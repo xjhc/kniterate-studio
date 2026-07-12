@@ -30,3 +30,8 @@ export {
 } from './colorwork/from-colorwork-chart.js';
 export type { YarnBinding } from './knitout/types.js';
 export type { PredictedPass } from './knitout/sim/types.js';
+export {
+  projectBackFaceFromArtifact,
+  type BackFaceCell,
+  type BackFaceProjection,
+} from './knitout/back-face-projection.js';

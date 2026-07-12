@@ -15,7 +15,7 @@ async function canvasGeometry(page: Page, cell = 16) {
   return {
     canvas,
     point(column: number, row: number) {
-      return { x: box.x + 42 + (column + 0.5) * cell, y: box.y + (row + 0.5) * cell };
+      return { x: box.x + 70 + (column + 0.5) * cell, y: box.y + (row + 0.5) * cell };
     },
   };
 }

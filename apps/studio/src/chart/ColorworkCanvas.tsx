@@ -14,16 +14,15 @@ import {
 } from '@knitlab/colorwork-core';
 import type { ColorworkChartV1 } from '@kniterate-studio/chart-contract';
 import type { ChartTool } from './ChartToolbar';
-import { rowGutterActionAt, selectionMoveDestination } from './canvasCoordinates';
+import { CHART_GUTTER as GUTTER, rowGutterActionAt, selectionMoveDestination } from './canvasCoordinates';
 
-const GUTTER = 42;
 const BASE_CELL = 16;
 
 function rectContains(rect: Rect, point: Point): boolean {
   return point.column >= rect.left && point.column <= rect.right && point.row >= rect.top && point.row <= rect.bottom;
 }
 
-export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, onInsertRow, onDeleteRow, isDarkMode }: {
+export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow }: {
   chart: ColorworkChartV1;
   tool: ChartTool;
   paletteIndex: number;
@@ -35,6 +34,9 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   onInsertRow: (afterRow: number | null) => void;
   onDeleteRow: (row: number) => void;
   isDarkMode: boolean;
+  passCounts: ReadonlyMap<number, number>;
+  focusedRow: number | null;
+  onFocusRow: (row: number) => void;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
   const paintLayer = useRef<HTMLCanvasElement>(null);
@@ -114,10 +116,15 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       context.fillStyle = isDarkMode ? '#b2bbb5' : '#667069';
       context.font = '10px system-ui';
       context.fillText(String(displayRow), 4, y + Math.min(cell - 3, 12));
+      const passCount = passCounts.get(row);
+      if (passCount !== undefined) {
+        context.fillStyle = row === focusedRow ? '#d86645' : isDarkMode ? '#d1d8d3' : '#48504b';
+        context.fillText(`×${passCount}`, 24, y + Math.min(cell - 3, 12));
+      }
       if (cell >= 12) {
         context.fillStyle = isDarkMode ? '#89938d' : '#8b938e';
-        context.fillText('+', 24, y + Math.min(cell - 3, 12));
-        context.fillText('−', 33, y + Math.min(cell - 3, 12));
+        context.fillText('+', 50, y + Math.min(cell - 3, 12));
+        context.fillText('−', 61, y + Math.min(cell - 3, 12));
       }
     }
   };
@@ -150,7 +157,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     overlay.globalAlpha = 1;
   };
 
-  useLayoutEffect(drawBase, [chart, scroll, zoom, viewportSize, isDarkMode]);
+  useLayoutEffect(drawBase, [chart, scroll, zoom, viewportSize, isDarkMode, passCounts, focusedRow]);
   useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex]);
 
   useEffect(() => {
@@ -213,6 +220,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         }
         const point = pointAt(event);
         if (!point) return;
+        onFocusRow(point.row);
         if (tool === 'move' && (!selection || !rectContains(selection, point))) return;
         event.currentTarget.setPointerCapture(event.pointerId);
         if (event.button === 1 || event.altKey) setGesture({ start: point, points: [point], pan: { x: event.clientX, y: event.clientY } });
@@ -220,6 +228,8 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         else setGesture({ start: point, points: [point] });
       }}
       onPointerMove={(event) => {
+        const hoverPoint = pointAt(event);
+        if (hoverPoint) onFocusRow(hoverPoint.row);
         if (!gesture) return;
         if (gesture.pan) {
           const element = viewport.current!;
@@ -228,7 +238,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
           setGesture({ ...gesture, pan: { x: event.clientX, y: event.clientY } });
           return;
         }
-        const point = pointAt(event);
+        const point = hoverPoint;
         if (point && !gesture.points.some((item) => item.row === point.row && item.column === point.column)) setGesture({ ...gesture, points: [...gesture.points, point] });
       }}
       onPointerUp={finish}

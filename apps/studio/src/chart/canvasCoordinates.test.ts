@@ -3,8 +3,8 @@ import { rowGutterActionAt, selectionMoveDestination } from './canvasCoordinates
 
 describe('canvas interaction coordinates', () => {
   it('keeps fixed gutter hit testing independent of horizontal scroll', () => {
-    expect(rowGutterActionAt(24, 8, 160, 16, 300)).toEqual({ kind: 'insert', row: 10 });
-    expect(rowGutterActionAt(34, 8, 160, 16, 300)).toEqual({ kind: 'delete', row: 10 });
+    expect(rowGutterActionAt(50, 8, 160, 16, 300)).toEqual({ kind: 'insert', row: 10 });
+    expect(rowGutterActionAt(62, 8, 160, 16, 300)).toEqual({ kind: 'delete', row: 10 });
   });
 
   it('moves a selection by pointer delta rather than treating the endpoint as its origin', () => {

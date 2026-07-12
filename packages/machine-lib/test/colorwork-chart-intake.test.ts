@@ -11,15 +11,16 @@ const fixture = JSON.parse(readFileSync(
 )) as unknown;
 
 describe('ColorworkChartV1 machine boundary', () => {
-  it('projects the public artifact into the proven chart compiler unchanged', () => {
+  it('normalizes canvas rows into bottom-up machine order without changing the artifact', () => {
     const projected = projectColorworkChartV1(fixture);
     expect(projected.chart).toMatchObject({ rows: 3, cols: 4, orientation: 'bottom-up' });
     expect(projected.palette.map((entry) => entry.id)).toEqual(['natural', 'red', 'gold', 'navy']);
     expect(projected.chart.layers[0]!.keyPlacements).toHaveLength(12);
     expect(projected.chart.layers[0]!.keyPlacements[0]).toEqual({
       anchor: { x: 0, y: 0 },
-      keyId: 'navy',
+      keyId: 'red',
     });
+    expect(projected.artifact).toEqual(fixture);
   });
 
   it('compiles the four-color fixture after Studio assigns carriers', () => {

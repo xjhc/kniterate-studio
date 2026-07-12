@@ -251,6 +251,7 @@ export function emitStockinetteWithOverridesWalk(input: StitchOverrideWalkInput)
   }));
 
   for (let r = 0; r < projection.rows; r++) {
+    sim.setSourceRows([r]);
     ops.push(...sim.drainOps());
     const dir = directionForCarrier(sim, carrier);
     ops.push(comment(`row ${r}`));
@@ -359,6 +360,7 @@ export function emitStockinetteWithOverridesWalk(input: StitchOverrideWalkInput)
     }
     restoreFirstRowSpeedOverride(sim, r, input.firstRowSpeedOverride);
   }
+  sim.setSourceRows();
   ops.push(...sim.drainOps());
 
   const finalCarrierStates = sim.snapshot();

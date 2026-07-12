@@ -8,11 +8,21 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   await page.goto('/');
   await page.locator('input[accept=".json,application/json"]').setInputFiles('fixtures/colorwork-chart-v1/four-color-checker.json');
   await expect(page.locator('.compile-verdict')).toContainText('Surface-proven', { timeout: 15_000 });
+  await expect(page.getByRole('button', { name: /Fairisle/ })).not.toContainText('Calculating', { timeout: 15_000 });
+  await expect(page.getByRole('button', { name: /Complement/ })).toContainText('Blocked');
 
-  await page.getByRole('button', { name: 'Complement', exact: true }).click();
+  const canvasBox = await page.locator('canvas.chart-canvas').first().boundingBox();
+  if (!canvasBox) throw new Error('Chart canvas has no browser geometry');
+  await page.mouse.move(canvasBox.x + 78, canvasBox.y + 8);
+  await page.getByRole('button', { name: 'Open machine', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Predicted pass grid' })).toBeVisible();
+  await expect(page.locator('.pass-row.selected')).toContainText('R3');
+  await page.getByRole('button', { name: 'Open chart', exact: true }).click();
+
+  await page.getByRole('button', { name: /Complement/ }).click();
   await expect(page.locator('.compile-verdict')).toContainText('Blocked');
   await expect(page.locator('.setup-error')).toContainText('exactly two used colors');
-  await page.getByRole('button', { name: 'Birdseye', exact: true }).click();
+  await page.getByRole('button', { name: /Birdseye/ }).click();
 
   await page.getByLabel('Needles', { exact: true }).fill('6');
   await page.getByLabel('Needles', { exact: true }).press('Tab');
@@ -32,5 +42,9 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
     'set-strategy', 'set-strategy', 'set-width', 'set-height', 'set-frame',
   ]);
   expect(project.history.cursor).toBe(5);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Open machine', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Predicted pass grid' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
   expect(errors).toEqual([]);
 });

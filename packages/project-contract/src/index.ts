@@ -21,7 +21,7 @@ const YarnAssignmentSchema = z.object({
 });
 
 const StrategySchema = z.object({
-  technique: z.enum(['fairisle', 'ladder-back', 'birdseye', 'complement']),
+  technique: z.enum(['fairisle', 'ladder-back', 'lined', 'birdseye', 'complement']),
   birdseyeMode: z.enum(['minimal', 'full']).optional(),
   floatLimit: z.number().int().min(1).max(30).default(5),
 });

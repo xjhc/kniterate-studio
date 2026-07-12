@@ -221,6 +221,7 @@ export function emitStockinetteWalk(input: StockinetteWalkInput): StockinetteWal
   // visual one. Honoring top-down / left-right / in-the-round natively
   // would require row reversal + dimension swap and is deferred.
   for (let r = 0; r < projection.rows; r++) {
+    sim.setSourceRows([r]);
     ops.push(...sim.drainOps());
     const dir = directionForCarrier(sim, carrier);
     ops.push(comment(`row ${r}`));
@@ -292,6 +293,7 @@ export function emitStockinetteWalk(input: StockinetteWalkInput): StockinetteWal
     }
     restoreFirstRowSpeedOverride(sim, r, input.firstRowSpeedOverride);
   }
+  sim.setSourceRows();
   ops.push(...sim.drainOps());
 
   const finalCarrierStates = sim.snapshot();

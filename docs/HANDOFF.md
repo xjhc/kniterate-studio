@@ -1,13 +1,14 @@
 # Session handoff — 2026-07-12
 
-> **Current handoff:** M3A is complete and the Studio half of M3B is complete.
+> **Current handoff:** M3A, the Studio half of M3B, and M3C are complete.
 > The neutral `@knitlab/colorwork-core` package and embedded chart workspace are
 > implemented. Direct chart import, project save/reopen, continuous raster
 > gestures, atomic moves, row edits, clipboard/history, pan/zoom, narrow-screen
-> layout, and dark canvas chrome are covered by 171 unit/integration tests and 3
-> checked-in Playwright tests. `pnpm verify`, `pnpm test:e2e`, and
-> `git diff --check` are the closeout gates. Next product work is M3C's blanket
-> machine loop; see `ROADMAP.md`. `TERRA-READY-TASKS.md` records the only pieces
+> layout, dark canvas chrome, Worker compilation, strategy comparisons,
+> engine-owned back faces, row provenance, and the synchronized authored machine
+> view are covered by the repository gates. `pnpm verify`, `pnpm test:e2e`, and
+> `git diff --check` are the closeout gates. Next product work is M3D's durable
+> browser conversion/export loop; see `ROADMAP.md`. `TERRA-READY-TASKS.md` records the only pieces
 > that should be delegated after their contracts are frozen. The historical
 > session material below is retained for provenance, not as current status.
 

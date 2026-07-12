@@ -1,5 +1,5 @@
 import type { ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import type { BlanketCompileArtifact } from './compileProject';
+import type { BlanketCompileArtifact, StrategyComparison } from './compileProject';
 
 export interface BlanketCompileRequest {
   kind: 'compile-blanket';
@@ -11,6 +11,10 @@ export type BlanketCompileResponse = {
   kind: 'compile-complete';
   requestId: number;
   artifact: BlanketCompileArtifact;
+} | {
+  kind: 'strategy-comparisons-complete';
+  requestId: number;
+  comparisons: readonly StrategyComparison[];
 } | {
   kind: 'compile-failed';
   requestId: number;

@@ -1,22 +1,50 @@
-import { materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { appendProjectEdit, materializeColorworkProject, type ColorworkProjectV1, type ProjectState } from '@kniterate-studio/project-contract';
 import {
   compileToRunArtifact,
   projectColorworkChartV1,
+  projectBackFaceFromArtifact,
+  type BackFaceProjection,
   type PredictedPass,
   type ValidationMessage,
   type YarnBinding,
 } from '@kniterate-studio/machine-lib/browser';
 
 export type AuthoredVerdict = 'blocked' | 'surface';
+export type BackingTechnique = ProjectState['strategy']['technique'];
+
+export interface StrategyComparison {
+  technique: BackingTechnique;
+  verdict: AuthoredVerdict;
+  passCount: number;
+  estimatedKnitTimeSeconds: number | null;
+  backFace: BackFaceProjection | null;
+  blockingMessage: string | null;
+}
 
 export interface BlanketCompileArtifact {
   revision: string;
+  technique: BackingTechnique;
   ok: boolean;
   verdict: AuthoredVerdict;
   inputHash: string | null;
   messages: readonly ValidationMessage[];
   knitoutText: string | null;
   passes: readonly PredictedPass[];
+  rowProvenance: readonly {
+    rowId: string;
+    chartRow: number;
+    displayRow: number;
+    passIndices: readonly number[];
+  }[];
+  backFace: BackFaceProjection | null;
+  diagnostics: readonly {
+    severity: ValidationMessage['severity'];
+    rule: string;
+    message: string;
+    opIndex: number | null;
+    rowId: string | null;
+    passIndices: readonly number[];
+  }[];
   stats: {
     designRows: number;
     needles: number;
@@ -53,6 +81,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
 
   const base = {
     revision: projectRevision(project),
+    technique: state.strategy.technique,
     stats: {
       designRows: state.chart.height,
       needles: state.chart.width,
@@ -62,7 +91,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       estimatedKnitTimeSeconds: null,
     },
   };
-  if (setupMessages.length > 0) return { ...base, ok: false, verdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [] };
+  if (setupMessages.length > 0) return { ...base, ok: false, verdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], rowProvenance: [], backFace: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
 
   const projected = projectColorworkChartV1(state.chart);
   const yarnBindings: YarnBinding[] = usedPalette.map((entry) => {
@@ -71,6 +100,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   });
   const backBedStyle = state.strategy.technique === 'fairisle' ? 'floats'
     : state.strategy.technique === 'ladder-back' ? 'ladder'
+    : state.strategy.technique === 'lined' ? 'lined'
     : 'birdseye';
   const artifact = compileToRunArtifact({
     chart: projected.chart,
@@ -87,6 +117,38 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     ...(state.strategy.technique === 'fairisle' ? { floatPolicy: { mode: 'warn-above' as const, threshold: state.strategy.floatLimit } } : {}),
   });
   const messages = [...artifact.chartMessages, ...artifact.programMessages, ...artifact.bedStateMessages, ...artifact.carriageMessages];
+  const passIndicesByMachineRow = new Map<number, number[]>();
+  artifact.predictedPasses.forEach((pass, passIndex) => {
+    for (const machineRow of pass.sourceRows ?? []) {
+      const indices = passIndicesByMachineRow.get(machineRow) ?? [];
+      indices.push(passIndex);
+      passIndicesByMachineRow.set(machineRow, indices);
+    }
+  });
+  const rowProvenance = state.rowIds.map((rowId, chartRow) => {
+    const machineRow = state.chart.height - chartRow - 1;
+    return {
+      rowId,
+      chartRow,
+      displayRow: state.chart.rowNumbering === 'bottom-up' ? state.chart.height - chartRow : chartRow + 1,
+      passIndices: passIndicesByMachineRow.get(machineRow) ?? [],
+    };
+  });
+  const machineRowByOpIndex: Array<number | null> = [];
+  let activeMachineRow: number | null = null;
+  artifact.program?.ops.forEach((op, opIndex) => {
+    if (op.kind === 'comment') {
+      const row = /^row (\d+)$/.exec(op.text);
+      if (row) activeMachineRow = Number(row[1]);
+      else if (/^(--- BIND OFF|--- RELEASE|-- lined finish)/.test(op.text)) activeMachineRow = null;
+    }
+    machineRowByOpIndex[opIndex] = activeMachineRow;
+  });
+  const diagnostics = messages.map((message) => {
+    const machineRow = message.opIndex === undefined ? null : machineRowByOpIndex[message.opIndex] ?? null;
+    const provenance = machineRow === null ? undefined : rowProvenance[state.chart.height - machineRow - 1];
+    return { severity: message.severity, rule: message.rule, message: message.message, opIndex: message.opIndex ?? null, rowId: provenance?.rowId ?? null, passIndices: provenance?.passIndices ?? [] };
+  });
   return {
     ...base,
     ok: artifact.ok,
@@ -95,6 +157,9 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     messages,
     knitoutText: artifact.knitoutText,
     passes: artifact.predictedPasses,
+    rowProvenance,
+    backFace: projectBackFaceFromArtifact(artifact, state.chart, yarnBindings, state.machine.needleOffset),
+    diagnostics,
     stats: {
       ...base.stats,
       passCount: artifact.predictedPasses.length,
@@ -102,4 +167,23 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       estimatedKnitTimeSeconds: artifact.plan?.estimatedKnitTimeSeconds ?? null,
     },
   };
+}
+
+export function strategyComparisonFromArtifact(artifact: BlanketCompileArtifact): StrategyComparison {
+  return {
+    technique: artifact.technique,
+    verdict: artifact.verdict,
+    passCount: artifact.stats.passCount,
+    estimatedKnitTimeSeconds: artifact.stats.estimatedKnitTimeSeconds,
+    backFace: artifact.backFace,
+    blockingMessage: artifact.messages.find((message) => message.severity === 'error')?.message ?? null,
+  };
+}
+
+export function projectWithPreviewStrategy(project: ColorworkProjectV1, technique: BackingTechnique): ColorworkProjectV1 {
+  const current = materializeColorworkProject(project).state.strategy;
+  if (current.technique === technique) return project;
+  let id = `preview_strategy_${technique.replace(/-/g, '_')}`;
+  while (project.history.entries.some((entry) => entry.id === id)) id += '_';
+  return appendProjectEdit(project, { id, source: 'system', edit: { kind: 'set-strategy', strategy: { ...current, technique } } });
 }

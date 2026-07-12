@@ -1,13 +1,23 @@
 import { AlertTriangle, CheckCircle2, LoaderCircle } from 'lucide-react';
 import type { ProjectState } from '@kniterate-studio/project-contract';
+import type { BackFaceProjection } from '@kniterate-studio/machine-lib/browser';
 import type { BlanketCompileState } from './useBlanketCompiler';
 
 const techniques = [
   ['fairisle', 'Fairisle'],
   ['ladder-back', 'Ladder'],
+  ['lined', 'Lined'],
   ['birdseye', 'Birdseye'],
   ['complement', 'Complement'],
 ] as const;
+
+function BackFaceMini({ projection, palette }: { projection: BackFaceProjection | null | undefined; palette: ProjectState['chart']['palette'] }) {
+  if (!projection) return <span className="back-mini pending" />;
+  const rowStep = Math.max(1, Math.ceil(projection.height / 4));
+  const columnStep = Math.max(1, Math.ceil(projection.width / 8));
+  const sampled = projection.cells.filter((_row, index) => index % rowStep === 0).slice(0, 4).flatMap((row) => row.filter((_cell, index) => index % columnStep === 0).slice(0, 8));
+  return <span className="back-mini" style={{ gridTemplateColumns: `repeat(${Math.min(8, Math.ceil(projection.width / columnStep))}, 1fr)` }}>{sampled.map((cell, index) => <i className={cell.kind} style={{ background: cell.paletteIndexes.length ? palette[cell.paletteIndexes[0]!]?.hex : 'transparent' }} key={index} />)}</span>;
+}
 
 export function BlanketSetupRail({ state, compile, onWidth, onHeight, onNeedleOffset, onStrategy, onAssignment, onFrame }: {
   state: ProjectState;
@@ -22,6 +32,7 @@ export function BlanketSetupRail({ state, compile, onWidth, onHeight, onNeedleOf
   const assignmentFor = (paletteId: string) => state.machine.yarnAssignments.find((item) => item.paletteId === paletteId);
   const verdict = compile.status === 'failed' || compile.artifact?.verdict === 'blocked' ? 'Blocked'
     : compile.status === 'ready' ? 'Surface-proven' : 'Compiling';
+  const selectedPassCount = compile.comparisons.find((item) => item.technique === state.strategy.technique)?.passCount ?? compile.artifact?.stats.passCount ?? null;
   return <aside className="blanket-setup" aria-label="Blanket setup">
     <div className={`compile-verdict ${verdict.toLowerCase().replace('-', '')}`}>
       {verdict === 'Compiling' ? <LoaderCircle size={15} className="spin" /> : verdict === 'Blocked' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
@@ -31,7 +42,11 @@ export function BlanketSetupRail({ state, compile, onWidth, onHeight, onNeedleOf
       <label>Needles<input type="number" min="1" max="252" defaultValue={state.chart.width} key={`w${state.chart.width}`} onBlur={(event) => onWidth(Number(event.currentTarget.value))} /></label>
       <label>Rows<input type="number" min="1" defaultValue={state.chart.height} key={`h${state.chart.height}`} onBlur={(event) => onHeight(Number(event.currentTarget.value))} /></label>
     </div><label>First needle<input type="number" min="1" max={253 - state.chart.width} defaultValue={state.machine.needleOffset} key={`n${state.machine.needleOffset}`} onBlur={(event) => onNeedleOffset(Number(event.currentTarget.value))} /></label></section>
-    <section><h2>Backing</h2><div className="strategy-segments">{techniques.map(([id, label]) => <button type="button" className={state.strategy.technique === id ? 'active' : ''} key={id} onClick={() => onStrategy(id)}>{label}</button>)}</div></section>
+    <section><h2>Backing</h2><div className="strategy-segments">{techniques.map(([id, label]) => {
+      const comparison = compile.comparisons.find((item) => item.technique === id);
+      const delta = comparison && selectedPassCount !== null ? comparison.passCount - selectedPassCount : null;
+      return <button type="button" className={state.strategy.technique === id ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{label}</b><small>{comparison?.verdict === 'blocked' ? 'Blocked' : delta === null ? 'Calculating' : `${delta >= 0 ? '+' : ''}${delta.toLocaleString()} passes · ${Math.ceil((comparison?.estimatedKnitTimeSeconds ?? 0) / 60)} min`}</small></span></button>;
+    })}</div></section>
     <section><h2>Pattern yarns</h2><div className="assignment-list">{state.chart.palette.map((color) => {
       const assignment = assignmentFor(color.id);
       if (!assignment) return <div className="assignment-row missing" key={color.id}><i style={{ background: color.hex }} /><span>{color.name}</span><b>Unassigned</b></div>;

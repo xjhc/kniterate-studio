@@ -92,13 +92,13 @@ Completed 2026-07-12:
 KnitLab consuming the neutral package remains a separate cross-repository task;
 Studio does not wait on it before M3C.
 
-### M3C - Blanket machine loop
+### M3C - Blanket machine loop - complete
 
 Rectangle sizing, palette-to-yarn/carrier assignment, backing strategy and
 previews, default frame, debounced Worker compile, synced machine view, and live
 verdict.
 
-First implementation slice (2026-07-12):
+Completed 2026-07-12:
 
 - durable height, needle-placement, and frame edits added to project history
 - project-to-compiler adapter enforces four used pattern colors, complete C2-C5
@@ -108,9 +108,14 @@ First implementation slice (2026-07-12):
 - live setup rail covers rectangle, backing, yarn carriers, frame, compile
   estimates, and authored Surface-proven/Blocked state
 - checked-in browser coverage proves setup persistence and Worker verdict changes
-
-Remaining: engine-owned back-face projections and consequence comparisons,
-design-row-to-pass provenance, synchronized machine view, and diagnostic anchors.
+- the machine boundary normalizes top-to-bottom canvas storage into cast-on-first
+  compiler rows without changing the durable chart
+- engine-emitted design-row provenance powers the ×N gutter, compiled pass-grid
+  focus, and diagnostic anchors; React performs no pass reconstruction
+- all five backing choices compile speculatively in cancellable Worker slices and
+  show engine-derived back faces, pass/time deltas, and blocked state before apply
+- authored machine view is virtualized, synchronized with chart hover, responsive
+  on narrow screens, and groups repeated findings without hiding their count
 
 ### M3D - Durable machine output
 

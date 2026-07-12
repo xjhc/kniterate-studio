@@ -22,7 +22,7 @@ export interface MachinePass {
   carriers: readonly string[];
   beds: string;
   needleSpan: string;
-  rack: number;
+  rack: number | null;
   speed: number | null;
   roller: number | null;
   lineStart: number;
@@ -150,7 +150,7 @@ export function openMachineDocument(filename: string, source: string): MachineDo
   const warnings = findings.filter((item) => item.severity === 'warning');
   const carrierSet = [...new Set(passes.flatMap((pass) => pass.carriers))].sort();
   const needleNumbers = passes.flatMap((pass) => [...pass.needleSpan.matchAll(/\d+/g)].map((match) => Number(match[0])));
-  const racks = passes.map((pass) => pass.rack);
+  const racks = passes.map((pass) => pass.rack).filter((rack): rack is number => rack !== null);
   // Imported files have no authored waiver/project context. Any unresolved
   // validator finding therefore blocks the foreign-file verdict rather than
   // silently minting Experimental status.

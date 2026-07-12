@@ -51,6 +51,9 @@ export interface PredictedPass {
   readonly roller: number;
   /** Optional debugging hint — which simulator call produced this pass. */
   readonly source?: string;
+  /** Machine-order design rows that produced this pass. Frame and finish
+   *  passes omit this field. A merged vendor pass can name multiple rows. */
+  readonly sourceRows?: readonly number[];
 }
 
 /**

@@ -151,11 +151,13 @@ interface LogicalPass {
   presserSpeed?: number;
   presserRoller?: number;
   source?: string;
+  sourceRows?: number[];
 }
 
 export class CarriageSimulator {
   private readonly ops: KnitoutOp[] = [];
   private readonly logicalPasses: LogicalPass[] = [];
+  private activeSourceRows?: number[];
 
   private readonly carriers: Map<CarrierId, MutableCarrierState> = new Map();
   private readonly carrierIds: readonly CarrierId[];
@@ -177,6 +179,11 @@ export class CarriageSimulator {
   constructor(opts: CarriageSimulatorOptions) {
     this.carrierIds = [...opts.carriers];
     this.initialNextDir = opts.initialNextDirection ?? '+';
+  }
+
+  /** Attach engine-owned design-row provenance to subsequent logical passes. */
+  setSourceRows(rows?: readonly number[]): void {
+    this.activeSourceRows = rows === undefined ? undefined : [...new Set(rows)];
   }
 
   /* ----- Settings (emit-on-change) ------------------------------- */
@@ -933,6 +940,7 @@ export class CarriageSimulator {
           speed: lp.presserSpeed ?? this.presserSpeed ?? this.speed ?? 300,
           roller: lp.presserRoller ?? this.presserRoller ?? 0,
           source: `auto-move before ${lp.source ?? 'pass'}`,
+          ...(lp.sourceRows ? { sourceRows: [...lp.sourceRows] } : {}),
         });
         nextDir = flip(nextDir);
       }
@@ -946,6 +954,7 @@ export class CarriageSimulator {
         speed: lp.speed,
         roller: lp.roller,
         source: lp.source,
+        ...(lp.sourceRows ? { sourceRows: [...lp.sourceRows] } : {}),
       });
       nextDir = flip(nextDir);
     }
@@ -1051,6 +1060,7 @@ export class CarriageSimulator {
 
   /** Push a logical pass, merging into the previous if vendor would. */
   private pushLogical(p: LogicalPass): void {
+    if (p.sourceRows === undefined && this.activeSourceRows !== undefined) p.sourceRows = [...this.activeSourceRows];
     if (this.pendingRollerAdd !== undefined) {
       p.roller = (p.roller ?? 0) + this.pendingRollerAdd;
       this.pendingRollerAdd = undefined;
@@ -1067,6 +1077,7 @@ export class CarriageSimulator {
       prev.minSlot = Math.min(prev.minSlot, p.minSlot);
       prev.maxSlot = Math.max(prev.maxSlot, p.maxSlot);
       prev.gripper = prev.gripper ?? p.gripper;
+      if (p.sourceRows) prev.sourceRows = [...new Set([...(prev.sourceRows ?? []), ...p.sourceRows])];
       const prevSoft = prev.type === 'Tu-Tu' && prev.isDecay;
       const nextSoft = p.type === 'Tu-Tu' && p.isDecay;
       if (prevSoft && !nextSoft) {

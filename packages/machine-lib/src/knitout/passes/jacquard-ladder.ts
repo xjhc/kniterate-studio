@@ -112,6 +112,7 @@ export function emitJacquardLadderWalk(input: JacquardLadderInput): JacquardLadd
   }
 
   for (let r = 0; r < resolved.rows; r++) {
+    sim.setSourceRows([r]);
     ops.push(...sim.drainOps());
     ops.push(comment(`row ${r}`));
     applyFirstRowSpeedOverride(sim, r, input.firstRowSpeedOverride);
@@ -134,6 +135,7 @@ export function emitJacquardLadderWalk(input: JacquardLadderInput): JacquardLadd
     pushFullBackPass(sim, ladderDir, resolved, ladderColor, needleStart);
     restoreFirstRowSpeedOverride(sim, r, input.firstRowSpeedOverride);
   }
+  sim.setSourceRows();
   ops.push(...sim.drainOps());
 
   const finalCarrierStates = sim.snapshot();

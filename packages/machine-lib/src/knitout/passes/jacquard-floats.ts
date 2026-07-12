@@ -134,6 +134,7 @@ export function emitJacquardFloatsWalk(input: JacquardFloatsInput): JacquardFloa
   );
 
   for (let r = 0; r < resolved.rows; r++) {
+    sim.setSourceRows([r]);
     ops.push(...sim.drainOps());
     ops.push(comment(`row ${r}`));
     applyFirstRowSpeedOverride(sim, r, input.firstRowSpeedOverride);
@@ -152,6 +153,7 @@ export function emitJacquardFloatsWalk(input: JacquardFloatsInput): JacquardFloa
     }
     restoreFirstRowSpeedOverride(sim, r, input.firstRowSpeedOverride);
   }
+  sim.setSourceRows();
   ops.push(...sim.drainOps());
 
   const finalCarrierStates = sim.snapshot();

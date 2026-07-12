@@ -22,6 +22,10 @@ describe('blanket project compiler', () => {
     expect(first.knitoutText).toBe(second.knitoutText);
     expect(first.stats.passCount).toBeGreaterThan(0);
     expect(first.knitoutText).toContain(';;Carriers: 1 2 3 4 5 6');
+    expect(first.rowProvenance.map((row) => row.displayRow)).toEqual([3, 2, 1]);
+    expect(first.rowProvenance.every((row) => row.passIndices.length > 0)).toBe(true);
+    expect(first.passes.some((pass) => pass.sourceRows?.includes(0))).toBe(true);
+    expect(first.backFace?.cells.flat().some((cell) => cell.kind === 'float')).toBe(true);
   });
 
   it('blocks before compile when a used color has no assignment', () => {

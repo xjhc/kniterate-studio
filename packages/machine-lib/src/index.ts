@@ -52,3 +52,8 @@ export {
   type ProjectedColorworkChart,
 } from './colorwork/from-colorwork-chart.js';
 export * from './knitout/types.js';
+export {
+  projectBackFaceFromArtifact,
+  type BackFaceCell,
+  type BackFaceProjection,
+} from './knitout/back-face-projection.js';

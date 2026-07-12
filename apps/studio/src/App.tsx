@@ -24,6 +24,7 @@ import {
 import { compareKcDocuments, openMachineDocument, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
 import { createColorworkProjectV1, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
+import type { BlanketCompileArtifact } from './blanket/compileProject';
 import { ChartWorkspace } from './chart/ChartWorkspace';
 
 const ROW_HEIGHT = 44;
@@ -67,12 +68,13 @@ function EmptyState({ active, onOpen, onDrop }: { active: boolean; onOpen: () =>
   );
 }
 
-function PassGrid({ passes, selected, collapsed, onToggle, onSelect }: {
+function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = false }: {
   passes: readonly MachinePass[];
   selected: number;
   collapsed: ReadonlySet<string>;
   onToggle: (section: string) => void;
   onSelect: (index: number) => void;
+  compiled?: boolean;
 }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -104,7 +106,7 @@ function PassGrid({ passes, selected, collapsed, onToggle, onSelect }: {
   return (
     <div className="pass-table">
       <div className="pass-head" aria-hidden="true">
-        <span>Pass</span><span>Direction</span><span>Carrier</span><span>Action</span><span>Bed</span><span>Needles</span><span>Rack</span><span>Speed</span><span>Roller</span>
+        <span>Pass</span><span>Direction</span><span>Carrier</span><span>Action</span><span>{compiled ? 'Status' : 'Bed'}</span><span>{compiled ? 'Design' : 'Needles'}</span><span>Rack</span><span>Speed</span><span>Roller</span>
       </div>
       <div className="pass-viewport" ref={viewportRef} onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}>
         <div className="pass-spacer" style={{ height: grouped.length * ROW_HEIGHT }}>
@@ -126,7 +128,7 @@ function PassGrid({ passes, selected, collapsed, onToggle, onSelect }: {
                 <span className="direction">{pass.direction ?? '•'}</span>
                 <span>{pass.carriers.length ? pass.carriers.map((carrier) => <i className="carrier-chip" style={{ '--carrier': CARRIER_COLORS[carrier] } as CSSProperties} key={carrier}>C{carrier}</i>) : <em>none</em>}</span>
                 <span><code>{pass.type}</code></span><span>{pass.beds}</span><span>{pass.needleSpan}</span>
-                <span>{pass.rack}</span><span>{pass.speed ?? '—'}</span><span>{pass.roller ?? '—'}</span>
+                <span>{pass.rack ?? '—'}</span><span>{pass.speed ?? '—'}</span><span>{pass.roller ?? '—'}</span>
               </button>
             );
           })}
@@ -134,6 +136,54 @@ function PassGrid({ passes, selected, collapsed, onToggle, onSelect }: {
       </div>
     </div>
   );
+}
+
+function CompiledMachineWorkspace({ artifact, focusedRowId, onFocusedRowId }: { artifact: BlanketCompileArtifact; focusedRowId: string | null; onFocusedRowId: (rowId: string) => void }) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const focusedPass = artifact.rowProvenance.find((row) => row.rowId === focusedRowId)?.passIndices[0] ?? 0;
+  const [selected, setSelected] = useState(focusedPass);
+  useEffect(() => setSelected(focusedPass), [focusedPass]);
+  const passes = useMemo<MachinePass[]>(() => artifact.passes.map((pass, index) => {
+    const designRows = [...new Set((pass.sourceRows ?? []).map((row) => row + 1))];
+    return {
+      index,
+      direction: pass.direction,
+      type: pass.type,
+      carriers: pass.carriers,
+      beds: pass.isAutoMove ? 'Auto move' : 'Predicted',
+      needleSpan: designRows.length ? designRows.map((row) => `R${row}`).join(', ') : 'Frame',
+      rack: null,
+      speed: pass.speed,
+      roller: pass.roller,
+      lineStart: 0,
+      lineEnd: 0,
+      section: designRows.length ? 'Body' : 'Frame / finish',
+      ghost: pass.isAutoMove,
+    };
+  }), [artifact]);
+  const selectPass = (index: number) => {
+    setSelected(index);
+    const row = artifact.rowProvenance.find((item) => item.passIndices.includes(index));
+    if (row) onFocusedRowId(row.rowId);
+  };
+  const errors = artifact.messages.filter((message) => message.severity === 'error');
+  const warnings = artifact.messages.filter((message) => message.severity === 'warning');
+  const findingGroups = [...artifact.diagnostics.reduce((groups, diagnostic) => {
+    const group = groups.get(diagnostic.rule);
+    if (group) group.count += 1;
+    else groups.set(diagnostic.rule, { diagnostic, count: 1 });
+    return groups;
+  }, new Map<string, { diagnostic: BlanketCompileArtifact['diagnostics'][number]; count: number }>()).values()];
+  return <div className="workspace">
+    <nav className="side-rail" aria-label="Workspace views"><button className="active" type="button" title="Machine passes"><Rows3 size={19} /></button></nav>
+    <main className="machine-workspace compiled-workspace">
+      <div className="workspace-head"><div><span className="eyebrow">Compiled project</span><h1>Predicted pass grid</h1></div><div className="stat-strip"><span><b>{artifact.stats.passCount.toLocaleString()}</b> passes</span><span><b>{artifact.stats.patternColors}</b> pattern colors</span><span><b>{artifact.stats.needles}</b> needles</span><span><b>{errors.length}</b> errors</span></div></div>
+      <div className="compiled-machine-layout">
+        <PassGrid passes={passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={selectPass} compiled />
+        <section className="diagnostics-panel"><div className="panel-title"><span><ListChecks size={15} /> Checks</span><b>{warnings.length} warnings</b></div><div className="diagnostic-list">{artifact.messages.length === 0 ? <div className="compiled-clear"><CheckCircle2 size={18} /><strong>No compiler findings</strong></div> : findingGroups.map(({ diagnostic, count }) => <button type="button" disabled={diagnostic.passIndices.length === 0} onClick={() => { const pass = diagnostic.passIndices[0]; if (pass !== undefined) selectPass(pass); }} className={`compiled-finding severity-${diagnostic.severity}`} key={diagnostic.rule}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}<span><strong>{diagnostic.rule}{count > 1 ? ` · ${count} occurrences` : ''}</strong><small>{diagnostic.message}</small></span></button>)}</div></section>
+      </div>
+    </main>
+  </div>;
 }
 
 function DiagnosticItem({ item, active, onClick }: { item: MachineDiagnostic; active: boolean; onClick: () => void }) {
@@ -244,6 +294,7 @@ export function App() {
   const [showVerdict, setShowVerdict] = useState(false);
   const [showRunSheet, setShowRunSheet] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const blanketCompile = useBlanketCompiler(project);
 
   const openFile = async (file: File | undefined, comparison = false) => {
@@ -275,7 +326,7 @@ export function App() {
         <div className="brand-lockup"><span className="brand-mark"><Rows3 size={17} /></span><strong>Kniterate Studio</strong>{document && <span className="file-name">{document.filename}</span>}</div>
         <div className="topbar-actions">
           <button className={`icon-button${view === 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => setView('chart')} title="Chart" aria-label="Open chart"><Grid3X3 size={17} /></button>
-          <button className={`icon-button${view !== 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => document && setView('machine')} title="Machine" aria-label="Open machine" disabled={!document}><Rows3 size={17} /></button>
+          <button className={`icon-button${view !== 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => (document || blanketCompile.artifact?.ok) && setView('machine')} title="Machine" aria-label="Open machine" disabled={!document && !blanketCompile.artifact?.ok}><Rows3 size={17} /></button>
           {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
           <button className="icon-button" type="button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} title="Toggle theme" aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
           {document && <button className="icon-button" type="button" onClick={() => setShowRunSheet(true)} title="Run sheet" aria-label="Open run sheet"><Printer size={17} /></button>}
@@ -285,7 +336,7 @@ export function App() {
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} isDarkMode={theme === 'dark'} compile={blanketCompile} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
+      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} isDarkMode={theme === 'dark'} compile={blanketCompile} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>

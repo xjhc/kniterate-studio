@@ -165,6 +165,7 @@ export function emitJacquardBirdseyeWalk(input: JacquardBirdseyeInput): Jacquard
   }
 
   for (let r = 0; r < resolved.rows; r++) {
+    sim.setSourceRows([r]);
     ops.push(...sim.drainOps());
     ops.push(comment(`row ${r}`));
     applyFirstRowSpeedOverride(sim, r, input.firstRowSpeedOverride);
@@ -198,6 +199,7 @@ export function emitJacquardBirdseyeWalk(input: JacquardBirdseyeInput): Jacquard
     if (backColorIndices.length > 0) sim.setRacking(0);
     restoreFirstRowSpeedOverride(sim, r, input.firstRowSpeedOverride);
   }
+  sim.setSourceRows();
   ops.push(...sim.drainOps());
 
   // Lined finish (DBJ-garment campaign 2026-06-13, mirrors the shaped

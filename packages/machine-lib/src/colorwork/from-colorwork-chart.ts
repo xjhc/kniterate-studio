@@ -31,11 +31,15 @@ export function projectColorworkChartV1(value: unknown): ProjectedColorworkChart
     yarnSlotRole: 'own-yarn',
   }));
   const placements: KnitlabKeyInstance[] = [];
+  // ColorworkChartV1 cells are canvas order (top to bottom). The proven
+  // compiler's row 0 is always the cast-on edge, so normalize the machine
+  // projection to bottom-up without changing the durable artifact.
   for (let row = 0; row < artifact.height; row += 1) {
+    const artifactRow = artifact.height - row - 1;
     for (let column = 0; column < artifact.width; column += 1) {
       placements.push({
         anchor: { x: column, y: row },
-        keyId: artifact.palette[artifact.cells[row]![column]!]!.id,
+        keyId: artifact.palette[artifact.cells[artifactRow]![column]!]!.id,
       });
     }
   }
@@ -47,7 +51,7 @@ export function projectColorworkChartV1(value: unknown): ProjectedColorworkChart
       id: 'colorwork-chart-v1',
       rows: artifact.height,
       cols: artifact.width,
-      orientation: artifact.rowNumbering,
+      orientation: 'bottom-up',
       name: artifact.title ?? 'Imported colorwork chart',
       displaySettings: { rowCountVisibility: 'right', colCountVisibility: 'bottom' },
       layers: [{
