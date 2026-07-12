@@ -1,0 +1,7 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "manual",
+  "description": "TODO: saved source request that produced out.k/out.kc",
+  "reemitCommand": "TODO: command that can regenerate out.k from this request, or not-applicable with reason",
+  "inputFiles": []
+}

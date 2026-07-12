@@ -1,0 +1,105 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`compileChartToKnitout — P4 2-color ladder-back jacquard > produces a snapshot-stable .k for a 2x4 two-color chart 1`] = `
+";!knitout-2
+;;Carriers: 1 2 3 4 5 6
+;;Machine: kniterate
+;;Gauge: 7
+;;Position: Center
+;;Yarn-2: cream
+;;Yarn-3: navy
+;;X-carrier-spacing: 2
+;;X-carrier-stopping-distance: 2.5
+x-roller-advance 200
+x-stitch-number 6
+x-xfer-stitch-number 5
+x-speed-number 300
+x-xfer-style four-pass
+x-carrier-spacing 2
+x-carrier-stopping-distance 2.5
+; --- WASTE SECTION ---
+in 6
+knit + f50 6
+knit + b51 6
+knit + f52 6
+knit + b53 6
+knit - f53 6
+knit - b52 6
+knit - f51 6
+knit - b50 6
+knit + f50 6
+knit + b51 6
+knit + f52 6
+knit + b53 6
+knit - f53 6
+knit - b52 6
+knit - f51 6
+knit - b50 6
+; --- DRAW THREAD ---
+in 1
+knit + f50 1
+knit + f51 1
+knit + f52 1
+knit + f53 1
+; --- DROP BACK-BED WASTE STITCHES ---
+drop b50
+drop b51
+drop b52
+drop b53
+; --- BRING IN PATTERN CARRIERS ---
+in 2
+in 3
+; --- BOTH-BEDS CAST-ON ROW ---
+knit + f50 2
+knit + b51 2
+knit + f52 2
+knit + b53 2
+; --- END WASTE SECTION ---
+out 6
+out 1
+; --- PATTERN ---
+x-roller-advance 200
+x-stitch-number 6
+x-speed-number 300
+; row 0
+x-speed-number 100
+miss - f53 2
+knit - f52 2
+miss - f51 2
+knit - f50 2
+miss + f50 3
+knit + f51 3
+miss + f52 3
+knit + f53 3
+knit + b50 2
+knit + b51 2
+knit + b52 2
+knit + b53 2
+x-speed-number 300
+; row 1
+knit - f53 2
+miss - f52 2
+knit - f51 2
+miss - f50 2
+miss - f53 3
+knit - f52 3
+miss - f51 3
+knit - f50 3
+knit + b50 3
+knit + b51 3
+knit + b52 3
+knit + b53 3
+; --- BIND OFF (drop — test only) ---
+drop f50
+drop b50
+drop f51
+drop b51
+drop f52
+drop b52
+drop f53
+drop b53
+out 2
+; --- RELEASE TRAILING CARRIERS ---
+out 3
+"
+`;

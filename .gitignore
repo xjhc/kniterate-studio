@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.vite/
+.playwright-cli/
+.playwright-mcp/
+playwright-report/
+output/
+*.log

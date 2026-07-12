@@ -1,0 +1,19 @@
+{
+  "name": "kniterate-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.17.1",
+  "scripts": {
+    "dev": "pnpm --dir apps/studio dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "test:e2e": "playwright test",
+    "typecheck": "pnpm -r typecheck",
+    "kniterate:conform": "pnpm --dir packages/machine-lib kniterate:conform",
+    "verify": "pnpm typecheck && pnpm test && pnpm kniterate:conform && pnpm build"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
+  }
+}

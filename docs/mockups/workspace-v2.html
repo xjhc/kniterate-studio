@@ -1,0 +1,915 @@
+<title>Kniterate Studio — workspace demo v2</title>
+<style>
+  :root{
+    --bg:#EEF0F4; --panel:#FBFBFD; --panel2:#E5E8EF; --panel3:#DCDFE9; --line:#D2D6E1;
+    --ink:#1B1E2A; --ink2:#5A6175; --ink3:#8B92A6;
+    --accent:#3D53C6; --accent-soft:rgba(61,83,198,.10); --accent-ink:#FFFFFF;
+    --proven:#25714B; --exp:#A36F10; --blocked:#B93A2E;
+    --proven-soft:rgba(37,113,75,.12); --exp-soft:rgba(166,111,16,.13); --blocked-soft:rgba(185,58,46,.12);
+    --sans:'Avenir Next','Segoe UI',ui-sans-serif,system-ui,sans-serif;
+    --mono:ui-monospace,'SF Mono','Cascadia Code',Menlo,Consolas,monospace;
+    --cell:21px; --r:6px;
+  }
+  @media (prefers-color-scheme: dark){:root{
+    --bg:#12141B; --panel:#1A1D26; --panel2:#232734; --panel3:#2B3040; --line:#2F3446;
+    --ink:#E6E8F0; --ink2:#9AA1B5; --ink3:#6B7288;
+    --accent:#8C9CF0; --accent-soft:rgba(140,156,240,.14); --accent-ink:#12141B;
+    --proven:#5CBE8E; --exp:#D9A94E; --blocked:#E1705F;
+    --proven-soft:rgba(92,190,142,.14); --exp-soft:rgba(217,169,78,.15); --blocked-soft:rgba(225,112,95,.15);
+  }}
+  :root[data-theme="light"]{
+    --bg:#EEF0F4; --panel:#FBFBFD; --panel2:#E5E8EF; --panel3:#DCDFE9; --line:#D2D6E1;
+    --ink:#1B1E2A; --ink2:#5A6175; --ink3:#8B92A6;
+    --accent:#3D53C6; --accent-soft:rgba(61,83,198,.10); --accent-ink:#FFFFFF;
+    --proven:#25714B; --exp:#A36F10; --blocked:#B93A2E;
+    --proven-soft:rgba(37,113,75,.12); --exp-soft:rgba(166,111,16,.13); --blocked-soft:rgba(185,58,46,.12);
+  }
+  :root[data-theme="dark"]{
+    --bg:#12141B; --panel:#1A1D26; --panel2:#232734; --panel3:#2B3040; --line:#2F3446;
+    --ink:#E6E8F0; --ink2:#9AA1B5; --ink3:#6B7288;
+    --accent:#8C9CF0; --accent-soft:rgba(140,156,240,.14); --accent-ink:#12141B;
+    --proven:#5CBE8E; --exp:#D9A94E; --blocked:#E1705F;
+    --proven-soft:rgba(92,190,142,.14); --exp-soft:rgba(217,169,78,.15); --blocked-soft:rgba(225,112,95,.15);
+  }
+
+  *{box-sizing:border-box;margin:0}
+  [hidden]{display:none!important}
+  #app{height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--ink);
+    font:13px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-radius:4px}
+  .mono{font-family:var(--mono)}
+  .eyebrow{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+  .hint{font-size:10.5px;color:var(--ink3)}
+  .dim{color:var(--ink3)}
+  .t-warn{color:var(--blocked)} .t-exp{color:var(--exp)} .t-ok{color:var(--proven)}
+  .btn{border:1px solid var(--line);border-radius:var(--r);padding:5px 12px;font-size:12px;font-weight:600;background:var(--panel)}
+  .btn:hover{border-color:var(--ink3)}
+  .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+  .btn.primary:hover{filter:brightness(1.06)}
+  .btn.primary[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+  .btn.sm{padding:2px 9px;font-size:11px}
+  @keyframes flashk{0%{box-shadow:0 0 0 2px var(--accent)}100%{box-shadow:0 0 0 2px transparent}}
+  .flash{animation:flashk .7s ease-out 2}
+  @media (prefers-reduced-motion: reduce){.flash{animation:none;box-shadow:0 0 0 2px var(--accent)}}
+
+  /* ── header ── */
+  #top{display:flex;align-items:center;gap:14px;padding:8px 14px;background:var(--panel);
+    border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .brand{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+  .brand b{font-size:13.5px;letter-spacing:.01em}
+  .brand .mark{color:var(--accent);font-size:12px}
+  .proj{font-size:11px;color:var(--ink2);font-family:var(--mono)}
+  #pipeline{display:flex;align-items:center;gap:2px;flex:1;min-width:0;overflow-x:auto;padding:2px 0}
+  .stage{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:3px 9px;border-radius:var(--r);
+    border:1px solid transparent;white-space:nowrap}
+  .stage b{font-size:11px;font-weight:600}
+  .stage span{font-size:9.5px;color:var(--ink3);font-family:var(--mono)}
+  .stage:hover{background:var(--panel2)}
+  .stage.on{border-color:var(--accent);background:var(--accent-soft)}
+  .thr{width:14px;height:1.5px;background:var(--line);flex:none}
+  .thr.gate{width:10px;height:10px;border-radius:50%;background:var(--line);margin:0 3px;border:2px solid var(--bg)}
+  .thr.gate.g-surface{background:var(--proven)} .thr.gate.g-exp{background:var(--exp)} .thr.gate.g-blocked{background:var(--blocked)}
+  .topright{display:flex;align-items:center;gap:8px;position:relative}
+  .chip{font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:99px;border:1px solid transparent}
+  .chip.warn{background:var(--exp-soft);color:var(--exp);border-color:var(--exp)}
+  .verdict{display:flex;align-items:center;gap:6px;padding:4px 11px;border-radius:99px;font-size:11.5px;font-weight:700;
+    border:1.5px solid var(--line)}
+  .verdict .dot{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
+  .verdict.v-surface{border-color:var(--proven);color:var(--proven);background:var(--proven-soft)}
+  .verdict.v-surface .dot{background:var(--proven)}
+  .verdict.v-exp{border-color:var(--exp);color:var(--exp);background:var(--exp-soft)}
+  .verdict.v-exp .dot{background:var(--exp)}
+  .verdict.v-blocked{border-color:var(--blocked);color:var(--blocked);background:var(--blocked-soft)}
+  .verdict.v-blocked .dot{background:var(--blocked)}
+  .vpanel{position:absolute;top:calc(100% + 8px);right:0;z-index:40;width:320px;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(10,12,22,.18);padding:12px}
+  .vpanel h3{font-size:12px;margin-bottom:2px}
+  .vpanel .why{font-size:11.5px;color:var(--ink2);margin-bottom:10px}
+  .rung{display:flex;gap:8px;padding:6px 8px;border-radius:6px;align-items:baseline}
+  .rung .rl{font-size:11.5px;font-weight:700;min-width:104px}
+  .rung .rd{font-size:10.5px;color:var(--ink3)}
+  .rung.here{background:var(--accent-soft);outline:1px solid var(--accent)}
+  .rung.locked{opacity:.55}
+
+  /* ── main ── */
+  #workspace{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 236px 348px;gap:10px;padding:10px}
+  .col{background:var(--panel);border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;
+    min-height:0;overflow:hidden}
+  .colhead{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;
+    border-bottom:1px solid var(--line);flex-wrap:wrap}
+
+  /* chart column */
+  .seg{display:flex;gap:2px;background:var(--panel2);padding:2px;border-radius:7px}
+  .seg .tool{padding:2.5px 9px;font-size:11px;font-weight:600;border-radius:5px;color:var(--ink2)}
+  .seg .tool.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(10,12,22,.12)}
+  .palette{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .yarn{display:flex;align-items:center;gap:6px;padding:3px 9px 3px 4px;border:1px solid var(--line);border-radius:99px;font-size:11px}
+  .yarn i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+  .yarn .car{font-family:var(--mono);font-size:9.5px;color:var(--ink3)}
+  .yarn.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  #chartwrap{flex:1;overflow:auto;padding:12px;display:flex;align-items:flex-start;gap:0}
+  .rownums,.pgut,.edges{display:flex;flex-direction:column}
+  .rn,.pg,.ec{height:var(--cell);display:flex;align-items:center;font-size:9px;color:var(--ink3);font-family:var(--mono)}
+  .rn{width:22px;justify-content:flex-end;padding-right:5px}
+  .pg{width:26px;justify-content:flex-end;padding-right:6px}
+  .rn.hot,.pg.hot{color:var(--accent);font-weight:700}
+  .ec{width:16px;justify-content:center;font-size:10px}
+  .grid{display:grid;border:1px solid var(--line);width:max-content}
+  .cell{width:var(--cell);height:var(--cell);position:relative;display:flex;align-items:center;justify-content:center;
+    background-image:linear-gradient(180deg,rgba(255,255,255,.16),rgba(0,0,0,.10));
+    box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08);cursor:crosshair}
+  .cell i{font-style:normal;font-size:11px;line-height:1;pointer-events:none}
+  .cell.f-warn{box-shadow:inset 0 0 0 2px var(--blocked)}
+  .cell.f-acc{box-shadow:inset 0 0 0 2px var(--exp)}
+  .cell.rowhl::after{content:'';position:absolute;inset:0;background:var(--accent);opacity:.14;pointer-events:none}
+  .ruler{display:grid;width:max-content}
+  .ruler span{width:var(--cell);text-align:center;font-size:8.5px;color:var(--ink3);font-family:var(--mono);padding-top:3px}
+  .chartfoot{display:flex;justify-content:space-between;gap:10px;padding:7px 12px;border-top:1px solid var(--line);
+    font-size:10.5px;color:var(--ink2);flex-wrap:wrap}
+
+  /* strategy column */
+  #strategyCol{overflow-y:auto}
+  #strategyCol .body{padding:10px 12px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+  .tech{display:block;width:100%;text-align:left;padding:7px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px}
+  .tech .tt{font-size:12px;font-weight:700;display:block}
+  .tech .td{font-size:10.5px;color:var(--ink3)}
+  .tech:hover{border-color:var(--ink3)}
+  .tech.on{border-color:var(--accent);background:var(--accent-soft)}
+  .field{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px}
+  .field label{color:var(--ink2)}
+  .field .val{font-family:var(--mono);font-size:11px}
+  .stepper{display:flex;align-items:center;gap:4px}
+  .stepper button{width:20px;height:20px;border:1px solid var(--line);border-radius:5px;font-size:12px;line-height:1}
+  input[type=range]{width:100px;accent-color:var(--accent)}
+  .minis{display:flex;gap:8px}
+  .mini{flex:1}
+  .mini .cap{font-size:9.5px;color:var(--ink3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.07em}
+  .minigrid{display:grid;border:1px solid var(--line);width:max-content}
+  .minigrid span{width:3.5px;height:3.5px}
+  .params{font-size:10.5px;line-height:1.7;color:var(--ink2);background:var(--panel2);border-radius:8px;padding:8px 10px}
+  .params b{color:var(--ink)}
+
+  /* machine column */
+  #machineCol{min-height:0}
+  #passlist{flex:1;overflow-y:auto;min-height:100px;padding:4px 8px}
+  .pass{display:grid;grid-template-columns:30px 14px 26px 14px 40px 1fr 92px;align-items:center;gap:5px;
+    padding:2.5px 5px;border-radius:5px;font-family:var(--mono);font-size:10px;color:var(--ink2)}
+  .pass.hl{background:var(--accent-soft)}
+  .pass.ghost{opacity:.55}
+  .pass .pn{text-align:right;color:var(--ink3)}
+  .pass .dir{text-align:center;color:var(--ink)}
+  .carchip{font-style:normal;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;text-align:center}
+  .carchip.mute{background:var(--panel3);color:var(--ink3)}
+  .pass .strip{height:7px;border-radius:2px;background:var(--panel3)}
+  .pass.ghost .strip{background:repeating-linear-gradient(90deg,var(--panel3) 0 5px,transparent 5px 10px)}
+  .pass .kv{text-align:right;font-size:9px;color:var(--ink3)}
+  .diag{margin:8px 10px;border-radius:8px;padding:9px 11px;font-size:11.5px;line-height:1.5;border:1px solid var(--line)}
+  .diag.d-warn{border-color:var(--blocked);background:var(--blocked-soft)}
+  .diag.d-exp{border-color:var(--exp);background:var(--exp-soft)}
+  .diag.d-ok{border-color:var(--proven);background:var(--proven-soft)}
+  .diag.d-block{border-color:var(--blocked);background:var(--blocked-soft)}
+  .diag .anchor{display:block;font-family:var(--mono);font-size:9.5px;color:var(--ink2);margin-top:4px}
+  .fixes{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .fixes button{border:1px solid var(--line);background:var(--panel);border-radius:6px;padding:3px 9px;font-size:10.5px;font-weight:600}
+  .fixes button:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* assistant */
+  #assist{border-top:1px solid var(--line)}
+  #assistHead{display:flex;align-items:center;justify-content:space-between;width:100%;padding:8px 12px}
+  #assistHead .hint{font-weight:400}
+  .assistBody{display:flex;flex-direction:column;gap:6px;max-height:230px;overflow-y:auto;padding:0 12px 10px}
+  .msg{font-size:11.5px;line-height:1.5}
+  .msg .who{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);display:block}
+  .msg.you .txt{color:var(--ink2);font-style:italic}
+  .diffcard{border:1px solid var(--accent);border-radius:8px;padding:8px 10px;background:var(--accent-soft)}
+  .diffcard .dt{font-size:11px;font-weight:700;margin-bottom:2px}
+  .diffcard .dd{font-size:10.5px;color:var(--ink2)}
+  .diffcard .dd s{color:var(--blocked)} .diffcard .dd b{color:var(--proven)}
+  .diffcard .acts{display:flex;gap:6px;margin-top:7px}
+  .presets{display:flex;gap:5px;flex-wrap:wrap;padding:0 12px 8px}
+  .preset{font-size:10px;border:1px solid var(--line);border-radius:99px;padding:2px 9px;color:var(--ink2)}
+  .preset:hover{border-color:var(--accent);color:var(--accent)}
+  .composer{display:flex;gap:6px;padding:0 12px 10px}
+  .composer input{flex:1;border:1px solid var(--line);border-radius:6px;padding:5px 9px;font:11.5px var(--sans);
+    background:var(--panel);color:var(--ink)}
+
+  /* dock */
+  #dock{margin:0 10px 10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    display:flex;flex-direction:column;height:218px;overflow:hidden}
+  #dock.collapsed{height:38px}
+  .dockbar{display:flex;align-items:center;gap:12px;padding:7px 12px;border-bottom:1px solid var(--line)}
+  .docktabs{display:flex;gap:2px;background:var(--panel2);padding:2px;border-radius:7px}
+  .docktab{padding:2px 10px;font-size:11px;font-weight:600;border-radius:5px;color:var(--ink2);font-family:var(--mono)}
+  .docktab.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(10,12,22,.12)}
+  .dockbar .hint{flex:1;text-align:right}
+  #dockpre{flex:1;overflow:auto;margin:0;padding:8px 14px;font:10.5px/1.6 var(--mono);color:var(--ink2)}
+  #dockpre .ln{display:block;white-space:pre}
+  #dockpre .hlrow{display:block;background:var(--accent-soft);border-left:2px solid var(--accent);margin-left:-8px;padding-left:6px}
+  .cmt{color:var(--ink3)} .kw{color:var(--accent)} .op-t{color:var(--exp);font-weight:700}
+
+  /* run sheet overlay */
+  .overlay{position:fixed;inset:0;z-index:60;background:rgba(10,12,22,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:12px;max-width:700px;width:100%;
+    max-height:88vh;overflow-y:auto;padding:22px 26px}
+  .sheet h2{font-size:16px;margin-bottom:2px}
+  .sheet .sub{font-size:11px;color:var(--ink3);font-family:var(--mono);margin-bottom:14px}
+  .sheet h4{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin:14px 0 6px}
+  .sheet table{width:100%;border-collapse:collapse;font-size:11.5px}
+  .sheet td{padding:4px 6px;border-bottom:1px solid var(--line)}
+  .sheet td:last-child{text-align:right;font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.15)}
+  .check{font-size:11.5px;line-height:1.9;color:var(--ink2)}
+  .sheet .foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+  .stamp{display:inline-block;padding:3px 10px;border-radius:99px;font-size:10.5px;font-weight:700}
+  .stamp.v-surface{background:var(--proven-soft);color:var(--proven)}
+  .stamp.v-exp{background:var(--exp-soft);color:var(--exp)}
+
+  @media (max-width:1180px){
+    #workspace{grid-template-columns:minmax(0,1fr) 236px}
+    #machineCol{grid-column:1/-1;max-height:320px}
+  }
+  @media (max-width:840px){
+    #app{height:auto}
+    #workspace{display:flex;flex-direction:column}
+    #chartCol{min-height:420px}
+  }
+</style>
+
+<div id="app">
+  <header id="top">
+    <div class="brand"><span class="mark">◆</span><b>Kniterate Studio</b><span class="proj">aurora-throw · 7gg worsted · 252N</span></div>
+    <nav id="pipeline" aria-label="lowering chain"></nav>
+    <div class="topright">
+      <button id="warnchip" class="chip warn" hidden></button>
+      <button id="verdictBtn" class="verdict" aria-haspopup="true"><span class="dot"></span><span id="vlabel"></span></button>
+      <div id="vpanel" class="vpanel" hidden></div>
+      <button id="exportBtn" class="btn primary">Export .kc</button>
+    </div>
+  </header>
+
+  <main id="workspace">
+    <section id="chartCol" class="col">
+      <div class="colhead">
+        <span class="eyebrow">L1 · Chart</span>
+        <div id="tools" class="seg">
+          <button class="tool on" data-tool="pencil">Pencil</button>
+          <button class="tool" data-tool="fill">Fill</button>
+          <button class="tool" data-tool="eyedrop">Pick</button>
+          <button class="tool" data-tool="ops" title="L3 · per-stitch override">Tuck · L3</button>
+          <button class="tool" data-tool="select">Row</button>
+        </div>
+      </div>
+      <div id="palette" class="palette"></div>
+      <div id="chartwrap"></div>
+      <div class="chartfoot"><span id="floatnote"></span><span id="passnote" class="mono"></span></div>
+    </section>
+
+    <aside id="strategyCol" class="col">
+      <div class="colhead"><span class="eyebrow">L2 · Strategy</span></div>
+      <div class="body">
+        <div id="techgrid"></div>
+        <div class="field"><label>Float budget</label>
+          <span class="stepper"><button id="budDown">−</button><span class="val" id="budVal"></span><button id="budUp">+</button></span></div>
+        <div class="field"><label>Carriage speed</label>
+          <span class="stepper"><input type="range" id="spSpeed" min="80" max="600" step="10" value="300"><span class="val" id="spSpeedV">300</span></span></div>
+        <div class="field"><label>Roller advance</label>
+          <span class="stepper"><input type="range" id="spRoll" min="300" max="500" step="10" value="440"><span class="val" id="spRollV">440</span></span></div>
+        <div class="minis">
+          <div class="mini"><div class="cap">Front face</div><div class="minigrid" id="miniFront"></div></div>
+          <div class="mini"><div class="cap" id="backCap">Back face</div><div class="minigrid" id="miniBack"></div></div>
+        </div>
+        <div id="params" class="params mono"></div>
+      </div>
+    </aside>
+
+    <aside id="machineCol" class="col">
+      <div class="colhead"><span class="eyebrow">L4 · Machine passes</span><span id="machinehint" class="hint"></span></div>
+      <div id="passlist"></div>
+      <div id="diagslot"></div>
+      <section id="assist">
+        <button id="assistHead"><span class="eyebrow">Studio assistant — replies as diffs, never silent edits</span><span class="hint" id="assistChev">▸</span></button>
+        <div id="assistBodyWrap" hidden>
+          <div class="assistBody" id="thread"></div>
+          <div class="presets" id="presets">
+            <button class="preset" data-p="float">Why is a row flagged?</button>
+            <button class="preset" data-p="reversible">Make the back reversible</button>
+            <button class="preset" data-p="kc">What am I looking at in .kc?</button>
+          </div>
+          <div class="composer">
+            <input id="composerInput" placeholder="Ask about this project…">
+            <button id="sendBtn" class="btn sm">Send</button>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <footer id="dock">
+    <div class="dockbar">
+      <span class="eyebrow">L5 · Source</span>
+      <div class="docktabs">
+        <button class="docktab" data-d="plan">Plan</button>
+        <button class="docktab" data-d="knitout">Knitout .k</button>
+        <button class="docktab" data-d="kc">K-code .kc</button>
+      </div>
+      <span id="dockmeta" class="hint"></span>
+      <button id="dockToggle" class="btn sm">Hide</button>
+    </div>
+    <pre id="dockpre"></pre>
+  </footer>
+
+  <div id="runsheet" class="overlay" hidden><div class="sheet" id="rsBody"></div></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const W = 28, H = 24, N0 = 112;
+
+const YARN = [
+  {name:'Natural', hex:'#E9E1D2', ink:'#3A3428', car:2},
+  {name:'Rust',    hex:'#B4552D', ink:'#FFF4EC', car:3},
+  {name:'Navy',    hex:'#2C3A5E', ink:'#EDF0F7', car:4},
+  {name:'Gold',    hex:'#D9A441', ink:'#33270E', car:5},
+];
+const yByCar = car => YARN.find(y => y.car === car);
+const yName = i => YARN[i].name;
+
+const TECH = {
+  fairisle:   {name:'Fairisle',   sub:'floats carried on the back',        rack:'0',    rev:false},
+  birdseye:   {name:'Birdseye',   sub:'alternating backing · rack +0.5',   rack:'+0.5', rev:false},
+  complement: {name:'Complement', sub:'reversible · 2 yarns only',         rack:'0',    rev:true},
+  ladder:     {name:'Ladder',     sub:'striped backing · lined fallback',  rack:'0',    rev:false},
+};
+const TORD = ['fairisle','birdseye','complement','ladder'];
+
+function seed(){
+  const g = [];
+  for (let r = 0; r < H; r++){
+    const row = [];
+    for (let c = 0; c < W; c++){
+      let v = 0;
+      if (r <= 1 || r >= H-2) v = (c % 4 < 2) ? 1 : 0;
+      else if (r === 2 || r === H-3) v = 2;
+      else {
+        const cy = Math.abs(c - 13.5), ry = Math.abs(r - 11.5);
+        if (cy + ry < 6) v = (cy + ry < 2.5) ? 3 : 2;
+        else if ((r === 4 || r === 17) && c % 3 === 1) v = 3;
+      }
+      row.push(v);
+    }
+    g.push(row);
+  }
+  for (let c = 0; c < W; c++) g[19][c] = (c < 2 || c >= W-2) ? 2 : 0;
+  return g;
+}
+
+const state = {
+  cells: seed(), tech:'fairisle', budget:5, waiver:false, anchored:false,
+  ops:{}, tool:'pencil', yarn:2, selRow:19, hoverRow:null, dockTab:'plan',
+};
+const curRow = () => state.hoverRow ?? state.selRow;
+
+// ---------- model ----------
+const rowColors = r => { const s = new Set(); for (let c = 0; c < W; c++) s.add(state.cells[r][c]); return [...s]; };
+const rowOrder  = r => { const seen = []; for (let c = 0; c < W; c++){ const v = state.cells[r][c]; if (!seen.includes(v)) seen.push(v); } return seen; };
+const maxColors = () => { let m = 0; for (let r = 0; r < H; r++) m = Math.max(m, rowColors(r).length); return m; };
+
+function genPasses(r){
+  const order = rowOrder(r), t = state.tech, out = [];
+  let d = (r % 2 === 0);
+  const push = (car, bed, par) => { out.push({dir:d, car, bed, par}); d = !d; };
+  order.forEach(y => push(YARN[y].car, 'F'));
+  if (t === 'complement') order.forEach(y => push(YARN[y].car, 'R'));
+  else if (t === 'birdseye'){ push(YARN[order[0]].car,'R',0); push(YARN[order[order.length-1]].car,'R',1); }
+  else if (t === 'ladder') push(YARN[order[0]].car,'R',0);
+  return out;
+}
+const ppr = r => genPasses(r).length;
+const pprMax = () => { let m = 0; for (let r = 0; r < H; r++) m = Math.max(m, ppr(r)); return m; };
+function totalPasses(){ let n = 0; for (let r = 0; r < H; r++){ n += ppr(r); if (rowColors(r).length >= 3) n++; } return n; }
+function passBase(r){ let n = 96; for (let i = 0; i < r; i++){ n += ppr(i); if (rowColors(i).length >= 3) n++; } return n; }
+function opCount(){ let n = 0; for (let r = 0; r < H; r++) for (const p of genPasses(r)) for (let c = 0; c < W; c++) if (knitsAt(r,p,c)) n++; return n; }
+
+function knitsAt(r, p, c){
+  const isCar = YARN[state.cells[r][c]].car === p.car;
+  if (p.bed === 'F') return isCar;
+  if (state.tech === 'complement') return !isCar;
+  if (state.tech === 'birdseye') return c % 2 === p.par;
+  return c % 2 === 0; // ladder
+}
+
+function floatsRow(r){
+  if (state.tech !== 'fairisle') return [];
+  const cols = rowColors(r); if (cols.length < 2) return [];
+  const out = [];
+  for (const y of cols){
+    let last = -1;
+    for (let c = 0; c < W; c++) if (state.cells[r][c] === y){
+      if (last >= 0 && c - last - 1 > state.budget) out.push({row:r, color:y, start:last+1, len:c-last-1});
+      last = c;
+    }
+  }
+  return out;
+}
+const rawFloats = () => { const a = []; for (let r = 0; r < H; r++) a.push(...floatsRow(r)); return a; };
+const liveFloats = () => state.anchored ? [] : rawFloats();
+const floatSpan = (r, c) => { for (const f of floatsRow(r)) if (c >= f.start && c < f.start + f.len) return f; return null; };
+const isTuck = (r, c) => state.ops[r+'_'+c] === 'tuck' || (state.anchored && !!floatSpan(r,c) && c % 4 === 1);
+const overrideCount = () => Object.keys(state.ops).length + (state.anchored ? 1 : 0);
+
+function verdict(){
+  const mc = maxColors();
+  if (state.tech === 'complement' && mc > 2)
+    return {key:'blocked', label:'Blocked', why:`Complement backing is reversible only for 2-yarn charts — this chart peaks at ${mc} yarns in a row. Export is gated until the palette drops to 2 or the backing changes.`};
+  if (state.waiver && liveFloats().length)
+    return {key:'exp', label:'Experimental', why:`A waiver accepts ${liveFloats().length} floats beyond budget ${state.budget}. It is logged with the project and stamped on the run sheet; the badge cannot climb until this recipe is knit and registered.`};
+  return {key:'surface', label:'Surface-proven', why:'Compiles clean — the simulator vouches for it. Knit-proven needs a matching physical swatch in the registry, which is empty today.'};
+}
+
+const speedCode = mm => (mm = +mm, mm <= 150 ? 100 : mm <= 350 ? 300 : 600);
+function timeSec(){ const sp = +$('spSpeed').value; return 96 * 1.4 + totalPasses() * (1100 / sp + 0.9); }
+const fmtTime = s => `${Math.floor(s/60)}m ${String(Math.round(s%60)).padStart(2,'0')}s`;
+
+// ---------- pipeline ----------
+const STAGES = [
+  {label:'Chart',      stat:() => `${W}×${H} · ${maxColors()} yarns`, act:() => flash('chartCol')},
+  {label:'Plan',       stat:() => 'IR · JSON',                        dock:'plan'},
+  {label:'Passes',     stat:() => `${totalPasses()} total`,           act:() => flash('machineCol')},
+  {label:'Knitout .k', stat:() => `${opCount()} ops`,                 dock:'knitout'},
+  {label:'K-code .kc', stat:() => `${totalPasses()*6} lines`,         dock:'kc'},
+  {label:'Run sheet',  stat:() => verdict().label,                    act:() => openRunsheet(), gate:true},
+];
+function renderPipeline(){
+  const v = verdict();
+  $('pipeline').innerHTML = STAGES.map((s, i) => {
+    const conn = i ? `<span class="thr${s.gate ? ' gate g-'+v.key : ''}"></span>` : '';
+    const on = s.dock && s.dock === state.dockTab;
+    return conn + `<button class="stage${on ? ' on' : ''}" data-i="${i}"><b>${s.label}</b><span>${s.stat()}</span></button>`;
+  }).join('');
+  $('pipeline').querySelectorAll('.stage').forEach(b => b.onclick = () => {
+    const s = STAGES[+b.dataset.i];
+    if (s.dock){ setDock(s.dock); if ($('dock').classList.contains('collapsed')) toggleDock(); }
+    else s.act();
+  });
+}
+function flash(id){ const el = $(id); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+
+// ---------- chart ----------
+function renderChart(){
+  const flags = {};
+  if (state.tech === 'fairisle' && !state.anchored){
+    const m = state.waiver ? 'acc' : 'warn';
+    rawFloats().forEach(f => { for (let c = f.start; c < f.start + f.len; c++) flags[f.row+'_'+c] = m; });
+  }
+  let h = '<div class="rownums">';
+  for (let r = H-1; r >= 0; r--) h += `<div class="rn${r === curRow() ? ' hot' : ''}">${r+1}</div>`;
+  h += '</div><div class="pgut">';
+  for (let r = H-1; r >= 0; r--) h += `<div class="pg${r === curRow() ? ' hot' : ''}">×${ppr(r)}</div>`;
+  h += `</div><div class="gridcol"><div class="grid" id="grid" style="grid-template-columns:repeat(${W},var(--cell))">`;
+  for (let r = H-1; r >= 0; r--) for (let c = 0; c < W; c++){
+    const v = state.cells[r][c], f = flags[r+'_'+c], tk = isTuck(r,c);
+    h += `<span class="cell${f ? ' f-'+f : ''}${r === curRow() ? ' rowhl' : ''}" data-r="${r}" data-c="${c}" style="background:${YARN[v].hex}">${tk ? `<i style="color:${YARN[v].ink}">∪</i>` : ''}</span>`;
+  }
+  h += `</div><div class="ruler" style="grid-template-columns:repeat(${W},var(--cell))">`;
+  for (let c = 0; c < W; c++) h += `<span>${c % 4 === 0 ? N0+c : '·'}</span>`;
+  h += '</div></div><div class="edges" title="carriage end side per row">';
+  for (let r = H-1; r >= 0; r--) h += `<div class="ec">${ppr(r) % 2 === 0 ? '◧' : '◨'}</div>`;
+  h += '</div>';
+  $('chartwrap').innerHTML = h;
+  bindGrid();
+
+  const lf = liveFloats();
+  $('floatnote').innerHTML =
+    state.tech !== 'fairisle' ? (TECH[state.tech].rev ? '<b class="t-ok">✓</b> reversible — no floats' : '<b class="t-ok">✓</b> floats secured by backing')
+    : state.anchored ? '<b class="t-ok">✓</b> floats tuck-anchored every 4th needle'
+    : lf.length ? `<b class="${state.waiver ? 't-exp' : 't-warn'}">▲</b> ${lf.length} float${lf.length > 1 ? 's' : ''} beyond budget ${state.budget}${state.waiver ? ' — accepted by waiver' : ''}`
+    : `<b class="t-ok">✓</b> floats within budget ${state.budget}`;
+  $('passnote').textContent = `${pprMax()} passes/row max · ${totalPasses()} total · ~${fmtTime(timeSec())}`;
+}
+
+let painting = false;
+function bindGrid(){
+  const g = $('grid');
+  g.addEventListener('pointerdown', e => {
+    const t = e.target.closest('.cell'); if (!t) return;
+    painting = state.tool === 'pencil';
+    paintAt(t); e.preventDefault();
+  });
+  g.addEventListener('pointerover', e => {
+    const t = e.target.closest('.cell'); if (!t) return;
+    if (painting && state.tool === 'pencil') paintAt(t);
+    const r = +t.dataset.r;
+    if (r !== state.hoverRow){ state.hoverRow = r; syncRow(); }
+  });
+  g.addEventListener('pointerleave', () => { state.hoverRow = null; syncRow(); });
+}
+window.addEventListener('pointerup', () => { if (painting){ painting = false; recompute(); } });
+
+function paintAt(el){
+  const r = +el.dataset.r, c = +el.dataset.c;
+  if (state.tool === 'eyedrop'){ state.yarn = state.cells[r][c]; renderPalette(); return; }
+  if (state.tool === 'ops'){ const k = r+'_'+c; if (state.ops[k]) delete state.ops[k]; else state.ops[k] = 'tuck'; recompute(); return; }
+  if (state.tool === 'fill'){ flood(r, c, state.cells[r][c], state.yarn); recompute(); return; }
+  if (state.tool === 'select'){ state.selRow = r; syncRow(); return; }
+  state.cells[r][c] = state.yarn; el.style.background = YARN[state.yarn].hex;
+}
+function flood(r, c, from, to){
+  if (from === to) return;
+  const st = [[r,c]];
+  while (st.length){
+    const [rr, cc] = st.pop();
+    if (rr < 0 || rr >= H || cc < 0 || cc >= W || state.cells[rr][cc] !== from) continue;
+    state.cells[rr][cc] = to;
+    st.push([rr+1,cc],[rr-1,cc],[rr,cc+1],[rr,cc-1]);
+  }
+}
+function applyRowHL(){
+  const cr = curRow();
+  document.querySelectorAll('#grid .cell').forEach(el => el.classList.toggle('rowhl', +el.dataset.r === cr));
+  document.querySelectorAll('.rownums .rn').forEach((el, i) => el.classList.toggle('hot', H-1-i === cr));
+  document.querySelectorAll('.pgut .pg').forEach((el, i) => el.classList.toggle('hot', H-1-i === cr));
+}
+
+// ---------- palette & tools ----------
+function renderPalette(){
+  $('palette').innerHTML = YARN.map((y, i) =>
+    `<button class="yarn${i === state.yarn ? ' on' : ''}" data-i="${i}"><i style="background:${y.hex}"></i>${y.name}<span class="car">c${y.car}</span></button>`).join('')
+    + `<span class="hint" style="align-self:center">c1 draw · c6 waste</span>`;
+  $('palette').querySelectorAll('.yarn').forEach(b => b.onclick = () => { state.yarn = +b.dataset.i; renderPalette(); });
+}
+$('tools').querySelectorAll('.tool').forEach(b => b.onclick = () => {
+  state.tool = b.dataset.tool;
+  $('tools').querySelectorAll('.tool').forEach(x => x.classList.toggle('on', x === b));
+});
+
+// ---------- strategy ----------
+function renderTech(){
+  $('techgrid').innerHTML = TORD.map(k => {
+    const t = TECH[k];
+    return `<button class="tech${k === state.tech ? ' on' : ''}" data-k="${k}"><span class="tt">${t.name}</span><span class="td">${t.sub}</span></button>`;
+  }).join('');
+  $('techgrid').querySelectorAll('.tech').forEach(b => b.onclick = () => { state.tech = b.dataset.k; recompute(); });
+  $('budVal').textContent = state.budget;
+  const t = TECH[state.tech];
+  $('params').innerHTML =
+    `<b>technique</b> ${t.name} · <b>rack</b> ${t.rack}<br>` +
+    `<b>passes/row</b> ${pprMax()} max · <b>total</b> ${totalPasses()}<br>` +
+    `<b>est. time</b> ${fmtTime(timeSec())} · <b>overrides</b> ${overrideCount()}<br>` +
+    `<b>carriers</b> c1 draw · c2–c5 pattern · c6 waste` +
+    (state.anchored ? '<br><b>policy</b> tuck-anchor every 4th float needle' : '') +
+    (state.waiver && liveFloats().length ? '<br><b class="t-exp">waiver</b> logged — see run sheet' : '');
+}
+$('budDown').onclick = () => { state.budget = Math.max(2, state.budget - 1); recompute(); };
+$('budUp').onclick   = () => { state.budget = Math.min(20, state.budget + 1); recompute(); };
+$('spSpeed').addEventListener('input', e => { $('spSpeedV').textContent = e.target.value; renderMachine(); renderDock(); renderTech(); });
+$('spRoll').addEventListener('input',  e => { $('spRollV').textContent = e.target.value; renderMachine(); renderDock(); });
+
+function backColor(r, c){
+  const v = state.cells[r][c], cols = rowColors(r), t = state.tech;
+  if (t === 'complement' && cols.length <= 2){ const o = cols.find(x => x !== v); return o ?? v; }
+  if (t === 'ladder'){ const o = cols.find(x => x !== v); return (c % 2 === 0 && o != null) ? o : v; }
+  if (t === 'birdseye' && cols.length > 1) return cols[(r + c) % cols.length];
+  return v;
+}
+function renderMinis(){
+  const paint = (id, fn) => {
+    const el = $(id);
+    el.style.gridTemplateColumns = `repeat(${W},3.5px)`;
+    let h = '';
+    for (let r = H-1; r >= 0; r--) for (let c = 0; c < W; c++) h += `<span style="background:${YARN[fn(r,c)].hex}"></span>`;
+    el.innerHTML = h;
+  };
+  paint('miniFront', (r, c) => state.cells[r][c]);
+  paint('miniBack', backColor);
+  $('backCap').textContent = 'Back — ' + TECH[state.tech].name.toLowerCase() + (state.tech === 'fairisle' ? ' (floats)' : '');
+}
+
+// ---------- machine ----------
+function windowRows(){ const f = curRow(), rows = []; for (let r = Math.min(H-1, f+2); r >= Math.max(0, f-3); r--) rows.push(r); return rows; }
+function renderMachine(){
+  const sp = $('spSpeed').value, rl = $('spRoll').value;
+  let h = '';
+  windowRows().forEach(r => {
+    const base = passBase(r);
+    genPasses(r).forEach((p, i) => {
+      const rack = (p.bed === 'R' && state.tech === 'birdseye') ? '+0.5' : TECH[state.tech].rack;
+      h += passRow({pn: base+i+1, r, dir: p.dir ? '→' : '←', car: p.car, bed: p.bed, op: 'Kn-Kn', kv: `r${rack} sp${sp} rl${rl}`});
+    });
+    if (rowColors(r).length >= 3) h += passRow({ghost:true, r, dir:'→', car:0, bed:'', op:'kick', kv:'feeder clear'});
+  });
+  $('passlist').innerHTML = h;
+  $('passlist').querySelectorAll('.pass').forEach(el => el.addEventListener('pointerenter', () => {
+    const r = +el.dataset.r;
+    if (state.selRow !== r || state.hoverRow !== null){ state.selRow = r; state.hoverRow = null; syncRow(); }
+  }));
+  $('machinehint').textContent = `window near row ${curRow()+1} · kicks shown as ghosts`;
+}
+function passRow(p){
+  const y = yByCar(p.car);
+  const chip = y ? `<i class="carchip" style="background:${y.hex};color:${y.ink}">c${p.car}</i>` : `<i class="carchip mute">c·</i>`;
+  const strip = (y && !p.ghost) ? `background:linear-gradient(90deg,transparent 0 6%,${y.hex} 6% 94%,transparent 94%)` : '';
+  return `<div class="pass${p.ghost ? ' ghost' : ''}${p.r === curRow() ? ' hl' : ''}" data-r="${p.r}">` +
+    `<span class="pn">${p.pn ?? '—'}</span><span class="dir">${p.dir}</span>${chip}` +
+    `<span class="bd">${p.bed}</span><span class="op">${p.op}</span>` +
+    `<span class="strip" style="${strip}"></span><span class="kv">${p.kv}</span></div>`;
+}
+
+// ---------- diagnostics ----------
+function renderDiag(){
+  const slot = $('diagslot'), v = verdict();
+  if (v.key === 'blocked'){
+    slot.innerHTML = `<div class="diag d-block"><b>Blocked — export gated.</b> ${v.why}
+      <div class="fixes"><button data-fix="birdseye">Switch to birdseye (keeps 4 yarns)</button><button data-fix="reduce">Reduce to 2 yarns</button></div></div>`;
+  } else if (state.tech === 'fairisle' && !state.anchored && !state.waiver && liveFloats().length){
+    const fs = liveFloats(), f = fs.reduce((a, b) => b.len > a.len ? b : a);
+    slot.innerHTML = `<div class="diag d-warn"><b>Warning — ${fs.length} long float${fs.length > 1 ? 's' : ''}.</b> Worst: ${yName(f.color)} carried across ${f.len} needles on row ${f.row+1} (budget ${state.budget}). At 7 gg worsted, floats this long snag and drop stitches.
+      <span class="anchor">chart r${f.row+1} c${f.start+1}–${f.start+f.len} ↔ needles ${N0+f.start}–${N0+f.start+f.len-1}</span>
+      <div class="fixes"><button data-fix="tuck">Tuck-anchor floats</button><button data-fix="birdseye">Birdseye backing</button><button data-fix="waiver">Accept floats (waiver)</button></div></div>`;
+  } else if (state.waiver && liveFloats().length){
+    slot.innerHTML = `<div class="diag d-exp"><b>Experimental — waiver logged.</b> ${liveFloats().length} floats beyond budget ${state.budget} are accepted, not fixed. The badge stays Experimental until this recipe is knit and registered.
+      <div class="fixes"><button data-fix="unwaive">Remove waiver</button></div></div>`;
+  } else {
+    const how = TECH[state.tech].rev ? 'Reversible backing — no floats.' : state.anchored ? 'Floats tuck-anchored.' : state.tech !== 'fairisle' ? 'Backing secures all floats.' : 'Floats within budget.';
+    slot.innerHTML = `<div class="diag d-ok"><b>No blocking issues.</b> ${how} Ceiling is <b>Surface-proven</b> until a physical swatch matches this recipe — the registry is empty today.</div>`;
+  }
+  slot.querySelectorAll('[data-fix]').forEach(b => b.onclick = () => applyFix(b.dataset.fix));
+}
+function applyFix(k){
+  if (k === 'tuck'){ state.anchored = true; state.waiver = false; }
+  else if (k === 'birdseye'){ state.tech = 'birdseye'; }
+  else if (k === 'waiver'){ state.waiver = true; state.anchored = false; }
+  else if (k === 'unwaive'){ state.waiver = false; }
+  else if (k === 'reduce'){
+    for (let r = 0; r < H; r++) for (let c = 0; c < W; c++){
+      const v = state.cells[r][c];
+      state.cells[r][c] = (v === 1 || v === 2) ? 2 : 0;
+    }
+  }
+  recompute();
+}
+function flashDiag(){ flash('machineCol'); const d = $('diagslot').firstElementChild; if (d){ d.classList.remove('flash'); void d.offsetWidth; d.classList.add('flash'); } }
+
+// ---------- verdict ----------
+const RUNGS = [
+  {k:'knit',    label:'Knit-proven',    d:'a physical swatch fingerprint matches — registry is empty today', locked:true},
+  {k:'surface', label:'Surface-proven', d:'compiles clean; the simulator vouches for it'},
+  {k:'exp',     label:'Experimental',   d:'a waiver accepts a real warning — logged, never silent'},
+  {k:'blocked', label:'Blocked',        d:'validator error — export is gated'},
+];
+function renderVerdict(){
+  const v = verdict();
+  const b = $('verdictBtn');
+  b.className = 'verdict v-' + v.key;
+  $('vlabel').textContent = v.label;
+  b.title = v.why;
+  $('vpanel').innerHTML = `<h3>${v.label}</h3><div class="why">${v.why}</div>` +
+    RUNGS.map(rg => `<div class="rung${rg.k === v.key ? ' here' : ''}${rg.locked ? ' locked' : ''}"><span class="rl">${rg.label}</span><span class="rd">${rg.d}</span></div>`).join('');
+  const lf = liveFloats();
+  const showChip = state.tech === 'fairisle' && !state.anchored && !state.waiver && lf.length;
+  $('warnchip').hidden = !showChip;
+  if (showChip) $('warnchip').textContent = `▲ ${lf.length} float${lf.length > 1 ? 's' : ''}`;
+  $('exportBtn').setAttribute('aria-disabled', v.key === 'blocked' ? 'true' : 'false');
+  $('exportBtn').title = v.key === 'blocked' ? 'Export gated: ' + v.why : 'Open the run sheet';
+}
+$('verdictBtn').onclick = e => { e.stopPropagation(); $('vpanel').hidden = !$('vpanel').hidden; };
+document.addEventListener('click', () => { $('vpanel').hidden = true; });
+$('vpanel').addEventListener('click', e => e.stopPropagation());
+$('warnchip').onclick = flashDiag;
+
+// ---------- source dock ----------
+const cmt = s => `<span class="cmt">${s}</span>`;
+const kw  = s => `<span class="kw">${s}</span>`;
+
+function planLines(){
+  const r = curRow(), sp = $('spSpeed').value, rl = $('spRoll').value;
+  const tn = {fairisle:'fairisle-floats', birdseye:'birdseye-jacquard', complement:'complement-jacquard', ladder:'ladder-jacquard'}[state.tech];
+  const carr = rowOrder(r).map(y => `    { "id": ${YARN[y].car}, "yarn": "${YARN[y].name}", "role": "pattern" }`).join(',\n');
+  const passes = genPasses(r).map(p => `    { "srcRow": ${r+1}, "dir": "${p.dir ? '&gt;&gt;' : '&lt;&lt;'}", "carrier": ${p.car}, "op": "Kn-Kn", "bed": "${p.bed}" }`).join(',\n');
+  return (
+`{
+  ${kw('"schemaVersion"')}: 1, ${kw('"machine"')}: "kniterate", ${kw('"gauge"')}: 7,
+  ${kw('"technique"')}: "${tn}",
+  ${kw('"carriers"')}: [
+${carr}
+  ],
+  ${kw('"settings"')}: { "speed": ${sp}, "rollerAdvance": ${rl}, "stitchFront": 5, "stitchRear": 5, "rack": "${TECH[state.tech].rack}" },
+  ${kw('"waste"')}: { "carrier": 6, "draw": 1, "interlock": 80 },
+  ${kw('"estimatedRows"')}: ${H}, ${kw('"estimatedPasses"')}: ${totalPasses()},
+${cmt('  // passes projected for the row under the cursor (row '+(r+1)+'):')}
+  ${kw('"passes"')}: [
+${passes}
+  ]
+}`).split('\n');
+}
+
+function knitoutHeader(){
+  const sp = $('spSpeed').value, rl = $('spRoll').value;
+  return [
+    cmt(';!knitout-2'),
+    cmt(';;Machine: Kniterate  ;;Gauge: 7  ;;Carriers: 1 2 3 4 5 6'),
+    kw('x-stitch-number') + ' 5', kw('x-speed-number') + ' ' + speedCode(sp), kw('x-roller-advance') + ' ' + rl, ''
+  ];
+}
+function knitoutRow(r){
+  const lines = [cmt(`; row ${r+1} — needles ${N0}–${N0+W-1}`)];
+  genPasses(r).forEach(p => {
+    lines.push(cmt(`; pass ${p.dir ? '→' : '←'} carrier ${p.car}${p.bed === 'R' ? ' (back bed)' : ''}`));
+    let total = 0;
+    for (let c = 0; c < W; c++) if (knitsAt(r, p, c)) total++;
+    let cnt = 0;
+    for (let c = 0; c < W; c++){
+      if (!knitsAt(r, p, c)) continue;
+      const tuck = p.bed === 'F' && isTuck(r, c);
+      lines.push(`${tuck ? '<span class="op-t">tuck</span>' : kw('knit')} ${p.dir ? '+' : '-'} ${p.bed === 'R' ? 'r' : 'f'}${N0+c} ${p.car}`);
+      if (++cnt >= 6 && total > cnt){ lines.push(`<span class="dim">  … ${total-cnt} more needles this pass</span>`); break; }
+    }
+  });
+  return lines;
+}
+function kcRow(r){
+  const sp = $('spSpeed').value, rl = $('spRoll').value;
+  const out = [cmt(`// row ${r+1} — needles ${N0}–${N0+W-1}`)];
+  genPasses(r).forEach(p => {
+    let seg = '';
+    for (let c = 0; c < W; c++) seg += knitsAt(r, p, c) ? '-' : '_';
+    const first = seg.indexOf('-'), last = seg.lastIndexOf('-');
+    const marked = first < 0 ? '…' + '_'.repeat(W)
+      : '…' + seg.slice(0, first) + '/' + p.car + seg.slice(first, last+1) + p.car + '\\' + seg.slice(last+1);
+    const empty = '…' + '_'.repeat(W), on = '…' + '5'.repeat(W), off = '…' + '0'.repeat(W);
+    const F = p.bed === 'F';
+    out.push(kw('FRNT:') + (F ? marked : empty));
+    out.push(kw('STIF:') + (F ? on : off));
+    out.push(kw('REAR:') + (F ? empty : marked));
+    out.push(kw('STIR:') + (F ? off : on));
+    out.push(`${p.dir ? '&gt;&gt;' : '&lt;&lt;'} Kn-Kn ${p.car} ${speedCode(sp)} ${rl}`);
+    out.push(cmt('//'));
+  });
+  return out;
+}
+function renderDock(){
+  const r = curRow();
+  const rows = [Math.min(H-1, r+1), r, Math.max(0, r-1)].filter((v, i, a) => a.indexOf(v) === i);
+  let html = '', meta = '';
+  const wrap = ls => ls.map(l => `<span class="ln">${l}</span>`).join('');
+  if (state.dockTab === 'plan'){
+    meta = `KniteratePlan (IR) · JSON · row ${r+1} passes shown`;
+    html = wrap(planLines());
+  } else if (state.dockTab === 'knitout'){
+    meta = `knitout .k · machine-independent · rows ${Math.max(1, r)}–${Math.min(H, r+2)}`;
+    html = wrap(knitoutHeader());
+    rows.forEach(rr => {
+      const block = wrap(knitoutRow(rr));
+      html += rr === r ? `<span class="hlrow">${block}</span>` : block;
+      html += '<span class="ln"> </span>';
+    });
+  } else {
+    meta = `command.kc · Kniterate native · one block per carriage pass · rows ${Math.max(1, r)}–${Math.min(H, r+2)}`;
+    html = `<span class="ln">${cmt('// command.kc — window needles '+N0+'–'+(N0+W-1)+' of 252')}</span><span class="ln"> </span>`;
+    rows.forEach(rr => {
+      const block = wrap(kcRow(rr));
+      html += rr === r ? `<span class="hlrow">${block}</span>` : block;
+    });
+  }
+  $('dockpre').innerHTML = html;
+  $('dockmeta').textContent = meta;
+  document.querySelectorAll('.docktab').forEach(t => t.classList.toggle('on', t.dataset.d === state.dockTab));
+  renderPipeline();
+}
+function setDock(d){ state.dockTab = d; renderDock(); }
+document.querySelectorAll('.docktab').forEach(t => t.onclick = () => setDock(t.dataset.d));
+function toggleDock(){
+  const d = $('dock');
+  d.classList.toggle('collapsed');
+  $('dockToggle').textContent = d.classList.contains('collapsed') ? 'Show' : 'Hide';
+}
+$('dockToggle').onclick = toggleDock;
+
+// ---------- run sheet ----------
+function openRunsheet(){
+  const v = verdict();
+  if (v.key === 'blocked'){ flashDiag(); return; }
+  const used = new Set();
+  for (let r = 0; r < H; r++) rowColors(r).forEach(y => used.add(y));
+  const yrows = YARN.map((y, i) =>
+    `<tr><td><i class="sw" style="background:${y.hex}"></i>${y.name}${used.has(i) ? '' : ' <span class="dim">(unused)</span>'}</td><td>carrier ${y.car} · pattern</td></tr>`).join('')
+    + `<tr><td><i class="sw" style="background:var(--panel3)"></i>Draw thread</td><td>carrier 1</td></tr>`
+    + `<tr><td><i class="sw" style="background:var(--panel3)"></i>Waste</td><td>carrier 6 · interlock ×80</td></tr>`;
+  const mrows = [
+    ['Technique', TECH[state.tech].name + ' · rack ' + TECH[state.tech].rack],
+    ['Passes', `${pprMax()}/row max · ${totalPasses()} total (incl. kicks)`],
+    ['Est. time', fmtTime(timeSec()) + ' + waste'],
+    ['Speed / roller', `${$('spSpeed').value} mm/s · ${$('spRoll').value}`],
+    ['Stitch size', 'F5 / R5'],
+    ['Bed', `252 needles · chart centered at ${N0}–${N0+W-1}`],
+    ['Overrides', `${overrideCount()} active (L3 ops${state.anchored ? ' + tuck-anchor policy' : ''})`],
+  ].map(([k, val]) => `<tr><td>${k}</td><td>${val}</td></tr>`).join('');
+  $('rsBody').innerHTML =
+    `<h2>Run sheet — aurora-throw <span class="stamp v-${v.key}">${v.label}</span></h2>
+     <div class="sub">command.kc · 7gg worsted · generated from project · ${v.key === 'exp' ? 'waiver logged with this file' : 'no waivers'}</div>
+     <h4>Yarn & carriers</h4><table>${yrows}</table>
+     <h4>Machine</h4><table>${mrows}</table>
+     <h4>Before you knit</h4>
+     <div class="check">
+       ☐ Thread carriers per the map above<br>
+       ☐ Knit a tension swatch first — this recipe is <b>not yet Knit-proven</b> (registry is empty)<br>
+       ${v.key === 'exp' ? '☐ <b class="t-exp">Waiver on file:</b> ' + liveFloats().length + ' floats beyond budget ' + state.budget + ' were accepted, not fixed<br>' : ''}
+       ${v.key !== 'exp' && liveFloats().length ? '☐ <b class="t-warn">▲ ' + liveFloats().length + ' float warnings are unresolved</b> — tuck-anchor, change backing, or waive before knitting<br>' : ''}
+       ☐ Rename to <span class="mono">command.kc</span> on the SD card (replaces existing)<br>
+       ☐ Confirm rollers engaged before the waste section clears
+     </div>
+     <div class="foot"><button class="btn" id="rsClose">Close</button><button class="btn primary" title="Demo — no file is written">Download command.kc</button></div>`;
+  $('runsheet').hidden = false;
+  $('rsClose').onclick = closeRunsheet;
+}
+function closeRunsheet(){ $('runsheet').hidden = true; }
+$('runsheet').addEventListener('click', e => { if (e.target === $('runsheet')) closeRunsheet(); });
+$('exportBtn').onclick = () => openRunsheet();
+document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeRunsheet(); $('vpanel').hidden = true; } });
+
+// ---------- assistant ----------
+function say(who, txt, cls){
+  const d = document.createElement('div');
+  d.className = 'msg ' + (cls || '');
+  d.innerHTML = `<span class="who">${who}</span><span class="txt">${txt}</span>`;
+  $('thread').appendChild(d);
+  $('thread').scrollTop = $('thread').scrollHeight;
+}
+function diffCard(title, body, apply){
+  const d = document.createElement('div');
+  d.className = 'diffcard';
+  d.innerHTML = `<div class="dt">${title}</div><div class="dd">${body}</div>
+    <div class="acts"><button class="btn primary sm">Apply</button><button class="btn sm">Discard</button></div>`;
+  d.querySelector('.primary').onclick = () => { apply(); d.querySelector('.acts').innerHTML = '<span class="hint t-ok">✓ applied — undoable</span>'; };
+  d.querySelector('.btn:not(.primary)').onclick = () => d.remove();
+  $('thread').appendChild(d);
+  $('thread').scrollTop = $('thread').scrollHeight;
+}
+function preset(p){
+  openAssist();
+  if (p === 'float'){
+    const fs = liveFloats();
+    say('you', fs.length ? `Why is row ${fs.reduce((a,b)=>b.len>a.len?b:a).row+1} flagged?` : 'Why would a row get flagged?', 'you');
+    if (!fs.length){
+      say('studio', state.anchored ? 'Nothing is flagged — tuck anchors secure every float. Remove the policy in Strategy to see the raw warnings again.'
+        : 'Nothing is flagged right now. With Fairisle selected, paint a long single-yarn run to raise a float warning.');
+      return;
+    }
+    const f = fs.reduce((a, b) => b.len > a.len ? b : a);
+    say('studio', `Row ${f.row+1} carries ${yName(f.color)} across ${f.len} needles without knitting it; your budget is ${state.budget}. At 7 gg worsted that float snags and pulls stitches off the needle. The smallest fix keeps the front face identical:`);
+    diffCard('Tuck-anchor floats · strategy',
+      'float handling: <s>warn</s> → <b>tuck every 4th needle inside a float</b><br>front face unchanged · clears all warnings · verdict stays Surface-proven',
+      () => applyFix('tuck'));
+  } else if (p === 'reversible'){
+    say('you', 'Make the back reversible', 'you');
+    if (maxColors() > 2){
+      say('studio', `Complement backing needs a 2-yarn chart — this one peaks at ${maxColors()}. I can merge Rust→Navy and Gold→Natural (shapes survive, hues merge), then switch the backing:`);
+      diffCard('Reduce to 2 yarns, then complement',
+        'palette: <s>4 yarns</s> → <b>Natural + Navy</b><br>technique → <b>complement</b> · fully reversible · no floats',
+        () => { applyFix('reduce'); state.tech = 'complement'; recompute(); });
+    } else {
+      say('studio', 'This chart is already 2-yarn, so complement works directly — each carrier knits its inverse on the back bed.');
+      diffCard('Switch to complement (reversible)',
+        `technique: <s>${TECH[state.tech].name}</s> → <b>complement</b><br>reversible · no floats`,
+        () => { state.tech = 'complement'; recompute(); });
+    }
+  } else if (p === 'kc'){
+    say('you', 'What am I looking at in .kc?', 'you');
+    setDock('kc');
+    if ($('dock').classList.contains('collapsed')) toggleDock();
+    say('studio', `The dock now shows command.kc near row ${curRow()+1}. Each carriage pass is four lines — FRNT/STIF are front-bed needle actions and stitch size, REAR/STIR the rear bed. "-" is an operated needle, "_" idle; the /4 … 4\\ marks are where that carrier stops. The footer "&gt;&gt; Kn-Kn 4 ${speedCode($('spSpeed').value)} ${$('spRoll').value}" reads: rightward knit-knit, carrier 4, speed code, roller advance. Hover any chart row and all six stages retarget to it.`);
+  }
+}
+$('presets').querySelectorAll('.preset').forEach(b => b.onclick = () => preset(b.dataset.p));
+function openAssist(){ if ($('assistBodyWrap').hidden){ $('assistBodyWrap').hidden = false; $('assistChev').textContent = '▾'; } }
+$('assistHead').onclick = () => {
+  const w = $('assistBodyWrap');
+  w.hidden = !w.hidden;
+  $('assistChev').textContent = w.hidden ? '▸' : '▾';
+};
+$('sendBtn').onclick = () => {
+  const v = $('composerInput').value.trim();
+  if (!v) return;
+  openAssist();
+  say('you', v.replace(/</g, '&lt;'), 'you');
+  say('studio', 'In the real product this compiles against a clone of your project and replies with a diff card carrying the recompiled verdict and time delta. Try a preset above to see the shape of the reply.');
+  $('composerInput').value = '';
+};
+$('composerInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('sendBtn').click(); });
+
+// ---------- sync spine ----------
+function syncRow(){
+  applyRowHL();
+  renderMachine();
+  renderDock();
+}
+function recompute(){
+  renderPipeline(); renderPalette(); renderTech(); renderChart();
+  renderMachine(); renderDiag(); renderVerdict(); renderDock(); renderMinis();
+}
+
+recompute();
+})();
+</script>

@@ -1,0 +1,28 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "chart",
+  "sourceFingerprint": "TODO: hash of input chart/package",
+  "emitterCommit": "TODO: git rev-parse HEAD at compile time",
+  "compiledAt": "1970-01-01T00:00:00Z",
+  "knitlab2Version": "TODO: version from package.json",
+  "compileResultOk": null,
+  "request": {
+    "path": "request.json",
+    "reemitCommand": "TODO: command that regenerates out.k from request.json"
+  },
+  "reemitCheck": {
+    "status": "not-run",
+    "checkedAt": null,
+    "currentCommit": null,
+    "notes": "TODO: set to matches only after re-emitting and byte-comparing out.k"
+  },
+  "compileMessages": [],
+  "planSummary": {
+    "technique": "TODO: stockinette | ladder-jacquard | birdseye-jacquard | ...",
+    "needleStart": 0,
+    "needleEnd": 0,
+    "rows": 0,
+    "wastePasses": 0
+  },
+  "notes": "TODO: anything about this compile that isn't in the plan — e.g. why this carrier binding was chosen, what variant of waste section was used."
+}

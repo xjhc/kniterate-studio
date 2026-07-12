@@ -1,0 +1,3 @@
+# Preserve imported reference and vendor sources byte-for-byte.
+packages/machine-lib/reference/** -whitespace
+packages/machine-lib/src/knitout/vendor/** -whitespace

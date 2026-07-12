@@ -1,0 +1,934 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kniterate Studio — workspace mockup</title>
+<style>
+  :root {
+    --paper:#f3ede1; --paper-2:#faf6ee; --paper-3:#e9e0cd; --paper-4:#ded3ba;
+    --border:#d3c6a8; --border-2:#c3b491;
+    --ink:#1c1813; --ink-2:#5c534a; --ink-3:#897f71; --ink-4:#b3a892;
+    --blocked:#a5442f; --blocked-bg:rgba(165,68,47,.12);
+    --exp:#8a6a34; --exp-bg:rgba(138,106,52,.13);
+    --surface:#2c3c70; --surface-bg:rgba(44,60,112,.11);
+    --proven:#3d6c57; --proven-bg:rgba(61,108,87,.13);
+    --accent:var(--surface);
+    --y-natural:#f4f0e6; --y-red:#c2413a; --y-gold:#d6a633; --y-navy:#24415d;
+    --shadow: 0 1px 2px rgba(28,24,19,.06), 0 8px 24px rgba(28,24,19,.05);
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --paper:#191510; --paper-2:#211c15; --paper-3:#2a231a; --paper-4:#33291c;
+    --border:#3b3225; --border-2:#4a3f2d;
+    --ink:#f1eadd; --ink-2:#cabfa9; --ink-3:#9f9482; --ink-4:#6a6051;
+    --blocked:#e08a70; --blocked-bg:rgba(224,138,112,.15);
+    --exp:#d4aa66; --exp-bg:rgba(212,170,102,.15);
+    --surface:#93a5e6; --surface-bg:rgba(147,165,230,.14);
+    --proven:#82c8ab; --proven-bg:rgba(130,200,171,.15);
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#191510; --paper-2:#211c15; --paper-3:#2a231a; --paper-4:#33291c;
+      --border:#3b3225; --border-2:#4a3f2d;
+      --ink:#f1eadd; --ink-2:#cabfa9; --ink-3:#9f9482; --ink-4:#6a6051;
+      --blocked:#e08a70; --blocked-bg:rgba(224,138,112,.15);
+      --exp:#d4aa66; --exp-bg:rgba(212,170,102,.15);
+      --surface:#93a5e6; --surface-bg:rgba(147,165,230,.14);
+      --proven:#82c8ab; --proven-bg:rgba(130,200,171,.15);
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif; }
+  .m { font-family: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace; }
+  button { font: inherit; cursor: pointer; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  .app { display: flex; flex-direction: column; height: 100vh; min-height: 660px; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    display: flex; align-items: center; gap: 13px; padding: 0 16px; height: 52px;
+    background: var(--paper-2); border-bottom: 1px solid var(--border); flex: none; position: relative; z-index: 40;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; }
+  .brand .knot { width: 22px; height: 22px; color: var(--accent); }
+  .brand b { font-size: 15px; letter-spacing: .01em; }
+  .proj { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--ink-3);
+    padding: 3px 9px; border: 1px solid var(--border); border-radius: 5px; background: var(--paper); }
+  .spacer { flex: 1; }
+  .viewseg { display: flex; background: var(--paper); border: 1px solid var(--border); border-radius: 7px; padding: 2px; gap: 2px; }
+  .viewseg button { font-size: 12px; font-weight: 600; padding: 5px 11px; border: none; background: none; color: var(--ink-3); border-radius: 5px; }
+  .viewseg button.on { background: var(--ink); color: var(--paper-2); }
+  .btn { font-size: 12.5px; font-weight: 600; padding: 7px 12px; border-radius: 7px; border: 1px solid var(--border);
+    background: var(--paper); color: var(--ink-2); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; transition: background .12s, border-color .12s; }
+  .btn:hover { background: var(--paper-3); }
+  .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper-2); }
+  .btn.sm { padding: 4px 10px; font-size: 11px; border-radius: 6px; }
+
+  .verdict { display: inline-flex; align-items: center; gap: 8px; padding: 5px 11px 5px 9px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; border: 1px solid transparent; user-select: none; }
+  .verdict .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); flex: none; }
+  .verdict .gg { font-family: ui-monospace, Menlo, monospace; font-weight: 500; font-size: 10.5px; opacity: .72; padding-left: 8px; margin-left: 2px; border-left: 1px solid currentColor; }
+  .v-blocked { color: var(--blocked); background: var(--blocked-bg); border-color: color-mix(in srgb, var(--blocked) 30%, transparent); }
+  .v-exp { color: var(--exp); background: var(--exp-bg); border-color: color-mix(in srgb, var(--exp) 30%, transparent); }
+  .v-surface { color: var(--surface); background: var(--surface-bg); border-color: color-mix(in srgb, var(--surface) 30%, transparent); }
+  .v-proven { color: var(--proven); background: var(--proven-bg); border-color: color-mix(in srgb, var(--proven) 30%, transparent); }
+
+  /* verdict panel */
+  .vpanel { position: absolute; top: 48px; left: 210px; width: 320px; background: var(--paper-2);
+    border: 1px solid var(--border); border-radius: 11px; box-shadow: var(--shadow); padding: 14px 15px; z-index: 60; display: none; }
+  .vpanel.open { display: block; }
+  .vpanel h4 { margin: 0 0 4px; font-size: 13px; }
+  .vpanel .why { font-size: 12px; color: var(--ink-3); margin-bottom: 12px; }
+  .rung { display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 7px; font-size: 12px; color: var(--ink-3); }
+  .rung .rk { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .rung.here { background: var(--paper-3); color: var(--ink); font-weight: 600; }
+  .rung small { color: var(--ink-4); font-weight: 400; }
+
+  /* ---------- stage strip (the pipeline) ---------- */
+  .strip { display: flex; align-items: stretch; gap: 0; padding: 7px 14px; background: var(--paper);
+    border-bottom: 1px solid var(--border); flex: none; overflow-x: auto; }
+  .stage { display: flex; flex-direction: column; justify-content: center; gap: 1px; padding: 4px 12px; border-radius: 8px;
+    border: 1px solid transparent; white-space: nowrap; position: relative; }
+  .stage:hover { background: var(--paper-2); }
+  .stage.on { background: var(--surface-bg); border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+  .stage .sl { font-size: 12px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 6px; }
+  .stage .rg { font-family: ui-monospace, Menlo, monospace; font-size: 8.5px; font-weight: 700; letter-spacing: .04em;
+    color: var(--paper-2); background: var(--ink-4); border-radius: 3px; padding: 0 3px; }
+  .stage.text .rg { background: var(--accent); }
+  .stage .ss { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-3); }
+  .stage .badge { font-family: ui-sans-serif, sans-serif; font-size: 8px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--ink-4); }
+  .arrow { display: flex; align-items: center; color: var(--ink-4); padding: 0 2px; flex: none; }
+  .arrow svg { width: 15px; height: 15px; }
+  .strip .flash { animation: flashcol .7s ease; }
+  @keyframes flashcol { 0%,100% { box-shadow: none; } 30% { box-shadow: 0 0 0 2px var(--accent); } }
+
+  /* ---------- main ---------- */
+  .main { flex: 1; display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,.92fr) minmax(0,1.05fr); min-height: 0; }
+  .col { min-width: 0; display: flex; flex-direction: column; overflow: hidden; transition: box-shadow .2s; }
+  .col + .col { border-left: 1px solid var(--border); }
+  .col.flash { box-shadow: inset 0 0 0 2px var(--accent); }
+  .colhead { display: flex; align-items: center; gap: 10px; padding: 10px 15px 8px; flex: none; }
+  .colhead .t { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); }
+  .colhead .rg { font-family: ui-monospace, Menlo, monospace; font-size: 8.5px; font-weight: 700; color: var(--paper-2);
+    background: var(--ink-4); border-radius: 3px; padding: 1px 4px; }
+  .colhead .sub { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--accent); margin-left: auto; }
+  .colhead .sub.muted { color: var(--ink-4); }
+  .colscroll { overflow: auto; padding: 0 15px 16px; flex: 1; min-height: 0; }
+
+  /* ---------- chart column ---------- */
+  .toolstrip { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tool { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--ink-2); border: 1px solid var(--border);
+    background: var(--paper-2); border-radius: 6px; padding: 4px 9px; display: inline-flex; align-items: center; gap: 5px; }
+  .tool.on { background: var(--accent); border-color: var(--accent); color: var(--paper-2); }
+  .tool svg { width: 13px; height: 13px; }
+
+  .chartwrap { position: relative; display: inline-grid; grid-template-columns: auto auto auto auto; align-items: start; }
+  .rownums, .passgutter, .edgecol { display: grid; }
+  .rownum { font-family: ui-monospace, Menlo, monospace; font-size: 9px; color: var(--ink-4);
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; height: var(--cell); }
+  .pg { font-family: ui-monospace, Menlo, monospace; font-size: 8.5px; color: var(--ink-3); display: flex; align-items: center;
+    justify-content: center; height: var(--cell); width: 30px; border-right: 1px solid var(--border); }
+  .pg .x { opacity: .5; }
+  .pg.hot { color: var(--accent); font-weight: 700; }
+  .gridcol { display: flex; flex-direction: column; }
+  .grid { display: grid; touch-action: none; user-select: none; border: 1px solid var(--border-2); }
+  .cell { width: var(--cell); height: var(--cell); position: relative; }
+  .cell.float { box-shadow: inset 0 0 0 1.5px var(--exp); z-index: 1; }
+  .cell .op { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: rgba(0,0,0,.55); font-weight: 700; }
+  .grid-row-hl { outline: 2px solid var(--accent); outline-offset: -1px; z-index: 2; }
+  .edgecol .ec { width: 16px; height: var(--cell); display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: var(--ink-4); }
+  .ruler { display: grid; margin-top: 3px; grid-column: 3; }
+  .rk2 { font-family: ui-monospace, Menlo, monospace; font-size: 7.5px; color: var(--ink-4); text-align: center; height: 13px; line-height: 13px; overflow: hidden; }
+
+  .palette { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 15px; }
+  .yarn { display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 5px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--paper-2); font-size: 11.5px; color: var(--ink-2); }
+  .yarn.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--surface-bg); }
+  .yarn i { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(0,0,0,.18); flex: none; }
+  .yarn .car { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-4); }
+
+  .machineaware { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .maware { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-3);
+    border: 1px dashed var(--border-2); border-radius: 5px; padding: 3px 8px; }
+  .legend { display: flex; gap: 14px; margin-top: 10px; font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-3); }
+  .legend b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---------- strategy column ---------- */
+  .scard { background: var(--paper-2); border: 1px solid var(--border); border-radius: 9px; padding: 12px 13px; margin-bottom: 10px; }
+  .scard.on { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); box-shadow: 0 0 0 2px var(--surface-bg); }
+  .scard .sh { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .scard .sn { font-weight: 700; font-size: 12.5px; color: var(--ink); }
+  .scard .stag { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-4); }
+  .scard .params { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--ink-3); line-height: 1.85; }
+  .scard .params b { color: var(--ink-2); font-weight: 600; }
+  .techgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .tech { text-align: left; font-size: 11px; color: var(--ink-2); border: 1px solid var(--border); background: var(--paper);
+    border-radius: 7px; padding: 7px 8px; line-height: 1.3; }
+  .tech .tt { font-weight: 700; display: block; color: var(--ink); }
+  .tech .td { font-family: ui-monospace, Menlo, monospace; font-size: 9px; color: var(--ink-4); }
+  .tech.on { border-color: var(--accent); background: var(--surface-bg); }
+  .band { display: flex; align-items: center; gap: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--ink-3); margin-top: 6px; }
+  .band label { color: var(--ink-4); width: 46px; }
+  .band input[type=range] { flex: 1; accent-color: var(--accent); height: 3px; }
+  .band .val { color: var(--ink-2); width: 66px; text-align: right; }
+  .heat { height: 8px; border-radius: 3px; margin-top: 5px; }
+  .heat.roller { background: linear-gradient(90deg, #b7c7bd, #3d6c57); }
+  .heat.speed { background: linear-gradient(90deg, #ddd0b3, #8a6a34); }
+
+  /* ---------- machine column ---------- */
+  .machinehint { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-4); margin: 0 0 10px; }
+  .pass { display: flex; align-items: center; gap: 7px; padding: 3px 5px; border-radius: 4px; font-family: ui-monospace, Menlo, monospace;
+    font-size: 10px; color: var(--ink-2); border-bottom: 1px solid var(--paper-3); white-space: nowrap; }
+  .pass.hl { background: var(--surface-bg); }
+  .pass.ghost { color: var(--ink-4); font-style: italic; border-bottom-style: dashed; }
+  .pass .pn { width: 30px; flex: none; color: var(--ink-4); text-align: right; }
+  .pass .dir { width: 15px; flex: none; font-weight: 700; color: var(--ink); text-align: center; }
+  .pass .car { width: 15px; height: 15px; border-radius: 50%; flex: none; font-size: 8px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(0,0,0,.18); }
+  .pass .op { width: 44px; flex: none; }
+  .pass .strip2 { flex: 1; height: 10px; border-radius: 2px; min-width: 40px; }
+  .pass .kv { flex: none; color: var(--ink-4); font-size: 9px; }
+  .pass .bd { font-size: 8px; color: var(--ink-4); width: 12px; flex: none; }
+
+  .diag { margin-top: 12px; border-radius: 8px; padding: 10px 12px; font-size: 11.5px; line-height: 1.5;
+    border: 1px solid var(--exp); background: var(--exp-bg); color: var(--ink-2); }
+  .diag.clean { border-color: var(--proven); background: var(--proven-bg); }
+  .diag.block { border-color: var(--blocked); background: var(--blocked-bg); }
+  .diag b { color: var(--exp); } .diag.clean b { color: var(--proven); } .diag.block b { color: var(--blocked); }
+  .diag .anchor { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-3); display: block; margin-top: 5px; }
+  .diag .fixes { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .fixbtn { font-size: 10.5px; font-weight: 600; border: 1px solid var(--border-2); background: var(--paper-2);
+    border-radius: 6px; padding: 4px 9px; color: var(--ink-2); }
+  .fixbtn:hover { background: var(--paper-3); }
+
+  /* ---------- source dock ---------- */
+  .dock { flex: none; border-top: 1px solid var(--border); background: var(--paper-2); display: flex; flex-direction: column; }
+  .dockhead { display: flex; align-items: center; gap: 6px; padding: 7px 14px; flex: none; }
+  .docktab { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--ink-3); border: 1px solid var(--border);
+    background: var(--paper); border-radius: 6px; padding: 4px 10px; display: inline-flex; gap: 6px; align-items: center; }
+  .docktab .rg { font-size: 8px; font-weight: 700; color: var(--paper-2); background: var(--accent); border-radius: 3px; padding: 0 3px; }
+  .docktab.on { background: var(--ink); color: var(--paper-2); border-color: var(--ink); }
+  .docktab.on .rg { background: var(--paper-2); color: var(--ink); }
+  .dockmeta { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--ink-4); margin-left: auto; }
+  .dockbody { overflow: auto; max-height: 216px; transition: max-height .25s ease; }
+  .dock.collapsed .dockbody { max-height: 0; }
+  .dockbody pre { margin: 0; padding: 4px 16px 16px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px; line-height: 1.65; color: var(--ink-2); white-space: pre; }
+  .dockbody .ln { display: block; }
+  .dockbody .hlrow { background: var(--surface-bg); border-radius: 3px; }
+  .dockbody .cmt { color: var(--ink-4); }
+  .dockbody .kw { color: var(--accent); font-weight: 600; }
+  .dockbody .op-tuck { color: var(--exp); font-weight: 600; }
+  .dockbody .k { color: var(--ink-4); }
+  .dockbody .cur { color: var(--proven); }
+
+  /* ---------- assistant ---------- */
+  .assist { flex: none; border-top: 1px solid var(--border); background: var(--paper); }
+  .assist-head { display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; }
+  .assist-head .lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-3); }
+  .assist-head .hint { font-size: 11.5px; color: var(--ink-4); }
+  .assist-body { max-height: 0; overflow: hidden; transition: max-height .28s ease; }
+  .assist.open .assist-body { max-height: 320px; overflow: auto; }
+  .assist-inner { padding: 4px 16px 14px; }
+  .presets { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 10px; }
+  .preset { font-size: 11px; color: var(--ink-2); border: 1px solid var(--border); background: var(--paper-2); border-radius: 20px; padding: 5px 12px; }
+  .preset:hover { border-color: var(--accent); color: var(--ink); }
+  .msg { display: flex; gap: 10px; align-items: baseline; margin-bottom: 8px; font-size: 12.5px; }
+  .msg .who { font-family: ui-monospace, Menlo, monospace; font-size: 9px; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-4); width: 48px; flex: none; text-align: right; padding-top: 1px; }
+  .msg .txt { color: var(--ink-2); line-height: 1.5; } .msg .txt.you { color: var(--ink); }
+  .diffcard { margin: 4px 0 8px 58px; border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border)); border-radius: 9px;
+    background: var(--surface-bg); padding: 10px 12px; max-width: 640px; }
+  .diffcard .dt { font-weight: 700; font-size: 12px; color: var(--ink); margin-bottom: 5px; }
+  .diffcard .dd { font-family: ui-monospace, Menlo, monospace; font-size: 10px; line-height: 1.7; color: var(--ink-3); }
+  .diffcard .add { color: var(--proven); } .diffcard .del { color: var(--blocked); text-decoration: line-through; }
+  .diffcard .acts { display: flex; gap: 7px; margin-top: 9px; align-items: center; flex-wrap: wrap; }
+  .composer { display: flex; gap: 8px; margin-top: 6px; }
+  .composer input { flex: 1; font: inherit; font-size: 12.5px; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--paper-2); color: var(--ink); }
+
+  /* ---------- alt views ---------- */
+  .altview { flex: 1; overflow: auto; padding: 26px 30px; }
+  .altview.hidden, .main.hidden { display: none; }
+  .backing-h { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  .backing-h h2 { font-size: 21px; margin: 0; } .backing-h p { margin: 0; color: var(--ink-3); font-size: 13px; }
+  .backing-picks { display: flex; gap: 6px; flex-wrap: wrap; margin: 18px 0 22px; }
+  .fabricrow { display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start; }
+  .face .fl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); font-weight: 700; margin-bottom: 9px; }
+  .conseq { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--ink-2); line-height: 2.1; min-width: 240px; }
+  .conseq .k { color: var(--ink-4); }
+  .facegrid { display: grid; border: 1px solid var(--border-2); }
+  .facegrid span { width: 12px; height: 12px; }
+  .runsheet { max-width: 720px; }
+  .runsheet h2 { font-size: 21px; margin: 0 0 4px; }
+  .rs-meta { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--ink-3); margin-bottom: 20px; }
+  .rs-block { border: 1px solid var(--border); border-radius: 9px; background: var(--paper-2); padding: 14px 16px; margin-bottom: 12px; }
+  .rs-block h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-3); margin: 0 0 10px; }
+  .rs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+  .rs-grid .r { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--border); padding: 3px 0; }
+  .rs-grid .r span:first-child { color: var(--ink-3); } .rs-grid .r span:last-child { color: var(--ink); }
+
+  .note { font-size: 11px; color: var(--ink-4); text-align: center; padding: 6px; border-top: 1px solid var(--border); background: var(--paper-2); flex: none; }
+  .note b { color: var(--ink-3); }
+
+  @media (max-width: 1000px) {
+    .main { grid-template-columns: 1fr; overflow: auto; }
+    .col + .col { border-left: none; border-top: 1px solid var(--border); }
+    .col, .colscroll { overflow: visible; }
+  }
+</style>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <svg class="knot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M4 8c2.5 0 2.5 8 5 8s2.5-8 5-8 2.5 8 5 8"/>
+        <path d="M4 16c2.5 0 2.5-8 5-8s2.5 8 5 8 2.5-8 5-8" opacity=".45"/>
+      </svg>
+      <b>Kniterate Studio</b>
+    </div>
+    <span class="proj">aurora-throw.kproj</span>
+    <button class="verdict v-surface" id="verdict" title="Open verdict panel">
+      <span class="dot"></span><span id="verdict-label">Surface-proven</span><span class="gg">7gg worsted</span>
+    </button>
+    <div class="spacer"></div>
+    <div class="viewseg" id="viewseg">
+      <button data-view="workspace" class="on">Workspace</button>
+      <button data-view="backing">Backing</button>
+      <button data-view="runsheet">Run sheet</button>
+    </div>
+    <button class="btn" id="themeToggle" title="Toggle light / dark">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+    </button>
+    <button class="btn primary" id="exportBtn">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+      Export command.kc
+    </button>
+
+    <div class="vpanel" id="vpanel">
+      <h4 id="vp-title">Surface-proven</h4>
+      <div class="why" id="vp-why"></div>
+      <div class="rung" data-k="blocked"><span class="rk" style="background:var(--blocked)"></span> Blocked <small>— a validator error; export is off</small></div>
+      <div class="rung" data-k="exp"><span class="rk" style="background:var(--exp)"></span> Experimental <small>— shipped on a logged waiver</small></div>
+      <div class="rung" data-k="surface"><span class="rk" style="background:var(--surface)"></span> Surface-proven <small>— validator-clean; not yet knit</small></div>
+      <div class="rung" data-k="proven"><span class="rk" style="background:var(--proven)"></span> Knit-proven <small>— a physical swatch matches</small></div>
+    </div>
+  </div>
+
+  <!-- pipeline stage strip -->
+  <div class="strip" id="strip"></div>
+
+  <!-- ===================== WORKSPACE ===================== -->
+  <div class="main" id="workspaceView">
+    <!-- CHART -->
+    <section class="col" id="col-chart">
+      <div class="colhead"><span class="rg">L1</span><span class="t">Chart</span><span class="sub" id="chartsub">paint · 20×14</span></div>
+      <div class="colscroll">
+        <div class="toolstrip" id="tools">
+          <button class="tool on" data-tool="pencil" title="Paint color (L1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l4-1 10-10-3-3L5 16l-1 4z"/></svg>pencil</button>
+          <button class="tool" data-tool="fill">fill</button>
+          <button class="tool" data-tool="select">select</button>
+          <button class="tool" data-tool="tile">tile</button>
+          <button class="tool" data-tool="eyedrop">pick</button>
+          <button class="tool" data-tool="ops" title="Stamp a stitch op — tuck (L3)">op·tuck</button>
+        </div>
+        <div class="chartwrap" id="chartwrap"></div>
+        <div class="legend">
+          <span><b>◧ ◨</b> carrier ends left / right (per row)</span>
+          <span id="floatnote"></span>
+        </div>
+        <div class="palette" id="palette"></div>
+        <div class="machineaware">
+          <span class="maware">needles 116–135 / 252</span>
+          <span class="maware" id="ma-passes">passes/row: —</span>
+          <span class="maware">gauge 7 · worsted</span>
+          <span class="maware" id="ma-float">float budget: 5</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- STRATEGY -->
+    <section class="col" id="col-strategy">
+      <div class="colhead"><span class="rg">L2</span><span class="t">Strategy</span><span class="sub">recompiles live</span></div>
+      <div class="colscroll">
+        <div class="scard">
+          <div class="sh"><span class="sn">Frame · waste + cast-on</span><span class="stag">preset</span></div>
+          <div class="params"><b>waste</b> carrier 6 · <b>draw</b> carrier 1<br>interlock 80 · zig-zag + 2 tubular</div>
+        </div>
+        <div class="scard on">
+          <div class="sh"><span class="sn">Body · colorwork</span><span class="stag" id="bodyrows">rows 1–14</span></div>
+          <div class="techgrid" id="techgrid"></div>
+          <div class="params" id="bodyparams" style="margin-top:10px"></div>
+        </div>
+        <div class="scard">
+          <div class="sh"><span class="sn">Settings band</span><span class="stag">rows 1–14</span></div>
+          <div class="band"><label>speed</label><input type="range" min="100" max="600" value="320" id="sp-speed"><span class="val m" id="sp-speed-v">320 mm/s</span></div>
+          <div class="heat speed"></div>
+          <div class="band" style="margin-top:10px"><label>roller</label><input type="range" min="0" max="500" value="260" id="sp-roll"><span class="val m" id="sp-roll-v">260→300</span></div>
+          <div class="heat roller"></div>
+          <div class="band" style="margin-top:10px"><label>stitch</label><span class="val m" style="width:auto;text-align:left;color:var(--ink-3)">F5 · R5 · rack auto</span></div>
+        </div>
+        <div class="scard">
+          <div class="sh"><span class="sn">Frame · bind-off</span><span class="stag">preset</span></div>
+          <div class="params" id="bindoff">side <b>front</b> · dir <b>auto</b> · carrier 2 · borders <b>closed</b></div>
+        </div>
+        <div class="scard" style="border-style:dashed;text-align:center;color:var(--ink-4);font-family:ui-monospace,Menlo,monospace;font-size:10.5px" id="ovcount">
+          overrides · L3 stitch ops + L4 pass patches — 0 active
+        </div>
+      </div>
+    </section>
+
+    <!-- MACHINE -->
+    <section class="col" id="col-passes">
+      <div class="colhead"><span class="rg">L4</span><span class="t">Machine</span><span class="sub muted">derived · inspect &amp; override</span></div>
+      <div class="colscroll">
+        <div class="machinehint" id="machinehint">carriage passes · kicks &amp; moves as ghost rows · click a pass to sync</div>
+        <div id="passlist"></div>
+        <div id="diagslot"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== BACKING ===================== -->
+  <div class="altview hidden" id="backingView">
+    <div class="backing-h"><h2 class="serif">Backing strategy</h2><p>The back of a jacquard is half the design. Pick by consequence, not by name.</p></div>
+    <div class="backing-picks" id="backingPicks"></div>
+    <div class="fabricrow">
+      <div class="face"><div class="fl">Front face</div><div class="facegrid" id="face-front"></div></div>
+      <div class="face"><div class="fl" id="backlabel">Back face</div><div class="facegrid" id="face-back"></div></div>
+      <div class="face" style="align-self:center"><div class="fl">Consequences</div><div class="conseq" id="conseq"></div></div>
+    </div>
+  </div>
+
+  <!-- ===================== RUN SHEET ===================== -->
+  <div class="altview hidden" id="runsheetView">
+    <div class="runsheet">
+      <h2 class="serif">Run sheet — aurora-throw</h2>
+      <div class="rs-meta" id="rs-meta"></div>
+      <div class="rs-block"><h3>Yarn &amp; carriers</h3><div class="rs-grid" id="rs-yarns"></div></div>
+      <div class="rs-block"><h3>Machine</h3><div class="rs-grid" id="rs-machine"></div></div>
+      <div class="rs-block"><h3>Before you knit</h3><div class="params m" id="rs-checklist" style="font-size:11.5px;color:var(--ink-2);line-height:2"></div></div>
+    </div>
+  </div>
+
+  <!-- ===================== SOURCE DOCK ===================== -->
+  <div class="dock" id="dock">
+    <div class="dockhead">
+      <button class="docktab" data-d="plan"><span class="rg">IR</span> Plan</button>
+      <button class="docktab on" data-d="knitout"><span class="rg">L5</span> Knitout&nbsp;.k</button>
+      <button class="docktab" data-d="kc"><span class="rg">L5</span> K-code&nbsp;.kc</button>
+      <span class="dockmeta" id="dockmeta"></span>
+      <button class="btn sm" id="dockToggle" style="margin-left:8px">Hide</button>
+    </div>
+    <div class="dockbody" id="dockbody"><pre id="dockpre"></pre></div>
+  </div>
+
+  <!-- ===================== ASSISTANT ===================== -->
+  <div class="assist" id="assist">
+    <div class="assist-head" id="assistHead">
+      <span class="lbl">Studio assistant</span>
+      <span class="hint">proposes reviewable diffs — never silent edits</span>
+      <div class="spacer"></div>
+      <svg id="assistChevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ink-4);transform:rotate(180deg)"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="assist-body">
+      <div class="assist-inner">
+        <div class="presets" id="presets">
+          <button class="preset" data-p="float">Why is a row flagged?</button>
+          <button class="preset" data-p="reversible">Make the back reversible</button>
+          <button class="preset" data-p="recolor">Recolor to 3 yarns, keep the motif</button>
+          <button class="preset" data-p="explain">What am I looking at in .kc?</button>
+        </div>
+        <div id="thread"></div>
+        <div class="composer">
+          <input id="composerInput" placeholder="Ask for a change — it comes back as a diff you approve…" />
+          <button class="btn primary" id="sendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">Interactive mockup · <b>paint the chart, hover a row to sync every stage, switch technique, open Plan / Knitout / .kc, try an assistant preset</b> · pass counts, knitout &amp; k-code are illustrative slices near the selected row, not compiler output</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var PAL = [
+    { id:'natural', name:'Natural', hex:'#f4f0e6', car:2, ink:'#4a4436' },
+    { id:'red',     name:'Red',     hex:'#c2413a', car:3, ink:'#ffffff' },
+    { id:'navy',    name:'Navy',    hex:'#24415d', car:4, ink:'#ffffff' },
+    { id:'gold',    name:'Gold',    hex:'#d6a633', car:5, ink:'#4a3a10' }
+  ];
+  var W = 20, H = 14, N0 = 116; // needle of wale 0
+
+  function seed() {
+    var g = []; for (var r=0;r<H;r++) g.push(new Array(W).fill(0));
+    var cols=[3,10,16], colColor=[2,1,3];
+    for (var i=0;i<cols.length;i++){ var cc=cols[i], col=colColor[i];
+      for (var dr=-2;dr<=2;dr++){ var span=2-Math.abs(dr);
+        for (var dc=-span;dc<=span;dc++){ var rr=4+dr, x=cc+dc; if(rr>=0&&rr<H&&x>=0&&x<W) g[rr][x]=col; } } }
+    for (var c=5;c<=15;c++) g[7][c]=2;                 // long navy band → float in fairisle
+    for (var c2=0;c2<W;c2++){ g[12][c2]=3; g[0][c2]=(c2%4<2)?1:0; }
+    return g;
+  }
+
+  var TECH = {
+    floats:          { name:'Fairisle',      desc:'floats · front only', rev:false, rack:'0',   back:false },
+    'birdseye':      { name:'Birdseye',      desc:'DBJ · minimal back',  rev:false, rack:'+0.5', back:true  },
+    'birdseye-full': { name:'Birdseye full', desc:'DBJ · full back',     rev:false, rack:'+0.5', back:true  },
+    ladder:          { name:'Ladder-back',   desc:'vertical floats',     rev:false, rack:'0',   back:false },
+    complement:      { name:'Complement',    desc:'2-color · reversible',rev:true,  rack:'0',   back:true  }
+  };
+  var TORD = ['floats','birdseye','birdseye-full','ladder','complement'];
+
+  var STAGES = [
+    { id:'chart',    rg:'L1', label:'Chart',    ss:'ColorworkChartV1', kind:'live', col:'col-chart' },
+    { id:'strategy', rg:'L2', label:'Strategy', ss:'compile input',    kind:'live', col:'col-strategy' },
+    { id:'plan',     rg:'IR', label:'Plan',     ss:'KniteratePlan',    kind:'text', dock:'plan' },
+    { id:'passes',   rg:'L4', label:'Passes',   ss:'predictedPasses()',kind:'live', col:'col-passes' },
+    { id:'knitout',  rg:'L5', label:'Knitout',  ss:'.k',               kind:'text', dock:'knitout' },
+    { id:'kc',       rg:'L5', label:'K-code',   ss:'command.kc',       kind:'text', dock:'kc' }
+  ];
+
+  var state = { cells:seed(), active:1, tool:'pencil', technique:'floats', budget:5,
+    selRow:7, hoverRow:null, overrides:0, ops:{}, tuckAnchored:false, waiver:false,
+    view:'workspace', dockTab:'knitout' };
+
+  // ---------- derived ----------
+  function cellCar(r,c){ return PAL[state.cells[r][c]].car; }
+  function rowColors(r){ var s={}; for(var c=0;c<W;c++) s[state.cells[r][c]]=true; return Object.keys(s).map(Number); }
+  function rowColorsOrdered(r){ return rowColors(r).sort(function(a,b){ return PAL[a].car-PAL[b].car; }); }
+  function maxColors(){ var m=1; for(var r=0;r<H;r++) m=Math.max(m,rowColors(r).length); return m; }
+
+  function longFloats(r){
+    var out=[]; if(rowColors(r).length<2) return out;
+    var run=1;
+    for(var c=1;c<=W;c++){
+      if(c<W && state.cells[r][c]===state.cells[r][c-1]) run++;
+      else { if(run>state.budget) out.push({start:c-run,len:run,color:state.cells[r][c-1]}); run=1; }
+    }
+    return out;
+  }
+  function floatWarnings(){
+    if(state.technique!=='floats'||state.tuckAnchored) return [];
+    var out=[]; for(var r=0;r<H;r++) longFloats(r).forEach(function(f){ out.push({row:r,start:f.start,len:f.len,color:f.color}); });
+    return out;
+  }
+
+  function genPasses(r){
+    var t=TECH[state.technique], present=rowColorsOrdered(r), out=[], d=0;
+    if(state.technique==='complement'){
+      present.slice(0,2).forEach(function(pi){
+        out.push({r:r,pi:pi,car:PAL[pi].car,dir:(d++%2===0),op:'Kn-Kn',bed:'F'});
+        out.push({r:r,pi:pi,car:PAL[pi].car,dir:(d++%2===0),op:'Kn-Kn',bed:'R',comp:true});
+      });
+      return out;
+    }
+    present.forEach(function(pi){ out.push({r:r,pi:pi,car:PAL[pi].car,dir:(d++%2===0),op:'Kn-Kn',bed:'F'}); });
+    if(state.technique==='birdseye') out.push({r:r,pi:present[0],car:present[0]!=null?PAL[present[0]].car:0,dir:(d++%2===0),op:'Kn-Kn',bed:'R',birds:true});
+    if(state.technique==='birdseye-full') present.forEach(function(pi){ out.push({r:r,pi:pi,car:PAL[pi].car,dir:(d++%2===0),op:'Kn-Kn',bed:'R',birds:true}); });
+    return out;
+  }
+  function ppr(r){ return genPasses(r==null?6:r).length; }
+  function pprMax(){ var m=1; for(var r=0;r<H;r++) m=Math.max(m,ppr(r)); return m; }
+  function totalPasses(){ var s=168; for(var r=0;r<H;r++) s+=ppr(r); return s; }
+  function timeSec(){ return totalPasses()*4.2; }
+  function fmtTime(s){ var m=Math.round(s/60); return Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m'; }
+
+  function verdict(){
+    var colors=maxColors();
+    if(colors>4) return {key:'blocked',label:'Blocked',why:'more than 4 pattern carriers (C2–C5); a 5th needs an advanced waiver'};
+    if(state.technique==='complement'&&colors>2) return {key:'blocked',label:'Blocked',why:'complement DBJ needs a 2-color chart'};
+    if(state.waiver) return {key:'exp',label:'Experimental',why:'shipping on a logged float-budget waiver — knit a swatch before trusting it'};
+    var fw=floatWarnings();
+    return {key:'surface',label:'Surface-proven',why:(fw.length?fw.length+' float warning(s), non-blocking. ':'')+'validator-clean; ceiling until a physical swatch matches'};
+  }
+
+  // ---------- stage strip ----------
+  function renderStrip(){
+    var el=document.getElementById('strip'), html='';
+    STAGES.forEach(function(s,i){
+      var on = (s.kind==='text' && s.dock===state.dockTab);
+      html+='<button class="stage '+(s.kind)+(on?' on':'')+'" data-i="'+i+'">'+
+        '<span class="sl"><span class="rg">'+s.rg+'</span>'+s.label+'</span>'+
+        '<span class="ss">'+s.ss+(s.kind==='live'?' · <span class="badge">live</span>':'')+'</span></button>';
+      if(i<STAGES.length-1) html+='<span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>';
+    });
+    el.innerHTML=html;
+    el.querySelectorAll('.stage').forEach(function(b){ b.onclick=function(){ var s=STAGES[+b.dataset.i];
+      if(s.kind==='text'){ setDock(s.dock); if(document.getElementById('dock').classList.contains('collapsed')) toggleDock(); }
+      else flashCol(s.col); }; });
+  }
+  function flashCol(id){ var c=document.getElementById(id); if(!c) return; c.classList.add('flash'); setTimeout(function(){ c.classList.remove('flash'); },700); }
+
+  // ---------- chart ----------
+  var chartwrap=document.getElementById('chartwrap');
+  function setCell(px){ document.documentElement.style.setProperty('--cell',px+'px'); }
+  function endsSide(r){ // schematic: carrier ends opposite its starting side based on pass parity
+    return (rowColorsOrdered(r).length % 2 === 0) ? '◧' : '◨';
+  }
+  function renderChart(){
+    setCell(20);
+    var fw={}; floatWarnings().forEach(function(f){ for(var c=f.start;c<f.start+f.len;c++) fw[f.row+'_'+c]=1; });
+    var p=pprMax();
+    var html='';
+    html+='<div class="rownums">'; for(var r=H-1;r>=0;r--) html+='<div class="rownum">'+(r+1)+'</div>'; html+='</div>';
+    html+='<div class="passgutter">'; for(var r2=H-1;r2>=0;r2--){ var hot=(r2===curRow())?' hot':''; html+='<div class="pg'+hot+'"><span class="x">×</span>'+ppr(r2)+'</div>'; } html+='</div>';
+    html+='<div class="gridcol"><div class="grid" id="grid" style="grid-template-columns:repeat('+W+',var(--cell))">';
+    for(var r3=H-1;r3>=0;r3--) for(var c3=0;c3<W;c3++){
+      var v=state.cells[r3][c3]; var fl=fw[r3+'_'+c3]?' float':'';
+      var opg=state.ops[r3+'_'+c3]; var glyph=opg?('<span class="op">'+(opg==='tuck'?'∪':opg==='miss'?'·':'')+'</span>'):'';
+      html+='<div class="cell'+fl+'" data-r="'+r3+'" data-c="'+c3+'" style="background:'+PAL[v].hex+'">'+glyph+'</div>';
+    }
+    html+='</div><div class="ruler" style="grid-template-columns:repeat('+W+',var(--cell))">';
+    for(var c4=0;c4<W;c4++) html+='<div class="rk2">'+(N0+c4)+'</div>'; html+='</div></div>';
+    html+='<div class="edgecol">'; for(var r5=H-1;r5>=0;r5--) html+='<div class="ec">'+endsSide(r5)+'</div>'; html+='</div>';
+    chartwrap.innerHTML=html;
+
+    document.getElementById('ma-passes').textContent='passes/row: '+pprMax()+' ('+maxColors()+' colors)';
+    var fn=document.getElementById('floatnote');
+    fn.innerHTML=(state.technique==='floats'&&!state.tuckAnchored)
+      ? (floatWarnings().length?'<b style="color:var(--exp)">■</b> float &gt; '+state.budget+' flagged':'<b style="color:var(--proven)">✓</b> floats within budget')
+      : (TECH[state.technique].rev?'reversible · no floats':'floats secured by backing');
+    bindGrid(); applyRowHL();
+  }
+  function curRow(){ return state.hoverRow!=null?state.hoverRow:state.selRow; }
+
+  var painting=false;
+  function paintAt(el){
+    var r=+el.dataset.r,c=+el.dataset.c; if(isNaN(r))return;
+    if(state.tool==='eyedrop'){ state.active=state.cells[r][c]; renderPalette(); return; }
+    if(state.tool==='ops'){ var k=r+'_'+c; if(state.ops[k]) delete state.ops[k]; else state.ops[k]='tuck'; countOverrides(); recompute(); return; }
+    if(state.tool==='fill'){ flood(r,c,state.cells[r][c],state.active); recompute(); return; }
+    if(state.tool==='select'||state.tool==='tile'){ state.selRow=r; recompute(); return; }
+    state.cells[r][c]=state.active; el.style.background=PAL[state.active].hex;
+  }
+  function flood(r,c,from,to){ if(from===to)return; var st=[[r,c]]; while(st.length){var p=st.pop(),rr=p[0],cc=p[1]; if(rr<0||rr>=H||cc<0||cc>=W)continue; if(state.cells[rr][cc]!==from)continue; state.cells[rr][cc]=to; st.push([rr+1,cc],[rr-1,cc],[rr,cc+1],[rr,cc-1]);} }
+  function bindGrid(){
+    var g=document.getElementById('grid');
+    g.addEventListener('mousedown',function(e){ if(e.target.classList.contains('cell')){ painting=true; paintAt(e.target); if(state.tool!=='pencil')painting=false; e.preventDefault(); }});
+    g.addEventListener('mouseover',function(e){ if(painting&&e.target.classList.contains('cell')&&state.tool==='pencil') paintAt(e.target); });
+    g.addEventListener('mousemove',function(e){ if(e.target.classList.contains('cell')){ var r=+e.target.dataset.r; if(r!==state.hoverRow){ state.hoverRow=r; syncRow(); }}});
+    g.addEventListener('mouseleave',function(){ state.hoverRow=null; syncRow(); });
+  }
+  window.addEventListener('mouseup',function(){ if(painting){ painting=false; recompute(); }});
+  function countOverrides(){ state.overrides=Object.keys(state.ops).length+(state.tuckAnchored?1:0); }
+
+  // ---------- palette ----------
+  var paletteEl=document.getElementById('palette');
+  function renderPalette(){
+    paletteEl.innerHTML=PAL.map(function(p,i){ return '<button class="yarn'+(i===state.active?' on':'')+'" data-i="'+i+'"><i style="background:'+p.hex+'"></i>'+p.name+' <span class="car">→ c'+p.car+'</span></button>'; }).join('');
+    paletteEl.querySelectorAll('.yarn').forEach(function(b){ b.onclick=function(){ state.active=+b.dataset.i; renderPalette(); }; });
+  }
+
+  // ---------- strategy ----------
+  var techgrid=document.getElementById('techgrid');
+  function renderTech(){
+    techgrid.innerHTML=TORD.map(function(k){ var t=TECH[k]; return '<button class="tech'+(k===state.technique?' on':'')+'" data-k="'+k+'"><span class="tt">'+t.name+'</span><span class="td">'+t.desc+'</span></button>'; }).join('');
+    techgrid.querySelectorAll('.tech').forEach(function(b){ b.onclick=function(){ setTechnique(b.dataset.k); }; });
+    var t=TECH[state.technique];
+    document.getElementById('bodyparams').innerHTML='<b>technique</b> '+t.name+' · <b>rack</b> '+t.rack+'<br><b>float budget</b> '+state.budget+(state.tuckAnchored?' · tuck-anchored':'')+(state.waiver?' · waiver':'')+'<br><b>yarn order</b> auto · <b>passes/row</b> '+pprMax();
+  }
+  function setTechnique(k){ state.technique=k; if(k!=='floats'){ state.tuckAnchored=false; state.waiver=false; } recompute(); }
+  document.getElementById('sp-speed').addEventListener('input',function(e){ document.getElementById('sp-speed-v').textContent=e.target.value+' mm/s'; renderMachine(); renderDock(); });
+  document.getElementById('sp-roll').addEventListener('input',function(e){ var v=+e.target.value; document.getElementById('sp-roll-v').textContent=v+'→'+(v+40); });
+
+  // ---------- machine ----------
+  var passlist=document.getElementById('passlist');
+  function windowRows(){ var f=curRow(),rows=[]; for(var r=Math.min(H-1,f+2);r>=Math.max(0,f-3);r--) rows.push(r); return rows; }
+  function renderMachine(){
+    var speed=document.getElementById('sp-speed').value, roll=document.getElementById('sp-roll').value, pn=300, html='';
+    windowRows().forEach(function(r){
+      genPasses(r).forEach(function(p){
+        var rack=(p.birds||state.technique==='birdseye'||state.technique==='birdseye-full')&&p.bed==='R'?'+0.5':TECH[state.technique].rack;
+        html+=passRow({pn:pn++,src:r,dir:p.dir?'→':'←',car:p.car,op:p.op,bed:p.bed,kv:'r'+rack+' sp'+speed+' rl'+roll});
+      });
+      if(rowColors(r).length>=3) html+=passRow({ghost:true,src:r,dir:'→',car:rowColorsOrdered(r).slice(-1)[0]!=null?PAL[rowColorsOrdered(r).slice(-1)[0]].car:0,op:'kick',bed:'',kv:'feeder clear'});
+    });
+    passlist.innerHTML=html;
+    passlist.querySelectorAll('.pass').forEach(function(el){ el.addEventListener('mouseenter',function(){ state.selRow=+el.dataset.src; state.hoverRow=null; syncRow(); }); });
+    document.getElementById('machinehint').textContent='window near row '+(curRow()+1)+' · '+pprMax()+' passes/row · kicks as ghost rows';
+    renderDiag();
+  }
+  function passRow(p){
+    var car=p.car===0?'<span class="car" style="background:var(--paper-3);color:var(--ink-4)">0</span>':'<span class="car" style="background:'+PAL[palIdxByCar(p.car)].hex+';color:'+PAL[palIdxByCar(p.car)].ink+'">'+p.car+'</span>';
+    var strip = p.op==='kick' ? 'background:repeating-linear-gradient(90deg,var(--paper-4) 0 5px,transparent 5px 10px)'
+      : 'background:linear-gradient(90deg,var(--paper-4) 0 8%,'+PAL[palIdxByCar(p.car)].hex+' 8% 90%,var(--paper-4) 90%)';
+    return '<div class="pass'+(p.ghost?' ghost':'')+(p.src===curRow()?' hl':'')+'" data-src="'+p.src+'">'+
+      '<span class="pn">'+(p.pn||'—')+'</span><span class="dir">'+p.dir+'</span>'+car+
+      '<span class="bd">'+(p.bed||'')+'</span><span class="op">'+p.op+'</span>'+
+      '<span class="strip2" style="'+strip+'"></span><span class="kv">'+p.kv+'</span></div>';
+  }
+  function palIdxByCar(car){ for(var i=0;i<PAL.length;i++) if(PAL[i].car===car) return i; return 0; }
+
+  function renderDiag(){
+    var slot=document.getElementById('diagslot'), v=verdict();
+    if(v.key==='blocked'){
+      slot.innerHTML='<div class="diag block"><b>Blocked · export gated</b> — '+v.why+'.'+
+        (v.why.indexOf('complement')>=0?' Reduce the palette to 2 yarns, or pick birdseye (keeps 4).':'')+
+        '<div class="fixes">'+(v.why.indexOf('complement')>=0?'<button class="fixbtn" data-fix="birdseye">Use birdseye</button>':'')+'</div></div>';
+      bindFix(slot); return;
+    }
+    var fw=floatWarnings();
+    if(state.technique==='floats'&&fw.length&&!state.tuckAnchored){
+      var f=fw[0];
+      slot.innerHTML='<div class="diag"><b>Warning · long float</b> — '+f.len+' needles of '+PAL[f.color].name+' exceed budget '+state.budget+'. At 7gg worsted, floats this long snag and drop stitches.'+
+        '<span class="anchor">chart r'+(f.row+1)+' c'+f.start+'–'+(f.start+f.len)+' ↔ needles '+(N0+f.start)+'–'+(N0+f.start+f.len)+'</span>'+
+        '<div class="fixes"><button class="fixbtn" data-fix="tuck">Tuck-anchor floats</button><button class="fixbtn" data-fix="birdseye">Birdseye backing</button><button class="fixbtn" data-fix="waiver">Raise budget (waiver)</button></div></div>';
+      bindFix(slot);
+    } else if(state.waiver){
+      slot.innerHTML='<div class="diag"><b>Experimental · waiver logged</b> — float budget raised to '+state.budget+' past the safe 7. The badge will not read Surface-proven until this recipe is knit and registered.<div class="fixes"><button class="fixbtn" data-fix="unwaive">Remove waiver</button></div></div>';
+      bindFix(slot);
+    } else {
+      slot.innerHTML='<div class="diag clean"><b>No blocking issues</b> — '+(TECH[state.technique].rev?'reversible backing, no floats. ':'backing secures all floats. ')+'Ceiling is <b>Surface-proven</b> until a physical swatch matches this recipe.</div>';
+    }
+  }
+  function bindFix(slot){ slot.querySelectorAll('.fixbtn').forEach(function(b){ b.onclick=function(){ applyFix(b.dataset.fix); }; }); }
+  function applyFix(k){
+    if(k==='tuck'){ state.tuckAnchored=true; state.waiver=false; }
+    else if(k==='birdseye'){ setTechnique('birdseye'); return; }
+    else if(k==='waiver'){ state.waiver=true; state.budget=12; state.tuckAnchored=false; }
+    else if(k==='unwaive'){ state.waiver=false; state.budget=5; }
+    countOverrides(); recompute();
+  }
+
+  // ---------- source dock (plan / knitout / kc) ----------
+  var NWIN0=112, NWIN1=139; // needle window for .kc slice
+  function dirCh(b){ return b?'+':'-'; }
+  function knitoutHeader(){
+    var sp=document.getElementById('sp-speed').value, rl=document.getElementById('sp-roll').value;
+    return [
+      cmt(';!knitout-2'),
+      cmt(';;Machine: Kniterate  ;;Gauge: 7  ;;Carriers: 1 2 3 4 5 6'),
+      kw('x-stitch-number')+' 5', kw('x-speed-number')+' '+speedCode(sp), kw('x-roller-advance')+' '+rl, ''
+    ];
+  }
+  function speedCode(mm){ mm=+mm; return mm<=150?100:mm<=350?300:600; }
+  function knitoutForRow(r){
+    var lines=[cmt('; row '+(r+1)+'   needles '+N0+'–'+(N0+W-1))];
+    genPasses(r).forEach(function(p){
+      lines.push(cmt('; pass '+(p.dir?'→':'←')+' carrier '+p.car+(p.bed==='R'?' (back bed)':'')));
+      var cnt=0;
+      for(var c=0;c<W;c++){
+        var isCar=cellCar(r,c)===p.car;
+        var want = p.bed==='R' ? !isCar : isCar; // back bed knits the complementary needles
+        if(!want) continue;
+        var isTuck = (p.bed==='F') && ((state.tuckAnchored && inFloat(r,c) && c%4===0) || state.ops[r+'_'+c]==='tuck');
+        var bd = p.bed==='R'?'r':'f';
+        var opw = isTuck?op('tuck')+' ':kw('knit')+' ';
+        lines.push(opw+dirCh(p.dir)+' '+bd+(N0+c)+' '+p.car);
+        cnt++;
+        if(cnt>=7){ lines.push(k('  … '+(needleCount(r,p)-cnt)+' more on this pass')); break; }
+      }
+    });
+    return lines;
+  }
+  function needleCount(r,p){ var n=0; for(var c=0;c<W;c++){ var isCar=cellCar(r,c)===p.car; if(p.bed==='R'?!isCar:isCar)n++; } return n; }
+  function inFloat(r,c){ var fs=longFloats(r); for(var i=0;i<fs.length;i++) if(c>=fs[i].start&&c<fs[i].start+fs[i].len) return true; return false; }
+
+  function kcForRow(r){
+    var sp=document.getElementById('sp-speed').value, out=[cmt('// row: '+(r+1)+'   (window needles '+NWIN0+'–'+NWIN1+')')];
+    genPasses(r).forEach(function(p){
+      var front=p.bed==='F', ops=[];
+      for(var n=NWIN0;n<=NWIN1;n++){ var c=n-N0; var on=false;
+        if(c>=0&&c<W){ var isCar=cellCar(r,c)===p.car; on = front?isCar:!isCar; }
+        ops.push(on?'-':'_');
+      }
+      var seg=ops.join(''); var first=seg.indexOf('-'), last=seg.lastIndexOf('-');
+      var bedstr;
+      if(first<0){ bedstr='…'+'_'.repeat(seg.length); }
+      else { bedstr='…'+seg.slice(0,first)+'/'+p.car+seg.slice(first,last+1)+p.car+'\\'+seg.slice(last+1); }
+      var otherEmpty='…'+'_'.repeat(seg.length);
+      var stiOn='…'+'5'.repeat(seg.length), stiOff='…'+'0'.repeat(seg.length);
+      out.push(k('FRNT:')+(front?bedstr:otherEmpty));
+      out.push(k('STIF:')+(front?stiOn:stiOff));
+      out.push(k('REAR:')+(front?otherEmpty:bedstr));
+      out.push(k('STIR:')+(front?stiOff:stiOn));
+      out.push((p.dir?'&gt;&gt;':'&lt;&lt;')+' Kn-Kn '+p.car+' '+speedCode(sp)+' 440');
+      out.push('//');
+    });
+    return out;
+  }
+
+  function planText(){
+    var r=curRow(), t=state.technique, sp=document.getElementById('sp-speed').value, rl=document.getElementById('sp-roll').value;
+    var carr=rowColorsOrdered(r).map(function(pi){ return '    { "id": '+PAL[pi].car+', "yarn": "'+PAL[pi].name+'", "role": "pattern" }'; }).join(',\n');
+    var techName = t==='floats'?'floats-jacquard':t==='complement'?'complement-jacquard':t==='ladder'?'ladder-jacquard':t.indexOf('birdseye')===0?'birdseye-jacquard':'stockinette';
+    var passes=genPasses(r).map(function(p){ return '    { "srcRow": '+(r+1)+', "dir": "'+(p.dir?'>>':'<<')+'", "carrier": '+p.car+', "op": "Kn-Kn", "bed": "'+p.bed+'" }'; }).join(',\n');
+    return [
+      '{',
+      '  '+key('"schemaVersion"')+': 1, '+key('"machine"')+': "kniterate",',
+      '  '+key('"technique"')+': "'+techName+'",',
+      '  '+key('"carriers"')+': [',
+      carr,
+      '  ],',
+      '  '+key('"settings"')+': { "speed": '+sp+', "rollerAdvance": '+rl+', "stitchFront": 5, "stitchRear": 5, "rack": "'+TECH[t].rack+'" },',
+      '  '+key('"waste"')+': { "carrier": 6, "draw": 1, "interlock": 80 },',
+      '  '+key('"estimatedRows"')+': '+H+', '+key('"estimatedPasses"')+': '+totalPasses()+',',
+      cmt('  // passes projected for the row under the cursor (row '+(r+1)+'):'),
+      '  '+key('"passes"')+': [',
+      passes,
+      '  ]',
+      '}'
+    ];
+  }
+
+  function cmt(s){ return '<span class="cmt">'+s+'</span>'; }
+  function kw(s){ return '<span class="kw">'+s+'</span>'; }
+  function op(s){ return '<span class="op-tuck">'+s+'</span>'; }
+  function k(s){ return '<span class="k">'+s+'</span>'; }
+  function key(s){ return '<span class="kw">'+s+'</span>'; }
+
+  function renderDock(){
+    var pre=document.getElementById('dockpre'), r=curRow(), html='', meta='';
+    if(state.dockTab==='plan'){
+      meta='KniteratePlan (IR) · JSON-safe · row '+(r+1)+' passes shown';
+      planText().forEach(function(l){ html+='<span class="ln">'+l+'</span>'; });
+    } else if(state.dockTab==='knitout'){
+      meta='knitout .k · machine-independent · window rows '+Math.max(1,r)+'–'+(r+2);
+      knitoutHeader().forEach(function(l){ html+='<span class="ln">'+l+'</span>'; });
+      var rows=[Math.min(H-1,r+1),r,Math.max(0,r-1)].filter(function(v,i,a){return a.indexOf(v)===i;});
+      rows.forEach(function(rr){ var block=knitoutForRow(rr).map(function(l){return '<span class="ln">'+l+'</span>';}).join('');
+        html+=(rr===r)?'<span class="hlrow">'+block+'</span>':block; html+='<span class="ln"> </span>'; });
+    } else {
+      meta='command.kc · Kniterate native · one block per carriage pass · window rows '+Math.max(1,r)+'–'+(r+2);
+      html+='<span class="ln">'+cmt('// command.kc')+'</span><span class="ln"> </span>';
+      var rows2=[Math.min(H-1,r+1),r,Math.max(0,r-1)].filter(function(v,i,a){return a.indexOf(v)===i;});
+      rows2.forEach(function(rr){ var block=kcForRow(rr).map(function(l){return '<span class="ln">'+l+'</span>';}).join('');
+        html+=(rr===r)?'<span class="hlrow">'+block+'</span>':block; });
+    }
+    pre.innerHTML=html;
+    document.getElementById('dockmeta').textContent=meta;
+    document.querySelectorAll('#strip .stage').forEach(function(b){ var s=STAGES[+b.dataset.i]; b.classList.toggle('on', s.kind==='text'&&s.dock===state.dockTab); });
+    document.querySelectorAll('.docktab').forEach(function(t){ t.classList.toggle('on', t.dataset.d===state.dockTab); });
+  }
+  function setDock(d){ state.dockTab=d; renderDock(); }
+  document.querySelectorAll('.docktab').forEach(function(t){ t.onclick=function(){ setDock(t.dataset.d); }; });
+  function toggleDock(){ var d=document.getElementById('dock'); d.classList.toggle('collapsed'); document.getElementById('dockToggle').textContent=d.classList.contains('collapsed')?'Show':'Hide'; }
+  document.getElementById('dockToggle').onclick=toggleDock;
+
+  // ---------- sync (the "one truth" spine) ----------
+  function applyRowHL(){ var g=document.getElementById('grid'); if(!g)return; g.querySelectorAll('.cell').forEach(function(c){ c.classList.remove('grid-row-hl'); }); g.querySelectorAll('.cell[data-r="'+curRow()+'"]').forEach(function(c){ c.classList.add('grid-row-hl'); }); }
+  function syncRow(){ // light update on hover: highlight only, re-render machine window + dock
+    applyRowHL();
+    passlist.querySelectorAll('.pass').forEach(function(el){ el.classList.toggle('hl',+el.dataset.src===curRow()); });
+    renderMachine(); renderDock();
+    document.querySelectorAll('.pg').forEach(function(){});
+    var pgs=document.querySelectorAll('.passgutter .pg'); // recolor hot gutter
+    for(var i=0;i<pgs.length;i++){ var rowForI=H-1-i; pgs[i].classList.toggle('hot',rowForI===curRow()); }
+  }
+
+  // ---------- verdict ----------
+  function renderVerdict(){ var v=verdict(),el=document.getElementById('verdict'); el.className='verdict v-'+v.key; document.getElementById('verdict-label').textContent=v.label; el.title=v.label+' — '+v.why;
+    document.getElementById('vp-title').textContent=v.label; document.getElementById('vp-why').textContent=v.why;
+    document.querySelectorAll('#vpanel .rung').forEach(function(rg){ rg.classList.toggle('here',rg.dataset.k===v.key); }); }
+  document.getElementById('verdict').onclick=function(e){ e.stopPropagation(); document.getElementById('vpanel').classList.toggle('open'); };
+  document.addEventListener('click',function(){ document.getElementById('vpanel').classList.remove('open'); });
+
+  // ---------- chips ----------
+  function renderChips(){ document.getElementById('ma-float').textContent='float budget: '+state.budget; document.getElementById('ovcount').textContent='overrides · L3 stitch ops + L4 pass patches — '+state.overrides+' active'; document.getElementById('bodyrows').textContent='rows 1–'+H; }
+
+  // ---------- backing view ----------
+  function backColor(r,c){ var v=state.cells[r][c],cols=rowColors(r),t=state.technique;
+    if(t==='complement'){ if(cols.length<=2){ var o=cols.find(function(x){return x!==v;}); return o==null?v:o; } return v; }
+    if(t==='ladder'){ var oc=cols.find(function(x){return x!==v;}); return (c%2===0&&oc!=null)?oc:v; }
+    if(cols.length<2) return v; return cols[(c+r)%cols.length]; }
+  function renderBacking(){
+    var picks=document.getElementById('backingPicks');
+    picks.innerHTML=TORD.map(function(k){ return '<button class="tool'+(k===state.technique?' on':'')+'" data-k="'+k+'">'+TECH[k].name+'</button>'; }).join('');
+    picks.querySelectorAll('.tool').forEach(function(b){ b.onclick=function(){ setTechnique(b.dataset.k); renderBacking(); }; });
+    setCell(13);
+    function paint(id,fn){ var el=document.getElementById(id); el.style.gridTemplateColumns='repeat('+W+',13px)'; var h=''; for(var r=H-1;r>=0;r--) for(var c=0;c<W;c++) h+='<span style="background:'+fn(r,c)+'"></span>'; el.innerHTML=h; }
+    paint('face-front',function(r,c){ return PAL[state.cells[r][c]].hex; });
+    paint('face-back',function(r,c){ return PAL[backColor(r,c)].hex; });
+    document.getElementById('backlabel').textContent='Back face — '+TECH[state.technique].name.toLowerCase();
+    var t=TECH[state.technique];
+    document.getElementById('conseq').innerHTML='<span class="k">passes / design row</span>  '+pprMax()+'<br><span class="k">rack on backing</span>  '+t.rack+'<br><span class="k">est. knit time</span>  '+fmtTime(timeSec())+'<br><span class="k">est. yarn</span>  N 410g · R 180g · Nv 195g · G 88g<br><span class="k">floats</span>  '+(t.rev?'none (reversible)':(state.technique==='floats'?'up to budget '+state.budget:'none (secured)'))+'<br><span class="k">reversible</span>  '+(t.rev?'yes':'no');
+    setCell(20);
+  }
+
+  // ---------- run sheet ----------
+  function renderRunsheet(){
+    var used={}; for(var r=0;r<H;r++) rowColors(r).forEach(function(i){used[i]=true;});
+    document.getElementById('rs-yarns').innerHTML=PAL.map(function(p,i){ return '<div class="r"><span>'+p.name+(used[i]?'':' (unused)')+'</span><span>carrier '+p.car+'</span></div>'; }).join('')+'<div class="r"><span>Draw thread</span><span>carrier 1</span></div><div class="r"><span>Waste</span><span>carrier 6</span></div>';
+    function row(k,v){ return '<div class="r"><span>'+k+'</span><span>'+v+'</span></div>'; }
+    document.getElementById('rs-machine').innerHTML=row('Technique',TECH[state.technique].name)+row('Passes / row',pprMax())+row('Total passes',totalPasses().toLocaleString())+row('Est. time',fmtTime(timeSec()))+row('Speed',document.getElementById('sp-speed').value+' mm/s')+row('Stitch size','F5 / R5')+row('Bed','252 needles · centered '+N0)+row('Gauge','7gg worsted');
+    var v=verdict();
+    document.getElementById('rs-meta').textContent='command.kc · 7gg worsted · generated from project · verdict '+v.label;
+    document.getElementById('rs-checklist').innerHTML='☐ thread carriers per the map above<br>☐ knit a tension swatch first — this recipe is '+(v.key==='proven'?'Knit-proven':'not yet Knit-proven')+'<br>☐ rename to command.kc on the SD card (replace existing)<br>☐ confirm rollers engaged before the waste section clears';
+  }
+
+  // ---------- assistant ----------
+  var thread=document.getElementById('thread');
+  function say(who,txt,cls){ var d=document.createElement('div'); d.className='msg'; d.innerHTML='<span class="who">'+who+'</span><span class="txt '+(cls||'')+'">'+txt+'</span>'; thread.appendChild(d); scrollA(); }
+  function diffCard(title,body,fn,chip){ var d=document.createElement('div'); d.className='diffcard'; d.innerHTML='<div class="dt">'+title+'</div><div class="dd">'+body+'</div><div class="acts"><button class="btn primary sm">Apply</button><button class="btn sm">Discard</button>'+(chip||'')+'</div>';
+    d.querySelector('.primary').onclick=function(){ fn(); d.querySelector('.acts').innerHTML='<span class="m" style="font-size:10.5px;color:var(--proven)">✓ applied — undoable</span>'; };
+    d.querySelector('.btn:not(.primary)').onclick=function(){ d.remove(); }; thread.appendChild(d); scrollA(); }
+  function scrollA(){ var b=document.querySelector('.assist-body'); b.scrollTop=b.scrollHeight; }
+  function chipAfter(key,label){ return '<span class="verdict v-'+key+'" style="font-size:10px;padding:3px 8px"><span class="dot"></span>after: '+label+'</span>'; }
+
+  function preset(p){
+    if(p==='float'){
+      var fw=floatWarnings();
+      if(!fw.length){ say('you','Why is a row flagged?','you'); say('studio','Nothing is flagged right now — every float is within budget '+state.budget+', or the current backing secures them. Switch the body to Fairisle and paint a long single-color run to see a warning.'); return; }
+      var f=fw[0]; say('you','Why is row '+(f.row+1)+' flagged?','you');
+      say('studio','Row '+(f.row+1)+' carries '+PAL[f.color].name+' across '+f.len+' needles; your float budget is '+state.budget+'. At 7gg worsted, floats that long catch and pull stitches off the needle. Two fixes keep the front identical — smallest first:');
+      diffCard('Tuck-anchor floats · body','float handling: <span class="del">warn</span> → <span class="add">tuck-anchor every 4th needle</span><br>adds tuck ops · +~1m · front face unchanged · clears the warning',function(){ applyFix('tuck'); },chipAfter('surface','Surface-proven'));
+    } else if(p==='reversible'){
+      say('you','Make the back reversible','you'); var colors=maxColors();
+      if(colors>2){ say('studio','Reversible backing (complement DBJ) needs a 2-color chart — this one uses '+colors+'. I can reduce to your two dominant yarns first, or switch to birdseye (stable, not reversible). Reduce-then-reverse:');
+        diffCard('Reduce to 2 colors, then complement','palette: <span class="del">4 yarns</span> → <span class="add">Natural + Navy</span><br>technique: '+TECH[state.technique].name+' → <span class="add">complement</span> · passes/row → 2 · fully reversible',function(){ for(var r=0;r<H;r++) for(var c=0;c<W;c++){ var v=state.cells[r][c]; state.cells[r][c]=(v===0)?0:2; } setTechnique('complement'); },chipAfter('surface','Surface-proven'));
+      } else { say('studio','This chart is already 2-color, so complement DBJ works directly — each carrier knits its inverse on the back bed. No floats, 2 passes/row.');
+        diffCard('Switch to complement (reversible)','technique: <span class="del">'+TECH[state.technique].name+'</span> → <span class="add">complement</span><br>passes/row → 2 · reversible · clears all floats',function(){ setTechnique('complement'); },chipAfter('surface','Surface-proven')); }
+    } else if(p==='recolor'){
+      say('you','Recolor to 3 yarns, keep the motif','you'); say('studio','Merging Gold into Navy keeps every shape and boundary — only the hue changes. Chart edit (L1), fully undoable:');
+      diffCard('Recolor · Gold → Navy','cells with Gold (c5) → Navy (c4) · geometry unchanged<br>max colors/row 4 → 3 · passes/row may drop',function(){ for(var r=0;r<H;r++) for(var c=0;c<W;c++) if(state.cells[r][c]===3) state.cells[r][c]=2; recompute(); });
+    } else if(p==='explain'){
+      say('you','What am I looking at in .kc?','you'); setDock('kc'); if(document.getElementById('dock').classList.contains('collapsed')) toggleDock();
+      say('studio','The dock now shows command.kc near row '+(curRow()+1)+'. Each carriage pass is four lines: FRNT / STIF (front needle actions + stitch size) and REAR / STIR (rear). A "-" is an operated needle, "_" idle; the /6 … 6\\ marks are where carrier 6 stops. The footer ">> Kn-Kn 3 300 440" reads: rightward knit, carrier 3, speed 300, roller 440. Hover any chart row and all six stages retarget to it.');
+    }
+  }
+  document.getElementById('presets').querySelectorAll('.preset').forEach(function(b){ b.onclick=function(){ preset(b.dataset.p); }; });
+  document.getElementById('sendBtn').onclick=function(){ var v=document.getElementById('composerInput').value.trim(); if(!v)return; say('you',v.replace(/</g,'&lt;'),'you'); say('studio','In the real product I compile that against your project on a cloned document and reply with a diff card carrying the recompiled verdict and time delta. Try a preset above to see the shape of the reply.'); document.getElementById('composerInput').value=''; };
+  document.getElementById('composerInput').addEventListener('keydown',function(e){ if(e.key==='Enter') document.getElementById('sendBtn').click(); });
+  var assist=document.getElementById('assist');
+  document.getElementById('assistHead').onclick=function(){ assist.classList.toggle('open'); document.getElementById('assistChevron').style.transform=assist.classList.contains('open')?'rotate(0)':'rotate(180deg)'; };
+
+  // ---------- views ----------
+  document.getElementById('viewseg').querySelectorAll('button').forEach(function(b){ b.onclick=function(){ state.view=b.dataset.view;
+    document.querySelectorAll('#viewseg button').forEach(function(x){x.classList.toggle('on',x===b);});
+    document.getElementById('workspaceView').classList.toggle('hidden',state.view!=='workspace');
+    document.getElementById('backingView').classList.toggle('hidden',state.view!=='backing');
+    document.getElementById('runsheetView').classList.toggle('hidden',state.view!=='runsheet');
+    document.getElementById('dock').style.display=state.view==='workspace'?'flex':'none';
+    if(state.view==='backing') renderBacking(); if(state.view==='runsheet') renderRunsheet(); }; });
+  document.getElementById('exportBtn').onclick=function(){ var v=verdict(); document.querySelector('#viewseg [data-view="runsheet"]').click(); if(v.key==='blocked'){ if(!assist.classList.contains('open')) document.getElementById('assistHead').click(); say('studio','Export is blocked: '+v.why+'. The badge gates the file — fix that first.'); } else if(v.key==='exp'){ if(!assist.classList.contains('open')) document.getElementById('assistHead').click(); say('studio','Exporting an Experimental recipe — the run sheet is stamped "not Knit-proven" and your waiver is logged with the file.'); } };
+
+  document.getElementById('tools').querySelectorAll('.tool').forEach(function(b){ b.onclick=function(){ state.tool=b.dataset.tool; document.querySelectorAll('#tools .tool').forEach(function(x){x.classList.toggle('on',x===b);}); }; });
+  document.getElementById('themeToggle').onclick=function(){ var cur=document.documentElement.getAttribute('data-theme'); var next=cur==='dark'?'light':(cur==='light'?'dark':(matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark')); document.documentElement.setAttribute('data-theme',next); };
+
+  // ---------- recompute ----------
+  function recompute(){ countOverrides(); renderStrip(); renderTech(); renderChart(); renderMachine(); renderVerdict(); renderChips(); renderDock(); if(state.view==='backing') renderBacking(); if(state.view==='runsheet') renderRunsheet(); }
+
+  // boot
+  renderStrip(); renderPalette(); renderTech(); renderChart(); renderMachine(); renderVerdict(); renderChips(); renderDock();
+})();
+</script>

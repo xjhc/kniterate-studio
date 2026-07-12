@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://knitlab.local/registry/swatches/_schema.json",
+  "title": "KnitLab Kniterate swatch registry JSON record",
+  "description": "Shared schema for swatch registry spec.json, machine.json, yarn.json, and request.json records. The conformance checker performs the file-specific validation.",
+  "type": "object",
+  "required": ["$schema"],
+  "additionalProperties": true
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "knitlab-colorwork-chart",
+  "version": 1,
+  "title": "One color field",
+  "width": 4,
+  "height": 3,
+  "rowNumbering": "bottom-up",
+  "palette": [
+    { "id": "natural", "name": "Natural", "hex": "#F4F0E6" }
+  ],
+  "cells": [
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0]
+  ]
+}

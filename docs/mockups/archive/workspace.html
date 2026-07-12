@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kniterate Studio — interactive workspace mockup</title>
+<style>
+  :root {
+    --paper:#f3ede1; --paper-2:#faf6ee; --paper-3:#e9e0cd; --paper-4:#ded3ba;
+    --border:#d3c6a8; --border-2:#c3b491;
+    --ink:#1c1813; --ink-2:#5c534a; --ink-3:#897f71; --ink-4:#b3a892;
+    --blocked:#a5442f; --blocked-bg:rgba(165,68,47,.12);
+    --exp:#8a6a34; --exp-bg:rgba(138,106,52,.13);
+    --surface:#2c3c70; --surface-bg:rgba(44,60,112,.11);
+    --proven:#3d6c57; --proven-bg:rgba(61,108,87,.13);
+    --accent:var(--surface);
+    --y-natural:#f4f0e6; --y-red:#c2413a; --y-gold:#d6a633; --y-navy:#24415d;
+    --shadow: 0 1px 2px rgba(28,24,19,.06), 0 8px 24px rgba(28,24,19,.05);
+    color-scheme: light;
+  }
+  :root[data-theme="dark"], .dark-scope {
+    --paper:#191510; --paper-2:#211c15; --paper-3:#2a231a; --paper-4:#33291c;
+    --border:#3b3225; --border-2:#4a3f2d;
+    --ink:#f1eadd; --ink-2:#cabfa9; --ink-3:#9f9482; --ink-4:#6a6051;
+    --blocked:#e08a70; --blocked-bg:rgba(224,138,112,.15);
+    --exp:#d4aa66; --exp-bg:rgba(212,170,102,.15);
+    --surface:#93a5e6; --surface-bg:rgba(147,165,230,.14);
+    --proven:#82c8ab; --proven-bg:rgba(130,200,171,.15);
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#191510; --paper-2:#211c15; --paper-3:#2a231a; --paper-4:#33291c;
+      --border:#3b3225; --border-2:#4a3f2d;
+      --ink:#f1eadd; --ink-2:#cabfa9; --ink-3:#9f9482; --ink-4:#6a6051;
+      --blocked:#e08a70; --blocked-bg:rgba(224,138,112,.15);
+      --exp:#d4aa66; --exp-bg:rgba(212,170,102,.15);
+      --surface:#93a5e6; --surface-bg:rgba(147,165,230,.14);
+      --proven:#82c8ab; --proven-bg:rgba(130,200,171,.15);
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+      color-scheme: dark;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sans { font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  .mono, .m { font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace; }
+  button { font: inherit; cursor: pointer; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+  .app { display: flex; flex-direction: column; height: 100vh; min-height: 620px; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    display: flex; align-items: center; gap: 14px; padding: 0 16px; height: 52px;
+    background: var(--paper-2); border-bottom: 1px solid var(--border); flex: none; position: relative; z-index: 20;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; }
+  .brand .knot { width: 22px; height: 22px; }
+  .brand b { font-size: 15px; letter-spacing: .01em; }
+  .proj { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--ink-3);
+    padding: 3px 9px; border: 1px solid var(--border); border-radius: 5px; background: var(--paper); }
+  .spacer { flex: 1; }
+  .viewseg { display: flex; background: var(--paper); border: 1px solid var(--border); border-radius: 7px; padding: 2px; gap: 2px; }
+  .viewseg button {
+    font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 12px; font-weight: 600; letter-spacing: .01em;
+    padding: 5px 11px; border: none; background: none; color: var(--ink-3); border-radius: 5px;
+  }
+  .viewseg button.on { background: var(--ink); color: var(--paper-2); }
+  .btn {
+    font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 12.5px; font-weight: 600;
+    padding: 7px 13px; border-radius: 7px; border: 1px solid var(--border); background: var(--paper);
+    color: var(--ink-2); display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+    transition: background .12s, border-color .12s;
+  }
+  .btn:hover { background: var(--paper-3); }
+  .btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper-2); }
+  .btn.primary:hover { background: #000; }
+  :root[data-theme="dark"] .btn.primary:hover, .dark-scope .btn.primary:hover { background: #fff; }
+
+  /* verdict chip */
+  .verdict {
+    display: inline-flex; align-items: center; gap: 8px; padding: 5px 11px 5px 9px; border-radius: 20px;
+    font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: .01em;
+    border: 1px solid transparent; cursor: pointer; user-select: none;
+  }
+  .verdict .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); flex: none; }
+  .verdict .gg { font-family: ui-monospace, Menlo, monospace; font-weight: 500; font-size: 10.5px; opacity: .72; padding-left: 8px; margin-left: 2px; border-left: 1px solid currentColor; }
+  .v-blocked { color: var(--blocked); background: var(--blocked-bg); border-color: color-mix(in srgb, var(--blocked) 30%, transparent); }
+  .v-exp { color: var(--exp); background: var(--exp-bg); border-color: color-mix(in srgb, var(--exp) 30%, transparent); }
+  .v-surface { color: var(--surface); background: var(--surface-bg); border-color: color-mix(in srgb, var(--surface) 30%, transparent); }
+  .v-proven { color: var(--proven); background: var(--proven-bg); border-color: color-mix(in srgb, var(--proven) 30%, transparent); }
+
+  /* ---------- body ---------- */
+  .body { flex: 1; display: grid; grid-template-columns: minmax(0,1.35fr) minmax(0,.92fr) minmax(0,1.15fr); min-height: 0; }
+  .col { min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .col + .col { border-left: 1px solid var(--border); }
+  .col-head {
+    display: flex; align-items: center; gap: 10px; padding: 11px 15px 9px; flex: none;
+  }
+  .col-head .t { font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); }
+  .col-head .sub { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--accent); }
+  .col-head .sub.muted { color: var(--ink-4); }
+  .col-scroll { overflow: auto; padding: 0 15px 18px; flex: 1; min-height: 0; }
+
+  /* ---------- chart column ---------- */
+  .toolstrip { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tool {
+    font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--ink-2);
+    border: 1px solid var(--border); background: var(--paper-2); border-radius: 6px; padding: 4px 9px;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .tool.on { background: var(--accent); border-color: var(--accent); color: var(--paper-2); }
+  .tool svg { width: 13px; height: 13px; }
+
+  .chartwrap { position: relative; display: inline-grid; grid-template-columns: auto auto auto; gap: 0; align-items: start; }
+  .rownums { display: grid; }
+  .rownum { font-family: ui-monospace, Menlo, monospace; font-size: 9px; color: var(--ink-4);
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; height: var(--cell); }
+  .passgutter { display: grid; }
+  .pg { font-family: ui-monospace, Menlo, monospace; font-size: 8.5px; color: var(--ink-3);
+    display: flex; align-items: center; justify-content: center; height: var(--cell); width: 30px;
+    border-right: 1px solid var(--border); }
+  .pg .x { opacity: .55; }
+  .gridcol { display: flex; flex-direction: column; }
+  .grid { display: grid; touch-action: none; user-select: none; border: 1px solid var(--border-2); }
+  .cell { width: var(--cell); height: var(--cell); position: relative; }
+  .cell.float { box-shadow: inset 0 0 0 1.5px var(--exp); z-index: 1; }
+  .grid-row-hl { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .ruler { display: grid; margin-top: 3px; }
+  .rk { font-family: ui-monospace, Menlo, monospace; font-size: 7.5px; color: var(--ink-4);
+    text-align: center; height: 14px; line-height: 14px; overflow: hidden; }
+  .edgekey { display: flex; gap: 14px; margin: 9px 0 0; font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-3); }
+  .edgekey b { color: var(--ink-2); font-weight: 600; }
+
+  .palette { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 16px; }
+  .yarn {
+    display: inline-flex; align-items: center; gap: 7px; padding: 4px 10px 4px 5px; border-radius: 20px;
+    border: 1px solid var(--border); background: var(--paper-2); font-family: ui-sans-serif, "Segoe UI", sans-serif;
+    font-size: 11.5px; color: var(--ink-2);
+  }
+  .yarn.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--surface-bg); }
+  .yarn i { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(0,0,0,.18); flex: none; }
+  .yarn .car { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-4); }
+
+  .machineaware { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .maware { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-3);
+    border: 1px dashed var(--border-2); border-radius: 5px; padding: 3px 8px; }
+
+  /* ---------- strategy column ---------- */
+  .scard {
+    background: var(--paper-2); border: 1px solid var(--border); border-radius: 9px; padding: 12px 13px; margin-bottom: 10px;
+  }
+  .scard.on { border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); box-shadow: 0 0 0 2px var(--surface-bg); }
+  .scard .sh { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+  .scard .sn { font-family: ui-sans-serif, "Segoe UI", sans-serif; font-weight: 700; font-size: 12.5px; color: var(--ink); }
+  .scard .stag { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-4); }
+  .scard .params { font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--ink-3); line-height: 1.85; }
+  .scard .params b { color: var(--ink-2); font-weight: 600; }
+
+  .techgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+  .tech {
+    text-align: left; font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 11px; color: var(--ink-2);
+    border: 1px solid var(--border); background: var(--paper); border-radius: 7px; padding: 7px 8px; line-height: 1.3;
+  }
+  .tech .tt { font-weight: 700; display: block; color: var(--ink); }
+  .tech .td { font-family: ui-monospace, Menlo, monospace; font-size: 9px; color: var(--ink-4); }
+  .tech.on { border-color: var(--accent); background: var(--surface-bg); }
+  .tech:hover { border-color: var(--border-2); }
+
+  .band { display: flex; align-items: center; gap: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 10.5px; color: var(--ink-3); margin-top: 6px; }
+  .band label { color: var(--ink-4); width: 46px; }
+  .band input[type=range] { flex: 1; accent-color: var(--accent); height: 3px; }
+  .band .val { color: var(--ink-2); width: 60px; text-align: right; }
+
+  .heat { height: 8px; border-radius: 3px; margin-top: 5px; }
+  .heat.roller { background: linear-gradient(90deg, #b7c7bd, #3d6c57); }
+  .heat.speed { background: linear-gradient(90deg, #ddd0b3, #8a6a34); }
+
+  /* ---------- machine column ---------- */
+  .mtabs { display: flex; gap: 3px; margin-bottom: 10px; flex-wrap: wrap; }
+  .mtab { font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--ink-3);
+    border: 1px solid var(--border); background: var(--paper-2); border-radius: 6px; padding: 3px 8px; }
+  .mtab.on { background: var(--ink); color: var(--paper-2); border-color: var(--ink); }
+  .machinehint { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-4); margin: -4px 0 10px; }
+
+  .pass {
+    display: flex; align-items: center; gap: 7px; padding: 3px 5px; border-radius: 4px;
+    font-family: ui-monospace, Menlo, monospace; font-size: 10px; color: var(--ink-2);
+    border-bottom: 1px solid var(--paper-3); white-space: nowrap;
+  }
+  .pass.hl { background: var(--surface-bg); }
+  .pass.ghost { color: var(--ink-4); font-style: italic; border-bottom-style: dashed; }
+  .pass .pn { width: 30px; flex: none; color: var(--ink-4); text-align: right; }
+  .pass .dir { width: 16px; flex: none; font-weight: 700; color: var(--ink); text-align: center; }
+  .pass .car { width: 15px; height: 15px; border-radius: 50%; flex: none; border: 1px solid rgba(0,0,0,.18);
+    font-size: 8px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+  .pass .op { width: 46px; flex: none; }
+  .pass .strip { flex: 1; height: 10px; border-radius: 2px; min-width: 44px; }
+  .pass .kv { flex: none; color: var(--ink-4); font-size: 9px; }
+
+  .diag { margin-top: 12px; border-radius: 8px; padding: 10px 12px; font-size: 11.5px; line-height: 1.5;
+    border: 1px solid var(--exp); background: var(--exp-bg); color: var(--ink-2); }
+  .diag.clean { border-color: var(--proven); background: var(--proven-bg); }
+  .diag b { color: var(--exp); }
+  .diag.clean b { color: var(--proven); }
+  .diag .anchor { font-family: ui-monospace, Menlo, monospace; font-size: 9.5px; color: var(--ink-3); display: block; margin-top: 5px; }
+  .diag .fixes { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .fixbtn { font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 10.5px; font-weight: 600;
+    border: 1px solid var(--border-2); background: var(--paper-2); border-radius: 6px; padding: 4px 9px; color: var(--ink-2); }
+  .fixbtn:hover { background: var(--paper-3); }
+
+  /* ---------- assistant drawer ---------- */
+  .assist { flex: none; border-top: 1px solid var(--border); background: var(--paper-2); }
+  .assist-head { display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; }
+  .assist-head .lbl { font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .09em; color: var(--ink-3); }
+  .assist-head .hint { font-size: 11.5px; color: var(--ink-4); }
+  .assist-body { max-height: 0; overflow: hidden; transition: max-height .28s ease; }
+  .assist.open .assist-body { max-height: 340px; overflow: auto; }
+  .assist-inner { padding: 4px 16px 14px; }
+  .presets { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 10px; }
+  .preset { font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 11px; color: var(--ink-2);
+    border: 1px solid var(--border); background: var(--paper); border-radius: 20px; padding: 5px 12px; }
+  .preset:hover { border-color: var(--accent); color: var(--ink); }
+  .msg { display: flex; gap: 10px; align-items: baseline; margin-bottom: 8px; font-size: 12.5px; }
+  .msg .who { font-family: ui-monospace, Menlo, monospace; font-size: 9px; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink-4); width: 48px; flex: none; text-align: right; padding-top: 1px; }
+  .msg .txt { color: var(--ink-2); line-height: 1.5; }
+  .msg .txt.you { color: var(--ink); }
+  .diffcard { margin: 4px 0 8px 58px; border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+    border-radius: 9px; background: var(--surface-bg); padding: 10px 12px; max-width: 640px; }
+  .diffcard .dt { font-family: ui-sans-serif, "Segoe UI", sans-serif; font-weight: 700; font-size: 12px; color: var(--ink); margin-bottom: 5px; }
+  .diffcard .dd { font-family: ui-monospace, Menlo, monospace; font-size: 10px; line-height: 1.7; color: var(--ink-3); }
+  .diffcard .add { color: var(--proven); }
+  .diffcard .del { color: var(--blocked); text-decoration: line-through; }
+  .diffcard .acts { display: flex; gap: 7px; margin-top: 9px; align-items: center; flex-wrap: wrap; }
+
+  .composer { display: flex; gap: 8px; margin-top: 6px; }
+  .composer input { flex: 1; font: inherit; font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 12.5px;
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--paper); color: var(--ink); }
+
+  /* ---------- alt views ---------- */
+  .altview { flex: 1; overflow: auto; padding: 26px 30px; }
+  .altview.hidden, .body.hidden { display: none; }
+  .backing-h { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  .backing-h h2 { font-size: 21px; margin: 0; }
+  .backing-h p { margin: 0; color: var(--ink-3); font-size: 13px; }
+  .backing-picks { display: flex; gap: 6px; flex-wrap: wrap; margin: 18px 0 22px; }
+  .fabricrow { display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-start; }
+  .face .fl { font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--ink-3); font-weight: 700; margin-bottom: 9px; }
+  .conseq { font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; color: var(--ink-2); line-height: 2.1; min-width: 240px; }
+  .conseq .k { color: var(--ink-4); }
+  .facegrid { display: grid; border: 1px solid var(--border-2); }
+  .facegrid span { width: 12px; height: 12px; }
+
+  .runsheet { max-width: 720px; }
+  .runsheet h2 { font-size: 21px; margin: 0 0 4px; }
+  .rs-meta { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--ink-3); margin-bottom: 20px; }
+  .rs-block { border: 1px solid var(--border); border-radius: 9px; background: var(--paper-2); padding: 14px 16px; margin-bottom: 12px; }
+  .rs-block h3 { font-size: 13px; font-family: ui-sans-serif, "Segoe UI", sans-serif; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--ink-3); margin: 0 0 10px; }
+  .rs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; }
+  .rs-grid .r { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--border); padding: 3px 0; }
+  .rs-grid .r span:first-child { color: var(--ink-3); }
+  .rs-grid .r span:last-child { color: var(--ink); }
+
+  .note { font-family: ui-sans-serif, "Segoe UI", sans-serif; font-size: 11px; color: var(--ink-4);
+    text-align: center; padding: 6px; border-top: 1px solid var(--border); background: var(--paper-2); flex: none; }
+  .note b { color: var(--ink-3); }
+
+  @media (max-width: 940px) {
+    .body { grid-template-columns: 1fr; grid-template-rows: auto; overflow: auto; }
+    .col + .col { border-left: none; border-top: 1px solid var(--border); }
+    .col { overflow: visible; }
+    .col-scroll { overflow: visible; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <svg class="knot" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+        <path d="M4 8c2.5 0 2.5 8 5 8s2.5-8 5-8 2.5 8 5 8"/>
+        <path d="M4 16c2.5 0 2.5-8 5-8s2.5 8 5 8 2.5-8 5-8" opacity=".45"/>
+      </svg>
+      <b>Kniterate Studio</b>
+    </div>
+    <span class="proj">aurora-throw.kproj</span>
+    <button class="verdict v-surface" id="verdict" title="Open verdict panel">
+      <span class="dot"></span><span id="verdict-label">Surface-proven</span><span class="gg">7gg worsted</span>
+    </button>
+    <div class="spacer"></div>
+    <div class="viewseg" id="viewseg">
+      <button data-view="workspace" class="on">Workspace</button>
+      <button data-view="backing">Backing</button>
+      <button data-view="runsheet">Run sheet</button>
+    </div>
+    <button class="btn" id="themeToggle" title="Toggle theme">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>
+    </button>
+    <button class="btn primary" id="exportBtn">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+      Export command.kc
+    </button>
+  </div>
+
+  <!-- ===================== WORKSPACE ===================== -->
+  <div class="body" id="workspaceView">
+    <!-- CHART -->
+    <section class="col">
+      <div class="col-head"><span class="t">Chart</span><span class="sub" id="chartsub">paint · 20×14 · bottom-up</span></div>
+      <div class="col-scroll">
+        <div class="toolstrip" id="tools">
+          <button class="tool on" data-tool="pencil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20l4-1 10-10-3-3L5 16l-1 4z"/></svg>pencil</button>
+          <button class="tool" data-tool="line">line</button>
+          <button class="tool" data-tool="rect">rect</button>
+          <button class="tool" data-tool="fill">fill</button>
+          <button class="tool" data-tool="eyedrop">pick</button>
+          <button class="tool" data-tool="mirror">mirror-x</button>
+        </div>
+        <div class="chartwrap" id="chartwrap"></div>
+        <div class="edgekey">
+          <span><b>◧</b> carrier ends left</span>
+          <span><b>◨</b> carrier ends right</span>
+          <span id="floatnote"></span>
+        </div>
+        <div class="palette" id="palette"></div>
+        <div class="machineaware">
+          <span class="maware">needles 116–135 / 252</span>
+          <span class="maware" id="ma-passes">passes/row: —</span>
+          <span class="maware">gauge 7 · worsted</span>
+          <span class="maware" id="ma-float">float budget: 5</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- STRATEGY -->
+    <section class="col">
+      <div class="col-head"><span class="t">Strategy</span><span class="sub">declarative · recompiles live</span></div>
+      <div class="col-scroll">
+        <div class="scard">
+          <div class="sh"><span class="sn">Frame · waste + cast-on</span><span class="stag">preset</span></div>
+          <div class="params"><b>waste</b> carrier 6 · <b>draw</b> carrier 1<br>interlock 80 · zig-zag + 2 tubular</div>
+        </div>
+
+        <div class="scard on">
+          <div class="sh"><span class="sn">Body · colorwork</span><span class="stag" id="bodyrows">rows 1–14</span></div>
+          <div class="techgrid" id="techgrid"></div>
+          <div class="params" id="bodyparams" style="margin-top:10px"></div>
+        </div>
+
+        <div class="scard">
+          <div class="sh"><span class="sn">Settings band</span><span class="stag">rows 1–14</span></div>
+          <div class="band"><label>speed</label><input type="range" min="100" max="600" value="320" id="sp-speed"><span class="val m" id="sp-speed-v">320 mm/s</span></div>
+          <div class="heat speed"></div>
+          <div class="band" style="margin-top:10px"><label>roller</label><input type="range" min="0" max="500" value="260" id="sp-roll"><span class="val m" id="sp-roll-v">260→300</span></div>
+          <div class="heat roller"></div>
+          <div class="band" style="margin-top:10px"><label>stitch</label><span class="val m" style="width:auto;text-align:left;color:var(--ink-3)">F5 · R5 · rack auto</span></div>
+        </div>
+
+        <div class="scard">
+          <div class="sh"><span class="sn">Frame · bind-off</span><span class="stag">preset</span></div>
+          <div class="params">side <b>front</b> · dir <b>auto</b> · carrier 2</div>
+        </div>
+
+        <div class="scard" style="border-style:dashed;text-align:center;color:var(--ink-4);font-family:ui-monospace,Menlo,monospace;font-size:10.5px" id="ovcount">
+          overrides · L3 stitch ops + L4 pass patches — 0 active
+        </div>
+      </div>
+    </section>
+
+    <!-- MACHINE -->
+    <section class="col">
+      <div class="col-head"><span class="t">Machine</span><span class="sub muted">derived · inspect &amp; override</span></div>
+      <div class="col-scroll">
+        <div class="mtabs" id="mtabs">
+          <button class="mtab on" data-m="passes">passes</button>
+          <button class="mtab" data-m="roller">roller</button>
+          <button class="mtab" data-m="speed">speed</button>
+          <button class="mtab" data-m="occupancy">occupancy</button>
+        </div>
+        <div class="machinehint" id="machinehint">carriage passes · kicks &amp; moves shown as ghost rows</div>
+        <div id="passlist"></div>
+        <div id="diagslot"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================== BACKING ===================== -->
+  <div class="altview hidden" id="backingView">
+    <div class="backing-h">
+      <h2>Backing strategy</h2>
+      <p>The back of a jacquard is half the design. Pick by consequence, not by name.</p>
+    </div>
+    <div class="backing-picks" id="backingPicks"></div>
+    <div class="fabricrow">
+      <div class="face"><div class="fl">Front face</div><div class="facegrid" id="face-front"></div></div>
+      <div class="face"><div class="fl" id="backlabel">Back face</div><div class="facegrid" id="face-back"></div></div>
+      <div class="face" style="align-self:center"><div class="fl">Consequences</div><div class="conseq" id="conseq"></div></div>
+    </div>
+  </div>
+
+  <!-- ===================== RUN SHEET ===================== -->
+  <div class="altview hidden" id="runsheetView">
+    <div class="runsheet">
+      <h2>Run sheet — aurora-throw</h2>
+      <div class="rs-meta" id="rs-meta">command.kc · 7gg worsted · generated from project · verdict Surface-proven</div>
+      <div class="rs-block">
+        <h3>Yarn &amp; carriers</h3>
+        <div class="rs-grid" id="rs-yarns"></div>
+      </div>
+      <div class="rs-block">
+        <h3>Machine</h3>
+        <div class="rs-grid" id="rs-machine"></div>
+      </div>
+      <div class="rs-block">
+        <h3>Before you knit</h3>
+        <div class="params m" id="rs-checklist" style="font-size:11.5px;color:var(--ink-2);line-height:2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ASSISTANT ===================== -->
+  <div class="assist open" id="assist">
+    <div class="assist-head" id="assistHead">
+      <span class="lbl">Studio assistant</span>
+      <span class="hint" id="assistHint">proposes reviewable diffs — never silent edits</span>
+      <div class="spacer"></div>
+      <svg id="assistChevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--ink-4)"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="assist-body">
+      <div class="assist-inner">
+        <div class="presets" id="presets">
+          <button class="preset" data-p="float">Why is row 8 flagged?</button>
+          <button class="preset" data-p="reversible">Make the back reversible</button>
+          <button class="preset" data-p="recolor">Recolor to 3 yarns, keep the motif</button>
+          <button class="preset" data-p="close">Close the edges</button>
+        </div>
+        <div id="thread"></div>
+        <div class="composer">
+          <input id="composerInput" placeholder="Ask for a change — it comes back as a diff you approve…" />
+          <button class="btn primary" id="sendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">Interactive mockup · <b>paint the chart, switch backing, click a pass to sync, try an assistant preset</b> · illustrative pass counts &amp; estimates, not compiler output</div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  // ---------- palette + chart model ----------
+  var PAL = [
+    { id:'natural', name:'Natural', hex:'#f4f0e6', car:2, ink:'#4a4436' },
+    { id:'red',     name:'Red',     hex:'#c2413a', car:3, ink:'#fff' },
+    { id:'navy',    name:'Navy',    hex:'#24415d', car:4, ink:'#fff' },
+    { id:'gold',    name:'Gold',    hex:'#d6a633', car:5, ink:'#4a3a10' }
+  ];
+  var W = 20, H = 14;
+
+  // preloaded motif (0=natural bg). aurora bands + diamonds.
+  function seed() {
+    var g = [];
+    for (var r = 0; r < H; r++) { g.push(new Array(W).fill(0)); }
+    // diamond centers
+    var cols = [3, 10, 16];
+    var colColor = [2, 1, 3];
+    for (var i = 0; i < cols.length; i++) {
+      var cc = cols[i], col = colColor[i];
+      for (var dr = -2; dr <= 2; dr++) {
+        var span = 2 - Math.abs(dr);
+        for (var dc = -span; dc <= span; dc++) {
+          var rr = 4 + dr, ccx = cc + dc;
+          if (rr>=0&&rr<H&&ccx>=0&&ccx<W) g[rr][ccx] = col;
+        }
+      }
+    }
+    // a long navy band on row 8 (index 7 from bottom -> stored row) to trigger a float
+    for (var c = 5; c <= 15; c++) g[7][c] = 2;
+    g[7][10] = 2;
+    // top border stripe
+    for (var c2 = 0; c2 < W; c2++) { g[12][c2] = 3; g[0][c2] = (c2 % 4 < 2) ? 1 : 0; }
+    return g;
+  }
+
+  var state = {
+    cells: seed(),
+    active: 1,
+    tool: 'pencil',
+    technique: 'floats',
+    budget: 5,
+    selRow: null,      // stored-row index (0=bottom)
+    overrides: 0,
+    backing: 'floats',
+    view: 'workspace',
+    mView: 'passes',
+    tuckAnchored: false
+  };
+
+  var TECH = {
+    floats:      { name:'Fairisle', desc:'floats · front only', reversible:false, ppr:function(c){return c;}, rack:'0' },
+    'birdseye':  { name:'Birdseye', desc:'DBJ · minimal back', reversible:false, ppr:function(c){return c;}, rack:'+0.5' },
+    'birdseye-full': { name:'Birdseye full', desc:'DBJ · full back', reversible:false, ppr:function(c){return c+1;}, rack:'+0.5' },
+    ladder:      { name:'Ladder-back', desc:'vertical floats', reversible:false, ppr:function(c){return c;}, rack:'0' },
+    complement:  { name:'Complement', desc:'2-color · reversible', reversible:true, ppr:function(){return 2;}, rack:'0' }
+  };
+  var TECH_ORDER = ['floats','birdseye','birdseye-full','ladder','complement'];
+
+  // ---------- derived ----------
+  function rowColors(r) { // set of palette indices present in stored row r
+    var s = {}; for (var c = 0; c < W; c++) s[state.cells[r][c]] = true;
+    return Object.keys(s).map(Number);
+  }
+  function maxColorsPresent() {
+    var m = 1; for (var r = 0; r < H; r++) m = Math.max(m, rowColors(r).length); return m;
+  }
+  function floatWarnings() {
+    // only meaningful in floats mode and when not tuck-anchored
+    var out = [];
+    if (state.technique !== 'floats' || state.tuckAnchored) return out;
+    for (var r = 0; r < H; r++) {
+      var run = 1;
+      for (var c = 1; c <= W; c++) {
+        if (c < W && state.cells[r][c] === state.cells[r][c-1]) { run++; }
+        else {
+          if (run > state.budget && rowColors(r).length > 1) {
+            out.push({ row:r, start:c-run, len:run, color:state.cells[r][c-1] });
+          }
+          run = 1;
+        }
+      }
+    }
+    return out;
+  }
+  function passesPerRow() {
+    var c = maxColorsPresent();
+    return TECH[state.technique].ppr(c);
+  }
+  function totalPasses() { return passesPerRow() * H + 168 /*waste*/; }
+  function timeSec() { return totalPasses() * 4.2; }
+  function fmtTime(s) { var m = Math.round(s/60); return Math.floor(m/60)+'h '+String(m%60).padStart(2,'0')+'m'; }
+
+  function verdict() {
+    var colors = maxColorsPresent();
+    if (colors > 4) return { key:'blocked', label:'Blocked', why:'more than 4 pattern carriers' };
+    var fw = floatWarnings();
+    if (state.technique === 'complement' && colors > 2)
+      return { key:'blocked', label:'Blocked', why:'complement needs a 2-color chart' };
+    // warnings never block; ceiling is Surface-proven until a physical swatch matches
+    return { key:'surface', label:'Surface-proven', why: fw.length ? fw.length+' float warning(s)' : 'validator-clean' };
+  }
+
+  // ---------- render: chart ----------
+  var chartwrap = document.getElementById('chartwrap');
+  function cell(px) { document.documentElement.style.setProperty('--cell', px+'px'); }
+  function renderChart() {
+    cell(20);
+    var fw = floatWarnings();
+    var flagged = {};
+    fw.forEach(function(f){ for (var c=f.start;c<f.start+f.len;c++) flagged[f.row+'_'+c]=1; });
+    var ppr = passesPerRow();
+
+    var html = '';
+    // rownums col
+    html += '<div class="rownums">';
+    for (var r = H-1; r >= 0; r--) html += '<div class="rownum">'+(r+1)+'</div>';
+    html += '</div>';
+    // pass gutter
+    html += '<div class="passgutter">';
+    for (var r2 = H-1; r2 >= 0; r2--) html += '<div class="pg"><span class="x">×</span>'+ppr+'</div>';
+    html += '</div>';
+    // grid + ruler
+    html += '<div class="gridcol"><div class="grid" id="grid" style="grid-template-columns:repeat('+W+',var(--cell))">';
+    for (var r3 = H-1; r3 >= 0; r3--) {
+      for (var c3 = 0; c3 < W; c3++) {
+        var v = state.cells[r3][c3];
+        var fl = flagged[r3+'_'+c3] ? ' float' : '';
+        html += '<div class="cell'+fl+'" data-r="'+r3+'" data-c="'+c3+'" style="background:'+PAL[v].hex+'"></div>';
+      }
+    }
+    html += '</div><div class="ruler" style="grid-template-columns:repeat('+W+',var(--cell))">';
+    for (var c4 = 0; c4 < W; c4++) html += '<div class="rk">'+(116+c4)+'</div>';
+    html += '</div></div>';
+
+    chartwrap.innerHTML = html;
+    document.getElementById('chartsub').textContent = 'paint · '+W+'×'+H+' · bottom-up';
+    document.getElementById('ma-passes').textContent = 'passes/row: '+ppr+' ('+maxColorsPresent()+' colors)';
+    var fn = document.getElementById('floatnote');
+    fn.innerHTML = (state.technique==='floats' && !state.tuckAnchored)
+      ? (fw.length? '<b style="color:var(--exp)">■</b> float &gt; '+state.budget : '<b style="color:var(--proven)">✓</b> floats within budget')
+      : (TECH[state.technique].reversible ? 'reversible · no floats' : 'floats secured by backing');
+    bindGrid();
+    applyRowHL();
+  }
+
+  // painting
+  var painting = false;
+  function paintAt(el) {
+    var r = +el.dataset.r, c = +el.dataset.c;
+    if (isNaN(r)) return;
+    if (state.tool === 'eyedrop') { state.active = state.cells[r][c]; renderPalette(); return; }
+    if (state.tool === 'fill') { floodFill(r,c,state.cells[r][c],state.active); recompute(); return; }
+    state.cells[r][c] = state.active;
+    el.style.background = PAL[state.active].hex;
+  }
+  function floodFill(r,c,from,to){ if(from===to)return; var st=[[r,c]]; while(st.length){var p=st.pop();var rr=p[0],cc=p[1]; if(rr<0||rr>=H||cc<0||cc>=W)continue; if(state.cells[rr][cc]!==from)continue; state.cells[rr][cc]=to; st.push([rr+1,cc],[rr-1,cc],[rr,cc+1],[rr,cc-1]); } }
+  function bindGrid() {
+    var grid = document.getElementById('grid');
+    grid.addEventListener('mousedown', function(e){ if(e.target.classList.contains('cell')){ painting=true; paintAt(e.target); if(state.tool==='fill'||state.tool==='eyedrop')painting=false; e.preventDefault(); }});
+    grid.addEventListener('mouseover', function(e){ if(painting&&e.target.classList.contains('cell')&&state.tool==='pencil') paintAt(e.target); });
+    // row hover -> sync passes
+    grid.addEventListener('mousemove', function(e){ if(e.target.classList.contains('cell')){ var r=+e.target.dataset.r; if(r!==state.hoverRow){ state.hoverRow=r; highlightPasses(r);} }});
+    grid.addEventListener('mouseleave', function(){ state.hoverRow=null; highlightPasses(state.selRow); });
+  }
+  window.addEventListener('mouseup', function(){ if(painting){ painting=false; recompute(); }});
+
+  // ---------- palette ----------
+  var paletteEl = document.getElementById('palette');
+  function renderPalette() {
+    paletteEl.innerHTML = PAL.map(function(p,i){
+      return '<button class="yarn'+(i===state.active?' on':'')+'" data-i="'+i+'"><i style="background:'+p.hex+'"></i>'+p.name+' <span class="car">→ c'+p.car+'</span></button>';
+    }).join('');
+    paletteEl.querySelectorAll('.yarn').forEach(function(b){ b.onclick=function(){ state.active=+b.dataset.i; renderPalette(); }; });
+  }
+
+  // ---------- strategy ----------
+  var techgrid = document.getElementById('techgrid');
+  function renderTech() {
+    techgrid.innerHTML = TECH_ORDER.map(function(k){
+      var t = TECH[k];
+      return '<button class="tech'+(k===state.technique?' on':'')+'" data-k="'+k+'"><span class="tt">'+t.name+'</span><span class="td">'+t.desc+'</span></button>';
+    }).join('');
+    techgrid.querySelectorAll('.tech').forEach(function(b){ b.onclick=function(){ setTechnique(b.dataset.k); }; });
+    var t = TECH[state.technique];
+    document.getElementById('bodyparams').innerHTML =
+      '<b>technique</b> '+t.name+' · <b>rack</b> '+t.rack+'<br>'+
+      '<b>float budget</b> '+state.budget+(state.tuckAnchored?' · tuck-anchored':'')+' · <b>borders</b> closed<br>'+
+      '<b>yarn order</b> auto · <b>passes/row</b> '+passesPerRow();
+  }
+  function setTechnique(k){ state.technique=k; state.backing=k; if(k!=='floats')state.tuckAnchored=false; recompute(); }
+
+  // settings band live labels
+  document.getElementById('sp-speed').addEventListener('input', function(e){ document.getElementById('sp-speed-v').textContent=e.target.value+' mm/s'; recomputeMachineOnly(); });
+  document.getElementById('sp-roll').addEventListener('input', function(e){ var v=+e.target.value; document.getElementById('sp-roll-v').textContent=v+'→'+(v+40); });
+
+  // ---------- machine ----------
+  var passlist = document.getElementById('passlist');
+  function buildPasses() {
+    // build a windowed view of ~ the selected/hovered row region
+    var ppr = passesPerRow();
+    var focusRow = state.selRow!=null ? state.selRow : (state.hoverRow!=null? state.hoverRow : 6);
+    var rows = [];
+    for (var r = Math.min(H-1, focusRow+2); r >= Math.max(0, focusRow-3); r--) rows.push(r);
+    var speed = document.getElementById('sp-speed').value;
+    var roll = document.getElementById('sp-roll').value;
+    var out = [];
+    var pn = 300;
+    rows.forEach(function(r){
+      var cs = rowColors(r).filter(function(x){return true;});
+      // one pass per carrier present (schematic)
+      var carriers = rowColors(r);
+      if (carriers.length===0) carriers=[0];
+      for (var p = 0; p < ppr; p++) {
+        var ci = carriers[p % carriers.length];
+        var dir = (p % 2 === 0) ? '→' : '←';
+        out.push({ pn:pn++, srcRow:r, dir:dir, car:ci, op:'Kn-Kn', speed:speed, roll:roll });
+      }
+      // occasional kick ghost between rows with many carriers
+      if (carriers.length >= 3) out.push({ ghost:true, srcRow:r, dir:'→', car:carriers[carriers.length-1], op:'kick', kv:'feeder clear' });
+      // birdseye adds a transfer setup ghost
+      if (state.technique.indexOf('birdseye')===0 && r%3===0) out.push({ srcRow:r, dir:'←', car:0, op:'Tr-Rr', pn:pn++, speed:160, roll:0, xfer:true });
+    });
+    return out;
+  }
+  function stripFor(ci, op) {
+    if (op==='kick') return 'background:repeating-linear-gradient(90deg,var(--paper-4) 0 5px,transparent 5px 10px)';
+    if (op==='Tr-Rr') return 'background:repeating-linear-gradient(90deg,var(--ink-4) 0 2px,transparent 2px 6px);opacity:.6';
+    var col = ci===0 ? 'var(--paper-4)' : PAL[ci].hex;
+    return 'background:linear-gradient(90deg,var(--paper-4) 0 8%,'+col+' 8% 90%,var(--paper-4) 90%)';
+  }
+  function renderMachine() {
+    var passes = buildPasses();
+    passlist.innerHTML = passes.map(function(p){
+      var carHtml = p.car===0
+        ? '<span class="car" style="background:var(--paper-3);color:var(--ink-4)">0</span>'
+        : '<span class="car" style="background:'+PAL[p.car].hex+';color:'+PAL[p.car].ink+'">'+p.car+'</span>';
+      var kv = p.op==='kick' ? p.kv : ('r'+(state.technique.indexOf('birdseye')===0&&p.xfer?'0.5':(TECH[state.technique].rack))+' sp'+p.speed+' rl'+p.roll);
+      return '<div class="pass'+(p.ghost?' ghost':'')+'" data-src="'+p.srcRow+'">'+
+        '<span class="pn">'+(p.pn||'—')+'</span>'+
+        '<span class="dir">'+p.dir+'</span>'+carHtml+
+        '<span class="op">'+p.op+'</span>'+
+        '<span class="strip" style="'+stripFor(p.car,p.op)+'"></span>'+
+        '<span class="kv">'+kv+'</span></div>';
+    }).join('');
+    passlist.querySelectorAll('.pass').forEach(function(el){
+      el.addEventListener('mouseenter', function(){ var r=+el.dataset.src; state.selRow=r; applyRowHL(); highlightPasses(r); });
+    });
+    document.getElementById('machinehint').textContent =
+      'window near row '+((state.selRow!=null?state.selRow:6)+1)+' · '+passesPerRow()+' passes/row · kicks shown as ghost rows';
+    renderDiag();
+  }
+  function highlightPasses(r) {
+    passlist.querySelectorAll('.pass').forEach(function(el){ el.classList.toggle('hl', +el.dataset.src===r); });
+  }
+  function applyRowHL() {
+    var grid = document.getElementById('grid'); if(!grid) return;
+    grid.querySelectorAll('.cell').forEach(function(c){ c.classList.remove('grid-row-hl'); });
+    if (state.selRow!=null) grid.querySelectorAll('.cell[data-r="'+state.selRow+'"]').forEach(function(c){ c.classList.add('grid-row-hl'); });
+  }
+
+  function renderDiag() {
+    var fw = floatWarnings();
+    var slot = document.getElementById('diagslot');
+    var v = verdict();
+    if (v.key==='blocked') {
+      slot.innerHTML = '<div class="diag" style="border-color:var(--blocked);background:var(--blocked-bg)">'+
+        '<b style="color:var(--blocked)">Blocked · export gated</b> — '+v.why+'. '+
+        (v.why.indexOf('complement')>=0
+          ? 'Complement DBJ carries one color as the exact inverse of the other; reduce the palette to 2 yarns, or pick a backing that supports more colors.'
+          : 'The Kniterate runs 4 pattern carriers (C2–C5); a 5th/6th needs an advanced waiver.')+
+        '<div class="fixes">'+(v.why.indexOf('complement')>=0
+          ? '<button class="fixbtn" data-fix="birdseye">Use birdseye (keeps 4 colors)</button>'
+          : '')+'</div></div>';
+      slot.querySelectorAll('.fixbtn').forEach(function(b){ b.onclick=function(){ applyFix(b.dataset.fix); }; });
+      return;
+    }
+    if (state.technique==='floats' && fw.length && !state.tuckAnchored) {
+      var f = fw[0];
+      slot.innerHTML = '<div class="diag"><b>Warning · long float</b> — '+f.len+' needles of '+PAL[f.color].name+
+        ' exceed budget '+state.budget+'. At 7gg, floats this long snag and drop stitches.'+
+        '<span class="anchor">chart r'+(f.row+1)+' c'+f.start+'–'+(f.start+f.len)+' ↔ passes near '+(300+f.row*passesPerRow())+'</span>'+
+        '<div class="fixes"><button class="fixbtn" data-fix="tuck">Tuck-anchor floats</button>'+
+        '<button class="fixbtn" data-fix="birdseye">Birdseye backing</button>'+
+        '<button class="fixbtn" data-fix="budget">Raise budget (waiver)</button></div></div>';
+      slot.querySelectorAll('.fixbtn').forEach(function(b){ b.onclick=function(){ applyFix(b.dataset.fix); }; });
+    } else {
+      slot.innerHTML = '<div class="diag clean"><b>No blocking issues</b> — '+
+        (TECH[state.technique].reversible?'reversible backing, no floats. ':'backing secures all floats. ')+
+        'Ceiling is <b>Surface-proven</b> until a physical swatch matches this recipe.</div>';
+    }
+  }
+  function applyFix(kind){
+    if (kind==='tuck'){ state.tuckAnchored=true; state.overrides=1; }
+    else if (kind==='birdseye'){ setTechnique('birdseye'); return; }
+    else if (kind==='budget'){ state.budget=12; }
+    recompute();
+  }
+
+  // ---------- verdict ----------
+  function renderVerdict() {
+    var v = verdict();
+    var el = document.getElementById('verdict');
+    el.className = 'verdict v-'+v.key;
+    document.getElementById('verdict-label').textContent = v.label;
+    el.title = v.label+' — '+v.why;
+  }
+
+  // ---------- machine-aware chips + override count ----------
+  function renderChips(){
+    document.getElementById('ma-float').textContent = 'float budget: '+state.budget;
+    document.getElementById('ovcount').textContent = 'overrides · L3 stitch ops + L4 pass patches — '+state.overrides+' active';
+    document.getElementById('bodyrows').textContent = 'rows 1–'+H;
+  }
+
+  // ---------- backing view ----------
+  function backColor(r,c) {
+    var v = state.cells[r][c];
+    var cols = rowColors(r);
+    var t = state.technique;
+    if (t==='complement') { // inverse of two colors
+      if (cols.length<=2){ var other=cols.find(function(x){return x!==v;}); return other==null?v:other; }
+      return v;
+    }
+    if (t==='ladder') { // vertical carried stripes of non-shown color
+      var oc = cols.find(function(x){return x!==v;}); return (c%2===0 && oc!=null)? oc : v;
+    }
+    // birdseye / floats: 1x1 stipple of present colors offset by row
+    if (cols.length<2) return v;
+    return cols[(c+r)%cols.length];
+  }
+  function renderBacking() {
+    var picks = document.getElementById('backingPicks');
+    picks.innerHTML = TECH_ORDER.map(function(k){
+      return '<button class="tool'+(k===state.technique?' on':'')+'" data-k="'+k+'">'+TECH[k].name+'</button>';
+    }).join('');
+    picks.querySelectorAll('.tool').forEach(function(b){ b.onclick=function(){ setTechnique(b.dataset.k); renderBacking(); }; });
+
+    cell(13);
+    function paint(elid, fn){
+      var el = document.getElementById(elid);
+      el.style.gridTemplateColumns = 'repeat('+W+',13px)';
+      var h='';
+      for (var r=H-1;r>=0;r--) for(var c=0;c<W;c++) h+='<span style="background:'+fn(r,c)+'"></span>';
+      el.innerHTML=h;
+    }
+    paint('face-front', function(r,c){ return PAL[state.cells[r][c]].hex; });
+    paint('face-back', function(r,c){ return PAL[backColor(r,c)].hex; });
+    document.getElementById('backlabel').textContent = 'Back face — '+TECH[state.technique].name.toLowerCase();
+
+    var t = TECH[state.technique], colors = maxColorsPresent();
+    document.getElementById('conseq').innerHTML =
+      '<span class="k">passes / design row</span>  '+passesPerRow()+'<br>'+
+      '<span class="k">rack on backing</span>  '+t.rack+'<br>'+
+      '<span class="k">est. knit time</span>  '+fmtTime(timeSec())+'<br>'+
+      '<span class="k">est. yarn</span>  N 410g · R 180g · Nv 195g · G 88g<br>'+
+      '<span class="k">floats</span>  '+(t.reversible?'none (reversible)':(state.technique==='floats'?'up to budget '+state.budget:'none (secured)'))+'<br>'+
+      '<span class="k">reversible</span>  '+(t.reversible?'yes':'no');
+  }
+
+  // ---------- run sheet ----------
+  function renderRunsheet() {
+    var used = {};
+    for (var r=0;r<H;r++) rowColors(r).forEach(function(i){used[i]=true;});
+    document.getElementById('rs-yarns').innerHTML = PAL.map(function(p,i){
+      return '<div class="r"><span>'+p.name+(used[i]?'':' (unused)')+'</span><span>carrier '+p.car+'</span></div>';
+    }).join('') + '<div class="r"><span>Draw thread</span><span>carrier 1</span></div><div class="r"><span>Waste</span><span>carrier 6</span></div>';
+    document.getElementById('rs-machine').innerHTML =
+      row('Technique', TECH[state.technique].name)+row('Passes / row', passesPerRow())+
+      row('Total passes', totalPasses().toLocaleString())+row('Est. time', fmtTime(timeSec()))+
+      row('Speed', document.getElementById('sp-speed').value+' mm/s')+row('Stitch size', 'F5 / R5')+
+      row('Bed', '252 needles · centered 116')+row('Gauge', '7gg worsted');
+    var v = verdict();
+    document.getElementById('rs-meta').textContent='command.kc · 7gg worsted · generated from project · verdict '+v.label;
+    document.getElementById('rs-checklist').innerHTML =
+      '☐ thread carriers 1–6 per the map above<br>☐ knit tension swatch first — this recipe is not yet Knit-proven<br>'+
+      '☐ rename file to command.kc on the SD card (replace existing)<br>☐ confirm rollers engaged before the waste section clears';
+    function row(k,v){ return '<div class="r"><span>'+k+'</span><span>'+v+'</span></div>'; }
+  }
+
+  // ---------- assistant ----------
+  var thread = document.getElementById('thread');
+  function say(who, txt, cls){ var d=document.createElement('div'); d.className='msg'; d.innerHTML='<span class="who">'+who+'</span><span class="txt '+(cls||'')+'">'+txt+'</span>'; thread.appendChild(d); scrollAssist(); }
+  function diffCard(title, body, applyFn, chip){
+    var d=document.createElement('div'); d.className='diffcard';
+    d.innerHTML='<div class="dt">'+title+'</div><div class="dd">'+body+'</div>'+
+      '<div class="acts"><button class="btn primary sm">Apply</button><button class="btn sm">Discard</button>'+
+      (chip||'')+'</div>';
+    d.querySelector('.primary').onclick=function(){ applyFn(); d.querySelector('.acts').innerHTML='<span class="m" style="font-size:10.5px;color:var(--proven)">✓ applied</span>'; };
+    d.querySelector('.btn:not(.primary)').onclick=function(){ d.remove(); };
+    thread.appendChild(d); scrollAssist();
+  }
+  function scrollAssist(){ var b=document.querySelector('.assist-body'); b.scrollTop=b.scrollHeight; }
+
+  function assistPreset(p) {
+    if (p==='float') {
+      var fw = floatWarnings();
+      if (!fw.length) {
+        say('you','Why is a row flagged?','you');
+        say('studio','Nothing is flagged right now — every float is within budget '+state.budget+' (or the current backing secures them). Switch the body to Fairisle and paint a long single-color run to see a warning appear.');
+        return;
+      }
+      var f = fw[0];
+      say('you','Why is row '+(f.row+1)+' flagged?','you');
+      say('studio','Row '+(f.row+1)+' carries '+PAL[f.color].name+' across '+f.len+' needles; your float budget is '+state.budget+'. At 7gg worsted, floats that long catch fingers and pull stitches off the needle. Two fixes keep the front identical — smallest first:');
+      diffCard('Tuck-anchor floats · body',
+        'float handling: <span class="del">warn</span> → <span class="add">tuck-anchor every 4th needle</span><br>adds tuck ops · +~1m · front face unchanged · clears the warning',
+        function(){ applyFix('tuck'); },
+        '<span class="verdict v-surface" style="font-size:10px;padding:3px 8px"><span class="dot"></span>after: Surface-proven</span>');
+    } else if (p==='reversible') {
+      say('you','Make the back reversible','you');
+      var colors = maxColorsPresent();
+      if (colors>2) {
+        say('studio','Reversible backing (complement DBJ) needs a 2-color chart — this one uses '+colors+'. I can reduce to your 2 dominant yarns first, or you can switch to birdseye (stable but not reversible). Reduce-then-reverse:');
+        diffCard('Reduce to 2 colors, then complement',
+          'palette: <span class="del">4 yarns</span> → <span class="add">Natural + Navy</span><br>technique: floats → <span class="add">complement</span> · passes/row → 2 · fully reversible',
+          function(){ // collapse to nearest of 2
+            for (var r=0;r<H;r++) for (var c=0;c<W;c++){ var v=state.cells[r][c]; state.cells[r][c]= (v===0)?0:2; }
+            setTechnique('complement');
+          });
+      } else {
+        say('studio','This chart is already 2-color, so complement DBJ works directly — each carrier knits its inverse on the back bed, no floats, 2 passes/row.');
+        diffCard('Switch to complement (reversible)',
+          'technique: <span class="del">'+TECH[state.technique].name+'</span> → <span class="add">complement</span><br>passes/row → 2 · reversible · clears all floats',
+          function(){ setTechnique('complement'); });
+      }
+    } else if (p==='recolor') {
+      say('you','Recolor to 3 yarns, keep the motif','you');
+      say('studio','Merging Gold into Navy keeps every shape and boundary — only the hue changes. Chart edit, fully undoable:');
+      diffCard('Recolor · Gold → Navy',
+        'cells with Gold (3) → Navy (2) · motif geometry unchanged<br>max colors/row 4 → 3 · passes/row may drop',
+        function(){ for (var r=0;r<H;r++) for(var c=0;c<W;c++) if(state.cells[r][c]===3) state.cells[r][c]=2; recompute(); });
+    } else if (p==='close') {
+      say('you','Close the edges','you');
+      say('studio','Border closing keeps the fabric from curling and the outermost carriers tucked in. This is a strategy-only change — no chart edit:');
+      diffCard('Borders · close',
+        'borders: <span class="del">open</span> → <span class="add">closed</span> · inner+outer front/rear<br>adds edge tucks · verdict unchanged',
+        function(){ state.overrides++; renderChips(); });
+    }
+  }
+  document.getElementById('presets').querySelectorAll('.preset').forEach(function(b){ b.onclick=function(){ assistPreset(b.dataset.p); }; });
+  document.getElementById('sendBtn').onclick = function(){
+    var v=document.getElementById('composerInput').value.trim(); if(!v)return;
+    say('you',v.replace(/</g,'&lt;'),'you');
+    say('studio','In the real product I compile that against your project and answer with a diff card carrying the recompiled verdict. Try one of the presets above to see the shape of the reply.');
+    document.getElementById('composerInput').value='';
+  };
+  document.getElementById('composerInput').addEventListener('keydown',function(e){ if(e.key==='Enter') document.getElementById('sendBtn').click(); });
+
+  // assistant collapse
+  var assist = document.getElementById('assist');
+  document.getElementById('assistHead').onclick=function(){
+    assist.classList.toggle('open');
+    document.getElementById('assistChevron').style.transform = assist.classList.contains('open')?'rotate(0)':'rotate(180deg)';
+  };
+
+  // ---------- view switching ----------
+  document.getElementById('viewseg').querySelectorAll('button').forEach(function(b){
+    b.onclick=function(){
+      state.view=b.dataset.view;
+      document.querySelectorAll('#viewseg button').forEach(function(x){x.classList.toggle('on',x===b);});
+      document.getElementById('workspaceView').classList.toggle('hidden', state.view!=='workspace');
+      document.getElementById('backingView').classList.toggle('hidden', state.view!=='backing');
+      document.getElementById('runsheetView').classList.toggle('hidden', state.view!=='runsheet');
+      if (state.view==='backing') renderBacking();
+      if (state.view==='runsheet') renderRunsheet();
+    };
+  });
+  document.getElementById('exportBtn').onclick=function(){
+    var v=verdict();
+    document.querySelector('#viewseg [data-view="runsheet"]').click();
+    if (v.key==='blocked') { say('studio','Export is blocked: '+v.why+'. Fix that first — the badge gates the file.'); if(!assist.classList.contains('open'))document.getElementById('assistHead').click(); }
+  };
+
+  // ---------- tools ----------
+  document.getElementById('tools').querySelectorAll('.tool').forEach(function(b){
+    b.onclick=function(){ state.tool=b.dataset.tool; document.querySelectorAll('#tools .tool').forEach(function(x){x.classList.toggle('on',x===b);}); };
+  });
+
+  // ---------- machine tabs ----------
+  document.getElementById('mtabs').querySelectorAll('.mtab').forEach(function(b){
+    b.onclick=function(){ state.mView=b.dataset.m; document.querySelectorAll('#mtabs .mtab').forEach(function(x){x.classList.toggle('on',x===b);});
+      // heat lanes are illustrative: recolor strips by mode
+      document.querySelectorAll('#passlist .strip').forEach(function(s){
+        if (state.mView==='roller') s.style.background='linear-gradient(90deg,#b7c7bd,#3d6c57)';
+        else if (state.mView==='speed') s.style.background='linear-gradient(90deg,#ddd0b3,#8a6a34)';
+        else if (state.mView==='occupancy') s.style.background='linear-gradient(90deg,#cbb9d6,#5b4a6e)';
+      });
+      if (state.mView==='passes') renderMachine();
+    };
+  });
+
+  // ---------- theme toggle ----------
+  document.getElementById('themeToggle').onclick=function(){
+    var cur=document.documentElement.getAttribute('data-theme');
+    var next = cur==='dark'?'light':(cur==='light'?'dark':(matchMedia('(prefers-color-scheme: dark)').matches?'light':'dark'));
+    document.documentElement.setAttribute('data-theme',next);
+  };
+
+  // ---------- recompute pipeline ----------
+  function recomputeMachineOnly(){ renderMachine(); }
+  function recompute() {
+    renderTech(); renderChart(); renderMachine(); renderVerdict(); renderChips();
+    if (state.view==='backing') renderBacking();
+    if (state.view==='runsheet') renderRunsheet();
+  }
+
+  // ---------- boot ----------
+  renderPalette();
+  renderTech();
+  renderChart();
+  renderMachine();
+  renderVerdict();
+  renderChips();
+})();
+</script>
+</body>
+</html>

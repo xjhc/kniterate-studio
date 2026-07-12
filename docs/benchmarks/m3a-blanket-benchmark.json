@@ -1,0 +1,75 @@
+{
+  "kind": "m3a-blanket-compile-benchmark",
+  "schemaVersion": 1,
+  "runtime": {
+    "node": "v22.16.0",
+    "platform": "linux",
+    "arch": "x64"
+  },
+  "fixture": {
+    "width": 200,
+    "height": 300,
+    "cells": 60000,
+    "colors": 4,
+    "strategy": "birdseye-minimal",
+    "bindOff": "machine-bindoff",
+    "runs": 5,
+    "warmupRunsExcluded": 1
+  },
+  "decisionThresholdMs": 1000,
+  "summary": {
+    "medianTotalMs": 578.6896959999999,
+    "p95TotalMs": 647.136762,
+    "medianProjectionMs": 3.6798709999999346,
+    "medianCompileMs": 576.6354779999997,
+    "maxHeapDeltaMb": 121.18669128417969,
+    "targetMet": true
+  },
+  "samples": [
+    {
+      "projectionMs": 5.1663429999999835,
+      "compileMs": 653.001091,
+      "totalMs": 658.167434,
+      "heapDeltaMb": 123.85900115966797,
+      "ops": 487928,
+      "plannedPasses": 5,
+      "predictedPasses": 5032
+    },
+    {
+      "projectionMs": 3.6798709999999346,
+      "compileMs": 643.456891,
+      "totalMs": 647.136762,
+      "heapDeltaMb": 116.20147705078125,
+      "ops": 487928,
+      "plannedPasses": 5,
+      "predictedPasses": 5032
+    },
+    {
+      "projectionMs": 3.965492999999924,
+      "compileMs": 558.800859,
+      "totalMs": 562.7663519999999,
+      "heapDeltaMb": 121.18669128417969,
+      "ops": 487928,
+      "plannedPasses": 5,
+      "predictedPasses": 5032
+    },
+    {
+      "projectionMs": 2.054218000000219,
+      "compileMs": 576.6354779999997,
+      "totalMs": 578.6896959999999,
+      "heapDeltaMb": -156.62381744384766,
+      "ops": 487928,
+      "plannedPasses": 5,
+      "predictedPasses": 5032
+    },
+    {
+      "projectionMs": 2.3885999999997694,
+      "compileMs": 540.9981190000003,
+      "totalMs": 543.3867190000001,
+      "heapDeltaMb": 117.71736145019531,
+      "ops": 487928,
+      "plannedPasses": 5,
+      "predictedPasses": 5032
+    }
+  ]
+}

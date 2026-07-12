@@ -1,0 +1,31 @@
+{
+  "$schema": "../_schema.json",
+  "yarns": [
+    {
+      "carrier": "2",
+      "name": "TODO: e.g. cream wool 2/12",
+      "fiber": "TODO: wool | cotton | alpaca | acrylic | blend",
+      "weight": "TODO: e.g. 2/12 Nm",
+      "ply": 2,
+      "color": "TODO: hex or pantone",
+      "coneSource": "TODO: vendor + lot or batch id"
+    }
+  ],
+  "tensionSwatch": {
+    "stsPer10cm": {
+      "offMachine": null,
+      "rested24h": null,
+      "steamed": null,
+      "wetFinished": null
+    },
+    "rowsPer10cm": {
+      "offMachine": null,
+      "rested24h": null,
+      "steamed": null,
+      "wetFinished": null
+    },
+    "measuredBy": "TODO: who measured",
+    "measuredOn": "1970-01-01",
+    "notes": "TODO: any drape / hand / weight observations"
+  }
+}

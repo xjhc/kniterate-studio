@@ -1,0 +1,44 @@
+{
+  "kind": "kniterate-studio-m1-conformance-report",
+  "schemaVersion": "1",
+  "generatedAt": "2026-07-12T21:15:34.780Z",
+  "verdict": "Verified - swatch recommended",
+  "honestyCap": "Software extraction proof only; Knit-proven requires a matching physical registry entry.",
+  "gates": [
+    {
+      "layer": "0",
+      "name": "reference kc reproducibility",
+      "command": "test:reference-kc",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "layer": 1,
+      "name": "chart compiler matrix and topology unit rail",
+      "command": "test:compiler",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "layer": 3,
+      "name": "kc revalidation and diff rails",
+      "command": "test:revalidation",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "layer": 6,
+      "name": "known-bad refusal corpus",
+      "command": "kniterate:refusals",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "layer": 7,
+      "name": "physical swatch registry integrity",
+      "command": "kniterate:swatches",
+      "status": "pass",
+      "exitCode": 0
+    }
+  ]
+}

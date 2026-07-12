@@ -1,0 +1,33 @@
+{
+  "name": "@kniterate-studio/machine-lib",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./browser": "./src/browser.ts"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:reference-kc": "vitest run test/knitout/reference-kc test/knitout/sim/kc-section.test.ts",
+    "test:compiler": "vitest run test/colorwork-chart-intake.test.ts test/knitout/first-body-row-protection.test.ts test/knitout/from-chart-stockinette.test.ts test/knitout/from-chart-jacquard.test.ts test/knitout/from-chart-jacquard-birdseye.test.ts test/knitout/from-chart-jacquard-complement.test.ts test/knitout/from-chart-jacquard-floats.test.ts test/knitout/from-chart-stitch-overrides.test.ts test/knitout/dbj-parity.test.ts test/knitout/plan-roundtrip.test.ts test/knitout/kniterate-topology-oracle.test.ts",
+    "test:revalidation": "vitest run test/knitout/kc-to-knitout.test.ts test/knitout/kc-diff.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts",
+    "benchmark:m3a": "node --import tsx scripts/m3a-blanket-benchmark.ts",
+    "kniterate:refusals": "node --import tsx scripts/kniterate-refusal-corpus.ts",
+    "kniterate:swatches": "node --import tsx scripts/kniterate-swatch-registry-check.ts",
+    "kniterate:conform": "node --import tsx scripts/kniterate-conform.ts"
+  },
+  "dependencies": {
+    "@kniterate-studio/chart-contract": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "fast-check": "^4.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}

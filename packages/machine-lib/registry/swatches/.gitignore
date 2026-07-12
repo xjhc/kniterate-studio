@@ -1,0 +1,8 @@
+# Photos are useful locally but blow up the repo.
+photo-front.jpg
+photo-back.jpg
+photo-front.png
+photo-back.png
+*.jpg
+*.jpeg
+*.png

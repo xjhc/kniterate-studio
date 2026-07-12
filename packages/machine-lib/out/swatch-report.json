@@ -1,0 +1,11 @@
+{
+  "kind": "kniterate-swatch-registry-report",
+  "schemaVersion": "1",
+  "ok": true,
+  "currentCommit": null,
+  "entryCount": 0,
+  "knitProvenCount": 0,
+  "staleCount": 0,
+  "templateMessages": [],
+  "entries": []
+}

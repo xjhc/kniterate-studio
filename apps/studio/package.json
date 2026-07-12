@@ -1,0 +1,29 @@
+{
+  "name": "@kniterate-studio/app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kniterate-studio/chart-contract": "workspace:*",
+    "@kniterate-studio/project-contract": "workspace:*",
+    "@knitlab/colorwork-core": "workspace:*",
+    "@kniterate-studio/machine-lib": "workspace:*",
+    "lucide-react": "^0.468.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "^6.0.2",
+    "vite": "^6.4.3",
+    "vitest": "^4.1.2"
+  }
+}
