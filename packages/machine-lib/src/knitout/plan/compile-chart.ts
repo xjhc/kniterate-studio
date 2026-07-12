@@ -145,6 +145,8 @@ export interface CompileChartToPlanInput {
    *     the body structure of the fairisle parity recipe's `.kc` fairisle exports.
    *  - `'lined'`: deferred; falls back to `'ladder'` with a warning. */
   backBedStyle?: 'ladder' | 'lined' | 'birdseye' | 'floats';
+  /** Project-level DBJ intent. Overrides the legacy chart annotation. */
+  dbjBackingStrategy?: 'birdseye' | 'twill' | 'striped' | 'full' | 'complement';
   /** Birdseye-specific knob: 'minimal' emits back-bed passes only for
    *  colors present in the current row; 'full' emits them for all
    *  design colors. Default 'minimal'. */
@@ -644,7 +646,7 @@ export function compileChartToKniteratePlan(
   const dbjBacking = chartAnnotations.find(
     (a): a is KnitlabChartSheetAnnotation => a.kind === 'dbj-backing',
   );
-  const dbjBackingStrategy = dbjBacking?.dbjStrategy;
+  const dbjBackingStrategy = input.dbjBackingStrategy ?? dbjBacking?.dbjStrategy;
   const wantsDbjFull = input.backBedStyle === 'birdseye' && dbjBackingStrategy === 'full';
   const wantsIntro = input.backBedStyle === 'floats' && !!input.fairisleCarrierIntro;
   const wantsContinuousWaste = wantsIntro || wantsDbjFull;

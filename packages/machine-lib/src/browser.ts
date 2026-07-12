@@ -20,3 +20,13 @@ export {
   resolveValidatorMessage,
   type ResolvedValidatorMessage,
 } from './validators/messages.js';
+export {
+  compileToRunArtifact,
+  type CompiledRunArtifact,
+} from './knitout/run-artifact.js';
+export {
+  projectColorworkChartV1,
+  type ProjectedColorworkChart,
+} from './colorwork/from-colorwork-chart.js';
+export type { YarnBinding } from './knitout/types.js';
+export type { PredictedPass } from './knitout/sim/types.js';

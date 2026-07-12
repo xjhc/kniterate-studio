@@ -98,6 +98,20 @@ Rectangle sizing, palette-to-yarn/carrier assignment, backing strategy and
 previews, default frame, debounced Worker compile, synced machine view, and live
 verdict.
 
+First implementation slice (2026-07-12):
+
+- durable height, needle-placement, and frame edits added to project history
+- project-to-compiler adapter enforces four used pattern colors, complete C2-C5
+  assignments, C1 draw thread, C6 waste yarn, and complement's two-color rule
+- pure deterministic artifacts compile in a dedicated debounced Worker; stale
+  results cannot replace a newer project revision
+- live setup rail covers rectangle, backing, yarn carriers, frame, compile
+  estimates, and authored Surface-proven/Blocked state
+- checked-in browser coverage proves setup persistence and Worker verdict changes
+
+Remaining: engine-owned back-face projections and consequence comparisons,
+design-row-to-pass provenance, synchronized machine view, and diagnostic anchors.
+
 ### M3D - Durable machine output
 
 Browser `.kc` conversion, gated export, project save/reopen, byte-identical

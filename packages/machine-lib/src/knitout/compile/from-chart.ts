@@ -110,6 +110,10 @@ export interface CompileChartInput {
    *  - `'floats'`: front-bed only, no back-bed knit. Classic stranded
    *     fairisle. Matches the fairisle parity recipe's `.kc` fairisle body style. */
   backBedStyle?: 'ladder' | 'lined' | 'birdseye' | 'floats';
+  /** Explicit DBJ backing selection for Studio's strategy contract. This
+   *  overrides any legacy chart annotation and keeps machine intent out of
+   *  the color chart artifact. */
+  dbjBackingStrategy?: 'birdseye' | 'twill' | 'striped' | 'full' | 'complement';
   /** Birdseye-specific knob — 'minimal' or 'full'. Default 'minimal'. */
   birdseyeMode?: 'minimal' | 'full';
   /** Phase 3 (2026-05-23): Fairisle carrier intro + stitch ramp.

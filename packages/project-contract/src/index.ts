@@ -73,7 +73,18 @@ const SetWidthEditSchema = z.object({
   width: z.number().int().min(1).max(252),
   fillPaletteIndex: z.number().int().min(0),
 });
+const SetHeightEditSchema = z.object({
+  kind: z.literal('set-height'),
+  height: z.number().int().min(1),
+  fillPaletteIndex: z.number().int().min(0),
+  newRowIds: z.array(RowId),
+});
+const SetNeedleOffsetEditSchema = z.object({
+  kind: z.literal('set-needle-offset'),
+  needleOffset: z.number().int().min(1).max(252),
+});
 const SetStrategyEditSchema = z.object({ kind: z.literal('set-strategy'), strategy: StrategySchema });
+const SetFrameEditSchema = z.object({ kind: z.literal('set-frame'), frame: FrameSchema });
 const SetYarnEditSchema = z.object({ kind: z.literal('set-yarn-assignment'), assignment: YarnAssignmentSchema });
 const RemoveYarnEditSchema = z.object({ kind: z.literal('remove-yarn-assignment'), paletteId: Id });
 const AddOverrideEditSchema = z.object({ kind: z.literal('add-override'), override: ProjectOverrideSchema });
@@ -84,7 +95,10 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   InsertRowEditSchema,
   DeleteRowEditSchema,
   SetWidthEditSchema,
+  SetHeightEditSchema,
+  SetNeedleOffsetEditSchema,
   SetStrategyEditSchema,
+  SetFrameEditSchema,
   SetYarnEditSchema,
   RemoveYarnEditSchema,
   AddOverrideEditSchema,
@@ -334,7 +348,30 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       state.chart.cells = state.chart.cells.map((row) => row.length >= edit.width ? row.slice(0, edit.width) : [...row, ...Array(edit.width - row.length).fill(edit.fillPaletteIndex) as number[]]);
       state.chart.width = edit.width;
       break;
+    case 'set-height': {
+      assertPaletteIndex(state, edit.fillPaletteIndex);
+      const added = edit.height - state.chart.height;
+      const expectedIds = Math.max(0, added);
+      if (edit.newRowIds.length !== expectedIds) throw new Error(`set-height requires ${expectedIds} new row ids; received ${edit.newRowIds.length}`);
+      if (new Set(edit.newRowIds).size !== edit.newRowIds.length || edit.newRowIds.some((id) => state.rowIds.includes(id))) throw new Error('set-height row ids must be new and unique');
+      if (added > 0) {
+        const rows = edit.newRowIds.map(() => Array(state.chart.width).fill(edit.fillPaletteIndex) as number[]);
+        if (state.chart.rowNumbering === 'bottom-up') { state.rowIds.unshift(...edit.newRowIds); state.chart.cells.unshift(...rows); }
+        else { state.rowIds.push(...edit.newRowIds); state.chart.cells.push(...rows); }
+      } else if (added < 0) {
+        const remove = -added;
+        if (state.chart.rowNumbering === 'bottom-up') { state.rowIds.splice(0, remove); state.chart.cells.splice(0, remove); }
+        else { state.rowIds.splice(edit.height, remove); state.chart.cells.splice(edit.height, remove); }
+      }
+      state.chart.height = edit.height;
+      break;
+    }
+    case 'set-needle-offset':
+      if (edit.needleOffset + state.chart.width - 1 > 252) throw new Error('chart exceeds the 252-needle bed at this offset');
+      state.machine.needleOffset = edit.needleOffset;
+      break;
     case 'set-strategy': state.strategy = edit.strategy; break;
+    case 'set-frame': state.frame = edit.frame; break;
     case 'set-yarn-assignment': {
       if (!state.chart.palette.some((entry) => entry.id === edit.assignment.paletteId)) throw new Error(`unknown palette id "${edit.assignment.paletteId}"`);
       state.machine.yarnAssignments = state.machine.yarnAssignments.filter((item) => item.paletteId !== edit.assignment.paletteId && item.carrier !== edit.assignment.carrier);

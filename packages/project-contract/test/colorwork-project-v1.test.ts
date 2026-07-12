@@ -50,6 +50,24 @@ describe('ColorworkProjectV1', () => {
     expect(result.overrides[0]).toMatchObject({ status: 'quarantined', reason: expect.stringContaining('no longer exists') });
   });
 
+  it('resizes height away from the row-numbering origin and preserves stable rows', () => {
+    let project = createColorworkProjectV1(chart, { id: 'resize-height' });
+    const original = [...project.base.rowIds];
+    project = appendProjectEdit(project, { id: 'grow', source: 'human', edit: { kind: 'set-height', height: 4, fillPaletteIndex: 0, newRowIds: ['row_new_1', 'row_new_2'] } });
+    expect(materializeColorworkProject(project).state.rowIds).toEqual(['row_new_1', 'row_new_2', ...original]);
+    project = appendProjectEdit(project, { id: 'shrink', source: 'human', edit: { kind: 'set-height', height: 2, fillPaletteIndex: 0, newRowIds: [] } });
+    expect(materializeColorworkProject(project).state.rowIds).toEqual(original);
+  });
+
+  it('edits machine placement and frame through project history', () => {
+    let project = createColorworkProjectV1(chart, { id: 'machine-setup' });
+    project = appendProjectEdit(project, { id: 'place', source: 'human', edit: { kind: 'set-needle-offset', needleOffset: 20 } });
+    project = appendProjectEdit(project, { id: 'frame', source: 'human', edit: { kind: 'set-frame', frame: { wasteRows: 30, drawThread: true, bindOff: 'machine-bindoff' } } });
+    const state = materializeColorworkProject(project).state;
+    expect(state.machine.needleOffset).toBe(20);
+    expect(state.frame).toEqual({ wasteRows: 30, drawThread: true, bindOff: 'machine-bindoff' });
+  });
+
   it('uses one history for human and assistant edits with deterministic undo/redo', () => {
     let project = createColorworkProjectV1(chart, { id: 'blanket-1' });
     project = appendProjectEdit(project, { id: 'human-paint', source: 'human', edit: { kind: 'paint-cells', cells: [{ rowId: 'row_0001', column: 0, paletteIndex: 1 }] } });

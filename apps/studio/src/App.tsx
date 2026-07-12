@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { compareKcDocuments, openMachineDocument, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
 import { createColorworkProjectV1, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import { ChartWorkspace } from './chart/ChartWorkspace';
 
 const ROW_HEIGHT = 44;
@@ -243,6 +244,7 @@ export function App() {
   const [showVerdict, setShowVerdict] = useState(false);
   const [showRunSheet, setShowRunSheet] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const blanketCompile = useBlanketCompiler(project);
 
   const openFile = async (file: File | undefined, comparison = false) => {
     if (!file) return;
@@ -283,7 +285,7 @@ export function App() {
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} isDarkMode={theme === 'dark'} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
+      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} isDarkMode={theme === 'dark'} compile={blanketCompile} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>

@@ -1,7 +1,7 @@
 {
   "kind": "kniterate-studio-m1-conformance-report",
   "schemaVersion": "1",
-  "generatedAt": "2026-07-12T21:15:34.780Z",
+  "generatedAt": "2026-07-12T22:33:18.734Z",
   "verdict": "Verified - swatch recommended",
   "honestyCap": "Software extraction proof only; Knit-proven requires a matching physical registry entry.",
   "gates": [
