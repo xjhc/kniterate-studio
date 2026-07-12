@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./browser": "./src/browser.ts"
+    "./browser": "./src/browser.ts",
+    "./browser-converter": "./src/knitout/kniterate/browser-to-kcode.ts"
   },
   "scripts": {
     "build": "tsc --noEmit",

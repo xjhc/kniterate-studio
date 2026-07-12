@@ -1882,7 +1882,7 @@ function passesToKCode(headers, passes, kcFile) {
 //-------------------------------
 //driver code (if run from command line):
 
-if (typeof(window) === 'undefined') {
+if (typeof(require) !== 'undefined' && typeof(module) !== 'undefined' && require.main === module) {
 	//parse command line
 	if (process.argv.length != 4) {
 		console.error("Usage:\nknitout-to-kcode.js <in.knitout> <out.kc>");
@@ -1899,3 +1899,5 @@ if (typeof(window) === 'undefined') {
 		fs.writeFileSync(kcFile, kcode);
 	}
 }
+
+module.exports = { knitoutToPasses, passesToKCode };

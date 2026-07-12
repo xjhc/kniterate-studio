@@ -9,6 +9,7 @@ import {
   ChevronRight,
   CircleAlert,
   Code2,
+  Download,
   FileCode2,
   FilePlus2,
   FileUp,
@@ -22,10 +23,12 @@ import {
   X,
 } from 'lucide-react';
 import { compareKcDocuments, openMachineDocument, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
-import { createColorworkProjectV1, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { createColorworkProjectV1, materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import type { BlanketCompileArtifact } from './blanket/compileProject';
 import { ChartWorkspace } from './chart/ChartWorkspace';
+import { useKCodeArtifact } from './kcode/useKCodeArtifact';
+import type { KCodeArtifact } from './kcode/kcodeProtocol';
 
 const ROW_HEIGHT = 44;
 const CARRIER_COLORS: Record<string, string> = {
@@ -138,7 +141,7 @@ function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = 
   );
 }
 
-function CompiledMachineWorkspace({ artifact, focusedRowId, onFocusedRowId }: { artifact: BlanketCompileArtifact; focusedRowId: string | null; onFocusedRowId: (rowId: string) => void }) {
+function CompiledMachineWorkspace({ artifact, kcode, focusedRowId, onFocusedRowId }: { artifact: BlanketCompileArtifact; kcode: KCodeArtifact | null; focusedRowId: string | null; onFocusedRowId: (rowId: string) => void }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const focusedPass = artifact.rowProvenance.find((row) => row.rowId === focusedRowId)?.passIndices[0] ?? 0;
   const [selected, setSelected] = useState(focusedPass);
@@ -174,6 +177,10 @@ function CompiledMachineWorkspace({ artifact, focusedRowId, onFocusedRowId }: { 
     else groups.set(diagnostic.rule, { diagnostic, count: 1 });
     return groups;
   }, new Map<string, { diagnostic: BlanketCompileArtifact['diagnostics'][number]; count: number }>()).values()];
+  const sourceLines = useMemo(() => kcode?.kcText.split(/\r?\n/) ?? [], [kcode]);
+  const sourceSpan = kcode?.passLines[selected];
+  const sourceFrom = Math.max(1, (sourceSpan?.lineStart ?? 1) - 6);
+  const sourceTo = Math.min(sourceLines.length, (sourceSpan?.lineEnd ?? 1) + 6);
   return <div className="workspace">
     <nav className="side-rail" aria-label="Workspace views"><button className="active" type="button" title="Machine passes"><Rows3 size={19} /></button></nav>
     <main className="machine-workspace compiled-workspace">
@@ -181,6 +188,7 @@ function CompiledMachineWorkspace({ artifact, focusedRowId, onFocusedRowId }: { 
       <div className="compiled-machine-layout">
         <PassGrid passes={passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={selectPass} compiled />
         <section className="diagnostics-panel"><div className="panel-title"><span><ListChecks size={15} /> Checks</span><b>{warnings.length} warnings</b></div><div className="diagnostic-list">{artifact.messages.length === 0 ? <div className="compiled-clear"><CheckCircle2 size={18} /><strong>No compiler findings</strong></div> : findingGroups.map(({ diagnostic, count }) => <button type="button" disabled={diagnostic.passIndices.length === 0} onClick={() => { const pass = diagnostic.passIndices[0]; if (pass !== undefined) selectPass(pass); }} className={`compiled-finding severity-${diagnostic.severity}`} key={diagnostic.rule}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}<span><strong>{diagnostic.rule}{count > 1 ? ` · ${count} occurrences` : ''}</strong><small>{diagnostic.message}</small></span></button>)}</div></section>
+        <section className="source-dock"><div className="panel-title"><span><Code2 size={15} /> Generated K-code</span><b>{kcode ? `${kcode.passCount.toLocaleString()} passes · ${kcode.kcHash.slice(0, 12)}` : 'Converting'}</b></div><pre>{kcode ? sourceLines.slice(sourceFrom - 1, sourceTo).map((line, offset) => { const lineNumber = sourceFrom + offset; const highlighted = lineNumber >= (sourceSpan?.lineStart ?? 0) && lineNumber <= (sourceSpan?.lineEnd ?? 0); return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={lineNumber}><i>{lineNumber}</i><code>{line || ' '}</code></span>; }) : <span className="source-line"><i /><code>Waiting for validated conversion…</code></span>}</pre></section>
       </div>
     </main>
   </div>;
@@ -262,6 +270,23 @@ function RunSheet({ document, onClose }: { document: MachineDocument; onClose: (
   );
 }
 
+function AuthoredRunSheet({ project, compiled, kcode, onClose }: { project: ColorworkProjectV1; compiled: BlanketCompileArtifact; kcode: KCodeArtifact; onClose: () => void }) {
+  const { state } = materializeColorworkProject(project);
+  const needleEnd = state.machine.needleOffset + state.chart.width - 1;
+  const findings = [...new Map(compiled.messages.filter((message) => message.severity !== 'info').map((message) => [message.rule, message])).values()];
+  return <div className="modal-backdrop"><article className="run-sheet">
+    <div className="run-sheet-actions"><button className="secondary-button" type="button" onClick={onClose}><X size={16} /> Close</button><button className="primary-button" type="button" onClick={() => window.print()}><Printer size={16} /> Print</button></div>
+    <header><span>KNITERATE STUDIO · RUN SHEET</span><h1>{project.title}</h1><div className="print-verdict verdict-surface">Surface-proven</div></header>
+    <p className="run-annotation">Compiled and converted locally without blocking findings. Physical yarn, tension, and fabric behavior remain swatch-dependent.</p>
+    <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Needles</dt><dd>{state.machine.needleOffset}–{needleEnd} ({state.chart.width})</dd></div><div><dt>Design rows</dt><dd>{state.chart.height}</dd></div><div><dt>Backing</dt><dd>{state.strategy.technique}</dd></div><div><dt>K-code passes</dt><dd>{kcode.passCount.toLocaleString()}</dd></div><div><dt>Estimated time</dt><dd>{compiled.stats.estimatedKnitTimeSeconds === null ? '—' : `${Math.ceil(compiled.stats.estimatedKnitTimeSeconds / 60)} min`}</dd></div></dl></section>
+    <section><h2>Carrier map</h2><div className="carrier-map"><span><i style={{ background: CARRIER_COLORS['1'] }} />C1<b>{state.frame.drawThread ? 'Draw thread' : 'Not used'}</b></span>{state.machine.yarnAssignments.map((assignment) => { const color = state.chart.palette.find((entry) => entry.id === assignment.paletteId); return <span key={assignment.paletteId}><i style={{ background: color?.hex }} />C{assignment.carrier}<b>{assignment.yarnName}</b></span>; })}<span><i style={{ background: CARRIER_COLORS['6'] }} />C6<b>Waste yarn · {state.frame.wasteRows} rows</b></span></div></section>
+    <section><h2>Finish and identity</h2><dl><div><dt>Bind-off</dt><dd>{state.frame.bindOff}</dd></div><div><dt>Project revision</dt><dd>{compiled.revision}</dd></div><div><dt>Compile hash</dt><dd>{compiled.inputHash}</dd></div><div><dt>K-code SHA-256</dt><dd>{kcode.kcHash.slice(0, 16)}</dd></div></dl></section>
+    {findings.length > 0 && <section><h2>Known findings</h2><ul>{findings.map((finding) => <li key={finding.rule}><b>{finding.severity.toUpperCase()}</b> {finding.message}</li>)}</ul></section>}
+    <section><h2>Pre-knit check</h2><ul className="checklist"><li>C1 draw thread, C6 waste, and C2–C5 pattern yarns match the carrier map</li><li>Needles {state.machine.needleOffset}–{needleEnd} are selected and the remaining bed is clear</li><li>Carriage moves freely and takedown is ready for {state.frame.wasteRows} waste rows</li><li>Machine profile is 7gg worsted and the finish is {state.frame.bindOff}</li><li>A representative swatch has been knit and inspected</li></ul></section>
+    <footer>Generated locally · {new Date().toLocaleDateString()}</footer>
+  </article></div>;
+}
+
 function DiffView({ base, compare, onOpenCompare, onSelect }: { base: MachineDocument; compare: MachineDocument | null; onOpenCompare: () => void; onSelect: (index: number) => void }) {
   const result = useMemo(() => compare && base.format === 'kc' && compare.format === 'kc' ? compareKcDocuments(base, compare) : null, [base, compare]);
   if (base.format !== 'kc') return <div className="diff-empty"><ArrowLeftRight size={26} /><h2>Pass diff requires a .kc file</h2></div>;
@@ -296,6 +321,16 @@ export function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const blanketCompile = useBlanketCompiler(project);
+  const kcodeState = useKCodeArtifact(blanketCompile.artifact);
+  const authoredExportReady = blanketCompile.artifact?.ok === true && kcodeState.artifact?.ok === true && kcodeState.artifact.inputHash === blanketCompile.artifact.inputHash;
+  const downloadKCode = () => {
+    if (!authoredExportReady || !kcodeState.artifact) return;
+    const link = window.document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([kcodeState.artifact.kcText], { type: 'text/plain' }));
+    link.download = `${project.id}.kc`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
 
   const openFile = async (file: File | undefined, comparison = false) => {
     if (!file) return;
@@ -329,14 +364,15 @@ export function App() {
           <button className={`icon-button${view !== 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => (document || blanketCompile.artifact?.ok) && setView('machine')} title="Machine" aria-label="Open machine" disabled={!document && !blanketCompile.artifact?.ok}><Rows3 size={17} /></button>
           {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
           <button className="icon-button" type="button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} title="Toggle theme" aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
-          {document && <button className="icon-button" type="button" onClick={() => setShowRunSheet(true)} title="Run sheet" aria-label="Open run sheet"><Printer size={17} /></button>}
+          {!document && <button className="icon-button" type="button" onClick={downloadKCode} disabled={!authoredExportReady} title={authoredExportReady ? 'Export validated K-code' : kcodeState.status === 'converting' ? 'Validating K-code' : 'Resolve blocking findings before export'} aria-label="Export k-code"><Download size={17} /></button>}
+          {(document || authoredExportReady) && <button className="icon-button" type="button" onClick={() => setShowRunSheet(true)} title="Run sheet" aria-label="Open run sheet"><Printer size={17} /></button>}
           <button className="primary-button top-open" type="button" onClick={() => fileInput.current?.click()}><FileUp size={16} /> Open</button>
         </div>
       </header>
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} isDarkMode={theme === 'dark'} compile={blanketCompile} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
+      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} isDarkMode={theme === 'dark'} compile={blanketCompile} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash ? kcodeState.artifact : null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>
@@ -362,6 +398,7 @@ export function App() {
       )}
       {document && showVerdict && <VerdictPanel document={document} onClose={() => setShowVerdict(false)} />}
       {document && showRunSheet && <RunSheet document={document} onClose={() => setShowRunSheet(false)} />}
+      {!document && showRunSheet && authoredExportReady && blanketCompile.artifact && kcodeState.artifact && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} onClose={() => setShowRunSheet(false)} />}
     </div>
   );
 }

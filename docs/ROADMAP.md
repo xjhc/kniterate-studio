@@ -117,10 +117,26 @@ Completed 2026-07-12:
 - authored machine view is virtualized, synchronized with chart hover, responsive
   on narrow screens, and groups repeated findings without hiding their count
 
-### M3D - Durable machine output
+### M3D - Durable machine output - complete
 
 Browser `.kc` conversion, gated export, project save/reopen, byte-identical
 recompile, and final run sheet.
+
+Completed 2026-07-12:
+
+- a dedicated Worker executes the same vendored converter source as the Node
+  conformance adapter; a parity test pins byte-identical output
+- generated `.kc` is reconstructed and validator-gated before export, with
+  trusted body prediction checked against vendor passes and known-approximate
+  frame/finish deltas retained as non-gating provenance
+- pass-to-`.kc` line spans join the existing design-row provenance and drive the
+  generated source dock
+- export is disabled for blocked, converting, stale, reconstruction-failed, or
+  parity-failed artifacts
+- the authored run sheet records dimensions, frame, backing, C1/C6 reservations,
+  C2-C5 yarns, findings, compile identity, and k-code SHA-256
+- browser tests prove gated export, print output, foreign-file revalidation,
+  byte-identical save/reopen/recompile, and a responsive 200x300 four-color run
 
 M3 gate: author/import the four-color fixture, assign yarns, compile, export,
 reopen, and revalidate byte-identically in a browser test.

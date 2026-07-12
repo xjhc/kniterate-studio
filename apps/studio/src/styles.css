@@ -71,7 +71,7 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
 .verdict-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 
 .machine-layout { display: grid; grid-template-columns: minmax(600px, 1fr) 310px; grid-template-rows: minmax(0, 1fr) 220px; min-width: 0; min-height: 0; }
-.compiled-machine-layout { display: grid; grid-template-columns: minmax(600px, 1fr) 310px; min-width: 0; min-height: 0; }
+.compiled-machine-layout { display: grid; grid-template-columns: minmax(600px, 1fr) 310px; grid-template-rows: minmax(0, 1fr) 220px; min-width: 0; min-height: 0; }
 .compiled-clear { display: flex; align-items: center; gap: 8px; padding: 16px 12px; color: var(--surface); font-size: 11px; }
 .compiled-finding { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 7px; width: 100%; padding: 10px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; color: var(--ink-2); background: var(--panel); text-align: left; }.compiled-finding:not(:disabled) { cursor: pointer; }.compiled-finding:not(:disabled):hover { background: var(--panel-2); }.compiled-finding:disabled { opacity: 1; }
 .compiled-finding strong,.compiled-finding small { display: block; }.compiled-finding strong { margin-bottom: 3px; color: var(--ink); font-size: 10px; }.compiled-finding small { font-size: 10px; line-height: 1.4; }.compiled-finding.severity-error > svg { color: var(--blocked); }.compiled-finding.severity-warning > svg { color: var(--warning); }.compiled-finding.severity-info > svg { color: var(--surface); }
@@ -195,7 +195,7 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
   .blanket-setup { grid-column: 1 / -1; display: flex; gap: 14px; padding: 8px; overflow-x: auto; overflow-y: hidden; border-top: 1px solid var(--line); border-left: 0; }
   .blanket-setup > * { flex: 0 0 210px; }
   .blanket-setup section { padding: 0 12px 0 0; border-right: 1px solid var(--line); border-bottom: 0; }
-  .compiled-machine-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 180px; }
+  .compiled-machine-layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(300px, 1fr) 150px 180px; overflow: auto; }
   .compiled-machine-layout .pass-table { border-right: 0; }
   .palette-rail { padding: 6px; }
   .palette-rail button { grid-template-columns: 20px minmax(0, 1fr); padding: 4px; }
@@ -209,6 +209,7 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
   .mobile-tabs button.active { border-color: var(--accent); color: var(--accent); }
   .machine-layout { display: block; min-height: 0; overflow: hidden; }
   .pass-table, .diagnostics-panel, .source-dock { display: none; width: 100%; height: 100%; border: 0; }
+  .compiled-machine-layout .pass-table,.compiled-machine-layout .diagnostics-panel,.compiled-machine-layout .source-dock { display: grid; }
   .mobile-passes .pass-table { display: grid; }
   .mobile-diagnostics .diagnostics-panel { display: grid; }
   .mobile-source .source-dock { display: grid; }
