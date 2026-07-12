@@ -8,6 +8,7 @@ import { inspectKcDocument } from '../packages/machine-lib/src/knitout/kc-docume
 import { kcToKnitout } from '../packages/machine-lib/src/knitout/kc-to-knitout.js';
 import { knitoutToKCode } from '../packages/machine-lib/src/knitout/kniterate/to-kcode.js';
 import { validateKnitoutProgram } from '../packages/machine-lib/src/validators/knitout-program.js';
+import { computeCompilerFingerprint } from '../packages/machine-lib/scripts/registry-support.js';
 
 const destination = resolve('out/v1-knit-trial');
 const palette = [
@@ -37,10 +38,26 @@ const validation = validateKnitoutProgram(reconstructed.program);
 const errors = validation.messages.filter((message) => message.severity === 'error');
 if (errors.length > 0 || Object.keys(reconstructed.stats.unrecognizedTypes).length > 0) throw new Error(`generated k-code failed revalidation: ${errors.map((message) => message.message).join('; ')}`);
 const hash = (text: string) => createHash('sha256').update(text).digest('hex');
+const firstSetting = (name: string): number => {
+  const value = new RegExp(`^${name} ([0-9.]+)$`, 'm').exec(compiled.knitoutText!)?.[1];
+  if (value === undefined) throw new Error(`generated knitout is missing ${name}`);
+  return Number(value);
+};
 const manifest = {
   kind: 'kniterate-studio-v1-physical-trial', schemaVersion: 1,
   title: project.title, profile: project.base.machine.profile,
-  chart: { width, height, colors: palette.length, rowNumbering: chart.rowNumbering },
+  chart: { width, height, colors: palette.length, rowNumbering: chart.rowNumbering, palette },
+  machine: {
+    needleStart: project.base.machine.needleOffset,
+    needleEnd: project.base.machine.needleOffset + width - 1,
+    settings: {
+      gauge: 7,
+      stitchNumber: firstSetting('x-stitch-number'),
+      xferStitchNumber: firstSetting('x-xfer-stitch-number'),
+      speedNumber: firstSetting('x-speed-number'),
+      rollerAdvance: firstSetting('x-roller-advance'),
+    },
+  },
   carriers: [
     { carrier: '1', role: 'draw-thread' },
     ...project.base.machine.yarnAssignments.map((assignment) => ({ carrier: assignment.carrier, role: 'pattern', paletteId: assignment.paletteId, yarnName: assignment.yarnName })),
@@ -49,6 +66,7 @@ const manifest = {
   frame: project.base.frame, strategy: project.base.strategy,
   output: { predictedPasses: compiled.stats.passCount, emittedPasses: inspectKcDocument(converted.kcode).length, operations: compiled.stats.opCount, estimatedKnitTimeSeconds: compiled.stats.estimatedKnitTimeSeconds },
   identity: { compileHash: compiled.inputHash, knitoutSha256: hash(compiled.knitoutText), kcodeSha256: hash(converted.kcode) },
+  compilerFingerprint: computeCompilerFingerprint(resolve('packages/machine-lib/src')),
   softwareVerdict: 'Surface-proven', physicalVerdict: 'Pending machine trial',
 };
 

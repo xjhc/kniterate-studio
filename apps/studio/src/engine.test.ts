@@ -25,6 +25,15 @@ describe('machine document engine', () => {
     expect(document.verdict.label).toBe('Surface-proven (imported)');
   });
 
+  it('recognizes an exact physically registered imported artifact', () => {
+    const document = openMachineDocument('sample.kc', KC, '2026-07-12-proof');
+    expect(document.verdict).toMatchObject({
+      state: 'knit',
+      label: 'Knit-proven',
+    });
+    expect(document.verdict.annotation).toContain('2026-07-12-proof');
+  });
+
   it('opens knitout and groups authored operations', () => {
     const document = openMachineDocument('sample.k', K);
     expect(document.passes).toHaveLength(1);

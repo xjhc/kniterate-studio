@@ -33,6 +33,11 @@ hash-pinned four-color physical-knit package. Promotion to `1.0.0` is reserved
 for a successful run of that exact package on a real Kniterate; see
 [`docs/V1-PHYSICAL-TRIAL.md`](./docs/V1-PHYSICAL-TRIAL.md).
 
+After the machine run, `pnpm release:register -- <short-name>` scaffolds the
+hash-linked physical record and `pnpm release:physical-check` enforces the
+promotion gate. Studio grants Knit-proven only when the current compiler and
+the exact exported or reopened `.kc` match a clean registry entry.
+
 ## Product boundary
 
 - Studio owns yarn/carrier mapping, colorwork strategy, validation, verdicts,

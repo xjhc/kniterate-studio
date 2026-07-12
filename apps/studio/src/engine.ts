@@ -13,7 +13,7 @@ import {
 } from '@kniterate-studio/machine-lib/browser';
 
 export type MachineFormat = 'kc' | 'k';
-export type VerdictState = 'blocked' | 'surface';
+export type VerdictState = 'blocked' | 'surface' | 'knit';
 
 export interface MachinePass {
   index: number;
@@ -45,7 +45,7 @@ export interface MachineDocument {
   diagnostics: readonly MachineDiagnostic[];
   verdict: {
     state: VerdictState;
-    label: 'Blocked' | 'Surface-proven (imported)';
+    label: 'Blocked' | 'Surface-proven (imported)' | 'Knit-proven';
     annotation: string;
   };
   stats: {
@@ -79,7 +79,7 @@ function diagnostics(
   }));
 }
 
-export function openMachineDocument(filename: string, source: string): MachineDocument {
+export function openMachineDocument(filename: string, source: string, knitProvenEntryId: string | null = null): MachineDocument {
   const format: MachineFormat = filename.toLowerCase().endsWith('.kc') ? 'kc' : 'k';
   let passes: MachinePass[];
   let findings: MachineDiagnostic[];
@@ -163,10 +163,12 @@ export function openMachineDocument(filename: string, source: string): MachineDo
   return {
     filename, format, source, passes, diagnostics: findings,
     verdict: {
-      state: blocked ? 'blocked' : 'surface',
-      label: blocked ? 'Blocked' : 'Surface-proven (imported)',
+      state: blocked ? 'blocked' : knitProvenEntryId ? 'knit' : 'surface',
+      label: blocked ? 'Blocked' : knitProvenEntryId ? 'Knit-proven' : 'Surface-proven (imported)',
       annotation: blocked
         ? 'Machine-facing findings must be resolved before this file should be knit.'
+        : knitProvenEntryId
+          ? `This exact k-code artifact has a current clean physical registry match: ${knitProvenEntryId}.`
         : 'Imported file reconstructed and validated without errors. Source intent and physical knitting remain unproven; knit a swatch first.',
     },
     stats: {

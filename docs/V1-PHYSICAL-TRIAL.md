@@ -32,11 +32,15 @@ tail; body parity and generated-file revalidation gate export.
    bind-off complete without manual source edits.
 3. Photograph front/back and all four boundaries; record rested dimensions and
    every machine stop or intervention.
-4. If the run fails, keep the RC capped, add the failure to the refusal corpus,
+4. Run `pnpm release:register -- v1-four-color-blanket`, complete its physical
+   fields, regenerate the trial, and mark the re-emit check `matches` only when
+   both emitted files remain byte-identical.
+5. Run `pnpm release:physical-check`. It must identify the exact registry entry;
+   Studio will then show Knit-proven only for that compile hash and `.kc` hash.
+6. If the run fails, keep the RC capped, add the failure to the refusal corpus,
    fix the engine, regenerate, and repeat.
-5. If it succeeds, register the exact artifact under
-   `packages/machine-lib/registry/swatches/`, verify the fingerprint match, bump
-   workspace versions from `1.0.0-rc.1` to `1.0.0`, and tag the release.
+7. If it succeeds and the physical check passes, bump workspace versions from
+   `1.0.0-rc.1` to `1.0.0` and tag the release.
 
 This single blanket run closes the v1 release ruling. M4's broader Knit-proven
 gate remains four exact registry entries: tension, fairisle, birdseye, and

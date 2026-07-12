@@ -19,9 +19,10 @@ function BackFaceMini({ projection, palette }: { projection: BackFaceProjection 
   return <span className="back-mini" style={{ gridTemplateColumns: `repeat(${Math.min(8, Math.ceil(projection.width / columnStep))}, 1fr)` }}>{sampled.map((cell, index) => <i className={cell.kind} style={{ background: cell.paletteIndexes.length ? palette[cell.paletteIndexes[0]!]?.hex : 'transparent' }} key={index} />)}</span>;
 }
 
-export function BlanketSetupRail({ state, compile, onWidth, onHeight, onNeedleOffset, onStrategy, onAssignment, onFrame }: {
+export function BlanketSetupRail({ state, compile, knitProvenEntryId, onWidth, onHeight, onNeedleOffset, onStrategy, onAssignment, onFrame }: {
   state: ProjectState;
   compile: BlanketCompileState;
+  knitProvenEntryId: string | null;
   onWidth: (width: number) => void;
   onHeight: (height: number) => void;
   onNeedleOffset: (offset: number) => void;
@@ -31,12 +32,14 @@ export function BlanketSetupRail({ state, compile, onWidth, onHeight, onNeedleOf
 }) {
   const assignmentFor = (paletteId: string) => state.machine.yarnAssignments.find((item) => item.paletteId === paletteId);
   const verdict = compile.status === 'failed' || compile.artifact?.verdict === 'blocked' ? 'Blocked'
+    : compile.status === 'ready' && knitProvenEntryId ? 'Knit-proven'
     : compile.status === 'ready' ? 'Surface-proven' : 'Compiling';
   const selectedPassCount = compile.comparisons.find((item) => item.technique === state.strategy.technique)?.passCount ?? compile.artifact?.stats.passCount ?? null;
   return <aside className="blanket-setup" aria-label="Blanket setup">
     <div className={`compile-verdict ${verdict.toLowerCase().replace('-', '')}`}>
       {verdict === 'Compiling' ? <LoaderCircle size={15} className="spin" /> : verdict === 'Blocked' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
       <strong>{verdict}</strong>
+      {knitProvenEntryId && <small title={knitProvenEntryId}>Exact physical match</small>}
     </div>
     <section><h2>Rectangle</h2><div className="setup-pair">
       <label>Needles<input type="number" min="1" max="252" defaultValue={state.chart.width} key={`w${state.chart.width}`} onBlur={(event) => onWidth(Number(event.currentTarget.value))} /></label>

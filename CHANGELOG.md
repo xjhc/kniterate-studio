@@ -16,6 +16,9 @@
   gated export, deterministic project reopen, and byte-identical re-export.
 - Added machine-only rectangle topology fixtures, refusal cases, reference
   parity rails, and a reproducible physical blanket trial package.
+- Added hash-checked physical registry scaffolding, fail-closed release
+  promotion, and exact-artifact Knit-proven verdicts for authored and reopened
+  k-code.
 
 The RC remains capped at Surface-proven. Promotion to `1.0.0` requires the
 representative blanket trial documented in `docs/V1-PHYSICAL-TRIAL.md`.

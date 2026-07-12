@@ -35,3 +35,12 @@ export {
   type BackFaceCell,
   type BackFaceProjection,
 } from './knitout/back-face-projection.js';
+export {
+  findKnitProvenMatch,
+  findKnitProvenKCodeMatch,
+  knitProvenRegistryEntries,
+  matchKnitProvenArtifact,
+  matchKnitProvenKCode,
+  type KnitProvenMatch,
+  type KnitProvenRegistryEntry,
+} from './physical-registry.js';

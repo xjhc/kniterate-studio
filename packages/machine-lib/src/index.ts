@@ -57,3 +57,4 @@ export {
   type BackFaceCell,
   type BackFaceProjection,
 } from './knitout/back-face-projection.js';
+export * from './physical-registry.js';

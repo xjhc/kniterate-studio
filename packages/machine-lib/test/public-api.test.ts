@@ -5,8 +5,9 @@ import * as nodeApi from '../src/index';
 describe('machine-lib public boundaries', () => {
   it('keeps the browser surface explicit and free of Node-only adapters', () => {
     expect(Object.keys(browserApi).sort()).toEqual([
-      'compileToRunArtifact', 'diffKc', 'inspectKcDocument', 'inspectKnitoutPasses',
-      'kcToKnitout', 'parseKnitoutProgram', 'projectBackFaceFromArtifact',
+      'compileToRunArtifact', 'diffKc', 'findKnitProvenKCodeMatch', 'findKnitProvenMatch', 'inspectKcDocument',
+      'inspectKnitoutPasses', 'kcToKnitout', 'knitProvenRegistryEntries',
+      'matchKnitProvenArtifact', 'matchKnitProvenKCode', 'parseKnitoutProgram', 'projectBackFaceFromArtifact',
       'projectColorworkChartV1', 'renderKcPassWindow', 'resolveValidatorMessage',
       'validateKnitoutProgram',
     ]);

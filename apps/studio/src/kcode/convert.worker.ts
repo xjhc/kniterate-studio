@@ -2,13 +2,9 @@
 import { browserKnitoutToKCode } from '@kniterate-studio/machine-lib/browser-converter';
 import { inspectKcDocument, kcToKnitout, validateKnitoutProgram, type ValidationMessage } from '@kniterate-studio/machine-lib/browser';
 import type { KCodeConversionRequest, KCodeConversionResponse } from './kcodeProtocol';
+import { sha256Text } from './sha256';
 
 const scope: DedicatedWorkerGlobalScope = self as unknown as DedicatedWorkerGlobalScope;
-
-async function sha256(text: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
-}
 
 scope.onmessage = async (event: MessageEvent<KCodeConversionRequest>) => {
   const request = event.data;
@@ -42,7 +38,7 @@ scope.onmessage = async (event: MessageEvent<KCodeConversionRequest>) => {
     });
     const artifact = {
       inputHash: request.inputHash,
-      kcHash: await sha256(converted.kcode),
+      kcHash: await sha256Text(converted.kcode),
       kcText: converted.kcode,
       passCount: passes.length,
       messages,

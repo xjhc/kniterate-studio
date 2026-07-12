@@ -147,6 +147,8 @@ the exact recipe matches the physical registry.
 
 Software readiness is complete: `pnpm release:trial` produces the validated,
 hash-pinned 120x160 four-color blanket package and operator checklist described
-in [`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md). Physical state remains 0/4 registry entries; the
-representative blanket machine run is the only blocker to promoting
-`1.0.0-rc.1` to `1.0.0`.
+in [`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md). The registration command,
+source-tree/output hash checks, browser registry manifest, exact-artifact
+matcher, Knit-proven setup/run-sheet state, and fail-closed promotion command
+are wired. Physical state remains 0/4 registry entries; actual machine runs are
+the remaining gate.

@@ -12,6 +12,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { computeCompilerFingerprint, sha256File } from './registry-support.js';
 
 interface SwatchEntryResult {
   id: string;
@@ -19,6 +20,13 @@ interface SwatchEntryResult {
   stale: boolean;
   knitProven: boolean;
   messages: string[];
+  registryEntry: {
+    id: string;
+    sourceFingerprint: string;
+    knitoutSha256: string;
+    kcodeSha256: string;
+    compilerFingerprint: string;
+  } | null;
 }
 
 function readJson(path: string): unknown {
@@ -49,6 +57,10 @@ function currentCommit(): string | null {
   }
 }
 
+function compilerFingerprint(): string {
+  return computeCompilerFingerprint(resolve('src'));
+}
+
 function validateTemplate(root: string): string[] {
   const messages: string[] = [];
   const schema = join(root, '_schema.json');
@@ -60,7 +72,7 @@ function validateTemplate(root: string): string[] {
   return messages;
 }
 
-function validateEntry(root: string, id: string, head: string | null): SwatchEntryResult {
+function validateEntry(root: string, id: string, currentCompilerFingerprint: string): SwatchEntryResult {
   const dir = join(root, id);
   const messages: string[] = [];
   const required = ['spec.json', 'request.json', 'machine.json', 'yarn.json', 'out.k', 'out.kc', 'outcome.md'];
@@ -98,6 +110,15 @@ function validateEntry(root: string, id: string, head: string | null): SwatchEnt
   if (typeof spec.sourceFingerprint !== 'string' || spec.sourceFingerprint.length === 0) {
     messages.push('spec.sourceFingerprint is required');
   }
+  if (typeof spec.compilerFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(spec.compilerFingerprint)) {
+    messages.push('spec.compilerFingerprint must be a SHA-256 fingerprint');
+  }
+  if (typeof spec.knitoutSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(spec.knitoutSha256)) {
+    messages.push('spec.knitoutSha256 must be a SHA-256 hash');
+  }
+  if (typeof spec.kcodeSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(spec.kcodeSha256)) {
+    messages.push('spec.kcodeSha256 must be a SHA-256 hash');
+  }
   if (spec.compileResultOk !== true) {
     messages.push('spec.compileResultOk must be true for a completed swatch entry');
   }
@@ -115,8 +136,16 @@ function validateEntry(root: string, id: string, head: string | null): SwatchEnt
   }
   const outcome = existsSync(join(dir, 'outcome.md')) ? readFileSync(join(dir, 'outcome.md'), 'utf8') : '';
   const cleanOutcome = /\*\*Result:\*\*\s*(clean|pass)/i.test(outcome) || /\bResult:\s*(clean|pass)\b/i.test(outcome);
-  const emitterCommit = typeof spec.emitterCommit === 'string' ? spec.emitterCommit : '';
-  const stale = reemitStatus !== 'matches' || (head !== null && emitterCommit !== head);
+  const outK = join(dir, 'out.k');
+  const outKc = join(dir, 'out.kc');
+  if (existsSync(outK) && typeof spec.knitoutSha256 === 'string' && sha256File(outK) !== spec.knitoutSha256) {
+    messages.push('spec.knitoutSha256 does not match out.k');
+  }
+  if (existsSync(outKc) && typeof spec.kcodeSha256 === 'string' && sha256File(outKc) !== spec.kcodeSha256) {
+    messages.push('spec.kcodeSha256 does not match out.kc');
+  }
+  const entryCompilerFingerprint = typeof spec.compilerFingerprint === 'string' ? spec.compilerFingerprint : '';
+  const stale = reemitStatus !== 'matches' || entryCompilerFingerprint !== currentCompilerFingerprint;
   const knitProven = messages.length === 0 && cleanOutcome && !stale;
   if (!cleanOutcome) messages.push('outcome.md does not record a clean/pass result');
 
@@ -126,6 +155,13 @@ function validateEntry(root: string, id: string, head: string | null): SwatchEnt
     stale,
     knitProven,
     messages,
+    registryEntry: knitProven ? {
+      id,
+      sourceFingerprint: String(spec.sourceFingerprint),
+      knitoutSha256: String(spec.knitoutSha256),
+      kcodeSha256: String(spec.kcodeSha256),
+      compilerFingerprint: entryCompilerFingerprint,
+    } : null,
   };
 }
 
@@ -147,25 +183,34 @@ function main(): void {
   const absRoot = resolve(root);
   const templateMessages = validateTemplate(absRoot);
   const head = currentCommit();
+  const currentCompilerFingerprint = compilerFingerprint();
   const entries = existsSync(absRoot)
     ? readdirSync(absRoot)
       .filter(name => !name.startsWith('.') && name !== '_template' && name !== '_schema.json')
       .filter(name => statSync(join(absRoot, name)).isDirectory())
       .sort()
     : [];
-  const results = entries.map(id => validateEntry(absRoot, id, head));
+  const results = entries.map(id => validateEntry(absRoot, id, currentCompilerFingerprint));
   const ok = templateMessages.length === 0 && results.every(r => r.ok);
   const report = {
     kind: 'kniterate-swatch-registry-report',
     schemaVersion: '1',
     ok,
     currentCommit: head,
+    compilerFingerprint: currentCompilerFingerprint,
     entryCount: results.length,
     knitProvenCount: results.filter(r => r.knitProven).length,
     staleCount: results.filter(r => r.stale).length,
     templateMessages,
     entries: results,
   };
+  const manifest = {
+    kind: 'kniterate-knit-proven-registry',
+    schemaVersion: 1,
+    compilerFingerprint: currentCompilerFingerprint,
+    entries: results.flatMap(result => result.registryEntry === null ? [] : [result.registryEntry]),
+  };
+  writeFileSync(resolve(absRoot, '..', 'knit-proven.json'), JSON.stringify(manifest, null, 2) + '\n');
 
   if (outPath !== undefined) {
     const dest = resolve(outPath);

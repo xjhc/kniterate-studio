@@ -8,9 +8,11 @@
 > rectangle, and topology rails; seven checked-in Playwright tests cover the
 > product flow. `pnpm release:trial` deterministically builds the 120x160
 > four-color machine package in `out/v1-knit-trial/`. The only v1 promotion gate
-> is the real-Kniterate run in `V1-PHYSICAL-TRIAL.md`; do not label or tag
-> `1.0.0` before it succeeds. The historical session material below is retained
-> for provenance, not as current status.
+> is the real-Kniterate run in `V1-PHYSICAL-TRIAL.md`; registration, compiler and
+> output hash checks, Studio's exact-artifact Knit-proven state, and the
+> fail-closed `release:physical-check` are implemented. Do not label or tag
+> `1.0.0` before the machine run succeeds. The historical session material below
+> is retained for provenance, not as current status.
 
 > **Implementation update:** the user accepted the residual decisions: four
 > simultaneous pattern colors (C2–C5), embedded shared canvas (R1=B), fixed 7gg

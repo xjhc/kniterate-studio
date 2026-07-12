@@ -60,12 +60,14 @@ change?"
 ## Creating a new entry
 
 ```sh
-pnpm tsx scripts/swatch-register.ts <short-name>
+pnpm release:trial
+pnpm release:register -- <short-name>
 ```
 
-Scaffolds `<today>-<short-name>/` from `_template/`. Edit each file as you
-go through the physical knit. Commit when the entry is complete — the
-registry is content-addressed by date, so additions don't conflict.
+The second command copies the exact v1 trial artifacts and their hashes into
+`<today>-<short-name>/`, then scaffolds the physical fields from `_template/`.
+Edit `machine.json`, `yarn.json`, `outcome.md`, and the re-emit status as you go
+through the physical knit. Commit when the entry is complete.
 
 ## What goes in vs stays out
 
@@ -76,6 +78,14 @@ registry is content-addressed by date, so additions don't conflict.
 current compiler no longer byte-reproduces `out.k` from `request.json`, the
 entry is **stale** for current-output claims. Keep the entry; just do not call
 current output "knit-proven" from it.
+
+The checker compares `compilerFingerprint` to the current machine source tree,
+verifies the recorded SHA-256 identities against `out.k` and `out.kc`, and
+writes `registry/knit-proven.json`. Studio matches both the compile fingerprint
+and final k-code hash; a chart that merely looks similar cannot inherit proof.
+
+Before promoting a release, run `pnpm release:physical-check`. It fails until
+the current generated v1 blanket has an exact clean registry match.
 
 **Out:** Photos. They're useful locally but blow up the repo. Keep them in
 `photo-front.jpg` / `photo-back.jpg` inside the entry directory locally
