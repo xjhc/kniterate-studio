@@ -89,6 +89,13 @@ knit + b50 3
 knit + b51 3
 knit + b52 3
 knit + b53 3
+; -- lined finish: home final-row ladder backing b->f --
+rack 0
+xfer b50 f50
+xfer b52 f52
+rack 0
+xfer b51 f51
+xfer b53 f53
 ; --- BIND OFF (drop — test only) ---
 drop f50
 drop b50

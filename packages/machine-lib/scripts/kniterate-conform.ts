@@ -14,7 +14,9 @@ interface Gate {
 const gates: Gate[] = [
   { layer: '0', name: 'reference kc reproducibility', command: 'test:reference-kc', status: 'pending', exitCode: null },
   { layer: 1, name: 'chart compiler matrix and topology unit rail', command: 'test:compiler', status: 'pending', exitCode: null },
+  { layer: 2, name: 'machine-only rectangle fixture corpus', command: 'kniterate:fixtures', status: 'pending', exitCode: null },
   { layer: 3, name: 'kc revalidation and diff rails', command: 'test:revalidation', status: 'pending', exitCode: null },
+  { layer: 4, name: 'rectangle topology oracle', command: 'kniterate:topology', status: 'pending', exitCode: null },
   { layer: 6, name: 'known-bad refusal corpus', command: 'kniterate:refusals', status: 'pending', exitCode: null },
   { layer: 7, name: 'physical swatch registry integrity', command: 'kniterate:swatches', status: 'pending', exitCode: null },
 ];

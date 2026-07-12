@@ -1,7 +1,7 @@
 {
   "name": "@kniterate-studio/machine-lib",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
@@ -17,6 +17,8 @@
     "test:revalidation": "vitest run test/knitout/kc-to-knitout.test.ts test/knitout/kc-diff.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts",
     "benchmark:m3a": "node --import tsx scripts/m3a-blanket-benchmark.ts",
     "kniterate:refusals": "node --import tsx scripts/kniterate-refusal-corpus.ts",
+    "kniterate:fixtures": "node --import tsx scripts/generate-rectangle-corpus.ts",
+    "kniterate:topology": "node --import tsx scripts/kniterate-topology-oracle.ts out/rectangle-corpus -o out/rectangle-topology-report.json",
     "kniterate:swatches": "node --import tsx scripts/kniterate-swatch-registry-check.ts",
     "kniterate:conform": "node --import tsx scripts/kniterate-conform.ts"
   },

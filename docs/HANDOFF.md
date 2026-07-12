@@ -1,16 +1,16 @@
 # Session handoff — 2026-07-12
 
-> **Current handoff:** M3A, the Studio half of M3B, and M3C are complete.
-> The neutral `@knitlab/colorwork-core` package and embedded chart workspace are
-> implemented. Direct chart import, project save/reopen, continuous raster
-> gestures, atomic moves, row edits, clipboard/history, pan/zoom, narrow-screen
-> layout, dark canvas chrome, Worker compilation, strategy comparisons,
-> engine-owned back faces, row provenance, and the synchronized authored machine
-> view are covered by the repository gates. `pnpm verify`, `pnpm test:e2e`, and
-> `git diff --check` are the closeout gates. Next product work is M3D's durable
-> browser conversion/export loop; see `ROADMAP.md`. `TERRA-READY-TASKS.md` records the only pieces
-> that should be delegated after their contracts are frozen. The historical
-> session material below is retained for provenance, not as current status.
+> **Current handoff:** M0-M3D are complete and the repository is at
+> `1.0.0-rc.1`. Studio authors/imports rectangular four-color charts, compiles
+> five backing routes off the UI thread, validates browser-generated `.kc`,
+> exports only the current validated revision, and reopens byte-identically.
+> `pnpm verify` includes the reference, compiler, refusal, public-API, generated
+> rectangle, and topology rails; seven checked-in Playwright tests cover the
+> product flow. `pnpm release:trial` deterministically builds the 120x160
+> four-color machine package in `out/v1-knit-trial/`. The only v1 promotion gate
+> is the real-Kniterate run in `V1-PHYSICAL-TRIAL.md`; do not label or tag
+> `1.0.0` before it succeeds. The historical session material below is retained
+> for provenance, not as current status.
 
 > **Implementation update:** the user accepted the residual decisions: four
 > simultaneous pattern colors (C2–C5), embedded shared canvas (R1=B), fixed 7gg

@@ -13,7 +13,7 @@ The detailed product boundary and machine extraction manifest live in
 Gate: the KnitLab fixture parses byte-for-byte here and renders with the same
 dimensions, row convention, palette order, and cell indices.
 
-## M1 - Machine extraction - in progress
+## M1 - Machine extraction - complete
 
 Move the proven machine library and tests from `knitlab2` into
 `packages/machine-lib`; do not rewrite it. Preserve the reference `.kc` corpus,
@@ -33,18 +33,17 @@ Completed in the first extraction slice:
 - six refusal cases pinned and the physical swatch registry validated
 - public package entry point and a green `pnpm kniterate:conform`
 
-Remaining before closing M1:
-
-- replace the old mixed hand-knit `surface:verify` corpus with a machine-only
-  rectangle fixture corpus, then run the topology oracle across its emitted
-  `.k` files
-- complete the public API/export review and provenance manifest audit
+Closeout (2026-07-12): six machine-only rectangle routes now generate into the
+conformance run and pass the vendored topology oracle. That gate exposed and
+fixed orphaned stockinette cast-on loops and un-homed ladder backing loops. The
+browser/Node export boundaries are pinned by a public API test, and
+`EXTRACTION.md` records the exact source commit and exclusions.
 
 The old surface corpus is deliberately not copied: it exports written
 instructions and exercises measurement-first garment packages that are outside
 Studio's product boundary.
 
-## M2 - Open, validate, diff - in progress
+## M2 - Open, validate, diff - complete
 
 Ship foreign `.kc`/`.k` intake, pass-grid machine view, anchored diagnostics,
 verdict panel, run sheet, and `.kc` diff.
@@ -59,11 +58,11 @@ First implementation slice (2026-07-12):
 - all 13 reference `.kc` files open Surface-proven (imported); full repository
   verification and conformance rails remain green
 
-The six refusal programs are pinned through the browser-facing engine. Remaining
-gate work: add automated browser coverage for open, diff, keyboard navigation,
-and print.
+The six refusal programs are pinned through the browser-facing engine. Checked-in
+Playwright coverage now exercises foreign open, pass navigation, identical diff,
+print-ready run sheet output, and a blocked illegal-carrier file.
 
-## M3 - Blanket flow - in progress
+## M3 - Blanket flow - complete
 
 ### M3A - Project foundation - complete
 
@@ -145,3 +144,9 @@ reopen, and revalidate byte-identically in a browser test.
 
 Register physical swatches and allow a verdict to become Knit-proven only when
 the exact recipe matches the physical registry.
+
+Software readiness is complete: `pnpm release:trial` produces the validated,
+hash-pinned 120x160 four-color blanket package and operator checklist described
+in [`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md). Physical state remains 0/4 registry entries; the
+representative blanket machine run is the only blocker to promoting
+`1.0.0-rc.1` to `1.0.0`.

@@ -1,7 +1,7 @@
 {
   "kind": "kniterate-studio-m1-conformance-report",
   "schemaVersion": "1",
-  "generatedAt": "2026-07-12T23:08:16.959Z",
+  "generatedAt": "2026-07-12T23:17:50.062Z",
   "verdict": "Verified - swatch recommended",
   "honestyCap": "Software extraction proof only; Knit-proven requires a matching physical registry entry.",
   "gates": [
@@ -20,9 +20,23 @@
       "exitCode": 0
     },
     {
+      "layer": 2,
+      "name": "machine-only rectangle fixture corpus",
+      "command": "kniterate:fixtures",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
       "layer": 3,
       "name": "kc revalidation and diff rails",
       "command": "test:revalidation",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "layer": 4,
+      "name": "rectangle topology oracle",
+      "command": "kniterate:topology",
       "status": "pass",
       "exitCode": 0
     },

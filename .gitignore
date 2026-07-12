@@ -5,4 +5,7 @@ dist/
 .playwright-mcp/
 playwright-report/
 output/
+packages/machine-lib/out/rectangle-corpus/
+packages/machine-lib/out/rectangle-topology-report.json
+out/v1-knit-trial/
 *.log

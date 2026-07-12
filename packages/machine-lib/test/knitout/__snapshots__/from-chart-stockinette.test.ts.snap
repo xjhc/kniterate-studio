@@ -59,6 +59,14 @@ out 1
 x-roller-advance 200
 x-stitch-number 6
 x-speed-number 300
+; --- BACK-BED CLEAR (floats body) ---
+x-speed-number 120
+xfer b51 f51
+xfer b53 f53
+x-speed-number 300
+x-roller-advance 200
+x-stitch-number 6
+x-speed-number 300
 ; row 0
 x-speed-number 100
 knit - f53 2

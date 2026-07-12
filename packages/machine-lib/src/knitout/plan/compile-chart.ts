@@ -804,14 +804,15 @@ export function compileChartToKniteratePlan(
     currentHandoff = simulatorHandoffFromBoundary(introResult);
   }
 
-  // Phase 2 (2026-05-23): for floats jacquard, transfer all back-bed
-  // cast-on loops to the front so the body can knit single-bed without
-  // orphaned back-bed loops. The vendor splits a batched run of `xfer
+  // For single-bed bodies, transfer all back-bed cast-on loops to the front
+  // so floats jacquard and plain stockinette cannot retain orphaned loops.
+  // The vendor splits a batched run of `xfer
   // b{n} f{n}` into the two `[back-to-front, even/odd]` passes that
   // appear at rows 105-106 of `reference/fairisle.kc`. Without this, a
-  // floats-mode chart leaves cast-on loops on the back bed for the
-  // entire run and rejects on bed-state validation at bind-off.
-  if (input.backBedStyle === 'floats') {
+  // single-bed chart leaves cast-on loops on the back bed for the entire run
+  // and rejects on bed-state validation at bind-off.
+  const needsBackBedClear = input.backBedStyle === 'floats' || bodyWalkerDispatch.kind === 'single-color-stockinette';
+  if (needsBackBedClear) {
     // The cast-on row direction is encoded in where `castOnCarrier`
     // ended up: a '+' pass moves it from left → right, a '-' pass
     // moves it right → left. Since the cast-on always starts from
@@ -854,7 +855,7 @@ export function compileChartToKniteratePlan(
   // doesn't touch STIF/roller). Re-emit body STIF/roller here so the
   // walker's first knit lands with the configured body values even
   // when intro/clear ran.
-  if (wantsIntro || input.backBedStyle === 'floats') {
+  if (wantsIntro || needsBackBedClear) {
     if (settings.rollerAdvance !== undefined) bodyOps.push(xRollerAdvance(settings.rollerAdvance));
     if (settings.stitchNumber !== undefined) bodyOps.push(xStitchNumber(settings.stitchNumber));
     if (settings.speedNumber !== undefined) bodyOps.push(xSpeedNumber(settings.speedNumber));
@@ -930,14 +931,15 @@ export function compileChartToKniteratePlan(
     machineConfig: input.bindOffMachineConfig,
     fairisleParkConfig: input.fairisleParkConfig,
     initialNextDirection: threadedNextDirection,
-    // Birdseye / complement jacquard (shaped or plain rectangle): the
+    // Backed jacquard walkers home the final back-bed row onto the front,
     // walker homed the final row's lining onto the front bed, so chain
     // bind-off must consolidate the doubled loops before walking.
     linedBackBed:
       (technique === 'stockinette-shaped-jacquard'
         || technique === 'birdseye-jacquard'
-        || technique === 'complement-jacquard')
-      && input.backBedStyle === 'birdseye',
+        || technique === 'complement-jacquard'
+        || technique === 'ladder-jacquard')
+      && (input.backBedStyle === 'birdseye' || input.backBedStyle === 'ladder' || input.backBedStyle === 'lined'),
   });
   passes.push({ index: passes.length, purpose: 'bind-off', ops: bindResult.ops });
   predictedPasses.push(...bindResult.predictedPasses);

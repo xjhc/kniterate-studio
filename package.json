@@ -1,7 +1,7 @@
 {
   "name": "kniterate-studio",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "type": "module",
   "packageManager": "pnpm@10.17.1",
   "scripts": {
@@ -11,9 +11,11 @@
     "test:e2e": "playwright test",
     "typecheck": "pnpm -r typecheck",
     "kniterate:conform": "pnpm --dir packages/machine-lib kniterate:conform",
+    "release:trial": "tsx scripts/build-v1-knit-trial.ts",
     "verify": "pnpm typecheck && pnpm test && pnpm kniterate:conform && pnpm build"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1"
+    "@playwright/test": "^1.61.1",
+    "tsx": "^4.23.0"
   }
 }

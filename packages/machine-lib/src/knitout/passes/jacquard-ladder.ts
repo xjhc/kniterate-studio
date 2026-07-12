@@ -39,6 +39,7 @@ import {
   restoreFirstRowSpeedOverride,
   type FirstRowSpeedOverride,
 } from './first-row-speed.js';
+import { emitNonAdjacentXferBatches } from './bed-transition.js';
 
 export interface JacquardLadderInput {
   resolved: ResolvedChart;
@@ -137,6 +138,16 @@ export function emitJacquardLadderWalk(input: JacquardLadderInput): JacquardLadd
   }
   sim.setSourceRows();
   ops.push(...sim.drainOps());
+
+  // The last ladder row leaves one lining loop on every back-bed needle.
+  // Home those loops before the chain bind-off; the bind-off then performs
+  // its doubled-loop consolidation row just like birdseye/complement.
+  ops.push(comment('-- lined finish: home final-row ladder backing b->f --'));
+  const finishTransfers = Array.from({ length: resolved.cols }, (_, column) => ({
+    needle: needleStart + column,
+    direction: 'b-to-f' as const,
+  }));
+  ops.push(...emitNonAdjacentXferBatches(finishTransfers));
 
   const finalCarrierStates = sim.snapshot();
 

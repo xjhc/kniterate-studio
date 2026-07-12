@@ -28,6 +28,11 @@ export only for the current validated project revision. Project JSON and the
 printed run sheet retain the carrier, frame, strategy, and artifact identities
 needed to reproduce a run.
 
+The software is currently `1.0.0-rc.1`. Run `pnpm release:trial` to generate the
+hash-pinned four-color physical-knit package. Promotion to `1.0.0` is reserved
+for a successful run of that exact package on a real Kniterate; see
+[`docs/V1-PHYSICAL-TRIAL.md`](./docs/V1-PHYSICAL-TRIAL.md).
+
 ## Product boundary
 
 - Studio owns yarn/carrier mapping, colorwork strategy, validation, verdicts,
