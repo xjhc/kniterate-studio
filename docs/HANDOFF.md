@@ -6,7 +6,7 @@
 
 ## Where things actually stand
 
-- Repo at `1.0.0-rc.1`; `pnpm typecheck` + `pnpm test` green (191 tests).
+- Repo at `1.0.0-rc.1`; `pnpm typecheck` + `pnpm test` green.
 - **Both product stories ship** in `apps/studio`: the foreign-`.kc` workspace
   ("S1") and the authored chart→compile→k-code loop ("S2" core). Neither is a
   slice waiting to start — see STATUS for the file map.
@@ -16,12 +16,13 @@
 - The only `1.0.0` promotion gate is the physical Kniterate run
   (`V1-PHYSICAL-TRIAL.md`). Do not tag `1.0.0` before it succeeds.
 
-## Next work (reconcile-first is done; these are the two follow-on slices)
+## Next work
 
-1. **Extract the authored verdict policy** into one engine function
-   (`compileProject.ts:155` + `App.tsx` currently split it). 3-rung mapping in one place.
-2. **Typed operation provenance** — replace the `row N` comment-scan in
-   `compileProject.ts:137` with typed op→row provenance (SYSTEM-DESIGN R11).
+The reconcile-first follow-ons are complete: authored verdict policy lives in
+`engine.ts::resolveAuthoredVerdict`, and typed op→row provenance replaces the
+old `row N` comment scan (SYSTEM-DESIGN R11). Next, audit and polish the running
+Studio against the canonical workspace mockup, then execute the release trial
+and hand the generated artifact to the physical Kniterate trial.
 
 Beyond these: the assistant (S3), swatch-registry UI (S4), and the L3–L5 upper
 editability ladder remain forward design (STATUS "Not yet built").

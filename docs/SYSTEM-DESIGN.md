@@ -363,7 +363,7 @@ downstream work forks on them. **R1–R4 should be answered before S2 starts.**
   human paint, override edit, AI apply — is the same `ProjectEdit` op, so undo is
   uniform and the AI's work is undoable by construction.
 
-### R11 — Provenance plumbing (row ↔ pass ↔ `.kc` line) · BLOCKING for S1
+### R11 — Provenance plumbing (row ↔ pass ↔ `.kc` line) · CLOSED for V1
 
 - **What.** Every synced view (hover-sync, anchored diagnostics, `kc-diff`
   windows) and every AI diff card depends on stable maps chart row → plan pass →
@@ -373,14 +373,13 @@ downstream work forks on them. **R1–R4 should be answered before S2 starts.**
   anchors degrade into UI-side heuristics that break silently — hover highlights
   the wrong pass, a diagnostic points at the wrong needle, and the verdict's
   anchored explanations stop being trustworthy.
-- **Decision needed.** (a) Where provenance lives: required fields on
-  pass/op (plan passes already carry `srcRow`) vs side tables. (b) The stability
-  contract across each lowering stage, including through the vendor converter
-  (pass → `.kc` block spans via `sim/kc-section.ts` parsing).
-- **Proposed default.** Provenance is a **required field at every stage** from
-  the first Studio wiring: ops carry their source pass id, the conversion step
-  records pass → `.kc` line spans, and `RunArtifact` ships the joined maps. The
-  UI never computes an anchor itself.
+- **Ruling / shipped implementation.** Provenance is engine-owned typed data.
+  Simulator-emitted knitout ops carry `sourceRows`; `CompiledRunArtifact`
+  exposes the one-to-one `programOpSourceRows` map; bed-state pass-local indexes
+  are normalized to program op indexes; predicted passes carry `sourceRows`;
+  and K-code conversion records row/pass line spans. Studio joins those maps to
+  stable project row IDs. Emitted `row N` comments are human-readable only and
+  are never parsed for UI attribution.
 
 ### R12 — Walker proliferation
 

@@ -134,18 +134,9 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       passIndices: passIndicesByMachineRow.get(machineRow) ?? [],
     };
   });
-  const machineRowByOpIndex: Array<number | null> = [];
-  let activeMachineRow: number | null = null;
-  artifact.program?.ops.forEach((op, opIndex) => {
-    if (op.kind === 'comment') {
-      const row = /^row (\d+)$/.exec(op.text);
-      if (row) activeMachineRow = Number(row[1]);
-      else if (/^(--- BIND OFF|--- RELEASE|-- lined finish)/.test(op.text)) activeMachineRow = null;
-    }
-    machineRowByOpIndex[opIndex] = activeMachineRow;
-  });
   const diagnostics = messages.map((message) => {
-    const machineRow = message.opIndex === undefined ? null : machineRowByOpIndex[message.opIndex] ?? null;
+    const sourceRows = message.opIndex === undefined ? null : artifact.programOpSourceRows[message.opIndex] ?? null;
+    const machineRow = sourceRows?.length === 1 ? sourceRows[0]! : null;
     const provenance = machineRow === null ? undefined : rowProvenance[state.chart.height - machineRow - 1];
     return { severity: message.severity, rule: message.rule, message: message.message, opIndex: message.opIndex ?? null, rowId: provenance?.rowId ?? null, passIndices: provenance?.passIndices ?? [] };
   });

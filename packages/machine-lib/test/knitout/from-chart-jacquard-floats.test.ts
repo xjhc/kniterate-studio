@@ -113,6 +113,24 @@ describe('compileChartToKnitout — floats jacquard (Customist fairisle)', () =>
     expect(result.plan?.technique).toBe('floats-jacquard');
   });
 
+  it('carries typed design-row provenance on emitted body operations', () => {
+    const result = compileChartToKnitout({
+      chart: smallFairisleChart(),
+      keyPalette: PALETTE,
+      yarnBindings: TWO_COLOR_BINDINGS,
+      needleOffset: 50,
+      wastePasses: 4,
+      bindOff: 'drop',
+      developerMode: true,
+      backBedStyle: 'floats',
+    });
+    expect(result.ok).toBe(true);
+    const sourcedOps = result.program!.ops.filter((op) => op.sourceRows !== undefined);
+    expect(sourcedOps.length).toBeGreaterThan(0);
+    expect(sourcedOps.some((op) => op.sourceRows?.includes(0))).toBe(true);
+    expect(sourcedOps.some((op) => op.sourceRows?.includes(5))).toBe(true);
+  });
+
   it('emits no back-bed knits or misses in the body', () => {
     const result = compileChartToKnitout({
       chart: smallFairisleChart(),

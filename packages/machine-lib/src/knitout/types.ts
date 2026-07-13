@@ -28,7 +28,7 @@ export type CarrierId = '1' | '2' | '3' | '4' | '5' | '6';
 
 export const ALL_CARRIERS: readonly CarrierId[] = ['1', '2', '3', '4', '5', '6'];
 
-export type KnitoutOp =
+type KnitoutOpData =
   | { kind: 'in'; carriers: CarrierId[] }
   | { kind: 'out'; carriers: CarrierId[] }
   | { kind: 'knit'; direction: Direction; needle: BedNeedle; carriers: CarrierId[] }
@@ -71,6 +71,12 @@ export type KnitoutOp =
   // vendor only honors the op form).
   | { kind: 'x-carrier-spacing'; value: number }
   | { kind: 'x-carrier-stopping-distance'; value: number };
+
+/** Engine-owned source provenance. It is ignored by the knitout writer but
+ * travels with the op through planning, validation, and diagnostics. */
+export type KnitoutOp = KnitoutOpData & {
+  readonly sourceRows?: readonly number[];
+};
 
 export type Position = 'Left' | 'Center' | 'Right' | 'Keep';
 

@@ -186,53 +186,59 @@ export class CarriageSimulator {
     this.activeSourceRows = rows === undefined ? undefined : [...new Set(rows)];
   }
 
+  private pushOp(op: KnitoutOp): void {
+    this.ops.push(this.activeSourceRows === undefined
+      ? op
+      : { ...op, sourceRows: [...this.activeSourceRows] });
+  }
+
   /* ----- Settings (emit-on-change) ------------------------------- */
 
   setSpeed(value: number, options: SettingEmitOptions = {}): void {
     if (!options.force && this.speed === value) return;
     this.speed = value;
-    this.ops.push(xSpeedNumber(value));
+    this.pushOp(xSpeedNumber(value));
   }
 
   setRoller(value: number, options: SettingEmitOptions = {}): void {
     if (!options.force && this.roller === value) return;
     this.roller = value;
-    this.ops.push(xRollerAdvance(value));
+    this.pushOp(xRollerAdvance(value));
   }
 
   addRollerAdvance(value: number): void {
     this.pendingRollerAdd = value;
-    this.ops.push(xAddRollerAdvance(value));
+    this.pushOp(xAddRollerAdvance(value));
   }
 
   setStitch(value: StitchValue, options: SettingEmitOptions = {}): void {
     if (!options.force && this.stitch === value) return;
     this.stitch = value;
-    this.ops.push(xStitchNumber(value));
+    this.pushOp(xStitchNumber(value));
   }
 
   setXferStitch(value: StitchValue, options: SettingEmitOptions = {}): void {
     if (!options.force && this.xferStitch === value) return;
     this.xferStitch = value;
-    this.ops.push(xXferStitchNumber(value));
+    this.pushOp(xXferStitchNumber(value));
   }
 
   setPresserSpeed(value: number): void {
     if (this.presserSpeed === value) return;
     this.presserSpeed = value;
-    this.ops.push(xPresserSpeed(value));
+    this.pushOp(xPresserSpeed(value));
   }
 
   setPresserRoller(value: number): void {
     if (this.presserRoller === value) return;
     this.presserRoller = value;
-    this.ops.push(xPresserRoller(value));
+    this.pushOp(xPresserRoller(value));
   }
 
   setXferStyle(value: 'four-pass' | 'two-pass'): void {
     if (this.xferStyle === value) return;
     this.xferStyle = value;
-    this.ops.push(xXferStyle(value));
+    this.pushOp(xXferStyle(value));
   }
 
   seedXferStyle(value: 'four-pass' | 'two-pass'): void {
@@ -243,7 +249,7 @@ export class CarriageSimulator {
     if (this.rackingEmitted && this.racking === offset) return;
     this.racking = offset;
     this.rackingEmitted = true;
-    this.ops.push(rack(offset));
+    this.pushOp(rack(offset));
   }
 
   /** K-1 Phase 1 (2026-06-10): re-assert the current racking as an
@@ -254,7 +260,7 @@ export class CarriageSimulator {
    *  physical passes (Kniterate cheatsheet adjacency rule). */
   rackRelief(): void {
     this.rackingEmitted = true;
-    this.ops.push(rack(this.racking));
+    this.pushOp(rack(this.racking));
   }
 
   seedRacking(offset: number): void {
@@ -278,7 +284,7 @@ export class CarriageSimulator {
       kickDirection: null,
       pendingIn: true,
     });
-    this.ops.push(carrierIn(c));
+    this.pushOp(carrierIn(c));
   }
 
   /**
@@ -358,7 +364,7 @@ export class CarriageSimulator {
       maxSlot: anchorSlot,
       source: `out ${c}`,
     });
-    this.ops.push(carrierOut(c));
+    this.pushOp(carrierOut(c));
     state.side = 'left';
     state.active = false;
     this.carriers.delete(c);
@@ -451,7 +457,7 @@ export class CarriageSimulator {
         kickState.kickDirection = kick.direction;
       }
       // Emit the knit op + extend the current run.
-      this.ops.push(knitOp(dir, needle, c));
+      this.pushOp(knitOp(dir, needle, c));
       if (runStart === null) runStart = n;
       runEnd = n;
     }
@@ -574,7 +580,7 @@ export class CarriageSimulator {
         kickState.kickNeedle = kickState.lastNeedle;
         kickState.kickDirection = kick.direction;
       }
-      this.ops.push(knitOp(dir, needle, c));
+      this.pushOp(knitOp(dir, needle, c));
       if (runStartNeedle === null) {
         runStartNeedle = n;
         runStartBed = bed;
@@ -641,7 +647,7 @@ export class CarriageSimulator {
       maxSlot: slot,
       source: `knit ${c}`,
     });
-    this.ops.push(knitOp(dir, needle, c));
+    this.pushOp(knitOp(dir, needle, c));
     state.lastNeedle = needle;
     state.lastDirection = dir;
     state.kickNeedle = needle;
@@ -710,7 +716,7 @@ export class CarriageSimulator {
       maxSlot: slot,
       source: `tuck ${c}`,
     });
-    this.ops.push(tuckOp(dir, needle, c));
+    this.pushOp(tuckOp(dir, needle, c));
     state.lastNeedle = needle;
     state.lastDirection = dir;
     state.kickNeedle = needle;
@@ -769,7 +775,7 @@ export class CarriageSimulator {
       maxSlot: slot,
       source: `split ${c}`,
     });
-    this.ops.push(splitOp(dir, from, to, c));
+    this.pushOp(splitOp(dir, from, to, c));
     state.lastNeedle = from;
     state.lastDirection = dir;
     state.kickNeedle = from;
@@ -781,14 +787,14 @@ export class CarriageSimulator {
   /* ----- Transfers / drops --------------------------------------- */
 
   xfer(from: BedNeedle, to: BedNeedle): void {
-    this.ops.push(xferOp(from, to));
+    this.pushOp(xferOp(from, to));
     // Phase A: single-xfer prediction deferred. See xferBatch.
   }
 
   xferBatch(pairs: readonly { from: BedNeedle; to: BedNeedle }[]): void {
     if (pairs.length === 0) return;
     for (const { from, to } of pairs) {
-      this.ops.push(xferOp(from, to));
+      this.pushOp(xferOp(from, to));
     }
     const style = this.xferStyle ?? 'four-pass';
     const xpasses = predictXferSubPasses(pairs, style, this.racking);
@@ -810,7 +816,7 @@ export class CarriageSimulator {
   }
 
   drop(n: BedNeedle): void {
-    this.ops.push(dropOp(n));
+    this.pushOp(dropOp(n));
     // Drop becomes a directionless soft-miss (DIRECTION_NONE) in vendor.
     // Vendor's passesToKCode does NOT emit a kc line for direction NONE
     // passes (no `>>`/`<<` prefix). We don't predict anything here.
@@ -833,7 +839,7 @@ export class CarriageSimulator {
       maxSlot: 0,
       source: 'parkCarriage',
     });
-    this.ops.push(xParkCarriage());
+    this.pushOp(xParkCarriage());
   }
 
   /* ----- Introspection ------------------------------------------- */
@@ -999,7 +1005,7 @@ export class CarriageSimulator {
       maxSlot: slot,
       source: `miss ${c}`,
     });
-    this.ops.push(missOp(dir, needle, c));
+    this.pushOp(missOp(dir, needle, c));
     state.lastNeedle = needle;
     state.lastDirection = dir;
     state.kickNeedle = needle;

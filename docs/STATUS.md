@@ -1,8 +1,7 @@
 # STATUS — what is shipped vs. proposed
 
 **Front door. Read this before any planning doc.** Reconciled 2026-07-12 against
-the working tree. Repo at `1.0.0-rc.1`; `pnpm typecheck` and `pnpm test` green
-(191 tests: machine-lib 149, studio 24, project/chart/colorwork contracts 18).
+the working tree. Repo at `1.0.0-rc.1`; `pnpm typecheck` and `pnpm test` green.
 
 The other docs are framed as forward design and drifted behind the code. Where a
 planning doc says a thing is "proposed" / "not built" / "the first slice to
@@ -23,6 +22,11 @@ ship," trust this file and the working tree instead.
   (`src/blanket/compile.worker.ts` → `compileToRunArtifact`), predicted pass
   grid, back-face preview, browser `.kc` conversion in a Worker
   (`src/kcode/convert.worker.ts`), validated export, local autosave, run sheet.
+- **Central authored verdict policy + typed provenance.**
+  `engine.ts::resolveAuthoredVerdict` is the sole authored 3-rung policy owner.
+  Design-row provenance travels on typed knitout ops, is exposed as an aligned
+  `RunArtifact` map, and joins validator diagnostics to chart rows without
+  scanning emitted comments.
 - **Engine (`packages/machine-lib`).** Chart→plan→knitout→`.kc` compile,
   `CarriageSimulator` + `predictedPasses`, the three validator layers, `kc-diff`,
   `kcToKnitout` reconstruction, Node + browser `KCodeConverter` adapters, the
@@ -43,23 +47,12 @@ schema.
 - **Foreign file** (`engine.ts`): any error **or unresolved warning** ⇒ Blocked
   (no project context to accept a warning); clean ⇒ Surface-proven (imported);
   registry artifact match ⇒ Knit-proven.
-- **Authored** (`compileProject.ts`): compile error ⇒ Blocked; clean ⇒
+- **Authored** (`engine.ts::resolveAuthoredVerdict`): compile or output error ⇒ Blocked; clean ⇒
   Surface-proven (non-gating warnings, e.g. over-budget floats, stay visible on
   diagnostics and the run sheet); exact registry match ⇒ Knit-proven.
 
 ## Not yet built
 
-- **Small refactors (next, per the reconcile-first sequence):**
-  1. **Extract authored verdict policy** into one engine function. Today the
-     authored verdict is assembled across `compileProject.ts:155` (surface/blocked)
-     + `App.tsx` (`knit` via `matchKnitProvenArtifact`). Centralize it so the
-     3-rung mapping lives in one place. (The foreign path already resolves its
-     verdict at a pure engine boundary — this is only the authored path.)
-  2. **Typed operation provenance.** `compileProject.ts:137` recovers op→row
-     attribution by regex-scanning emitted `row N` comments — the fragile
-     side-channel SYSTEM-DESIGN R11 warns against. Chart-row→pass provenance is
-     already typed engine output; make op→row typed too before more consumers
-     depend on it.
 - **Forward design (still proposed, unbuilt):** the assistant / AI-as-diff (S3),
   swatch-registry UI (S4), and the L3–L5 upper editability ladder (stitch ops,
   pass overrides, machine-code editing stays read-only per FOUNDING §2).
