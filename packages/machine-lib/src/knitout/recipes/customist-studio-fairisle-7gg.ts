@@ -93,7 +93,7 @@ export const CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE: MachineRecipe = ({
       'test/knitout/from-chart-jacquard-floats.test.ts',
     ],
     notes:
-      'Pinned to the .kc emitted by Customist Studio\'s default fairisle export — see docs/kniterate-export-rearchitecture-plan.md §P3.1.',
+      'Pinned to the .kc emitted by Customist Studio\'s default fairisle export — see docs/SYSTEM-DESIGN.md §A.5.',
   },
 })
 

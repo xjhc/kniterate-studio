@@ -8,7 +8,7 @@
  * effectful `.kc` conversion (which is async-by-environment: browser
  * iframe round-trip or Node `spawnSync`).
  *
- * See docs/kniterate-export-rearchitecture-plan.md §P2.
+ * See docs/SYSTEM-DESIGN.md §A.5 (component architecture / RunArtifact).
  */
 
 import { compileChartToKnitout, type CompileChartInput, type CompileChartResult } from './compile/from-chart.js'
@@ -44,6 +44,9 @@ export interface CompiledRunArtifact {
    *  one simulator-owned state model this can graduate from trace
    *  observability to byte-perfect whole-program accuracy. */
   readonly predictedPasses: readonly PredictedPass[]
+  /** Source design rows aligned one-to-one with `program.ops`. `null`
+   *  identifies frame, setup, or finishing ops with no chart-row owner. */
+  readonly programOpSourceRows: readonly (readonly number[] | null)[]
   /** Bed-state validator messages — a separate oracle (loop-state, not
    *  kc structural prediction). Kept distinct from `programMessages` so
    *  the Run tab can label them separately. */
@@ -203,6 +206,7 @@ function buildCompiledRunArtifact(input: {
   // through simulator-backed sections, or when every section is on a
   // non-sim emitter.
   const predictedPasses: readonly PredictedPass[] = plan?.predictedPasses ?? []
+  const programOpSourceRows = program?.ops.map(op => op.sourceRows ?? null) ?? []
 
   const notes: string[] = []
   if (predictedPasses.length === 0 && program) {
@@ -233,6 +237,7 @@ function buildCompiledRunArtifact(input: {
     plan,
     program,
     predictedPasses,
+    programOpSourceRows,
     bedStateMessages,
     programMessages,
     chartMessages,

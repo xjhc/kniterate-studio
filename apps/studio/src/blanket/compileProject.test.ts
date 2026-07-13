@@ -17,7 +17,7 @@ describe('blanket project compiler', () => {
     const first = compileColorworkProject(project);
     const second = compileColorworkProject(project);
     expect(first.ok).toBe(true);
-    expect(first.verdict).toBe('surface');
+    expect(first.compileVerdict).toBe('surface');
     expect(first.inputHash).toBe(second.inputHash);
     expect(first.knitoutText).toBe(second.knitoutText);
     expect(first.stats.passCount).toBeGreaterThan(0);
@@ -25,6 +25,7 @@ describe('blanket project compiler', () => {
     expect(first.rowProvenance.map((row) => row.displayRow)).toEqual([3, 2, 1]);
     expect(first.rowProvenance.every((row) => row.passIndices.length > 0)).toBe(true);
     expect(first.passes.some((pass) => pass.sourceRows?.includes(0))).toBe(true);
+    expect(first.knitoutText).not.toContain('sourceRows');
     expect(first.backFace?.cells.flat().some((cell) => cell.kind === 'float')).toBe(true);
   });
 
@@ -42,5 +43,20 @@ describe('blanket project compiler', () => {
     let project = createColorworkProjectV1(oneColor, { id: 'bad-complement' });
     project = appendProjectEdit(project, { id: 'complement', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'complement', floatLimit: 5 } } });
     expect(compileColorworkProject(project).messages).toContainEqual(expect.objectContaining({ rule: 'project-complement-two-colors' }));
+  });
+
+  it('joins op diagnostics to chart rows through typed engine provenance', () => {
+    let project = createColorworkProjectV1(chart, { id: 'typed-provenance' });
+    project = appendProjectEdit(project, {
+      id: 'strict-floats',
+      source: 'human',
+      edit: { kind: 'set-strategy', strategy: { technique: 'fairisle', floatLimit: 1 } },
+    });
+    const artifact = compileColorworkProject(project);
+    const floatDiagnostic = artifact.diagnostics.find((diagnostic) => diagnostic.rule === 'bed-state-long-float');
+    expect(floatDiagnostic).toBeDefined();
+    expect(floatDiagnostic?.opIndex).not.toBeNull();
+    expect(floatDiagnostic?.rowId).not.toBeNull();
+    expect(floatDiagnostic?.passIndices.length).toBeGreaterThan(0);
   });
 });

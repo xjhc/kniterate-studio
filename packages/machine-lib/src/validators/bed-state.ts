@@ -35,7 +35,13 @@ export function validateBedState(
   options: ValidateBedStateOptions = {},
 ): BedStateValidationReport {
   const trace = simulateBedStates(plan, { floatPolicy: options.floatPolicy });
-  const messages: ValidationMessage[] = trace.errors.map(toMessage);
+  const passOffsets: number[] = [];
+  let opOffset = 0;
+  for (const pass of plan.passes) {
+    passOffsets.push(opOffset);
+    opOffset += pass.ops.length;
+  }
+  const messages: ValidationMessage[] = trace.errors.map((error) => toMessage(error, passOffsets));
   const errorCount = messages.filter(m => m.severity === 'error').length;
   return {
     ok: errorCount === 0,
@@ -44,11 +50,12 @@ export function validateBedState(
   };
 }
 
-function toMessage(err: BedStateError): ValidationMessage {
+function toMessage(err: BedStateError, passOffsets: readonly number[]): ValidationMessage {
   return {
     severity: err.severity ?? 'error',
     rule: ruleId(err.rule),
     message: `[pass ${err.passIndex}, op ${err.opIndex}] ${err.message}`,
+    opIndex: (passOffsets[err.passIndex] ?? 0) + err.opIndex,
   };
 }
 

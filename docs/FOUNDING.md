@@ -111,10 +111,11 @@ Then stop and put it in front of users before scoping anything else.
   primary view.
 - **Verdict UI:** persistent badge (state + "7gg worsted" chip) → panel with
   the ladder rungs and anchored diagnostics. Never a bare green checkmark —
-  the level name is the UI. Experimental requires an explicit logged waiver.
+  the level name is the UI. Three rungs — Blocked / Surface-proven /
+  Knit-proven; no waiver or Experimental state in V1 (revised 2026-07-12).
 - **One project file:** a single durable JSON package (surface-package
   precedent: reopens and revalidates from embedded data), new file extension.
-- **Look:** paper-and-ink tokens for type/neutrals; the four verdict states
+- **Look:** paper-and-ink tokens for type/neutrals; the three verdict states
   are the accent system. Two mockups before M2 chrome: foreign-`.kc`
   workspace, blanket flow.
 

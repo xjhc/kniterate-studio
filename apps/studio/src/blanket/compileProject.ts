@@ -9,12 +9,12 @@ import {
   type YarnBinding,
 } from '@kniterate-studio/machine-lib/browser';
 
-export type AuthoredVerdict = 'blocked' | 'surface';
+export type CompileVerdict = 'blocked' | 'surface';
 export type BackingTechnique = ProjectState['strategy']['technique'];
 
 export interface StrategyComparison {
   technique: BackingTechnique;
-  verdict: AuthoredVerdict;
+  compileVerdict: CompileVerdict;
   passCount: number;
   estimatedKnitTimeSeconds: number | null;
   backFace: BackFaceProjection | null;
@@ -25,7 +25,7 @@ export interface BlanketCompileArtifact {
   revision: string;
   technique: BackingTechnique;
   ok: boolean;
-  verdict: AuthoredVerdict;
+  compileVerdict: CompileVerdict;
   inputHash: string | null;
   messages: readonly ValidationMessage[];
   knitoutText: string | null;
@@ -91,7 +91,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       estimatedKnitTimeSeconds: null,
     },
   };
-  if (setupMessages.length > 0) return { ...base, ok: false, verdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], rowProvenance: [], backFace: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
+  if (setupMessages.length > 0) return { ...base, ok: false, compileVerdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], rowProvenance: [], backFace: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
 
   const projected = projectColorworkChartV1(state.chart);
   const yarnBindings: YarnBinding[] = usedPalette.map((entry) => {
@@ -134,25 +134,16 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       passIndices: passIndicesByMachineRow.get(machineRow) ?? [],
     };
   });
-  const machineRowByOpIndex: Array<number | null> = [];
-  let activeMachineRow: number | null = null;
-  artifact.program?.ops.forEach((op, opIndex) => {
-    if (op.kind === 'comment') {
-      const row = /^row (\d+)$/.exec(op.text);
-      if (row) activeMachineRow = Number(row[1]);
-      else if (/^(--- BIND OFF|--- RELEASE|-- lined finish)/.test(op.text)) activeMachineRow = null;
-    }
-    machineRowByOpIndex[opIndex] = activeMachineRow;
-  });
   const diagnostics = messages.map((message) => {
-    const machineRow = message.opIndex === undefined ? null : machineRowByOpIndex[message.opIndex] ?? null;
+    const sourceRows = message.opIndex === undefined ? null : artifact.programOpSourceRows[message.opIndex] ?? null;
+    const machineRow = sourceRows?.length === 1 ? sourceRows[0]! : null;
     const provenance = machineRow === null ? undefined : rowProvenance[state.chart.height - machineRow - 1];
     return { severity: message.severity, rule: message.rule, message: message.message, opIndex: message.opIndex ?? null, rowId: provenance?.rowId ?? null, passIndices: provenance?.passIndices ?? [] };
   });
   return {
     ...base,
     ok: artifact.ok,
-    verdict: artifact.ok ? 'surface' : 'blocked',
+    compileVerdict: artifact.ok ? 'surface' : 'blocked',
     inputHash: artifact.inputHash,
     messages,
     knitoutText: artifact.knitoutText,
@@ -172,7 +163,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
 export function strategyComparisonFromArtifact(artifact: BlanketCompileArtifact): StrategyComparison {
   return {
     technique: artifact.technique,
-    verdict: artifact.verdict,
+    compileVerdict: artifact.compileVerdict,
     passCount: artifact.stats.passCount,
     estimatedKnitTimeSeconds: artifact.stats.estimatedKnitTimeSeconds,
     backFace: artifact.backFace,

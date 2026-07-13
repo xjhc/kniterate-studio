@@ -537,7 +537,7 @@ export function parseKniterateConfig(blob: unknown): ParseKniterateConfigResult 
  *
  *  P3.2 (2026-05-23): replaces the original hardcoded preset functions.
  *  See `src/knitout/recipes/` for the registered set and
- *  docs/kniterate-export-rearchitecture-plan.md §P3.2.
+ *  docs/SYSTEM-DESIGN.md §A.5 (intent vs. derived state).
  */
 export function applyMachineRecipe(
   state: KniterateExportState,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { openMachineDocument } from './engine';
+import { openMachineDocument, resolveAuthoredVerdict, type AuthoredVerdictInput } from './engine';
 
 const KC = [
   'FRNT:________________-______________',
@@ -58,5 +58,53 @@ describe('machine document engine', () => {
     const document = openMachineDocument('refusal.k', source);
     expect(document.verdict.label).toBe('Blocked');
     expect(document.diagnostics.some((item) => item.rule === rule)).toBe(true);
+  });
+});
+
+describe('authored verdict policy', () => {
+  const ready: AuthoredVerdictInput = {
+    compileStatus: 'ready',
+    compileOk: true,
+    compileError: null,
+    outputStatus: 'ready',
+    outputOk: true,
+    outputCurrent: true,
+    outputError: null,
+    knitProvenEntryId: null,
+  };
+
+  it('withholds a verdict while compilation or output conversion is pending', () => {
+    expect(resolveAuthoredVerdict({ ...ready, compileStatus: 'compiling', compileOk: null })).toBeNull();
+    expect(resolveAuthoredVerdict({ ...ready, outputStatus: 'converting', outputOk: null })).toBeNull();
+    expect(resolveAuthoredVerdict({ ...ready, outputCurrent: false })).toBeNull();
+  });
+
+  it('blocks compiler and K-code validation failures', () => {
+    expect(resolveAuthoredVerdict({ ...ready, compileOk: false, compileError: 'Carrier conflict.' })).toMatchObject({
+      state: 'blocked',
+      label: 'Blocked',
+      annotation: 'Carrier conflict.',
+    });
+    expect(resolveAuthoredVerdict({ ...ready, outputOk: false, outputError: 'Pass mismatch.' })).toMatchObject({
+      state: 'blocked',
+      label: 'Blocked',
+      annotation: 'Pass mismatch.',
+    });
+  });
+
+  it('mints Surface-proven only for current clean output', () => {
+    expect(resolveAuthoredVerdict(ready)).toMatchObject({
+      state: 'surface',
+      label: 'Surface-proven',
+      evidenceId: null,
+    });
+  });
+
+  it('mints Knit-proven only for an exact physical registry match', () => {
+    expect(resolveAuthoredVerdict({ ...ready, knitProvenEntryId: '2026-07-12-proof' })).toMatchObject({
+      state: 'knit',
+      label: 'Knit-proven',
+      evidenceId: '2026-07-12-proof',
+    });
   });
 });

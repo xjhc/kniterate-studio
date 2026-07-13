@@ -44,6 +44,8 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [scroll, setScroll] = useState({ left: 0, top: 0 });
   const [gesture, setGesture] = useState<{ start: Point; points: Point[]; pan?: { x: number; y: number } } | null>(null);
+  const [keyboardPoint, setKeyboardPoint] = useState<Point>({ column: 0, row: 0 });
+  const [keyboardActive, setKeyboardActive] = useState(false);
   const cell = BASE_CELL * zoom;
   const pixelChart = { width: chart.width, height: chart.height, cells: chart.cells };
 
@@ -145,6 +147,11 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       overlay.strokeRect(GUTTER + currentSelection.left * cell - scroll.left + 1, currentSelection.top * cell - scroll.top + 1, (currentSelection.right - currentSelection.left + 1) * cell - 2, (currentSelection.bottom - currentSelection.top + 1) * cell - 2);
       overlay.setLineDash([]);
     }
+    if (keyboardActive) {
+      overlay.strokeStyle = '#d86645';
+      overlay.lineWidth = 3;
+      overlay.strokeRect(GUTTER + keyboardPoint.column * cell - scroll.left + 1.5, keyboardPoint.row * cell - scroll.top + 1.5, cell - 3, cell - 3);
+    }
     if (!gesture || !end || gesture.pan || tool === 'select' || tool === 'move' || tool === 'fill') return;
     const mutation = tool === 'pen' ? pen(pixelChart, gesture.points, paletteIndex)
       : tool === 'erase' ? erase(pixelChart, gesture.points, 0)
@@ -158,7 +165,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   };
 
   useLayoutEffect(drawBase, [chart, scroll, zoom, viewportSize, isDarkMode, passCounts, focusedRow]);
-  useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex]);
+  useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex, keyboardPoint, keyboardActive]);
 
   useEffect(() => {
     const element = viewport.current;
@@ -207,6 +214,37 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       ref={paintLayer}
       style={{ transform: `translate(${scroll.left}px, ${scroll.top}px)` }}
       className="chart-canvas"
+      tabIndex={0}
+      role="grid"
+      aria-label={`Colorwork chart, ${chart.height} rows by ${chart.width} needles`}
+      aria-rowcount={chart.height}
+      aria-colcount={chart.width}
+      onFocus={() => { setKeyboardActive(true); onFocusRow(keyboardPoint.row); }}
+      onBlur={() => setKeyboardActive(false)}
+      onKeyDown={(event) => {
+        let next = keyboardPoint;
+        if (event.key === 'ArrowLeft') next = { ...next, column: Math.max(0, next.column - 1) };
+        else if (event.key === 'ArrowRight') next = { ...next, column: Math.min(chart.width - 1, next.column + 1) };
+        else if (event.key === 'ArrowUp') next = { ...next, row: Math.max(0, next.row - 1) };
+        else if (event.key === 'ArrowDown') next = { ...next, row: Math.min(chart.height - 1, next.row + 1) };
+        else if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onCommit(pen(pixelChart, [keyboardPoint], paletteIndex));
+          return;
+        } else return;
+        event.preventDefault();
+        setKeyboardPoint(next);
+        onFocusRow(next.row);
+        const element = viewport.current;
+        if (element) {
+          const x = GUTTER + next.column * cell;
+          const y = next.row * cell;
+          if (x < element.scrollLeft + GUTTER) element.scrollLeft = Math.max(0, x - GUTTER);
+          else if (x + cell > element.scrollLeft + element.clientWidth) element.scrollLeft = x + cell - element.clientWidth;
+          if (y < element.scrollTop) element.scrollTop = y;
+          else if (y + cell > element.scrollTop + element.clientHeight) element.scrollTop = y + cell - element.clientHeight;
+        }
+      }}
       onPointerDown={(event) => {
         const element = viewport.current;
         if (!element) return;
@@ -220,6 +258,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         }
         const point = pointAt(event);
         if (!point) return;
+        setKeyboardPoint(point);
         onFocusRow(point.row);
         if (tool === 'move' && (!selection || !rectContains(selection, point))) return;
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -229,7 +268,6 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       }}
       onPointerMove={(event) => {
         const hoverPoint = pointAt(event);
-        if (hoverPoint) onFocusRow(hoverPoint.row);
         if (!gesture) return;
         if (gesture.pan) {
           const element = viewport.current!;

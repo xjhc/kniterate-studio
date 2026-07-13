@@ -5,7 +5,7 @@ const fixture = 'fixtures/colorwork-chart-v1/four-color-checker.json';
 
 async function importProject(page: Page, path = fixture) {
   await page.locator('input[accept=".json,application/json"]').setInputFiles(path);
-  await expect(page.getByRole('heading', { level: 1 })).not.toHaveText('Untitled colorwork');
+  await expect(page.locator('.brand-copy small')).not.toContainText('Untitled colorwork');
 }
 
 async function canvasGeometry(page: Page, cell = 16) {

@@ -56,12 +56,12 @@ loop needs **no backend** and no runtime code evaluation.
 
 **Machine profile (single, hardcoded): 7gg worsted, 252-needle bed, carriers
 1–6.** Convention: C1 draw thread, C2–C5 pattern, C6 waste; a 5th/6th pattern
-carrier is gated (advanced / logged waiver). Racking integer or ±0.5, practical
+carrier is gated (advanced; hard-gated ⇒ Blocked in V1). Racking integer or ±0.5, practical
 max ±4. Machine knobs are inline knitout ops (`x-stitch-number`, `x-speed-number`,
 `x-roller-advance`), not headers. `.kc` is human-readable ASCII, one block per
 carriage pass (`FRNT/STIF/REAR/STIR` + `>> Kn-Kn <carrier> <speed> <roller>`).
 
-### A.2 What the UI adds (not built)
+### A.2 What the UI adds (shipped in `apps/studio`)
 
 - **Machine column** — renders `CarriageSimulator.predictedPasses()` as the pass
   grid (direction, carrier, cam action, speed, roller, kick/park/auto-move flags),
@@ -98,7 +98,7 @@ settings → waste → body → bind-off → release
   pattern-carrier bring-in → both-beds cast-on. Waste, draw, and cast-on are not
   separate passes; don't model them separately in the UI either.
 - `passes/bind-off.ts` carries the styles: `machine-bindoff` (xfer chain),
-  `waste-and-drop` (default), `drop` (developer-only, gated ⇒ Experimental),
+  `waste-and-drop` (default), `drop` (developer-only, hard-gated ⇒ Blocked),
   `fairisle-park-bindoff`.
 - Fairisle additionally gets `passes/carrier-intro.ts` + `passes/back-bed-clear.ts`.
 
@@ -114,7 +114,7 @@ intent (`KniterateWizardConfig` lineage, schema-versioned), derive engine input.
 
 ```
 project document (ColorworkProjectV1: chart + strategy + frame
-        │                             + overrides[] + waivers[] + history)
+        │                             + overrides[] + history)
         │   debounced edit stream → compile in a Web Worker
         ▼
 compileToRunArtifact()                ← pure, deterministic, memoizable
@@ -276,33 +276,35 @@ downstream work forks on them. **R1–R4 should be answered before S2 starts.**
   cache the last compiled plan and read back-bed knits from it (still cheaper than
   recompiling per hover). Confirm feasibility in S1 spike, before S2 depends on it.
 
-### R6 — Verdict semantics: validator output → 4-state ladder
+### R6 — Verdict semantics: validator output → 3-state ladder
 
 - **What.** The exact mapping from `ValidationMessage[]` (error/warning/info) +
-  registry match → {Blocked, Experimental, Surface-proven, Knit-proven}, plus the
-  waiver flow for Experimental.
+  registry match → {Blocked, Surface-proven, Knit-proven}.
 - **Why high-risk.** The verdict gates export and bounds every AI claim (P3, P5). A
   fuzzy mapping produces a dishonest badge — the one thing the product must never
   do.
-- **Decision needed.** (a) Rule table: any `error` → Blocked; what distinguishes
-  Experimental from Surface-proven (developer-mode features? unresolved warnings?
-  waivers?); Knit-proven strictly from a registry fingerprint match. (b) What a
-  waiver is (logged, per-project, re-shown on reopen) and who can grant it.
-- **Proposed default.** `error` ⇒ Blocked; a clean plan with only info/benign
-  warnings ⇒ Surface-proven; use of a developer-mode/experimental capability or an
-  accepted waiver over a real warning ⇒ Experimental (with the logged waiver
-  visible); exact `recipe-fingerprint` match against a physical `registry/swatches`
-  entry ⇒ Knit-proven. Never auto-Knit-proven. Reuse `validators/messages.ts` copy
-  verbatim in the panel.
-- **Resolved 2026-07-12 — foreign-file rule (S1).** A foreign `.kc`/`.k` (opened,
-  not compiled by us) has no plan; its verdict is computed from the `kcToKnitout`
-  reconstruction run through the op-level + bed-state validators. Any error ⇒
-  **Blocked**. Clean ⇒ **Surface-proven (imported)** — the same rung, with a
-  mandatory annotation ("imported — reconstructed at viz fidelity") on the badge
-  panel and run sheet; known-approximate regions are marked preview-grade in the
-  pass grid and can never flip the badge (consistent with R4). Waivers behave as
-  usual (⇒ Experimental). Knit-proven stays registry-fingerprint-only — a file we
-  previously exported can legitimately match. **No fifth rung.**
+- **Ruling 2026-07-12 — three rungs, no waivers (V1 product contract).** The
+  shipped ladder is **Blocked / Surface-proven / Knit-proven**. Experimental and
+  the waiver workflow are **cut from V1**: they add a substantial honesty and
+  persistence model without serving the present four-pattern-color goal, and no
+  project-level waiver contract exists in the code. A later carrier-strategy
+  feature can reintroduce the concept through a real project schema — not before.
+  Machine-lib's internal "developer-only / gated" capabilities (e.g. the `drop`
+  bind-off, a 5th/6th pattern carrier) are **hard gates ⇒ Blocked** (the
+  `compile-bindoff-drop-developer-only` gate), not a soft Experimental rung.
+- **Rule table (as implemented).** any `error` ⇒ **Blocked**; a clean plan with
+  only info/benign notes ⇒ **Surface-proven**; exact `recipe-fingerprint` /
+  artifact match against a physical `registry/swatches` entry ⇒ **Knit-proven**.
+  Never auto-Knit-proven. Reuse `validators/messages.ts` copy verbatim in the panel.
+- **Foreign-file rule (S1) — as implemented in `apps/studio/src/engine.ts`.** A
+  foreign `.kc`/`.k` (opened, not compiled by us) has no plan; its verdict is
+  computed from the `kcToKnitout` reconstruction run through the op-level +
+  bed-state validators. Any error **or unresolved warning** ⇒ **Blocked** (an
+  imported file has no project context in which to accept a warning). Clean ⇒
+  **Surface-proven (imported)** — with a mandatory annotation ("imported —
+  reconstructed") on the badge panel and run sheet. Knit-proven stays
+  registry-fingerprint-only — a file we previously exported can legitimately match.
+  **Three rungs; no waiver, no Experimental.**
 
 ### R7 — AI tool-use surface & speculative compile
 
@@ -361,7 +363,7 @@ downstream work forks on them. **R1–R4 should be answered before S2 starts.**
   human paint, override edit, AI apply — is the same `ProjectEdit` op, so undo is
   uniform and the AI's work is undoable by construction.
 
-### R11 — Provenance plumbing (row ↔ pass ↔ `.kc` line) · BLOCKING for S1
+### R11 — Provenance plumbing (row ↔ pass ↔ `.kc` line) · CLOSED for V1
 
 - **What.** Every synced view (hover-sync, anchored diagnostics, `kc-diff`
   windows) and every AI diff card depends on stable maps chart row → plan pass →
@@ -371,14 +373,13 @@ downstream work forks on them. **R1–R4 should be answered before S2 starts.**
   anchors degrade into UI-side heuristics that break silently — hover highlights
   the wrong pass, a diagnostic points at the wrong needle, and the verdict's
   anchored explanations stop being trustworthy.
-- **Decision needed.** (a) Where provenance lives: required fields on
-  pass/op (plan passes already carry `srcRow`) vs side tables. (b) The stability
-  contract across each lowering stage, including through the vendor converter
-  (pass → `.kc` block spans via `sim/kc-section.ts` parsing).
-- **Proposed default.** Provenance is a **required field at every stage** from
-  the first Studio wiring: ops carry their source pass id, the conversion step
-  records pass → `.kc` line spans, and `RunArtifact` ships the joined maps. The
-  UI never computes an anchor itself.
+- **Ruling / shipped implementation.** Provenance is engine-owned typed data.
+  Simulator-emitted knitout ops carry `sourceRows`; `CompiledRunArtifact`
+  exposes the one-to-one `programOpSourceRows` map; bed-state pass-local indexes
+  are normalized to program op indexes; predicted passes carry `sourceRows`;
+  and K-code conversion records row/pass line spans. Studio joins those maps to
+  stable project row IDs. Emitted `row N` comments are human-readable only and
+  are never parsed for UI attribution.
 
 ### R12 — Walker proliferation
 

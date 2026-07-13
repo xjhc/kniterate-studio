@@ -68,7 +68,7 @@ for (const name of ['fairisle', 'jacquard', 'dbj'] as const) {
     await page.locator('input[accept=".json,application/json"]').setInputFiles({
       name: `${name}.colorwork.json`, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(chart)),
     });
-    await expect(page.getByRole('heading', { name: `${name} reference pattern` })).toBeVisible();
+    await expect(page.locator('.brand-copy small')).toContainText(`${name} reference pattern`);
     if (name !== 'fairisle') {
       await page.getByRole('button', { name: /^Birdseye/ }).click();
       await page.getByLabel('Color coverage').selectOption('full');
