@@ -15,13 +15,8 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   await page.getByLabel('Float budget', { exact: true }).fill('7');
   await page.getByLabel('Float budget', { exact: true }).press('Tab');
 
-  const canvasBox = await page.locator('canvas.chart-canvas').first().boundingBox();
-  if (!canvasBox) throw new Error('Chart canvas has no browser geometry');
-  await page.mouse.move(canvasBox.x + 78, canvasBox.y + 8);
-  await page.getByRole('button', { name: 'Open machine', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Predicted pass grid' })).toBeVisible();
-  await expect(page.locator('.pass-row.selected')).toContainText('R3');
-  await page.getByRole('button', { name: 'Open chart', exact: true }).click();
+  await page.locator('canvas.chart-canvas').first().focus();
+  await expect(page.locator('.authored-pass-row.active')).toContainText('R3');
 
   await page.getByRole('button', { name: /Complement/ }).click();
   await expect(page.locator('.compile-verdict')).toContainText('Blocked');
@@ -48,10 +43,10 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   expect(project.history.entries[1].edit.strategy.floatLimit).toBe(7);
   expect(project.history.cursor).toBe(7);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Open machine', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Predicted pass grid' })).toBeVisible();
+  await page.getByRole('tab', { name: 'machine', exact: true }).click();
+  await expect(page.locator('.authored-machine')).toBeVisible();
   await expect(page.getByLabel('Verdict: Surface-proven')).toBeVisible();
-  const visibleHeaders = await page.locator('.pass-head span:visible').evaluateAll((elements) => elements.map((element) => {
+  const visibleHeaders = await page.locator('.authored-pass-head span:visible').evaluateAll((elements) => elements.map((element) => {
     const box = element.getBoundingClientRect();
     return { left: box.left, right: box.right };
   }));

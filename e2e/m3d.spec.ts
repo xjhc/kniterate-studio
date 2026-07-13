@@ -34,9 +34,8 @@ test('exports validated k-code and reproduces it byte-identically after project 
   expect(firstBytes.toString('utf8')).toContain('FRNT:');
   expect(firstBytes.toString('utf8')).toContain('>>');
 
-  await page.getByRole('button', { name: 'Open machine', exact: true }).click();
-  await expect(page.getByText('Generated K-code', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Open chart', exact: true }).click();
+  await page.getByRole('tab', { name: 'K-code .kc', exact: true }).click();
+  await expect(page.locator('.generated-source-content')).toContainText('FRNT:');
   await page.getByRole('button', { name: 'Open run sheet', exact: true }).click();
   await expect(page.locator('.run-sheet')).toContainText('C1');
   await expect(page.locator('.run-sheet')).toContainText('C6');

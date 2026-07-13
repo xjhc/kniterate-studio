@@ -39,6 +39,31 @@ const CARRIER_COLORS: Record<string, string> = {
   '1': '#d95d48', '2': '#33866a', '3': '#d49b32', '4': '#4e75b8', '5': '#9b60a8', '6': '#67584c',
 };
 
+function useModalFocusTrap(onClose: () => void) {
+  const dialogRef = useRef<HTMLElement>(null);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    const returnFocus = window.document.activeElement instanceof HTMLElement ? window.document.activeElement : null;
+    if (!dialog) return;
+    const focusable = () => [...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])')];
+    (focusable()[0] ?? dialog).focus();
+    const handler = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); return; }
+      if (event.key !== 'Tab') return;
+      const items = focusable();
+      if (items.length === 0) { event.preventDefault(); dialog.focus(); return; }
+      const first = items[0]!; const last = items.at(-1)!;
+      if (event.shiftKey && window.document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && window.document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    window.document.addEventListener('keydown', handler);
+    return () => { window.document.removeEventListener('keydown', handler); returnFocus?.focus(); };
+  }, []);
+  return dialogRef;
+}
+
 type MobileView = 'passes' | 'diagnostics' | 'source';
 
 function defaultProject(): ColorworkProjectV1 {
@@ -92,8 +117,8 @@ function Verdict({ document, onClick }: { document: MachineDocument; onClick: ()
   );
 }
 
-function AuthoredVerdictBadge({ verdict }: { verdict: AuthoredVerdict }) {
-  return <span className={`verdict authored-verdict verdict-${verdict.state}`} title={verdict.annotation} aria-label={`Verdict: ${verdict.label}`}><span className="verdict-dot" />{verdict.label}</span>;
+function AuthoredVerdictBadge({ verdict, onClick }: { verdict: AuthoredVerdict; onClick: () => void }) {
+  return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={verdict.annotation} aria-label={`Verdict: ${verdict.label}`} onClick={onClick}><span className="verdict-dot" />{verdict.label}</button>;
 }
 
 function EmptyState({ active, onOpen, onDrop }: { active: boolean; onOpen: () => void; onDrop: (file: File) => void }) {
@@ -301,12 +326,23 @@ function VerdictPanel({ document, onClose }: { document: MachineDocument; onClos
   );
 }
 
+function AuthoredVerdictPanel({ verdict, onClose }: { verdict: AuthoredVerdict; onClose: () => void }) {
+  return <div className="popover verdict-panel">
+    <div className="popover-head"><strong>Output verdict</strong><button className="icon-button" type="button" onClick={onClose} aria-label="Close verdict"><X size={16} /></button></div>
+    <div className={`verdict-summary verdict-${verdict.state}`}><span className="verdict-dot" /><strong>{verdict.label}</strong></div>
+    <p>{verdict.annotation}</p>
+    <ol className="verdict-ladder"><li className={verdict.state === 'blocked' ? 'current' : ''}><i />Blocked</li><li className={verdict.state === 'surface' ? 'current' : ''}><i />Surface-proven</li><li className={verdict.state === 'knit' ? 'current' : ''}><i />Knit-proven</li></ol>
+    <span className="profile-chip">7gg worsted / 252-needle bed</span>
+  </div>;
+}
+
 function RunSheet({ document, onClose }: { document: MachineDocument; onClose: () => void }) {
+  const dialogRef = useModalFocusTrap(onClose);
   return (
     <div className="modal-backdrop">
-      <article className="run-sheet">
+      <article className="run-sheet" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="machine-run-title" tabIndex={-1}>
         <div className="run-sheet-actions"><button className="secondary-button" type="button" onClick={onClose}><X size={16} /> Close</button><button className="primary-button" type="button" onClick={() => window.print()}><Printer size={16} /> Print</button></div>
-        <header><span>KNITERATE STUDIO · RUN SHEET</span><h1>{document.filename}</h1><div className={`print-verdict verdict-${document.verdict.state}`}>{document.verdict.label}</div></header>
+        <header><span>KNITERATE STUDIO · RUN SHEET</span><h1 id="machine-run-title">{document.filename}</h1><div className={`print-verdict verdict-${document.verdict.state}`}>{document.verdict.label}</div></header>
         <p className="run-annotation">{document.verdict.annotation}</p>
         <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Passes</dt><dd>{document.stats.passCount.toLocaleString()}</dd></div><div><dt>Needles</dt><dd>{document.stats.needleSpan}</dd></div><div><dt>Rack range</dt><dd>{document.stats.rackRange}</dd></div></dl></section>
         <section><h2>Carrier map</h2><div className="carrier-map">{document.stats.carriers.length ? document.stats.carriers.map((carrier) => <span key={carrier}><i style={{ background: CARRIER_COLORS[carrier] }} />C{carrier}<b>{carrier === '1' ? 'Draw thread' : carrier === '6' ? 'Waste yarn' : 'Pattern yarn'}</b></span>) : <em>No carriers found</em>}</div></section>
@@ -320,11 +356,12 @@ function RunSheet({ document, onClose }: { document: MachineDocument; onClose: (
 
 function AuthoredRunSheet({ project, compiled, kcode, verdict, onClose }: { project: ColorworkProjectV1; compiled: BlanketCompileArtifact; kcode: KCodeArtifact; verdict: AuthoredVerdict; onClose: () => void }) {
   const { state } = materializeColorworkProject(project);
+  const dialogRef = useModalFocusTrap(onClose);
   const needleEnd = state.machine.needleOffset + state.chart.width - 1;
   const findings = [...new Map(compiled.messages.filter((message) => message.severity !== 'info').map((message) => [message.rule, message])).values()];
-  return <div className="modal-backdrop"><article className="run-sheet">
+  return <div className="modal-backdrop"><article className="run-sheet" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="authored-run-title" tabIndex={-1}>
     <div className="run-sheet-actions"><button className="secondary-button" type="button" onClick={onClose}><X size={16} /> Close</button><button className="primary-button" type="button" onClick={() => window.print()}><Printer size={16} /> Print</button></div>
-    <header><span>KNITERATE STUDIO · RUN SHEET</span><h1>{project.title}</h1><div className={`print-verdict verdict-${verdict.state}`}>{verdict.label}</div></header>
+    <header><span>KNITERATE STUDIO · RUN SHEET</span><h1 id="authored-run-title">{project.title}</h1><div className={`print-verdict verdict-${verdict.state}`}>{verdict.label}</div></header>
     <p className="run-annotation">{verdict.annotation}</p>
     <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Needles</dt><dd>{state.machine.needleOffset}–{needleEnd} ({state.chart.width})</dd></div><div><dt>Design rows</dt><dd>{state.chart.height}</dd></div><div><dt>Backing</dt><dd>{state.strategy.technique}</dd></div><div><dt>K-code passes</dt><dd>{kcode.passCount.toLocaleString()}</dd></div><div><dt>Estimated time</dt><dd>{compiled.stats.estimatedKnitTimeSeconds === null ? '—' : `${Math.ceil(compiled.stats.estimatedKnitTimeSeconds / 60)} min`}</dd></div></dl></section>
     <section><h2>Carrier map</h2><div className="carrier-map"><span><i style={{ background: CARRIER_COLORS['1'] }} />C1<b>{state.frame.drawThread ? 'Draw thread' : 'Not used'}</b></span>{state.machine.yarnAssignments.map((assignment) => { const color = state.chart.palette.find((entry) => entry.id === assignment.paletteId); return <span key={assignment.paletteId}><i style={{ background: color?.hex }} />C{assignment.carrier}<b>{assignment.yarnName}</b></span>; })}<span><i style={{ background: CARRIER_COLORS['6'] }} />C6<b>Waste yarn · {state.frame.wasteRows} rows</b></span></div></section>
@@ -363,7 +400,10 @@ export function App() {
   const [mobileView, setMobileView] = useState<MobileView>('passes');
   const [showVerdict, setShowVerdict] = useState(false);
   const [showRunSheet, setShowRunSheet] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const requested = new URLSearchParams(window.location.search).get('theme');
+    return requested === 'light' || requested === 'dark' ? requested : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const [showNewProject, setShowNewProject] = useState(false);
   const [showProjectSettings, setShowProjectSettings] = useState(false);
@@ -388,6 +428,7 @@ export function App() {
     knitProvenEntryId: knitProvenMatch?.id ?? null,
   });
   const authoredExportReady = outputReady && authoredVerdict !== null && authoredVerdict.state !== 'blocked';
+  const authoredState = useMemo(() => materializeColorworkProject(project).state, [project]);
   useEffect(() => {
     setAutosaveState('saving');
     const timeout = window.setTimeout(() => {
@@ -400,6 +441,11 @@ export function App() {
     }, 350);
     return () => window.clearTimeout(timeout);
   }, [project]);
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('theme', theme);
+    window.history.replaceState(null, '', url);
+  }, [theme]);
   const createProject = ({ title, width, height, colorCount }: NewProjectValues) => {
     const palette = DEFAULT_PROJECT_PALETTE.slice(0, colorCount).map((entry) => ({ ...entry }));
     setProject(createColorworkProjectV1({
@@ -455,24 +501,22 @@ export function App() {
   return (
     <div className="app-shell" data-theme={theme}>
       <header className="topbar">
-        <div className="brand-lockup"><span className="brand-mark"><Rows3 size={17} /></span><strong>Kniterate Studio</strong>{document && <span className="file-name">{document.filename}</span>}</div>
+        <div className="brand-lockup"><span className="brand-mark" aria-hidden="true"><i /><i /><i /></span><span className="brand-copy"><strong>Kniterate Studio</strong><small>{document ? document.filename : `${project.title} / ${authoredState.chart.width} needles / ${authoredState.chart.height} rows`}</small></span></div>
         {!document && <CompilePipeline project={project} compile={blanketCompile} kcodeStatus={kcodeState.status} />}
         <div className="topbar-actions">
-          <button className={`icon-button${view === 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => setView('chart')} title="Chart" aria-label="Open chart"><Grid3X3 size={17} /></button>
-          <button className={`icon-button${view !== 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => (document || blanketCompile.artifact?.ok) && setView('machine')} title="Machine" aria-label="Open machine" disabled={!document && !blanketCompile.artifact?.ok}><Rows3 size={17} /></button>
-          {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
-          {!document && view !== 'chart' && authoredVerdict && <AuthoredVerdictBadge verdict={authoredVerdict} />}
-          {!document && <button className="icon-button top-new" type="button" onClick={() => setShowNewProject(true)} title="New project" aria-label="New project"><FilePlus2 size={17} /></button>}
+          {document && <button className={`icon-button${view === 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => { setDocument(null); setView('chart'); }} title="Return to authored project" aria-label="Return to authored project"><Grid3X3 size={17} /></button>}
           <button className="icon-button" type="button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} title="Toggle theme" aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
-          {!document && <button className="primary-button top-export" type="button" onClick={downloadKCode} disabled={!authoredExportReady} title={authoredExportReady ? 'Export validated K-code' : kcodeState.status === 'converting' ? 'Validating K-code' : 'Resolve blocking findings before export'} aria-label="Export k-code"><Download size={16} /><span>Export .kc</span></button>}
+          {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
+          {!document && authoredVerdict && <AuthoredVerdictBadge verdict={authoredVerdict} onClick={() => setShowVerdict((value) => !value)} />}
           {(document || authoredExportReady) && <button className="icon-button" type="button" onClick={() => setShowRunSheet(true)} title="Run sheet" aria-label="Open run sheet"><Printer size={17} /></button>}
-          <button className="primary-button top-open" type="button" onClick={() => fileInput.current?.click()}><FileUp size={16} /> Open</button>
+          {!document && <button className="primary-button top-export" type="button" onClick={downloadKCode} disabled={!authoredExportReady} title={authoredExportReady ? 'Export validated K-code' : kcodeState.status === 'converting' ? 'Validating K-code' : 'Resolve blocking findings before export'} aria-label="Export k-code"><Download size={16} /><span>Export .kc</span></button>}
+          <button className="icon-button top-open" type="button" onClick={() => fileInput.current?.click()} title="Open machine file" aria-label="Open machine file"><FileUp size={16} /></button>
         </div>
       </header>
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} outputStatus={kcodeState.status} outputError={kcodeState.error} authoredVerdict={authoredVerdict} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash ? kcodeState.artifact : null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
+      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={kcodeState.status} outputError={kcodeState.error} authoredVerdict={authoredVerdict} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash ? kcodeState.artifact : null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>
@@ -497,6 +541,7 @@ export function App() {
         </div>
       )}
       {document && showVerdict && <VerdictPanel document={document} onClose={() => setShowVerdict(false)} />}
+      {!document && showVerdict && authoredVerdict && <AuthoredVerdictPanel verdict={authoredVerdict} onClose={() => setShowVerdict(false)} />}
       {document && showRunSheet && <RunSheet document={document} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
       {showNewProject && <NewProjectDialog onCreate={createProject} onClose={() => setShowNewProject(false)} />}

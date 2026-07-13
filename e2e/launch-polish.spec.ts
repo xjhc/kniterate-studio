@@ -13,7 +13,7 @@ test('creates, renames, recolors, autosaves, and recovers a customer project', a
   await newProject.getByLabel('Rows').fill('72');
   await newProject.getByRole('button', { name: '2', exact: true }).click();
   await newProject.getByRole('button', { name: 'Create' }).click();
-  await expect(page.getByRole('heading', { name: 'Harbor blanket' })).toBeVisible();
+  await expect(page.locator('.brand-copy small')).toContainText('Harbor blanket');
 
   await page.getByRole('button', { name: 'Project settings' }).click();
   const settings = page.getByRole('dialog', { name: 'Project settings' });
@@ -21,13 +21,13 @@ test('creates, renames, recolors, autosaves, and recovers a customer project', a
   await settings.getByLabel('Palette color 1 name').fill('Ivory');
   await settings.locator('input[type="color"]').first().fill('#E8E1D2');
   await settings.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Harbor blanket v1' })).toBeVisible();
-  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  await expect(page.locator('.brand-copy small')).toContainText('Harbor blanket v1');
+  await expect(page.locator('.autosave-state.saved')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Export k-code' })).toBeEnabled({ timeout: 15_000 });
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Harbor blanket v1' })).toBeVisible();
+  await expect(page.locator('.brand-copy small')).toContainText('Harbor blanket v1');
   await expect(page.getByRole('button', { name: 'Use Ivory' })).toBeVisible();
-  await expect(page.getByText('Saved', { exact: true })).toBeVisible();
+  await expect(page.locator('.autosave-state.saved')).toBeVisible();
   expect(errors).toEqual([]);
 });

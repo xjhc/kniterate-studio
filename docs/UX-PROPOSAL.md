@@ -1,6 +1,6 @@
 # Kniterate Studio — UI/UX proposal
 
-**Status:** partly shipped, partly forward design (revised 2026-07-12). The
+**Status:** partly shipped, partly forward design (revised 2026-07-13). The
 foreign-`.kc` workspace and the authored chart→compile→k-code loop this document
 proposes are **built and shipping** in `apps/studio` (`v1.0.0-rc.1`); see
 [`STATUS.md`](./STATUS.md) for what's live vs. still-proposed. Sections that
@@ -10,12 +10,11 @@ adopted). The verdict ladder is **three rungs** — Experimental/waivers were cu
 from V1 (SYSTEM-DESIGN R6).
 
 **Companion artifacts**
-- Interactive workspace mockup (canonical, 2026-07-12):
-  [`docs/mockups/workspace-v2.html`](./mockups/workspace-v2.html) — paint the
-  chart, switch backing, drive the blocked/resolve paths, hover a row to sync all
-  six pipeline stages. Body-only file (Artifact format); earlier iterations live
-  in `docs/mockups/archive/`. Published:
-  `https://claude.ai/code/artifact/09e9cecb-67d9-411e-914a-59fb8d7f350d`.
+- Interactive workspace mockup (canonical, 2026-07-13):
+  [`docs/mockups/workspace-target.html`](./mockups/workspace-target.html) with
+  its binding [`workspace-target.md`](./mockups/workspace-target.md) contract.
+  It supersedes V2 for the V1 production workspace; earlier iterations remain
+  reference material rather than implementation targets.
 - Rendered proposal (shareable): claude.ai artifact
   `https://claude.ai/code/artifact/3675603a-7d2e-49a5-836f-e5d3f97f1c38`.
 - Engineering handoff + open risks: [`SYSTEM-DESIGN.md`](./SYSTEM-DESIGN.md).

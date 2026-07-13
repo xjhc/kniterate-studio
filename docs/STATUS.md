@@ -1,6 +1,6 @@
 # STATUS — what is shipped vs. proposed
 
-**Front door. Read this before any planning doc.** Reconciled 2026-07-12 against
+**Front door. Read this before any planning doc.** Reconciled 2026-07-13 against
 the working tree. Repo at `1.0.0-rc.1`; `pnpm typecheck` and `pnpm test` green.
 
 The other docs are framed as forward design and drifted behind the code. Where a
@@ -22,6 +22,11 @@ ship," trust this file and the working tree instead.
   (`src/blanket/compile.worker.ts` → `compileToRunArtifact`), predicted pass
   grid, back-face preview, browser `.kc` conversion in a Worker
   (`src/kcode/convert.worker.ts`), validated export, local autosave, run sheet.
+- **Synchronized authored workspace.** Chart, backing/frame strategy, selected
+  design-row passes, full-program frame regions, attributional diagnostics, and
+  collapsible Knitout/K-code source now share the canonical cause/effect layout.
+  Narrow screens use explicit Chart / Strategy / Machine tabs; export remains
+  hard-gated by the authored verdict.
 - **Central authored verdict policy + typed provenance.**
   `engine.ts::resolveAuthoredVerdict` is the sole authored 3-rung policy owner.
   Design-row provenance travels on typed knitout ops, is exposed as an aligned
@@ -72,4 +77,6 @@ machine run succeeds.**
 - `ROADMAP.md` — milestone ledger (M0–M3D complete).
 - `HANDOFF.md` — reduced to present truth; points here.
 - `docs/archive/BUILD-S1.md` — **historical** M2 implementation contract (S1 shipped).
-- `docs/mockups/workspace-v2.html` — canonical design mockup (3-rung; de-waivered).
+- `docs/mockups/workspace-target.html` + `workspace-target.md` — canonical V1
+  workspace mockup and binding implementation contract.
+- `docs/mockups/workspace-v2.html` — superseded design reference.

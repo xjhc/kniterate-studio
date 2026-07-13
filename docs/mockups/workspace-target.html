@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff" id="themeColor">
+  <link rel="preconnect" href="https://unpkg.com" crossorigin>
+  <link rel="preload" href="assets/fonts/cantarell-vf.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/ibm-plex-mono-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="assets/fonts/ibm-plex-mono-semibold.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23202624'/%3E%3Cpath d='M9 9v14M16 6v20M23 9v14' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
+  <title>Kniterate Studio - implementation target</title>
+  <!--
+    Canonical-candidate workspace mockup, 2026-07-13.
+    Scope: shipped V1 capabilities only. No assistant, stitch overrides,
+    pass editing, waivers, or invented machine controls.
+  -->
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
+  <style>
+    @font-face {
+      font-family: "Knit Sans";
+      src: url("assets/fonts/cantarell-vf.woff2") format("woff2");
+      font-style: normal;
+      font-weight: 100 900;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Knit Mono";
+      src: url("assets/fonts/ibm-plex-mono-regular.woff2") format("woff2");
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Knit Mono";
+      src: url("assets/fonts/ibm-plex-mono-semibold.woff2") format("woff2");
+      font-style: normal;
+      font-weight: 600;
+      font-display: swap;
+    }
+    :root {
+      color-scheme: light;
+      --font-sans: "Knit Sans", "Segoe UI", sans-serif;
+      --font-mono: "Knit Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-family: var(--font-sans);
+      font-synthesis: none;
+      --canvas: #eef1ef;
+      --paper: #f8faf9;
+      --panel: #ffffff;
+      --panel-2: #f1f4f2;
+      --ink: #202624;
+      --ink-2: #59635f;
+      --ink-3: #626d68;
+      --rule: #cdd4d0;
+      --rule-strong: #aab5b0;
+      --signal: #13785a;
+      --signal-soft: #e2f2ea;
+      --focus: #d4553d;
+      --focus-soft: #fbe9e4;
+      --warn: #a9680d;
+      --warn-soft: #fff2d6;
+      --blocked: #b43734;
+      --blocked-soft: #f9e5e3;
+      --source: #18201d;
+      --source-2: #22302a;
+      --source-ink: #dfe8e3;
+      --shadow: 0 14px 34px rgba(28, 39, 34, .14);
+      --row-height: 24px;
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #171c1a;
+      --paper: #202623;
+      --panel: #252c29;
+      --panel-2: #2d3531;
+      --ink: #edf2ef;
+      --ink-2: #bac4bf;
+      --ink-3: #a7b1ac;
+      --rule: #3c4742;
+      --rule-strong: #59655f;
+      --signal: #70c7a2;
+      --signal-soft: #213d31;
+      --focus: #ef8a6e;
+      --focus-soft: #442d27;
+      --warn: #e4b55d;
+      --warn-soft: #40351f;
+      --blocked: #f08079;
+      --blocked-soft: #482927;
+      --source: #111614;
+      --source-2: #1a241f;
+      --source-ink: #e0e9e4;
+      --shadow: 0 14px 34px rgba(0, 0, 0, .3);
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body { overflow: hidden; color: var(--ink); background: var(--canvas); }
+    button, input, select { font: inherit; letter-spacing: 0; }
+    button { color: inherit; touch-action: manipulation; -webkit-tap-highlight-color: color-mix(in srgb, var(--focus) 20%, transparent); }
+    button:not(.cell) { transition: transform 120ms ease, opacity 120ms ease; }
+    button:not(.cell):not(:disabled):hover { opacity: .92; }
+    button:not(.cell):not(:disabled):active { transform: translateY(1px); }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--focus) 34%, transparent);
+      outline-offset: 1px;
+    }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    [hidden] { display: none !important; }
+    .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    .skip-link { position: fixed; z-index: 100; top: 8px; left: 8px; padding: 8px 10px; border-radius: 3px; color: var(--panel); background: var(--ink); font-size: 11px; transform: translateY(-160%); transition: transform 140ms ease-out; }
+    .skip-link:focus { transform: translateY(0); }
+    .eyebrow { color: var(--ink-3); font: 600 9px/1 var(--font-mono); text-transform: uppercase; }
+    .app { --source-dock-height: 188px; display: grid; grid-template-rows: 54px minmax(0, 1fr) var(--source-dock-height); width: 100%; height: 100%; color: var(--ink); background: var(--paper); }
+    .app.source-collapsed { --source-dock-height: 36px; }
+
+    /* Header: identity, lowering state, verdict, commands. */
+    .topbar { z-index: 30; display: grid; grid-template-columns: minmax(260px, 1fr) auto minmax(310px, 1fr); align-items: center; gap: 18px; padding: 0 calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left)); border-bottom: 1px solid var(--rule); background: var(--panel); }
+    .brand { display: flex; align-items: center; min-width: 0; gap: 9px; }
+    .brand-mark { display: grid; grid-template-columns: repeat(3, 4px); gap: 2px; width: 30px; height: 30px; place-content: center; border-radius: 4px; background: var(--ink); }
+    .brand-mark i { width: 4px; height: 12px; background: var(--panel); }
+    .brand-mark i:nth-child(2) { height: 17px; }
+    .brand-copy { min-width: 0; }
+    .brand-copy b { display: block; font-size: 13px; line-height: 1.05; }
+    .brand-copy span { display: block; overflow: hidden; margin-top: 3px; color: var(--ink-3); font: 9px/1 var(--font-mono); text-overflow: ellipsis; white-space: nowrap; }
+    .pipeline { display: flex; align-items: center; margin: 0; padding: 0; list-style: none; }
+    .pipeline li { display: flex; align-items: center; }
+    .pipeline li + li::before { width: 28px; height: 1px; margin: 0 7px; background: var(--rule-strong); content: ""; }
+    .pipeline span { display: grid; gap: 2px; min-width: 52px; }
+    .pipeline b { color: var(--signal); font-size: 9px; }
+    .pipeline small { color: var(--ink-3); font: 9px/1 var(--font-mono); }
+    .pipeline small, .row-label, .pass-head, .pass-row, .estimate, .source-content { font-variant-numeric: tabular-nums; }
+    .top-actions { display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
+    .icon-btn, .command, .verdict, .tab, .dock-tab, .segmented button, .stepper button {
+      min-height: 32px; border: 1px solid var(--rule-strong); border-radius: 4px; background: var(--panel); cursor: pointer;
+    }
+    .icon-btn { display: inline-grid; place-items: center; width: 32px; padding: 0; }
+    .icon-btn svg { width: 15px; height: 15px; }
+    .command { display: inline-flex; align-items: center; gap: 7px; padding: 0 11px; font-size: 11px; font-weight: 700; }
+    .command.primary { border-color: var(--ink); color: var(--panel); background: var(--ink); }
+    .verdict { display: inline-flex; align-items: center; gap: 7px; padding: 0 10px; border-color: var(--signal); color: var(--signal); background: var(--signal-soft); font-size: 10px; font-weight: 750; }
+    .verdict .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .verdict.blocked { border-color: var(--blocked); color: var(--blocked); background: var(--blocked-soft); }
+    .icon-btn:not(:disabled):hover, .command:not(:disabled):hover, .verdict:hover, .tab:hover, .dock-tab:hover, .stepper button:hover { border-color: var(--focus); color: var(--focus); background: var(--focus-soft); }
+    .command.primary:not(:disabled):hover { border-color: var(--focus); color: #fff; background: var(--focus); }
+    .mobile-tabs { display: none; }
+
+    /* The subject-specific signature: design row and physical passes coexist. */
+    .workspace { display: grid; grid-template-columns: minmax(480px, 1.45fr) 252px minmax(340px, .9fr); min-width: 0; min-height: 0; }
+    .column { min-width: 0; min-height: 0; overflow: hidden; border-right: 1px solid var(--rule); background: var(--panel); }
+    .column:last-child { border-right: 0; }
+    .column-head { display: flex; align-items: center; justify-content: space-between; min-height: 38px; padding: 0 10px; border-bottom: 1px solid var(--rule); background: var(--panel-2); }
+    .column-title { display: flex; align-items: baseline; gap: 8px; }
+    .column-title strong { font-size: 11px; }
+    .column-head .meta { color: var(--ink-3); font: 9px/1 var(--font-mono); }
+
+    /* Chart column. */
+    .chart-column { display: grid; grid-template-rows: 38px 40px minmax(0, 1fr); }
+    .toolstrip { display: flex; align-items: center; gap: 3px; padding: 4px 8px; overflow-x: auto; border-bottom: 1px solid var(--rule); background: var(--paper); }
+    .toolstrip .divider { flex: 0 0 1px; align-self: stretch; margin: 2px 4px; background: var(--rule); }
+    .toolstrip button.active { border-color: var(--ink); color: var(--panel); background: var(--ink); }
+    .chart-stage { position: relative; display: grid; grid-template-columns: 102px minmax(0, 1fr); min-height: 0; background: var(--canvas); }
+    .palette { display: flex; flex-direction: column; gap: 3px; padding: 8px 6px; overflow: auto; border-right: 1px solid var(--rule); background: var(--paper); }
+    .palette button { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; align-items: center; gap: 6px; min-height: 29px; padding: 4px; border: 1px solid transparent; border-radius: 3px; color: var(--ink-2); background: transparent; text-align: left; cursor: pointer; }
+    .palette button:hover { border-color: var(--rule-strong); color: var(--ink); background: var(--panel); }
+    .palette button.active { border-color: var(--focus); color: var(--ink); background: var(--focus-soft); }
+    .swatch { width: 16px; height: 16px; border: 1px solid rgba(0, 0, 0, .2); border-radius: 2px; }
+    .palette b { overflow: hidden; font-size: 9px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+    .palette code { color: var(--ink-3); font: 9px var(--font-mono); }
+    .chart-scroll { position: relative; min-width: 0; min-height: 0; overflow: auto; padding: 24px 24px 34px 30px; }
+    .needle-ruler { position: sticky; z-index: 5; top: -24px; display: grid; height: 24px; margin-left: 50px; color: var(--ink-3); background: var(--canvas); font: 8px/24px var(--font-mono); }
+    .needle-ruler span { border-left: 1px solid var(--rule-strong); padding-left: 3px; }
+    .chart-frame { display: grid; grid-template-columns: 50px auto; width: max-content; box-shadow: 0 0 0 1px var(--rule-strong); background: var(--panel); }
+    .row-gutter { display: grid; background: var(--panel-2); }
+    .row-label { display: grid; grid-template-columns: 25px 1fr; align-items: center; height: var(--row-height); padding: 0 4px; border-bottom: 1px solid var(--rule); color: var(--ink-3); font: 9px var(--font-mono); cursor: pointer; }
+    .row-label b { color: var(--ink-2); font-weight: 600; text-align: right; }
+    .row-label:hover { color: var(--focus); background: var(--focus-soft); }
+    .row-label.selected { color: var(--focus); background: var(--focus-soft); box-shadow: inset 3px 0 var(--focus); }
+    .chart-grid { display: grid; position: relative; user-select: none; touch-action: none; }
+    .cell { width: 22px; height: var(--row-height); border: 0; border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule); border-radius: 0; padding: 0; cursor: crosshair; }
+    .cell:hover { box-shadow: inset 0 0 0 2px var(--focus); }
+    .cell.row-selected { box-shadow: inset 0 2px rgba(212, 85, 61, .55), inset 0 -2px rgba(212, 85, 61, .55); }
+    .cell.float-warning { position: relative; }
+    .cell.float-warning::after { position: absolute; right: 2px; bottom: 2px; width: 4px; height: 4px; border-radius: 50%; background: var(--warn); content: ""; }
+    .chart-caption { position: sticky; left: 0; display: flex; justify-content: space-between; gap: 20px; width: min(100%, 660px); margin-top: 8px; color: var(--ink-3); font: 9px/1.4 var(--font-mono); }
+    .chart-caption .warn { color: var(--warn); }
+
+    /* Strategy column: parameters and compiler consequences, not a wizard. */
+    .strategy-column { display: grid; grid-template-rows: 38px minmax(0, 1fr); }
+    .strategy-body { min-height: 0; overflow: auto; }
+    .strategy-section { padding: 10px; border-bottom: 1px solid var(--rule); }
+    .strategy-section h3 { margin: 0 0 8px; font-size: 9px; text-transform: uppercase; }
+    .strategy-list { display: grid; gap: 4px; }
+    .strategy-choice { display: grid; grid-template-columns: 46px minmax(0, 1fr); align-items: center; gap: 7px; min-height: 45px; padding: 4px; border: 1px solid var(--rule-strong); border-radius: 3px; color: var(--ink-2); background: var(--paper); text-align: left; cursor: pointer; }
+    .strategy-choice:hover, .strategy-choice.active { border-color: var(--focus); color: var(--ink); background: var(--focus-soft); }
+    .strategy-choice.blocked-choice { color: var(--ink-3); }
+    .strategy-choice b, .strategy-choice small { display: block; }
+    .strategy-choice b { font-size: 10px; }
+    .strategy-choice small { margin-top: 2px; color: var(--ink-3); font: 9px/1.25 var(--font-mono); }
+    .back-preview { display: grid; grid-template-columns: repeat(8, 1fr); width: 46px; height: 32px; overflow: hidden; border: 1px solid var(--rule); background: var(--panel-2); }
+    .back-preview i { min-width: 3px; min-height: 3px; }
+    .field { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-top: 8px; color: var(--ink-2); font-size: 9px; }
+    .field:focus-within label { color: var(--focus); }
+    .field input, .field select { width: 104px; height: 29px; padding: 3px 6px; border: 1px solid var(--rule-strong); border-radius: 3px; color: var(--ink); background: var(--panel); }
+    .check-field { min-height: 29px; cursor: pointer; }
+    .check-field span { min-width: 0; }
+    .check-field input[type="checkbox"] { width: 16px; height: 16px; margin: 0 6px 0 0; padding: 0; accent-color: var(--signal); cursor: pointer; }
+    .stepper { display: grid; grid-template-columns: 28px 46px 28px; }
+    .stepper button { width: 28px; padding: 0; }
+    .stepper output { display: grid; place-items: center; border-top: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule-strong); font: 9px var(--font-mono); }
+    .carrier-list { display: grid; gap: 5px; }
+    .carrier-row { display: grid; grid-template-columns: 15px 24px minmax(0, 1fr); align-items: center; gap: 5px; color: var(--ink-2); font-size: 9px; }
+    .carrier-row i { width: 15px; height: 15px; border: 1px solid rgba(0,0,0,.2); border-radius: 2px; }
+    .carrier-row code { color: var(--ink); font: 9px var(--font-mono); }
+    .estimate { display: grid; grid-template-columns: 1fr auto; gap: 5px 10px; margin: 0; font-size: 9px; }
+    .estimate dt, .estimate dd { margin: 0; }
+    .estimate dt { color: var(--ink-3); }
+    .estimate dd { color: var(--ink); font-family: var(--font-mono); }
+    h1, h2, h3 { text-wrap: balance; }
+
+    /* Machine column: the physical expansion of the selected design row. */
+    .machine-column { display: grid; grid-template-rows: 38px minmax(0, 1fr) auto; }
+    .pass-area { min-height: 0; overflow: auto; background: var(--paper); }
+    .program-map { position: sticky; z-index: 6; top: 0; display: grid; grid-template-columns: 1.2fr .72fr 2.6fr 1fr; min-width: 340px; padding: 7px; border-bottom: 1px solid var(--rule); background: var(--panel); }
+    .program-region { position: relative; min-width: 0; min-height: 43px; padding: 5px 7px; overflow: hidden; border: 0; border-right: 1px solid color-mix(in srgb, var(--ink) 16%, transparent); border-radius: 0; color: var(--ink-2); background: var(--panel-2); text-align: left; }
+    .program-region:first-child { border-radius: 3px 0 0 3px; }
+    .program-region:last-child { border-right: 0; border-radius: 0 3px 3px 0; }
+    .program-region::before { position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--region-color, var(--rule-strong)); content: ""; }
+    .program-region b, .program-region small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .program-region b { font-size: 9px; font-weight: 650; }
+    .program-region small { margin-top: 3px; color: var(--ink-3); font: 9px/1 var(--font-mono); }
+    .program-region.active { z-index: 1; color: var(--ink); background: var(--focus-soft); box-shadow: inset 0 0 0 1px var(--focus); }
+    .program-region.waste { --region-color: #b65378; }
+    .program-region.draw { --region-color: #5a8e67; }
+    .program-region.body { --region-color: var(--focus); }
+    .program-region.finish { --region-color: #596b83; }
+    .pass-head, .pass-row { display: grid; grid-template-columns: 34px 36px 42px minmax(72px, 1fr) 54px 46px; align-items: center; }
+    .pass-head { position: sticky; z-index: 5; top: 57px; min-width: 330px; height: 29px; padding: 0 7px; border-bottom: 1px solid var(--rule); color: var(--ink-3); background: var(--panel-2); font: 8px var(--font-mono); text-transform: uppercase; }
+    .pass-list { min-width: 330px; }
+    .empty-passes { margin: 0; padding: 18px 10px; color: var(--ink-3); font-size: 9px; }
+    .pass-row { width: 100%; min-height: 34px; padding: 0 7px; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; color: var(--ink-2); background: var(--panel); text-align: left; cursor: pointer; }
+    .pass-row:hover, .pass-row.active { background: var(--focus-soft); }
+    .pass-row.active { box-shadow: inset 3px 0 var(--focus); color: var(--ink); }
+    .pass-row span, .pass-row code { overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .pass-row .num { font-family: var(--font-mono); }
+    .pass-row .dir { font-size: 13px; font-weight: 700; }
+    .carrier-chip { display: inline-grid; place-items: center; width: 27px; height: 19px; border: 1px solid var(--rule-strong); border-radius: 3px; color: var(--ink); background: var(--panel-2); font: 9px var(--font-mono); }
+    .pass-row .row-ref { color: var(--focus); font-family: var(--font-mono); }
+    .diagnostic { padding: 10px; border-top: 1px solid var(--rule); background: var(--panel); }
+    .diagnostic-line { display: grid; grid-template-columns: 17px minmax(0, 1fr); gap: 7px; padding: 8px; border-left: 3px solid var(--warn); color: var(--ink-2); background: var(--warn-soft); font-size: 9px; line-height: 1.4; }
+    .diagnostic-line.clean { border-color: var(--signal); color: var(--signal); background: var(--signal-soft); }
+    .diagnostic-line.blocked { border-color: var(--blocked); color: var(--blocked); background: var(--blocked-soft); }
+    .diagnostic-line svg { width: 15px; height: 15px; }
+    .diagnostic-line b { display: block; margin-bottom: 2px; color: currentColor; font-size: 10px; }
+    .diagnostic-line code { display: block; margin-top: 3px; color: var(--ink-2); font: 9px var(--font-mono); }
+
+    /* Persistent machine source, available without leaving the cause/effect view. */
+    .source-dock { display: grid; grid-template-rows: 36px minmax(0, 1fr); min-height: 0; border-top: 1px solid #34403b; color: var(--source-ink); background: var(--source); }
+    .source-dock.collapsed { grid-template-rows: 36px; }
+    .source-bar { display: flex; align-items: center; gap: 10px; padding: 0 calc(10px + env(safe-area-inset-right)) 0 calc(10px + env(safe-area-inset-left)); border-bottom: 1px solid #34403b; background: var(--source-2); }
+    .source-bar .eyebrow { color: #91a099; }
+    .dock-tabs { display: flex; gap: 2px; }
+    .dock-tab { min-height: 25px; padding: 0 9px; border-color: transparent; color: #9eaaa4; background: transparent; font: 9px var(--font-mono); }
+    .dock-tab.active { color: #fff; border-color: #4b5c54; background: #2c3b34; }
+    .source-meta { flex: 1; overflow: hidden; color: #9aa8a1; font: 9px var(--font-mono); text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+    .source-toggle { display: inline-flex; width: auto; gap: 6px; padding: 0 8px; color: #b9c5bf; border-color: #4b5c54; background: transparent; font-size: 9px; }
+    .source-content { min-height: 0; margin: 0; overflow: auto; padding: 7px 0 calc(7px + env(safe-area-inset-bottom)); color: var(--source-ink); font: 9px/1.45 var(--font-mono); }
+    .source-content .line { display: grid; grid-template-columns: 48px minmax(max-content, 1fr); min-height: 14px; white-space: pre; }
+    .source-content .line b { padding-right: 9px; color: #637169; font-weight: 400; text-align: right; user-select: none; }
+    .source-content .line code { padding: 0 10px; }
+    .source-content .line.highlight { color: #fff; background: #32483e; }
+    .source-content .line.highlight b { color: #ef9a81; }
+    .source-dock.collapsed .source-content { display: none; }
+
+    /* Verdict and run sheet overlays. */
+    .popover { position: fixed; z-index: 60; top: 48px; right: 102px; width: min(340px, calc(100vw - 24px)); border: 1px solid var(--rule-strong); border-radius: 5px; box-shadow: var(--shadow); background: var(--panel); }
+    .popover:not([hidden]) { animation: pop-in 140ms ease-out; transform-origin: top right; }
+    .popover[hidden], .overlay[hidden] { display: none; }
+    .popover header { display: flex; align-items: center; justify-content: space-between; min-height: 38px; padding: 0 10px; border-bottom: 1px solid var(--rule); }
+    .popover header strong { font-size: 11px; }
+    .popover-body { padding: 12px; }
+    .verdict-summary { padding: 9px; border-left: 3px solid var(--signal); color: var(--signal); background: var(--signal-soft); font-size: 10px; line-height: 1.45; }
+    .verdict-summary.blocked { border-color: var(--blocked); color: var(--blocked); background: var(--blocked-soft); }
+    .ladder { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 18px; padding: 0; list-style: none; }
+    .ladder li { position: relative; padding-top: 14px; color: var(--ink-3); font: 9px var(--font-mono); text-align: center; }
+    .ladder li::before { position: absolute; top: 4px; left: 0; width: 100%; height: 1px; background: var(--rule); content: ""; }
+    .ladder i { position: absolute; z-index: 1; top: 0; left: calc(50% - 4px); width: 9px; height: 9px; border: 2px solid var(--panel); border-radius: 50%; background: var(--rule-strong); }
+    .ladder .current { color: var(--signal); }
+    .ladder .current i { background: currentColor; }
+    .overlay { position: fixed; z-index: 80; inset: 0; overflow: auto; overscroll-behavior: contain; padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); background: rgba(18, 24, 21, .68); }
+    .overlay:not([hidden]) { animation: fade-in 140ms ease-out; }
+    .run-sheet { width: min(760px, 100%); margin: 0 auto; padding: 34px 42px; color: #202624; background: #fff; box-shadow: 0 22px 70px rgba(0,0,0,.35); }
+    .overlay:not([hidden]) .run-sheet { animation: sheet-in 160ms ease-out; }
+    .run-actions { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 18px; }
+    .run-sheet header { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding-bottom: 16px; border-bottom: 2px solid #202624; }
+    .run-sheet h1 { margin: 4px 0 0; font-size: 22px; text-wrap: balance; }
+    .run-stamp { padding: 6px 9px; border: 1px solid #13785a; color: #13785a; font: 9px var(--font-mono); }
+    .run-sheet section { padding: 15px 0; border-bottom: 1px solid #ccd3cf; }
+    .run-sheet h2 { margin: 0 0 8px; font-size: 10px; text-transform: uppercase; }
+    .run-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 22px; }
+    .run-grid div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 4px; border-bottom: 1px dotted #ccd3cf; font-size: 9px; }
+    .run-grid b { font-family: var(--font-mono); }
+    .run-grid span, .run-grid b { min-width: 0; overflow-wrap: anywhere; }
+    .checklist { margin: 0; padding: 0; list-style: none; font-size: 9px; line-height: 1.9; }
+    .checklist li::before { display: inline-block; width: 11px; height: 11px; margin-right: 7px; border: 1px solid #77817c; vertical-align: -2px; content: ""; }
+
+    @media (max-width: 1180px) {
+      .topbar { grid-template-columns: minmax(210px, 1fr) auto minmax(260px, 1fr); }
+      .pipeline small { display: none; }
+      .workspace { grid-template-columns: minmax(500px, 1fr) 250px; grid-template-rows: minmax(340px, 1fr) 230px; overflow: auto; }
+      .machine-column { grid-column: 1 / -1; border-top: 1px solid var(--rule); }
+      .pass-head, .pass-row { grid-template-columns: 45px 55px 60px minmax(100px, 1fr) 80px 70px; }
+    }
+    @media (max-width: 760px) {
+      body { overflow: hidden; }
+      .app { --source-dock-height: 150px; grid-template-rows: 48px 38px minmax(0, 1fr) var(--source-dock-height); }
+      .app.source-collapsed { --source-dock-height: 36px; }
+      .topbar { display: flex; gap: 6px; padding: 0 calc(7px + env(safe-area-inset-right)) 0 calc(7px + env(safe-area-inset-left)); }
+      .brand { margin-right: auto; }
+      .brand-copy { display: none; }
+      .pipeline { display: none; }
+      .top-actions { gap: 4px; }
+      .verdict { width: 32px; padding: 0; font-size: 0; justify-content: center; }
+      .command.primary { width: 32px; padding: 0; font-size: 0; justify-content: center; }
+      .mobile-tabs { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--rule); background: var(--panel-2); }
+      .tab { min-height: 38px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: var(--ink-3); background: transparent; font-size: 9px; font-weight: 700; }
+      .tab.active { border-color: var(--focus); color: var(--focus); }
+      .workspace { display: block; min-height: 0; overflow: hidden; }
+      .column { display: none; width: 100%; height: 100%; border: 0; }
+      .column.mobile-active { display: grid; }
+      .chart-stage { grid-template-columns: 82px minmax(0, 1fr); }
+      .palette { padding: 6px 4px; }
+      .palette button { grid-template-columns: 18px minmax(0, 1fr); }
+      .palette code { display: none; }
+      .chart-scroll { padding: 20px 12px 26px 18px; }
+      .strategy-column { grid-template-rows: 38px minmax(0, 1fr); }
+      .machine-column { grid-template-rows: 38px minmax(0, 1fr) auto; }
+      .source-dock { height: 150px; }
+      .source-collapsed .source-dock { height: 36px; }
+      .source-meta { display: none; }
+      .source-toggle span { display: none; }
+      .popover { top: 43px; right: 7px; }
+      .overlay { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+      .run-sheet { min-height: 100%; padding: 26px 18px; }
+      .run-grid { grid-template-columns: 1fr; }
+    }
+    #exportButton [data-lucide="loader-circle"] { animation: spin 760ms linear infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(.99); } }
+    @keyframes fade-in { from { opacity: 0; } }
+    @keyframes sheet-in { from { opacity: 0; transform: translateY(8px); } }
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to workspace</a>
+  <div class="app" id="app" data-theme="light">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="brand-copy"><b>Kniterate Studio</b><span id="projectMeta">Aurora throw / 120 needles / 160 rows</span></span>
+      </div>
+      <ol class="pipeline" aria-label="Compile pipeline">
+        <li><span><b>Chart</b><small id="pipelineChart">120 x 160</small></span></li>
+        <li><span><b>Plan</b><small id="pipelineTechnique">fairisle</small></span></li>
+        <li><span><b>Passes</b><small id="pipelinePasses">482</small></span></li>
+        <li><span><b>K-code</b><small>validated</small></span></li>
+      </ol>
+      <div class="top-actions">
+        <button class="icon-btn secondary-action" id="themeButton" type="button" title="Toggle theme" aria-label="Toggle theme"><i data-lucide="moon" aria-hidden="true"></i></button>
+        <button class="verdict" id="verdictButton" type="button" aria-expanded="false" aria-controls="verdictPopover"><span class="dot" aria-hidden="true"></span><span id="verdictLabel">Surface-proven</span></button>
+        <button class="icon-btn secondary-action" id="runButton" type="button" title="Open run sheet" aria-label="Open run sheet"><i data-lucide="printer" aria-hidden="true"></i></button>
+        <button class="command primary" id="exportButton" type="button" aria-live="polite"><i data-lucide="download" aria-hidden="true"></i><span>Export .kc</span></button>
+      </div>
+    </header>
+
+    <nav class="mobile-tabs" aria-label="Workspace columns" role="tablist">
+      <button class="tab active" id="chartTab" type="button" role="tab" aria-selected="true" aria-controls="chartColumn" data-panel="chartColumn">Chart</button>
+      <button class="tab" id="strategyTab" type="button" role="tab" aria-selected="false" aria-controls="strategyColumn" data-panel="strategyColumn">Strategy</button>
+      <button class="tab" id="machineTab" type="button" role="tab" aria-selected="false" aria-controls="machineColumn" data-panel="machineColumn">Machine</button>
+    </nav>
+
+    <main class="workspace" id="workspace" tabindex="-1">
+      <section class="column chart-column mobile-active" id="chartColumn">
+        <header class="column-head">
+          <div class="column-title"><span class="eyebrow">Design intent</span><strong>Chart</strong></div>
+          <span class="meta mono" id="chartMeta">rows 82-105 / needles 47-74</span>
+        </header>
+        <div class="toolstrip" role="toolbar" aria-label="Chart tools">
+          <button class="icon-btn active" type="button" data-tool="pen" title="Pen" aria-label="Pen" aria-pressed="true"><i data-lucide="pencil" aria-hidden="true"></i></button>
+          <button class="icon-btn" type="button" data-tool="line" title="Line" aria-label="Line" aria-pressed="false"><i data-lucide="slash" aria-hidden="true"></i></button>
+          <button class="icon-btn" type="button" data-tool="rectangle" title="Rectangle" aria-label="Rectangle" aria-pressed="false"><i data-lucide="square" aria-hidden="true"></i></button>
+          <button class="icon-btn" type="button" data-tool="fill" title="Flood fill" aria-label="Flood fill" aria-pressed="false"><i data-lucide="paint-bucket" aria-hidden="true"></i></button>
+          <button class="icon-btn" type="button" data-tool="erase" title="Eraser" aria-label="Eraser" aria-pressed="false"><i data-lucide="eraser" aria-hidden="true"></i></button>
+          <span class="divider"></span>
+          <button class="icon-btn" id="undoButton" type="button" title="Undo" aria-label="Undo"><i data-lucide="undo-2" aria-hidden="true"></i></button>
+          <button class="icon-btn" id="redoButton" type="button" title="Redo" aria-label="Redo"><i data-lucide="redo-2" aria-hidden="true"></i></button>
+          <span class="divider"></span>
+          <button class="icon-btn" id="zoomOut" type="button" title="Zoom out" aria-label="Zoom out"><i data-lucide="zoom-out" aria-hidden="true"></i></button>
+          <button class="icon-btn" id="zoomIn" type="button" title="Zoom in" aria-label="Zoom in"><i data-lucide="zoom-in" aria-hidden="true"></i></button>
+        </div>
+        <div class="chart-stage">
+          <aside class="palette" id="palette" aria-label="Palette"></aside>
+          <div class="chart-scroll" id="chartScroll">
+            <div class="needle-ruler" id="needleRuler"></div>
+            <div class="chart-frame">
+              <div class="row-gutter" id="rowGutter" aria-label="Design rows"></div>
+              <div class="chart-grid" id="chartGrid" role="grid" aria-label="Colorwork chart" aria-rowcount="24" aria-colcount="28"></div>
+            </div>
+            <div class="chart-caption"><span id="chartStatus">Row 94 / 2 physical passes</span><span class="warn" id="floatStatus">2 floats over budget</span></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="column strategy-column" id="strategyColumn">
+        <header class="column-head">
+          <div class="column-title"><span class="eyebrow">Compiler intent</span><strong>Strategy</strong></div>
+          <span class="meta">live</span>
+        </header>
+        <div class="strategy-body">
+          <section class="strategy-section">
+            <h3>Backing</h3>
+            <div class="strategy-list" id="strategyList"></div>
+            <div class="field" id="floatField"><label for="floatBudget">Float budget</label><span class="stepper"><button id="floatDown" type="button" aria-label="Decrease float budget">-</button><output id="floatBudget" aria-live="polite">5</output><button id="floatUp" type="button" aria-label="Increase float budget">+</button></span></div>
+            <div class="field" id="coverageField" hidden><label for="coverage">Color coverage</label><select id="coverage" name="coverage" autocomplete="off"><option value="minimal">Active colors</option><option value="full">All colors</option></select></div>
+          </section>
+          <section class="strategy-section">
+            <h3>Rectangle</h3>
+            <div class="field"><label for="needles">Needles</label><input id="needles" name="needles" type="number" inputmode="numeric" autocomplete="off" min="1" max="252" value="120"></div>
+            <div class="field"><label for="rows">Rows</label><input id="rows" name="rows" type="number" inputmode="numeric" autocomplete="off" min="1" value="160"></div>
+            <div class="field"><label for="firstNeedle">First needle</label><input id="firstNeedle" name="firstNeedle" type="number" inputmode="numeric" autocomplete="off" min="1" max="133" value="67"></div>
+          </section>
+          <section class="strategy-section">
+            <h3>Pattern yarns</h3>
+            <div class="carrier-list" id="carrierList"></div>
+          </section>
+          <section class="strategy-section">
+            <h3>Frame</h3>
+            <div class="field"><label for="wasteRows">Waste rows / C6</label><input id="wasteRows" name="wasteRows" type="number" inputmode="numeric" autocomplete="off" min="1" max="200" value="20"></div>
+            <label class="field check-field" for="drawThread"><span>Draw thread / C1</span><input id="drawThread" name="drawThread" type="checkbox" checked></label>
+            <div class="field"><label for="finish">Finish</label><select id="finish" name="finish" autocomplete="off"><option>Machine bind-off</option><option>Waste and drop</option></select></div>
+          </section>
+          <section class="strategy-section">
+            <h3>Machine estimate</h3>
+            <dl class="estimate"><dt>Design rows</dt><dd id="estimateRows">160</dd><dt>Predicted passes</dt><dd id="estimatePasses">482</dd><dt>Estimated time</dt><dd id="estimateTime">49 min</dd></dl>
+          </section>
+        </div>
+      </aside>
+
+      <aside class="column machine-column" id="machineColumn">
+        <header class="column-head">
+          <div class="column-title"><span class="eyebrow">Machine truth</span><strong>Passes</strong></div>
+          <span class="meta mono" id="machineMeta">design row 94 x2</span>
+        </header>
+        <div class="pass-area">
+          <div class="program-map" id="programMap" aria-label="Machine program regions"></div>
+          <div class="pass-head"><span>Pass</span><span>Dir</span><span>Carrier</span><span>Action</span><span>Needles</span><span>Design</span></div>
+          <div class="pass-list" id="passList"></div>
+        </div>
+        <div class="diagnostic"><div class="diagnostic-line" id="diagnosticLine" role="status" aria-live="polite"></div></div>
+      </aside>
+    </main>
+
+    <footer class="source-dock" id="sourceDock">
+      <div class="source-bar">
+        <span class="eyebrow">Generated source</span>
+        <div class="dock-tabs" role="tablist" aria-label="Generated source format"><button class="dock-tab active" id="knitoutTab" type="button" role="tab" aria-selected="true" aria-controls="sourceContent" data-source="knitout">Knitout .k</button><button class="dock-tab" id="kcodeTab" type="button" role="tab" aria-selected="false" aria-controls="sourceContent" data-source="kcode">K-code .kc</button></div>
+        <span class="source-meta" id="sourceMeta">selected design row 94 / 2 passes</span>
+        <button class="icon-btn source-toggle" id="sourceToggle" type="button" title="Hide source" aria-label="Hide source" aria-expanded="true" aria-controls="sourceContent"><i data-lucide="panel-bottom-close" aria-hidden="true"></i><span>Hide</span></button>
+      </div>
+      <pre class="source-content" id="sourceContent" role="tabpanel" aria-labelledby="knitoutTab" tabindex="0" translate="no"></pre>
+    </footer>
+
+    <section class="popover" id="verdictPopover" role="dialog" aria-labelledby="verdictTitle" hidden>
+      <header><strong id="verdictTitle">Output verdict</strong><button class="icon-btn" id="closeVerdict" type="button" aria-label="Close verdict"><i data-lucide="x" aria-hidden="true"></i></button></header>
+      <div class="popover-body"><div class="verdict-summary" id="verdictSummary">Compiled and converted locally without blocking findings. Physical yarn, tension, and fabric behavior remain swatch-dependent.</div><ol class="ladder"><li><i></i>Blocked</li><li class="current"><i></i>Surface-proven</li><li><i></i>Knit-proven</li></ol></div>
+    </section>
+
+    <div class="overlay" id="runOverlay" role="dialog" aria-modal="true" aria-labelledby="runTitle" hidden>
+      <article class="run-sheet">
+        <div class="run-actions"><button class="command" id="closeRun" type="button"><i data-lucide="x" aria-hidden="true"></i>Close</button><button class="command primary" id="printRun" type="button"><i data-lucide="printer" aria-hidden="true"></i>Print</button></div>
+        <header><div><span class="eyebrow">Kniterate Studio / Run sheet</span><h1 id="runTitle">Aurora throw</h1></div><span class="run-stamp" id="runVerdict">Surface-proven</span></header>
+        <section><h2>Machine program</h2><div class="run-grid"><div><span>Profile</span><b>7gg worsted</b></div><div><span>Needles</span><b id="runNeedles">67-186 / 120</b></div><div><span>Design rows</span><b id="runRows">160</b></div><div><span>Backing</span><b id="runTechnique">Fairisle</b></div><div><span>Waste</span><b id="runWaste">20 rows / C6</b></div><div><span>Draw thread</span><b id="runDraw">C1</b></div><div><span>Finish</span><b id="runFinish">Machine bind-off</b></div></div></section>
+        <section><h2>Pattern carriers</h2><div class="run-grid"><div><span>Natural</span><b>C2</b></div><div><span>Rust</span><b>C3</b></div><div><span>Gold</span><b>C4</b></div><div><span>Navy</span><b>C5</b></div></div></section>
+        <section><h2>Operator checks</h2><ul class="checklist"><li>Confirm yarn identity and tension swatch</li><li>Confirm C1 draw thread and C6 waste yarn</li><li>Watch carrier bring-in and first two body rows</li><li>Inspect both faces, edges, and bind-off after knitting</li></ul></section>
+      </article>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+    const $ = (id) => document.getElementById(id);
+    const WIDTH = 28;
+    const HEIGHT = 24;
+    const FIRST_DISPLAY_ROW = 82;
+    const YARNS = [
+      { name: 'Natural', hex: '#E8E5DC', carrier: 2 },
+      { name: 'Rust', hex: '#B94A38', carrier: 3 },
+      { name: 'Gold', hex: '#D5A51D', carrier: 4 },
+      { name: 'Navy', hex: '#294A68', carrier: 5 },
+    ];
+    const TECHNIQUES = {
+      fairisle: { label: 'Fairisle', description: 'front knit / carried floats', multiplier: (colors) => colors },
+      'ladder-back': { label: 'Ladder', description: 'striped back-bed anchor', multiplier: (colors) => colors + 1 },
+      lined: { label: 'Lined', description: 'retired lowering path', multiplier: (colors) => colors * 2, blocked: true },
+      birdseye: { label: 'Birdseye', description: 'alternating backing / rack +0.5', multiplier: (colors) => colors * 2 },
+      complement: { label: 'Complement', description: 'reversible / exactly 2 colors', multiplier: () => 2, blocked: true },
+    };
+    const state = {
+      activeYarn: 1,
+      tool: 'pen',
+      technique: 'fairisle',
+      coverage: 'minimal',
+      floatBudget: 5,
+      selectedRow: 12,
+      selectedPass: 0,
+      programRegion: 'body',
+      focusedCell: { row: 12, column: 0 },
+      source: 'knitout',
+      sourceCollapsed: false,
+      zoom: 1,
+      history: [],
+      future: [],
+      drawing: false,
+      startCell: null,
+      mobilePanel: 'chartColumn',
+      cells: [],
+    };
+    const initialParams = new URLSearchParams(window.location.search);
+    const requestedTechnique = initialParams.get('technique');
+    const requestedSource = initialParams.get('source');
+    const requestedPanel = initialParams.get('panel');
+    const requestedRegion = initialParams.get('region');
+    state.sourceCollapsed = initialParams.get('dock') === 'closed';
+    if (requestedTechnique && TECHNIQUES[requestedTechnique]) state.technique = requestedTechnique;
+    if (requestedSource === 'knitout' || requestedSource === 'kcode') state.source = requestedSource;
+    if (['chartColumn', 'strategyColumn', 'machineColumn'].includes(requestedPanel)) state.mobilePanel = requestedPanel;
+    if (['waste', 'draw', 'body', 'finish'].includes(requestedRegion)) state.programRegion = requestedRegion;
+    const initialTheme = initialParams.get('theme') === 'dark' ? 'dark' : 'light';
+    $('app').dataset.theme = initialTheme;
+    document.documentElement.style.colorScheme = initialTheme;
+    $('themeColor').content = initialTheme === 'dark' ? '#252c29' : '#ffffff';
+
+    function syncUrl() {
+      const url = new URL(window.location.href);
+      url.searchParams.set('technique', state.technique);
+      url.searchParams.set('source', state.source);
+      url.searchParams.set('panel', state.mobilePanel);
+      url.searchParams.set('region', state.programRegion);
+      url.searchParams.set('dock', state.sourceCollapsed ? 'closed' : 'open');
+      url.searchParams.set('theme', $('app').dataset.theme);
+      window.history.replaceState(null, '', url);
+    }
+
+    function seedChart() {
+      const cells = [];
+      for (let row = 0; row < HEIGHT; row += 1) {
+        const values = [];
+        for (let column = 0; column < WIDTH; column += 1) {
+          const border = row < 2 || row >= HEIGHT - 2 || column < 2 || column >= WIDTH - 2;
+          const diamond = Math.abs(column - 13.5) + Math.abs(row - 11.5);
+          if (border) values.push((row + column) % 2);
+          else if (diamond < 5) values.push(3);
+          else if (diamond < 9) values.push(2);
+          else if ((Math.floor(column / 4) + Math.floor(row / 3)) % 5 === 0) values.push(1);
+          else values.push(0);
+        }
+        cells.push(values);
+      }
+      return cells;
+    }
+    state.cells = seedChart();
+
+    function cloneCells() { return state.cells.map((row) => [...row]); }
+    function commit(next) {
+      state.history.push(cloneCells());
+      state.cells = next;
+      state.future = [];
+      renderAll();
+    }
+    function colorsInRow(row) { return [...new Set(state.cells[row])]; }
+    function rowPassCount(row) {
+      const colors = colorsInRow(row).length;
+      return TECHNIQUES[state.technique].multiplier(colors);
+    }
+    function totalPasses() {
+      const body = state.cells.reduce((sum, _row, index) => sum + rowPassCount(index), 0);
+      const projectRows = Number($('rows')?.value ?? 160);
+      return Math.round((body / HEIGHT) * projectRows) + 2;
+    }
+    function displayRow(row) { return FIRST_DISPLAY_ROW + (HEIGHT - row - 1); }
+    function maxFloat(row) {
+      let max = 0;
+      let run = 1;
+      for (let column = 1; column < WIDTH; column += 1) {
+        if (state.cells[row][column] === state.cells[row][column - 1]) run += 1;
+        else run = 1;
+        max = Math.max(max, run);
+      }
+      return max;
+    }
+    function warningRows() {
+      if (state.technique !== 'fairisle') return [];
+      return state.cells.map((_row, index) => index).filter((row) => maxFloat(row) > state.floatBudget);
+    }
+    function isBlocked() { return Boolean(TECHNIQUES[state.technique].blocked); }
+
+    function renderPalette() {
+      $('palette').innerHTML = YARNS.map((yarn, index) => `<button type="button" class="${index === state.activeYarn ? 'active' : ''}" data-yarn="${index}" aria-label="Use ${yarn.name}" aria-pressed="${index === state.activeYarn}"><i class="swatch" style="background:${yarn.hex}" aria-hidden="true"></i><b>${yarn.name}</b><code translate="no">C${yarn.carrier}</code></button>`).join('');
+      $('palette').querySelectorAll('button').forEach((button) => button.addEventListener('click', () => { state.activeYarn = Number(button.dataset.yarn); renderPalette(); }));
+    }
+    function renderRuler() {
+      $('needleRuler').style.gridTemplateColumns = `repeat(${WIDTH}, ${22 * state.zoom}px)`;
+      $('needleRuler').innerHTML = Array.from({ length: WIDTH }, (_, index) => `<span>${index % 4 === 0 ? 47 + index : ''}</span>`).join('');
+    }
+    function renderChart() {
+      renderRuler();
+      const warnings = new Set(warningRows());
+      $('rowGutter').innerHTML = state.cells.map((_row, row) => `<button type="button" tabindex="${row === state.selectedRow ? 0 : -1}" class="row-label ${row === state.selectedRow ? 'selected' : ''}" data-row="${row}" aria-pressed="${row === state.selectedRow}"><span>${displayRow(row)}</span><b>x${rowPassCount(row)}</b></button>`).join('');
+      $('chartGrid').style.gridTemplateColumns = `repeat(${WIDTH}, ${22 * state.zoom}px)`;
+      $('chartGrid').innerHTML = state.cells.flatMap((rowValues, row) => rowValues.map((value, column) => `<button type="button" role="gridcell" tabindex="${row === state.focusedCell.row && column === state.focusedCell.column ? 0 : -1}" class="cell ${row === state.selectedRow ? 'row-selected' : ''} ${warnings.has(row) && column > 1 && column < WIDTH - 2 ? 'float-warning' : ''}" style="width:${22 * state.zoom}px;background:${YARNS[value].hex}" data-row="${row}" data-column="${column}" aria-rowindex="${row + 1}" aria-colindex="${column + 1}" aria-label="Row ${displayRow(row)}, needle ${47 + column}, ${YARNS[value].name}"></button>`)).join('');
+      $('rowGutter').querySelectorAll('button').forEach((button) => {
+        button.addEventListener('click', (event) => {
+          const row = Number(button.dataset.row);
+          selectRow(row);
+          if (event.detail === 0) $('rowGutter').querySelector(`[data-row="${row}"]`).focus();
+        });
+        button.addEventListener('keydown', (event) => {
+          if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const row = Number(button.dataset.row);
+          const nextRow = event.key === 'Home' ? 0 : event.key === 'End' ? HEIGHT - 1 : Math.max(0, Math.min(HEIGHT - 1, row + (event.key === 'ArrowDown' ? 1 : -1)));
+          selectRow(nextRow);
+          $('rowGutter').querySelector(`[data-row="${nextRow}"]`).focus();
+        });
+      });
+      $('chartGrid').querySelectorAll('.cell').forEach((cell) => {
+        cell.addEventListener('pointerdown', (event) => {
+          event.preventDefault();
+          const row = Number(cell.dataset.row);
+          const column = Number(cell.dataset.column);
+          setGridCursor(row, column, false);
+          if (state.selectedRow !== row) selectRow(row, false);
+          state.drawing = true;
+          state.startCell = { row, column };
+          if (state.tool === 'pen' || state.tool === 'erase') {
+            state.history.push(cloneCells());
+            state.future = [];
+            paintCell(row, column, cell);
+          } else if (state.tool === 'fill') {
+            state.drawing = false;
+            state.startCell = null;
+            applyFill(row, column);
+          }
+        });
+        cell.addEventListener('pointerenter', () => {
+          if (state.drawing && (state.tool === 'pen' || state.tool === 'erase')) paintCell(Number(cell.dataset.row), Number(cell.dataset.column), cell);
+        });
+        cell.addEventListener('pointerup', () => {
+          const end = { row: Number(cell.dataset.row), column: Number(cell.dataset.column) };
+          if (!state.drawing) return;
+          if (state.tool === 'line' || state.tool === 'rectangle') applyShape(state.startCell, end);
+          else if (state.tool === 'pen' || state.tool === 'erase') renderAll();
+          state.drawing = false;
+          state.startCell = null;
+        });
+        cell.addEventListener('focus', () => setGridCursor(Number(cell.dataset.row), Number(cell.dataset.column), false));
+        cell.addEventListener('keydown', (event) => {
+          if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const row = Number(cell.dataset.row);
+          const column = Number(cell.dataset.column);
+          const nextRow = event.ctrlKey && event.key === 'Home' ? 0 : event.ctrlKey && event.key === 'End' ? HEIGHT - 1 : event.key === 'ArrowUp' ? Math.max(0, row - 1) : event.key === 'ArrowDown' ? Math.min(HEIGHT - 1, row + 1) : row;
+          const nextColumn = event.ctrlKey && event.key === 'Home' ? 0 : event.ctrlKey && event.key === 'End' ? WIDTH - 1 : event.key === 'Home' ? 0 : event.key === 'End' ? WIDTH - 1 : event.key === 'ArrowLeft' ? Math.max(0, column - 1) : event.key === 'ArrowRight' ? Math.min(WIDTH - 1, column + 1) : column;
+          setGridCursor(nextRow, nextColumn);
+          if (state.selectedRow !== nextRow) selectRow(nextRow, false);
+        });
+        cell.addEventListener('click', (event) => {
+          if (event.detail !== 0) return;
+          const row = Number(cell.dataset.row);
+          const column = Number(cell.dataset.column);
+          if (state.tool === 'fill') {
+            applyFill(row, column);
+            setGridCursor(row, column);
+            return;
+          }
+          if (state.tool === 'line' || state.tool === 'rectangle') {
+            applyShape({ row, column }, { row, column });
+            setGridCursor(row, column);
+            return;
+          }
+          const next = cloneCells();
+          next[row][column] = state.tool === 'erase' ? 0 : state.activeYarn;
+          commit(next);
+          setGridCursor(row, column);
+        });
+      });
+      const selectedPasses = rowPassCount(state.selectedRow);
+      $('chartStatus').textContent = `Row ${displayRow(state.selectedRow)} / ${selectedPasses} physical ${selectedPasses === 1 ? 'pass' : 'passes'}`;
+      const warningsHere = warnings.has(state.selectedRow) ? 1 : 0;
+      $('floatStatus').textContent = state.technique === 'fairisle' ? (warningsHere ? `Float run ${maxFloat(state.selectedRow)} / budget ${state.floatBudget}` : `Floats within budget ${state.floatBudget}`) : 'Backing secures floats';
+      $('floatStatus').classList.toggle('warn', warningsHere > 0);
+    }
+    function paintCell(row, column, element) {
+      const value = state.tool === 'erase' ? 0 : state.activeYarn;
+      if (state.cells[row][column] === value) return;
+      state.cells[row][column] = value;
+      element.style.background = YARNS[value].hex;
+      element.setAttribute('aria-label', `Row ${displayRow(row)}, needle ${47 + column}, ${YARNS[value].name}`);
+    }
+    function applyFill(row, column) {
+      const target = state.cells[row][column];
+      if (target === state.activeYarn) return;
+      const next = cloneCells();
+      const stack = [[row, column]];
+      while (stack.length) {
+        const [r, c] = stack.pop();
+        if (r < 0 || r >= HEIGHT || c < 0 || c >= WIDTH || next[r][c] !== target) continue;
+        next[r][c] = state.activeYarn;
+        stack.push([r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]);
+      }
+      commit(next);
+    }
+    function applyShape(start, end) {
+      if (!start || !end) return;
+      const next = cloneCells();
+      const value = state.activeYarn;
+      if (state.tool === 'line') {
+        const steps = Math.max(Math.abs(end.row - start.row), Math.abs(end.column - start.column));
+        for (let step = 0; step <= steps; step += 1) {
+          const row = Math.round(start.row + (end.row - start.row) * (step / Math.max(1, steps)));
+          const column = Math.round(start.column + (end.column - start.column) * (step / Math.max(1, steps)));
+          next[row][column] = value;
+        }
+      } else {
+        const top = Math.min(start.row, end.row); const bottom = Math.max(start.row, end.row);
+        const left = Math.min(start.column, end.column); const right = Math.max(start.column, end.column);
+        for (let row = top; row <= bottom; row += 1) for (let column = left; column <= right; column += 1) if (row === top || row === bottom || column === left || column === right) next[row][column] = value;
+      }
+      commit(next);
+    }
+    function setGridCursor(row, column, focus = true) {
+      state.focusedCell = { row, column };
+      $('chartGrid').querySelectorAll('.cell[tabindex="0"]').forEach((item) => { item.tabIndex = -1; });
+      const target = $('chartGrid').querySelector(`.cell[data-row="${row}"][data-column="${column}"]`);
+      if (!target) return;
+      target.tabIndex = 0;
+      if (focus) target.focus();
+    }
+    function updateSelectedRowDom(row) {
+      $('rowGutter').querySelectorAll('.row-label').forEach((item) => {
+        const selected = Number(item.dataset.row) === row;
+        item.classList.toggle('selected', selected);
+        item.setAttribute('aria-pressed', String(selected));
+        item.tabIndex = selected ? 0 : -1;
+      });
+      $('chartGrid').querySelectorAll('.cell').forEach((item) => item.classList.toggle('row-selected', Number(item.dataset.row) === row));
+      const passes = rowPassCount(row);
+      $('chartStatus').textContent = `Row ${displayRow(row)} / ${passes} physical ${passes === 1 ? 'pass' : 'passes'}`;
+      const warned = warningRows().includes(row);
+      $('floatStatus').textContent = state.technique === 'fairisle' ? (warned ? `Float run ${maxFloat(row)} / budget ${state.floatBudget}` : `Floats within budget ${state.floatBudget}`) : 'Backing secures floats';
+      $('floatStatus').classList.toggle('warn', warned);
+    }
+    function selectRow(row, rerenderChart = true) {
+      if (state.selectedRow === row && state.programRegion === 'body' && !rerenderChart) return;
+      state.selectedRow = row;
+      state.selectedPass = 0;
+      state.programRegion = 'body';
+      if (rerenderChart) renderChart();
+      else updateSelectedRowDom(row);
+      renderMachine();
+      renderSource();
+      syncUrl();
+    }
+
+    function previewCells(technique) {
+      const palette = technique === 'birdseye' || technique === 'lined' ? [0, 1] : technique === 'ladder-back' ? [3, 0, 0, 0] : technique === 'complement' ? [0, 1] : [0, 0, 3, 0];
+      return Array.from({ length: 24 }, (_, index) => `<i style="background:${YARNS[palette[(index + Math.floor(index / 8)) % palette.length]].hex}" aria-hidden="true"></i>`).join('');
+    }
+    function renderStrategy() {
+      $('strategyList').innerHTML = Object.entries(TECHNIQUES).map(([id, technique]) => {
+        const blocked = technique.blocked;
+        const selected = state.technique === id;
+        const delta = id === 'fairisle' ? 'base' : id === 'birdseye' ? '+214 passes' : id === 'ladder-back' ? '+88 passes' : id === 'lined' ? 'replace with birdseye' : 'requires 2 colors';
+        return `<button type="button" class="strategy-choice ${selected ? 'active' : ''} ${blocked ? 'blocked-choice' : ''}" data-technique="${id}" aria-pressed="${selected}"><span class="back-preview" aria-hidden="true">${previewCells(id)}</span><span><b>${technique.label}</b><small>${blocked ? 'Blocked / ' : ''}${delta}</small></span></button>`;
+      }).join('');
+      $('strategyList').querySelectorAll('button').forEach((button) => button.addEventListener('click', () => { state.technique = button.dataset.technique; state.selectedPass = 0; renderAll(); syncUrl(); }));
+      $('floatField').hidden = state.technique !== 'fairisle';
+      $('coverageField').hidden = state.technique !== 'birdseye';
+      $('floatBudget').textContent = state.floatBudget;
+      $('coverage').value = state.coverage;
+      $('carrierList').innerHTML = YARNS.map((yarn) => `<div class="carrier-row"><i style="background:${yarn.hex}" aria-hidden="true"></i><code translate="no">C${yarn.carrier}</code><span>${yarn.name}</span></div>`).join('');
+      const passes = totalPasses();
+      $('estimateRows').textContent = Number($('rows').value).toLocaleString();
+      $('estimatePasses').textContent = passes.toLocaleString();
+      $('estimateTime').textContent = `${Math.ceil(passes * 6 / 60)} min`;
+      $('pipelineTechnique').textContent = state.technique;
+      $('pipelinePasses').textContent = passes.toLocaleString();
+    }
+
+    function renderProgramMap() {
+      const regions = [
+        { id: 'waste', label: 'Waste yarn', detail: `${Number($('wasteRows').value)} rows / C6` },
+        { id: 'draw', label: 'Draw', detail: $('drawThread').checked ? 'C1' : 'Off' },
+        { id: 'body', label: 'Blanket body', detail: `${Number($('rows').value)} design rows` },
+        { id: 'finish', label: 'Finish', detail: $('finish').selectedOptions[0].textContent.replace('Machine ', '') },
+      ];
+      $('programMap').innerHTML = regions.map((region) => `<button type="button" class="program-region ${region.id} ${state.programRegion === region.id ? 'active' : ''}" data-region="${region.id}" aria-pressed="${state.programRegion === region.id}"><b>${region.label}</b><small>${region.detail}</small></button>`).join('');
+      $('programMap').querySelectorAll('button').forEach((button) => {
+        button.addEventListener('click', () => { state.programRegion = button.dataset.region; state.selectedPass = 0; renderMachine(); renderSource(); syncUrl(); });
+        button.addEventListener('keydown', (event) => {
+          if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+          event.preventDefault();
+          const buttons = [...$('programMap').querySelectorAll('button')];
+          const next = buttons[(buttons.indexOf(button) + (event.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length];
+          state.programRegion = next.dataset.region;
+          state.selectedPass = 0;
+          renderMachine();
+          renderSource();
+          syncUrl();
+          $('programMap').querySelector(`[data-region="${state.programRegion}"]`).focus();
+        });
+      });
+    }
+
+    function renderMachine() {
+      renderProgramMap();
+      const row = state.selectedRow;
+      const firstNeedle = Number($('firstNeedle').value);
+      const lastNeedle = firstNeedle + Number($('needles').value) - 1;
+      let passes;
+      if (state.programRegion === 'body') {
+        const colors = colorsInRow(row);
+        const passCount = rowPassCount(row);
+        const carriers = state.technique === 'birdseye' || state.technique === 'lined' ? [...colors, ...colors] : state.technique === 'ladder-back' ? [...colors, 0] : state.technique === 'complement' ? [0, 1] : colors;
+        $('machineMeta').textContent = `design row ${displayRow(row)} x${passCount}`;
+        $('sourceMeta').textContent = `selected design row ${displayRow(row)} / ${passCount} passes`;
+        passes = Array.from({ length: passCount }, (_, index) => ({
+          number: 231 + index,
+          direction: index % 2 === 0 ? '>>' : '<<',
+          carrier: `C${YARNS[carriers[index % carriers.length]].carrier}`,
+          action: (state.technique === 'birdseye' || state.technique === 'lined') && index >= colors.length ? 'back knit' : state.technique === 'ladder-back' && index === passCount - 1 ? 'ladder back' : 'front knit',
+          needles: '47-74',
+          design: `R${displayRow(row)}`,
+        }));
+      } else if (state.programRegion === 'waste') {
+        const wasteRows = Number($('wasteRows').value);
+        $('machineMeta').textContent = `frame / waste yarn x${wasteRows}`;
+        $('sourceMeta').textContent = `${wasteRows} generated waste-yarn rows / C6`;
+        passes = Array.from({ length: wasteRows }, (_, index) => ({ number: index + 1, direction: index % 2 === 0 ? '>>' : '<<', carrier: 'C6', action: 'waste knit', needles: `${firstNeedle}-${lastNeedle}`, design: 'Frame' }));
+      } else if (state.programRegion === 'draw') {
+        $('machineMeta').textContent = $('drawThread').checked ? 'frame / draw thread x1' : 'frame / draw thread off';
+        $('sourceMeta').textContent = $('drawThread').checked ? 'generated draw-thread pass / C1' : 'draw thread disabled';
+        passes = $('drawThread').checked ? [{ number: Number($('wasteRows').value) + 1, direction: '>>', carrier: 'C1', action: 'draw thread', needles: `${firstNeedle}-${lastNeedle}`, design: 'Frame' }] : [];
+      } else {
+        $('machineMeta').textContent = `frame / ${$('finish').selectedOptions[0].textContent.toLowerCase()}`;
+        $('sourceMeta').textContent = `generated ${$('finish').selectedOptions[0].textContent.toLowerCase()} sequence`;
+        passes = Array.from({ length: $('finish').value === 'Waste and drop' ? 2 : 8 }, (_, index) => ({ number: totalPasses() - 7 + index, direction: index % 2 === 0 ? '>>' : '<<', carrier: index === 0 ? 'C6' : '—', action: $('finish').value === 'Waste and drop' ? 'waste & drop' : index < 6 ? 'bind-off xfer' : 'release', needles: `${firstNeedle}-${lastNeedle}`, design: 'Frame' }));
+      }
+      $('passList').innerHTML = passes.length ? passes.map((pass, index) => `<button type="button" class="pass-row ${index === state.selectedPass ? 'active' : ''}" data-pass="${index}" aria-pressed="${index === state.selectedPass}"><span class="num">${pass.number}</span><span class="dir">${pass.direction}</span><span><i class="carrier-chip" translate="no">${pass.carrier}</i></span><code>${pass.action}</code><span>${pass.needles}</span><span class="row-ref" translate="no">${pass.design}</span></button>`).join('') : '<p class="empty-passes">No passes generated for this region.</p>';
+      $('passList').querySelectorAll('button').forEach((button) => button.addEventListener('click', () => { state.selectedPass = Number(button.dataset.pass); renderMachine(); renderSource(); }));
+      const diagnostic = $('diagnosticLine');
+      diagnostic.className = 'diagnostic-line';
+      if (state.technique === 'lined') {
+        diagnostic.classList.add('blocked');
+        diagnostic.innerHTML = '<i data-lucide="circle-x" aria-hidden="true"></i><span><b>Lined lowering is not maintained</b>Choose Birdseye or Ladder before export.<code translate="no">back-bed-lined-unsupported</code></span>';
+      } else if (isBlocked()) {
+        diagnostic.classList.add('blocked');
+        diagnostic.innerHTML = '<i data-lucide="circle-x" aria-hidden="true"></i><span><b>Complement needs exactly 2 used colors</b>Choose another backing or reduce the chart palette before export.<code translate="no">project-complement-two-colors</code></span>';
+      } else if (state.programRegion === 'waste') {
+        diagnostic.classList.add('clean');
+        diagnostic.innerHTML = `<i data-lucide="circle-check" aria-hidden="true"></i><span><b>Waste-yarn scaffold generated</b>${Number($('wasteRows').value)} rows use reserved carrier C6 before the draw thread and blanket body.<code translate="no">frame / waste / C6</code></span>`;
+      } else if (state.programRegion === 'draw') {
+        diagnostic.classList.add('clean');
+        diagnostic.innerHTML = `<i data-lucide="circle-check" aria-hidden="true"></i><span><b>${$('drawThread').checked ? 'Draw thread generated on C1' : 'Draw thread disabled'}</b>${$('drawThread').checked ? 'This separating pass sits between waste yarn and the blanket body.' : 'Enable Draw thread in Frame settings when a removable separation row is required.'}</span>`;
+      } else if (state.programRegion === 'finish') {
+        diagnostic.classList.add('clean');
+        diagnostic.innerHTML = `<i data-lucide="circle-check" aria-hidden="true"></i><span><b>${$('finish').selectedOptions[0].textContent} generated</b>The finishing sequence is compiler-owned scaffolding and remains inspectable in source.</span>`;
+      } else if (warningRows().includes(row)) {
+        diagnostic.innerHTML = `<i data-lucide="triangle-alert" aria-hidden="true"></i><span><b>Float exceeds the ${state.floatBudget}-stitch budget</b>Visible strand predicted behind design row ${displayRow(row)}. This warning remains on the run sheet.<code translate="no">row ${displayRow(row)} / pass ${231 + state.selectedPass}</code></span>`;
+      } else {
+        diagnostic.classList.add('clean');
+        diagnostic.innerHTML = '<i data-lucide="circle-check" aria-hidden="true"></i><span><b>No findings on this row</b>The selected design row and its physical passes are linked by compiler provenance.</span>';
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function knitoutLines() {
+      const firstNeedle = Number($('firstNeedle').value);
+      const lastNeedle = firstNeedle + Number($('needles').value) - 1;
+      if (state.programRegion === 'waste') return [';;Machine: kniterate', ';;Carriers: 1 2 3 4 5 6', '; frame: waste yarn / C6', 'x-speed-number 300', `knit + f${firstNeedle} 6`, `miss + f${firstNeedle + 1} 6`, `; waste row ${state.selectedPass + 1} continues to f${lastNeedle}`, 'rack 0'];
+      if (state.programRegion === 'draw') return $('drawThread').checked ? [';;Machine: kniterate', '; frame: draw thread / C1', 'x-speed-number 250', `knit + f${firstNeedle} 1`, `miss + f${firstNeedle + 1} 1`, `; draw thread continues to f${lastNeedle}`, 'rack 0'] : [';;Machine: kniterate', '; frame: draw thread disabled'];
+      if (state.programRegion === 'finish') return [';;Machine: kniterate', `; frame: ${$('finish').selectedOptions[0].textContent.toLowerCase()}`, 'rack 0', `xfer f${firstNeedle} b${firstNeedle}`, `xfer f${firstNeedle + 1} b${firstNeedle + 1}`, '; compiler-owned finish continues across active needles', 'rack 0'];
+      const row = displayRow(state.selectedRow);
+      const yarn = YARNS[colorsInRow(state.selectedRow)[state.selectedPass % colorsInRow(state.selectedRow).length]];
+      return [
+        ';;Machine: kniterate', ';;Carriers: 1 2 3 4 5 6', `; design row ${row}`, 'x-speed-number 300', 'x-roller-advance 440', `knit + f47 ${yarn.carrier}`, `miss + f48 ${yarn.carrier}`, `knit + f49 ${yarn.carrier}`, `miss + f50 ${yarn.carrier}`, `knit + f51 ${yarn.carrier}`, `; row ${row} continues to f74`, 'rack 0',
+      ];
+    }
+    function kcodeLines() {
+      if (state.programRegion !== 'body') {
+        const carrier = state.programRegion === 'waste' ? '6' : state.programRegion === 'draw' ? '1' : '0';
+        return ['// command.kc', `// frame region: ${state.programRegion}`, 'FRNT:........................................................................................................................', 'REAR:........................................................................................................................', 'RACK:0', `${state.selectedPass % 2 ? '<<' : '>>'} Kn-Kn ${carrier} 300 440`];
+      }
+      const yarn = YARNS[colorsInRow(state.selectedRow)[state.selectedPass % colorsInRow(state.selectedRow).length]];
+      return ['// command.kc', `// design row ${displayRow(state.selectedRow)} / pass ${231 + state.selectedPass}`, 'FRNT:...........................................-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_...........................................', 'REAR:........................................................................................................................', 'RACK:0', `${state.selectedPass % 2 ? '<<' : '>>'} Kn-Kn ${yarn.carrier} 300 440`];
+    }
+    function renderSource() {
+      const lines = state.source === 'knitout' ? knitoutLines() : kcodeLines();
+      const highlight = state.source === 'knitout' ? Math.min(lines.length - 1, 4 + (state.selectedPass % Math.max(1, lines.length - 4))) : Math.min(5, lines.length - 1);
+      $('sourceContent').innerHTML = lines.map((line, index) => `<span class="line ${index === highlight ? 'highlight' : ''}"><b>${index + 1}</b><code>${line.replaceAll('&', '&amp;').replaceAll('<', '&lt;')}</code></span>`).join('');
+    }
+    function renderVerdict() {
+      const blocked = isBlocked();
+      $('verdictButton').classList.toggle('blocked', blocked);
+      $('verdictLabel').textContent = blocked ? 'Blocked' : 'Surface-proven';
+      $('exportButton').disabled = blocked;
+      $('verdictSummary').classList.toggle('blocked', blocked);
+      $('verdictSummary').textContent = state.technique === 'lined' ? 'Lined lowering is retired. Export is disabled until Birdseye, Ladder, or another supported strategy is selected.' : blocked ? 'Complement cannot compile while the project uses four colors. Export is disabled until the strategy or palette changes.' : 'Compiled and converted locally without blocking findings. Physical yarn, tension, and fabric behavior remain swatch-dependent.';
+      document.querySelectorAll('.ladder li').forEach((item, index) => item.classList.toggle('current', index === (blocked ? 0 : 1)));
+      $('runVerdict').textContent = blocked ? 'Blocked' : 'Surface-proven';
+      $('runTechnique').textContent = TECHNIQUES[state.technique].label;
+    }
+    function renderProjectSettings() {
+      const needles = Number($('needles').value);
+      const rows = Number($('rows').value);
+      const firstNeedle = Number($('firstNeedle').value);
+      const lastNeedle = firstNeedle + needles - 1;
+      $('projectMeta').textContent = `Aurora throw / ${needles} needles / ${rows} rows`;
+      $('pipelineChart').textContent = `${needles} x ${rows}`;
+      $('runNeedles').textContent = `${firstNeedle}-${lastNeedle} / ${needles}`;
+      $('runRows').textContent = rows.toLocaleString();
+      $('runWaste').textContent = `${Number($('wasteRows').value)} rows / C6`;
+      $('runDraw').textContent = $('drawThread').checked ? 'C1' : 'None';
+      $('runFinish').textContent = $('finish').selectedOptions[0].textContent;
+    }
+    function renderAll() {
+      renderPalette(); renderChart(); renderStrategy(); renderMachine(); renderSource(); renderVerdict(); renderProjectSettings();
+      $('undoButton').disabled = state.history.length === 0;
+      $('redoButton').disabled = state.future.length === 0;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function setTheme(theme, updateUrl = true) {
+      $('app').dataset.theme = theme;
+      document.documentElement.style.colorScheme = theme;
+      $('themeColor').content = theme === 'dark' ? '#252c29' : '#ffffff';
+      $('themeButton').setAttribute('aria-label', theme === 'dark' ? 'Use light theme' : 'Use dark theme');
+      $('themeButton').title = $('themeButton').getAttribute('aria-label');
+      $('themeButton').innerHTML = `<i data-lucide="${theme === 'dark' ? 'sun' : 'moon'}" aria-hidden="true"></i>`;
+      if (window.lucide) lucide.createIcons();
+      if (updateUrl) syncUrl();
+    }
+    function setVerdictOpen(open) {
+      $('verdictPopover').hidden = !open;
+      $('verdictButton').setAttribute('aria-expanded', String(open));
+      if (open) $('closeVerdict').focus();
+      else $('verdictButton').focus();
+    }
+    let focusBeforeRun = null;
+    function openRunSheet() {
+      focusBeforeRun = document.activeElement;
+      $('verdictPopover').hidden = true;
+      $('verdictButton').setAttribute('aria-expanded', 'false');
+      $('runOverlay').hidden = false;
+      $('closeRun').focus();
+    }
+    function closeRunSheet() {
+      if ($('runOverlay').hidden) return;
+      $('runOverlay').hidden = true;
+      if (focusBeforeRun instanceof HTMLElement) focusBeforeRun.focus();
+      focusBeforeRun = null;
+    }
+    function setSourceCollapsed(collapsed, updateUrl = true) {
+      state.sourceCollapsed = collapsed;
+      $('sourceDock').classList.toggle('collapsed', collapsed);
+      $('app').classList.toggle('source-collapsed', collapsed);
+      $('sourceContent').setAttribute('aria-hidden', String(collapsed));
+      $('sourceContent').tabIndex = collapsed ? -1 : 0;
+      $('sourceToggle').title = collapsed ? 'Show source' : 'Hide source';
+      $('sourceToggle').setAttribute('aria-label', $('sourceToggle').title);
+      $('sourceToggle').setAttribute('aria-expanded', String(!collapsed));
+      $('sourceToggle').innerHTML = `<i data-lucide="panel-bottom-${collapsed ? 'open' : 'close'}" aria-hidden="true"></i><span>${collapsed ? 'Show' : 'Hide'}</span>`;
+      if (window.lucide) lucide.createIcons();
+      if (updateUrl) syncUrl();
+    }
+    function setSource(source, updateUrl = true) {
+      state.source = source;
+      document.querySelectorAll('.dock-tab').forEach((item) => {
+        const active = item.dataset.source === source;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-selected', String(active));
+        item.tabIndex = active ? 0 : -1;
+      });
+      $('sourceContent').setAttribute('aria-labelledby', source === 'knitout' ? 'knitoutTab' : 'kcodeTab');
+      if (updateUrl && state.sourceCollapsed) setSourceCollapsed(false, false);
+      renderSource();
+      if (updateUrl) syncUrl();
+    }
+    function setMobilePanel(panel, updateUrl = true) {
+      state.mobilePanel = panel;
+      document.querySelectorAll('.mobile-tabs .tab').forEach((item) => {
+        const active = item.dataset.panel === panel;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-selected', String(active));
+        item.tabIndex = active ? 0 : -1;
+      });
+      document.querySelectorAll('.workspace .column').forEach((item) => item.classList.toggle('mobile-active', item.id === panel));
+      if (updateUrl) syncUrl();
+    }
+
+    document.querySelectorAll('[data-tool]').forEach((button) => button.addEventListener('click', () => {
+      state.tool = button.dataset.tool;
+      document.querySelectorAll('[data-tool]').forEach((item) => {
+        const active = item === button;
+        item.classList.toggle('active', active);
+        item.setAttribute('aria-pressed', String(active));
+      });
+    }));
+    $('undoButton').addEventListener('click', () => { if (!state.history.length) return; state.future.push(cloneCells()); state.cells = state.history.pop(); renderAll(); });
+    $('redoButton').addEventListener('click', () => { if (!state.future.length) return; state.history.push(cloneCells()); state.cells = state.future.pop(); renderAll(); });
+    $('zoomIn').addEventListener('click', () => { state.zoom = Math.min(1.5, state.zoom + .15); renderChart(); });
+    $('zoomOut').addEventListener('click', () => { state.zoom = Math.max(.6, state.zoom - .15); renderChart(); });
+    $('floatDown').addEventListener('click', () => { state.floatBudget = Math.max(1, state.floatBudget - 1); renderAll(); });
+    $('floatUp').addEventListener('click', () => { state.floatBudget = Math.min(30, state.floatBudget + 1); renderAll(); });
+    $('coverage').addEventListener('change', (event) => { state.coverage = event.target.value; renderAll(); });
+    ['needles', 'rows', 'firstNeedle', 'wasteRows', 'drawThread', 'finish'].forEach((id) => $(id).addEventListener('change', renderAll));
+    $('themeButton').addEventListener('click', () => setTheme($('app').dataset.theme === 'light' ? 'dark' : 'light'));
+    $('verdictButton').addEventListener('click', () => setVerdictOpen($('verdictPopover').hidden));
+    $('closeVerdict').addEventListener('click', () => setVerdictOpen(false));
+    $('runButton').addEventListener('click', openRunSheet);
+    $('closeRun').addEventListener('click', closeRunSheet);
+    $('printRun').addEventListener('click', () => window.print());
+    $('exportButton').addEventListener('click', () => {
+      if (isBlocked()) return;
+      const button = $('exportButton');
+      const old = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = '<i data-lucide="loader-circle" aria-hidden="true"></i><span>Exporting…</span>';
+      if (window.lucide) lucide.createIcons();
+      setTimeout(() => {
+        button.innerHTML = old;
+        button.disabled = isBlocked();
+        if (window.lucide) lucide.createIcons();
+      }, 700);
+    });
+    document.querySelectorAll('.dock-tab').forEach((button) => {
+      button.addEventListener('click', () => setSource(button.dataset.source));
+      button.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        setSource(state.source === 'knitout' ? 'kcode' : 'knitout');
+        document.querySelector(`.dock-tab[data-source="${state.source}"]`).focus();
+      });
+    });
+    $('sourceToggle').addEventListener('click', () => setSourceCollapsed(!state.sourceCollapsed));
+    document.querySelectorAll('.mobile-tabs .tab').forEach((button) => {
+      button.addEventListener('click', () => setMobilePanel(button.dataset.panel));
+      button.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        event.preventDefault();
+        const tabs = [...document.querySelectorAll('.mobile-tabs .tab')];
+        const direction = event.key === 'ArrowRight' ? 1 : -1;
+        const next = tabs[(tabs.indexOf(button) + direction + tabs.length) % tabs.length];
+        setMobilePanel(next.dataset.panel);
+        next.focus();
+      });
+    });
+    window.addEventListener('pointerup', () => {
+      if (!state.drawing) return;
+      if (state.tool === 'pen' || state.tool === 'erase') renderAll();
+      state.drawing = false;
+      state.startCell = null;
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        if (!$('runOverlay').hidden) closeRunSheet();
+        else if (!$('verdictPopover').hidden) setVerdictOpen(false);
+      }
+      if (event.key !== 'Tab' || $('runOverlay').hidden) return;
+      const focusable = [...$('runOverlay').querySelectorAll('button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), [tabindex]:not([tabindex="-1"])')];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
+    renderAll();
+    setTheme(initialTheme, false);
+    setSource(state.source, false);
+    setMobilePanel(state.mobilePanel, false);
+    setSourceCollapsed(state.sourceCollapsed, false);
+    syncUrl();
+  })();
+  </script>
+</body>
+</html>
