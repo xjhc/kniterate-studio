@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: './e2e',
   outputDir: 'output/playwright/test-results',
   timeout: 30_000,
+  workers: process.env.CI ? 1 : undefined,
   use: {
     baseURL: 'http://127.0.0.1:4173',
     viewport: { width: 1440, height: 900 },
