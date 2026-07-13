@@ -79,6 +79,7 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
 .stat-strip b { color: var(--ink); }
 
 .verdict { gap: 7px; min-height: 30px; padding: 0 9px; border: 1px solid; border-radius: 99px; background: transparent; font-size: 11px; font-weight: 800; cursor: pointer; }
+.authored-verdict { cursor: default; white-space: nowrap; }
 .verdict-surface { border-color: var(--surface); color: var(--surface); background: var(--surface-soft); }
 .verdict-knit { background: var(--surface-soft); }
 .verdict-blocked { border-color: var(--blocked); color: var(--blocked); background: var(--blocked-soft); }
@@ -206,7 +207,8 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
 @media (max-width: 700px) {
   .app-shell { grid-template-rows: 48px minmax(0, 1fr); }
   .topbar { padding: 0 7px; }
-  .brand-lockup strong { font-size: 12px; }
+  .brand-lockup strong { display: none; }
+  .top-new { display: none; }
   .top-open { width: 34px; padding: 0; }
   .top-open svg { margin: 0; }
   .top-open { font-size: 0; }
@@ -214,6 +216,7 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
   .top-export span { display: none; }
   .verdict { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .verdict { font-size: 9px; }
+  .authored-verdict { justify-content: center; width: 30px; padding: 0; font-size: 0; }
   .workspace { grid-template-columns: 42px minmax(0, 1fr); }
   .chart-head { padding: 7px 9px; }
   .chart-head h1 { max-width: 100px; overflow: hidden; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
@@ -242,9 +245,9 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
   .mobile-passes .pass-table { display: grid; }
   .mobile-diagnostics .diagnostics-panel { display: grid; }
   .mobile-source .source-dock { display: grid; }
-  .pass-head, .pass-row { grid-template-columns: 42px 46px 54px 80px 38px 88px; }
-  .pass-head span:nth-child(n+7), .pass-row > span:nth-child(n+7) { display: none; }
-  .pass-spacer { min-width: 348px; }
+  .pass-head, .pass-row { grid-template-columns: 38px 54px 54px minmax(100px, 1fr) 72px; }
+  .pass-head span:nth-child(5), .pass-row > span:nth-child(5), .pass-head span:nth-child(n+7), .pass-row > span:nth-child(n+7) { display: none; }
+  .pass-spacer { min-width: 318px; }
   .popover { top: 44px; right: 7px; }
   .modal-backdrop { padding: 0; }
   .run-sheet { min-height: 100%; padding: 28px 20px; }

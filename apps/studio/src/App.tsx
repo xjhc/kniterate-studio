@@ -92,6 +92,10 @@ function Verdict({ document, onClick }: { document: MachineDocument; onClick: ()
   );
 }
 
+function AuthoredVerdictBadge({ verdict }: { verdict: AuthoredVerdict }) {
+  return <span className={`verdict authored-verdict verdict-${verdict.state}`} title={verdict.annotation} aria-label={`Verdict: ${verdict.label}`}><span className="verdict-dot" />{verdict.label}</span>;
+}
+
 function EmptyState({ active, onOpen, onDrop }: { active: boolean; onOpen: () => void; onDrop: (file: File) => void }) {
   const [dragging, setDragging] = useState(false);
   return (
@@ -457,7 +461,8 @@ export function App() {
           <button className={`icon-button${view === 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => setView('chart')} title="Chart" aria-label="Open chart"><Grid3X3 size={17} /></button>
           <button className={`icon-button${view !== 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => (document || blanketCompile.artifact?.ok) && setView('machine')} title="Machine" aria-label="Open machine" disabled={!document && !blanketCompile.artifact?.ok}><Rows3 size={17} /></button>
           {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
-          {!document && <button className="icon-button" type="button" onClick={() => setShowNewProject(true)} title="New project" aria-label="New project"><FilePlus2 size={17} /></button>}
+          {!document && view !== 'chart' && authoredVerdict && <AuthoredVerdictBadge verdict={authoredVerdict} />}
+          {!document && <button className="icon-button top-new" type="button" onClick={() => setShowNewProject(true)} title="New project" aria-label="New project"><FilePlus2 size={17} /></button>}
           <button className="icon-button" type="button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} title="Toggle theme" aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
           {!document && <button className="primary-button top-export" type="button" onClick={downloadKCode} disabled={!authoredExportReady} title={authoredExportReady ? 'Export validated K-code' : kcodeState.status === 'converting' ? 'Validating K-code' : 'Resolve blocking findings before export'} aria-label="Export k-code"><Download size={16} /><span>Export .kc</span></button>}
           {(document || authoredExportReady) && <button className="icon-button" type="button" onClick={() => setShowRunSheet(true)} title="Run sheet" aria-label="Open run sheet"><Printer size={17} /></button>}

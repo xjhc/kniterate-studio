@@ -30,6 +30,7 @@ describe('BlanketSetupRail physical verdict', () => {
       onNeedleOffset={() => {}}
       onStrategy={() => {}}
       onBirdseyeMode={() => {}}
+      onFloatLimit={() => {}}
       onAssignment={() => {}}
       onFrame={() => {}}
     />);

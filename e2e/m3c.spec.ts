@@ -11,6 +11,10 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   await expect(page.getByRole('button', { name: /Fairisle/ })).not.toContainText('Calculating', { timeout: 15_000 });
   await expect(page.getByRole('button', { name: /Complement/ })).toContainText('Blocked');
 
+  await page.getByRole('button', { name: /Fairisle/ }).click();
+  await page.getByLabel('Float budget', { exact: true }).fill('7');
+  await page.getByLabel('Float budget', { exact: true }).press('Tab');
+
   const canvasBox = await page.locator('canvas.chart-canvas').first().boundingBox();
   if (!canvasBox) throw new Error('Chart canvas has no browser geometry');
   await page.mouse.move(canvasBox.x + 78, canvasBox.y + 8);
@@ -39,12 +43,19 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   await (await downloadEvent).saveAs(path);
   const project = JSON.parse(await readFile(path, 'utf8'));
   expect(project.history.entries.map((entry: { edit: { kind: string } }) => entry.edit.kind)).toEqual([
-    'set-strategy', 'set-strategy', 'set-width', 'set-height', 'set-frame',
+    'set-strategy', 'set-strategy', 'set-strategy', 'set-strategy', 'set-width', 'set-height', 'set-frame',
   ]);
-  expect(project.history.cursor).toBe(5);
+  expect(project.history.entries[1].edit.strategy.floatLimit).toBe(7);
+  expect(project.history.cursor).toBe(7);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Open machine', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Predicted pass grid' })).toBeVisible();
+  await expect(page.getByLabel('Verdict: Surface-proven')).toBeVisible();
+  const visibleHeaders = await page.locator('.pass-head span:visible').evaluateAll((elements) => elements.map((element) => {
+    const box = element.getBoundingClientRect();
+    return { left: box.left, right: box.right };
+  }));
+  for (let index = 1; index < visibleHeaders.length; index += 1) expect(visibleHeaders[index]!.left).toBeGreaterThanOrEqual(visibleHeaders[index - 1]!.right);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
   expect(errors).toEqual([]);
 });

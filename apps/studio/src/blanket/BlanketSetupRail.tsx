@@ -20,7 +20,7 @@ function BackFaceMini({ projection, palette }: { projection: BackFaceProjection 
   return <span className="back-mini" style={{ gridTemplateColumns: `repeat(${Math.min(8, Math.ceil(projection.width / columnStep))}, 1fr)` }}>{sampled.map((cell, index) => <i className={cell.kind} style={{ background: cell.paletteIndexes.length ? palette[cell.paletteIndexes[0]!]?.hex : 'transparent' }} key={index} />)}</span>;
 }
 
-export function BlanketSetupRail({ state, compile, outputStatus, outputError, authoredVerdict, onWidth, onHeight, onNeedleOffset, onStrategy, onBirdseyeMode, onAssignment, onFrame }: {
+export function BlanketSetupRail({ state, compile, outputStatus, outputError, authoredVerdict, onWidth, onHeight, onNeedleOffset, onStrategy, onBirdseyeMode, onFloatLimit, onAssignment, onFrame }: {
   state: ProjectState;
   compile: BlanketCompileState;
   outputStatus: 'idle' | 'converting' | 'ready' | 'failed';
@@ -31,6 +31,7 @@ export function BlanketSetupRail({ state, compile, outputStatus, outputError, au
   onNeedleOffset: (offset: number) => void;
   onStrategy: (technique: ProjectState['strategy']['technique']) => void;
   onBirdseyeMode: (mode: 'minimal' | 'full') => void;
+  onFloatLimit: (limit: number) => void;
   onAssignment: (paletteId: string, carrier: '2' | '3' | '4' | '5', yarnName: string) => void;
   onFrame: (frame: ProjectState['frame']) => void;
 }) {
@@ -55,7 +56,7 @@ export function BlanketSetupRail({ state, compile, outputStatus, outputError, au
       const comparison = compile.comparisons.find((item) => item.technique === id);
       const delta = comparison && selectedPassCount !== null ? comparison.passCount - selectedPassCount : null;
       return <button type="button" className={state.strategy.technique === id ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{label}</b><small>{comparison?.compileVerdict === 'blocked' ? 'Blocked' : delta === null ? 'Calculating' : `${delta >= 0 ? '+' : ''}${delta.toLocaleString()} passes · ${Math.ceil((comparison?.estimatedKnitTimeSeconds ?? 0) / 60)} min`}</small></span></button>;
-    })}</div>{state.strategy.technique === 'birdseye' && <label>Color coverage<select value={state.strategy.birdseyeMode ?? 'minimal'} onChange={(event) => onBirdseyeMode(event.currentTarget.value as 'minimal' | 'full')}><option value="minimal">Active colors</option><option value="full">All colors</option></select></label>}</section>
+    })}</div>{state.strategy.technique === 'fairisle' && <label>Float budget<input type="number" min="1" max="30" defaultValue={state.strategy.floatLimit} key={`float-${state.strategy.floatLimit}`} onBlur={(event) => onFloatLimit(Number(event.currentTarget.value))} /></label>}{state.strategy.technique === 'birdseye' && <label>Color coverage<select value={state.strategy.birdseyeMode ?? 'minimal'} onChange={(event) => onBirdseyeMode(event.currentTarget.value as 'minimal' | 'full')}><option value="minimal">Active colors</option><option value="full">All colors</option></select></label>}</section>
     <section><h2>Pattern yarns</h2><div className="assignment-list">{state.chart.palette.map((color) => {
       const assignment = assignmentFor(color.id);
       if (!assignment) return <div className="assignment-row missing" key={color.id}><i style={{ background: color.hex }} /><span>{color.name}</span><b>Unassigned</b></div>;
