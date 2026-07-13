@@ -1,6 +1,7 @@
 import { AlertTriangle, CheckCircle2, LoaderCircle } from 'lucide-react';
 import type { ProjectState } from '@kniterate-studio/project-contract';
 import type { BackFaceProjection } from '@kniterate-studio/machine-lib/browser';
+import type { AuthoredVerdict } from '../engine';
 import type { BlanketCompileState } from './useBlanketCompiler';
 
 const techniques = [
@@ -19,12 +20,12 @@ function BackFaceMini({ projection, palette }: { projection: BackFaceProjection 
   return <span className="back-mini" style={{ gridTemplateColumns: `repeat(${Math.min(8, Math.ceil(projection.width / columnStep))}, 1fr)` }}>{sampled.map((cell, index) => <i className={cell.kind} style={{ background: cell.paletteIndexes.length ? palette[cell.paletteIndexes[0]!]?.hex : 'transparent' }} key={index} />)}</span>;
 }
 
-export function BlanketSetupRail({ state, compile, outputStatus, outputError, knitProvenEntryId, onWidth, onHeight, onNeedleOffset, onStrategy, onBirdseyeMode, onAssignment, onFrame }: {
+export function BlanketSetupRail({ state, compile, outputStatus, outputError, authoredVerdict, onWidth, onHeight, onNeedleOffset, onStrategy, onBirdseyeMode, onAssignment, onFrame }: {
   state: ProjectState;
   compile: BlanketCompileState;
   outputStatus: 'idle' | 'converting' | 'ready' | 'failed';
   outputError: string | null;
-  knitProvenEntryId: string | null;
+  authoredVerdict: AuthoredVerdict | null;
   onWidth: (width: number) => void;
   onHeight: (height: number) => void;
   onNeedleOffset: (offset: number) => void;
@@ -34,19 +35,17 @@ export function BlanketSetupRail({ state, compile, outputStatus, outputError, kn
   onFrame: (frame: ProjectState['frame']) => void;
 }) {
   const assignmentFor = (paletteId: string) => state.machine.yarnAssignments.find((item) => item.paletteId === paletteId);
-  const verdict = compile.status === 'failed' || compile.artifact?.verdict === 'blocked' ? 'Blocked'
+  const verdict = authoredVerdict?.label ?? (compile.status === 'failed' || compile.artifact?.compileVerdict === 'blocked' ? 'Blocked'
     : compile.status !== 'ready' ? 'Compiling'
     : outputStatus === 'failed' ? 'Output failed'
-    : outputStatus !== 'ready' ? 'Validating output'
-    : knitProvenEntryId ? 'Knit-proven'
-    : 'Surface-proven';
+    : 'Validating output');
   const verdictClass = verdict.toLowerCase().replace(/[^a-z]/g, '');
   const selectedPassCount = compile.comparisons.find((item) => item.technique === state.strategy.technique)?.passCount ?? compile.artifact?.stats.passCount ?? null;
   return <aside className="blanket-setup" aria-label="Blanket setup">
     <div className={`compile-verdict ${verdictClass}`}>
       {verdict === 'Compiling' || verdict === 'Validating output' ? <LoaderCircle size={15} className="spin" /> : verdict === 'Blocked' || verdict === 'Output failed' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}
       <strong>{verdict}</strong>
-      {knitProvenEntryId && <small title={knitProvenEntryId}>Exact physical match</small>}
+      {authoredVerdict?.evidenceId && <small title={authoredVerdict.evidenceId}>Exact physical match</small>}
     </div>
     <section><h2>Rectangle</h2><div className="setup-pair">
       <label>Needles<input type="number" min="1" max="252" defaultValue={state.chart.width} key={`w${state.chart.width}`} onBlur={(event) => onWidth(Number(event.currentTarget.value))} /></label>
@@ -55,7 +54,7 @@ export function BlanketSetupRail({ state, compile, outputStatus, outputError, kn
     <section><h2>Backing</h2><div className="strategy-segments">{techniques.map(([id, label]) => {
       const comparison = compile.comparisons.find((item) => item.technique === id);
       const delta = comparison && selectedPassCount !== null ? comparison.passCount - selectedPassCount : null;
-      return <button type="button" className={state.strategy.technique === id ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{label}</b><small>{comparison?.verdict === 'blocked' ? 'Blocked' : delta === null ? 'Calculating' : `${delta >= 0 ? '+' : ''}${delta.toLocaleString()} passes · ${Math.ceil((comparison?.estimatedKnitTimeSeconds ?? 0) / 60)} min`}</small></span></button>;
+      return <button type="button" className={state.strategy.technique === id ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{label}</b><small>{comparison?.compileVerdict === 'blocked' ? 'Blocked' : delta === null ? 'Calculating' : `${delta >= 0 ? '+' : ''}${delta.toLocaleString()} passes · ${Math.ceil((comparison?.estimatedKnitTimeSeconds ?? 0) / 60)} min`}</small></span></button>;
     })}</div>{state.strategy.technique === 'birdseye' && <label>Color coverage<select value={state.strategy.birdseyeMode ?? 'minimal'} onChange={(event) => onBirdseyeMode(event.currentTarget.value as 'minimal' | 'full')}><option value="minimal">Active colors</option><option value="full">All colors</option></select></label>}</section>
     <section><h2>Pattern yarns</h2><div className="assignment-list">{state.chart.palette.map((color) => {
       const assignment = assignmentFor(color.id);

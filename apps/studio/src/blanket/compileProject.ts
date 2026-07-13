@@ -9,12 +9,12 @@ import {
   type YarnBinding,
 } from '@kniterate-studio/machine-lib/browser';
 
-export type AuthoredVerdict = 'blocked' | 'surface';
+export type CompileVerdict = 'blocked' | 'surface';
 export type BackingTechnique = ProjectState['strategy']['technique'];
 
 export interface StrategyComparison {
   technique: BackingTechnique;
-  verdict: AuthoredVerdict;
+  compileVerdict: CompileVerdict;
   passCount: number;
   estimatedKnitTimeSeconds: number | null;
   backFace: BackFaceProjection | null;
@@ -25,7 +25,7 @@ export interface BlanketCompileArtifact {
   revision: string;
   technique: BackingTechnique;
   ok: boolean;
-  verdict: AuthoredVerdict;
+  compileVerdict: CompileVerdict;
   inputHash: string | null;
   messages: readonly ValidationMessage[];
   knitoutText: string | null;
@@ -91,7 +91,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       estimatedKnitTimeSeconds: null,
     },
   };
-  if (setupMessages.length > 0) return { ...base, ok: false, verdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], rowProvenance: [], backFace: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
+  if (setupMessages.length > 0) return { ...base, ok: false, compileVerdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], rowProvenance: [], backFace: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
 
   const projected = projectColorworkChartV1(state.chart);
   const yarnBindings: YarnBinding[] = usedPalette.map((entry) => {
@@ -152,7 +152,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   return {
     ...base,
     ok: artifact.ok,
-    verdict: artifact.ok ? 'surface' : 'blocked',
+    compileVerdict: artifact.ok ? 'surface' : 'blocked',
     inputHash: artifact.inputHash,
     messages,
     knitoutText: artifact.knitoutText,
@@ -172,7 +172,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
 export function strategyComparisonFromArtifact(artifact: BlanketCompileArtifact): StrategyComparison {
   return {
     technique: artifact.technique,
-    verdict: artifact.verdict,
+    compileVerdict: artifact.compileVerdict,
     passCount: artifact.stats.passCount,
     estimatedKnitTimeSeconds: artifact.stats.estimatedKnitTimeSeconds,
     backFace: artifact.backFace,

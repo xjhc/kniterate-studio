@@ -9,10 +9,11 @@ import { makeRowId, pixelMutationToProjectEdit } from './projectCanvasAdapter';
 import { openStudioProjectJson } from './projectFile';
 import { BlanketSetupRail } from '../blanket/BlanketSetupRail';
 import type { BlanketCompileState } from '../blanket/useBlanketCompiler';
+import type { AuthoredVerdict } from '../engine';
 
 function entry(edit: ProjectEdit) { return { id: `edit_${crypto.randomUUID().replace(/-/g, '')}`, source: 'human' as const, edit }; }
 
-export function ChartWorkspace({ project, onProject, onNewProject, onProjectSettings, autosaveState, isDarkMode, compile, outputStatus, outputError, knitProvenEntryId, focusedRowId, onFocusedRowId }: {
+export function ChartWorkspace({ project, onProject, onNewProject, onProjectSettings, autosaveState, isDarkMode, compile, outputStatus, outputError, authoredVerdict, focusedRowId, onFocusedRowId }: {
   project: ColorworkProjectV1;
   onProject: (project: ColorworkProjectV1) => void;
   onNewProject: () => void;
@@ -22,7 +23,7 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
   compile: BlanketCompileState;
   outputStatus: 'idle' | 'converting' | 'ready' | 'failed';
   outputError: string | null;
-  knitProvenEntryId: string | null;
+  authoredVerdict: AuthoredVerdict | null;
   focusedRowId: string | null;
   onFocusedRowId: (rowId: string) => void;
 }) {
@@ -63,7 +64,7 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
     <div className="chart-body">
       <PaletteRail chart={chart} active={activePaletteIndex} onSelect={setPaletteIndex} />
       <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={passCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => onFocusedRowId(rowIds[row]!)} />
-      <BlanketSetupRail state={materialized.state} compile={compile} outputStatus={outputStatus} outputError={outputError} knitProvenEntryId={knitProvenEntryId} onWidth={(width) => Number.isInteger(width) && width > 0 && width <= 252 && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })} onHeight={(height) => { if (!Number.isInteger(height) || height < 1 || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }} onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} onStrategy={(technique) => technique !== materialized.state.strategy.technique && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } })} onBirdseyeMode={(birdseyeMode) => birdseyeMode !== materialized.state.strategy.birdseyeMode && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, birdseyeMode } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} onFrame={(frame) => { if (JSON.stringify(frame) !== JSON.stringify(materialized.state.frame)) commit({ kind: 'set-frame', frame }); }} />
+      <BlanketSetupRail state={materialized.state} compile={compile} outputStatus={outputStatus} outputError={outputError} authoredVerdict={authoredVerdict} onWidth={(width) => Number.isInteger(width) && width > 0 && width <= 252 && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })} onHeight={(height) => { if (!Number.isInteger(height) || height < 1 || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }} onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} onStrategy={(technique) => technique !== materialized.state.strategy.technique && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } })} onBirdseyeMode={(birdseyeMode) => birdseyeMode !== materialized.state.strategy.birdseyeMode && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, birdseyeMode } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} onFrame={(frame) => { if (JSON.stringify(frame) !== JSON.stringify(materialized.state.frame)) commit({ kind: 'set-frame', frame }); }} />
     </div>
   </main>;
 }

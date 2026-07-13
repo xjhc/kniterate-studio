@@ -17,7 +17,7 @@ describe('blanket project compiler', () => {
     const first = compileColorworkProject(project);
     const second = compileColorworkProject(project);
     expect(first.ok).toBe(true);
-    expect(first.verdict).toBe('surface');
+    expect(first.compileVerdict).toBe('surface');
     expect(first.inputHash).toBe(second.inputHash);
     expect(first.knitoutText).toBe(second.knitoutText);
     expect(first.stats.passCount).toBeGreaterThan(0);

@@ -15,6 +15,59 @@ import {
 export type MachineFormat = 'kc' | 'k';
 export type VerdictState = 'blocked' | 'surface' | 'knit';
 
+export interface AuthoredVerdict {
+  state: VerdictState;
+  label: 'Blocked' | 'Surface-proven' | 'Knit-proven';
+  annotation: string;
+  evidenceId: string | null;
+}
+
+export interface AuthoredVerdictInput {
+  compileStatus: 'queued' | 'compiling' | 'ready' | 'failed';
+  compileOk: boolean | null;
+  compileError: string | null;
+  outputStatus: 'idle' | 'converting' | 'ready' | 'failed';
+  outputOk: boolean | null;
+  outputCurrent: boolean;
+  outputError: string | null;
+  knitProvenEntryId: string | null;
+}
+
+export function resolveAuthoredVerdict(input: AuthoredVerdictInput): AuthoredVerdict | null {
+  if (input.compileStatus === 'failed' || (input.compileStatus === 'ready' && input.compileOk === false)) {
+    return {
+      state: 'blocked',
+      label: 'Blocked',
+      annotation: input.compileError ?? 'The authored project has blocking compiler findings.',
+      evidenceId: null,
+    };
+  }
+  if (input.compileStatus !== 'ready' || input.compileOk !== true) return null;
+  if (input.outputStatus === 'failed' || (input.outputStatus === 'ready' && input.outputOk === false)) {
+    return {
+      state: 'blocked',
+      label: 'Blocked',
+      annotation: input.outputError ?? 'Generated K-code did not pass output validation.',
+      evidenceId: null,
+    };
+  }
+  if (input.outputStatus !== 'ready' || input.outputOk !== true || !input.outputCurrent) return null;
+  if (input.knitProvenEntryId) {
+    return {
+      state: 'knit',
+      label: 'Knit-proven',
+      annotation: `This exact compiled artifact has a current clean physical registry match: ${input.knitProvenEntryId}.`,
+      evidenceId: input.knitProvenEntryId,
+    };
+  }
+  return {
+    state: 'surface',
+    label: 'Surface-proven',
+    annotation: 'Compiled and converted locally without blocking findings. Physical yarn, tension, and fabric behavior remain swatch-dependent.',
+    evidenceId: null,
+  };
+}
+
 export interface MachinePass {
   index: number;
   direction: '>>' | '<<' | null;

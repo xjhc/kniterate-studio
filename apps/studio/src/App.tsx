@@ -22,8 +22,8 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import { matchKnitProvenArtifact, matchKnitProvenKCode, type KnitProvenMatch } from '@kniterate-studio/machine-lib/browser';
-import { compareKcDocuments, openMachineDocument, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
+import { matchKnitProvenArtifact, matchKnitProvenKCode } from '@kniterate-studio/machine-lib/browser';
+import { compareKcDocuments, openMachineDocument, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, renameColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import type { BlanketCompileArtifact } from './blanket/compileProject';
@@ -314,14 +314,14 @@ function RunSheet({ document, onClose }: { document: MachineDocument; onClose: (
   );
 }
 
-function AuthoredRunSheet({ project, compiled, kcode, knitProvenMatch, onClose }: { project: ColorworkProjectV1; compiled: BlanketCompileArtifact; kcode: KCodeArtifact; knitProvenMatch: KnitProvenMatch | null; onClose: () => void }) {
+function AuthoredRunSheet({ project, compiled, kcode, verdict, onClose }: { project: ColorworkProjectV1; compiled: BlanketCompileArtifact; kcode: KCodeArtifact; verdict: AuthoredVerdict; onClose: () => void }) {
   const { state } = materializeColorworkProject(project);
   const needleEnd = state.machine.needleOffset + state.chart.width - 1;
   const findings = [...new Map(compiled.messages.filter((message) => message.severity !== 'info').map((message) => [message.rule, message])).values()];
   return <div className="modal-backdrop"><article className="run-sheet">
     <div className="run-sheet-actions"><button className="secondary-button" type="button" onClick={onClose}><X size={16} /> Close</button><button className="primary-button" type="button" onClick={() => window.print()}><Printer size={16} /> Print</button></div>
-    <header><span>KNITERATE STUDIO · RUN SHEET</span><h1>{project.title}</h1><div className={`print-verdict verdict-${knitProvenMatch ? 'knit' : 'surface'}`}>{knitProvenMatch ? 'Knit-proven' : 'Surface-proven'}</div></header>
-    <p className="run-annotation">{knitProvenMatch ? `Exact machine artifact match: ${knitProvenMatch.id}.` : 'Compiled and converted locally without blocking findings. Physical yarn, tension, and fabric behavior remain swatch-dependent.'}</p>
+    <header><span>KNITERATE STUDIO · RUN SHEET</span><h1>{project.title}</h1><div className={`print-verdict verdict-${verdict.state}`}>{verdict.label}</div></header>
+    <p className="run-annotation">{verdict.annotation}</p>
     <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Needles</dt><dd>{state.machine.needleOffset}–{needleEnd} ({state.chart.width})</dd></div><div><dt>Design rows</dt><dd>{state.chart.height}</dd></div><div><dt>Backing</dt><dd>{state.strategy.technique}</dd></div><div><dt>K-code passes</dt><dd>{kcode.passCount.toLocaleString()}</dd></div><div><dt>Estimated time</dt><dd>{compiled.stats.estimatedKnitTimeSeconds === null ? '—' : `${Math.ceil(compiled.stats.estimatedKnitTimeSeconds / 60)} min`}</dd></div></dl></section>
     <section><h2>Carrier map</h2><div className="carrier-map"><span><i style={{ background: CARRIER_COLORS['1'] }} />C1<b>{state.frame.drawThread ? 'Draw thread' : 'Not used'}</b></span>{state.machine.yarnAssignments.map((assignment) => { const color = state.chart.palette.find((entry) => entry.id === assignment.paletteId); return <span key={assignment.paletteId}><i style={{ background: color?.hex }} />C{assignment.carrier}<b>{assignment.yarnName}</b></span>; })}<span><i style={{ background: CARRIER_COLORS['6'] }} />C6<b>Waste yarn · {state.frame.wasteRows} rows</b></span></div></section>
     <section><h2>Finish and identity</h2><dl><div><dt>Bind-off</dt><dd>{state.frame.bindOff}</dd></div><div><dt>Project revision</dt><dd>{compiled.revision}</dd></div><div><dt>Compile hash</dt><dd>{compiled.inputHash}</dd></div><div><dt>K-code SHA-256</dt><dd>{kcode.kcHash.slice(0, 16)}</dd></div></dl></section>
@@ -366,11 +366,24 @@ export function App() {
   const [autosaveState, setAutosaveState] = useState<'saving' | 'saved' | 'failed'>(initial.recoveredAt ? 'saved' : 'saving');
   const blanketCompile = useBlanketCompiler(project);
   const kcodeState = useKCodeArtifact(blanketCompile.artifact);
-  const authoredExportReady = blanketCompile.artifact?.ok === true && kcodeState.artifact?.ok === true && kcodeState.artifact.inputHash === blanketCompile.artifact.inputHash;
+  const outputCurrent = blanketCompile.artifact?.inputHash != null
+    && kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash;
+  const outputReady = outputCurrent && kcodeState.artifact?.ok === true;
   const knitProvenMatch = matchKnitProvenArtifact(
-    authoredExportReady ? blanketCompile.artifact?.inputHash : null,
-    authoredExportReady ? kcodeState.artifact?.kcHash : null,
+    outputReady ? blanketCompile.artifact?.inputHash : null,
+    outputReady ? kcodeState.artifact?.kcHash : null,
   );
+  const authoredVerdict = resolveAuthoredVerdict({
+    compileStatus: blanketCompile.status,
+    compileOk: blanketCompile.artifact?.ok ?? null,
+    compileError: blanketCompile.error,
+    outputStatus: kcodeState.status,
+    outputOk: kcodeState.artifact?.ok ?? null,
+    outputCurrent,
+    outputError: kcodeState.error,
+    knitProvenEntryId: knitProvenMatch?.id ?? null,
+  });
+  const authoredExportReady = outputReady && authoredVerdict !== null && authoredVerdict.state !== 'blocked';
   useEffect(() => {
     setAutosaveState('saving');
     const timeout = window.setTimeout(() => {
@@ -454,7 +467,7 @@ export function App() {
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} outputStatus={kcodeState.status} outputError={kcodeState.error} knitProvenEntryId={knitProvenMatch?.id ?? null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash ? kcodeState.artifact : null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
+      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} outputStatus={kcodeState.status} outputError={kcodeState.error} authoredVerdict={authoredVerdict} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash ? kcodeState.artifact : null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>
@@ -480,7 +493,7 @@ export function App() {
       )}
       {document && showVerdict && <VerdictPanel document={document} onClose={() => setShowVerdict(false)} />}
       {document && showRunSheet && <RunSheet document={document} onClose={() => setShowRunSheet(false)} />}
-      {!document && showRunSheet && authoredExportReady && blanketCompile.artifact && kcodeState.artifact && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} knitProvenMatch={knitProvenMatch} onClose={() => setShowRunSheet(false)} />}
+      {!document && showRunSheet && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
       {showNewProject && <NewProjectDialog onCreate={createProject} onClose={() => setShowNewProject(false)} />}
       {showProjectSettings && <ProjectSettingsDialog project={project} onSave={saveProjectSettings} onClose={() => setShowProjectSettings(false)} />}
     </div>

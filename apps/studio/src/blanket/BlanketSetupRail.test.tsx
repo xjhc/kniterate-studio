@@ -19,7 +19,12 @@ describe('BlanketSetupRail physical verdict', () => {
       compile={{ status: 'ready', artifact, error: null, comparisons: [] }}
       outputStatus="ready"
       outputError={null}
-      knitProvenEntryId="2026-07-12-proof"
+      authoredVerdict={{
+        state: 'knit',
+        label: 'Knit-proven',
+        annotation: 'Exact compiled artifact match.',
+        evidenceId: '2026-07-12-proof',
+      }}
       onWidth={() => {}}
       onHeight={() => {}}
       onNeedleOffset={() => {}}
