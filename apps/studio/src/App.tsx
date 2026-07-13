@@ -289,7 +289,6 @@ function VerdictPanel({ document, onClose }: { document: MachineDocument; onClos
       <p>{document.verdict.annotation}</p>
       <ol className="verdict-ladder">
         <li className={document.verdict.state === 'blocked' ? 'current' : ''}><i />Blocked</li>
-        <li><i />Experimental</li>
         <li className={document.verdict.state === 'surface' ? 'current' : ''}><i />Surface-proven</li>
         <li className={document.verdict.state === 'knit' ? 'current' : ''}><i />Knit-proven</li>
       </ol>

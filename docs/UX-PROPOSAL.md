@@ -1,13 +1,18 @@
 # Kniterate Studio — UI/UX proposal
 
-**Status:** proposed direction, 2026-07-12. Not yet adopted into
-[`FOUNDING.md`](./FOUNDING.md); §8 below names one deliberate revision to the
-founding boundary that needs a decision before it lands.
+**Status:** partly shipped, partly forward design (revised 2026-07-12). The
+foreign-`.kc` workspace and the authored chart→compile→k-code loop this document
+proposes are **built and shipping** in `apps/studio` (`v1.0.0-rc.1`); see
+[`STATUS.md`](./STATUS.md) for what's live vs. still-proposed. Sections that
+describe the assistant (S3), swatch-registry UI (S4), and the editability ladder
+remain forward design. §8 names one founding-boundary revision (dark mode, now
+adopted). The verdict ladder is **three rungs** — Experimental/waivers were cut
+from V1 (SYSTEM-DESIGN R6).
 
 **Companion artifacts**
 - Interactive workspace mockup (canonical, 2026-07-12):
   [`docs/mockups/workspace-v2.html`](./mockups/workspace-v2.html) — paint the
-  chart, switch backing, drive the waiver/blocked paths, hover a row to sync all
+  chart, switch backing, drive the blocked/resolve paths, hover a row to sync all
   six pipeline stages. Body-only file (Artifact format); earlier iterations live
   in `docs/mockups/archive/`. Published:
   `https://claude.ai/code/artifact/09e9cecb-67d9-411e-914a-59fb8d7f350d`.
@@ -55,7 +60,7 @@ never around it.
    to reorder — only values to change and recompile.
 3. **The verdict is the interface (P3).** Validation runs continuously.
    Diagnostics anchor to both a chart cell and a machine pass. The ladder —
-   Blocked, Experimental, Surface-proven, Knit-proven — is always on screen, and
+   Blocked, Surface-proven, Knit-proven — is always on screen, and
    export is gated by it.
 4. **Show the fabric, both faces (P4).** The back of a jacquard is half the
    design. Preview front and back per backing strategy before knitting, with
@@ -252,7 +257,8 @@ SYSTEM-DESIGN.md Risk R1.**
 Sources: Agnes Cameron's colourwork notes ([soup, 2026-07-09](https://soup.agnescameron.info/2026/07/09/colourwork.html))
 and knitout-on-Kniterate log ([soup, 2025-09-20](https://soup.agnescameron.info/2025/09/20/kniterate.html));
 the official changelog v1.1.0→v2.0.24 (editor.kniterate.design/changelog).
-Each finding binds a decision; `BUILD-S1.md` and `SYSTEM-DESIGN.md` cite these.
+Each finding binds a decision; `SYSTEM-DESIGN.md` and the archived
+`docs/archive/BUILD-S1.md` cite these.
 
 | # | Evidence (practitioner / official) | Binding decision |
 |---|---|---|

@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kniterate Studio — workspace demo v2</title>
 <style>
   :root{
@@ -42,7 +44,7 @@
   .eyebrow{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);font-weight:600}
   .hint{font-size:10.5px;color:var(--ink3)}
   .dim{color:var(--ink3)}
-  .t-warn{color:var(--blocked)} .t-exp{color:var(--exp)} .t-ok{color:var(--proven)}
+  .t-warn{color:var(--blocked)} .t-ok{color:var(--proven)}
   .btn{border:1px solid var(--line);border-radius:var(--r);padding:5px 12px;font-size:12px;font-weight:600;background:var(--panel)}
   .btn:hover{border-color:var(--ink3)}
   .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
@@ -78,8 +80,6 @@
   .verdict .dot{width:8px;height:8px;border-radius:50%;background:var(--ink3)}
   .verdict.v-surface{border-color:var(--proven);color:var(--proven);background:var(--proven-soft)}
   .verdict.v-surface .dot{background:var(--proven)}
-  .verdict.v-exp{border-color:var(--exp);color:var(--exp);background:var(--exp-soft)}
-  .verdict.v-exp .dot{background:var(--exp)}
   .verdict.v-blocked{border-color:var(--blocked);color:var(--blocked);background:var(--blocked-soft)}
   .verdict.v-blocked .dot{background:var(--blocked)}
   .vpanel{position:absolute;top:calc(100% + 8px);right:0;z-index:40;width:320px;background:var(--panel);
@@ -166,7 +166,6 @@
   .pass .kv{text-align:right;font-size:9px;color:var(--ink3)}
   .diag{margin:8px 10px;border-radius:8px;padding:9px 11px;font-size:11.5px;line-height:1.5;border:1px solid var(--line)}
   .diag.d-warn{border-color:var(--blocked);background:var(--blocked-soft)}
-  .diag.d-exp{border-color:var(--exp);background:var(--exp-soft)}
   .diag.d-ok{border-color:var(--proven);background:var(--proven-soft)}
   .diag.d-block{border-color:var(--blocked);background:var(--blocked-soft)}
   .diag .anchor{display:block;font-family:var(--mono);font-size:9.5px;color:var(--ink2);margin-top:4px}
@@ -223,7 +222,6 @@
   .sheet .foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
   .stamp{display:inline-block;padding:3px 10px;border-radius:99px;font-size:10.5px;font-weight:700}
   .stamp.v-surface{background:var(--proven-soft);color:var(--proven)}
-  .stamp.v-exp{background:var(--exp-soft);color:var(--exp)}
 
   @media (max-width:1180px){
     #workspace{grid-template-columns:minmax(0,1fr) 236px}
@@ -367,7 +365,7 @@ function seed(){
 }
 
 const state = {
-  cells: seed(), tech:'fairisle', budget:5, waiver:false, anchored:false,
+  cells: seed(), tech:'fairisle', budget:5, anchored:false,
   ops:{}, tool:'pencil', yarn:2, selRow:19, hoverRow:null, dockTab:'plan',
 };
 const curRow = () => state.hoverRow ?? state.selRow;
@@ -424,9 +422,7 @@ function verdict(){
   const mc = maxColors();
   if (state.tech === 'complement' && mc > 2)
     return {key:'blocked', label:'Blocked', why:`Complement backing is reversible only for 2-yarn charts — this chart peaks at ${mc} yarns in a row. Export is gated until the palette drops to 2 or the backing changes.`};
-  if (state.waiver && liveFloats().length)
-    return {key:'exp', label:'Experimental', why:`A waiver accepts ${liveFloats().length} floats beyond budget ${state.budget}. It is logged with the project and stamped on the run sheet; the badge cannot climb until this recipe is knit and registered.`};
-  return {key:'surface', label:'Surface-proven', why:'Compiles clean — the simulator vouches for it. Knit-proven needs a matching physical swatch in the registry, which is empty today.'};
+  return {key:'surface', label:'Surface-proven', why:'Compiles clean — the simulator vouches for it. Unresolved float warnings (if any) stay visible on the diagnostics and the run sheet, but do not gate export. Knit-proven needs a matching physical swatch in the registry, which is empty today.'};
 }
 
 const speedCode = mm => (mm = +mm, mm <= 150 ? 100 : mm <= 350 ? 300 : 600);
@@ -461,8 +457,7 @@ function flash(id){ const el = $(id); el.classList.remove('flash'); void el.offs
 function renderChart(){
   const flags = {};
   if (state.tech === 'fairisle' && !state.anchored){
-    const m = state.waiver ? 'acc' : 'warn';
-    rawFloats().forEach(f => { for (let c = f.start; c < f.start + f.len; c++) flags[f.row+'_'+c] = m; });
+    rawFloats().forEach(f => { for (let c = f.start; c < f.start + f.len; c++) flags[f.row+'_'+c] = 'warn'; });
   }
   let h = '<div class="rownums">';
   for (let r = H-1; r >= 0; r--) h += `<div class="rn${r === curRow() ? ' hot' : ''}">${r+1}</div>`;
@@ -485,7 +480,7 @@ function renderChart(){
   $('floatnote').innerHTML =
     state.tech !== 'fairisle' ? (TECH[state.tech].rev ? '<b class="t-ok">✓</b> reversible — no floats' : '<b class="t-ok">✓</b> floats secured by backing')
     : state.anchored ? '<b class="t-ok">✓</b> floats tuck-anchored every 4th needle'
-    : lf.length ? `<b class="${state.waiver ? 't-exp' : 't-warn'}">▲</b> ${lf.length} float${lf.length > 1 ? 's' : ''} beyond budget ${state.budget}${state.waiver ? ' — accepted by waiver' : ''}`
+    : lf.length ? `<b class="t-warn">▲</b> ${lf.length} float${lf.length > 1 ? 's' : ''} beyond budget ${state.budget}`
     : `<b class="t-ok">✓</b> floats within budget ${state.budget}`;
   $('passnote').textContent = `${pprMax()} passes/row max · ${totalPasses()} total · ~${fmtTime(timeSec())}`;
 }
@@ -559,8 +554,7 @@ function renderTech(){
     `<b>passes/row</b> ${pprMax()} max · <b>total</b> ${totalPasses()}<br>` +
     `<b>est. time</b> ${fmtTime(timeSec())} · <b>overrides</b> ${overrideCount()}<br>` +
     `<b>carriers</b> c1 draw · c2–c5 pattern · c6 waste` +
-    (state.anchored ? '<br><b>policy</b> tuck-anchor every 4th float needle' : '') +
-    (state.waiver && liveFloats().length ? '<br><b class="t-exp">waiver</b> logged — see run sheet' : '');
+    (state.anchored ? '<br><b>policy</b> tuck-anchor every 4th float needle' : '');
 }
 $('budDown').onclick = () => { state.budget = Math.max(2, state.budget - 1); recompute(); };
 $('budUp').onclick   = () => { state.budget = Math.min(20, state.budget + 1); recompute(); };
@@ -623,14 +617,11 @@ function renderDiag(){
   if (v.key === 'blocked'){
     slot.innerHTML = `<div class="diag d-block"><b>Blocked — export gated.</b> ${v.why}
       <div class="fixes"><button data-fix="birdseye">Switch to birdseye (keeps 4 yarns)</button><button data-fix="reduce">Reduce to 2 yarns</button></div></div>`;
-  } else if (state.tech === 'fairisle' && !state.anchored && !state.waiver && liveFloats().length){
+  } else if (state.tech === 'fairisle' && !state.anchored && liveFloats().length){
     const fs = liveFloats(), f = fs.reduce((a, b) => b.len > a.len ? b : a);
-    slot.innerHTML = `<div class="diag d-warn"><b>Warning — ${fs.length} long float${fs.length > 1 ? 's' : ''}.</b> Worst: ${yName(f.color)} carried across ${f.len} needles on row ${f.row+1} (budget ${state.budget}). At 7 gg worsted, floats this long snag and drop stitches.
+    slot.innerHTML = `<div class="diag d-warn"><b>Warning — ${fs.length} long float${fs.length > 1 ? 's' : ''}.</b> Worst: ${yName(f.color)} carried across ${f.len} needles on row ${f.row+1} (budget ${state.budget}). At 7 gg worsted, floats this long snag and drop stitches. This does not gate export — it rides along on the badge annotation and the run sheet until you resolve it.
       <span class="anchor">chart r${f.row+1} c${f.start+1}–${f.start+f.len} ↔ needles ${N0+f.start}–${N0+f.start+f.len-1}</span>
-      <div class="fixes"><button data-fix="tuck">Tuck-anchor floats</button><button data-fix="birdseye">Birdseye backing</button><button data-fix="waiver">Accept floats (waiver)</button></div></div>`;
-  } else if (state.waiver && liveFloats().length){
-    slot.innerHTML = `<div class="diag d-exp"><b>Experimental — waiver logged.</b> ${liveFloats().length} floats beyond budget ${state.budget} are accepted, not fixed. The badge stays Experimental until this recipe is knit and registered.
-      <div class="fixes"><button data-fix="unwaive">Remove waiver</button></div></div>`;
+      <div class="fixes"><button data-fix="tuck">Tuck-anchor floats</button><button data-fix="birdseye">Birdseye backing</button></div></div>`;
   } else {
     const how = TECH[state.tech].rev ? 'Reversible backing — no floats.' : state.anchored ? 'Floats tuck-anchored.' : state.tech !== 'fairisle' ? 'Backing secures all floats.' : 'Floats within budget.';
     slot.innerHTML = `<div class="diag d-ok"><b>No blocking issues.</b> ${how} Ceiling is <b>Surface-proven</b> until a physical swatch matches this recipe — the registry is empty today.</div>`;
@@ -638,10 +629,8 @@ function renderDiag(){
   slot.querySelectorAll('[data-fix]').forEach(b => b.onclick = () => applyFix(b.dataset.fix));
 }
 function applyFix(k){
-  if (k === 'tuck'){ state.anchored = true; state.waiver = false; }
+  if (k === 'tuck'){ state.anchored = true; }
   else if (k === 'birdseye'){ state.tech = 'birdseye'; }
-  else if (k === 'waiver'){ state.waiver = true; state.anchored = false; }
-  else if (k === 'unwaive'){ state.waiver = false; }
   else if (k === 'reduce'){
     for (let r = 0; r < H; r++) for (let c = 0; c < W; c++){
       const v = state.cells[r][c];
@@ -656,7 +645,6 @@ function flashDiag(){ flash('machineCol'); const d = $('diagslot').firstElementC
 const RUNGS = [
   {k:'knit',    label:'Knit-proven',    d:'a physical swatch fingerprint matches — registry is empty today', locked:true},
   {k:'surface', label:'Surface-proven', d:'compiles clean; the simulator vouches for it'},
-  {k:'exp',     label:'Experimental',   d:'a waiver accepts a real warning — logged, never silent'},
   {k:'blocked', label:'Blocked',        d:'validator error — export is gated'},
 ];
 function renderVerdict(){
@@ -668,7 +656,7 @@ function renderVerdict(){
   $('vpanel').innerHTML = `<h3>${v.label}</h3><div class="why">${v.why}</div>` +
     RUNGS.map(rg => `<div class="rung${rg.k === v.key ? ' here' : ''}${rg.locked ? ' locked' : ''}"><span class="rl">${rg.label}</span><span class="rd">${rg.d}</span></div>`).join('');
   const lf = liveFloats();
-  const showChip = state.tech === 'fairisle' && !state.anchored && !state.waiver && lf.length;
+  const showChip = state.tech === 'fairisle' && !state.anchored && lf.length;
   $('warnchip').hidden = !showChip;
   if (showChip) $('warnchip').textContent = `▲ ${lf.length} float${lf.length > 1 ? 's' : ''}`;
   $('exportBtn').setAttribute('aria-disabled', v.key === 'blocked' ? 'true' : 'false');
@@ -808,15 +796,14 @@ function openRunsheet(){
   ].map(([k, val]) => `<tr><td>${k}</td><td>${val}</td></tr>`).join('');
   $('rsBody').innerHTML =
     `<h2>Run sheet — aurora-throw <span class="stamp v-${v.key}">${v.label}</span></h2>
-     <div class="sub">command.kc · 7gg worsted · generated from project · ${v.key === 'exp' ? 'waiver logged with this file' : 'no waivers'}</div>
+     <div class="sub">command.kc · 7gg worsted · generated from project</div>
      <h4>Yarn & carriers</h4><table>${yrows}</table>
      <h4>Machine</h4><table>${mrows}</table>
      <h4>Before you knit</h4>
      <div class="check">
        ☐ Thread carriers per the map above<br>
        ☐ Knit a tension swatch first — this recipe is <b>not yet Knit-proven</b> (registry is empty)<br>
-       ${v.key === 'exp' ? '☐ <b class="t-exp">Waiver on file:</b> ' + liveFloats().length + ' floats beyond budget ' + state.budget + ' were accepted, not fixed<br>' : ''}
-       ${v.key !== 'exp' && liveFloats().length ? '☐ <b class="t-warn">▲ ' + liveFloats().length + ' float warnings are unresolved</b> — tuck-anchor, change backing, or waive before knitting<br>' : ''}
+       ${liveFloats().length ? '☐ <b class="t-warn">▲ ' + liveFloats().length + ' float warnings are unresolved</b> — tuck-anchor or change backing before knitting<br>' : ''}
        ☐ Rename to <span class="mono">command.kc</span> on the SD card (replaces existing)<br>
        ☐ Confirm rollers engaged before the waste section clears
      </div>

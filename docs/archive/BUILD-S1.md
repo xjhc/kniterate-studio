@@ -1,5 +1,14 @@
 # BUILD-S1 — machine truth (implementation brief)
 
+> **⚠️ HISTORICAL / ARCHIVED (2026-07-12).** This brief commissioned a greenfield
+> build of the foreign-`.kc` workspace ("S1"). That workspace was **already
+> shipped** in `apps/studio` (`engine.ts` + `App.tsx`) when this was written — the
+> brief drifted behind the code. It is retained only for provenance. Do **not**
+> implement from it (following its "create `engine.ts` / a `machine/ verdict/
+> diagnostics/…` layout" would rebuild shipped code). For current state see
+> [`../STATUS.md`](../STATUS.md); the 4-rung verdict/waiver model below is
+> superseded by the 3-rung ruling in `SYSTEM-DESIGN.md` R6.
+
 **Audience:** the implementing agent for slice S1. This brief is self-contained;
 `UX-PROPOSAL.md` / `SYSTEM-DESIGN.md` / `FOUNDING.md` are the authorities if
 anything here seems to conflict — flag the conflict, don't silently pick.

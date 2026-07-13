@@ -14,7 +14,7 @@
  * Customist becomes ONE registered MachineRecipe; the wizard preset
  * function maps to `applyMachineRecipe(state, registry.get(id))`.
  *
- * See docs/kniterate-export-rearchitecture-plan.md §P3.2.
+ * See docs/SYSTEM-DESIGN.md §A.5 (intent vs. derived state).
  */
 
 import type { CarrierId, KniterateExtensionHeaders } from '../types.js'

@@ -151,9 +151,9 @@ export function openMachineDocument(filename: string, source: string, knitProven
   const carrierSet = [...new Set(passes.flatMap((pass) => pass.carriers))].sort();
   const needleNumbers = passes.flatMap((pass) => [...pass.needleSpan.matchAll(/\d+/g)].map((match) => Number(match[0])));
   const racks = passes.map((pass) => pass.rack).filter((rack): rack is number => rack !== null);
-  // Imported files have no authored waiver/project context. Any unresolved
-  // validator finding therefore blocks the foreign-file verdict rather than
-  // silently minting Experimental status.
+  // Imported files have no authored project context in which a warning could be
+  // reviewed and accepted, so any unresolved error or warning blocks the
+  // foreign-file verdict. (V1 has three rungs; there is no waiver/Experimental path.)
   const blocked = errors.length > 0 || warnings.length > 0 || passes.length === 0;
   if (passes.length === 0) findings = [{
     ...resolveValidatorMessage({ severity: 'error', rule: 'machine-passes-required', message: 'No machine passes were found in this file.' }),

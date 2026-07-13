@@ -8,7 +8,7 @@
  * effectful `.kc` conversion (which is async-by-environment: browser
  * iframe round-trip or Node `spawnSync`).
  *
- * See docs/kniterate-export-rearchitecture-plan.md §P2.
+ * See docs/SYSTEM-DESIGN.md §A.5 (component architecture / RunArtifact).
  */
 
 import { compileChartToKnitout, type CompileChartInput, type CompileChartResult } from './compile/from-chart.js'
