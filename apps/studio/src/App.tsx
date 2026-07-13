@@ -24,13 +24,15 @@ import {
 } from 'lucide-react';
 import { matchKnitProvenArtifact, matchKnitProvenKCode, type KnitProvenMatch } from '@kniterate-studio/machine-lib/browser';
 import { compareKcDocuments, openMachineDocument, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
-import { createColorworkProjectV1, materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, renameColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import type { BlanketCompileArtifact } from './blanket/compileProject';
 import { ChartWorkspace } from './chart/ChartWorkspace';
 import { useKCodeArtifact } from './kcode/useKCodeArtifact';
 import type { KCodeArtifact } from './kcode/kcodeProtocol';
 import { sha256Text } from './kcode/sha256';
+import { NewProjectDialog, ProjectSettingsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
+import { readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
 
 const ROW_HEIGHT = 44;
 const CARRIER_COLORS: Record<string, string> = {
@@ -38,6 +40,47 @@ const CARRIER_COLORS: Record<string, string> = {
 };
 
 type MobileView = 'passes' | 'diagnostics' | 'source';
+
+function defaultProject(): ColorworkProjectV1 {
+  return createColorworkProjectV1({
+    kind: 'knitlab-colorwork-chart', version: 1, title: 'Untitled colorwork', width: 200, height: 300, rowNumbering: 'bottom-up',
+    palette: DEFAULT_PROJECT_PALETTE.map((entry) => ({ ...entry })),
+    cells: Array.from({ length: 300 }, () => Array.from({ length: 200 }, () => 0)),
+  }, { id: 'studio-default', title: 'Untitled colorwork' });
+}
+
+function initialProject(): { project: ColorworkProjectV1; recoveredAt: string | null } {
+  let recovered: ReturnType<typeof readProjectAutosave> = null;
+  try {
+    recovered = readProjectAutosave(window.localStorage);
+  } catch {
+    // Storage can be disabled by the browser; the editor must still start.
+  }
+  return recovered ? { project: recovered.project, recoveredAt: recovered.savedAt } : { project: defaultProject(), recoveredAt: null };
+}
+
+function projectId(title: string): string {
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'colorwork';
+  return `${slug}-${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
+}
+
+function CompilePipeline({ project, compile, kcodeStatus }: {
+  project: ColorworkProjectV1;
+  compile: ReturnType<typeof useBlanketCompiler>;
+  kcodeStatus: ReturnType<typeof useKCodeArtifact>['status'];
+}) {
+  const state = materializeColorworkProject(project).state;
+  const stages = [
+    { label: 'Chart', detail: `${state.chart.width}x${state.chart.height} · ${state.chart.palette.length} colors`, state: 'ready' },
+    { label: 'Plan', detail: state.strategy.technique, state: compile.status === 'failed' || compile.artifact?.ok === false ? 'blocked' : compile.status === 'compiling' ? 'working' : 'ready' },
+    { label: 'Passes', detail: compile.artifact?.ok ? compile.artifact.stats.passCount.toLocaleString() : compile.status === 'compiling' ? 'calculating' : 'waiting', state: compile.artifact?.ok ? 'ready' : compile.artifact?.ok === false ? 'blocked' : 'working' },
+    { label: 'K-code', detail: kcodeStatus === 'ready' ? 'validated' : kcodeStatus === 'failed' ? 'failed' : kcodeStatus === 'converting' ? 'validating' : 'waiting', state: kcodeStatus === 'ready' ? 'ready' : kcodeStatus === 'failed' ? 'blocked' : 'working' },
+  ];
+  return <ol className="compile-pipeline" aria-label="Compile pipeline">{stages.map((stage, index) => <li key={stage.label} className={stage.state}>
+    {index > 0 && <i aria-hidden="true" />}
+    <span><b>{stage.label}</b><small>{stage.detail}</small></span>
+  </li>)}</ol>;
+}
 
 function Verdict({ document, onClick }: { document: MachineDocument; onClick: () => void }) {
   return (
@@ -312,16 +355,16 @@ export function App() {
   const [preferredLine, setPreferredLine] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [view, setView] = useState<'chart' | 'machine' | 'diff'>('chart');
-  const [project, setProject] = useState<ColorworkProjectV1>(() => createColorworkProjectV1({
-    kind: 'knitlab-colorwork-chart', version: 1, title: 'Untitled colorwork', width: 200, height: 300, rowNumbering: 'bottom-up',
-    palette: [{ id: 'natural', name: 'Natural', hex: '#F4F0E6' }, { id: 'red', name: 'Red', hex: '#C2413A' }, { id: 'gold', name: 'Gold', hex: '#D6A633' }, { id: 'navy', name: 'Navy', hex: '#24415D' }],
-    cells: Array.from({ length: 300 }, () => Array.from({ length: 200 }, () => 0)),
-  }, { id: 'studio-default', title: 'Untitled colorwork' }));
+  const [initial] = useState(initialProject);
+  const [project, setProject] = useState<ColorworkProjectV1>(initial.project);
   const [mobileView, setMobileView] = useState<MobileView>('passes');
   const [showVerdict, setShowVerdict] = useState(false);
   const [showRunSheet, setShowRunSheet] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [showProjectSettings, setShowProjectSettings] = useState(false);
+  const [autosaveState, setAutosaveState] = useState<'saving' | 'saved' | 'failed'>(initial.recoveredAt ? 'saved' : 'saving');
   const blanketCompile = useBlanketCompiler(project);
   const kcodeState = useKCodeArtifact(blanketCompile.artifact);
   const authoredExportReady = blanketCompile.artifact?.ok === true && kcodeState.artifact?.ok === true && kcodeState.artifact.inputHash === blanketCompile.artifact.inputHash;
@@ -329,6 +372,36 @@ export function App() {
     authoredExportReady ? blanketCompile.artifact?.inputHash : null,
     authoredExportReady ? kcodeState.artifact?.kcHash : null,
   );
+  useEffect(() => {
+    setAutosaveState('saving');
+    const timeout = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(PROJECT_AUTOSAVE_KEY, serializeProjectAutosave(project));
+        setAutosaveState('saved');
+      } catch {
+        setAutosaveState('failed');
+      }
+    }, 350);
+    return () => window.clearTimeout(timeout);
+  }, [project]);
+  const createProject = ({ title, width, height, colorCount }: NewProjectValues) => {
+    const palette = DEFAULT_PROJECT_PALETTE.slice(0, colorCount).map((entry) => ({ ...entry }));
+    setProject(createColorworkProjectV1({
+      kind: 'knitlab-colorwork-chart', version: 1, title, width, height, rowNumbering: 'bottom-up', palette,
+      cells: Array.from({ length: height }, () => Array.from({ length: width }, () => 0)),
+    }, { id: projectId(title), title }));
+    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false);
+  };
+  const saveProjectSettings = (title: string, palette: { id: string; name: string; hex: string }[]) => {
+    let next = renameColorworkProject(project, title);
+    const currentPalette = materializeColorworkProject(next).state.chart.palette;
+    for (const entry of palette) {
+      const current = currentPalette.find((item) => item.id === entry.id);
+      if (current?.name === entry.name.trim() && current.hex.toUpperCase() === entry.hex.toUpperCase()) continue;
+      next = appendProjectEdit(next, { id: `palette_${entry.id}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`, source: 'human', edit: { kind: 'set-palette-entry', paletteId: entry.id, name: entry.name.trim(), hex: entry.hex } });
+    }
+    setProject(next); setShowProjectSettings(false);
+  };
   const downloadKCode = () => {
     if (!authoredExportReady || !kcodeState.artifact) return;
     const link = window.document.createElement('a');
@@ -367,12 +440,14 @@ export function App() {
     <div className="app-shell" data-theme={theme}>
       <header className="topbar">
         <div className="brand-lockup"><span className="brand-mark"><Rows3 size={17} /></span><strong>Kniterate Studio</strong>{document && <span className="file-name">{document.filename}</span>}</div>
+        {!document && <CompilePipeline project={project} compile={blanketCompile} kcodeStatus={kcodeState.status} />}
         <div className="topbar-actions">
           <button className={`icon-button${view === 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => setView('chart')} title="Chart" aria-label="Open chart"><Grid3X3 size={17} /></button>
           <button className={`icon-button${view !== 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => (document || blanketCompile.artifact?.ok) && setView('machine')} title="Machine" aria-label="Open machine" disabled={!document && !blanketCompile.artifact?.ok}><Rows3 size={17} /></button>
           {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
+          {!document && <button className="icon-button" type="button" onClick={() => setShowNewProject(true)} title="New project" aria-label="New project"><FilePlus2 size={17} /></button>}
           <button className="icon-button" type="button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} title="Toggle theme" aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
-          {!document && <button className="icon-button" type="button" onClick={downloadKCode} disabled={!authoredExportReady} title={authoredExportReady ? 'Export validated K-code' : kcodeState.status === 'converting' ? 'Validating K-code' : 'Resolve blocking findings before export'} aria-label="Export k-code"><Download size={17} /></button>}
+          {!document && <button className="primary-button top-export" type="button" onClick={downloadKCode} disabled={!authoredExportReady} title={authoredExportReady ? 'Export validated K-code' : kcodeState.status === 'converting' ? 'Validating K-code' : 'Resolve blocking findings before export'} aria-label="Export k-code"><Download size={16} /><span>Export .kc</span></button>}
           {(document || authoredExportReady) && <button className="icon-button" type="button" onClick={() => setShowRunSheet(true)} title="Run sheet" aria-label="Open run sheet"><Printer size={17} /></button>}
           <button className="primary-button top-open" type="button" onClick={() => fileInput.current?.click()}><FileUp size={16} /> Open</button>
         </div>
@@ -380,7 +455,7 @@ export function App() {
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} isDarkMode={theme === 'dark'} compile={blanketCompile} knitProvenEntryId={knitProvenMatch?.id ?? null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash ? kcodeState.artifact : null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
+      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} outputStatus={kcodeState.status} outputError={kcodeState.error} knitProvenEntryId={knitProvenMatch?.id ?? null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash ? kcodeState.artifact : null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>
@@ -407,6 +482,8 @@ export function App() {
       {document && showVerdict && <VerdictPanel document={document} onClose={() => setShowVerdict(false)} />}
       {document && showRunSheet && <RunSheet document={document} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && authoredExportReady && blanketCompile.artifact && kcodeState.artifact && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} knitProvenMatch={knitProvenMatch} onClose={() => setShowRunSheet(false)} />}
+      {showNewProject && <NewProjectDialog onCreate={createProject} onClose={() => setShowNewProject(false)} />}
+      {showProjectSettings && <ProjectSettingsDialog project={project} onSave={saveProjectSettings} onClose={() => setShowProjectSettings(false)} />}
     </div>
   );
 }

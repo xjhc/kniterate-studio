@@ -140,6 +140,22 @@ Completed 2026-07-12:
 M3 gate: author/import the four-color fixture, assign yarns, compile, export,
 reopen, and revalidate byte-identically in a browser test.
 
+### V1 release polish - complete
+
+- local autosave recovery plus explicit New project, rename, and palette editing
+- visible chart-to-K-code pipeline, output-failure state, and validated export
+- CSP-compatible browser converter with generated-source and byte-parity checks
+- CI gates for full verification and Chromium/Firefox/WebKit browser coverage
+- decoded face designs from `fairisle.kc`, `jacquard.kc`, and `dbj.kc` author and
+  export through the real browser Worker path; all three references reconstruct
+  and validate cleanly
+
+Fairisle and DBJ also retain exact machine-equivalent reference parity tests.
+The official `jacquard.kc` combines front/back work into a denser pass schedule
+than Studio's generic birdseye generator. Its generated output is validator-cleared,
+but schedule parity remains a named optimization; do not describe that
+route as reference-equivalent until a dedicated walker is proven.
+
 ## M4 - Knit-proven
 
 Register physical swatches and allow a verdict to become Knit-proven only when

@@ -44,14 +44,15 @@ refusal corpus (6 pinned bad programs), topology oracle, swatch registry
 (empty → verdict ceiling is "Verified, swatch recommended", never Knit-proven).
 
 **Converter adapters (resolves the earlier in-browser vs subprocess ambiguity).**
-The vendored `knitout-to-kcode.cjs` is plain JS wrapped behind a `KCodeConverter`
-interface (`convertRunArtifactToKCode(artifact, converter)` is
+The vendored `knitout-to-kcode.cjs` is the canonical converter source behind a
+`KCodeConverter` interface (`convertRunArtifactToKCode(artifact, converter)` is
 environment-agnostic). `nodeKCodeConverter` (`knitout/kniterate/to-kcode.ts`) is
 the **Node adapter** — temp `.k` file + `spawnSync` — used by the CLI, tests, and
-parity suites. The **browser adapter** loads the *same* `.cjs` in a Web Worker;
-the pattern is proven in `knitlab2` (`reference/knitlab/lib/browser-kcode-converter.ts`
-+ `use-kcode-batch.ts`) and just needs porting into `apps/studio`. One vendored
-file, two adapters — S2's live loop needs **no backend**.
+parity suites. The **browser adapter** runs in a Web Worker and imports a
+deterministically generated ESM copy of the same library with only the Node CLI
+driver removed. A source-equivalence test and byte-parity test prevent the two
+paths from drifting. One canonical vendored source, two adapters — the live
+loop needs **no backend** and no runtime code evaluation.
 
 **Machine profile (single, hardcoded): 7gg worsted, 252-needle bed, carriers
 1–6.** Convention: C1 draw thread, C2–C5 pattern, C6 waste; a 5th/6th pattern

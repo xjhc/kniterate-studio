@@ -17,11 +17,14 @@ describe('BlanketSetupRail physical verdict', () => {
     const markup = renderToStaticMarkup(<BlanketSetupRail
       state={state}
       compile={{ status: 'ready', artifact, error: null, comparisons: [] }}
+      outputStatus="ready"
+      outputError={null}
       knitProvenEntryId="2026-07-12-proof"
       onWidth={() => {}}
       onHeight={() => {}}
       onNeedleOffset={() => {}}
       onStrategy={() => {}}
+      onBirdseyeMode={() => {}}
       onAssignment={() => {}}
       onFrame={() => {}}
     />);

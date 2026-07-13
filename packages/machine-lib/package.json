@@ -20,7 +20,8 @@
     "kniterate:fixtures": "node --import tsx scripts/generate-rectangle-corpus.ts",
     "kniterate:topology": "node --import tsx scripts/kniterate-topology-oracle.ts out/rectangle-corpus -o out/rectangle-topology-report.json",
     "kniterate:swatches": "node --import tsx scripts/kniterate-swatch-registry-check.ts",
-    "kniterate:conform": "node --import tsx scripts/kniterate-conform.ts"
+    "kniterate:conform": "node --import tsx scripts/kniterate-conform.ts",
+    "generate:browser-converter": "node --import tsx scripts/generate-browser-converter.ts"
   },
   "dependencies": {
     "@kniterate-studio/chart-contract": "workspace:*",

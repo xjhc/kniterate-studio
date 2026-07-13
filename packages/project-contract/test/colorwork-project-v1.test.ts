@@ -7,6 +7,7 @@ import {
   materializeColorworkProject,
   parseColorworkProjectV1Json,
   redoProjectEdit,
+  renameColorworkProject,
   undoProjectEdit,
 } from '../src/index';
 
@@ -66,6 +67,18 @@ describe('ColorworkProjectV1', () => {
     const state = materializeColorworkProject(project).state;
     expect(state.machine.needleOffset).toBe(20);
     expect(state.frame).toEqual({ wasteRows: 30, drawThread: true, bindOff: 'machine-bindoff' });
+  });
+
+  it('renames project metadata and palette entries without breaking checkpoints', () => {
+    let project = createColorworkProjectV1(chart, { id: 'metadata' });
+    for (let index = 0; index < 50; index += 1) project = appendProjectEdit(project, { id: `paint-${index}`, source: 'human', edit: { kind: 'paint-cells', cells: [{ rowId: 'row_0001', column: 0, paletteIndex: index % 2 }] } });
+    project = renameColorworkProject(project, 'Client blanket');
+    project = appendProjectEdit(project, { id: 'palette-red', source: 'human', edit: { kind: 'set-palette-entry', paletteId: 'red', name: 'Brick', hex: '#a12b34' } });
+    const state = materializeColorworkProject(project).state;
+    expect(project.title).toBe('Client blanket');
+    expect(state.chart.title).toBe('Client blanket');
+    expect(state.chart.palette[1]).toMatchObject({ name: 'Brick', hex: '#A12B34' });
+    expect(parseColorworkProjectV1Json(JSON.stringify(project))).toEqual(project);
   });
 
   it('uses one history for human and assistant edits with deterministic undo/redo', () => {

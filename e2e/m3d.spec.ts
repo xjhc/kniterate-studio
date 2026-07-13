@@ -40,9 +40,11 @@ test('exports validated k-code and reproduces it byte-identically after project 
   await page.getByRole('button', { name: 'Open run sheet', exact: true }).click();
   await expect(page.locator('.run-sheet')).toContainText('C1');
   await expect(page.locator('.run-sheet')).toContainText('C6');
-  const pdfPath = testInfo.outputPath('run-sheet.pdf');
-  await page.pdf({ path: pdfPath, printBackground: true });
-  expect((await stat(pdfPath)).size).toBeGreaterThan(5_000);
+  if (testInfo.project.name === 'chromium') {
+    const pdfPath = testInfo.outputPath('run-sheet.pdf');
+    await page.pdf({ path: pdfPath, printBackground: true });
+    expect((await stat(pdfPath)).size).toBeGreaterThan(5_000);
+  }
   await page.getByRole('button', { name: /Close/ }).click();
 
   const projectDownload = page.waitForEvent('download');

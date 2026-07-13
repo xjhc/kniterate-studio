@@ -93,10 +93,10 @@ WebFetch on the artifact URL above.
 
 **G4 — In-browser vs subprocess ambiguity. ✅ CLOSED 2026-07-12.** Verified in
 code: `nodeKCodeConverter` is the Node adapter (temp file + `spawnSync`, used by
-CLI/tests/parity); the browser path loads the *same* vendored `.cjs` in a Web
-Worker (proven in knitlab2's `browser-kcode-converter.ts`, not yet ported to
-`apps/studio`). Documented as "Converter adapters" in `SYSTEM-DESIGN.md` A.1,
-plus a pre-code spike (C.4) to port the Worker adapter.
+CLI/tests/parity); the browser Worker imports a deterministic ESM projection of
+the same vendored converter with its Node CLI driver removed. Source-equivalence
+and byte-parity tests pin the boundary; no backend or runtime evaluation is
+used. Documented as "Converter adapters" in `SYSTEM-DESIGN.md` A.1.
 
 **G5 — "Conformance oracle" phrasing is circular. ✅ CLOSED 2026-07-12** in
 `UX-PROPOSAL.md` §9 and `SYSTEM-DESIGN.md` A.5 §6: the oracle is

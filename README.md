@@ -22,6 +22,13 @@ pnpm dev
 Open `http://127.0.0.1:5173` and import a chart JSON exported by KnitLab Chart.
 `pnpm kniterate:conform` runs the extracted machine confidence ladder.
 
+## GitHub Pages
+
+The application is fully static. Pushes to `main` run the release verification,
+package `apps/studio/dist`, and deploy it through the `github-pages`
+environment. In the repository settings, select **GitHub Actions** under
+**Pages → Build and deployment → Source** before the first deployment.
+
 For an authored blanket, Studio keeps design rows intact, compares five backing
 choices, compiles off the UI thread, validates the vendored `.kc`, and enables
 export only for the current validated project revision. Project JSON and the

@@ -16,9 +16,11 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
 
   await page.getByRole('button', { name: 'Open run sheet', exact: true }).click();
   await expect(page.locator('.run-sheet')).toContainText('fairisle.kc');
-  const pdfPath = testInfo.outputPath('foreign-run-sheet.pdf');
-  await page.pdf({ path: pdfPath, printBackground: true });
-  expect((await stat(pdfPath)).size).toBeGreaterThan(5_000);
+  if (testInfo.project.name === 'chromium') {
+    const pdfPath = testInfo.outputPath('foreign-run-sheet.pdf');
+    await page.pdf({ path: pdfPath, printBackground: true });
+    expect((await stat(pdfPath)).size).toBeGreaterThan(5_000);
+  }
   await page.getByRole('button', { name: /Close/ }).click();
 
   await page.getByTitle('Pass diff').click();

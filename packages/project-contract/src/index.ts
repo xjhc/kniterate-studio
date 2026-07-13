@@ -87,6 +87,12 @@ const SetStrategyEditSchema = z.object({ kind: z.literal('set-strategy'), strate
 const SetFrameEditSchema = z.object({ kind: z.literal('set-frame'), frame: FrameSchema });
 const SetYarnEditSchema = z.object({ kind: z.literal('set-yarn-assignment'), assignment: YarnAssignmentSchema });
 const RemoveYarnEditSchema = z.object({ kind: z.literal('remove-yarn-assignment'), paletteId: Id });
+const SetPaletteEntryEditSchema = z.object({
+  kind: z.literal('set-palette-entry'),
+  paletteId: Id,
+  name: z.string().min(1).max(100),
+  hex: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+});
 const AddOverrideEditSchema = z.object({ kind: z.literal('add-override'), override: ProjectOverrideSchema });
 const RemoveOverrideEditSchema = z.object({ kind: z.literal('remove-override'), overrideId: Id });
 
@@ -101,6 +107,7 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   SetFrameEditSchema,
   SetYarnEditSchema,
   RemoveYarnEditSchema,
+  SetPaletteEntryEditSchema,
   AddOverrideEditSchema,
   RemoveOverrideEditSchema,
 ]);
@@ -304,6 +311,15 @@ export function createColorworkProjectV1(chartValue: unknown, options: { id: str
   });
 }
 
+export function renameColorworkProject(projectValue: ColorworkProjectV1, titleValue: string): ColorworkProjectV1 {
+  const title = z.string().trim().min(1).max(200).parse(titleValue);
+  const project = clone(projectValue);
+  project.title = title;
+  project.base.chart.title = title;
+  for (const checkpoint of project.history.checkpoints) checkpoint.state.chart.title = title;
+  return parseColorworkProjectV1(project);
+}
+
 function assertPaletteIndex(state: ProjectState, index: number): void {
   if (index >= state.chart.palette.length) throw new Error(`palette index ${index} does not exist`);
 }
@@ -380,6 +396,13 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       break;
     }
     case 'remove-yarn-assignment': state.machine.yarnAssignments = state.machine.yarnAssignments.filter((item) => item.paletteId !== edit.paletteId); break;
+    case 'set-palette-entry': {
+      const paletteEntry = state.chart.palette.find((entry) => entry.id === edit.paletteId);
+      if (!paletteEntry) throw new Error(`unknown palette id "${edit.paletteId}"`);
+      paletteEntry.name = edit.name;
+      paletteEntry.hex = edit.hex.toUpperCase();
+      break;
+    }
     case 'add-override':
       if (state.overrides.some((item) => item.id === edit.override.id)) throw new Error(`override id "${edit.override.id}" already exists`);
       state.overrides.push(edit.override);
