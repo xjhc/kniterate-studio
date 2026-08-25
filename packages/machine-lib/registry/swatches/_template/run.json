@@ -1,0 +1,45 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-run-observation-v1",
+  "schemaVersion": 1,
+  "operator": "TODO: operator name or stable id",
+  "startedAt": "1970-01-01T00:00:00Z",
+  "endedAt": "1970-01-01T00:00:00Z",
+  "outcome": "TODO: clean | dropped | jammed | aborted | partial",
+  "artifact": {
+    "loadedKcodeSha256": "TODO: exact SHA-256 loaded into the Kniterate application",
+    "displayedPassCount": null,
+    "manualProgramEdits": false
+  },
+  "physicalPlacement": {
+    "verified": false,
+    "compilerCoordinateStart": 0,
+    "compilerCoordinateEnd": 0,
+    "physicalNeedleStart": null,
+    "physicalNeedleEnd": null,
+    "method": "TODO: documented machine/vendor datum procedure used",
+    "verifiedBy": "TODO: independent verifier",
+    "verifiedAt": null
+  },
+  "manualInterventions": [],
+  "observations": {
+    "sections": {
+      "waste": "not-reached",
+      "castOn": "not-reached",
+      "drawThread": "not-reached",
+      "carrierBringIn": "not-reached",
+      "body": "not-reached",
+      "backing": "not-reached",
+      "leftEdge": "not-reached",
+      "rightEdge": "not-reached",
+      "bindOff": "not-reached"
+    },
+    "stops": [],
+    "dimensionsCm": {
+      "offMachine": { "status": "not-measured", "reason": "TODO: measure or explain" },
+      "rested24h": { "status": "not-measured", "reason": "TODO: measure or explain" }
+    },
+    "photos": [],
+    "notes": ""
+  }
+}

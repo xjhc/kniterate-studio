@@ -259,6 +259,7 @@ describe('strict lossless KCode document parser', () => {
       dialect: 'app',
       strict: true,
       parseStatus: 'accepted',
+      recordMaterialization: 'complete',
     })
 
     const unsupported = parseKCodeDocument(source, {

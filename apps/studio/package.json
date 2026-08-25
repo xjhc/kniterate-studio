@@ -4,9 +4,9 @@
   "version": "1.0.0-rc.1",
   "type": "module",
   "scripts": {
-    "predev": "pnpm --dir ../../packages/machine-lib kniterate:swatches",
+    "predev": "pnpm --dir ../../packages/machine-lib kniterate:swatches:check",
     "dev": "vite --host 127.0.0.1",
-    "prebuild": "pnpm --dir ../../packages/machine-lib kniterate:swatches",
+    "prebuild": "pnpm --dir ../../packages/machine-lib kniterate:swatches:check",
     "build": "vite build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

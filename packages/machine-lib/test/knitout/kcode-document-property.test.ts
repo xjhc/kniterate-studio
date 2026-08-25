@@ -99,6 +99,7 @@ type CriticalMutation =
   | 'rack'
   | 'field-label'
   | 'bed-character'
+  | 'needle-action-deletion'
   | 'carriage-marker'
   | 'operation'
   | 'carrier'
@@ -110,6 +111,7 @@ const criticalMutationArbitrary = fc.constantFrom<CriticalMutation>(
   'rack',
   'field-label',
   'bed-character',
+  'needle-action-deletion',
   'carriage-marker',
   'operation',
   'carrier',
@@ -139,6 +141,8 @@ function mutateCriticalToken(source: string, mutation: CriticalMutation): string
       return replaceFirstLine(source, (line) => line.startsWith('STIF:'), (line) => `STIX:${line.slice(5)}`)
     case 'bed-character':
       return replaceFirstLine(source, (line) => line.startsWith('FRNT:'), (line) => line.replace('_', '@'))
+    case 'needle-action-deletion':
+      return replaceFirstLine(source, (line) => line.startsWith('FRNT:'), (line) => line.replace('-', '.'))
     case 'carriage-marker':
       return replaceFirstLine(source, (line) => line.startsWith('FRNT:'), (line) => line.replace('/', '_'))
     case 'operation':

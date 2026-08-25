@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { appendProjectEdit, createColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { compileColorworkProject } from './compileProject';
+import { compileKCodeArtifact } from '../kcode/compileKCodeArtifact';
 
 const chart = {
   kind: 'knitlab-colorwork-chart', version: 1, title: 'Compile fixture', width: 4, height: 3, rowNumbering: 'bottom-up',
@@ -58,5 +59,56 @@ describe('blanket project compiler', () => {
     expect(floatDiagnostic?.opIndex).not.toBeNull();
     expect(floatDiagnostic?.rowId).not.toBeNull();
     expect(floatDiagnostic?.passIndices.length).toBeGreaterThan(0);
+  });
+
+  it('keeps predicted and emitted pass positions as distinct provenance spaces', async () => {
+    const width = 24;
+    const height = 10;
+    const blocks = {
+      kind: 'knitlab-colorwork-chart',
+      version: 1,
+      title: 'Predicted versus emitted provenance',
+      width,
+      height,
+      rowNumbering: 'bottom-up',
+      palette: [
+        { id: 'ground', name: 'Ground', hex: '#F4F0E6' },
+        { id: 'ink', name: 'Ink', hex: '#24211F' },
+      ],
+      cells: Array.from({ length: height }, () =>
+        Array.from({ length: width }, (_, column) => Math.floor(column / 3) % 2)),
+    };
+    let project = createColorworkProjectV1(blocks, { id: 'pass-space-regression' });
+    project = appendProjectEdit(project, {
+      id: 'strict-floats',
+      source: 'human',
+      edit: { kind: 'set-strategy', strategy: { technique: 'fairisle', floatLimit: 1 } },
+    });
+    project = appendProjectEdit(project, {
+      id: 'short-frame',
+      source: 'human',
+      edit: { kind: 'set-frame', frame: { wasteRows: 4, drawThread: false, bindOff: 'waste-and-drop' } },
+    });
+
+    const compiled = compileColorworkProject(project);
+    expect(compiled.ok).toBe(true);
+    expect(compiled.passes).toHaveLength(40);
+    const emitted = await compileKCodeArtifact({
+      kind: 'convert-kcode',
+      requestId: 1,
+      inputHash: compiled.inputHash!,
+      knitoutText: compiled.knitoutText!,
+      programOpSourceRows: compiled.programOpSourceRows,
+      rowProvenance: compiled.rowProvenance.map(({ rowId, chartRow, machineRow }) => ({ rowId, chartRow, machineRow })),
+    });
+
+    expect(emitted.ok).toBe(true);
+    expect(emitted.passCount).toBe(70);
+    expect(compiled.rowProvenance[0]).toMatchObject({ rowId: 'row_0001', passIndices: [28, 29] });
+    expect(emitted.rowPasses[0]).toEqual({ rowId: 'row_0001', passIndices: [30, 31] });
+    expect(compiled.diagnostics.find((item) => item.rowId === 'row_0001')).toMatchObject({
+      rule: 'bed-state-long-float',
+      passIndices: [28, 29],
+    });
   });
 });

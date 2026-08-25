@@ -1,5 +1,5 @@
 #!/usr/bin/env -S node --import tsx
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
@@ -21,10 +21,16 @@ const gates: Gate[] = [
 ];
 
 function main(): void {
+  const checkOnly = process.argv.includes('--check');
   const outArgIndex = process.argv.findIndex((arg) => arg === '--out' || arg === '-o');
   const outPath = outArgIndex >= 0
     ? process.argv[outArgIndex + 1] ?? 'out/kniterate-conformance-report.json'
     : 'out/kniterate-conformance-report.json';
+  const destination = resolve(outPath);
+  const temporaryDestination = `${destination}.${process.pid}.tmp`;
+  mkdirSync(dirname(destination), { recursive: true });
+  if (!checkOnly) rmSync(destination, { force: true });
+  rmSync(temporaryDestination, { force: true });
   const results: Gate[] = [];
 
   for (const gate of gates) {
@@ -40,7 +46,6 @@ function main(): void {
   const report = {
     kind: 'kniterate-studio-m1-conformance-report',
     schemaVersion: '1',
-    generatedAt: new Date().toISOString(),
     verdict: blocked ? 'Blocked' : 'Verified - swatch recommended',
     honestyCap: 'Software conformance only. Physical acceptance is a separate release:physical-check gate and never serves as a software oracle.',
     physicalAcceptance: {
@@ -49,9 +54,16 @@ function main(): void {
     },
     gates: results,
   };
-  const destination = resolve(outPath);
-  mkdirSync(dirname(destination), { recursive: true });
-  writeFileSync(destination, `${JSON.stringify(report, null, 2)}\n`);
+  const expectedReport = `${JSON.stringify(report, null, 2)}\n`;
+  if (checkOnly) {
+    const current = existsSync(destination) ? readFileSync(destination, 'utf8') : null;
+    const currentReport = current === expectedReport;
+    process.stdout.write(`\n${blocked ? 'Blocked' : currentReport ? report.verdict + ' · report current' : 'Blocked · conformance report stale'}\nReport: ${outPath}\n`);
+    if (blocked || !currentReport) process.exit(2);
+    return;
+  }
+  writeFileSync(temporaryDestination, expectedReport);
+  renameSync(temporaryDestination, destination);
   process.stdout.write(`\n${report.verdict}\nReport: ${outPath}\n`);
   if (blocked) process.exit(2);
 }

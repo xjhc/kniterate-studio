@@ -162,6 +162,7 @@ export function projectScheduledPassProvenance(input: {
 
 function messagesForArtifact(input: {
   vendorWarnings: readonly string[];
+  vendorWarningCount: number;
   knitoutIssues: ReturnType<typeof parseKnitoutProgram>['issues'];
   parserDiagnostics: KCodeArtifact['parserDiagnostics'];
   validation: KCodeArtifact['validation'];
@@ -169,9 +170,15 @@ function messagesForArtifact(input: {
 }): ValidationMessage[] {
   return [
     ...input.vendorWarnings.map((message): ValidationMessage => ({ severity: 'info', rule: 'vendor-converter-note', message })),
-    ...input.knitoutIssues.map((issue): ValidationMessage => ({ severity: 'error', rule: issue.rule ?? 'generated-knitout-parse', message: `Knitout line ${issue.line}: ${issue.message}` })),
-    ...input.parserDiagnostics.map((item): ValidationMessage => ({ severity: item.severity, rule: item.rule, message: `KCode ${item.line}:${item.column}: ${item.message}` })),
-    ...(input.validation?.diagnostics ?? []).map((item): ValidationMessage => ({ severity: item.severity, rule: item.rule, message: item.line === null ? item.message : `KCode ${item.line}:${item.column}: ${item.message}` })),
+    ...(input.vendorWarningCount > input.vendorWarnings.length ? [{
+      severity: 'info' as const,
+      rule: 'vendor-converter-note-summary',
+      message: `Vendor notes were truncated after ${input.vendorWarnings.length} details; omitted ${input.vendorWarningCount - input.vendorWarnings.length} additional notes.`,
+      occurrences: input.vendorWarningCount - input.vendorWarnings.length,
+    }] : []),
+    ...input.knitoutIssues.map((issue): ValidationMessage => ({ severity: 'error', rule: issue.rule ?? 'generated-knitout-parse', message: `Knitout line ${issue.line}: ${issue.message}`, occurrences: issue.occurrences })),
+    ...input.parserDiagnostics.map((item): ValidationMessage => ({ severity: item.severity, rule: item.rule, message: `KCode ${item.line}:${item.column}: ${item.message}`, occurrences: item.occurrences })),
+    ...(input.validation?.diagnostics ?? []).map((item): ValidationMessage => ({ severity: item.severity, rule: item.rule, message: item.line === null ? item.message : `KCode ${item.line}:${item.column}: ${item.message}`, occurrences: item.occurrences })),
     ...(input.differential?.mismatches ?? []).map((item): ValidationMessage => ({ severity: 'error', rule: 'kcode.backend-schedule-differential', message: item.message })),
   ];
 }
@@ -224,6 +231,7 @@ export async function compileKCodeArtifact(
   });
   const messages = [...messagesForArtifact({
     vendorWarnings: converted.warnings ?? [],
+    vendorWarningCount: converted.warningCount ?? converted.warnings?.length ?? 0,
     knitoutIssues: parsedKnitout.issues,
     parserDiagnostics: parsed.diagnostics,
     validation,

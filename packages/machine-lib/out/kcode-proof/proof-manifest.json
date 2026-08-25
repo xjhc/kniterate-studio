@@ -12,7 +12,7 @@
   "claims": [
     "strict-lossless-kcode-byte-roundtrip",
     "deterministic-pinned-backend-lowering",
-    "kcode-encoded-scheduled-pass-to-machine-trace-differential",
+    "machine-executable-scheduled-pass-to-machine-trace-differential",
     "kcode-native-loop-and-kinematic-validation",
     "full-machine-trace-diff",
     "deterministic-pass-bed-carrier-scene"
@@ -27,6 +27,7 @@
   },
   "proofTests": [
     "test/public-api.test.ts",
+    "test/physical-registry-manifest.test.ts",
     "test/browser-kcode-converter.test.ts",
     "test/knitout/browser-converter-source.test.ts",
     "test/knitout/kcode-machine-profile.test.ts",
@@ -41,16 +42,25 @@
     "test/knitout/kcode-scheduled-differential.test.ts",
     "test/knitout/kcode-scheduled-trace-diff.test.ts",
     "test/knitout/kc-diff.test.ts",
+    "test/knitout/loop-stack-software-policy.test.ts",
     "../../apps/studio/src/engine.test.ts",
     "../../apps/studio/src/blanket/compileProject.test.ts",
     "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
     "../../apps/studio/src/kcode/MachineMovementView.test.tsx",
-    "../../apps/studio/src/chart/AuthoredMachinePanel.test.ts"
+    "../../apps/studio/src/chart/AuthoredMachinePanel.test.ts",
+    "../../apps/studio/src/chart/ChartWorkspace.test.ts",
+    "../../apps/studio/src/sourceWindow.test.tsx"
   ],
   "gates": [
     {
+      "id": "physical-registry-manifest-current",
+      "command": "pnpm kniterate:swatches:check",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
       "id": "deterministic-kcode-proof-tests",
-      "command": "pnpm exec vitest run test/public-api.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts",
+      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts",
       "status": "pass",
       "exitCode": 0
     },
@@ -62,7 +72,7 @@
     },
     {
       "id": "studio-kcode-integration-tests",
-      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/blanket/compileProject.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/chart/AuthoredMachinePanel.test.ts",
+      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/blanket/compileProject.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/chart/AuthoredMachinePanel.test.ts src/chart/ChartWorkspace.test.ts src/sourceWindow.test.tsx",
       "status": "pass",
       "exitCode": 0
     },
@@ -80,12 +90,12 @@
     }
   ],
   "referenceCorpus": {
-    "dialect": "app",
+    "dialect": "knitout-vendor",
     "fixtureCount": 13,
     "bytes": 25111478,
     "passes": 20568,
     "actions": 710063,
-    "manifestSha256": "41446c1f76fa7c78195280b86352bc68f900a1ac91fca9df6c93898714569e21",
+    "manifestSha256": "188c95d3ac4d937f1c140c75455db08e981f76d0b9e7608ca8f36e5cf3fea169",
     "fixtures": [
       {
         "name": "2x2-rib-beanie.kc",
@@ -94,7 +104,7 @@
         "passes": 530,
         "actions": 46196,
         "validationErrors": 0,
-        "validationWarnings": 0
+        "validationWarnings": 1
       },
       {
         "name": "back.kc",
@@ -103,7 +113,7 @@
         "passes": 2108,
         "actions": 161743,
         "validationErrors": 0,
-        "validationWarnings": 0
+        "validationWarnings": 82
       },
       {
         "name": "color-swatch-bindoff.kc",
@@ -148,7 +158,7 @@
         "passes": 2544,
         "actions": 158640,
         "validationErrors": 0,
-        "validationWarnings": 0
+        "validationWarnings": 64
       },
       {
         "name": "jacquard.kc",
@@ -166,7 +176,7 @@
         "passes": 1994,
         "actions": 85013,
         "validationErrors": 0,
-        "validationWarnings": 0
+        "validationWarnings": 68
       },
       {
         "name": "sophie.kc",
@@ -175,7 +185,7 @@
         "passes": 3766,
         "actions": 44842,
         "validationErrors": 0,
-        "validationWarnings": 0
+        "validationWarnings": 5
       },
       {
         "name": "sophie2.kc",
@@ -207,8 +217,23 @@
     ]
   },
   "contract": {
-    "sha256": "cf6040d96269fc163ff1fe08bb93524fdea285050523690bb9b21fc04ad52323",
+    "sha256": "c123b32cb3941111a3a61c143462c005bd3eef5e6e3405de5c35e19baff3580f",
     "files": [
+      {
+        "path": "../../.github/workflows/ci.yml",
+        "sha256": "80d57bd4e4275e1fe5d528082a7aa508fc4cc53c6e037841869df4d3ffb2d813",
+        "bytes": 968
+      },
+      {
+        "path": "../../.github/workflows/pages.yml",
+        "sha256": "c7b3c419a7deb22d00f49152fcbcf5b9e81db111e1660f538e3b03df1cb902b1",
+        "bytes": 1063
+      },
+      {
+        "path": "../../.node-version",
+        "sha256": "177d20030d4dcc37eae9ef92865ec54dadce60e8f19e9a34a5d4f37502195a36",
+        "bytes": 8
+      },
       {
         "path": "../../apps/studio/index.html",
         "sha256": "b1c6c06e2ddad3bcd85bd424ec4f4dbc277e7f5f1ee7d95a5ff59449464dd8d9",
@@ -216,13 +241,13 @@
       },
       {
         "path": "../../apps/studio/package.json",
-        "sha256": "0136d60ab3e9dfb981d835ef0c10b7faf445c8fff63d379afcbfc55b8cbb001b",
-        "bytes": 918
+        "sha256": "23ae4d409033d6ae476972b0cf702f50d225e64a54672c46a1a771cafeda29ec",
+        "bytes": 930
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "fa747c62e19b47aae99bc3a8cc4d4bac7fa1014f0b39ca3d5e89a78ed3ee0dfe",
-        "bytes": 50230
+        "sha256": "1cc406067a5fbf43929683e897b8641d0fea1b55b815a5a06474fac8663df118",
+        "bytes": 49221
       },
       {
         "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
@@ -266,8 +291,8 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.test.ts",
-        "sha256": "b1c6788f59f38585c11f2ba4c30fe4e19d8118a37b843ac357eff8a176fbbb21",
-        "bytes": 3498
+        "sha256": "f1e6c6f842980dc682dc4aaf4ed51ccc0b59634748f5bcdc8162b2f0bf155552",
+        "bytes": 5591
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.ts",
@@ -291,13 +316,13 @@
       },
       {
         "path": "../../apps/studio/src/chart/AuthoredMachinePanel.test.ts",
-        "sha256": "aab2529b5427e47b832d082fbc9247dfc47be59b0ee4a2d4861f75e1fd4a33e2",
-        "bytes": 2922
+        "sha256": "b9de1f5fea5f1be30e70b8524ec6cd52203ac9741ce8b99aeb87cb0bc4debbcc",
+        "bytes": 5002
       },
       {
         "path": "../../apps/studio/src/chart/AuthoredMachinePanel.tsx",
-        "sha256": "4ed7c1d9578e8ce2fcb0074b71eac8318843feb5e0e28764704c7cf7d1eacd68",
-        "bytes": 8946
+        "sha256": "616779a3c1e26a25b3ec344af902f62310ec8b0e7671247e4075fdac7f6b5cf9",
+        "bytes": 9416
       },
       {
         "path": "../../apps/studio/src/chart/ChartToolbar.tsx",
@@ -305,9 +330,14 @@
         "bytes": 2809
       },
       {
+        "path": "../../apps/studio/src/chart/ChartWorkspace.test.ts",
+        "sha256": "6892f85da54fdc00a9f73555e8ca2e0ccd33ec0277000edf814c1140ae657db5",
+        "bytes": 415
+      },
+      {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "c80f69c8c3d38e375d3b96697d69ef79ec99f7ddbd09be38bf11ae89e4e3978a",
-        "bytes": 15928
+        "sha256": "c5eb2db0badecf1fdf6e50445c55dea0bfbcf00316657e60e58b8d03ca02fbe3",
+        "bytes": 16365
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
@@ -381,28 +411,28 @@
       },
       {
         "path": "../../apps/studio/src/engine.test.ts",
-        "sha256": "eb3c3fbe185d21cccefaf38c1eed8d8baaeaf782cd12b563e4925ac36edc6eeb",
-        "bytes": 15524
+        "sha256": "a8a9fce9620048385f250cbb1fdb0a216f2933ad002e2475aa0c40a2141ab531",
+        "bytes": 27317
       },
       {
         "path": "../../apps/studio/src/engine.ts",
-        "sha256": "91ced896d493616c208bca7f0b56d901ec776243d7a327caf38942083cbfdf11",
-        "bytes": 21315
+        "sha256": "a161aed90c7ce2c3ceede5ccde712752834b31ab90f316ee20fb56dc89283af2",
+        "bytes": 28969
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.css",
-        "sha256": "642d351de03253ac407e7d83a29620138656091b992a8ccc14012890ba5d5783",
-        "bytes": 16711
+        "sha256": "810f76b55b1d8f7d849f0945c5df09ea5a78556230972f7cccf03151a0d0dc40",
+        "bytes": 16815
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.test.tsx",
-        "sha256": "976659eb9859b408d7ae3ede25986451218acb064c690447769f9ec2f78347af",
-        "bytes": 7123
+        "sha256": "b25f3282e51b80d6f8d36805f6ed8ad049a6a097ea53f502c9b45547756ab34e",
+        "bytes": 8046
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.tsx",
-        "sha256": "2f3f9139dfd801b7d86e74a5e6ced90699104f2b55fb3c186ff23cb91040486d",
-        "bytes": 23787
+        "sha256": "3ba101d343bf17245f25cafafed556440d5f8692af87b7edea985b48f18bc902",
+        "bytes": 24540
       },
       {
         "path": "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
@@ -411,8 +441,8 @@
       },
       {
         "path": "../../apps/studio/src/kcode/compileKCodeArtifact.ts",
-        "sha256": "d52f64f6a08bf43f00ecec4a98efd56932b2b02da769fff82194fdaaa4d0ed47",
-        "bytes": 9650
+        "sha256": "e049743f830465b445909914fa49e178e05248c271f6b4271652e18d5421fd95",
+        "bytes": 10268
       },
       {
         "path": "../../apps/studio/src/kcode/convert.worker.ts",
@@ -440,9 +470,19 @@
         "bytes": 236
       },
       {
+        "path": "../../apps/studio/src/sourceWindow.test.tsx",
+        "sha256": "c735daa96904969dcfb2c321915e33715baa0e25c9922206b5956881f9985d82",
+        "bytes": 3578
+      },
+      {
+        "path": "../../apps/studio/src/sourceWindow.ts",
+        "sha256": "f8f7e4a117026a2eea5faba42904c0ff36c172d515af640b5581ff206c5a0b29",
+        "bytes": 4170
+      },
+      {
         "path": "../../apps/studio/src/styles.css",
-        "sha256": "1b48492eaa05b5250b2ec84e5ad34eb0033f7c6c21cd93b1cc11960216483b19",
-        "bytes": 47222
+        "sha256": "8b8813950cc72e0ed4009c54a05207e5ebaa421b07ecb0a356e3af23153348f8",
+        "bytes": 46365
       },
       {
         "path": "../../apps/studio/tsconfig.json",
@@ -455,9 +495,49 @@
         "bytes": 150
       },
       {
+        "path": "../../e2e/launch-polish.spec.ts",
+        "sha256": "106a3ad735c01bd753a2623eaab906cbc763497f9ab9b024e1361d242910d3ff",
+        "bytes": 1903
+      },
+      {
+        "path": "../../e2e/m2.spec.ts",
+        "sha256": "f7a66f774020b1e77f4f6ceeda73b2fcc46b538a47ba1b8beeb1e4bf1c48d63b",
+        "bytes": 3555
+      },
+      {
+        "path": "../../e2e/m3b.spec.ts",
+        "sha256": "20926d6206ea75a378b6e4671234e727a1d428bed61397a5c1b14e18804d5705",
+        "bytes": 6305
+      },
+      {
+        "path": "../../e2e/m3c.spec.ts",
+        "sha256": "4bbf191530e76caf98b553870fb102ea04b8612aaa17b413a3432773940933c0",
+        "bytes": 3496
+      },
+      {
+        "path": "../../e2e/m3d.spec.ts",
+        "sha256": "32ef67319ae11877aaa66bf395b991d85b9bc8b9080fbaf65892bbcd0f7e7de8",
+        "bytes": 5098
+      },
+      {
+        "path": "../../e2e/reference-patterns.spec.ts",
+        "sha256": "d5749e2f3c03e59b341fd68d9713fc1c59a44f65443adca2599ac29834969c9f",
+        "bytes": 4250
+      },
+      {
+        "path": "../../e2e/workspace-target.spec.ts",
+        "sha256": "4de582b97ba838d09f1d5320539dc27b7467b6a5e8254b7bb3d7f5153af460b7",
+        "bytes": 2899
+      },
+      {
         "path": "../../package.json",
-        "sha256": "bf5c2d4ccf68e9979f6d4c57c2b8a901ad2654e2773c3334a4649e41bd0bca9a",
-        "bytes": 893
+        "sha256": "1a5bbf8dee847024f47643ca6c05fbda8ca6727f28ba0722663ef87bfc385c22",
+        "bytes": 1144
+      },
+      {
+        "path": "../../playwright.config.ts",
+        "sha256": "b07a0401aa9a8192d3c70886f60d7cfa340106289e52ac5a5fa9d05346cbde1b",
+        "bytes": 1047
       },
       {
         "path": "../../pnpm-lock.yaml",
@@ -470,14 +550,229 @@
         "bytes": 36
       },
       {
+        "path": "../../scripts/build-v1-knit-trial.ts",
+        "sha256": "825822f54392a591b8ba011ac07ca6fa861f5a96f5808b1bffd2c511d261192a",
+        "bytes": 8671
+      },
+      {
+        "path": "../../scripts/check-v1-physical-release.ts",
+        "sha256": "f5679f565f4d8aab6fba4082092f2cb5682ad47348ef2c518105e1859bd5cd50",
+        "bytes": 4106
+      },
+      {
+        "path": "../../scripts/register-v1-knit-trial.ts",
+        "sha256": "1fa31587308fefc3bf52415feb7436fbb110b4bbc0c3eb8803a236b0293139c8",
+        "bytes": 7962
+      },
+      {
         "path": "../../tsconfig.base.json",
         "sha256": "8eca8075a3f2be2879a1a79148a4f8ceae48bb22c945e80c66560fe7d7eb08bf",
         "bytes": 213
       },
       {
+        "path": "../chart-contract/package.json",
+        "sha256": "36b2c5d165990a6a3fd2297997a2e9b44579cf0d5205b163403341a104f66eaa",
+        "bytes": 377
+      },
+      {
+        "path": "../chart-contract/src/index.ts",
+        "sha256": "e7b9543b71b043fef5d4db7b54fcd5a4a808a28a1a012ade4d6fadcd690cccf6",
+        "bytes": 5422
+      },
+      {
+        "path": "../chart-contract/tsconfig.json",
+        "sha256": "0d96b673fa2d7fdf96aafdcc14019cc9651f612b8e676dfd5042db14e370dd7c",
+        "bytes": 173
+      },
+      {
+        "path": "../colorwork-core/package.json",
+        "sha256": "ae0fb7fd20a9eb2490e434bfa2aa210fbb4d917a1c4c562c2d49872d96419e59",
+        "bytes": 308
+      },
+      {
+        "path": "../colorwork-core/src/geometry.ts",
+        "sha256": "51a9c9323c8fd1d8e876fa80bd6a05556f58076ff0c93c8d33d55269d3884319",
+        "bytes": 1584
+      },
+      {
+        "path": "../colorwork-core/src/index.ts",
+        "sha256": "dc5006fe413e6d1ad35bb65935445d9bde60fd4b669705d4948f98145c2f1c5e",
+        "bytes": 107
+      },
+      {
+        "path": "../colorwork-core/src/selection.ts",
+        "sha256": "db7fc7f0fbd18e9798034e7bb96dfd6c0fce6e81013fc5eb1601e8d8a6c88bcd",
+        "bytes": 2256
+      },
+      {
+        "path": "../colorwork-core/src/tools.ts",
+        "sha256": "d0b5cc839e516b4232ec0cf7cbd191fef87ecfee8736ae0c5fa8503ffdaeee18",
+        "bytes": 3017
+      },
+      {
+        "path": "../colorwork-core/src/types.ts",
+        "sha256": "121b968edfdf8ef9a58a697256bfb2861b904a43292df0919f15bb658902c2a0",
+        "bytes": 523
+      },
+      {
+        "path": "../colorwork-core/tsconfig.json",
+        "sha256": "573f7ebc2278519aad6bb76b49acdc7f4f138f2f7fda1dfaacd572384548ec3d",
+        "bytes": 128
+      },
+      {
+        "path": "../project-contract/package.json",
+        "sha256": "0e46c8677e0e98aac165a21539fd1c14e7e7d18a59c5d9721c7013c3a38a428f",
+        "bytes": 479
+      },
+      {
+        "path": "../project-contract/src/index.ts",
+        "sha256": "e0d9960746f768ebe39eda31ec88d0ffdde7b9d944c591ec5136f6a8cf6be356",
+        "bytes": 21295
+      },
+      {
+        "path": "../project-contract/tsconfig.json",
+        "sha256": "5c8f1056051ad8ca10395485adf2df63ac4c1f7c2054835f447e2d2295d6c2a2",
+        "bytes": 142
+      },
+      {
         "path": "package.json",
-        "sha256": "fbfd76d890a0802cf217ae85c772935d168f5195d5bec302c140374c56986642",
-        "bytes": 2804
+        "sha256": "b266248151df5a45e4f8e850a1f20be8ae7d86b87660c77c632507c9addb8e0c",
+        "bytes": 3154
+      },
+      {
+        "path": "reference/2x2-rib-beanie.kc",
+        "sha256": "de0002e2ac7f36ea95f87940ac83c39439c97eea8ab9ed98427c5bf29f5c2b4a",
+        "bytes": 644396
+      },
+      {
+        "path": "reference/back.kc",
+        "sha256": "fc7683dba9af398143e2d1d346bc0375635ad106389f2e87f8d9dce0ab450c8b",
+        "bytes": 2571232
+      },
+      {
+        "path": "reference/color-swatch-bindoff.kc",
+        "sha256": "1584c39f268f63189905582ddd16baa8866046ab1c8b0b8c25f70b6509a62fb8",
+        "bytes": 556629
+      },
+      {
+        "path": "reference/dbj.kc",
+        "sha256": "3e39d3491666afbc70d06986cbcf492844b41812965013bc79726d1e7071f6dd",
+        "bytes": 602338
+      },
+      {
+        "path": "reference/fairisle.kc",
+        "sha256": "0dba85bca3f3251030bd2302a539b26a14870692261313c948007fb99ccae8e7",
+        "bytes": 346337
+      },
+      {
+        "path": "reference/fox-baby-beanie.kc",
+        "sha256": "cab085708317a5e943c1c9976fd1c9646fe11533e31c8794307f7ab139234160",
+        "bytes": 266788
+      },
+      {
+        "path": "reference/front.kc",
+        "sha256": "8f451241667025c6f4dc7cd34a2e832c60bf2998e766371d7951be84ead07fbf",
+        "bytes": 3108405
+      },
+      {
+        "path": "reference/jacquard.kc",
+        "sha256": "2082bfff804b54efdd9f270941912d563b12a63e1f6430f97b83820d01398efb",
+        "bytes": 423957
+      },
+      {
+        "path": "reference/knitlab/public/visualizer/scripts/CellMachine.js",
+        "sha256": "08f32ccbb1d92b2ac87bd6bb00d309231204014c57bc9c96e1e858eb5eb985f0",
+        "bytes": 40866
+      },
+      {
+        "path": "reference/knitlab/public/visualizer/scripts/parseKnitout.js",
+        "sha256": "4b467a12abe3f60fdc15b891a8d48636b135b9edf3a74f40d2cdd7c53be837fe",
+        "bytes": 8170
+      },
+      {
+        "path": "reference/sleeves.kc",
+        "sha256": "1a092b9665786a0f5a5030d49ff3b2b99371f40923637c9ce302f770a47252af",
+        "bytes": 2433159
+      },
+      {
+        "path": "reference/sophie.kc",
+        "sha256": "00d75440ac6c47b460caab48aecab8cad40ec730223471d6f855097d0a10da7b",
+        "bytes": 4605174
+      },
+      {
+        "path": "reference/sophie2.kc",
+        "sha256": "4d6ff927b9c229b7eb131f75ec7768f0af60446477339473206d13c31119ad46",
+        "bytes": 4546374
+      },
+      {
+        "path": "reference/sophie_stripe.kc",
+        "sha256": "005627ce0953b8d8687956fa76734f2d0ea89d7f76f5c5cade84e541a24c122e",
+        "bytes": 4567907
+      },
+      {
+        "path": "reference/swatch.kc",
+        "sha256": "ee8807b2f7f50a868cdc6107dfb23c9de2c7fcfe2d10ef79ac124878214c0005",
+        "bytes": 438782
+      },
+      {
+        "path": "registry/knit-proven.json",
+        "sha256": "7a1b045fe374ae035e7e281596c32bc58a9b9a32f2e24cf57c41cb649158bae8",
+        "bytes": 179
+      },
+      {
+        "path": "registry/swatches/.gitignore",
+        "sha256": "5c930fe43bf96d0f64c13b0b2997739539ccd95476cbd5a80a5ed0978395f333",
+        "bytes": 131
+      },
+      {
+        "path": "registry/swatches/README.md",
+        "sha256": "2888bc6beee4ae5466c4f701abef4c65dd34da2e561fec21714428116680c044",
+        "bytes": 11703
+      },
+      {
+        "path": "registry/swatches/_schema.json",
+        "sha256": "73c9b48341fffab96f7f320dfdf49c497e706a212cb1de4ab16b82ddc257c876",
+        "bytes": 14656
+      },
+      {
+        "path": "registry/swatches/_template/machine.json",
+        "sha256": "2472b8ed7af6c30091d89a83f1989f5100873646dbd2f84f6bc2fe0a1e0d0661",
+        "bytes": 916
+      },
+      {
+        "path": "registry/swatches/_template/out.k",
+        "sha256": "2d6c9d4dcd523e55d22cba8de51176603c2e45cce9723d9fdbf36c526daca17d",
+        "bytes": 157
+      },
+      {
+        "path": "registry/swatches/_template/out.kc",
+        "sha256": "8027464f9ed8cfa52f04013ef16373c918dba431c47eeaaf5e936f9ddb8c1035",
+        "bytes": 143
+      },
+      {
+        "path": "registry/swatches/_template/outcome.md",
+        "sha256": "46cb57ce343fc20d3ebeac2b1ddfad318bd0f8b58158540176dee865f849765e",
+        "bytes": 465
+      },
+      {
+        "path": "registry/swatches/_template/request.json",
+        "sha256": "85485f39addca20885070efbcec43e6442101690fa6347f6a4af30121cc7c44f",
+        "bytes": 260
+      },
+      {
+        "path": "registry/swatches/_template/run.json",
+        "sha256": "69be5aaa907fe3f84cdee8df08583b6ac0348ce19f4a6fb0ae482c73107da523",
+        "bytes": 1414
+      },
+      {
+        "path": "registry/swatches/_template/spec.json",
+        "sha256": "415d2924ba39631bd0a43a4b6af27a0c244b585a5dae51197f3b814bd26be719",
+        "bytes": 1306
+      },
+      {
+        "path": "registry/swatches/_template/yarn.json",
+        "sha256": "ea1ff43a2fed559741f50f70f52cd50d8d626b650a65e204d57f4bd4d5e5f494",
+        "bytes": 1400
       },
       {
         "path": "scripts/generate-browser-converter.ts",
@@ -491,18 +786,23 @@
       },
       {
         "path": "scripts/kcode-proof-launcher.mjs",
-        "sha256": "77d184b451b2046fa90d6e15b643fb9542a3314c54d9caaf28addbd2f0a96378",
-        "bytes": 1761
+        "sha256": "6a39081f430c986f8a95e571ab9c9fc7acb44ecb75e058e759ba78ada0f23d37",
+        "bytes": 1927
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "4a61734a4ff6787c2a63d1cd130576371d335cecd41d022d625d07d5f184c684",
-        "bytes": 13178
+        "sha256": "27d6be05d9a606c862b408b088d8b193c787dfbb275bfb01d58b381aa3271a67",
+        "bytes": 16202
+      },
+      {
+        "path": "scripts/kniterate-conform-launcher.mjs",
+        "sha256": "abb91a5ecf80ab0cb8d2636f441d9d1c0a60bae3d65b1a0140bad3519afae090",
+        "bytes": 2049
       },
       {
         "path": "scripts/kniterate-conform.ts",
-        "sha256": "1def428de6fddb934b7fe96aa3ea37258ac53ac07f2f8998969d639c5e9fab1a",
-        "bytes": 2658
+        "sha256": "d4159486cf2dd76963d16950ebd0b87fc8279b47d93af983f539ba5675690c90",
+        "bytes": 3388
       },
       {
         "path": "scripts/kniterate-refusal-corpus.ts",
@@ -511,8 +811,8 @@
       },
       {
         "path": "scripts/kniterate-swatch-registry-check.ts",
-        "sha256": "181bdbe5b1ca8b45404a66eaeba30c9e4a93a20e3b9d3fa54852b823b248c954",
-        "bytes": 9657
+        "sha256": "d2f8739682713e863713250422bf32a1ea039b85a28d217fce4de12c4c62e6f4",
+        "bytes": 59707
       },
       {
         "path": "scripts/kniterate-topology-oracle.ts",
@@ -526,8 +826,8 @@
       },
       {
         "path": "scripts/registry-support.ts",
-        "sha256": "ea61f912c107c2993bbbbd143d4bcf568f1e5841b2282b50b7dd30dea0f589ae",
-        "bytes": 926
+        "sha256": "10e277d8ce9882b0af3436a4be11d2dd7171d945b57bd951c3574b2d213acb5d",
+        "bytes": 20678
       },
       {
         "path": "src/browser.ts",
@@ -711,8 +1011,8 @@
       },
       {
         "path": "src/knitout/inspect-program.ts",
-        "sha256": "6ea208cdd1f2a2ad864a3a725546d9aa944e3df2bcbe566965c27d44c3fb0195",
-        "bytes": 3614
+        "sha256": "6b9d4b6e98913624f23f4eb70e19307e8e701810212f940b87b3aa1c9504105c",
+        "bytes": 4075
       },
       {
         "path": "src/knitout/inspect.ts",
@@ -736,18 +1036,18 @@
       },
       {
         "path": "src/knitout/kcode/bytes.ts",
-        "sha256": "7d19777cdbc53754b0c5e85676f83d12458eb471744bda65caf02775207617de",
-        "bytes": 1520
+        "sha256": "76e3b6604a823afc71aae70f502dcbc7847627bf7fd718133fe5987eadbbd2a9",
+        "bytes": 2420
       },
       {
         "path": "src/knitout/kcode/emitter.ts",
-        "sha256": "fd880acea3ea620196108045c017b2a3e65ccd7ca3a8a7898813dda9a5aa2079",
-        "bytes": 519
+        "sha256": "ea5183a1c21bd816de1dc95e5abd9aaa9329aa3d7f93d91c896bf23084294af5",
+        "bytes": 824
       },
       {
         "path": "src/knitout/kcode/machine-profile.ts",
-        "sha256": "7758d1c5d2fad5616ae3bd55dc17bcf98ecdce1c4e0b650cfea3b73db92316b3",
-        "bytes": 13369
+        "sha256": "39c7b4113d997bbe46bfaee1a658024b5fd3fbaa9db934fdf6fd8248bcbd78f1",
+        "bytes": 14207
       },
       {
         "path": "src/knitout/kcode/machine-scene.ts",
@@ -756,33 +1056,33 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "sha256": "198ec51d9e5ae3b7a993086ecfcd86fd291e2e057e510d1145819c965899a603",
-        "bytes": 18782
+        "sha256": "8a5703e7e1d0816957c593efd58154b94810df1f9f009a74643e91281b35b921",
+        "bytes": 20620
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "sha256": "1a6a8c49102255e02e0e69d00d41a283a194fb7545e5d99d934672bc12ff1aab",
-        "bytes": 41580
+        "sha256": "2d824be15e7d0911e49af58bce5e0f66f62964ccc27191dba4a5dc6dd3216804",
+        "bytes": 47055
       },
       {
         "path": "src/knitout/kcode/parser.ts",
-        "sha256": "e86d7e680dbc8e226e9c99fcae5cbc31b4f9244bf02287065c5edf19b5235504",
-        "bytes": 22436
+        "sha256": "5420e5c8cb099e649d5004c1e395d918db89fd8202289d4b3af0c8c167ca7d5b",
+        "bytes": 32403
       },
       {
         "path": "src/knitout/kcode/scheduled-trace-diff.ts",
-        "sha256": "9a89e94b82a2dd2df06b92bce3633d9422177f8a430072d6571cb788f3d1e7a2",
-        "bytes": 3529
+        "sha256": "5e4448ecf156b9952283c8e7491f49a00504166cf24ee3e7f4e27db43b4d4d71",
+        "bytes": 3603
       },
       {
         "path": "src/knitout/kcode/types.ts",
-        "sha256": "c31f79dbe39b22f3e0474982716ce6239d40a0edb84cba69c5d78596c6233186",
-        "bytes": 5685
+        "sha256": "b30472e326156ad95ffc28ddeffd3a76be84a48d343e9e132eeefbfe9060896c",
+        "bytes": 6779
       },
       {
         "path": "src/knitout/kniterate/browser-to-kcode.ts",
-        "sha256": "6b14eab4eba8e775c8146c9477ba8ce52039637fa3bb38faafe003102fc77f5b",
-        "bytes": 2067
+        "sha256": "c0554c5ed41b5587d69b45e513cf572ccb8e3f5f3e52128666488ed04e814bdc",
+        "bytes": 2652
       },
       {
         "path": "src/knitout/kniterate/constants.ts",
@@ -791,8 +1091,8 @@
       },
       {
         "path": "src/knitout/kniterate/to-kcode.ts",
-        "sha256": "86ac57186293a39c9ffac6482fbc594c03780d50f05fba1bad964d51b7e4e02c",
-        "bytes": 5024
+        "sha256": "1911a5fba26c9148ebc84b1f37ad1c4f104228042905092b54314fbf235b4dd0",
+        "bytes": 5777
       },
       {
         "path": "src/knitout/kniterate/vendor-pass-contract.ts",
@@ -801,8 +1101,8 @@
       },
       {
         "path": "src/knitout/parser.ts",
-        "sha256": "db575a7e4c20f5541037bae3e493931d76f1ee7c6972ba5c64f5640bf7413033",
-        "bytes": 6380
+        "sha256": "24b07262f09da82dad224cc804ae14243f36c87b4dae21d18978b2b7b115e729",
+        "bytes": 9739
       },
       {
         "path": "src/knitout/passes/back-bed-clear.ts",
@@ -941,8 +1241,8 @@
       },
       {
         "path": "src/knitout/plan/bed-state.ts",
-        "sha256": "a54fd8b0cd629dec64fb14d72f1404fe3f3281f9f50b48c1ac7677958b3e6420",
-        "bytes": 20226
+        "sha256": "a12fd9b9c40a591fe7515b60dc15ef29a97bf2da9791fde6dde16bb7410ea1c1",
+        "bytes": 20624
       },
       {
         "path": "src/knitout/plan/chart-body-walker.ts",
@@ -1091,13 +1391,13 @@
       },
       {
         "path": "src/knitout/vendor/knitout-to-kcode.browser.js",
-        "sha256": "6c83e2e7a41330ecfa7ab679a94ed4e4220f31b792e75e72dda248b7e0d34c72",
-        "bytes": 76610
+        "sha256": "75fca7d95ff1f487c9d8c08a5acece470103de9db91b40ce201a5b9065abb098",
+        "bytes": 78005
       },
       {
         "path": "src/knitout/vendor/knitout-to-kcode.cjs",
-        "sha256": "7946b44b635ceadfec2f861954591ec61c9f4a58c8722c249f84f777a1a3552f",
-        "bytes": 77459
+        "sha256": "d1dcbfa236047e85845d6ef0df856b589f6caa0373138cfd4ab7d0dd1bc11c78",
+        "bytes": 78854
       },
       {
         "path": "src/knitout/vendor/knitout-to-kcode.d.cts",
@@ -1156,8 +1456,8 @@
       },
       {
         "path": "src/validators/knitout-program.ts",
-        "sha256": "3c5c53601d3e6047424ba9ec26e1e5fc99e8832df33daefa6b46c64957536626",
-        "bytes": 11258
+        "sha256": "a8ee5c6ee935ad060f73ff2953c99b003ac1f978d45c26aceaad4445d701fe45",
+        "bytes": 12810
       },
       {
         "path": "src/validators/messages.ts",
@@ -1171,8 +1471,8 @@
       },
       {
         "path": "test/browser-kcode-converter.test.ts",
-        "sha256": "a80fb9e70d7b74b22a10c5f296452c43b04966d3825affb741aa14b0c2ffe170",
-        "bytes": 3795
+        "sha256": "9af1a2ad1e40c545c2d8c5bc6de61980106d2aa092d13f255abd88fbb4220c61",
+        "bytes": 5444
       },
       {
         "path": "test/knitout/browser-converter-source.test.ts",
@@ -1181,33 +1481,33 @@
       },
       {
         "path": "test/knitout/kc-diff.test.ts",
-        "sha256": "7ba60db88350ebc6fb618991ab1835b71e5df0b625596e3711ac14353481055f",
-        "bytes": 16265
+        "sha256": "f8fac63e710af593dd9652dd370397ba0f5ebae0938dab6220a2785d4bbd05a9",
+        "bytes": 15971
       },
       {
         "path": "test/knitout/kcode-byte-roundtrip.test.ts",
-        "sha256": "0a457f3f2dc2befe4700873c866c46a14eeef42e08eb66916c1a56e53047c192",
-        "bytes": 1583
+        "sha256": "292368c1a9d10ad23b777702da9755e315c1f14510a622a0ec54f8a3121111b6",
+        "bytes": 2126
       },
       {
         "path": "test/knitout/kcode-document-adversarial.test.ts",
-        "sha256": "0c328c843bccaaed4a037433b79b9bf9b27ac3631d3e107986765edd09be418d",
-        "bytes": 13096
+        "sha256": "b4e0c5cabb1563ef59ebd1592693be749573afed1c10d9eab424d9740f273136",
+        "bytes": 18903
       },
       {
         "path": "test/knitout/kcode-document-property.test.ts",
-        "sha256": "dd0516f3938fb832aa9e414e17767df7dd5065fb91ca1a52e444f0bcccd15318",
-        "bytes": 7443
+        "sha256": "0c9df5da965a0399671cc5e7c79b8e47f601aed2a3c8d12d40ba5822ce757101",
+        "bytes": 7643
       },
       {
         "path": "test/knitout/kcode-independent-oracle.test.ts",
-        "sha256": "3876dbf885fe22617949ff906a8e6dd8033616882223547b1f3c6679d9f0df10",
-        "bytes": 29799
+        "sha256": "faf4fa3a8a808e0f1fa51dd15ab306d13458f6d4d159f41aa3621c0f42dd0ead",
+        "bytes": 33831
       },
       {
         "path": "test/knitout/kcode-machine-profile.test.ts",
-        "sha256": "7d731086d07a6b8cf62a9d7cca1fea894503719ac9caff4eba95d1050a848730",
-        "bytes": 5639
+        "sha256": "865afe4e51011db1e079453f2d1e39b498398c34f92c6f31a13ee43b15f84293",
+        "bytes": 6095
       },
       {
         "path": "test/knitout/kcode-machine-scene.test.ts",
@@ -1216,13 +1516,13 @@
       },
       {
         "path": "test/knitout/kcode-machine-trace.test.ts",
-        "sha256": "4ced1df556b3ea4825d9388da94be589ad4595e260490d3c4d116279d3f045cf",
-        "bytes": 11346
+        "sha256": "c0cdd91e3c22fe1e10f607c4f167cc45780ae1ff6f7a38edbd114197fe85e76d",
+        "bytes": 12499
       },
       {
         "path": "test/knitout/kcode-machine-validator.test.ts",
-        "sha256": "de42cad865dfb43323483586b3a2ff0b65b33afe12157d4cc52106f7a58d6712",
-        "bytes": 18394
+        "sha256": "3413ce2b90255044ba59c342e8059043231cd4efd122aff61769515e3c0bb170",
+        "bytes": 24336
       },
       {
         "path": "test/knitout/kcode-scheduled-differential.test.ts",
@@ -1235,9 +1535,19 @@
         "bytes": 2440
       },
       {
+        "path": "test/knitout/loop-stack-software-policy.test.ts",
+        "sha256": "87a7a253894992c137d476a2cce36f63fd3006c107785b52ac02e9553228024c",
+        "bytes": 1935
+      },
+      {
         "path": "test/knitout/strict-kcode-document.test.ts",
-        "sha256": "9f73b6465837605fbaa5c6a974d12f4bcc06352e3a960dbd6e80e430d81632c9",
-        "bytes": 10997
+        "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094",
+        "bytes": 11038
+      },
+      {
+        "path": "test/physical-registry-manifest.test.ts",
+        "sha256": "f29974c702a47cec8b57ee5376674c9f458a69840faa2ce10302355bb4dd84bd",
+        "bytes": 29874
       },
       {
         "path": "test/public-api.test.ts",
@@ -1261,13 +1571,15 @@
   },
   "auditFailures": [],
   "differentialScope": {
-    "compared": "every KCode-encoded scheduled field",
+    "compared": "every machine-executable KCode scheduled field",
     "backendOnlyProvenance": [
       "sourceLines",
-      "isAutoMove",
+      "isAutoMove"
+    ],
+    "serializedAnnotationsExcluded": [
       "comment"
     ],
-    "note": "sourceLines and claimed design rows fail closed against parsed Knitout; isAutoMove and comment are preserved backend annotations. None can be reconstructed from KCode bytes."
+    "note": "sourceLines and claimed design rows fail closed against parsed Knitout. isAutoMove is backend-only metadata; comment is serialized inert prose. Neither is treated as an independently verified machine movement or state field."
   },
   "mutationEvidence": {
     "inputGrammarAndDiffMutations": true,

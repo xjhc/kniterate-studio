@@ -440,6 +440,13 @@ let carrierDistance = 2.5;
 let leftFloor = true,
 	rightFloor = true;
 
+// PATCH (kniterate-studio): bound eager lowering structures before a compact
+// Knitout source can expand into an unbounded pass graph or KCode string.
+// All captured references are below 3,800 emitted passes; the trace projector
+// independently enforces the same 200,000 selected-cell ceiling.
+const MAX_LOWERED_PASSES = 4096;
+const MAX_LOWERED_SELECTIONS = 200000;
+
 
 //convert knitout code (read as a utf8 string) to a sequence of unified passes:
 // returns {headers, passes}
@@ -461,6 +468,12 @@ function knitoutToPasses(knitout, knitoutFile) {
 	//load file, split on lines:
 	let lines = knitout.split('\n');
 	let lineIdx = 0;
+	function appendPass(pass) {
+		if (passes.length >= MAX_LOWERED_PASSES) {
+			throw `${knitoutFile}:${lineIdx+1} ERROR: lowering resource limit exceeded (${MAX_LOWERED_PASSES} scheduled source passes); split the artifact.`;
+		}
+		passes.push(pass);
+	}
 
 	//check for windows-style line endings:
 	let complainAboutLineEndings = 0;
@@ -706,7 +719,7 @@ function knitoutToPasses(knitout, knitoutFile) {
 					pass.pauseMessage = pauseMessage;
 					doPause = false;
 				}
-				passes.push(pass);
+				appendPass(pass);
 			}
 		}
 
@@ -1001,7 +1014,7 @@ function knitoutToPasses(knitout, knitoutFile) {
 			//Adds a "park" marker pass that the emitter renders as an
 			//empty Kn-Kn pass with no carrier — same shape as the
 			//auto-inserted move but explicitly requested.
-			passes.push(new Pass({
+			appendPass(new Pass({
 				type:{kcode:'Kn-Kn'},
 				racking:racking,
 				speed:speed,
@@ -1231,6 +1244,26 @@ function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
 
 	//Now convert passes to 'kcode passes' by splitting xfer passes and adding any needed carriage moves:
 	let kcodePasses = [];
+	let loweredSelectionCount = 0;
+	function selectedCellCount(value) {
+		if (typeof(value) !== 'string') return 0;
+		let count = 0;
+		for (let i = 0; i < value.length; ++i) {
+			if (value.charCodeAt(i) === 45) ++count;
+		}
+		return count;
+	}
+	function appendKCodePass(pass) {
+		if (kcodePasses.length >= MAX_LOWERED_PASSES) {
+			throw `KCode lowering resource limit exceeded (${MAX_LOWERED_PASSES} emitted passes); split the artifact.`;
+		}
+		const selected = selectedCellCount(pass.FRNT) + selectedCellCount(pass.REAR);
+		if (loweredSelectionCount + selected > MAX_LOWERED_SELECTIONS) {
+			throw `KCode lowering resource limit exceeded (${MAX_LOWERED_SELECTIONS} selected raster cells); split the artifact.`;
+		}
+		loweredSelectionCount += selected;
+		kcodePasses.push(pass);
+	}
 	//each 'kcode pass' looks like:
 	// {
 	//    FRNT:'...---_---_- ... ----_---...',
@@ -1328,7 +1361,7 @@ function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
 			comment: (nextPass && nextPass.isPark) ? undefined : "automatically inserted carriage move"
 		};
 		if (pass.comment === undefined) delete pass.comment;
-		kcodePasses.push(pass);
+		appendKCodePass(pass);
 
 		//update carriage info:
 		nextDirection = (nextDirection === DIRECTION_RIGHT ? DIRECTION_LEFT : DIRECTION_RIGHT);
@@ -1544,7 +1577,7 @@ function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
 					rightStop = xpass.carriageRight;
 				}
 
-				kcodePasses.push(xpass);
+				appendKCodePass(xpass);
 				nextDirection = (nextDirection === DIRECTION_RIGHT ? DIRECTION_LEFT : DIRECTION_RIGHT);
 			}
 
@@ -1752,7 +1785,7 @@ function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
 			//build stitch values:
 			({STIR:kpass.STIR, STIF:kpass.STIF} = sizesToSTI(pass.sizes, kpass.direction, '0')); //using default of '0' on an empty bed because it shouldn't really matter (might induce a bit more stitch cam motion than using something else -- like doing lookahead to the next value used by that stitch cam)
 
-			kcodePasses.push(kpass);
+			appendKCodePass(kpass);
 			nextDirection = (nextDirection === DIRECTION_RIGHT ? DIRECTION_LEFT : DIRECTION_RIGHT);
 		}
 	});

@@ -2,14 +2,16 @@
 /**
  * Deterministic software proof for the emitted-KCode compiler boundary.
  *
- * This rail deliberately excludes the physical knit registry. A real-machine
- * run is a later acceptance gate, not an oracle for parsing, lowering,
- * movement projection, or state validation.
+ * Physical knit outcomes remain a later acceptance gate, not an oracle for
+ * parsing, lowering, movement projection, or state validation. The generated
+ * registry manifest is still checked and fingerprinted because Studio imports
+ * it at runtime and must never silently ship stale evidence metadata.
  */
 
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import {
+  existsSync,
   mkdirSync,
   readFileSync,
   readdirSync,
@@ -33,6 +35,7 @@ interface GateResult {
 
 const PROOF_TESTS = [
   'test/public-api.test.ts',
+  'test/physical-registry-manifest.test.ts',
   'test/browser-kcode-converter.test.ts',
   'test/knitout/browser-converter-source.test.ts',
   'test/knitout/kcode-machine-profile.test.ts',
@@ -47,6 +50,7 @@ const PROOF_TESTS = [
   'test/knitout/kcode-scheduled-differential.test.ts',
   'test/knitout/kcode-scheduled-trace-diff.test.ts',
   'test/knitout/kc-diff.test.ts',
+  'test/knitout/loop-stack-software-policy.test.ts',
 ] as const
 
 const STUDIO_PROOF_TESTS = [
@@ -55,6 +59,8 @@ const STUDIO_PROOF_TESTS = [
   'src/kcode/compileKCodeArtifact.test.ts',
   'src/kcode/MachineMovementView.test.tsx',
   'src/chart/AuthoredMachinePanel.test.ts',
+  'src/chart/ChartWorkspace.test.ts',
+  'src/sourceWindow.test.tsx',
 ] as const
 
 const CONTRACT_SOURCES = [
@@ -90,6 +96,7 @@ const CONTRACT_SOURCES = [
   '../../apps/studio/src/blanket/compileProject.ts',
   '../../apps/studio/src/chart/AuthoredMachinePanel.tsx',
   '../../apps/studio/src/chart/ChartWorkspace.tsx',
+  'registry/knit-proven.json',
 ] as const
 
 const PROOF_HARNESS_SOURCES = [
@@ -97,6 +104,10 @@ const PROOF_HARNESS_SOURCES = [
   'package.json',
   'tsconfig.json',
   '../../package.json',
+  '../../.node-version',
+  '../../.github/workflows/ci.yml',
+  '../../.github/workflows/pages.yml',
+  '../../playwright.config.ts',
   '../../pnpm-lock.yaml',
   '../../pnpm-workspace.yaml',
   '../../tsconfig.base.json',
@@ -104,6 +115,15 @@ const PROOF_HARNESS_SOURCES = [
   '../../apps/studio/index.html',
   '../../apps/studio/tsconfig.json',
   '../../apps/studio/vite.config.ts',
+  '../../scripts/build-v1-knit-trial.ts',
+  '../../scripts/check-v1-physical-release.ts',
+  '../../scripts/register-v1-knit-trial.ts',
+  '../chart-contract/package.json',
+  '../chart-contract/tsconfig.json',
+  '../colorwork-core/package.json',
+  '../colorwork-core/tsconfig.json',
+  '../project-contract/package.json',
+  '../project-contract/tsconfig.json',
   ...PROOF_TESTS,
   ...STUDIO_PROOF_TESTS.map((path) => `../../apps/studio/${path}`),
 ] as const
@@ -120,15 +140,21 @@ function listFilesRecursively(root: string): string[] {
   return visit(absoluteRoot)
 }
 
-const FINGERPRINT_SOURCES = [
-  ...new Set<string>([
+function collectFingerprintSources(): string[] {
+  return [...new Set<string>([
     ...CONTRACT_SOURCES,
     ...PROOF_HARNESS_SOURCES,
     ...listFilesRecursively('src'),
     ...listFilesRecursively('scripts'),
     ...listFilesRecursively('../../apps/studio/src'),
-  ]),
-].sort()
+    ...listFilesRecursively('../chart-contract/src'),
+    ...listFilesRecursively('../colorwork-core/src'),
+    ...listFilesRecursively('../project-contract/src'),
+    ...listFilesRecursively('reference'),
+    ...listFilesRecursively('registry/swatches'),
+    ...listFilesRecursively('../../e2e'),
+  ])].sort()
+}
 
 function sha256(bytes: Uint8Array | string): string {
   return createHash('sha256').update(bytes).digest('hex')
@@ -147,9 +173,10 @@ function runGate(id: string, args: readonly string[]): GateResult {
 }
 
 function collectReferenceCorpus() {
-  // The repository documents these as captured Kniterate App references.
-  // Keeping the provenance explicit avoids silently guessing at import time.
-  const corpusDialect = 'app' as const
+  // KCode does not encode origin. Profile V1's origin labels share one exact
+  // marker-free mapping, so the proof uses Studio's canonical label without
+  // claiming that the fixture bytes establish who produced them.
+  const corpusDialect = 'knitout-vendor' as const
   const referenceRoot = resolve(process.cwd(), 'reference')
   const fixtures = readdirSync(referenceRoot)
     .filter((name) => name.endsWith('.kc'))
@@ -225,7 +252,9 @@ function collectReferenceCorpus() {
 }
 
 function collectContractFingerprint() {
-  const files = FINGERPRINT_SOURCES.map((path) => {
+  // Re-enumerate on every pre/post capture so file additions and removals are
+  // drift, not merely modifications to the inventory observed at process load.
+  const files = collectFingerprintSources().map((path) => {
     const bytes = readFileSync(resolve(process.cwd(), path))
     return { path, sha256: sha256(bytes), bytes: bytes.byteLength }
   })
@@ -261,6 +290,7 @@ function collectToolchainFingerprint() {
 }
 
 function main(): void {
+  const checkOnly = process.argv.includes('--check')
   const outputFlag = process.argv.findIndex((argument) => argument === '--out' || argument === '-o')
   const outputPath = resolve(
     process.cwd(),
@@ -270,23 +300,11 @@ function main(): void {
   )
   const temporaryOutputPath = `${outputPath}.${process.pid}.tmp`
   mkdirSync(dirname(outputPath), { recursive: true })
-  // A failed audit must never leave a prior software-proven receipt behind.
-  rmSync(outputPath, { force: true })
+  // Writer mode fails closed. Check mode preserves tracked evidence and proves
+  // that its exact deterministic bytes already match the current candidate.
+  if (!checkOnly) rmSync(outputPath, { force: true })
   rmSync(temporaryOutputPath, { force: true })
 
-  const gates = [
-    runGate('deterministic-kcode-proof-tests', [
-      'exec', 'vitest', 'run', ...PROOF_TESTS,
-    ]),
-    runGate('machine-lib-typecheck', ['typecheck']),
-    runGate('studio-kcode-integration-tests', [
-      '--dir', '../../apps/studio', 'exec', 'vitest', 'run', ...STUDIO_PROOF_TESTS,
-    ]),
-    runGate('studio-typecheck', ['--dir', '../../apps/studio', 'typecheck']),
-    runGate('studio-production-build', [
-      '--dir', '../../apps/studio', 'exec', 'vite', 'build',
-    ]),
-  ]
   const auditFailures: Array<{ stage: string; message: string }> = []
   const capture = <Value>(stage: string, collect: () => Value): Value | null => {
     try {
@@ -299,8 +317,41 @@ function main(): void {
       return null
     }
   }
+
+  // Bind every gate to one stable source/harness/corpus candidate. A source
+  // edit during the run blocks the receipt instead of naming untested bytes.
+  const contractBeforeGates = capture('proof-input-fingerprint-before-gates', collectContractFingerprint)
+  const gates = [
+    runGate('physical-registry-manifest-current', ['kniterate:swatches:check']),
+    runGate('deterministic-kcode-proof-tests', [
+      'exec', 'vitest', 'run', ...PROOF_TESTS,
+    ]),
+    runGate('machine-lib-typecheck', ['typecheck']),
+    runGate('studio-kcode-integration-tests', [
+      '--dir', '../../apps/studio', 'exec', 'vitest', 'run', ...STUDIO_PROOF_TESTS,
+    ]),
+    runGate('studio-typecheck', ['--dir', '../../apps/studio', 'typecheck']),
+    runGate('studio-production-build', [
+      '--dir', '../../apps/studio', 'exec', 'vite', 'build',
+    ]),
+  ]
   const corpus = capture('reference-corpus', collectReferenceCorpus)
-  const contract = capture('proof-input-fingerprint', collectContractFingerprint)
+  const contractAfterGates = capture('proof-input-fingerprint-after-gates', collectContractFingerprint)
+  if (
+    contractBeforeGates !== null
+    && contractAfterGates !== null
+    && contractBeforeGates.sha256 !== contractAfterGates.sha256
+  ) {
+    auditFailures.push({
+      stage: 'proof-input-drift',
+      message: `Proof inputs changed while gates ran (${contractBeforeGates.sha256} before, ${contractAfterGates.sha256} after).`,
+    })
+  }
+  const contract = contractBeforeGates !== null
+    && contractAfterGates !== null
+    && contractBeforeGates.sha256 === contractAfterGates.sha256
+    ? contractAfterGates
+    : null
   const toolchain = capture('toolchain-fingerprint', collectToolchainFingerprint)
   const blocked = gates.some((gate) => gate.status === 'fail') || auditFailures.length > 0
   const manifest = {
@@ -317,7 +368,7 @@ function main(): void {
     claims: [
       'strict-lossless-kcode-byte-roundtrip',
       'deterministic-pinned-backend-lowering',
-      'kcode-encoded-scheduled-pass-to-machine-trace-differential',
+      'machine-executable-scheduled-pass-to-machine-trace-differential',
       'kcode-native-loop-and-kinematic-validation',
       'full-machine-trace-diff',
       'deterministic-pass-bed-carrier-scene',
@@ -340,9 +391,10 @@ function main(): void {
     toolchain,
     auditFailures,
     differentialScope: {
-      compared: 'every KCode-encoded scheduled field',
-      backendOnlyProvenance: ['sourceLines', 'isAutoMove', 'comment'],
-      note: 'sourceLines and claimed design rows fail closed against parsed Knitout; isAutoMove and comment are preserved backend annotations. None can be reconstructed from KCode bytes.',
+      compared: 'every machine-executable KCode scheduled field',
+      backendOnlyProvenance: ['sourceLines', 'isAutoMove'],
+      serializedAnnotationsExcluded: ['comment'],
+      note: 'sourceLines and claimed design rows fail closed against parsed Knitout. isAutoMove is backend-only metadata; comment is serialized inert prose. Neither is treated as an independently verified machine movement or state field.',
     },
     mutationEvidence: {
       inputGrammarAndDiffMutations: true,
@@ -356,7 +408,19 @@ function main(): void {
     },
   }
 
-  writeFileSync(temporaryOutputPath, `${JSON.stringify(manifest, null, 2)}\n`)
+  const expectedManifest = `${JSON.stringify(manifest, null, 2)}\n`
+  if (checkOnly) {
+    const current = existsSync(outputPath) ? readFileSync(outputPath, 'utf8') : null
+    const currentReceipt = current === expectedManifest
+    process.stdout.write(
+      `\n${blocked ? 'blocked' : currentReceipt ? 'software-proven · receipt current' : 'blocked · proof receipt stale'}\n`
+      + `Manifest: ${relative(process.cwd(), outputPath)}\n`,
+    )
+    if (blocked || !currentReceipt) process.exit(2)
+    return
+  }
+
+  writeFileSync(temporaryOutputPath, expectedManifest)
   renameSync(temporaryOutputPath, outputPath)
   process.stdout.write(`\n${manifest.verdict}\nManifest: ${relative(process.cwd(), outputPath)}\n`)
   if (blocked) process.exit(2)

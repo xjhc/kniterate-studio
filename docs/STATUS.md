@@ -13,8 +13,9 @@ ship," trust this file and the working tree instead.
 ## Shipped (in `apps/studio`, live today)
 
 - **Foreign-`.kc`/`.k` workspace (Story 1 / "S1").** Open any `.kc` or Knitout
-  `.k` → explicit KCode source-dialect choice, strict byte-preserving intake,
-  virtualized pass grid, exact movement view, anchored diagnostics,
+  `.k` → canonical V1 KCode semantics, strict byte-preserving intake, pinned
+  lowering and scheduled-pass differential for `.k`, virtualized pass grid,
+  exact movement view, anchored diagnostics,
   scroll-synced source dock, full-raster MachineTrace diff, printable run sheet,
   verdict badge. Code:
   `apps/studio/src/engine.ts` (`openMachineDocument`) + `App.tsx`. **This is
@@ -52,7 +53,7 @@ ship," trust this file and the working tree instead.
 ## Software-proof boundary
 
 Software now proves KCode grammar and bytes, deterministic pinned lowering,
-equivalence for every KCode-encoded scheduled field, programmed
+equivalence for every machine-executable scheduled field, programmed
 stops/selections/actions, carriage and carrier continuity, transfer pairing,
 and loop-state transitions. It does not
 claim physical needle-number labels, an operationally safe speed/roller/stack

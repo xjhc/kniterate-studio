@@ -102,17 +102,36 @@ interface ReferenceSnapshot {
   readonly maxStack: number
 }
 
+interface ReferenceMetrics {
+  readonly occupiedNeedles: number
+  readonly totalLoops: number
+  readonly maxStack: number
+}
+
+interface ReferenceStackDelta {
+  readonly bed: Bed
+  readonly traceCoordinate: number
+  readonly beforeCount: number
+  readonly afterCount: number
+}
+
 interface ReferenceReplay {
   readonly passStates: readonly {
     readonly passIndex: number
-    readonly before: ReferenceSnapshot
-    readonly after: ReferenceSnapshot
+    readonly before: ReferenceMetrics
+    readonly after: ReferenceMetrics
+    readonly stackDeltas: readonly ReferenceStackDelta[]
   }[]
   readonly finalState: ReferenceSnapshot
   readonly errors: readonly {
     readonly passIndex: number
     readonly actionIndex: number
     readonly code: 'drop-empty' | 'transfer-source-empty' | 'unknown-action'
+  }[]
+  readonly stackPolicy: readonly {
+    readonly passIndex: number
+    readonly actionIndex: number
+    readonly severity: 'warning' | 'error'
   }[]
 }
 
@@ -389,6 +408,51 @@ function stackKey(bed: Bed, coordinate: number): string {
   return `${bed}:${coordinate}`
 }
 
+function referenceMetrics(state: ReadonlyMap<string, number>): ReferenceMetrics {
+  const counts = [...state.values()].filter((count) => count > 0)
+  return {
+    occupiedNeedles: counts.length,
+    totalLoops: counts.reduce((total, count) => total + count, 0),
+    maxStack: counts.reduce((maximum, count) => Math.max(maximum, count), 0),
+  }
+}
+
+function referenceActionSelections(action: ReferenceAction): readonly ReferenceSelection[] {
+  switch (action.kind) {
+    case 'knit':
+    case 'tuck':
+    case 'drop':
+      return [action.at]
+    case 'xfer':
+    case 'split':
+      return [action.source, action.target]
+    case 'unknown':
+      return action.selections
+    case 'move':
+      return []
+  }
+}
+
+function referenceTouchedCoordinates(
+  actions: readonly ReferenceAction[],
+): Array<Pick<ReferenceSelection, 'bed' | 'traceCoordinate'>> {
+  const coordinates = new Map<string, Pick<
+    ReferenceSelection,
+    'bed' | 'traceCoordinate'
+  >>()
+  for (const action of actions) {
+    for (const selection of referenceActionSelections(action)) {
+      coordinates.set(stackKey(selection.bed, selection.traceCoordinate), {
+        bed: selection.bed,
+        traceCoordinate: selection.traceCoordinate,
+      })
+    }
+  }
+  return [...coordinates.values()].sort((left, right) =>
+    (left.bed === right.bed ? 0 : left.bed === 'front' ? -1 : 1)
+    || left.traceCoordinate - right.traceCoordinate)
+}
+
 function referenceSnapshot(state: ReadonlyMap<string, number>): ReferenceSnapshot {
   const cells = [...state]
     .filter(([, count]) => count > 0)
@@ -405,18 +469,30 @@ function referenceSnapshot(state: ReadonlyMap<string, number>): ReferenceSnapsho
     stacks,
     front: cells.filter((cell): cell is typeof cell & { bed: 'front' } => cell.bed === 'front'),
     rear: cells.filter((cell): cell is typeof cell & { bed: 'rear' } => cell.bed === 'rear'),
-    occupiedNeedles: cells.length,
-    totalLoops: cells.reduce((total, cell) => total + cell.count, 0),
-    maxStack: cells.reduce((maximum, cell) => Math.max(maximum, cell.count), 0),
+    ...referenceMetrics(state),
   }
 }
 
 function replayReference(passes: readonly ReferencePass[]): ReferenceReplay {
   const state = new Map<string, number>()
   const errors: ReferenceReplay['errors'][number][] = []
+  const stackPolicy: ReferenceReplay['stackPolicy'][number][] = []
   const passStates: ReferenceReplay['passStates'][number][] = []
+  const checkStackPolicy = (
+    count: number,
+    passIndex: number,
+    actionIndex: number,
+  ): void => {
+    if (count > 3) stackPolicy.push({ passIndex, actionIndex, severity: 'error' })
+    else if (count > 2) stackPolicy.push({ passIndex, actionIndex, severity: 'warning' })
+  }
   for (const pass of passes) {
-    const before = referenceSnapshot(state)
+    const touchedCoordinates = referenceTouchedCoordinates(pass.actions)
+    const beforeCounts = new Map(touchedCoordinates.map((coordinate) => [
+      stackKey(coordinate.bed, coordinate.traceCoordinate),
+      state.get(stackKey(coordinate.bed, coordinate.traceCoordinate)) ?? 0,
+    ]))
+    const before = referenceMetrics(state)
     for (const [actionIndex, action] of pass.actions.entries()) {
       switch (action.kind) {
         case 'knit':
@@ -424,7 +500,9 @@ function replayReference(passes: readonly ReferencePass[]): ReferenceReplay {
           break
         case 'tuck': {
           const key = stackKey(action.at.bed, action.at.traceCoordinate)
-          state.set(key, (state.get(key) ?? 0) + 1)
+          const count = (state.get(key) ?? 0) + 1
+          state.set(key, count)
+          checkStackPolicy(count, pass.index, actionIndex)
           break
         }
         case 'drop': {
@@ -444,9 +522,11 @@ function replayReference(passes: readonly ReferencePass[]): ReferenceReplay {
           if (sourceCount === 0) {
             errors.push({ passIndex: pass.index, actionIndex, code: 'transfer-source-empty' })
           } else {
-            state.set(targetKey, (state.get(targetKey) ?? 0) + sourceCount)
+            const targetCount = (state.get(targetKey) ?? 0) + sourceCount
+            state.set(targetKey, targetCount)
             if (action.kind === 'split') state.set(sourceKey, 1)
             else state.delete(sourceKey)
+            checkStackPolicy(targetCount, pass.index, actionIndex)
           }
           break
         }
@@ -457,9 +537,23 @@ function replayReference(passes: readonly ReferencePass[]): ReferenceReplay {
           break
       }
     }
-    passStates.push({ passIndex: pass.index, before, after: referenceSnapshot(state) })
+    passStates.push({
+      passIndex: pass.index,
+      before,
+      after: referenceMetrics(state),
+      stackDeltas: touchedCoordinates.map((coordinate) => ({
+        bed: coordinate.bed,
+        traceCoordinate: coordinate.traceCoordinate,
+        beforeCount: beforeCounts.get(
+          stackKey(coordinate.bed, coordinate.traceCoordinate),
+        ) ?? 0,
+        afterCount: state.get(
+          stackKey(coordinate.bed, coordinate.traceCoordinate),
+        ) ?? 0,
+      })),
+    })
   }
-  return { passStates, finalState: referenceSnapshot(state), errors }
+  return { passStates, finalState: referenceSnapshot(state), errors, stackPolicy }
 }
 
 function normalizeAction(action: MachineTraceActionV1): ReferenceAction {
@@ -638,11 +732,24 @@ describe('independent KCode decoder and loop-state oracle', () => {
       const expectedPasses = decodeReferenceDocument(source)
       const expectedReplay = replayReference(expectedPasses)
       const { trace, report } = parseProjectValidate(source)
+      const actualStackPolicy = report.diagnostics
+        .filter((diagnostic) => diagnostic.rule === 'machine-trace.loop-stack-policy')
+        .map((diagnostic) => ({
+          passIndex: diagnostic.passIndex,
+          actionIndex: diagnostic.actionIndex,
+          severity: diagnostic.severity,
+        }))
 
       expect(trace.passes.map(normalizePass), `trace case ${caseIndex}`).toEqual(expectedPasses)
       expect(expectedReplay.errors, `reference errors case ${caseIndex}`).toEqual([])
-      expect(report.ok, `production validation case ${caseIndex}`).toBe(true)
-      expect(report.diagnostics, `production diagnostics case ${caseIndex}`).toEqual([])
+      expect(
+        report.diagnostics.filter((diagnostic) => diagnostic.rule !== 'machine-trace.loop-stack-policy'),
+        `non-policy diagnostics case ${caseIndex}`,
+      ).toEqual([])
+      expect(actualStackPolicy, `stack policy case ${caseIndex}`).toEqual(expectedReplay.stackPolicy)
+      expect(report.ok, `production validation case ${caseIndex}`).toBe(
+        !expectedReplay.stackPolicy.some((diagnostic) => diagnostic.severity === 'error'),
+      )
       expect(report.passStates, `pass states case ${caseIndex}`).toEqual(expectedReplay.passStates)
       expect(report.finalState, `final state case ${caseIndex}`).toEqual(expectedReplay.finalState)
     }
@@ -851,12 +958,21 @@ describe('independent KCode decoder and loop-state oracle', () => {
           actionIndex: diagnostic.actionIndex,
           code: diagnostic.rule.replace('machine-trace.', ''),
         }))
+      const stackPolicy = report.diagnostics
+        .filter((diagnostic) => diagnostic.rule === 'machine-trace.loop-stack-policy')
+        .map((diagnostic) => ({
+          passIndex: diagnostic.passIndex,
+          actionIndex: diagnostic.actionIndex,
+          severity: diagnostic.severity,
+        }))
 
       expect(semanticErrors, sequence.join('')).toEqual(expected.errors)
+      expect(stackPolicy, sequence.join('')).toEqual(expected.stackPolicy)
       expect(report.passStates.map((state) => ({
         passIndex: state.passIndex,
         before: state.before,
         after: state.after,
+        stackDeltas: state.stackDeltas,
       })), sequence.join('')).toEqual(expected.passStates)
       expect(report.finalState, sequence.join('')).toEqual(expected.finalState)
     }

@@ -14,7 +14,26 @@ const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
   title: string;
   profile: string;
   chart: { width: number; height: number; palette: { id: string; name: string; hex: string }[] };
-  machine: { needleStart: number; needleEnd: number; settings: { gauge: number; stitchNumber: number; xferStitchNumber: number; speedNumber: number; rollerAdvance: number } };
+  machine: {
+    coordinateSystem: string;
+    compilerCoordinateStart: number;
+    compilerCoordinateEnd: number;
+    program: {
+      gauge: number;
+      position: string;
+      wastePasses: number;
+      bindOff: string;
+      initialSettings: {
+        stitchNumber: number;
+        xferStitchNumber: number;
+        speedNumber: number;
+        rollerAdvance: number;
+        xferStyle: string;
+        carrierSpacing: number;
+        carrierStoppingDistance: number;
+      };
+    };
+  };
   frame: { wasteRows: number; bindOff: string };
   strategy: { technique: string };
   identity: { compileHash: string; knitoutSha256: string; kcodeSha256: string };
@@ -52,13 +71,14 @@ const spec = {
   request: { path: 'request.json', reemitCommand: 'pnpm release:trial' },
   reemitCheck: {
     status: 'not-run', checkedAt: null, currentCommit: null,
-    notes: 'After the machine run, regenerate the trial and set status to matches only if out.k and out.kc remain byte-identical.',
+    notes: 'Historical operator note only. The registry checker independently recompiles and byte-compares current out.k/out.kc in-process.',
   },
   compileMessages: [],
   planSummary: {
     technique: manifest.strategy.technique,
-    needleStart: manifest.machine.needleStart,
-    needleEnd: manifest.machine.needleEnd,
+    coordinateSystem: manifest.machine.coordinateSystem,
+    compilerCoordinateStart: manifest.machine.compilerCoordinateStart,
+    compilerCoordinateEnd: manifest.machine.compilerCoordinateEnd,
     rows: manifest.chart.height,
     wastePasses: manifest.frame.wasteRows,
     bindOff: manifest.frame.bindOff,
@@ -80,6 +100,9 @@ const yarns = manifest.carriers.map((carrier) => {
     role: carrier.role,
     name: carrier.yarnName ?? `TODO: ${carrier.role}`,
     fiber: 'TODO: wool | cotton | alpaca | acrylic | blend',
+    brand: 'TODO: manufacturer',
+    line: 'TODO: yarn line',
+    lot: 'TODO: dye lot or batch id',
     weight: 'TODO: e.g. 2/12 Nm',
     ply: null,
     color: color?.hex ?? 'TODO: color',
@@ -88,25 +111,86 @@ const yarns = manifest.carriers.map((carrier) => {
 });
 const machine = {
   $schema: '../_schema.json',
+  kind: 'kniterate-machine-run-v1',
+  schemaVersion: 1,
   ranAt: '1970-01-01T00:00:00Z',
   machineSerial: 'TODO: machine serial or descriptive id',
-  ...manifest.machine.settings,
-  position: 'Center',
-  wastePasses: manifest.frame.wasteRows,
+  controlSoftwareVersion: 'TODO: Kniterate application/control software version',
+  profile: manifest.profile,
+  program: {
+    compilerCoordinateStart: manifest.machine.compilerCoordinateStart,
+    compilerCoordinateEnd: manifest.machine.compilerCoordinateEnd,
+    ...manifest.machine.program,
+  },
   carriers: Object.fromEntries(manifest.carriers.map((carrier, index) => [carrier.carrier, { role: carrier.role, yarnEntry: `yarn.json#yarns[${index}]` }])),
   deviationsFromCompile: [],
 };
 const yarn = {
   $schema: '../_schema.json',
+  kind: 'kniterate-yarn-evidence-v1',
+  schemaVersion: 1,
   yarns,
   tensionSwatch: {
-    stsPer10cm: { offMachine: null, rested24h: null, steamed: null, wetFinished: null },
-    rowsPer10cm: { offMachine: null, rested24h: null, steamed: null, wetFinished: null },
-    measuredBy: 'TODO: who measured', measuredOn: '1970-01-01', notes: 'TODO: drape, hand, and weight observations',
+    machineProfile: manifest.profile,
+    structure: 'TODO: tension-swatch structure',
+    settings: manifest.machine.program.initialSettings,
+    measuredBy: 'TODO: who measured',
+    measuredOn: '1970-01-01',
+    measurements: Object.fromEntries(['offMachine', 'rested24h', 'steamed', 'wetFinished'].map((stage) => [stage, {
+      status: 'not-performed',
+      reason: 'TODO: measure this stage or explain why it was not performed',
+    }])),
+    notes: 'TODO: drape, hand, and weight observations',
+  },
+};
+const run = {
+  $schema: '../_schema.json',
+  kind: 'kniterate-run-observation-v1',
+  schemaVersion: 1,
+  operator: 'TODO: operator name or stable id',
+  startedAt: '1970-01-01T00:00:00Z',
+  endedAt: '1970-01-01T00:00:00Z',
+  outcome: 'TODO: clean | dropped | jammed | aborted | partial',
+  physicalPlacement: {
+    verified: false,
+    compilerCoordinateStart: manifest.machine.compilerCoordinateStart,
+    compilerCoordinateEnd: manifest.machine.compilerCoordinateEnd,
+    physicalNeedleStart: null,
+    physicalNeedleEnd: null,
+    method: 'TODO: documented machine/vendor datum procedure used',
+    verifiedBy: 'TODO: independent verifier',
+    verifiedAt: null,
+  },
+  artifact: {
+    loadedKcodeSha256: manifest.identity.kcodeSha256,
+    displayedPassCount: null,
+    manualProgramEdits: false,
+  },
+  manualInterventions: [],
+  observations: {
+    sections: {
+      waste: 'not-reached',
+      castOn: 'not-reached',
+      drawThread: 'not-reached',
+      carrierBringIn: 'not-reached',
+      body: 'not-reached',
+      backing: 'not-reached',
+      leftEdge: 'not-reached',
+      rightEdge: 'not-reached',
+      bindOff: 'not-reached',
+    },
+    stops: [],
+    dimensionsCm: {
+      offMachine: { status: 'not-measured', reason: 'TODO: measure or explain' },
+      rested24h: { status: 'not-measured', reason: 'TODO: measure or explain' },
+    },
+    photos: [],
+    notes: '',
   },
 };
 writeFileSync(resolve(destination, 'spec.json'), `${JSON.stringify(spec, null, 2)}\n`);
 writeFileSync(resolve(destination, 'request.json'), `${JSON.stringify(request, null, 2)}\n`);
 writeFileSync(resolve(destination, 'machine.json'), `${JSON.stringify(machine, null, 2)}\n`);
 writeFileSync(resolve(destination, 'yarn.json'), `${JSON.stringify(yarn, null, 2)}\n`);
-process.stdout.write(`physical registry entry scaffolded: ${basename(destination)}\nComplete machine.json, yarn.json, outcome.md, and the reemit check after the run.\n`);
+writeFileSync(resolve(destination, 'run.json'), `${JSON.stringify(run, null, 2)}\n`);
+process.stdout.write(`physical registry entry scaffolded: ${basename(destination)}\nComplete machine.json, yarn.json, run.json, and outcome.md after the run.\n`);

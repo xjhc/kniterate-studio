@@ -1,21 +1,20 @@
-# Outcome
+# Outcome narrative
 
-**Date:** YYYY-MM-DD
-**Operator:** TODO
-**Result:** TODO — pick one: clean / dropped-at-row-N / jammed-at-xfer / aborted / partial
+`run.json` is the authoritative structured record for operator, timing, exact
+outcome, placement verification, interventions, inspections, and dimensions.
+Use this file only for explanatory context.
 
 ## What worked
 
 - TODO
 
-## What didn't
+## What failed or changed
 
 - TODO
 
-## Adjustments for next time
+## Follow-up
 
-- TODO: e.g. "drop stitchNumber from 5 → 4 for this yarn"
-- TODO: e.g. "C3 catches better if waste section is 24 passes instead of 20"
+- TODO
 
 ## Photos
 

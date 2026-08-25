@@ -44,6 +44,26 @@ export interface KCodeDialectContract {
   readonly evidence: KCodeEvidence
 }
 
+/**
+ * A deterministic software gate shared by authored-plan and emitted-KCode
+ * replay. These thresholds are deliberately conservative product policy, not
+ * measured machine capacity or a claim that a larger stack will physically
+ * jam, break yarn, or fail to knit.
+ */
+export interface LoopStackSoftwarePolicyV1 {
+  readonly validationRole: 'conservative-software-policy'
+  readonly warningAbove: number
+  readonly errorAbove: number
+  readonly physicalSafetyClaim: 'not-established'
+}
+
+export const KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1: LoopStackSoftwarePolicyV1 = {
+  validationRole: 'conservative-software-policy',
+  warningAbove: 2,
+  errorAbove: 3,
+  physicalSafetyClaim: 'not-established',
+}
+
 export interface KCodeMachineProfileV1 {
   readonly schemaVersion: 1
   readonly profileId: string
@@ -105,6 +125,8 @@ export interface KCodeMachineProfileV1 {
     readonly granularity: number
     readonly evidence: KCodeEvidence
   }
+
+  readonly loopStackSoftwarePolicy: LoopStackSoftwarePolicyV1
 
   readonly stitchSelectors: {
     /** Machine/editor selector levels, not the wider KCode token alphabet. */
@@ -265,6 +287,7 @@ export const KNITERATE_7GG_KCODE_PROFILE_V1: KCodeMachineProfileV1 = {
     evidence: evidence('repository-tested', [REPO_CONSTANTS, OFFICIAL_CUSTOMIST_MANUAL, OFFICIAL_OPTIONS, OFFICIAL_MACHINE],
       'Official sources document the ±4 envelope; the 0.5 step is the repository compiler contract.'),
   },
+  loopStackSoftwarePolicy: KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1,
   stitchSelectors: {
     documentedBounds: {
       lower: officialBound(0),

@@ -11,6 +11,7 @@ import {
 import { dirname, relative, resolve } from 'node:path'
 
 const forwardedArguments = process.argv.slice(2)
+const checkOnly = forwardedArguments.includes('--check')
 const outputFlag = forwardedArguments.findIndex(
   (argument) => argument === '--out' || argument === '-o',
 )
@@ -23,9 +24,10 @@ const outputPath = resolve(
 const fallbackPath = `${outputPath}.${process.pid}.guard.tmp`
 
 mkdirSync(dirname(outputPath), { recursive: true })
-// This plain-JavaScript guard runs before tsx parses or imports proof code, so
-// a broken harness or dependency cannot leave an earlier success receipt live.
-rmSync(outputPath, { force: true })
+// In writer mode this plain-JavaScript guard runs before tsx parses or imports
+// proof code, so a broken harness cannot leave an earlier success receipt live.
+// Check mode is deliberately read-only and reports failure without mutation.
+if (!checkOnly) rmSync(outputPath, { force: true })
 rmSync(fallbackPath, { force: true })
 
 const result = spawnSync(
@@ -35,7 +37,7 @@ const result = spawnSync(
 )
 const exitCode = typeof result.status === 'number' ? result.status : 1
 
-if (exitCode !== 0 && !existsSync(outputPath)) {
+if (!checkOnly && exitCode !== 0 && !existsSync(outputPath)) {
   const manifest = {
     kind: 'kniterate-studio-kcode-software-proof',
     schemaVersion: 1,

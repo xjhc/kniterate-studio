@@ -9,5 +9,13 @@ import type { KCodeDocumentV1 } from './types.js'
  * final terminator.
  */
 export function emitKCodeDocument(document: KCodeDocumentV1): string {
+  if (document.metadata.sourceRetention !== 'exact') {
+    throw new Error(
+      'Cannot emit KCode document: oversized source bytes remain caller-owned and were not decoded into rawText.',
+    )
+  }
+  if (document.metadata.recordMaterialization === 'resource-limited') {
+    return document.rawText
+  }
   return document.records.map((record) => record.raw + record.lineEnding).join('')
 }

@@ -44,13 +44,33 @@ export function inspectKnitoutPasses(document: ParsedKnitoutDocument): readonly 
   let speed: number | null = null;
   let roller: number | null = null;
   let section = 'Imported program';
-  let active: { key: string; ops: KnitoutOp[]; opStart: number; lineStart: number } | null = null;
+  let active: {
+    key: string;
+    first: KnitoutOp;
+    opStart: number;
+    lineStart: number;
+    beds: Set<'f' | 'b'>;
+    needleMin: number | null;
+    needleMax: number | null;
+  } | null = null;
+
+  const accumulateNeedles = (op: KnitoutOp): void => {
+    if (active === null) return;
+    for (const needle of needlesFor(op)) {
+      active.beds.add(needle.bed);
+      active.needleMin = active.needleMin === null
+        ? needle.needle
+        : Math.min(active.needleMin, needle.needle);
+      active.needleMax = active.needleMax === null
+        ? needle.needle
+        : Math.max(active.needleMax, needle.needle);
+    }
+  };
 
   const flush = (opEnd: number, lineEnd: number) => {
     if (!active) return;
-    const first = active.ops[0]!;
-    const needles = active.ops.flatMap(needlesFor);
-    const beds = [...new Set(needles.map((item) => item.bed))].sort() as ('f' | 'b')[];
+    const first = active.first;
+    const beds = [...active.beds].sort() as ('f' | 'b')[];
     const carriers = 'carriers' in first ? first.carriers : [];
     const direction = 'direction' in first ? first.direction : null;
     passes.push({
@@ -59,8 +79,8 @@ export function inspectKnitoutPasses(document: ParsedKnitoutDocument): readonly 
       type: first.kind,
       carriers,
       beds,
-      needleMin: needles.length ? Math.min(...needles.map((item) => item.needle)) : null,
-      needleMax: needles.length ? Math.max(...needles.map((item) => item.needle)) : null,
+      needleMin: active.needleMin,
+      needleMax: active.needleMax,
       rack,
       speed,
       roller,
@@ -88,8 +108,17 @@ export function inspectKnitoutPasses(document: ParsedKnitoutDocument): readonly 
     if (!key) { flush(opIndex, line - 1); continue; }
     if (!active || active.key !== key) {
       flush(opIndex, line - 1);
-      active = { key, ops: [op], opStart: opIndex, lineStart: line };
-    } else active.ops.push(op);
+      active = {
+        key,
+        first: op,
+        opStart: opIndex,
+        lineStart: line,
+        beds: new Set(),
+        needleMin: null,
+        needleMax: null,
+      };
+    }
+    accumulateNeedles(op);
   }
   flush(document.program.ops.length, document.opLines.at(-1) ?? 1);
   return passes;

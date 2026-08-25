@@ -22,8 +22,8 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import { matchKnitProvenArtifact, type KCodeDialect } from '@kniterate-studio/machine-lib/browser';
-import { compareKcDocuments, openMachineDocument, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
+import { matchKnitProvenArtifact } from '@kniterate-studio/machine-lib/browser';
+import { MAX_MACHINE_SOURCE_BYTES_V1, compareKcDocuments, openMachineDocument, rejectOversizedMachineDocument, rejectUnreadableMachineDocument, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, renameColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import type { BlanketCompileArtifact } from './blanket/compileProject';
@@ -34,6 +34,7 @@ import { MachineMovementView, type MachineMovementViewProps } from './kcode/Mach
 import { programRegionForPass } from './chart/AuthoredMachinePanel';
 import { NewProjectDialog, ProjectSettingsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
 import { readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
+import { indexSourceLines, sourceWindow } from './sourceWindow';
 
 const ROW_HEIGHT = 44;
 const CARRIER_COLORS: Record<string, string> = {
@@ -67,10 +68,21 @@ function useModalFocusTrap(onClose: () => void) {
 
 type MobileView = 'movement' | 'passes' | 'diagnostics' | 'source';
 
-interface PendingKCodeImport {
-  file: File;
-  bytes: Uint8Array;
-  comparison: boolean;
+export async function readMachineFile(file: File): Promise<MachineDocument> {
+  if (file.size > MAX_MACHINE_SOURCE_BYTES_V1) {
+    return rejectOversizedMachineDocument(file.name, file.size);
+  }
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    return file.name.toLowerCase().endsWith('.kc')
+      ? openMachineDocument(file.name, bytes, { dialect: 'knitout-vendor' })
+      : openMachineDocument(file.name, bytes, {});
+  } catch (error) {
+    return rejectUnreadableMachineDocument(
+      file.name,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
 }
 
 function defaultProject(): ColorworkProjectV1 {
@@ -152,25 +164,6 @@ function EmptyState({ active, onOpen, onDrop }: { active: boolean; onOpen: () =>
   );
 }
 
-function KCodeDialectDialog({ filename, onChoose, onClose }: {
-  filename: string;
-  onChoose: (dialect: KCodeDialect) => void;
-  onClose: () => void;
-}) {
-  const dialogRef = useModalFocusTrap(onClose);
-  return <div className="modal-backdrop project-dialog-backdrop">
-    <article className="project-dialog kcode-dialect-dialog" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="kcode-dialect-title" tabIndex={-1}>
-      <header><div><span className="eyebrow">Explicit parse contract</span><h2 id="kcode-dialect-title">How was this KCode produced?</h2></div><button className="icon-button" type="button" onClick={onClose} aria-label="Cancel KCode import"><X size={16} /></button></header>
-      <div className="kcode-dialect-body">
-        <p><code>{filename}</code> does not identify its raster dialect reliably. Choose the source; Studio will not guess.</p>
-        <button type="button" className="dialect-choice" onClick={() => onChoose('app')}><strong>Kniterate / Customist app</strong><span>For KCode exported by the official design tools.</span><code>dialect: app</code></button>
-        <button type="button" className="dialect-choice" onClick={() => onChoose('knitout-vendor')}><strong>Studio / Knitout backend</strong><span>For KCode emitted by this Studio or the pinned open Knitout backend.</span><code>dialect: knitout-vendor</code></button>
-      </div>
-      <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button></footer>
-    </article>
-  </div>;
-}
-
 function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = false }: {
   passes: readonly MachinePass[];
   selected: number;
@@ -242,8 +235,8 @@ function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = 
 }
 
 function kcodeOverallContext(kcode: KCodeArtifact): NonNullable<MachineMovementViewProps['overallContext']> {
-  const errorCount = kcode.messages.filter((message) => message.severity === 'error').length;
-  const warningCount = kcode.messages.filter((message) => message.severity === 'warning').length;
+  const errorCount = kcode.messages.filter((message) => message.severity === 'error').reduce((count, message) => count + (message.occurrences ?? 1), 0);
+  const warningCount = kcode.messages.filter((message) => message.severity === 'warning').reduce((count, message) => count + (message.occurrences ?? 1), 0);
   if (!kcode.ok || errorCount > 0) {
     const blockingCount = Math.max(1, errorCount);
     return {
@@ -262,8 +255,8 @@ function kcodeOverallContext(kcode: KCodeArtifact): NonNullable<MachineMovementV
 }
 
 function documentOverallContext(document: MachineDocument): NonNullable<MachineMovementViewProps['overallContext']> {
-  const errors = document.diagnostics.filter((diagnostic) => diagnostic.severity === 'error').length;
-  const warnings = document.diagnostics.filter((diagnostic) => diagnostic.severity === 'warning').length;
+  const errors = document.stats.errorCount;
+  const warnings = document.stats.warningCount;
   if (document.verdict.state === 'blocked' || errors > 0) return { status: 'blocked', label: document.verdict.annotation };
   if (warnings > 0) return { status: 'warning', label: `${warnings} finding${warnings === 1 ? '' : 's'} across the imported artifact. ${document.verdict.annotation}` };
   return { status: 'clear', label: document.verdict.annotation };
@@ -306,15 +299,17 @@ function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, 
   const outputMessages = kcode?.messages ?? [];
   const errors = [...artifact.messages, ...outputMessages].filter((message) => message.severity === 'error');
   const outputWarnings = outputMessages.filter((message) => message.severity === 'warning');
+  const errorCount = errors.reduce((count, message) => count + (message.occurrences ?? 1), 0);
+  const outputWarningCount = outputWarnings.reduce((count, message) => count + (message.occurrences ?? 1), 0);
   const findingGroups = [...outputMessages.reduce((groups, message) => {
     const group = groups.get(message.rule);
-    if (group) group.count += 1;
+    if (group) group.count += message.occurrences ?? 1;
     else groups.set(message.rule, {
       diagnostic: {
         ...message,
         passIndex: kcode?.validation?.diagnostics.find((item) => item.rule === message.rule)?.passIndex ?? null,
       },
-      count: 1,
+      count: message.occurrences ?? 1,
     });
     return groups;
   }, new Map<string, { diagnostic: { severity: 'error' | 'warning' | 'info'; rule: string; message: string; passIndex: number | null }; count: number }>()).values()];
@@ -325,14 +320,14 @@ function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, 
   return <div className="workspace">
     <nav className="side-rail" aria-label="Workspace views"><button className="active" type="button" title="Machine passes"><Rows3 size={19} /></button></nav>
     <main className="machine-workspace compiled-workspace">
-      <div className="workspace-head"><div><span className="eyebrow">Compiled project</span><h1>Exact emitted machine trace</h1></div><div className="stat-strip"><span><b>{(kcode?.passCount ?? 0).toLocaleString()}</b> passes</span><span><b>{artifact.stats.patternColors}</b> pattern colors</span><span><b>{artifact.stats.needles}</b> design columns</span><span><b>{errors.length + (outputStatus === 'failed' ? 1 : 0)}</b> errors</span></div></div>
+      <div className="workspace-head"><div><span className="eyebrow">Compiled project</span><h1>Exact emitted machine trace</h1></div><div className="stat-strip"><span><b>{(kcode?.passCount ?? 0).toLocaleString()}</b> passes</span><span><b>{artifact.stats.patternColors}</b> pattern colors</span><span><b>{artifact.stats.needles}</b> design columns</span><span><b>{errorCount + (outputStatus === 'failed' ? 1 : 0)}</b> errors</span></div></div>
       <div className="compiled-machine-layout">
         {kcode?.scene ? <MachineMovementView className="compiled-movement" scene={kcode.scene} validation={kcode.validation} overallContext={kcodeOverallContext(kcode)} selectedPass={selected} onSelect={selectPass} />
           : kcode ? <div className="compiled-movement compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>Exact machine scene blocked</strong><small>{outputMessages.find((message) => message.severity === 'error')?.message ?? 'Strict parsing or MachineTrace projection did not produce an inspectable scene.'}</small></span></div>
             : outputStatus === 'failed' || outputStatus === 'ready' ? <div className="compiled-movement compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>KCode generation failed</strong><small>{outputError ?? 'Generation completed without an inspectable exact-output artifact.'}</small></span></div>
               : <div className="compiled-movement compiled-clear" role="status"><span className="spin-dot" /><strong>Strictly parsing and validating emitted KCode…</strong></div>}
         <PassGrid passes={passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={selectPass} compiled />
-        <section className="diagnostics-panel"><div className="panel-title"><span><ListChecks size={15} /> Exact-output checks</span><b>{outputWarnings.length} warnings</b></div><div className="diagnostic-list">{findingGroups.length === 0 ? kcode?.ok ? <div className="compiled-clear"><CheckCircle2 size={18} /><strong>No exact-output findings</strong></div> : <div className="compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>Exact-output evidence unavailable</strong><small>{outputError ?? 'No completed strict KCode artifact is available.'}</small></span></div> : findingGroups.map(({ diagnostic, count }) => <button type="button" disabled={diagnostic.passIndex === null} onClick={() => { if (diagnostic.passIndex !== null) selectPass(diagnostic.passIndex); }} className={`compiled-finding severity-${diagnostic.severity}`} key={diagnostic.rule}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}<span><strong>{diagnostic.rule}{count > 1 ? ` · ${count} occurrences` : ''}</strong><small>{diagnostic.message}</small></span></button>)}</div></section>
+        <section className="diagnostics-panel"><div className="panel-title"><span><ListChecks size={15} /> Exact-output checks</span><b>{outputWarningCount} warnings</b></div><div className="diagnostic-list">{findingGroups.length === 0 ? kcode?.ok ? <div className="compiled-clear"><CheckCircle2 size={18} /><strong>No exact-output findings</strong></div> : <div className="compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>Exact-output evidence unavailable</strong><small>{outputError ?? 'No completed strict KCode artifact is available.'}</small></span></div> : findingGroups.map(({ diagnostic, count }) => <button type="button" disabled={diagnostic.passIndex === null} onClick={() => { if (diagnostic.passIndex !== null) selectPass(diagnostic.passIndex); }} className={`compiled-finding severity-${diagnostic.severity}`} key={diagnostic.rule}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}<span><strong>{diagnostic.rule}{count > 1 ? ` · ${count} occurrences` : ''}</strong><small>{diagnostic.message}</small></span></button>)}</div></section>
         <section className="source-dock"><div className="panel-title"><span><Code2 size={15} /> Generated K-code</span><b>{kcode ? `${kcode.passCount.toLocaleString()} passes · ${kcode.kcHash.slice(0, 12)}` : outputStatus === 'failed' || outputStatus === 'ready' ? 'Unavailable' : 'Converting'}</b></div><pre>{kcode ? sourceLines.slice(sourceFrom - 1, sourceTo).map((line, offset) => { const lineNumber = sourceFrom + offset; const highlighted = lineNumber >= (sourceSpan?.lineStart ?? 0) && lineNumber <= (sourceSpan?.lineEnd ?? 0); return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={lineNumber}><i>{lineNumber}</i><code>{line || ' '}</code></span>; }) : <span className="source-line"><i /><code>{outputStatus === 'failed' || outputStatus === 'ready' ? outputError ?? 'No exact KCode artifact was produced.' : 'Waiting for validated conversion…'}</code></span>}</pre></section>
       </div>
     </main>
@@ -356,26 +351,29 @@ function Diagnostics({ document, selected, onSelect }: { document: MachineDocume
       <div className="panel-title"><span><ListChecks size={16} /> Diagnostics</span><b>{document.stats.errorCount} errors · {document.stats.warningCount} warnings</b></div>
       <div className="diagnostic-list">
         {document.diagnostics.length === 0 ? (
-          <div className="diagnostic-clear"><CheckCircle2 size={22} /><strong>No validator findings</strong><span>Reconstruction completed cleanly.</span></div>
+          <div className="diagnostic-clear"><CheckCircle2 size={22} /><strong>No validator findings</strong><span>Strict parse, trace projection, and replay completed cleanly.</span></div>
         ) : document.diagnostics.map((item) => <DiagnosticItem key={item.id} item={item} active={item.passIndex === selected} onClick={() => onSelect(item.passIndex ?? selected, item.line)} />)}
       </div>
     </aside>
   );
 }
 
-function SourceDock({ document, selected, preferredLine }: { document: MachineDocument; selected: number; preferredLine: number | null }) {
+export function SourceDock({ document, selected, preferredLine }: { document: MachineDocument; selected: number; preferredLine: number | null }) {
   const pass = document.passes[selected];
-  const sourceLines = useMemo(() => document.source.split(/\r\n|\r|\n/), [document.source]);
   const focusLine = preferredLine ?? pass?.lineEnd ?? 1;
-  const from = Math.max(1, focusLine - 8);
-  const to = Math.min(sourceLines.length, focusLine + 8);
+  const sourceIndex = useMemo(() => indexSourceLines(document.source), [document.source]);
+  const window = useMemo(
+    () => sourceWindow(document.source, focusLine, 8, 2_048, sourceIndex),
+    [document.source, focusLine, sourceIndex],
+  );
+  const resourceLimited = document.kcode?.document?.metadata.recordMaterialization === 'resource-limited'
+    || document.diagnostics.some((finding) => finding.rule === 'knitout-resource-limit');
   return (
     <section className="source-dock">
-      <div className="panel-title"><span><Code2 size={16} /> Source</span><b>{document.format.toUpperCase()} · lines {from}-{to} of {sourceLines.length.toLocaleString()}</b></div>
-      <pre>{sourceLines.slice(from - 1, to).map((line, index) => {
-        const lineNumber = from + index;
+      <div className="panel-title"><span><Code2 size={16} /> Source</span><b>{document.format.toUpperCase()} · lines {window.from}-{window.to} of {window.totalLines.toLocaleString()}</b></div>
+      <pre>{(resourceLimited || window.truncatedLineCount > 0) && <span className="source-preview-note">Preview bounded for safe inspection; the exact imported source remains retained for audit.</span>}{window.lines.map(({ lineNumber, text }) => {
         const highlighted = lineNumber >= (pass?.lineStart ?? focusLine) && lineNumber <= (pass?.lineEnd ?? focusLine);
-        return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={lineNumber}><i>{lineNumber}</i><code>{line || ' '}</code></span>;
+        return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={lineNumber}><i>{lineNumber}</i><code>{text || ' '}</code></span>;
       })}</pre>
     </section>
   );
@@ -495,7 +493,6 @@ export function App() {
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const [showNewProject, setShowNewProject] = useState(false);
   const [showProjectSettings, setShowProjectSettings] = useState(false);
-  const [pendingKCodeImport, setPendingKCodeImport] = useState<PendingKCodeImport | null>(null);
   const [autosaveState, setAutosaveState] = useState<'saving' | 'saved' | 'failed'>(initial.recoveredAt ? 'saved' : 'saving');
   const blanketCompile = useBlanketCompiler(project);
   const kcodeState = useKCodeArtifact(blanketCompile.artifact);
@@ -571,21 +568,7 @@ export function App() {
   };
   const openFile = async (file: File | undefined, comparison = false) => {
     if (!file) return;
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    if (file.name.toLowerCase().endsWith('.kc')) {
-      setPendingKCodeImport({ file, bytes, comparison });
-      return;
-    }
-    showOpenedDocument(openMachineDocument(file.name, bytes, {}), comparison);
-  };
-  const chooseKCodeDialect = (dialect: KCodeDialect) => {
-    if (!pendingKCodeImport) return;
-    const opened = openMachineDocument(pendingKCodeImport.file.name, pendingKCodeImport.bytes, {
-      dialect,
-    });
-    const comparison = pendingKCodeImport.comparison;
-    setPendingKCodeImport(null);
-    showOpenedDocument(opened, comparison);
+    showOpenedDocument(await readMachineFile(file), comparison);
   };
   const handleInput = (event: ChangeEvent<HTMLInputElement>, comparison = false) => {
     void openFile(event.target.files?.[0], comparison); event.target.value = '';
@@ -655,7 +638,6 @@ export function App() {
       {!document && showRunSheet && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
       {showNewProject && <NewProjectDialog onCreate={createProject} onClose={() => setShowNewProject(false)} />}
       {showProjectSettings && <ProjectSettingsDialog project={project} onSave={saveProjectSettings} onClose={() => setShowProjectSettings(false)} />}
-      {pendingKCodeImport && <KCodeDialectDialog filename={pendingKCodeImport.file.name} onChoose={chooseKCodeDialect} onClose={() => setPendingKCodeImport(null)} />}
     </div>
   );
 }

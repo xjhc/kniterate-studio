@@ -138,6 +138,7 @@
 .mmv-rack-ledger > header { display: flex; align-items: center; justify-content: space-between; min-height: 28px; padding: 0 10px; color: var(--ink-3, #626d68); background: var(--panel-2, #f1f4f2); font: 7px var(--font-mono, monospace); letter-spacing: .07em; text-transform: uppercase; }
 .mmv-rack-ledger > header b { display: grid; place-items: center; min-width: 18px; height: 16px; border: 1px solid var(--line-strong, #aab5b0); border-radius: 9px; color: var(--ink, #202624); background: var(--panel, #fff); }
 .mmv-rack-ledger > p { margin: 0; padding: 9px 10px; color: var(--ink-3, #626d68); font: 8px var(--font-mono, monospace); }
+.mmv-rack-ledger > p.mmv-rack-window { border-top: 1px solid var(--line, #cdd4d0); line-height: 1.45; }
 .mmv-rack-ledger ol { margin: 0; padding: 0; list-style: none; }
 .mmv-rack-ledger li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 7px; padding: 7px 9px; border-top: 1px solid var(--line, #cdd4d0); font-family: var(--font-mono, monospace); }
 .mmv-rack-ledger li.is-selected-boundary { box-shadow: inset 3px 0 var(--mmv-copper); background: var(--mmv-copper-soft); }

@@ -15,19 +15,20 @@
   and waivers were cut from V1 on 2026-07-12 (SYSTEM-DESIGN R6). Docs, the
   canonical mockup, and the dead UI rung were reconciled to match.
 - **Machine truth now starts at emitted KCode.** Strict byte-preserving parsing,
-  explicit dialects, exact `MachineTraceV1`, loop/kinematic replay, scheduled
-  backend differential checks, and synchronized movement rendering replace the
-  former reconstruction/preview authority. `predictedPasses` remains planning
-  telemetry only.
+  canonical V1 raster semantics, exact `MachineTraceV1`, loop/kinematic replay,
+  scheduled backend differential checks, and synchronized movement rendering
+  replace the former reconstruction/preview authority. `predictedPasses`
+  remains planning telemetry only.
 - The only `1.0.0` promotion gate is the physical Kniterate run
   (`V1-PHYSICAL-TRIAL.md`). Do not tag `1.0.0` before it succeeds.
 
 ## Next work
 
-The KCode software compiler workbench is complete under the boundary documented
-in `KCODE-SOFTWARE-PROOF.md`. Next, review the remaining evidence gaps there,
-then execute the hash-bound release trial and hand that exact generated artifact
-to the physical Kniterate trial.
+The KCode software slice meets the boundary documented in
+`KCODE-SOFTWARE-PROOF.md`; it deliberately does not claim physical acceptance.
+Next, review the remaining evidence gaps there, then execute the hash-bound
+release trial and hand that exact generated artifact to the physical Kniterate
+trial.
 
 Beyond these: the assistant (S3), swatch-registry UI (S4), and the L3–L5 upper
 editability ladder remain forward design (STATUS "Not yet built").

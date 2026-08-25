@@ -1,9 +1,387 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://knitlab.local/registry/swatches/_schema.json",
-  "title": "KnitLab Kniterate swatch registry JSON record",
-  "description": "Shared schema for swatch registry spec.json, machine.json, yarn.json, and request.json records. The conformance checker performs the file-specific validation.",
-  "type": "object",
-  "required": ["$schema"],
-  "additionalProperties": true
+  "title": "Kniterate physical swatch evidence",
+  "description": "Strict file-specific machine, yarn, and run-observation records. The registry checker applies the same promotion contract without trusting caller status or stored commands.",
+  "oneOf": [
+    { "$ref": "#/$defs/machine" },
+    { "$ref": "#/$defs/yarnEvidence" },
+    { "$ref": "#/$defs/runObservation" },
+    { "$ref": "#/$defs/sourceRecord" }
+  ],
+  "$defs": {
+    "schemaPath": { "const": "../_schema.json" },
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "rfc3339DateTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "isoDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "carrierRole": { "enum": ["draw", "pattern", "waste"] },
+    "initialSettings": {
+      "type": "object",
+      "required": [
+        "stitchNumber", "xferStitchNumber", "speedNumber", "rollerAdvance",
+        "xferStyle", "carrierSpacing", "carrierStoppingDistance"
+      ],
+      "properties": {
+        "stitchNumber": { "type": "number", "minimum": 0 },
+        "xferStitchNumber": { "type": "number", "minimum": 0 },
+        "speedNumber": { "type": "number", "exclusiveMinimum": 0 },
+        "rollerAdvance": { "type": "number", "minimum": 0 },
+        "xferStyle": { "enum": ["four-pass", "two-pass"] },
+        "carrierSpacing": { "type": "number", "exclusiveMinimum": 0 },
+        "carrierStoppingDistance": { "type": "number", "exclusiveMinimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "carrier": {
+      "type": "object",
+      "required": ["role", "yarnEntry"],
+      "properties": {
+        "role": { "$ref": "#/$defs/carrierRole" },
+        "yarnEntry": { "type": "string", "pattern": "^yarn\\.json#yarns\\[[0-9]+\\]$" }
+      },
+      "additionalProperties": false
+    },
+    "deviation": {
+      "type": "object",
+      "required": ["field", "compiled", "actual", "reason"],
+      "properties": {
+        "field": { "$ref": "#/$defs/nonEmptyString" },
+        "compiled": {},
+        "actual": {},
+        "reason": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "additionalProperties": false
+    },
+    "machineProgram": {
+      "type": "object",
+      "required": [
+        "compilerCoordinateStart", "compilerCoordinateEnd", "gauge",
+        "position", "wastePasses", "bindOff", "initialSettings"
+      ],
+      "properties": {
+        "compilerCoordinateStart": { "type": "integer" },
+        "compilerCoordinateEnd": { "type": "integer" },
+        "gauge": { "type": "number", "exclusiveMinimum": 0 },
+        "position": { "enum": ["Left", "Center", "Right", "Keep"] },
+        "wastePasses": { "type": "integer", "minimum": 0 },
+        "bindOff": { "enum": ["machine-bindoff", "waste-and-drop"] },
+        "initialSettings": { "$ref": "#/$defs/initialSettings" }
+      },
+      "additionalProperties": false
+    },
+    "machine": {
+      "type": "object",
+      "required": [
+        "$schema", "kind", "schemaVersion", "ranAt", "machineSerial",
+        "controlSoftwareVersion", "profile", "program", "carriers",
+        "deviationsFromCompile"
+      ],
+      "properties": {
+        "$schema": { "$ref": "#/$defs/schemaPath" },
+        "kind": { "const": "kniterate-machine-run-v1" },
+        "schemaVersion": { "const": 1 },
+        "ranAt": { "$ref": "#/$defs/rfc3339DateTime" },
+        "machineSerial": { "$ref": "#/$defs/nonEmptyString" },
+        "controlSoftwareVersion": { "$ref": "#/$defs/nonEmptyString" },
+        "profile": { "$ref": "#/$defs/nonEmptyString" },
+        "program": { "$ref": "#/$defs/machineProgram" },
+        "carriers": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 6,
+          "propertyNames": { "pattern": "^[1-6]$" },
+          "additionalProperties": { "$ref": "#/$defs/carrier" }
+        },
+        "deviationsFromCompile": {
+          "type": "array",
+          "maxItems": 256,
+          "items": { "$ref": "#/$defs/deviation" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "yarn": {
+      "type": "object",
+      "required": [
+        "carrier", "role", "name", "brand", "line", "lot", "fiber",
+        "weight", "ply", "color", "coneSource"
+      ],
+      "properties": {
+        "carrier": { "type": "string", "pattern": "^[1-6]$" },
+        "role": { "$ref": "#/$defs/carrierRole" },
+        "name": { "$ref": "#/$defs/nonEmptyString" },
+        "brand": { "$ref": "#/$defs/nonEmptyString" },
+        "line": { "$ref": "#/$defs/nonEmptyString" },
+        "lot": { "$ref": "#/$defs/nonEmptyString" },
+        "fiber": { "$ref": "#/$defs/nonEmptyString" },
+        "weight": { "$ref": "#/$defs/nonEmptyString" },
+        "ply": { "type": "integer", "minimum": 1 },
+        "color": { "$ref": "#/$defs/nonEmptyString" },
+        "coneSource": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "additionalProperties": false
+    },
+    "measuredGaugeStage": {
+      "type": "object",
+      "required": ["status", "stitchesPer10cm", "rowsPer10cm"],
+      "properties": {
+        "status": { "const": "measured" },
+        "stitchesPer10cm": { "type": "number", "exclusiveMinimum": 0 },
+        "rowsPer10cm": { "type": "number", "exclusiveMinimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "unmeasuredGaugeStage": {
+      "type": "object",
+      "required": ["status", "reason"],
+      "properties": {
+        "status": { "const": "not-performed" },
+        "reason": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "additionalProperties": false
+    },
+    "gaugeStage": {
+      "oneOf": [
+        { "$ref": "#/$defs/measuredGaugeStage" },
+        { "$ref": "#/$defs/unmeasuredGaugeStage" }
+      ]
+    },
+    "tensionSwatch": {
+      "type": "object",
+      "required": [
+        "machineProfile", "structure", "settings", "measuredBy",
+        "measuredOn", "measurements", "notes"
+      ],
+      "properties": {
+        "machineProfile": { "$ref": "#/$defs/nonEmptyString" },
+        "structure": { "$ref": "#/$defs/nonEmptyString" },
+        "settings": { "$ref": "#/$defs/initialSettings" },
+        "measuredBy": { "$ref": "#/$defs/nonEmptyString" },
+        "measuredOn": { "$ref": "#/$defs/isoDate" },
+        "measurements": {
+          "type": "object",
+          "required": ["offMachine", "rested24h", "steamed", "wetFinished"],
+          "properties": {
+            "offMachine": { "$ref": "#/$defs/gaugeStage" },
+            "rested24h": { "$ref": "#/$defs/gaugeStage" },
+            "steamed": { "$ref": "#/$defs/gaugeStage" },
+            "wetFinished": { "$ref": "#/$defs/gaugeStage" }
+          },
+          "additionalProperties": false
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "yarnEvidence": {
+      "type": "object",
+      "required": ["$schema", "kind", "schemaVersion", "yarns", "tensionSwatch"],
+      "properties": {
+        "$schema": { "$ref": "#/$defs/schemaPath" },
+        "kind": { "const": "kniterate-yarn-evidence-v1" },
+        "schemaVersion": { "const": 1 },
+        "yarns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "items": { "$ref": "#/$defs/yarn" }
+        },
+        "tensionSwatch": { "$ref": "#/$defs/tensionSwatch" }
+      },
+      "additionalProperties": false
+    },
+    "physicalPlacement": {
+      "type": "object",
+      "required": [
+        "verified", "compilerCoordinateStart", "compilerCoordinateEnd",
+        "physicalNeedleStart", "physicalNeedleEnd", "method", "verifiedBy",
+        "verifiedAt"
+      ],
+      "properties": {
+        "verified": { "type": "boolean" },
+        "compilerCoordinateStart": { "type": "integer" },
+        "compilerCoordinateEnd": { "type": "integer" },
+        "physicalNeedleStart": { "type": ["integer", "null"] },
+        "physicalNeedleEnd": { "type": ["integer", "null"] },
+        "method": { "type": ["string", "null"] },
+        "verifiedBy": { "type": ["string", "null"] },
+        "verifiedAt": {
+          "anyOf": [
+            { "$ref": "#/$defs/rfc3339DateTime" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "intervention": {
+      "type": "object",
+      "required": ["section", "passIndex", "kind", "alteredProgramOrSettings", "description"],
+      "properties": {
+        "section": { "$ref": "#/$defs/sectionName" },
+        "passIndex": { "type": ["integer", "null"], "minimum": 0 },
+        "kind": {
+          "enum": ["restart", "yarn-rethread", "loop-repair", "needle-repair", "setting-change", "carrier-change", "source-edit", "other"]
+        },
+        "alteredProgramOrSettings": { "type": "boolean" },
+        "description": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "additionalProperties": false
+    },
+    "sectionName": {
+      "enum": ["waste", "castOn", "drawThread", "carrierBringIn", "body", "backing", "leftEdge", "rightEdge", "bindOff"]
+    },
+    "sectionStatus": { "enum": ["clean", "issue", "not-reached", "not-applicable"] },
+    "stop": {
+      "type": "object",
+      "required": ["section", "passIndex", "description"],
+      "properties": {
+        "section": { "$ref": "#/$defs/sectionName" },
+        "passIndex": { "type": ["integer", "null"], "minimum": 0 },
+        "description": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "additionalProperties": false
+    },
+    "measuredDimensions": {
+      "type": "object",
+      "required": ["status", "width", "height", "measuredAt"],
+      "properties": {
+        "status": { "const": "measured" },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "measuredAt": { "$ref": "#/$defs/rfc3339DateTime" }
+      },
+      "additionalProperties": false
+    },
+    "unmeasuredDimensions": {
+      "type": "object",
+      "required": ["status", "reason"],
+      "properties": {
+        "status": { "const": "not-measured" },
+        "reason": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "additionalProperties": false
+    },
+    "dimensions": {
+      "oneOf": [
+        { "$ref": "#/$defs/measuredDimensions" },
+        { "$ref": "#/$defs/unmeasuredDimensions" }
+      ]
+    },
+    "photo": {
+      "type": "object",
+      "required": ["view", "path", "sha256"],
+      "properties": {
+        "view": { "enum": ["front", "back", "cast-on", "left-edge", "right-edge", "bind-off"] },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?![A-Za-z]:[/\\\\])(?![/\\\\])(?!\\.{1,2}(?:[/\\\\]|$))(?!.*[/\\\\]\\.{1,2}(?:[/\\\\]|$))(?!.*[/\\\\]{2})(?!.*[/\\\\]$)[^\\r\\n]+$"
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      },
+      "additionalProperties": false
+    },
+    "observations": {
+      "type": "object",
+      "required": ["sections", "stops", "dimensionsCm", "photos", "notes"],
+      "properties": {
+        "sections": {
+          "type": "object",
+          "required": ["waste", "castOn", "drawThread", "carrierBringIn", "body", "backing", "leftEdge", "rightEdge", "bindOff"],
+          "properties": {
+            "waste": { "$ref": "#/$defs/sectionStatus" },
+            "castOn": { "$ref": "#/$defs/sectionStatus" },
+            "drawThread": { "$ref": "#/$defs/sectionStatus" },
+            "carrierBringIn": { "$ref": "#/$defs/sectionStatus" },
+            "body": { "$ref": "#/$defs/sectionStatus" },
+            "backing": { "$ref": "#/$defs/sectionStatus" },
+            "leftEdge": { "$ref": "#/$defs/sectionStatus" },
+            "rightEdge": { "$ref": "#/$defs/sectionStatus" },
+            "bindOff": { "$ref": "#/$defs/sectionStatus" }
+          },
+          "additionalProperties": false
+        },
+        "stops": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": { "$ref": "#/$defs/stop" }
+        },
+        "dimensionsCm": {
+          "type": "object",
+          "required": ["offMachine", "rested24h"],
+          "properties": {
+            "offMachine": { "$ref": "#/$defs/dimensions" },
+            "rested24h": { "$ref": "#/$defs/dimensions" }
+          },
+          "additionalProperties": false
+        },
+        "photos": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/$defs/photo" }
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "runObservation": {
+      "type": "object",
+      "required": [
+        "$schema", "kind", "schemaVersion", "operator", "startedAt", "endedAt",
+        "outcome", "artifact", "physicalPlacement", "manualInterventions", "observations"
+      ],
+      "properties": {
+        "$schema": { "$ref": "#/$defs/schemaPath" },
+        "kind": { "const": "kniterate-run-observation-v1" },
+        "schemaVersion": { "const": 1 },
+        "operator": { "$ref": "#/$defs/nonEmptyString" },
+        "startedAt": { "$ref": "#/$defs/rfc3339DateTime" },
+        "endedAt": { "$ref": "#/$defs/rfc3339DateTime" },
+        "outcome": { "enum": ["clean", "dropped", "jammed", "aborted", "partial"] },
+        "artifact": {
+          "type": "object",
+          "required": ["loadedKcodeSha256", "displayedPassCount", "manualProgramEdits"],
+          "properties": {
+            "loadedKcodeSha256": { "$ref": "#/$defs/sha256" },
+            "displayedPassCount": { "type": ["integer", "null"], "minimum": 0 },
+            "manualProgramEdits": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "physicalPlacement": { "$ref": "#/$defs/physicalPlacement" },
+        "manualInterventions": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": { "$ref": "#/$defs/intervention" }
+        },
+        "observations": { "$ref": "#/$defs/observations" }
+      },
+      "additionalProperties": false
+    },
+    "sourceRecord": {
+      "type": "object",
+      "required": ["$schema", "kind"],
+      "maxProperties": 2048,
+      "properties": {
+        "$schema": { "$ref": "#/$defs/schemaPath" },
+        "kind": { "enum": ["chart", "colorwork-blanket", "manual", "kniterate-studio-project"] },
+        "inputFiles": {
+          "type": "array",
+          "maxItems": 64,
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
 }

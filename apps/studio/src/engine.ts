@@ -1,5 +1,6 @@
 import {
   KNITERATE_7GG_KCODE_PROFILE_V1,
+  compareScheduledPassesToMachineTrace,
   diffKCodeMachineTrace,
   inspectKnitoutPasses,
   parseKCodeBytes,
@@ -20,12 +21,15 @@ import {
   type MachineTraceV1,
   type MachineValidationReportV1,
   type ResolvedValidatorMessage,
+  type ScheduledTraceComparisonV1,
   type ValidationMessage,
 } from '@kniterate-studio/machine-lib/browser';
+import { browserKnitoutToKCode } from '@kniterate-studio/machine-lib/browser-converter';
 
 export type MachineFormat = 'kc' | 'k';
 export type VerdictState = 'blocked' | 'surface' | 'knit';
 export type MachineSource = string | Uint8Array;
+export const MAX_MACHINE_SOURCE_BYTES_V1 = 64 * 1024 * 1024;
 
 /** Fixed V1 target. Keep this alias local so every Studio KCode seam shares it. */
 const KNITERATE_MACHINE_PROFILE_V1 = KNITERATE_7GG_KCODE_PROFILE_V1;
@@ -114,10 +118,12 @@ export interface MachineDiagnostic extends ResolvedValidatorMessage {
   line: number | null;
   sourceSpan: KCodeSourceSpan | null;
   classification: MachineDiagnosticClass;
+  /** One for details; greater than one for an omitted-findings summary. */
+  occurrences: number;
 }
 
 export interface MachineKCodeEvidence {
-  /** Always explicit caller input; Studio never infers a KCode dialect. */
+  /** Explicit parser contract; Studio imports use the canonical V1 label. */
   dialect: KCodeDialect | null;
   /** Exact strict-parser document, retained even when parsing is blocked. */
   document: KCodeDocumentV1 | null;
@@ -126,6 +132,8 @@ export interface MachineKCodeEvidence {
   trace: MachineTraceV1 | null;
   validation: MachineValidationReportV1 | null;
   scene: MachineSceneV1 | null;
+  /** Present only when a pinned lowering schedule can be checked against the trace. */
+  differential: ScheduledTraceComparisonV1 | null;
 }
 
 export interface MachineDocument {
@@ -175,6 +183,46 @@ function formatTraceCoordinates(min: number | null, max: number | null): string 
   return min === max ? `K-code ${min}` : `K-code ${min}-${max}`;
 }
 
+interface NumberExtent {
+  readonly min: number;
+  readonly max: number;
+}
+
+function numberExtent(values: Iterable<number>): NumberExtent | null {
+  let min: number | null = null;
+  let max: number | null = null;
+  for (const value of values) {
+    min = min === null ? value : Math.min(min, value);
+    max = max === null ? value : Math.max(max, value);
+  }
+  return min === null || max === null ? null : { min, max };
+}
+
+function appendAll<Value>(target: Value[], values: Iterable<Value>): void {
+  for (const value of values) target.push(value);
+}
+
+function* traceCoordinates(pass: MachineTracePassV1): Generator<number> {
+  for (const selection of pass.selections.front) yield selection.traceCoordinate;
+  for (const selection of pass.selections.rear) yield selection.traceCoordinate;
+}
+
+function* documentTraceCoordinates(trace: MachineTraceV1): Generator<number> {
+  for (const pass of trace.passes) yield* traceCoordinates(pass);
+}
+
+function* passRacks(passes: readonly MachinePass[]): Generator<number> {
+  for (const pass of passes) {
+    if (pass.rack !== null) yield pass.rack;
+  }
+}
+
+function* legacyNeedleNumbers(passes: readonly MachinePass[]): Generator<number> {
+  for (const pass of passes) {
+    for (const match of pass.needleSpan.matchAll(/N(-?\d+)/g)) yield Number(match[1]);
+  }
+}
+
 function resolveDiagnostic(
   message: ValidationMessage,
   metadata: {
@@ -184,6 +232,7 @@ function resolveDiagnostic(
     readonly line: number | null;
     readonly sourceSpan?: KCodeSourceSpan | null;
     readonly classification: MachineDiagnosticClass;
+    readonly occurrences?: number;
   },
 ): MachineDiagnostic {
   return {
@@ -194,6 +243,7 @@ function resolveDiagnostic(
     line: metadata.line,
     sourceSpan: metadata.sourceSpan ?? null,
     classification: metadata.classification,
+    occurrences: metadata.occurrences ?? 1,
   };
 }
 
@@ -210,6 +260,7 @@ function diagnostics(
       ...anchored,
       id: `${message.rule}-${message.opIndex ?? 'file'}-${index}`,
       classification: 'knitout',
+      occurrences: message.occurrences,
     });
   });
 }
@@ -233,9 +284,18 @@ function normalizeOptions(
   return value;
 }
 
-function tracePass(pass: MachineTracePassV1): MachinePass {
-  const selections = [...pass.selections.front, ...pass.selections.rear];
-  const coordinates = selections.map((selection) => selection.traceCoordinate);
+function tracePass(
+  pass: MachineTracePassV1,
+  presentation?: {
+    /** Knitout source lines which caused this emitted pass; empty means backend-only. */
+    readonly sourceLines: readonly number[];
+    readonly section: string;
+  },
+): MachinePass {
+  const coordinateSpan = numberExtent(traceCoordinates(pass));
+  const sourceSpan = presentation === undefined
+    ? { min: pass.source.span.start.line, max: pass.source.footer.end.line }
+    : numberExtent(presentation.sourceLines);
   const hasFront = pass.selections.front.length > 0;
   const hasRear = pass.selections.rear.length > 0;
   return {
@@ -247,15 +307,16 @@ function tracePass(pass: MachineTracePassV1): MachinePass {
       ? `${hasFront ? 'F' : ''}${hasFront && hasRear ? '+' : ''}${hasRear ? 'R' : ''}`
       : 'Move',
     needleSpan: formatTraceCoordinates(
-      coordinates.length > 0 ? Math.min(...coordinates) : null,
-      coordinates.length > 0 ? Math.max(...coordinates) : null,
+      coordinateSpan?.min ?? null,
+      coordinateSpan?.max ?? null,
     ),
     rack: pass.rack,
     speed: pass.speed,
     roller: pass.roller,
-    lineStart: pass.source.span.start.line,
-    lineEnd: pass.source.footer.end.line,
-    section: 'K-code passes',
+    // Zero is an explicit no-source sentinel. SourceDock never highlights it.
+    lineStart: sourceSpan?.min ?? 0,
+    lineEnd: sourceSpan?.max ?? 0,
+    section: presentation?.section ?? 'K-code passes',
     ghost: pass.actions.length > 0 && pass.actions.every((action) => action.kind === 'move'),
   };
 }
@@ -273,6 +334,7 @@ function parserFindings(
     line: diagnostic.line,
     sourceSpan: diagnostic.span,
     classification: 'syntax',
+    occurrences: diagnostic.occurrences,
   }));
 }
 
@@ -290,14 +352,70 @@ function validatorFindings(
     line: diagnostic.line,
     sourceSpan: diagnostic.sourceSpan,
     classification: diagnostic.class,
+    occurrences: diagnostic.occurrences,
   }));
+}
+
+function emittedParserFindings(
+  parsed: ReturnType<typeof parseKCodeDocument>,
+): MachineDiagnostic[] {
+  return parserFindings(parsed).map((finding) => ({
+    ...finding,
+    id: `emitted-${finding.id}`,
+    line: null,
+    sourceSpan: null,
+    rawMessage: `Emitted KCode line ${finding.line ?? '?'}: ${finding.rawMessage}`,
+  }));
+}
+
+function emittedValidatorFindings(
+  report: MachineValidationReportV1,
+): MachineDiagnostic[] {
+  return validatorFindings(report).map((finding) => ({
+    ...finding,
+    id: `emitted-${finding.id}`,
+    // These locations belong to generated KCode, not the imported Knitout source.
+    line: null,
+    sourceSpan: null,
+  }));
+}
+
+function differentialFindings(
+  report: ScheduledTraceComparisonV1,
+): MachineDiagnostic[] {
+  return report.mismatches.map((mismatch, index) => resolveDiagnostic({
+    severity: 'error',
+    rule: 'kcode.backend-schedule-differential',
+    message: mismatch.message,
+  }, {
+    id: `kcode.backend-schedule-differential-${mismatch.passIndex ?? 'file'}-${mismatch.field}-${index}`,
+    passIndex: mismatch.passIndex,
+    line: null,
+    classification: 'structural',
+  }));
+}
+
+function loweringFinding(
+  rule: string,
+  message: string,
+  severity: 'error' | 'warning' = 'error',
+  identity?: string,
+  occurrences = 1,
+): MachineDiagnostic {
+  return resolveDiagnostic({ severity, rule, message }, {
+    id: `${rule}-${severity}${identity === undefined ? '' : `-${identity}`}`,
+    passIndex: null,
+    line: null,
+    classification: 'structural',
+    occurrences,
+  });
 }
 
 function dialectRequiredFinding(): MachineDiagnostic {
   return resolveDiagnostic({
     severity: 'error',
     rule: 'kcode.dialect-required',
-    message: 'Choose the source KCode dialect (`app` or `knitout-vendor`) before strict import. Studio will not guess it from file contents.',
+    message: 'Supply an explicit KCode dialect contract (`app` or `knitout-vendor`) before strict library intake.',
   }, {
     id: 'kcode.dialect-required',
     passIndex: null,
@@ -348,10 +466,15 @@ function finishDocument(input: {
 
   const errors = findings.filter((item) => item.severity === 'error');
   const warnings = findings.filter((item) => item.severity === 'warning');
-  const carrierSet = [...new Set(input.passes.flatMap((pass) => pass.carriers))].sort();
-  const racks = input.passes.map((pass) => pass.rack).filter((rack): rack is number => rack !== null);
-  const legacyNeedleNumbers = input.passes.flatMap((pass) =>
-    [...pass.needleSpan.matchAll(/N(-?\d+)/g)].map((match) => Number(match[1])));
+  const errorCount = errors.reduce((count, item) => count + item.occurrences, 0);
+  const warningCount = warnings.reduce((count, item) => count + item.occurrences, 0);
+  const carriers = new Set<string>();
+  for (const pass of input.passes) {
+    for (const carrier of pass.carriers) carriers.add(carrier);
+  }
+  const carrierSet = [...carriers].sort();
+  const rackExtent = numberExtent(passRacks(input.passes));
+  const legacyNeedleExtent = numberExtent(legacyNeedleNumbers(input.passes));
 
   // Conservative foreign-file policy: imported warnings have no authored
   // review/waiver context, so both errors and warnings block V1 promotion.
@@ -359,8 +482,8 @@ function finishDocument(input: {
   const coordinateSpan = input.coordinateSpan;
   const spanLabel = coordinateSpan
     ? formatTraceCoordinates(coordinateSpan.min, coordinateSpan.max)
-    : legacyNeedleNumbers.length > 0
-      ? formatNeedles(Math.min(...legacyNeedleNumbers), Math.max(...legacyNeedleNumbers))
+    : legacyNeedleExtent
+      ? formatNeedles(legacyNeedleExtent.min, legacyNeedleExtent.max)
       : input.format === 'kc' ? 'No selections' : 'No needles';
 
   return {
@@ -379,17 +502,64 @@ function finishDocument(input: {
           : 'Machine-facing findings must be resolved before this file should be knit.'
         : input.format === 'kc'
           ? 'Strict KCode parsing, exact MachineTrace projection, and software validation passed. Operational limits and physical knitting remain unproven; use a representative swatch as the final gate.'
-          : 'Imported file reconstructed and validated without errors. Source intent and physical knitting remain unproven; knit a swatch first.',
+          : 'Pinned backend lowering, strict emitted KCode parsing, scheduled-pass differential checks, exact MachineTrace projection, and loop/kinematic replay passed. Physical yarn, tension, and fabric behavior remain a separate final swatch gate.',
     },
     stats: {
       passCount: input.passes.length,
       carriers: carrierSet,
       needleSpan: spanLabel,
-      rackRange: racks.length > 0 ? `${Math.min(...racks)} to ${Math.max(...racks)}` : '0',
-      warningCount: warnings.length,
-      errorCount: errors.length,
+      rackRange: rackExtent ? `${rackExtent.min} to ${rackExtent.max}` : '0',
+      warningCount,
+      errorCount,
     },
   };
+}
+
+function rejectedUnreadSource(
+  filename: string,
+  rule: string,
+  message: string,
+): MachineDocument {
+  const format: MachineFormat = filename.toLowerCase().endsWith('.kc') ? 'kc' : 'k';
+  return finishDocument({
+    filename,
+    format,
+    source: '',
+    kcode: {
+      dialect: 'knitout-vendor',
+      document: null,
+      sourceBytes: null,
+      trace: null,
+      validation: null,
+      scene: null,
+      differential: null,
+    },
+    passes: [],
+    findings: [loweringFinding(rule, message)],
+    coordinateSpan: null,
+  });
+}
+
+export function rejectOversizedMachineDocument(
+  filename: string,
+  byteLength: number,
+): MachineDocument {
+  return rejectedUnreadSource(
+    filename,
+    'machine-source-resource-limit',
+    `Machine source is ${byteLength.toLocaleString('en-US')} bytes, above the ${MAX_MACHINE_SOURCE_BYTES_V1.toLocaleString('en-US')}-byte V1 import limit. The file was not read or copied into Studio.`,
+  );
+}
+
+export function rejectUnreadableMachineDocument(
+  filename: string,
+  reason: string,
+): MachineDocument {
+  return rejectedUnreadSource(
+    filename,
+    'machine-source-read',
+    `Studio could not read this local file: ${reason}`,
+  );
 }
 
 function openKCodeDocument(
@@ -398,8 +568,8 @@ function openKCodeDocument(
   options: OpenMachineDocumentOptions,
 ): MachineDocument {
   const sourceBytes = input instanceof Uint8Array ? input.slice() : null;
-  const source = typeof input === 'string' ? input : decodeKCodeBytes(input);
   if (options.dialect === undefined) {
+    const source = typeof input === 'string' ? input : decodeKCodeBytes(input);
     return finishDocument({
       filename,
       format: 'kc',
@@ -411,6 +581,7 @@ function openKCodeDocument(
         trace: null,
         validation: null,
         scene: null,
+        differential: null,
       },
       passes: [],
       findings: [dialectRequiredFinding()],
@@ -436,17 +607,14 @@ function openKCodeDocument(
       trace = projectKCodeMachineTrace(parsed.document, KNITERATE_MACHINE_PROFILE_V1);
       validation = validateKCodeMachineTrace(trace, KNITERATE_MACHINE_PROFILE_V1);
       scene = projectMachineScene(trace);
-      findings.push(...validatorFindings(validation));
+      appendAll(findings, validatorFindings(validation));
     } catch (error) {
       findings.push(projectionFinding(error));
     }
   }
 
-  const passes = trace?.passes.map(tracePass) ?? [];
-  const traceCoordinates = trace?.passes.flatMap((pass) => [
-    ...pass.selections.front.map((selection) => selection.traceCoordinate),
-    ...pass.selections.rear.map((selection) => selection.traceCoordinate),
-  ]) ?? [];
+  const passes = trace?.passes.map((pass) => tracePass(pass)) ?? [];
+  const coordinateSpan = trace === null ? null : numberExtent(documentTraceCoordinates(trace));
   return finishDocument({
     filename,
     format: 'kc',
@@ -458,12 +626,11 @@ function openKCodeDocument(
       trace,
       validation,
       scene,
+      differential: null,
     },
     passes,
     findings,
-    coordinateSpan: traceCoordinates.length > 0
-      ? { min: Math.min(...traceCoordinates), max: Math.max(...traceCoordinates) }
-      : null,
+    coordinateSpan,
   });
 }
 
@@ -474,25 +641,11 @@ function openKnitoutDocument(
   const source = typeof input === 'string' ? input : decodeKnitoutBytes(input);
   const parsed = parseKnitoutProgram(source);
   const inspected = inspectKnitoutPasses(parsed);
-  const passes = inspected.map((pass): MachinePass => ({
-    index: pass.index,
-    direction: pass.direction === '+' ? '>>' : pass.direction === '-' ? '<<' : null,
-    type: pass.type,
-    carriers: pass.carriers,
-    beds: pass.beds.map((bed) => bed.toUpperCase()).join('+') || 'Move',
-    needleSpan: formatNeedles(pass.needleMin, pass.needleMax),
-    rack: pass.rack,
-    speed: pass.speed,
-    roller: pass.roller,
-    lineStart: pass.lineStart,
-    lineEnd: pass.lineEnd,
-    section: pass.section,
-    ghost: false,
-  }));
   const parseMessages: ValidationMessage[] = parsed.issues.map((issue) => ({
     severity: 'error',
     rule: issue.rule ?? 'knitout-parse',
     message: `Line ${issue.line}: ${issue.message}`,
+    occurrences: issue.occurrences,
   }));
   const report = validateKnitoutProgram(parsed.program);
   const findings = diagnostics([...parseMessages, ...report.messages], (message) => {
@@ -506,13 +659,81 @@ function openKnitoutDocument(
     findings[index] = { ...findings[index]!, line: issue.line };
   }
 
+  let loweredDocument: KCodeDocumentV1 | null = null;
+  let trace: MachineTraceV1 | null = null;
+  let validation: MachineValidationReportV1 | null = null;
+  let scene: MachineSceneV1 | null = null;
+  let differential: ScheduledTraceComparisonV1 | null = null;
+  let passes: MachinePass[] = [];
+  let coordinateSpan: NumberExtent | null = null;
+
+  if (!findings.some((finding) => finding.severity === 'error')) {
+    const converted = browserKnitoutToKCode(source, filename);
+    for (const [index, warning] of (converted.warnings ?? []).entries()) {
+      findings.push(loweringFinding('knitout-backend-warning', warning, 'warning', String(index)));
+    }
+    const omittedBackendWarnings = Math.max(
+      0,
+      (converted.warningCount ?? converted.warnings?.length ?? 0) - (converted.warnings?.length ?? 0),
+    );
+    if (omittedBackendWarnings > 0) {
+      findings.push(loweringFinding(
+        'knitout-backend-warning-summary',
+        `Pinned-backend warnings were truncated after ${converted.warnings?.length ?? 0} detailed findings; omitted ${omittedBackendWarnings} additional warnings.`,
+        'warning',
+        'summary',
+        omittedBackendWarnings,
+      ));
+    }
+    if (!converted.ok || converted.kcode === undefined || converted.scheduledPasses === undefined) {
+      findings.push(loweringFinding(
+        'knitout-backend-lowering',
+        converted.error ?? 'Pinned backend returned no emitted KCode or scheduled-pass trace.',
+      ));
+    } else {
+      const lowered = parseKCodeDocument(converted.kcode, {
+        profile: KNITERATE_MACHINE_PROFILE_V1,
+        dialect: 'knitout-vendor',
+        strict: true,
+      });
+      loweredDocument = lowered.document;
+      appendAll(findings, emittedParserFindings(lowered));
+      if (lowered.ok) {
+        try {
+          trace = projectKCodeMachineTrace(lowered.document, KNITERATE_MACHINE_PROFILE_V1);
+          validation = validateKCodeMachineTrace(trace, KNITERATE_MACHINE_PROFILE_V1);
+          scene = projectMachineScene(trace);
+          differential = compareScheduledPassesToMachineTrace(converted.scheduledPasses, trace);
+          appendAll(findings, emittedValidatorFindings(validation));
+          appendAll(findings, differentialFindings(differential));
+          passes = trace.passes.map((pass, index) => tracePass(pass, {
+            sourceLines: converted.scheduledPasses?.[index]?.sourceLines ?? [],
+            section: 'Pinned backend / emitted KCode',
+          }));
+          coordinateSpan = numberExtent(documentTraceCoordinates(trace));
+        } catch (error) {
+          findings.push(projectionFinding(error));
+        }
+      }
+    }
+  }
+
   return finishDocument({
     filename,
     format: 'k',
     source,
-    kcode: null,
+    kcode: {
+      dialect: 'knitout-vendor',
+      document: loweredDocument,
+      sourceBytes: null,
+      trace,
+      validation,
+      scene,
+      differential,
+    },
     passes,
     findings,
+    coordinateSpan,
   });
 }
 
@@ -536,6 +757,9 @@ export function openMachineDocument(
   source: MachineSource,
   options?: OpenMachineDocumentOptions | null,
 ): MachineDocument {
+  if (source instanceof Uint8Array && source.byteLength > MAX_MACHINE_SOURCE_BYTES_V1) {
+    return rejectOversizedMachineDocument(filename, source.byteLength);
+  }
   const normalized = normalizeOptions(options);
   return filename.toLowerCase().endsWith('.kc')
     ? openKCodeDocument(filename, source, normalized)
@@ -584,10 +808,12 @@ export function compareKcDocuments(left: MachineDocument, right: MachineDocument
   const leftDialect = left.kcode?.dialect;
   const rightDialect = right.kcode?.dialect;
   if (leftDialect === null || leftDialect === undefined || rightDialect === null || rightDialect === undefined) {
-    return blockedDiff(left, right, 'Both KCode inputs require an explicit source dialect; Studio will not guess.');
+    return blockedDiff(left, right, 'Both KCode inputs require an explicit parser contract.');
   }
-  if (leftDialect !== rightDialect) {
-    return blockedDiff(left, right, `KCode dialect mismatch: ${leftDialect} vs ${rightDialect}. Re-import both inputs under one explicit contract before comparing.`);
+  const leftDialectContract = KNITERATE_MACHINE_PROFILE_V1.dialects[leftDialect];
+  const rightDialectContract = KNITERATE_MACHINE_PROFILE_V1.dialects[rightDialect];
+  if (leftDialectContract.markerFreeTraceOffset !== rightDialectContract.markerFreeTraceOffset) {
+    return blockedDiff(left, right, `KCode dialect movement contracts differ: ${leftDialect} vs ${rightDialect}.`);
   }
   const leftTrace = left.kcode?.trace;
   const rightTrace = right.kcode?.trace;

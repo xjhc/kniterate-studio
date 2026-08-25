@@ -59,6 +59,67 @@ function kcode(options: {
   ].join(newline);
 }
 
+function largeKCode(passCount: number): string {
+  const selected = Array.from({ length: NEEDLE_COLUMNS }, (_, index) => index);
+  const decorateFullBed = (base: string): string => {
+    const markers: readonly [number, string][] = [[10, '/'], [15, '2'], [268, '2'], [273, '\\']];
+    let output = '';
+    let cursor = 0;
+    for (const [offset, marker] of markers) {
+      output += base.slice(cursor, offset) + marker;
+      cursor = offset;
+    }
+    return output + base.slice(cursor);
+  };
+  const front = decorateFullBed(markerFreeBed(selected));
+  const rear = decorateFullBed(markerFreeBed([]));
+  const stitch = '6'.repeat(BASE_WIDTH);
+  const lines = ['HOME', 'RACK:0', '// 150k-selection Studio regression'];
+  for (let index = 0; index < passCount; index += 1) {
+    lines.push(
+      `FRNT:${front}`,
+      `STIF:${stitch}`,
+      `REAR:${rear}`,
+      `STIR:${stitch}`,
+      `${index % 2 === 0 ? '>>' : '<<'} Kn-Kn 2 300 450`,
+    );
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+function emptyFullBedDrops(passCount: number): string {
+  const selected = Array.from({ length: NEEDLE_COLUMNS }, (_, index) => index);
+  const front = decorateBed(markerFreeBed(selected), '0');
+  const rear = decorateBed(markerFreeBed([]), '0');
+  const stitch = '6'.repeat(BASE_WIDTH);
+  const lines = ['HOME', 'RACK:0'];
+  for (let index = 0; index < passCount; index += 1) {
+    lines.push(
+      `FRNT:${front}`,
+      `STIF:${stitch}`,
+      `REAR:${rear}`,
+      `STIR:${stitch}`,
+      `${index % 2 === 0 ? '>>' : '<<'} Kn-Kn 0 300 450`,
+    );
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+function passExplosionKnitout(operationCount: number): string {
+  return [
+    ';!knitout-2',
+    ';;Machine: kniterate',
+    ';;Carriers: 1 2 3 4 5 6',
+    'in 1',
+    ...Array.from(
+      { length: operationCount },
+      (_, index) => `knit ${index % 2 === 0 ? '+' : '-'} f1 1`,
+    ),
+    'out 1',
+    '',
+  ].join('\n');
+}
+
 const KC = kcode();
 
 const K = [
@@ -71,7 +132,7 @@ const K = [
 ].join('\n');
 
 describe('strict KCode machine document engine', () => {
-  it('requires an explicit foreign-file dialect and never guesses one', () => {
+  it('requires an explicit parser contract at the direct library boundary', () => {
     const runtimeFilename: string = 'sample.kc';
     const document = openMachineDocument(runtimeFilename, KC, null);
 
@@ -236,6 +297,59 @@ describe('strict KCode machine document engine', () => {
     expect(document.verdict.annotation).toContain('conservative V1 policy');
   });
 
+  it('opens more than 150k selections without whole-document argument spreading', { timeout: 20_000 }, () => {
+    const source = largeKCode(594);
+    const document = openMachineDocument(
+      'full-bed-blanket.kc',
+      new TextEncoder().encode(source),
+      { dialect: 'knitout-vendor' },
+    );
+    const selectionCount = document.kcode?.trace?.passes.reduce(
+      (count, pass) => count + pass.selections.front.length + pass.selections.rear.length,
+      0,
+    );
+
+    expect(selectionCount).toBe(150_282);
+    expect(document.passes).toHaveLength(594);
+    expect(document.stats.needleSpan).toBe('K-code 0-252');
+    expect(document.verdict.state).toBe('surface');
+  });
+
+  it('blocks an oversized exact-trace graph before projection materializes it', { timeout: 20_000 }, () => {
+    const document = openMachineDocument('oversized-trace.kc', emptyFullBedDrops(791), {
+      dialect: 'knitout-vendor',
+    });
+
+    expect(document.verdict.state).toBe('blocked');
+    expect(document.kcode?.trace).toBeNull();
+    expect(document.kcode?.scene).toBeNull();
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'error',
+      rule: 'kcode.trace-projection',
+      rawMessage: expect.stringContaining('software resource limit of 200,000'),
+    }));
+  });
+
+  it('bounds MachineTrace diagnostic details while reporting exact warning totals', () => {
+    const document = openMachineDocument('many-empty-drops.kc', emptyFullBedDrops(100), {
+      dialect: 'knitout-vendor',
+    });
+
+    expect(document.kcode?.validation).toMatchObject({
+      ok: true,
+      errorCount: 0,
+      warningCount: 25_300,
+    });
+    expect(document.stats).toMatchObject({ errorCount: 0, warningCount: 25_300 });
+    expect(document.diagnostics.length).toBeLessThan(520);
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'warning',
+      rule: 'machine-trace.diagnostic-summary',
+      occurrences: 24_788,
+      rawMessage: expect.stringContaining('omitted 24788 additional warning findings'),
+    }));
+  });
+
   it('keeps imported artifacts Surface-proven without a registry-derived verification seam', () => {
     const document = openMachineDocument('sample.kc', KC, {
       dialect: 'knitout-vendor',
@@ -306,7 +420,7 @@ describe('authoritative KCode MachineTrace diff', () => {
     expect(result.windows[0]?.text).toContain('raw="1" numeric=1');
   });
 
-  it('blocks invalid or differently-declared inputs instead of guessing/falling back', () => {
+  it('blocks invalid inputs and compares V1 provenance aliases with identical movement semantics', () => {
     const valid = openMachineDocument('valid.kc', KC, { dialect: 'app' });
     const invalid = openMachineDocument(
       'invalid.kc',
@@ -321,22 +435,221 @@ describe('authoritative KCode MachineTrace diff', () => {
       dialect: 'knitout-vendor',
     });
     const dialectResult = compareKcDocuments(valid, vendor);
-    expect(dialectResult.summary.status).toBe('blocked');
-    expect(dialectResult.windows[0]?.text).toContain('dialect mismatch');
+    expect(dialectResult.summary).toMatchObject({
+      status: 'compared',
+      identical: true,
+      byteIdentical: true,
+    });
+    expect(dialectResult.windows).toEqual([]);
   });
 });
 
 describe('Knitout machine document behavior', () => {
-  it('opens Knitout and groups authored operations', () => {
+  it('lowers Knitout through the pinned backend and exposes exact emitted movement', () => {
     const document = openMachineDocument('sample.k', K);
-    expect(document.kcode).toBeNull();
-    expect(document.passes).toHaveLength(1);
+    expect(document.source).toBe(K);
+    expect(document.kcode?.document?.metadata).toMatchObject({
+      parseStatus: 'accepted',
+      recordMaterialization: 'complete',
+      dialect: 'knitout-vendor',
+      strict: true,
+    });
+    expect(document.kcode?.validation?.ok).toBe(true);
+    expect(document.kcode?.differential).toMatchObject({ ok: true, scheduledPassCount: 2, tracePassCount: 2 });
+    expect(document.kcode?.scene?.passes).toHaveLength(2);
+    expect(document.passes).toHaveLength(2);
     expect(document.passes[0]).toMatchObject({
       lineStart: 5,
       direction: '>>',
-      needleSpan: 'N12',
+      needleSpan: 'K-code 126',
+      section: 'Pinned backend / emitted KCode',
     });
+    expect(document.passes[1]).toMatchObject({ lineStart: 6, lineEnd: 6 });
     expect(document.stats.carriers).toEqual(['2']);
+    expect(document.verdict).toMatchObject({ state: 'surface', label: 'Surface-proven (imported)' });
+    expect(document.verdict.annotation).toContain('scheduled-pass differential checks');
+  });
+
+  it('gives each pinned-backend warning a stable unique diagnostic identity', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      ';;First-Unknown: one',
+      ';;Second-Unknown: two',
+      'in 2',
+      'tuck + f40 2',
+      'out 2',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('warnings.k', source);
+    const warnings = document.diagnostics.filter((finding) =>
+      finding.rule === 'knitout-backend-warning');
+
+    expect(warnings.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(warnings.map((finding) => finding.id)).size).toBe(warnings.length);
+    expect(warnings.map((finding) => finding.id)).toEqual(
+      warnings.map((_finding, index) => `knitout-backend-warning-warning-${index}`),
+    );
+  });
+
+  it('bounds pinned-backend warning details and reports the exact total', () => {
+    const headers = Array.from({ length: 10_000 }, (_, index) => `;;Unknown-${index}: value`);
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      ...headers,
+      'in 2',
+      'tuck + f40 2',
+      'out 2',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('many-warnings.k', source);
+
+    expect(document.stats.warningCount).toBe(10_000);
+    expect(document.diagnostics.length).toBeLessThan(520);
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'warning',
+      rule: 'knitout-backend-warning-summary',
+      occurrences: 9_488,
+      rawMessage: expect.stringContaining('omitted 9488 additional warnings'),
+    }));
+    const details = document.diagnostics.filter((finding) => finding.rule === 'knitout-backend-warning');
+    expect(details).toHaveLength(512);
+    expect(new Set(details.map((finding) => finding.id)).size).toBe(details.length);
+  });
+
+  it('bounds diagnostics for a high-record malformed Knitout import', () => {
+    const source = 'x\n'.repeat(100_000);
+    const document = openMachineDocument('adversarial.k', source);
+
+    expect(document.source).toBe(source);
+    expect(document.verdict.state).toBe('blocked');
+    expect(document.diagnostics.length).toBeLessThan(520);
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'error',
+      rule: 'knitout-diagnostic-summary',
+      rawMessage: expect.stringContaining('omitted 99489 additional findings'),
+    }));
+  });
+
+  it('bounds validator findings for many syntax-valid invalid operations', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1',
+      ...Array.from({ length: 2_000 }, () => 'knit + f0 1'),
+      '',
+    ].join('\n');
+    const document = openMachineDocument('many-invalid-ops.k', source);
+
+    expect(document.verdict.state).toBe('blocked');
+    expect(document.diagnostics.length).toBeLessThan(520);
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'error',
+      rule: 'validation-message-summary',
+      rawMessage: expect.stringContaining('omitted 5488 additional error findings'),
+    }));
+  });
+
+  it('blocks source-pass explosion inside lowering before emitted KCode allocation', { timeout: 20_000 }, () => {
+    const document = openMachineDocument('pass-explosion.k', passExplosionKnitout(10_001));
+
+    expect(document.verdict.state).toBe('blocked');
+    expect(document.kcode?.document).toBeNull();
+    expect(document.kcode?.trace).toBeNull();
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'error',
+      rule: 'knitout-backend-lowering',
+      rawMessage: expect.stringContaining('lowering resource limit exceeded (4096 scheduled source passes)'),
+    }));
+  });
+
+  it('streams one very large source-pass extent without argument spreading', { timeout: 20_000 }, () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      'in 1',
+      ...Array.from({ length: 130_000 }, () => 'knit + f1 1'),
+      'out 1',
+      '',
+    ].join('\n');
+
+    let document: ReturnType<typeof openMachineDocument> | undefined;
+    expect(() => { document = openMachineDocument('large-source-pass.k', source); }).not.toThrow();
+    expect(document).toBeDefined();
+    if (document === undefined) throw new Error('expected a blocked document');
+    expect(document.verdict.state).toBe('blocked');
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      rule: 'knitout-backend-lowering',
+      rawMessage: expect.stringContaining('lowering resource limit exceeded'),
+    }));
+  });
+
+  it('blocks syntax-clean Knitout when strict emitted KCode has no machine passes', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+    ].join('\n');
+    const document = openMachineDocument('empty.k', source);
+    const emittedFinding = document.diagnostics.find((item) => item.rule === 'kcode.no-passes');
+
+    expect(document.verdict.state).toBe('blocked');
+    expect(document.kcode?.document?.metadata.parseStatus).toBe('rejected');
+    expect(document.kcode?.trace).toBeNull();
+    expect(emittedFinding).toMatchObject({ line: null, sourceSpan: null, classification: 'syntax' });
+    expect(emittedFinding?.rawMessage).toContain('Emitted KCode line');
+  });
+
+  it('blocks syntax-clean Knitout whose lowered transfer reads an empty needle', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      'x-speed-number 300',
+      'x-roller-advance 450',
+      'xfer f40 b40',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('empty-transfer.k', source);
+
+    expect(document.kcode?.document?.metadata.parseStatus).toBe('accepted');
+    expect(document.kcode?.differential?.ok).toBe(true);
+    expect(document.kcode?.validation?.ok).toBe(false);
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'error',
+      rule: 'machine-trace.transfer-source-empty',
+      line: null,
+      sourceSpan: null,
+    }));
+    expect(document.verdict.state).toBe('blocked');
+  });
+
+  it('applies the shared loop-stack gate to lowered foreign Knitout', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      'x-speed-number 300',
+      'x-roller-advance 450',
+      'in 2',
+      'tuck + f40 2',
+      'tuck - f40 2',
+      'tuck + f40 2',
+      'tuck - f40 2',
+      'out 2',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('four-tucks.k', source);
+    const policy = document.diagnostics.filter((finding) =>
+      finding.rule === 'machine-trace.loop-stack-policy');
+
+    expect(document.kcode?.differential?.ok).toBe(true);
+    expect(policy.map((finding) => finding.severity)).toEqual(['warning', 'error']);
+    expect(document.verdict.state).toBe('blocked');
   });
 
   it('blocks malformed Knitout input', () => {

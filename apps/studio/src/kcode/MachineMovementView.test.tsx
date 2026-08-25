@@ -85,13 +85,17 @@ const SCENE: MachineSceneV1 = {
   }],
 };
 
-const emptyState = {
-  stacks: {},
-  front: [],
-  rear: [],
+const emptyMetrics = {
   occupiedNeedles: 0,
   totalLoops: 0,
   maxStack: 0,
+} as const;
+
+const emptyState = {
+  ...emptyMetrics,
+  stacks: {},
+  front: [],
+  rear: [],
 } as const;
 
 const VALIDATION: MachineValidationReportV1 = {
@@ -102,25 +106,24 @@ const VALIDATION: MachineValidationReportV1 = {
   passStates: [{
     passIndex: 0,
     before: {
-      stacks: { 'front:39': 1 },
-      front: [{ bed: 'front', traceCoordinate: 39, count: 1 }],
-      rear: [],
       occupiedNeedles: 1,
       totalLoops: 1,
       maxStack: 1,
     },
     after: {
-      stacks: { 'front:39': 1, 'rear:39': 1 },
-      front: [{ bed: 'front', traceCoordinate: 39, count: 1 }],
-      rear: [{ bed: 'rear', traceCoordinate: 39, count: 1 }],
       occupiedNeedles: 2,
       totalLoops: 2,
       maxStack: 1,
     },
+    stackDeltas: [
+      { bed: 'front', traceCoordinate: 39, beforeCount: 1, afterCount: 1 },
+      { bed: 'rear', traceCoordinate: 39, beforeCount: 0, afterCount: 1 },
+    ],
   }, {
     passIndex: 1,
-    before: emptyState,
-    after: emptyState,
+    before: emptyMetrics,
+    after: emptyMetrics,
+    stackDeltas: [],
   }],
   finalState: emptyState,
   operationalAssurance: {
@@ -155,9 +158,13 @@ describe('MachineMovementView', () => {
     expect(markup).toContain('is-selected-boundary');
     expect(markup).toContain('mmv-action-split');
     expect(markup).toContain('front K40 / trace 39');
+    expect(markup).toContain('1→1 loops');
+    expect(markup).toContain('0→1 loops');
     expect(markup).toContain('aria-label="Loops: 1 before, 2 after"');
     expect(markup).toContain('No KCode replay findings on this pass');
     expect(markup).toContain('KCode coordinates; physical needle labels unverified.');
+    expect(markup).toContain('canonical raster v1');
+    expect(markup).not.toContain('>knitout-vendor<');
     expect(markup).toContain('<dl class="mmv-loop-state">');
     expect(markup).toContain('operational assurance not established');
     expect(markup).toContain('physical-needle-numbering-unverified');
@@ -221,5 +228,28 @@ describe('MachineMovementView', () => {
     />);
     expect(markup).toContain('No programmed passes');
     expect(markup).toContain('renders only projected MachineScene data');
+  });
+
+  it('windows an adversarial rack ledger around the selected pass boundary', () => {
+    const sourceSpan = SCENE.rackCommands[0]!.sourceSpan;
+    const rackCommands = Array.from({ length: 49_990 }, (_, index) => ({
+      index,
+      beforePassIndex: 0,
+      fromRack: 0,
+      toRack: 0,
+      valueRaw: '0',
+      sourceSpan,
+    }));
+    const markup = renderToStaticMarkup(<MachineMovementView
+      scene={{ ...SCENE, rackCommands }}
+      validation={VALIDATION}
+      selectedPass={0}
+      onSelect={() => {}}
+    />);
+
+    expect(markup).toContain('49,990');
+    expect(markup).toContain('Showing commands #49890–#49990 of 49,990');
+    expect(markup.match(/<i>#/g)).toHaveLength(101);
+    expect(markup.length).toBeLessThan(100_000);
   });
 });

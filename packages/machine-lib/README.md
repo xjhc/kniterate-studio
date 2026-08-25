@@ -12,10 +12,16 @@ pnpm test:reference-kc
 pnpm test:compiler
 pnpm test:revalidation
 pnpm kniterate:refusals
-pnpm kniterate:swatches
+pnpm kniterate:swatches:check
 ```
 
-The root `pnpm kniterate:conform` assembles those rails and writes
-`out/kniterate-conformance-report.json`. See
+`kniterate:swatches:check` is the read-only build/proof gate. Run
+`pnpm kniterate:swatches` after intentionally completing or updating a physical
+registry entry, or after an intentional compiler-source change invalidates the
+tracked compiler fingerprint. It rewrites the tracked manifest.
+
+The root `pnpm kniterate:conform` assembles those rails and explicitly writes
+`out/kniterate-conformance-report.json`; `pnpm kniterate:conform:check` runs the
+same rail read-only and fails on stale report bytes. See
 [`../../docs/EXTRACTION.md`](../../docs/EXTRACTION.md) for included and excluded
 source boundaries.

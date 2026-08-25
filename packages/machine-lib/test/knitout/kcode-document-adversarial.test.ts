@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
+import { emitKCodeDocumentBytes, parseKCodeBytes } from '../../src/knitout/kcode/bytes.js'
 import { emitKCodeDocument } from '../../src/knitout/kcode/emitter.js'
 import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../../src/knitout/kcode/machine-profile.js'
-import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
+import { MAX_KCODE_SOURCE_CODE_UNITS, parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
 import type { KCodeDiagnosticRule } from '../../src/knitout/kcode/types.js'
 
 const STRICT_VENDOR_OPTIONS = {
@@ -266,6 +267,11 @@ describe('strict KCode adversarial rail', () => {
       mutate: (source: string) => replaceLine(source, (line) => line.startsWith('FRNT:'), (line) => line.replace('.', '_')),
     },
     {
+      name: 'selected needle changed to a dot inside the standard needle domain',
+      rules: ['kcode.bed-needle-domain'] as const,
+      mutate: (source: string) => replaceLine(source, (line) => line.startsWith('FRNT:'), (line) => line.replace('-', '.')),
+    },
+    {
       name: 'footer with too few tokens',
       rules: ['kcode.footer-arity'] as const,
       mutate: (source: string) => replaceLine(source, (line) => line.startsWith('>>'), (line) => line.replace(/ [^ ]+$/, '')),
@@ -322,10 +328,131 @@ describe('strict KCode adversarial rail', () => {
     },
     {
       name: 'UTF-8 BOM code point before HOME',
-      rules: ['kcode.source-byte', 'kcode.missing-home'] as const,
+      rules: ['kcode.source-byte'] as const,
       mutate: (source: string) => `\ufeff${source}`,
     },
   ])('rejects $name and still preserves the complete source', ({ rules, mutate }) => {
     expectRejected(mutate(validDocument()), rules)
+  })
+
+  it('rejects a leading BOM without cascading into a false missing-HOME error', () => {
+    const result = parseKCodeDocument(`\ufeff${validDocument()}`, STRICT_VENDOR_OPTIONS)
+
+    expect(result.ok).toBe(false)
+    expect(result.diagnostics.map((diagnostic) => diagnostic.rule)).toEqual([
+      'kcode.source-byte',
+    ])
+    expect(emitKCodeDocument(result.document)).toBe(`\ufeff${validDocument()}`)
+  })
+
+  it('groups and truncates diagnostics for one megabyte of invalid source without losing a code unit', () => {
+    const bytes = new Uint8Array(1024 * 1024).fill(0xff)
+    const source = '\u00ff'.repeat(bytes.length)
+    const result = parseKCodeBytes(bytes, STRICT_VENDOR_OPTIONS)
+
+    expect(result.ok).toBe(false)
+    expect(result.diagnostics.filter((diagnostic) => diagnostic.rule === 'kcode.source-byte')).toHaveLength(1)
+    expect(result.diagnostics).toContainEqual(expect.objectContaining({
+      rule: 'kcode.source-byte-summary',
+      severity: 'error',
+      message: expect.stringContaining('1048512 additional invalid code units'),
+      span: expect.objectContaining({
+        start: expect.objectContaining({ offset: 64 }),
+        end: expect.objectContaining({ offset: source.length }),
+      }),
+    }))
+    expect(result.diagnostics.length).toBeLessThan(10)
+    expect(Math.max(...result.diagnostics.map((diagnostic) => diagnostic.message.length))).toBeLessThan(512)
+    expect(result.document.records).toHaveLength(1)
+    expect(result.document.records[0]).toMatchObject({ raw: source, lineEnding: '' })
+    expect(result.document.records.map((record) => record.raw + record.lineEnding).join('')).toBe(source)
+    expect(emitKCodeDocument(result.document)).toBe(source)
+    expect(Buffer.compare(Buffer.from(emitKCodeDocumentBytes(result.document)), Buffer.from(bytes))).toBe(0)
+    expect(parseKCodeBytes(bytes, STRICT_VENDOR_OPTIONS).diagnostics).toEqual(result.diagnostics)
+  })
+
+  it('refuses oversized byte input before one-byte decoding or copying', () => {
+    const bytes = new Uint8Array(MAX_KCODE_SOURCE_CODE_UNITS + 1)
+    const result = parseKCodeBytes(bytes, STRICT_VENDOR_OPTIONS)
+
+    expect(result.ok).toBe(false)
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        rule: 'kcode.resource-limit',
+        message: expect.stringContaining('were not copied into the parsed document'),
+      }),
+    ])
+    expect(result.document.rawText).toBe('')
+    expect(result.document.records).toEqual([])
+    expect(result.document.metadata.recordMaterialization).toBe('resource-limited')
+    expect(result.document.metadata.sourceRetention).toBe('caller-owned-oversized-bytes')
+    expect(() => emitKCodeDocumentBytes(result.document)).toThrow(/caller-owned/)
+  })
+
+  it('fails closed before materializing an adversarial number of short records', () => {
+    const source = '//\n'.repeat(50_001)
+    const result = parseKCodeDocument(source, STRICT_VENDOR_OPTIONS)
+
+    expect(result.ok).toBe(false)
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        rule: 'kcode.resource-limit',
+        severity: 'error',
+        line: 50_001,
+        message: expect.stringContaining('50000-record strict-intake limit'),
+      }),
+    ])
+    expect(result.document.metadata.recordMaterialization).toBe('resource-limited')
+    expect(result.document.records).toEqual([])
+    expect(emitKCodeDocument(result.document)).toBe(source)
+  })
+
+  it('fails closed before materializing one oversized record', () => {
+    const source = 'X'.repeat(2 * 1024 * 1024 + 1)
+    const result = parseKCodeDocument(source, STRICT_VENDOR_OPTIONS)
+
+    expect(result.ok).toBe(false)
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        rule: 'kcode.resource-limit',
+        message: expect.stringContaining('2097152-code-unit line limit'),
+      }),
+    ])
+    expect(result.document.metadata.recordMaterialization).toBe('resource-limited')
+    expect(emitKCodeDocument(result.document)).toBe(source)
+  })
+
+  it('caps independent diagnostics while preserving every materialized record', () => {
+    const source = 'X\n'.repeat(2_000)
+    const first = parseKCodeDocument(source, STRICT_VENDOR_OPTIONS)
+    const second = parseKCodeDocument(source, STRICT_VENDOR_OPTIONS)
+
+    expect(first.ok).toBe(false)
+    expect(first.document.metadata.recordMaterialization).toBe('complete')
+    expect(first.document.records).toHaveLength(2_000)
+    expect(first.diagnostics).toHaveLength(513)
+    expect(first.diagnostics.at(-1)).toMatchObject({
+      rule: 'kcode.diagnostic-summary',
+      severity: 'error',
+      message: expect.stringContaining('omitted 1491 additional error findings'),
+    })
+    expect(first.diagnostics).toEqual(second.diagnostics)
+    expect(emitKCodeDocument(first.document)).toBe(source)
+  })
+
+  it('summarizes omitted errors and warnings separately in non-strict intake', () => {
+    const result = parseKCodeDocument(`\u0080\n${'X\n'.repeat(1_000)}`, {
+      ...STRICT_VENDOR_OPTIONS,
+      strict: false,
+    })
+    const summaries = result.diagnostics.filter((diagnostic) =>
+      diagnostic.rule === 'kcode.diagnostic-summary')
+
+    expect(result.ok).toBe(false)
+    expect(result.diagnostics).toHaveLength(514)
+    expect(summaries).toEqual(expect.arrayContaining([
+      expect.objectContaining({ severity: 'error', occurrences: 4 }),
+      expect.objectContaining({ severity: 'warning', occurrences: 489 }),
+    ]))
   })
 })

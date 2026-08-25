@@ -145,20 +145,22 @@ chart canvas · strategy rail · pass grid · verdict badge · source dock · ru
    and browser Worker adapters execute the same pinned vendored source. The
    backend returns an exact post-lowering scheduled-pass trace, including source
    lines, alongside KCode. All mutable lowering settings are conversion-scoped;
-   repeat and permutation tests guard deterministic, history-independent output.
+   repeat and cross-document ordering tests guard deterministic,
+   history-independent output.
 5. **Emitted KCode is machine-view authority.** `predictedPasses` remains useful
    planning telemetry, but exact pass count, design-row joins, movement, source
    spans, and output verdicts come from strict KCode → `MachineTraceV1` →
    validator/`MachineSceneV1`. React renders those projections and performs no
    raster, coordinate, or loop-state math.
 6. **Differential proof without circular trust.** The backend's scheduled-pass
-   IR is compared for every KCode-encoded field with an independently parsed
-   MachineTrace. Backend-only `sourceLines`, `isAutoMove`, and `comment`
-   provenance is not part of the KCode differential. `sourceLines` and claimed
-   design rows are integrity-checked against parsed Knitout; `isAutoMove` and
-   `comment` remain unverified backend annotations. Separate test-only
+   IR is compared for every machine-executable KCode field with an independently
+   parsed MachineTrace. Backend-only `sourceLines` and `isAutoMove` are not part
+   of the KCode differential; serialized `comment` prose is preserved but is not
+   movement/state evidence. `sourceLines` and claimed design rows are
+   integrity-checked against parsed Knitout. Separate test-only
    decoding/replay, byte round trips, adversarial grammar,
-   property and grammar/input-mutation tests, the App-captured 13-file corpus,
+   property and grammar/input-mutation tests, the 13-file reference corpus
+   parsed under the canonical V1 dialect without inferring an external producer,
    refusal cases, and topology checks cover the public result. This is not
    implementation-source mutation scoring; adding a source-mutation score is a
    future gate opportunity. `pnpm verify:kcode` fingerprints the contract and
@@ -302,15 +304,16 @@ downstream work forks on them. **R1–R4 should be answered before S2 starts.**
   artifact match against a physical `registry/swatches` entry ⇒ **Knit-proven**.
   Never auto-Knit-proven. Reuse `validators/messages.ts` copy verbatim in the panel.
 - **Foreign-file rule (S1) — as implemented in `apps/studio/src/engine.ts`.** A
-  foreign `.kc`/`.k` (opened, not compiled by us) has no plan; its verdict is
-  computed from the `kcToKnitout` reconstruction run through the op-level +
-  bed-state validators. Any error **or unresolved warning** ⇒ **Blocked** (an
-  imported file has no project context in which to accept a warning). Clean ⇒
-  **Surface-proven (imported)** — with a mandatory annotation ("imported —
-  reconstructed") on the badge panel and run sheet. Imported V1 files remain at
-  that rung: `openMachineDocument` accepts no registry evidence ID, and a future
-  trusted verifier must bind exact input bytes to the physical registry before
-  reopening an artifact can become Knit-proven.
+  foreign `.kc`/`.k` (opened, not compiled by us) has no project plan. `.kc`
+  intake is strict byte-preserving parse → MachineTrace → loop/kinematic replay;
+  `.k` intake first runs the pinned backend, then that same emitted-output rail
+  plus the scheduled-pass differential. Any error **or unresolved warning** ⇒
+  **Blocked** (an imported file has no project context in which to accept a
+  warning). Clean ⇒ **Surface-proven (imported)** — with a mandatory annotation
+  on the badge panel and run sheet. Imported V1 files remain at that rung:
+  `openMachineDocument` accepts no registry evidence ID, and a future trusted
+  verifier must bind exact input bytes to the physical registry before reopening
+  an artifact can become Knit-proven.
   **Three rungs; no waiver, no Experimental.**
 
 ### R7 — AI tool-use surface & speculative compile

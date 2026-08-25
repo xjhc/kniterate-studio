@@ -194,18 +194,16 @@ function mutateSelectedFrontStitch(source: string): string {
     replaceAt(value, payloadIndex, value[payloadIndex] === '8' ? '7' : '8'));
 }
 
-function mutateUnselectedRaw(
+function mutateUnselectedStitchRaw(
   source: string,
-  prefix: 'FRNT:' | 'STIF:' | 'REAR:' | 'STIR:',
+  prefix: 'STIF:' | 'STIR:',
 ): string {
   return mutateFirstLine(source, prefix, (value) => {
-    const candidates = prefix === 'FRNT:' || prefix === 'REAR:'
-      ? ['_', '.']
-      : ['0', '1', '6', '7'];
+    const candidates = ['0', '1', '6', '7'];
     const index = [...value].findIndex((token, tokenIndex) =>
       tokenIndex > 20 && candidates.includes(token) && value[tokenIndex] !== '-');
     if (index === -1) throw new Error(`No raw mutation candidate in ${prefix}`);
-    const replacement = value[index] === '_' ? '.' : value[index] === '.' ? '_' : value[index] === '0' ? '1' : '0';
+    const replacement = value[index] === '0' ? '1' : '0';
     return replaceAt(value, index, replacement);
   });
 }
@@ -308,10 +306,8 @@ describe('diffKCodeMachineTrace', () => {
           'raw.STIF',
         ],
       },
-      { source: mutateUnselectedRaw(VALID_KCODE, 'FRNT:'), fields: ['raw.FRNT'] },
-      { source: mutateUnselectedRaw(VALID_KCODE, 'STIF:'), fields: ['raw.STIF'] },
-      { source: mutateUnselectedRaw(VALID_KCODE, 'REAR:'), fields: ['raw.REAR'] },
-      { source: mutateUnselectedRaw(VALID_KCODE, 'STIR:'), fields: ['raw.STIR'] },
+      { source: mutateUnselectedStitchRaw(VALID_KCODE, 'STIF:'), fields: ['raw.STIF'] },
+      { source: mutateUnselectedStitchRaw(VALID_KCODE, 'STIR:'), fields: ['raw.STIR'] },
     ];
 
     for (const testCase of cases) {

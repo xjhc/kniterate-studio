@@ -145,8 +145,35 @@ interface DecodedBed {
   readonly markers: readonly DecodedMarker[]
 }
 
+/**
+ * Bound the eagerly materialized selection/action graph. The largest pinned
+ * reference artifact currently contains 150,282 selections; this leaves a
+ * deliberate margin while refusing compact inputs that would otherwise expand
+ * into multi-gigabyte trace, validation, and scene structures.
+ */
+const MAX_MACHINE_TRACE_SELECTIONS = 200_000
+
 function fail(message: string): never {
   throw new Error(`Cannot project MachineTraceV1: ${message}`)
+}
+
+function enforceSelectionBudget(document: KCodeDocumentV1): void {
+  let selectionCount = 0
+  for (const pass of document.passes) {
+    for (const bed of [pass.frnt.value, pass.rear.value]) {
+      for (let index = 0; index < bed.length; index++) {
+        if (bed.charCodeAt(index) !== 45) continue
+        selectionCount++
+        if (selectionCount > MAX_MACHINE_TRACE_SELECTIONS) {
+          fail(
+            `selected raster cells exceed the software resource limit of `
+            + `${MAX_MACHINE_TRACE_SELECTIONS.toLocaleString('en-US')}; `
+            + 'split the artifact before exact trace projection',
+          )
+        }
+      }
+    }
+  }
 }
 
 function unitSpan(span: KCodeSourceSpan, index: number): KCodeSourceSpan {
@@ -333,16 +360,33 @@ function selectionsForBed(
 function orderedSelections(
   selections: readonly MachineTraceSelectionV1[],
   direction: '>>' | '<<',
+  coordinate: (selection: MachineTraceSelectionV1) => number =
+    (selection) => selection.traceCoordinate,
 ): MachineTraceSelectionV1[] {
   const directionFactor = direction === '>>' ? 1 : -1
   return [...selections].sort((a, b) =>
-    directionFactor * (a.traceCoordinate - b.traceCoordinate)
+    directionFactor * (coordinate(a) - coordinate(b))
     || a.bed.localeCompare(b.bed))
+}
+
+/**
+ * Exact pinned-backend carriage slot for a regular knit/tuck/drop selection.
+ * Back-bed raster columns encode needle labels; integer racking moves their
+ * carriage traversal slot by `floor(rack)`. Transfer passes retain their
+ * source-raster traversal contract and intentionally do not use this helper.
+ */
+export function regularActionTraversalCoordinate(
+  selection: Pick<MachineTraceSelectionV1, 'bed' | 'traceCoordinate'>,
+  rack: number,
+): number {
+  return selection.traceCoordinate
+    + (selection.bed === 'rear' ? Math.floor(rack) : 0)
 }
 
 function knitTuckActions(
   operation: string,
   carrier: KCodeCarrierToken,
+  rack: number,
   direction: '>>' | '<<',
   front: readonly MachineTraceSelectionV1[],
   rear: readonly MachineTraceSelectionV1[],
@@ -350,7 +394,11 @@ function knitTuckActions(
   const match = /^(Kn|Tu)-(Kn|Tu)$/.exec(operation)
   if (match === null) return null
 
-  const selections = orderedSelections([...front, ...rear], direction)
+  const selections = orderedSelections(
+    [...front, ...rear],
+    direction,
+    (selection) => regularActionTraversalCoordinate(selection, rack),
+  )
   if (selections.length === 0) {
     return [{ kind: 'move', carrier }]
   }
@@ -430,7 +478,14 @@ function actionsForPass(
   front: readonly MachineTraceSelectionV1[],
   rear: readonly MachineTraceSelectionV1[],
 ): MachineTraceActionV1[] {
-  const knitTuck = knitTuckActions(operation, carrier, direction, front, rear)
+  const knitTuck = knitTuckActions(
+    operation,
+    carrier,
+    rack,
+    direction,
+    front,
+    rear,
+  )
   if (knitTuck !== null) return knitTuck
 
   const transfer = transferActions(
@@ -644,6 +699,8 @@ export function projectKCodeMachineTrace(
       + `dialect ${JSON.stringify(document.metadata.dialect)}`,
     )
   }
+
+  enforceSelectionBudget(document)
 
   return {
     schemaVersion: 1,

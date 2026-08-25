@@ -3,6 +3,7 @@ import {
   passesToKCode,
   passesToKCodeWithTrace,
 } from '../vendor/knitout-to-kcode.browser.js';
+import { checkKnitoutSourceResourceLimits } from '../parser.js';
 import type {
   VendorLoweringSettings,
   VendorScheduledKCode,
@@ -38,6 +39,8 @@ export interface BrowserKCodeResult {
   kcode?: string;
   error?: string;
   warnings?: readonly string[];
+  /** Total backend warnings, including details omitted from the bounded array. */
+  warningCount?: number;
   /** Exact post-lowering passes from the pinned backend. */
   scheduledPasses?: readonly VendorScheduledPass[];
 }
@@ -45,9 +48,23 @@ export interface BrowserKCodeResult {
 /** Browser-safe adapter over the same vendored converter used by Node. */
 export function browserKnitoutToKCode(knitoutText: string, filename = 'blanket.k'): BrowserKCodeResult {
   const warnings: string[] = [];
+  let warningCount = 0;
+  const captureWarning = (...values: unknown[]): void => {
+    warningCount++;
+    if (warnings.length < 512) warnings.push(values.map(String).join(' '));
+  };
   const originalWarn = console.warn;
   const originalLog = console.log;
-  console.warn = (...values: unknown[]) => warnings.push(values.map(String).join(' '));
+  const resourceIssue = checkKnitoutSourceResourceLimits(knitoutText);
+  if (resourceIssue !== null) {
+    return {
+      ok: false,
+      error: `Line ${resourceIssue.line}: ${resourceIssue.message}`,
+      warnings,
+      warningCount,
+    };
+  }
+  console.warn = captureWarning;
   console.log = () => {};
   try {
     const { headers, passes, lowering } = browserConverter.knitoutToPasses(knitoutText, filename);
@@ -62,9 +79,10 @@ export function browserKnitoutToKCode(knitoutText: string, filename = 'blanket.k
       kcode: converted.kcode,
       scheduledPasses: converted.passes,
       warnings,
+      warningCount,
     };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : String(error), warnings };
+    return { ok: false, error: error instanceof Error ? error.message : String(error), warnings, warningCount };
   } finally {
     console.warn = originalWarn;
     console.log = originalLog;

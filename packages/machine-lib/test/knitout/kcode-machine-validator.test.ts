@@ -6,6 +6,7 @@ import {
 } from '../../src/knitout/kcode/machine-profile.js'
 import {
   projectKCodeMachineTrace,
+  regularActionTraversalCoordinate,
   type MachineTraceActionV1,
   type MachineTraceBedV1,
   type MachineTracePassV1,
@@ -235,11 +236,30 @@ describe('KCode-native MachineTrace validation', () => {
       pass.actions.some((action) => action.kind === 'split'))
     expect(splitIndex).toBeGreaterThanOrEqual(0)
     const split = report.passStates[splitIndex]!
-    expect(split.before.stacks).toEqual({ 'front:126': 1 })
-    expect(split.after.stacks).toEqual({
-      'front:126': 1,
-      'rear:126': 1,
+    expect(split.before).toEqual({
+      occupiedNeedles: 1,
+      totalLoops: 1,
+      maxStack: 1,
     })
+    expect(split.after).toEqual({
+      occupiedNeedles: 2,
+      totalLoops: 2,
+      maxStack: 1,
+    })
+    expect(split.stackDeltas).toEqual([
+      {
+        bed: 'front',
+        traceCoordinate: 126,
+        beforeCount: 1,
+        afterCount: 1,
+      },
+      {
+        bed: 'rear',
+        traceCoordinate: 126,
+        beforeCount: 0,
+        afterCount: 1,
+      },
+    ])
     expect(report.finalState).toMatchObject({
       stacks: { 'rear:126': 1 },
       occupiedNeedles: 1,
@@ -264,6 +284,42 @@ describe('KCode-native MachineTrace validation', () => {
       trace,
       KNITERATE_7GG_KCODE_PROFILE_V1,
     ))).toBe(JSON.stringify(report))
+  })
+
+  it('retains action-local pass deltas and exact global metrics instead of full-bed snapshots', () => {
+    const base = smallTrace(['K'])
+    const passes = Array.from({ length: 64 }, (_, index): MachineTracePassV1 => {
+      const at = selection(index, 'front', index)
+      return {
+        ...smallPass('K', index),
+        carriageStops: { left: -0.5, right: 64.5 },
+        carrierStops: { left: -0.5, right: 64.5 },
+        selections: { front: [at], rear: [] },
+        actions: [{ kind: 'knit', at }],
+      }
+    })
+    const report = validateKCodeMachineTrace(
+      withPasses(base, passes),
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )
+
+    expect(report.ok).toBe(true)
+    expect(report.passStates).toHaveLength(64)
+    expect(report.passStates.every((passState) =>
+      passState.stackDeltas.length === 1)).toBe(true)
+    expect(report.passStates[63]).toEqual({
+      passIndex: 63,
+      before: { occupiedNeedles: 63, totalLoops: 63, maxStack: 1 },
+      after: { occupiedNeedles: 64, totalLoops: 64, maxStack: 1 },
+      stackDeltas: [{
+        bed: 'front',
+        traceCoordinate: 63,
+        beforeCount: 0,
+        afterCount: 1,
+      }],
+    })
+    expect(report.finalState.front).toHaveLength(64)
+    expect(report.finalState.occupiedNeedles).toBe(64)
   })
 
   it('blocks unknown/empty-transfer actions and warns on model-observed empty cleanup at exact spans', () => {
@@ -404,6 +460,61 @@ describe('KCode-native MachineTrace validation', () => {
     )
   })
 
+  it.each([
+    { rack: 2, direction: '+', operations: ['knit + f2 2', 'knit + b1 2'], beds: ['front', 'rear'] },
+    { rack: -2, direction: '+', operations: ['knit + b3 2', 'knit + f2 2'], beds: ['rear', 'front'] },
+    { rack: 2, direction: '-', operations: ['knit - b1 2', 'knit - f2 2'], beds: ['rear', 'front'] },
+    { rack: -2, direction: '-', operations: ['knit - f2 2', 'knit - b3 2'], beds: ['front', 'rear'] },
+  ] as const)(
+    'orders pinned-backend both-bed actions by rack-adjusted slots at rack $rack direction $direction',
+    ({ rack, direction, operations, beds }) => {
+      const trace = compileTrace([
+        ';!knitout-2',
+        ';;Machine: kniterate',
+        ';;Carriers: 1 2 3 4 5 6',
+        'x-speed-number 300',
+        'x-roller-advance 100',
+        'in 2',
+        ...(direction === '-' ? ['knit + f10 2'] : []),
+        `rack ${rack}`,
+        ...operations,
+        'out 2',
+        '',
+      ].join('\n'))
+      const pass = trace.passes.find((candidate) =>
+        candidate.selections.front.length > 0
+        && candidate.selections.rear.length > 0)!
+      const report = validateKCodeMachineTrace(
+        trace,
+        KNITERATE_7GG_KCODE_PROFILE_V1,
+      )
+      const regularActions = pass.actions.filter((action) =>
+        action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'drop')
+      const coordinates = regularActions.map((action) => {
+        if (action.kind !== 'knit' && action.kind !== 'tuck' && action.kind !== 'drop') {
+          throw new Error('Expected regular action')
+        }
+        return regularActionTraversalCoordinate(action.at, pass.rack)
+      })
+
+      expect(pass.rack).toBe(rack)
+      expect(pass.direction).toBe(direction === '+' ? '>>' : '<<')
+      expect(regularActions.map((action) =>
+        action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'drop'
+          ? action.at.bed
+          : null)).toEqual(beds)
+      expect(coordinates).toEqual(
+        direction === '+'
+          ? [...coordinates].sort((a, b) => a - b)
+          : [...coordinates].sort((a, b) => b - a),
+      )
+      expect(report.diagnostics).not.toContainEqual(expect.objectContaining({
+        rule: 'machine-trace.action-direction-order',
+      }))
+      expect(report.ok).toBe(true)
+    },
+  )
+
   it('validates the complete ordered rack-command stream against pass state', () => {
     const trace = smallTrace(['K', 'K'])
     const span = trace.passes[1]!.source.span
@@ -443,18 +554,36 @@ describe('KCode-native MachineTrace validation', () => {
     expect(rules(badIndex)).toContain('machine-trace.rack-command-index')
   })
 
-  it('keeps documented-setting findings advisory and physical limits explicit', () => {
-    const first = compileTrace().passes[0]!
+  it.each([
+    { count: 3, warningCount: 1, errorCount: 0, ok: true },
+    { count: 4, warningCount: 1, errorCount: 1, ok: false },
+    { count: 6, warningCount: 1, errorCount: 3, ok: false },
+  ])('applies the shared conservative software policy to $count tucks', ({
+    count,
+    warningCount,
+    errorCount,
+    ok,
+  }) => {
     const report = validateKCodeMachineTrace(
-      smallTrace(['T', 'T', 'T', 'T']),
+      smallTrace(Array.from({ length: count }, () => 'T')),
       KNITERATE_7GG_KCODE_PROFILE_V1,
     )
-    expect(report.ok).toBe(true)
-    expect(report.diagnostics).toEqual([])
+    const policyDiagnostics = report.diagnostics.filter((diagnostic) =>
+      diagnostic.rule === 'machine-trace.loop-stack-policy')
+
+    expect(report.ok).toBe(ok)
+    expect(policyDiagnostics.filter((diagnostic) =>
+      diagnostic.severity === 'warning')).toHaveLength(warningCount)
+    expect(policyDiagnostics.filter((diagnostic) =>
+      diagnostic.severity === 'error')).toHaveLength(errorCount)
+    expect(policyDiagnostics.every((diagnostic) =>
+      diagnostic.class === 'operational-advisory')).toBe(true)
+    expect(policyDiagnostics.every((diagnostic) =>
+      diagnostic.message.includes('physical'))).toBe(true)
     expect(report.finalState).toMatchObject({
-      stacks: { 'front:0': 4 },
-      maxStack: 4,
-      totalLoops: 4,
+      stacks: { 'front:0': count },
+      maxStack: count,
+      totalLoops: count,
     })
     expect(report.operationalAssurance).toMatchObject({
       status: 'not-established-by-software-validation',
@@ -464,7 +593,10 @@ describe('KCode-native MachineTrace validation', () => {
     expect(report.operationalAssurance.limitations.map((item) => item.code)).toContain(
       'loop-stack-operational-limit-unverified',
     )
+  })
 
+  it('keeps documented-setting findings advisory and carrier lifecycle unclaimed', () => {
+    const first = compileTrace().passes[0]!
     const highSpeed = withPasses(compileTrace(), [{
       ...first,
       speedRaw: '801',
@@ -482,6 +614,34 @@ describe('KCode-native MachineTrace validation', () => {
     }))
     expect(highSpeedReport.diagnostics.some((diagnostic) =>
       diagnostic.rule.includes('carrier-active'))).toBe(false)
+  })
+
+  it('keeps capped mixed-severity totals exact without reclassifying omissions', () => {
+    const report = validateKCodeMachineTrace(
+      smallTrace([
+        ...Array.from({ length: 600 }, () => 'D' as const),
+        ...Array.from({ length: 600 }, () => 'X' as const),
+      ]),
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )
+    const represented = (severity: 'error' | 'warning'): number =>
+      report.diagnostics
+        .filter((diagnostic) => diagnostic.severity === severity)
+        .reduce((count, diagnostic) => count + (diagnostic.occurrences ?? 1), 0)
+
+    expect(report.diagnostics.length).toBeLessThanOrEqual(514)
+    expect(represented('error')).toBe(report.errorCount)
+    expect(represented('warning')).toBe(report.warningCount)
+    expect(report.diagnostics).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        rule: 'machine-trace.diagnostic-summary',
+        severity: 'error',
+      }),
+      expect.objectContaining({
+        rule: 'machine-trace.diagnostic-summary',
+        severity: 'warning',
+      }),
+    ]))
   })
 
   it('property-checks stop containment with a fixed seed', () => {

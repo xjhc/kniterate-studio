@@ -121,13 +121,30 @@ export interface KCodeDocumentMetadataV1 {
    * be projected into executable machine state.
    */
   readonly parseStatus: 'accepted' | 'rejected'
+  /**
+   * `exact` means rawText contains every input code unit. Oversized byte input
+   * is rejected before decoding and remains owned by the caller; emitters must
+   * fail rather than pretend the empty sentinel is a lossless representation.
+   */
+  readonly sourceRetention: 'exact' | 'caller-owned-oversized-bytes'
+  /**
+   * `resource-limited` means the parser deliberately did not allocate one
+   * record object per source line. rawText remains exact when sourceRetention
+   * is `exact`; oversized byte input instead uses the explicit caller-owned
+   * retention state above. Such documents are always rejected.
+   */
+  readonly recordMaterialization: 'complete' | 'resource-limited'
 }
 
 export interface KCodeDocumentV1 {
   readonly metadata: KCodeDocumentMetadataV1
-  /** Original source retained as an audit/reference surface. */
+  /** Original source when metadata.sourceRetention is `exact`; otherwise empty. */
   readonly rawText: string
-  /** Every source code unit is represented by exactly one ordered record. */
+  /**
+   * Every source code unit is represented by exactly one ordered record when
+   * metadata.recordMaterialization is `complete`. Resource-limited raw text is
+   * lossless only when metadata.sourceRetention is `exact`.
+   */
   readonly records: readonly KCodeRecord[]
   readonly home: KCodeHomeRecord | null
   readonly initialRack: KCodeRackRecord | null
@@ -148,6 +165,9 @@ export type KCodeDiagnosticRule =
   | 'kcode.rack-order'
   | 'kcode.invalid-rack'
   | 'kcode.source-byte'
+  | 'kcode.source-byte-summary'
+  | 'kcode.resource-limit'
+  | 'kcode.diagnostic-summary'
   | 'kcode.unknown-record'
   | 'kcode.pass-interrupted'
   | 'kcode.orphan-field'
@@ -164,6 +184,7 @@ export type KCodeDiagnosticRule =
   | 'kcode.field-width'
   | 'kcode.bed-markers'
   | 'kcode.bed-padding'
+  | 'kcode.bed-needle-domain'
   | 'kcode.no-passes'
 
 export interface KCodeDiagnostic {
@@ -175,6 +196,8 @@ export interface KCodeDiagnostic {
   readonly column: number
   readonly endLine: number
   readonly endColumn: number
+  /** Number of omitted findings represented by a bounded summary record. */
+  readonly occurrences?: number
 }
 
 export interface ParseKCodeDocumentOptions {

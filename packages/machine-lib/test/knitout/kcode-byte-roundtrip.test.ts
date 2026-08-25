@@ -44,4 +44,19 @@ describe('KCode byte intake', () => {
     }))
     expect(emitKCodeDocumentBytes(parsed.document)).toEqual(bytes)
   })
+
+  it('rejects and preserves UTF-8 BOM bytes without structural cascades', () => {
+    const clean = readFileSync(resolve(__dirname, '../../reference/swatch.kc'))
+    const bytes = new Uint8Array(clean.length + 3)
+    bytes.set([0xef, 0xbb, 0xbf])
+    bytes.set(clean, 3)
+
+    const parsed = parseKCodeBytes(bytes, options)
+
+    expect(parsed.ok).toBe(false)
+    expect(parsed.diagnostics.map((diagnostic) => diagnostic.rule)).toEqual([
+      'kcode.source-byte',
+    ])
+    expect(emitKCodeDocumentBytes(parsed.document)).toEqual(bytes)
+  })
 })

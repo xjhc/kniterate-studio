@@ -27,6 +27,16 @@ function updateSearch(values: Record<string, string>) {
   window.history.replaceState(null, '', url);
 }
 
+export function rowPassEvidenceLabel(
+  displayRow: number,
+  predictedPassCount: number,
+  emittedPassCount: number | null,
+): string {
+  return emittedPassCount === null
+    ? `Row ${displayRow} / ${predictedPassCount} predicted passes`
+    : `Row ${displayRow} / ${emittedPassCount} emitted KCode passes`;
+}
+
 export function ChartWorkspace({ project, onProject, onNewProject, onProjectSettings, autosaveState, isDarkMode, compile, kcode, outputStatus, outputError, authoredVerdict, focusedRowId, onFocusedRowId }: {
   project: ColorworkProjectV1;
   onProject: (project: ColorworkProjectV1) => void;
@@ -60,8 +70,9 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
   const activePaletteIndex = Math.min(paletteIndex, chart.palette.length - 1);
   const focusedRow = focusedRowId === null ? null : rowIds.indexOf(focusedRowId);
   const focusedProvenance = compile.artifact?.rowProvenance.find((row) => row.rowId === focusedRowId) ?? null;
-  const focusedMachinePasses = kcode?.rowPasses.find((row) => row.rowId === focusedRowId)?.passIndices ?? [];
-  const passCounts = useMemo(() => new Map((compile.artifact?.rowProvenance ?? []).map((row) => [row.chartRow, kcode?.rowPasses.find((item) => item.rowId === row.rowId)?.passIndices.length ?? 0])), [compile.artifact, kcode]);
+  const emittedPassesByRow = useMemo(() => new Map((kcode?.rowPasses ?? []).map((row) => [row.rowId, row.passIndices])), [kcode]);
+  const focusedMachinePasses = focusedRowId === null ? [] : emittedPassesByRow.get(focusedRowId) ?? [];
+  const passCounts = useMemo(() => new Map((compile.artifact?.rowProvenance ?? []).map((row) => [row.chartRow, emittedPassesByRow.get(row.rowId)?.length ?? 0])), [compile.artifact, emittedPassesByRow]);
   const commit = (edit: ProjectEdit | null): boolean => {
     if (!edit) return false;
     try { onProject(appendProjectEdit(project, entry(edit))); setIssue(null); return true; }
@@ -72,9 +83,9 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
   useEffect(() => { if (paletteIndex >= chart.palette.length) setPaletteIndex(Math.max(0, chart.palette.length - 1)); }, [paletteIndex, chart.palette.length]);
   useEffect(() => {
     if (!compile.artifact || focusedRowId !== null) return;
-    const first = compile.artifact.rowProvenance.find((row) => (kcode?.rowPasses.find((item) => item.rowId === row.rowId)?.passIndices.length ?? 0) > 0);
+    const first = compile.artifact.rowProvenance.find((row) => (emittedPassesByRow.get(row.rowId)?.length ?? 0) > 0);
     if (first) onFocusedRowId(first.rowId);
-  }, [compile.artifact, kcode, focusedRowId, onFocusedRowId]);
+  }, [compile.artifact, emittedPassesByRow, focusedRowId, onFocusedRowId]);
   useEffect(() => {
     if (!focusedMachinePasses.length) return;
     setProgramRegion('body');
@@ -136,7 +147,7 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
           <PaletteRail chart={chart} active={activePaletteIndex} onSelect={setPaletteIndex} />
           <div className="canvas-stack">
             <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={passCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => onFocusedRowId(rowIds[row]!)} />
-            <div className="chart-caption"><span>{focusedProvenance ? `Row ${focusedProvenance.displayRow} / ${focusedProvenance.passIndices.length} physical passes` : 'Select a design row to inspect its passes'}</span><span>{compile.artifact?.messages.filter((message) => message.severity === 'warning').length ?? 0} compiler warnings</span></div>
+            <div className="chart-caption"><span>{focusedProvenance ? rowPassEvidenceLabel(focusedProvenance.displayRow, focusedProvenance.passIndices.length, kcode === null ? null : focusedMachinePasses.length) : 'Select a design row to inspect its passes'}</span><span>{compile.artifact?.messages.filter((message) => message.severity === 'warning').length ?? 0} compiler warnings</span></div>
           </div>
         </div>
       </section>

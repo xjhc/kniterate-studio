@@ -20,6 +20,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { KCodeConverter } from '../run-artifact.js';
+import { checkKnitoutSourceResourceLimits } from '../parser.js';
 import type {
   VendorLoweringSettings,
   VendorScheduledKCode,
@@ -61,11 +62,13 @@ export type KnitoutToScheduledKCodeResult =
       readonly kcode: string;
       readonly scheduledPasses: readonly VendorScheduledPass[];
       readonly warnings: readonly string[];
+      readonly warningCount: number;
     }
   | {
       readonly ok: false;
       readonly error: string;
       readonly warnings: readonly string[];
+      readonly warningCount: number;
     };
 
 /**
@@ -78,10 +81,24 @@ export function knitoutToKCodeWithTrace(
   filename = 'command.k',
 ): KnitoutToScheduledKCodeResult {
   const warnings: string[] = [];
+  let warningCount = 0;
+  const captureWarning = (...values: unknown[]): void => {
+    warningCount++;
+    if (warnings.length < 512) warnings.push(values.map(String).join(' '));
+  };
   const originalWarn = console.warn;
   const originalLog = console.log;
-  console.warn = (...values: unknown[]) => warnings.push(values.map(String).join(' '));
-  console.log = (...values: unknown[]) => warnings.push(values.map(String).join(' '));
+  const resourceIssue = checkKnitoutSourceResourceLimits(knitoutText);
+  if (resourceIssue !== null) {
+    return {
+      ok: false,
+      error: `Line ${resourceIssue.line}: ${resourceIssue.message}`,
+      warnings,
+      warningCount,
+    };
+  }
+  console.warn = captureWarning;
+  console.log = captureWarning;
   try {
     const vendor = requireFromHere(VENDOR_SCRIPT) as VendorCompilerModule;
     const { headers, passes, lowering } = vendor.knitoutToPasses(knitoutText, filename);
@@ -96,12 +113,14 @@ export function knitoutToKCodeWithTrace(
       kcode: converted.kcode,
       scheduledPasses: converted.passes,
       warnings,
+      warningCount,
     };
   } catch (error) {
     return {
       ok: false,
       error: error instanceof Error ? error.message : String(error),
       warnings,
+      warningCount,
     };
   } finally {
     console.warn = originalWarn;
@@ -112,6 +131,15 @@ export function knitoutToKCodeWithTrace(
 /** Run the vendored knitout-to-kcode compiler on a knitout source string.
  *  Returns the .kc output as a string. */
 export function knitoutToKCode(knitoutText: string): KnitoutToKCodeResult {
+  const resourceIssue = checkKnitoutSourceResourceLimits(knitoutText);
+  if (resourceIssue !== null) {
+    return {
+      ok: false,
+      stdout: '',
+      stderr: `Line ${resourceIssue.line}: ${resourceIssue.message}`,
+      exitCode: 2,
+    };
+  }
   const dir = mkdtempSync(join(tmpdir(), 'knitlab-kcode-'));
   const inputPath = join(dir, 'input.k');
   //The Kniterate machine loads a file literally named `command.kc`;

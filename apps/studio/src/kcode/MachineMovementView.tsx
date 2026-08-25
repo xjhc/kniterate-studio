@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, type KeyboardEvent } from 'react';
 import type {
-  MachineLoopStateSnapshotV1,
+  MachinePassStateSnapshotV1,
   MachineSceneActionGlyphV1,
   MachineScenePassV1,
   MachineSceneSelectionV1,
@@ -55,33 +55,17 @@ function passLabel(pass: MachineScenePassV1): string {
   return `Pass ${pass.passIndex + 1}, ${pass.direction === '>>' ? 'right' : 'left'}, ${pass.operation}, carrier ${pass.carrier}`;
 }
 
-function stateCells(
-  state: MachineLoopStateSnapshotV1,
-  selection: MachineSceneSelectionV1,
-) {
-  return selection.bed === 'front' ? state.front : state.rear;
-}
-
-function loopCount(
-  state: MachineLoopStateSnapshotV1 | undefined,
-  selection: MachineSceneSelectionV1,
-): number | null {
-  if (state === undefined) return null;
-  return stateCells(state, selection).find(
-    (cell) => cell.traceCoordinate === selection.traceCoordinate,
-  )?.count ?? 0;
-}
-
 function loopTransition(
-  before: MachineLoopStateSnapshotV1 | undefined,
-  after: MachineLoopStateSnapshotV1 | undefined,
+  passState: MachinePassStateSnapshotV1 | undefined,
   selection: MachineSceneSelectionV1,
 ): string {
-  const beforeCount = loopCount(before, selection);
-  const afterCount = loopCount(after, selection);
-  return beforeCount === null || afterCount === null
-    ? 'loops not attached'
-    : `${beforeCount}→${afterCount} loops`;
+  if (passState === undefined) return 'loops not attached';
+  const delta = passState.stackDeltas.find((candidate) =>
+    candidate.bed === selection.bed
+    && candidate.traceCoordinate === selection.traceCoordinate);
+  return delta === undefined
+    ? 'loop delta unavailable'
+    : `${delta.beforeCount}→${delta.afterCount} loops`;
 }
 
 function selectionLabel(selection: MachineSceneSelectionV1): string {
@@ -96,21 +80,20 @@ function rackBoundaryLabel(beforePassIndex: number, passCount: number): string {
 
 function actionLabel(
   action: MachineSceneActionGlyphV1,
-  before: MachineLoopStateSnapshotV1 | undefined,
-  after: MachineLoopStateSnapshotV1 | undefined,
+  passState: MachinePassStateSnapshotV1 | undefined,
 ): { title: string; detail: string } {
   switch (action.geometry) {
     case 'point':
       return {
         title: action.semantic,
-        detail: `${selectionLabel(action.at)} · ${loopTransition(before, after, action.at)}`,
+        detail: `${selectionLabel(action.at)} · ${loopTransition(passState, action.at)}`,
       };
     case 'edge':
       return {
         title: action.semantic === 'split' ? `split · C${action.carrier}` : 'transfer',
         detail: [
-          `${selectionLabel(action.source)} (${loopTransition(before, after, action.source)})`,
-          `${selectionLabel(action.target)} (${loopTransition(before, after, action.target)})`,
+          `${selectionLabel(action.source)} (${loopTransition(passState, action.source)})`,
+          `${selectionLabel(action.target)} (${loopTransition(passState, action.target)})`,
         ].join(' → '),
       };
     case 'travel':
@@ -133,17 +116,15 @@ function actionClass(action: MachineSceneActionGlyphV1): string {
 function PointGlyph({
   action,
   domain,
-  before,
-  after,
+  passState,
 }: {
   action: Extract<MachineSceneActionGlyphV1, { geometry: 'point' }>;
   domain: CoordinateDomain;
-  before: MachineLoopStateSnapshotV1 | undefined;
-  after: MachineLoopStateSnapshotV1 | undefined;
+  passState: MachinePassStateSnapshotV1 | undefined;
 }) {
   const x = plotX(action.at.kcodeColumn, domain);
   const y = action.at.bed === 'front' ? PLOT.frontY : PLOT.rearY;
-  const label = actionLabel(action, before, after);
+  const label = actionLabel(action, passState);
   if (action.semantic === 'drop') {
     return <g className={actionClass(action)}>
       <title>{`${label.title}: ${label.detail}`}</title>
@@ -166,18 +147,16 @@ function EdgeGlyph({
   action,
   domain,
   markerId,
-  before,
-  after,
+  passState,
 }: {
   action: Extract<MachineSceneActionGlyphV1, { geometry: 'edge' }>;
   domain: CoordinateDomain;
   markerId: string;
-  before: MachineLoopStateSnapshotV1 | undefined;
-  after: MachineLoopStateSnapshotV1 | undefined;
+  passState: MachinePassStateSnapshotV1 | undefined;
 }) {
   const sourceY = action.source.bed === 'front' ? PLOT.frontY : PLOT.rearY;
   const targetY = action.target.bed === 'front' ? PLOT.frontY : PLOT.rearY;
-  const label = actionLabel(action, before, after);
+  const label = actionLabel(action, passState);
   return <g className={actionClass(action)}>
     <title>{`${label.title}: ${label.detail}`}</title>
     <path
@@ -212,13 +191,11 @@ function UnknownGlyph({
 function MachinePlot({
   pass,
   domain,
-  before,
-  after,
+  passState,
 }: {
   pass: MachineScenePassV1;
   domain: CoordinateDomain;
-  before: MachineLoopStateSnapshotV1 | undefined;
-  after: MachineLoopStateSnapshotV1 | undefined;
+  passState: MachinePassStateSnapshotV1 | undefined;
 }) {
   const id = useId().replaceAll(':', '');
   const carriageMarker = `mmv-carriage-${id}`;
@@ -287,17 +264,17 @@ function MachinePlot({
     <line x1={PLOT.left} x2={PLOT.right} y1={PLOT.rearY} y2={PLOT.rearY} className="mmv-bed mmv-bed-rear" />
 
     {pass.beds.front.map((selection, index) => <g key={`front-${selection.payloadIndex}-${index}`} className="mmv-selection mmv-front-selection">
-      <title>{`${selectionLabel(selection)}; ${loopTransition(before, after, selection)}`}</title>
+      <title>{`${selectionLabel(selection)}; ${loopTransition(passState, selection)}`}</title>
       <line x1={plotX(selection.kcodeColumn, domain)} x2={plotX(selection.kcodeColumn, domain)} y1={PLOT.frontY - 9} y2={PLOT.frontY + 9} />
     </g>)}
     {pass.beds.rear.map((selection, index) => <g key={`rear-${selection.payloadIndex}-${index}`} className="mmv-selection mmv-rear-selection">
-      <title>{`${selectionLabel(selection)}; ${loopTransition(before, after, selection)}`}</title>
+      <title>{`${selectionLabel(selection)}; ${loopTransition(passState, selection)}`}</title>
       <line x1={plotX(selection.kcodeColumn, domain)} x2={plotX(selection.kcodeColumn, domain)} y1={PLOT.rearY - 9} y2={PLOT.rearY + 9} />
     </g>)}
 
     {pass.actionGlyphs.map((action, index) => {
       if (action.geometry === 'point') {
-        return <PointGlyph key={`point-${index}`} action={action} domain={domain} before={before} after={after} />;
+        return <PointGlyph key={`point-${index}`} action={action} domain={domain} passState={passState} />;
       }
       if (action.geometry === 'edge') {
         return <EdgeGlyph
@@ -305,8 +282,7 @@ function MachinePlot({
           action={action}
           domain={domain}
           markerId={action.semantic === 'split' ? splitMarker : transferMarker}
-          before={before}
-          after={after}
+          passState={passState}
         />;
       }
       if (action.geometry === 'unknown') {
@@ -414,6 +390,34 @@ function StateMetric({ label, before, after }: { label: string; before?: number;
   </div>;
 }
 
+const RACK_LEDGER_WINDOW_SIZE = 101;
+
+function rackLedgerWindow(
+  commands: MachineSceneV1['rackCommands'],
+  selectedPassIndex: number,
+) {
+  if (commands.length <= RACK_LEDGER_WINDOW_SIZE) {
+    return { start: 0, end: commands.length, commands };
+  }
+  // beforePassIndex is monotone in the projected source stream. Anchor the
+  // window on the last command effective at this pass boundary; earlier and
+  // later commands remain in the exact scene and source, but not in the DOM.
+  let low = 0;
+  let high = commands.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (commands[middle]!.beforePassIndex <= selectedPassIndex) low = middle + 1;
+    else high = middle;
+  }
+  const anchor = Math.max(0, low - 1);
+  const start = Math.max(0, Math.min(
+    commands.length - RACK_LEDGER_WINDOW_SIZE,
+    anchor - Math.floor(RACK_LEDGER_WINDOW_SIZE / 2),
+  ));
+  const end = start + RACK_LEDGER_WINDOW_SIZE;
+  return { start, end, commands: commands.slice(start, end) };
+}
+
 export function MachineMovementView({
   scene,
   validation = null,
@@ -436,6 +440,9 @@ export function MachineMovementView({
       : passWarnings > 0
         ? 'warning'
         : 'clear';
+  const rackLedger = pass === null
+    ? { start: 0, end: 0, commands: [] as MachineSceneV1['rackCommands'] }
+    : rackLedgerWindow(scene.rackCommands, pass.passIndex);
 
   return <section className={`machine-movement-view ${className}`.trim()} aria-label="Exact machine movement">
     <header className="mmv-header">
@@ -457,7 +464,7 @@ export function MachineMovementView({
       </div>
       <div className="mmv-contract">
         <span>{scene.profileId}@{scene.profileVersion}</span>
-        <span>{scene.dialect}</span>
+        <span title={`Parser label: ${scene.dialect}`}>canonical raster v1</span>
       </div>
     </header>
 
@@ -499,13 +506,13 @@ export function MachineMovementView({
               <header><span>Rack command stream</span><b>{scene.rackCommands.length}</b></header>
               {scene.rackCommands.length === 0
                 ? <p>No explicit RACK commands.</p>
-                : <ol>
-                    {scene.rackCommands.map((command) => <li className={command.beforePassIndex === pass.passIndex ? 'is-selected-boundary' : ''} key={command.index}>
+                : <>{scene.rackCommands.length > rackLedger.commands.length && <p className="mmv-rack-window">Showing commands #{rackLedger.start + 1}–#{rackLedger.end} of {scene.rackCommands.length.toLocaleString()}; the exact ordered stream remains retained.</p>}<ol>
+                    {rackLedger.commands.map((command) => <li className={command.beforePassIndex === pass.passIndex ? 'is-selected-boundary' : ''} key={command.index}>
                       <span><i>#{command.index}</i><b>{rackBoundaryLabel(command.beforePassIndex, scene.passes.length)}</b></span>
                       <code>{command.valueRaw}</code>
                       <small>{formatCoordinate(command.fromRack)}→{formatCoordinate(command.toRack)}</small>
                     </li>)}
-                  </ol>}
+                  </ol></>}
             </section>
           </aside>
 
@@ -518,8 +525,7 @@ export function MachineMovementView({
             <MachinePlot
               pass={pass}
               domain={scene.displayDomain.kcodeCoordinate}
-              before={passState?.before}
-              after={passState?.after}
+              passState={passState}
             />
             <dl className="mmv-loop-state">
               <StateMetric label="Loops" before={passState?.before.totalLoops} after={passState?.after.totalLoops} />
@@ -537,7 +543,7 @@ export function MachineMovementView({
               ? <p className="mmv-no-actions">No action glyphs in this pass.</p>
               : <ol>
                   {pass.actionGlyphs.map((action, index) => {
-                    const label = actionLabel(action, passState?.before, passState?.after);
+                    const label = actionLabel(action, passState);
                     return <li className={actionClass(action)} key={index}>
                       <i aria-hidden="true">{index + 1}</i>
                       <span><b>{label.title}</b><small>{label.detail}</small></span>

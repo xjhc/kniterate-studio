@@ -3,6 +3,7 @@ import { browserKnitoutToKCode } from '../src/knitout/kniterate/browser-to-kcode
 import {
   knitoutToKCode,
   knitoutToKCodeWithTrace,
+  nodeKCodeConverter,
 } from '../src/knitout/kniterate/to-kcode';
 import {
   knitoutToPasses,
@@ -43,6 +44,21 @@ const alternatingCarrierSpacing = [
   'out 3',
   '',
 ].join('\n');
+
+function passExplosionSource(operationCount: number): string {
+  return [
+    ';!knitout-2',
+    ';;Machine: kniterate',
+    ';;Carriers: 1 2 3 4 5 6',
+    'in 1',
+    ...Array.from(
+      { length: operationCount },
+      (_, index) => `knit ${index % 2 === 0 ? '+' : '-'} f1 1`,
+    ),
+    'out 1',
+    '',
+  ].join('\n');
+}
 
 describe('browser k-code adapter', () => {
   it('runs the same vendored converter byte-identically to the Node adapter', () => {
@@ -110,5 +126,38 @@ describe('browser k-code adapter', () => {
       log.mockRestore();
       warn.mockRestore();
     }
+  });
+
+  it('aborts pass explosion inside both in-process adapters before KCode emission', { timeout: 20_000 }, () => {
+    const source = passExplosionSource(10_001);
+    const browser = browserKnitoutToKCode(source, 'pass-explosion.k');
+    const node = knitoutToKCodeWithTrace(source, 'pass-explosion.k');
+
+    expect(browser).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('lowering resource limit exceeded (4096 scheduled source passes)'),
+    });
+    expect(browser.kcode).toBeUndefined();
+    expect(browser.scheduledPasses).toBeUndefined();
+    expect(node).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('lowering resource limit exceeded (4096 scheduled source passes)'),
+    });
+  });
+
+  it('applies source preflight before subprocess or async Node conversion', async () => {
+    const oversizedRecord = `;!knitout-2\n${'x'.repeat(16_385)}`;
+    const direct = knitoutToKCode(oversizedRecord);
+    const asyncResult = await nodeKCodeConverter(oversizedRecord);
+
+    expect(direct).toMatchObject({
+      ok: false,
+      exitCode: 2,
+      stderr: expect.stringContaining('16384-code-unit line limit'),
+    });
+    expect(asyncResult).toMatchObject({
+      ok: false,
+      error: expect.stringContaining('16384-code-unit line limit'),
+    });
   });
 });

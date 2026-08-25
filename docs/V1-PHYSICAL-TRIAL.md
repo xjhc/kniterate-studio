@@ -17,6 +17,11 @@ The command writes `out/v1-knit-trial/`:
   dimensions, frame, pass counts, and estimated time
 - `OPERATOR-CHECKLIST.md` for the actual machine session
 
+The manifest range is expressed only in compiler/project coordinates. It is
+not a physical needle-label claim. Resolve that range against a documented
+machine/vendor datum procedure and record an independent placement verification
+in `run.json` before sending the job.
+
 The release trial is a 120x160 four-color birdseye rectangle on the fixed 7gg
 profile: C1 draw, C2-C5 pattern yarns, C6 waste, 20 waste rows, and machine
 bind-off. The current generated package has 152,488 Knitout operations, 2,656
@@ -32,11 +37,16 @@ tail; body parity and generated-file revalidation gate export.
    bind-off complete without manual source edits.
 3. Photograph front/back and all four boundaries; record rested dimensions and
    every machine stop or intervention.
-4. Run `pnpm release:register -- v1-four-color-blanket`, complete its physical
-   fields, regenerate the trial, and mark the re-emit check `matches` only when
-   both emitted files remain byte-identical.
-5. Run `pnpm release:physical-check`. It must identify the exact registry entry;
-   Studio will then show Knit-proven only for that compile hash and `.kc` hash.
+4. Run `pnpm release:register -- v1-four-color-blanket`, then complete
+   `machine.json`, `yarn.json`, structured `run.json`, and the narrative
+   `outcome.md`. A failed or interrupted run remains valid history but is not
+   promotable.
+5. Run `pnpm release:physical-check`. It first checks the generated registry,
+   then freshly recompiles and re-emits the fixed trial in-process. It must find
+   one clean, complete, non-deviated physical entry with exact current Knitout
+   and KCode identities; stored commands and caller-marked re-emit statuses are
+   never trusted. Studio will then show Knit-proven only for that compile hash
+   and `.kc` hash.
 6. If the run fails, keep the RC capped, add the failure to the refusal corpus,
    fix the engine, regenerate, and repeat.
 7. If it succeeds and the physical check passes, bump workspace versions from

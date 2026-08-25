@@ -58,6 +58,26 @@ const knitoutWithKnitThenTransfer = [
   '',
 ].join('\n')
 
+function fullBedDropKCode(passCount: number): string {
+  const base = `${'.'.repeat(15)}${'-'.repeat(253)}${'.'.repeat(15)}`
+  const decorate = (value: string): string =>
+    `${value.slice(0, 10)}/${value.slice(10, 273)}\\${value.slice(273)}`
+  const selected = decorate(base)
+  const empty = decorate(`${'.'.repeat(15)}${'_'.repeat(253)}${'.'.repeat(15)}`)
+  const stitch = '6'.repeat(283)
+  const lines = ['HOME', 'RACK:0']
+  for (let index = 0; index < passCount; index++) {
+    lines.push(
+      `FRNT:${selected}`,
+      `STIF:${stitch}`,
+      `REAR:${empty}`,
+      `STIR:${stitch}`,
+      `${index % 2 === 0 ? '>>' : '<<'} Kn-Kn 0 300 450`,
+    )
+  }
+  return `${lines.join('\n')}\n`
+}
+
 function compileAndParse(
   dialect: 'app' | 'knitout-vendor',
   knitout = knitoutWithMoveAndTransfer,
@@ -276,6 +296,20 @@ describe('MachineTraceV1 KCode projection', () => {
       parsed.document,
       KNITERATE_7GG_KCODE_PROFILE_V1,
     )).toThrow(/rejected by the strict parser/)
+  })
+
+  it('fails closed before materializing an oversized selection and action graph', () => {
+    const parsed = parseKCodeDocument(fullBedDropKCode(791), {
+      profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+      dialect: 'knitout-vendor',
+      strict: true,
+    })
+    expect(parsed.ok).toBe(true)
+
+    expect(() => projectKCodeMachineTrace(
+      parsed.document,
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )).toThrow(/software resource limit of 200,000/)
   })
 
   it('projects knit, tuck, split, drop, and move semantics without physical labels', () => {

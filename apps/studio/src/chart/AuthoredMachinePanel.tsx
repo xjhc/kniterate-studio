@@ -9,18 +9,28 @@ const CARRIER_COLORS: Record<string, string> = {
   '1': '#d95d48', '2': '#33866a', '3': '#d49b32', '4': '#4e75b8', '5': '#9b60a8', '6': '#b65378',
 };
 
+const programRegionCache = new WeakMap<KCodeArtifact, readonly ProgramRegion[]>();
+
 export function programRegionsForKCode(kcode: KCodeArtifact): readonly ProgramRegion[] {
+  const cached = programRegionCache.get(kcode);
+  if (cached) return cached;
   const passes = kcode.scene?.passes ?? [];
-  const bodyIndices = kcode.passProvenance.flatMap((item) => item.sourceRows.length > 0 ? [item.passIndex] : []);
-  const firstBody = bodyIndices[0] ?? passes.length;
-  const lastBody = bodyIndices.at(-1) ?? -1;
-  return passes.map((pass, index) => {
-    if (bodyIndices.length === 0) return pass.carrier === '1' ? 'draw' : 'waste';
+  let firstBody = passes.length;
+  let lastBody = -1;
+  for (const item of kcode.passProvenance) {
+    if (item.sourceRows.length === 0) continue;
+    firstBody = Math.min(firstBody, item.passIndex);
+    lastBody = Math.max(lastBody, item.passIndex);
+  }
+  const regions = passes.map((pass, index): ProgramRegion => {
+    if (lastBody === -1) return pass.carrier === '1' ? 'draw' : 'waste';
     if (index >= firstBody && index <= lastBody) return 'body';
     if (index > lastBody) return 'finish';
     if (pass.carrier === '1') return 'draw';
     return 'waste';
   });
+  programRegionCache.set(kcode, regions);
+  return regions;
 }
 
 export function programRegionForPass(kcode: KCodeArtifact, index: number): ProgramRegion {
@@ -62,7 +72,11 @@ export function AuthoredMachinePanel({ artifact, kcode, outputStatus, outputErro
     rule: outputMessage.rule,
     message: outputMessage.message,
   };
-  const authoredSelectionDiagnostic = artifact?.diagnostics.find((item) => item.passIndices.some((index) => visibleIndices.has(index))) ?? null;
+  // Compiler pass positions precede vendor lowering and are not comparable to
+  // emitted MachineScene indices. The stable design-row ID is the only valid join.
+  const authoredSelectionDiagnostic = region === 'body' && focusedRowId !== null
+    ? artifact?.diagnostics.find((item) => item.rowId === focusedRowId) ?? null
+    : null;
   const diagnostic = machineDiagnostic ? {
     severity: machineDiagnostic.severity,
     rule: machineDiagnostic.rule,

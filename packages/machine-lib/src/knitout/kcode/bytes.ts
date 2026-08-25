@@ -1,5 +1,8 @@
 import { emitKCodeDocument } from './emitter.js'
-import { parseKCodeDocument } from './parser.js'
+import {
+  MAX_KCODE_SOURCE_CODE_UNITS,
+  parseKCodeDocument,
+} from './parser.js'
 import type {
   KCodeDocumentV1,
   ParseKCodeDocumentOptions,
@@ -20,6 +23,31 @@ export function parseKCodeBytes(
   bytes: Uint8Array,
   options: ParseKCodeDocumentOptions,
 ): ParseKCodeDocumentResult {
+  if (bytes.byteLength > MAX_KCODE_SOURCE_CODE_UNITS) {
+    const empty = parseKCodeDocument('', options)
+    const origin = { offset: 0, line: 1, column: 1 }
+    return {
+      ok: false,
+      diagnostics: [{
+        severity: 'error',
+        rule: 'kcode.resource-limit',
+        message: `KCode byte input exceeds the ${MAX_KCODE_SOURCE_CODE_UNITS}-byte decode limit; received ${bytes.byteLength}. Oversized bytes remain caller-owned and were not copied into the parsed document.`,
+        span: { start: origin, end: origin },
+        line: 1,
+        column: 1,
+        endLine: 1,
+        endColumn: 1,
+      }],
+      document: {
+        ...empty.document,
+        metadata: {
+          ...empty.document.metadata,
+          sourceRetention: 'caller-owned-oversized-bytes',
+          recordMaterialization: 'resource-limited',
+        },
+      },
+    }
+  }
   let source = ''
   for (let offset = 0; offset < bytes.length; offset += BYTE_CHUNK) {
     source += String.fromCharCode(...bytes.subarray(offset, offset + BYTE_CHUNK))

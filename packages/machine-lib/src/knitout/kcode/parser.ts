@@ -34,6 +34,12 @@ const SUPPORTED_OPERATIONS = new Set([
   'Rl-Tr',
   'Rr-Tr',
 ])
+const SOURCE_BYTE_DETAIL_CODE_UNIT_LIMIT = 64
+const DIAGNOSTIC_RAW_PREVIEW_CODE_UNITS = 120
+export const MAX_KCODE_SOURCE_CODE_UNITS = 64 * 1024 * 1024
+const MAX_KCODE_RECORDS = 50_000
+const MAX_KCODE_RECORD_CODE_UNITS = 2 * 1024 * 1024
+const MAX_KCODE_DIAGNOSTIC_DETAILS = 512
 
 interface ScannedLine {
   readonly recordIndex: number
@@ -58,6 +64,85 @@ type AddDiagnostic = (
 
 function position(offset: number, line: number, column: number): KCodeSourcePosition {
   return { offset, line, column }
+}
+
+function sourceResourceLimit(
+  source: string,
+): { readonly message: string; readonly span: KCodeSourceSpan } | null {
+  const origin = position(0, 1, 1)
+  if (source.length > MAX_KCODE_SOURCE_CODE_UNITS) {
+    return {
+      message: `KCode source exceeds the ${MAX_KCODE_SOURCE_CODE_UNITS}-code-unit strict-intake limit; received ${source.length}. The exact raw source is retained, but records were not materialized.`,
+      span: { start: origin, end: origin },
+    }
+  }
+
+  let offset = 0
+  let line = 1
+  let recordCount = 0
+  while (offset < source.length) {
+    const contentStart = offset
+    recordCount++
+    if (recordCount > MAX_KCODE_RECORDS) {
+      const point = position(contentStart, line, 1)
+      return {
+        message: `KCode source exceeds the ${MAX_KCODE_RECORDS}-record strict-intake limit. The exact raw source is retained, but records were not materialized.`,
+        span: { start: point, end: point },
+      }
+    }
+    while (offset < source.length && source[offset] !== '\r' && source[offset] !== '\n') offset++
+    if (offset - contentStart > MAX_KCODE_RECORD_CODE_UNITS) {
+      const point = position(contentStart, line, 1)
+      return {
+        message: `KCode record ${line} exceeds the ${MAX_KCODE_RECORD_CODE_UNITS}-code-unit line limit. The exact raw source is retained, but records were not materialized.`,
+        span: { start: point, end: point },
+      }
+    }
+    if (source[offset] === '\r' && source[offset + 1] === '\n') offset += 2
+    else if (source[offset] === '\r' || source[offset] === '\n') offset++
+    line++
+  }
+  return null
+}
+
+function resourceLimitedResult(
+  source: string,
+  options: ParseKCodeDocumentOptions,
+  limit: NonNullable<ReturnType<typeof sourceResourceLimit>>,
+): ParseKCodeDocumentResult {
+  const diagnostic: KCodeDiagnostic = {
+    severity: 'error',
+    rule: 'kcode.resource-limit',
+    message: limit.message,
+    span: limit.span,
+    line: limit.span.start.line,
+    column: limit.span.start.column,
+    endLine: limit.span.end.line,
+    endColumn: limit.span.end.column,
+  }
+  return {
+    ok: false,
+    diagnostics: [diagnostic],
+    document: {
+      metadata: {
+        schemaVersion: 1,
+        profileId: options.profile.profileId,
+        profileVersion: options.profile.profileVersion,
+        dialect: options.dialect,
+        strict: options.strict,
+        parseStatus: 'rejected',
+        sourceRetention: 'exact',
+        recordMaterialization: 'resource-limited',
+      },
+      rawText: source,
+      records: [],
+      home: null,
+      initialRack: null,
+      racks: [],
+      passes: [],
+      unknownRecords: [],
+    },
+  }
 }
 
 function scanSourceLines(source: string): ScannedLine[] {
@@ -138,13 +223,99 @@ function firstInvalidCharacter(value: string, allowed: ReadonlySet<string>): num
   return -1
 }
 
+function diagnosticRawPreview(raw: string): string {
+  if (raw.length <= DIAGNOSTIC_RAW_PREVIEW_CODE_UNITS) return JSON.stringify(raw)
+  return `${JSON.stringify(raw.slice(0, DIAGNOSTIC_RAW_PREVIEW_CODE_UNITS))}… (${raw.length} code units total)`
+}
+
+function isAcceptedSourceCodeUnit(code: number): boolean {
+  return code === 0x09 || (code >= 0x20 && code <= 0x7e)
+}
+
+/**
+ * Report invalid source code units without allocating one diagnostic per unit.
+ * Contiguous invalid units share a diagnostic, and only the first fixed-size
+ * code-unit budget receives detailed spans. The remainder is represented by
+ * one deterministic summary while the scanned records retain the full source.
+ */
+function validateSourceCodeUnits(
+  lines: readonly ScannedLine[],
+  addDiagnostic: AddDiagnostic,
+): void {
+  let remainingDetailCodeUnits = SOURCE_BYTE_DETAIL_CODE_UNIT_LIMIT
+  let detailedDiagnosticCount = 0
+  let omittedCodeUnits = 0
+  let omittedRangeCount = 0
+  let firstOmittedStart: KCodeSourcePosition | null = null
+  let lastOmittedEnd: KCodeSourcePosition | null = null
+
+  const omit = (span: KCodeSourceSpan, count: number): void => {
+    if (count === 0) return
+    omittedCodeUnits += count
+    omittedRangeCount++
+    firstOmittedStart ??= span.start
+    lastOmittedEnd = span.end
+  }
+
+  for (const line of lines) {
+    let index = 0
+    while (index < line.raw.length) {
+      if (isAcceptedSourceCodeUnit(line.raw.charCodeAt(index))) {
+        index++
+        continue
+      }
+
+      const runStart = index
+      while (
+        index < line.raw.length
+        && !isAcceptedSourceCodeUnit(line.raw.charCodeAt(index))
+      ) index++
+      const runEnd = index
+      const detailedLength = Math.min(runEnd - runStart, remainingDetailCodeUnits)
+
+      if (detailedLength > 0) {
+        const detailEnd = runStart + detailedLength
+        const firstCode = line.raw.charCodeAt(runStart)
+        addDiagnostic(
+          'kcode.source-byte',
+          detailedLength === 1
+            ? `KCode source must use printable 7-bit ASCII (plus tab and line endings); found code unit 0x${firstCode.toString(16).padStart(2, '0')}.`
+            : `KCode source must use printable 7-bit ASCII (plus tab and line endings); found ${detailedLength} consecutive invalid code units beginning with 0x${firstCode.toString(16).padStart(2, '0')}.`,
+          spanWithin(line, runStart, detailEnd),
+        )
+        detailedDiagnosticCount++
+        remainingDetailCodeUnits -= detailedLength
+        if (detailEnd < runEnd) {
+          omit(spanWithin(line, detailEnd, runEnd), runEnd - detailEnd)
+        }
+      } else {
+        omit(spanWithin(line, runStart, runEnd), runEnd - runStart)
+      }
+    }
+  }
+
+  if (firstOmittedStart !== null && lastOmittedEnd !== null) {
+    addDiagnostic(
+      'kcode.source-byte-summary',
+      `Invalid-source diagnostics were truncated after ${SOURCE_BYTE_DETAIL_CODE_UNIT_LIMIT} code units in ${detailedDiagnosticCount} grouped report${detailedDiagnosticCount === 1 ? '' : 's'}; ${omittedCodeUnits} additional invalid code units across ${omittedRangeCount} range${omittedRangeCount === 1 ? '' : 's'} were omitted.`,
+      { start: firstOmittedStart, end: lastOmittedEnd },
+    )
+  }
+}
+
 function classifyRecord(
   line: ScannedLine,
   profile: KCodeMachineProfileV1,
   strict: boolean,
   addDiagnostic: AddDiagnostic,
 ): KCodeRecord {
-  if (line.raw === 'HOME') {
+  // A leading Unicode or byte-preserved UTF-8 BOM is always rejected by the
+  // source-code-unit rail, but recognizing the following HOME record prevents
+  // one encoding defect from cascading into misleading unknown/missing-HOME
+  // diagnostics. The original record remains byte-for-byte untouched.
+  const firstRecordHome = line.recordIndex === 0
+    && (line.raw === '\ufeffHOME' || line.raw === '\u00ef\u00bb\u00bfHOME')
+  if (line.raw === 'HOME' || firstRecordHome) {
     return { ...line, kind: 'home' } satisfies KCodeHomeRecord
   }
 
@@ -290,7 +461,7 @@ function classifyRecord(
 
   addDiagnostic(
     'kcode.unknown-record',
-    `Unknown KCode record ${JSON.stringify(line.raw)}.`,
+    `Unknown KCode record ${diagnosticRawPreview(line.raw)}.`,
     line.span,
     strict ? 'error' : 'warning',
   )
@@ -400,17 +571,58 @@ function validatePassBlock(
 
   for (const bed of [frnt, rear]) {
     const markerFree = [...bed.value]
-      .filter((value) => value !== '/' && value !== '\\' && !profile.machine.carriers.includes(value as Exclude<KCodeCarrierToken, '0'>))
-      .join('')
+      .map((value, sourceIndex) => ({ value, sourceIndex }))
+      .filter(({ value }) => value !== '/' && value !== '\\' && !profile.machine.carriers.includes(value as Exclude<KCodeCarrierToken, '0'>))
     if (markerFree.length !== baseWidth) continue
 
     const left = markerFree.slice(0, profile.raster.leftPaddingColumns)
     const right = markerFree.slice(-profile.raster.rightPaddingColumns)
-    if (!/^\.*$/.test(left) || !/^\.*$/.test(right)) {
+    const invalidPadding = [...left, ...right].find(({ value }) => value !== '.')
+    if (invalidPadding !== undefined) {
       addDiagnostic(
         'kcode.bed-padding',
         `${bed.field} must retain ${profile.raster.leftPaddingColumns} left and ${profile.raster.rightPaddingColumns} right padding dots after marker removal.`,
-        bed.valueSpan,
+        {
+          start: position(
+            bed.valueSpan.start.offset + invalidPadding.sourceIndex,
+            bed.line,
+            bed.valueSpan.start.column + invalidPadding.sourceIndex,
+          ),
+          end: position(
+            bed.valueSpan.start.offset + invalidPadding.sourceIndex + 1,
+            bed.line,
+            bed.valueSpan.start.column + invalidPadding.sourceIndex + 1,
+          ),
+        },
+      )
+    }
+
+    const recognizedNeedleColumns = baseWidth === standardWidth
+      ? profile.raster.standardNeedleColumns
+      : baseWidth === legacy.basePayloadColumns
+        ? legacy.needleColumns
+        : null
+    if (recognizedNeedleColumns === null) continue
+
+    const needleStart = profile.raster.leftPaddingColumns
+    const needleDomain = markerFree.slice(needleStart, needleStart + recognizedNeedleColumns)
+    const invalidNeedle = needleDomain.find(({ value }) => value !== '_' && value !== '-')
+    if (invalidNeedle !== undefined) {
+      addDiagnostic(
+        'kcode.bed-needle-domain',
+        `${bed.field} needle-domain columns must use only "_" (not selected) or "-" (selected); received ${JSON.stringify(invalidNeedle.value)}.`,
+        {
+          start: position(
+            bed.valueSpan.start.offset + invalidNeedle.sourceIndex,
+            bed.line,
+            bed.valueSpan.start.column + invalidNeedle.sourceIndex,
+          ),
+          end: position(
+            bed.valueSpan.start.offset + invalidNeedle.sourceIndex + 1,
+            bed.line,
+            bed.valueSpan.start.column + invalidNeedle.sourceIndex + 1,
+          ),
+        },
       )
     }
   }
@@ -435,8 +647,24 @@ export function parseKCodeDocument(
   source: string,
   options: ParseKCodeDocumentOptions,
 ): ParseKCodeDocumentResult {
+  const resourceLimit = sourceResourceLimit(source)
+  if (resourceLimit !== null) return resourceLimitedResult(source, options, resourceLimit)
+
   const diagnostics: KCodeDiagnostic[] = []
+  let omittedDiagnosticCount = 0
+  let omittedErrorCount = 0
+  let omittedWarningCount = 0
+  let omittedStart: KCodeSourcePosition | null = null
+  let omittedEnd: KCodeSourcePosition | null = null
   const addDiagnostic: AddDiagnostic = (rule, message, span, severity = 'error') => {
+    if (diagnostics.length >= MAX_KCODE_DIAGNOSTIC_DETAILS) {
+      omittedDiagnosticCount++
+      if (severity === 'error') omittedErrorCount++
+      else omittedWarningCount++
+      if (omittedStart === null || span.start.offset < omittedStart.offset) omittedStart = span.start
+      if (omittedEnd === null || span.end.offset > omittedEnd.offset) omittedEnd = span.end
+      return
+    }
     diagnostics.push({
       severity,
       rule,
@@ -464,18 +692,7 @@ export function parseKCodeDocument(
 
   const records = scannedLines.map((line) =>
     classifyRecord(line, options.profile, options.strict, addDiagnostic))
-
-  for (const line of scannedLines) {
-    for (let index = 0; index < line.raw.length; index++) {
-      const code = line.raw.charCodeAt(index)
-      if (code === 0x09 || (code >= 0x20 && code <= 0x7e)) continue
-      addDiagnostic(
-        'kcode.source-byte',
-        `KCode source must use printable 7-bit ASCII (plus tab and line endings); found code unit 0x${code.toString(16).padStart(2, '0')}.`,
-        spanWithin(line, index, index + 1),
-      )
-    }
-  }
+  validateSourceCodeUnits(scannedLines, addDiagnostic)
 
   const racks: KCodeRackRecord[] = []
   const passes: KCodePassBlock[] = []
@@ -671,10 +888,34 @@ export function parseKCodeDocument(
     addDiagnostic('kcode.no-passes', 'KCode document must contain at least one complete pass block.', endOfDocumentSpan(records))
   }
 
+  // TypeScript does not model assignments made by the addDiagnostic closure,
+  // so re-widen the captured positions before narrowing them here.
+  const diagnosticSummaryStart = omittedStart as KCodeSourcePosition | null
+  const diagnosticSummaryEnd = omittedEnd as KCodeSourcePosition | null
+  if (omittedDiagnosticCount > 0 && diagnosticSummaryStart !== null && diagnosticSummaryEnd !== null) {
+    for (const [severity, count] of [
+      ['error', omittedErrorCount],
+      ['warning', omittedWarningCount],
+    ] as const satisfies readonly (readonly [KCodeDiagnosticSeverity, number])[]) {
+      if (count === 0) continue
+      diagnostics.push({
+        severity,
+        rule: 'kcode.diagnostic-summary',
+        message: `KCode diagnostics were truncated after ${MAX_KCODE_DIAGNOSTIC_DETAILS} detailed findings; omitted ${count} additional ${severity} finding${count === 1 ? '' : 's'} (${omittedDiagnosticCount} findings omitted across all severities).`,
+        span: { start: diagnosticSummaryStart, end: diagnosticSummaryEnd },
+        line: diagnosticSummaryStart.line,
+        column: diagnosticSummaryStart.column,
+        endLine: diagnosticSummaryEnd.line,
+        endColumn: diagnosticSummaryEnd.column,
+        occurrences: count,
+      })
+    }
+  }
+
   diagnostics.sort((a, b) =>
     a.span.start.offset - b.span.start.offset
     || a.span.end.offset - b.span.end.offset
-    || a.rule.localeCompare(b.rule))
+    || (a.rule < b.rule ? -1 : a.rule > b.rule ? 1 : 0))
 
   const accepted = !diagnostics.some((diagnostic) => diagnostic.severity === 'error')
   const document: KCodeDocumentV1 = {
@@ -685,6 +926,8 @@ export function parseKCodeDocument(
       dialect: options.dialect,
       strict: options.strict,
       parseStatus: accepted ? 'accepted' : 'rejected',
+      sourceRetention: 'exact',
+      recordMaterialization: 'complete',
     },
     rawText: source,
     records,

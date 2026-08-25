@@ -1,7 +1,6 @@
 {
   "kind": "kniterate-studio-m1-conformance-report",
   "schemaVersion": "1",
-  "generatedAt": "2026-08-25T17:14:08.917Z",
   "verdict": "Verified - swatch recommended",
   "honestyCap": "Software conformance only. Physical acceptance is a separate release:physical-check gate and never serves as a software oracle.",
   "physicalAcceptance": {

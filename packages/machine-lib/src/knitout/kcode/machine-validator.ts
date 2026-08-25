@@ -1,11 +1,12 @@
 import type { KCodeMachineProfileV1 } from './machine-profile.js'
-import type {
-  MachineTraceActionV1,
-  MachineTraceBedV1,
-  MachineTracePassV1,
-  MachineTraceRackCommandV1,
-  MachineTraceSelectionV1,
-  MachineTraceV1,
+import {
+  regularActionTraversalCoordinate,
+  type MachineTraceActionV1,
+  type MachineTraceBedV1,
+  type MachineTracePassV1,
+  type MachineTraceRackCommandV1,
+  type MachineTraceSelectionV1,
+  type MachineTraceV1,
 } from './machine-trace.js'
 import type { KCodeSourceSpan } from './types.js'
 
@@ -59,6 +60,8 @@ export type MachineValidationRuleV1 =
   | 'machine-trace.transfer-rack-pair'
   | 'machine-trace.transfer-source-empty'
   | 'machine-trace.drop-empty'
+  | 'machine-trace.loop-stack-policy'
+  | 'machine-trace.diagnostic-summary'
 
 export interface MachineValidationDiagnosticV1 {
   readonly severity: MachineValidationSeverityV1
@@ -74,6 +77,8 @@ export interface MachineValidationDiagnosticV1 {
   readonly column: number | null
   readonly endLine: number | null
   readonly endColumn: number | null
+  /** Number of omitted findings represented by a bounded summary diagnostic. */
+  readonly occurrences?: number
 }
 
 export type MachineLoopStackKeyV1 = `${MachineTraceBedV1}:${number}`
@@ -82,6 +87,12 @@ export interface MachineLoopStackCellV1 {
   readonly bed: MachineTraceBedV1
   readonly traceCoordinate: number
   readonly count: number
+}
+
+export interface MachineLoopStateMetricsV1 {
+  readonly occupiedNeedles: number
+  readonly totalLoops: number
+  readonly maxStack: number
 }
 
 /**
@@ -93,15 +104,29 @@ export interface MachineLoopStateSnapshotV1 {
   readonly stacks: Readonly<Partial<Record<MachineLoopStackKeyV1, number>>>
   readonly front: readonly MachineLoopStackCellV1[]
   readonly rear: readonly MachineLoopStackCellV1[]
-  readonly occupiedNeedles: number
-  readonly totalLoops: number
-  readonly maxStack: number
+  readonly occupiedNeedles: MachineLoopStateMetricsV1['occupiedNeedles']
+  readonly totalLoops: MachineLoopStateMetricsV1['totalLoops']
+  readonly maxStack: MachineLoopStateMetricsV1['maxStack']
 }
 
+export interface MachineLoopStackDeltaV1 {
+  readonly bed: MachineTraceBedV1
+  readonly traceCoordinate: number
+  readonly beforeCount: number
+  readonly afterCount: number
+}
+
+/**
+ * Memory-bounded per-pass evidence. `stackDeltas` includes every coordinate
+ * touched by a pass action (including unchanged empty/no-op coordinates), while
+ * `before` and `after` are exact whole-machine aggregate metrics. Full-bed
+ * occupancy is retained only once in `MachineValidationReportV1.finalState`.
+ */
 export interface MachinePassStateSnapshotV1 {
   readonly passIndex: number
-  readonly before: MachineLoopStateSnapshotV1
-  readonly after: MachineLoopStateSnapshotV1
+  readonly before: MachineLoopStateMetricsV1
+  readonly after: MachineLoopStateMetricsV1
+  readonly stackDeltas: readonly MachineLoopStackDeltaV1[]
 }
 
 export interface MachineOperationalAssuranceV1 {
@@ -157,10 +182,12 @@ const OPERATIONAL_ASSURANCE: MachineOperationalAssuranceV1 = {
     },
     {
       code: 'loop-stack-operational-limit-unverified',
-      message: 'Stack depth is measured but not blocked without an evidence-backed profile limit.',
+      message: 'Stack depth is measured and checked against a conservative software policy; the policy is not a measured physical-safe or physical-failure limit.',
     },
   ],
 }
+
+const MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS = 512
 
 const numberKey = (value: number): number => Object.is(value, -0) ? 0 : value
 
@@ -197,6 +224,21 @@ function setStack(
   })
 }
 
+function stateMetrics(state: MutableLoopState): MachineLoopStateMetricsV1 {
+  let totalLoops = 0
+  let maxStack = 0
+  for (const cell of state.values()) {
+    if (cell.count <= 0) continue
+    totalLoops += cell.count
+    maxStack = Math.max(maxStack, cell.count)
+  }
+  return {
+    occupiedNeedles: state.size,
+    totalLoops,
+    maxStack,
+  }
+}
+
 function snapshot(state: MutableLoopState): MachineLoopStateSnapshotV1 {
   const ordered = [...state.values()]
     .filter((cell) => cell.count > 0)
@@ -209,20 +251,14 @@ function snapshot(state: MutableLoopState): MachineLoopStateSnapshotV1 {
       count: cell.count,
     }))
   const stacks: Partial<Record<MachineLoopStackKeyV1, number>> = {}
-  let totalLoops = 0
-  let maxStack = 0
   for (const cell of ordered) {
     stacks[stackKey(cell.bed, cell.traceCoordinate)] = cell.count
-    totalLoops += cell.count
-    maxStack = Math.max(maxStack, cell.count)
   }
   return {
     stacks,
     front: ordered.filter((cell) => cell.bed === 'front'),
     rear: ordered.filter((cell) => cell.bed === 'rear'),
-    occupiedNeedles: ordered.length,
-    totalLoops,
-    maxStack,
+    ...stateMetrics(state),
   }
 }
 
@@ -289,6 +325,27 @@ function actionSelections(action: MachineTraceActionV1): readonly MachineTraceSe
   }
 }
 
+function touchedActionCoordinates(
+  actions: readonly MachineTraceActionV1[],
+): Array<Pick<MachineLoopStackCellV1, 'bed' | 'traceCoordinate'>> {
+  const coordinates = new Map<MachineLoopStackKeyV1, Pick<
+    MachineLoopStackCellV1,
+    'bed' | 'traceCoordinate'
+  >>()
+  for (const action of actions) {
+    for (const selection of actionSelections(action)) {
+      const traceCoordinate = numberKey(selection.traceCoordinate)
+      coordinates.set(stackKey(selection.bed, traceCoordinate), {
+        bed: selection.bed,
+        traceCoordinate,
+      })
+    }
+  }
+  return [...coordinates.values()].sort((a, b) =>
+    (a.bed === b.bed ? 0 : a.bed === 'front' ? -1 : 1)
+    || a.traceCoordinate - b.traceCoordinate)
+}
+
 function actionPrimarySelection(
   action: MachineTraceActionV1,
 ): MachineTraceSelectionV1 | null {
@@ -322,8 +379,7 @@ function actionStopCoordinate(
   if (action.kind === 'xfer' || action.kind === 'split') {
     return primary.traceCoordinate
   }
-  return primary.traceCoordinate
-    + (primary.bed === 'rear' ? Math.floor(pass.rack) : 0)
+  return regularActionTraversalCoordinate(primary, pass.rack)
 }
 
 function actionSpan(
@@ -385,6 +441,11 @@ export function validateKCodeMachineTrace(
 ): MachineValidationReportV1 {
   const diagnostics: MachineValidationDiagnosticV1[] = []
   const diagnosticKeys = new Set<string>()
+  let errorCount = 0
+  let warningCount = 0
+  let omittedDiagnosticCount = 0
+  let omittedErrorCount = 0
+  let omittedWarningCount = 0
   const state: MutableLoopState = new Map()
   const passStates: MachinePassStateSnapshotV1[] = []
 
@@ -407,8 +468,18 @@ export function validateKCodeMachineTrace(
       sourceSpan?.end.offset ?? '',
       message,
     ].join('|')
-    if (diagnosticKeys.has(key)) return
-    diagnosticKeys.add(key)
+    if (diagnostics.length < MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS) {
+      if (diagnosticKeys.has(key)) return
+      diagnosticKeys.add(key)
+    }
+    if (severity === 'error') errorCount++
+    else warningCount++
+    if (diagnostics.length >= MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS) {
+      omittedDiagnosticCount++
+      if (severity === 'error') omittedErrorCount++
+      else omittedWarningCount++
+      return
+    }
     diagnostics.push({
       severity,
       class: diagnosticClass,
@@ -422,6 +493,37 @@ export function validateKCodeMachineTrace(
       endLine: sourceSpan?.end.line ?? null,
       endColumn: sourceSpan?.end.column ?? null,
     })
+  }
+
+  const checkLoopStackPolicy = (
+    count: number,
+    pass: MachineTracePassV1,
+    sourceSpan: KCodeSourceSpan,
+    actionIndex: number,
+    location: string,
+  ): void => {
+    const policy = profile.loopStackSoftwarePolicy
+    if (count > policy.errorAbove) {
+      add(
+        'error',
+        'operational-advisory',
+        'machine-trace.loop-stack-policy',
+        `${location} reaches ${count} modeled loops, above the conservative software error threshold of ${policy.errorAbove}. This is a product gate, not a physical machine-failure claim.`,
+        pass.index,
+        sourceSpan,
+        actionIndex,
+      )
+    } else if (count > policy.warningAbove) {
+      add(
+        'warning',
+        'operational-advisory',
+        'machine-trace.loop-stack-policy',
+        `${location} reaches ${count} modeled loops, above the conservative software review threshold of ${policy.warningAbove}. This is not a physical safety-limit claim.`,
+        pass.index,
+        sourceSpan,
+        actionIndex,
+      )
+    }
   }
 
   if (
@@ -553,7 +655,12 @@ export function validateKCodeMachineTrace(
 
   for (let passPosition = 0; passPosition < trace.passes.length; passPosition++) {
     const pass = trace.passes[passPosition]!
-    const before = snapshot(state)
+    const touchedCoordinates = touchedActionCoordinates(pass.actions)
+    const beforeCounts = new Map(touchedCoordinates.map((coordinate) => [
+      stackKey(coordinate.bed, coordinate.traceCoordinate),
+      getStack(state, coordinate.bed, coordinate.traceCoordinate),
+    ]))
+    const before = stateMetrics(state)
     const structurallyInvalidActions = new Set<number>()
 
     for (const command of rackCommandsByBoundary.get(passPosition) ?? []) {
@@ -1161,15 +1268,25 @@ export function validateKCodeMachineTrace(
           setStack(state, action.at.bed, action.at.traceCoordinate, 1)
           break
 
-        case 'tuck':
+        case 'tuck': {
           // Tuck-on-empty creates a loop; otherwise it adds to the held stack.
+          const nextCount =
+            getStack(state, action.at.bed, action.at.traceCoordinate) + 1
           setStack(
             state,
             action.at.bed,
             action.at.traceCoordinate,
-            getStack(state, action.at.bed, action.at.traceCoordinate) + 1,
+            nextCount,
+          )
+          checkLoopStackPolicy(
+            nextCount,
+            pass,
+            span,
+            actionIndex,
+            `Tuck stack ${action.at.bed}:${action.at.traceCoordinate}`,
           )
           break
+        }
 
         case 'drop': {
           const count = getStack(state, action.at.bed, action.at.traceCoordinate)
@@ -1213,17 +1330,25 @@ export function validateKCodeMachineTrace(
             action.target.bed,
             action.target.traceCoordinate,
           )
+          const nextTargetCount = targetCount + sourceCount
           setStack(
             state,
             action.target.bed,
             action.target.traceCoordinate,
-            targetCount + sourceCount,
+            nextTargetCount,
           )
           setStack(
             state,
             action.source.bed,
             action.source.traceCoordinate,
             action.kind === 'split' ? 1 : 0,
+          )
+          checkLoopStackPolicy(
+            nextTargetCount,
+            pass,
+            span,
+            actionIndex,
+            `${action.kind} target ${action.target.bed}:${action.target.traceCoordinate}`,
           )
           break
         }
@@ -1237,19 +1362,51 @@ export function validateKCodeMachineTrace(
     passStates.push({
       passIndex: pass.index,
       before,
-      after: snapshot(state),
+      after: stateMetrics(state),
+      stackDeltas: touchedCoordinates.map((coordinate) => ({
+        bed: coordinate.bed,
+        traceCoordinate: coordinate.traceCoordinate,
+        beforeCount: beforeCounts.get(
+          stackKey(coordinate.bed, coordinate.traceCoordinate),
+        ) ?? 0,
+        afterCount: getStack(
+          state,
+          coordinate.bed,
+          coordinate.traceCoordinate,
+        ),
+      })),
     })
+  }
+
+  if (omittedDiagnosticCount > 0) {
+    for (const [severity, count] of [
+      ['error', omittedErrorCount],
+      ['warning', omittedWarningCount],
+    ] as const) {
+      if (count === 0) continue
+      diagnostics.push({
+        severity,
+        class: 'structural',
+        rule: 'machine-trace.diagnostic-summary',
+        message: `MachineTrace diagnostics were truncated after ${MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS} detailed findings; omitted ${count} additional ${severity} finding${count === 1 ? '' : 's'} (${omittedDiagnosticCount} findings omitted across all severities).`,
+        passIndex: null,
+        sourceSpan: null,
+        line: null,
+        column: null,
+        endLine: null,
+        endColumn: null,
+        occurrences: count,
+      })
+    }
   }
 
   diagnostics.sort((a, b) =>
     (a.passIndex ?? -1) - (b.passIndex ?? -1)
     || (a.sourceSpan?.start.offset ?? -1) - (b.sourceSpan?.start.offset ?? -1)
     || (a.actionIndex ?? -1) - (b.actionIndex ?? -1)
-    || a.rule.localeCompare(b.rule)
-    || a.message.localeCompare(b.message))
+    || (a.rule < b.rule ? -1 : a.rule > b.rule ? 1 : 0)
+    || (a.message < b.message ? -1 : a.message > b.message ? 1 : 0))
 
-  const errorCount = diagnostics.filter((diagnostic) => diagnostic.severity === 'error').length
-  const warningCount = diagnostics.length - errorCount
   return {
     ok: errorCount === 0,
     diagnostics,

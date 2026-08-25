@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1,
   basePayloadIndexToKCodeColumn,
   kcodeColumnToBasePayloadIndex,
   kcodeColumnToTraceCoordinate,
@@ -93,6 +94,18 @@ describe('Kniterate 7gg KCode machine profile V1', () => {
     })
     expect(profile.rack.documentedBounds.upper.value).toBe(4)
     expect(profile.rack.granularity).toBe(0.5)
+  })
+
+  it('shares a conservative loop-stack software policy without claiming a physical limit', () => {
+    expect(profile.loopStackSoftwarePolicy).toBe(
+      KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1,
+    )
+    expect(profile.loopStackSoftwarePolicy).toEqual({
+      validationRole: 'conservative-software-policy',
+      warningAbove: 2,
+      errorAbove: 3,
+      physicalSafetyClaim: 'not-established',
+    })
   })
 
   it('does not confuse wider backend stitch encoding with documented selector levels', () => {

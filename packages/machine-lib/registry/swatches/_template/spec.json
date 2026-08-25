@@ -2,7 +2,7 @@
   "$schema": "../_schema.json",
   "kind": "chart",
   "sourceFingerprint": "TODO: hash of input chart/package",
-  "compilerFingerprint": "TODO: SHA-256 of packages/machine-lib/src",
+  "compilerFingerprint": "TODO: SHA-256 of the current compiler and physical-proof contract closure",
   "knitoutSha256": "TODO: SHA-256 of out.k",
   "kcodeSha256": "TODO: SHA-256 of out.kc",
   "emitterCommit": "TODO: git rev-parse HEAD at compile time",
@@ -17,13 +17,14 @@
     "status": "not-run",
     "checkedAt": null,
     "currentCommit": null,
-    "notes": "TODO: set to matches only after re-emitting and byte-comparing out.k"
+    "notes": "Historical operator note only; the checker always recompiles and byte-compares independently."
   },
   "compileMessages": [],
   "planSummary": {
     "technique": "TODO: stockinette | ladder-jacquard | birdseye-jacquard | ...",
-    "needleStart": 0,
-    "needleEnd": 0,
+    "coordinateSystem": "compiler/project coordinates; physical needle labels unverified",
+    "compilerCoordinateStart": 0,
+    "compilerCoordinateEnd": 0,
     "rows": 0,
     "wastePasses": 0
   },

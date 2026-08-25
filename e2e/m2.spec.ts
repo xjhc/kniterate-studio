@@ -8,8 +8,7 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
   await page.goto('/');
   const machineInput = page.locator('input[accept=".kc,.k,text/plain"]');
   await machineInput.setInputFiles('packages/machine-lib/reference/fairisle.kc');
-  await expect(page.getByRole('dialog', { name: 'How was this KCode produced?' })).toBeVisible();
-  await page.getByRole('button', { name: /Kniterate \/ Customist app/ }).click();
+  await expect(page.getByRole('dialog', { name: 'How was this KCode produced?' })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Pass grid' })).toBeVisible();
   await expect(page.getByText('Surface-proven (imported)', { exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Exact machine movement' })).toBeVisible();
@@ -29,7 +28,6 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
 
   await page.getByTitle('Pass diff').click();
   await page.locator('input[accept=".kc,text/plain"]').setInputFiles('packages/machine-lib/reference/fairisle.kc');
-  await page.getByRole('button', { name: /Kniterate \/ Customist app/ }).click();
   await expect(page.getByText('Machine-trace identical', { exact: true })).toBeVisible();
 
   const refusal = testInfo.outputPath('refusal.k');
@@ -37,5 +35,25 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
   await machineInput.setInputFiles(refusal);
   await expect(page.getByText('Blocked', { exact: true })).toBeVisible();
   await expect(page.getByText('Invalid carrier ID', { exact: true }).first()).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('opens the two 150k-selection corpus files without overflow or page errors', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/');
+  const machineInput = page.locator('input[accept=".kc,.k,text/plain"]');
+
+  await machineInput.setInputFiles('packages/machine-lib/reference/back.kc');
+  await expect(page.locator('.brand-copy small')).toHaveText('back.kc');
+  await expect(page.getByRole('heading', { name: 'Pass grid' })).toBeVisible();
+  await expect(page.locator('.stat-strip')).toContainText('2,108');
+  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 82 warnings');
+
+  await machineInput.setInputFiles('packages/machine-lib/reference/front.kc');
+  await expect(page.locator('.brand-copy small')).toHaveText('front.kc');
+  await expect(page.locator('.stat-strip')).toContainText('2,544');
+  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 64 warnings');
   expect(errors).toEqual([]);
 });

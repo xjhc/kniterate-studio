@@ -22,10 +22,11 @@ function footer(pass: VendorScheduledPass): string {
 }
 
 /**
- * Compare the pinned backend's post-lowering schedule with the independently
- * parsed KCode MachineTrace. Backend-only sourceLines, isAutoMove, and comment
- * provenance are intentionally excluded because they are compiler side
- * channels, not fields serialized into KCode.
+ * Compare every machine-executable field in the pinned backend's post-lowering
+ * schedule with the independently parsed KCode MachineTrace. `sourceLines` and
+ * `isAutoMove` are compiler side channels. `comment` is serialized as inert
+ * KCode annotation, but MachineTrace intentionally does not treat prose as a
+ * movement or machine-state field.
  */
 export function compareScheduledPassesToMachineTrace(
   scheduledPasses: readonly VendorScheduledPass[],

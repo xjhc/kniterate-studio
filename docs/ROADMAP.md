@@ -125,9 +125,9 @@ Completed 2026-07-12:
 
 - a dedicated Worker executes the same vendored converter source as the Node
   conformance adapter; a parity test pins byte-identical output
-- generated `.kc` is reconstructed and validator-gated before export, with
-  trusted body prediction checked against vendor passes and known-approximate
-  frame/finish deltas retained as non-gating provenance
+- generated `.kc` is strict-parsed into `MachineTraceV1`, replay-validated, and
+  checked against the pinned backend's exact scheduled-pass fields before
+  export; predicted passes remain planning telemetry
 - pass-to-`.kc` line spans join the existing design-row provenance and drive the
   generated source dock
 - export is disabled for blocked, converting, stale, reconstruction-failed, or
@@ -147,7 +147,7 @@ reopen, and revalidate byte-identically in a browser test.
 - CSP-compatible browser converter with generated-source and byte-parity checks
 - CI gates for full verification and Chromium/Firefox/WebKit browser coverage
 - decoded face designs from `fairisle.kc`, `jacquard.kc`, and `dbj.kc` author and
-  export through the real browser Worker path; all three references reconstruct
+  export through the real browser Worker path; all three references strict-parse
   and validate cleanly
 
 Fairisle and DBJ also retain exact machine-equivalent reference parity tests.

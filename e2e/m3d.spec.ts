@@ -58,12 +58,11 @@ test('exports validated k-code and reproduces it byte-identically after project 
   expect(await readFile(secondKc)).toEqual(firstBytes);
 
   await page.locator('input[accept=".kc,.k,text/plain"]').first().setInputFiles(secondKc);
-  await page.getByRole('button', { name: /Studio \/ Knitout backend/ }).click();
   await expect(page.getByText('Surface-proven (imported)', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
-test('keeps the UI responsive while a 200x300 four-color blanket becomes export-ready', async ({ page }, testInfo) => {
+test('keeps the UI responsive and fails closed when a 200x300 four-color blanket exceeds the Knitout intake budget', async ({ page }, testInfo) => {
   test.setTimeout(75_000);
   const palette = [
     { id: 'natural', name: 'Natural', hex: '#F1EDE3' },
@@ -83,14 +82,12 @@ test('keeps the UI responsive while a 200x300 four-color blanket becomes export-
   await page.locator('input[accept=".json,application/json"]').setInputFiles(chartPath);
   await page.getByRole('button', { name: 'Toggle theme', exact: true }).click();
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'dark');
-  // WebKit's full vendor conversion and reconstruction pass is slower than
-  // Chromium/Firefox on the single-core CI runner, while remaining off-thread.
-  const exportButton = await waitForExport(page, 45_000);
-  const readyAfterMs = Date.now() - started;
-  expect(readyAfterMs).toBeLessThan(45_000);
-  testInfo.annotations.push({ type: 'benchmark', description: `Export ready after ${readyAfterMs} ms` });
+  const resourceDiagnostic = 'Line 250001: Knitout source exceeds the 250000-record intake limit.';
+  await expect(page.locator('.setup-error')).toHaveText(resourceDiagnostic, { timeout: 45_000 });
+  const blockedAfterMs = Date.now() - started;
+  expect(blockedAfterMs).toBeLessThan(45_000);
+  testInfo.annotations.push({ type: 'benchmark', description: `Resource limit reported after ${blockedAfterMs} ms` });
+  await expect(page.locator('.compile-verdict')).toContainText('Blocked');
+  await expect(page.getByRole('button', { name: 'Export k-code', exact: true })).toBeDisabled();
   await expect(page.locator('.compile-stats')).toContainText('5,032');
-  const kcPath = testInfo.outputPath('four-color-blanket.kc');
-  await downloadFrom(page, exportButton, kcPath);
-  expect((await stat(kcPath)).size).toBeGreaterThan(1_000_000);
 });
