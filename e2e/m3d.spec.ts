@@ -58,6 +58,7 @@ test('exports validated k-code and reproduces it byte-identically after project 
   expect(await readFile(secondKc)).toEqual(firstBytes);
 
   await page.locator('input[accept=".kc,.k,text/plain"]').first().setInputFiles(secondKc);
+  await page.getByRole('button', { name: /Studio \/ Knitout backend/ }).click();
   await expect(page.getByText('Surface-proven (imported)', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "typecheck": "pnpm -r typecheck",
     "kniterate:conform": "pnpm --dir packages/machine-lib kniterate:conform",
+    "verify:kcode": "pnpm --dir packages/machine-lib verify:kcode",
     "release:trial": "tsx scripts/build-v1-knit-trial.ts",
     "release:register": "tsx scripts/register-v1-knit-trial.ts",
     "release:physical-check": "pnpm --dir packages/machine-lib kniterate:swatches && tsx scripts/check-v1-physical-release.ts",

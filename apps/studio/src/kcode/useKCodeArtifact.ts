@@ -29,7 +29,7 @@ export function useKCodeArtifact(compiled: BlanketCompileArtifact | null): KCode
     activeRequest.current = requestId;
     if (!compiled?.ok || !compiled.inputHash || !compiled.knitoutText) { setState({ status: 'idle', artifact: null, error: null }); return; }
     setState((current) => ({ status: 'converting', artifact: current.artifact?.inputHash === compiled.inputHash ? current.artifact : null, error: null }));
-    const request: KCodeConversionRequest = { kind: 'convert-kcode', requestId, inputHash: compiled.inputHash, knitoutText: compiled.knitoutText, predictedPasses: compiled.passes, rowProvenance: compiled.rowProvenance };
+    const request: KCodeConversionRequest = { kind: 'convert-kcode', requestId, inputHash: compiled.inputHash, knitoutText: compiled.knitoutText, programOpSourceRows: compiled.programOpSourceRows, rowProvenance: compiled.rowProvenance };
     workerRef.current?.postMessage(request);
   }, [compiled]);
   return state;

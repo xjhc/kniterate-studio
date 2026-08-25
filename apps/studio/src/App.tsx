@@ -22,7 +22,7 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import { matchKnitProvenArtifact, matchKnitProvenKCode } from '@kniterate-studio/machine-lib/browser';
+import { matchKnitProvenArtifact, type KCodeDialect } from '@kniterate-studio/machine-lib/browser';
 import { compareKcDocuments, openMachineDocument, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, renameColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
@@ -30,7 +30,8 @@ import type { BlanketCompileArtifact } from './blanket/compileProject';
 import { ChartWorkspace } from './chart/ChartWorkspace';
 import { useKCodeArtifact } from './kcode/useKCodeArtifact';
 import type { KCodeArtifact } from './kcode/kcodeProtocol';
-import { sha256Text } from './kcode/sha256';
+import { MachineMovementView, type MachineMovementViewProps } from './kcode/MachineMovementView';
+import { programRegionForPass } from './chart/AuthoredMachinePanel';
 import { NewProjectDialog, ProjectSettingsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
 import { readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
 
@@ -64,7 +65,13 @@ function useModalFocusTrap(onClose: () => void) {
   return dialogRef;
 }
 
-type MobileView = 'passes' | 'diagnostics' | 'source';
+type MobileView = 'movement' | 'passes' | 'diagnostics' | 'source';
+
+interface PendingKCodeImport {
+  file: File;
+  bytes: Uint8Array;
+  comparison: boolean;
+}
 
 function defaultProject(): ColorworkProjectV1 {
   return createColorworkProjectV1({
@@ -89,17 +96,17 @@ function projectId(title: string): string {
   return `${slug}-${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
 }
 
-function CompilePipeline({ project, compile, kcodeStatus }: {
+function CompilePipeline({ project, compile, kcode }: {
   project: ColorworkProjectV1;
   compile: ReturnType<typeof useBlanketCompiler>;
-  kcodeStatus: ReturnType<typeof useKCodeArtifact>['status'];
+  kcode: ReturnType<typeof useKCodeArtifact>;
 }) {
   const state = materializeColorworkProject(project).state;
   const stages = [
     { label: 'Chart', detail: `${state.chart.width}x${state.chart.height} · ${state.chart.palette.length} colors`, state: 'ready' },
     { label: 'Plan', detail: state.strategy.technique, state: compile.status === 'failed' || compile.artifact?.ok === false ? 'blocked' : compile.status === 'compiling' ? 'working' : 'ready' },
-    { label: 'Passes', detail: compile.artifact?.ok ? compile.artifact.stats.passCount.toLocaleString() : compile.status === 'compiling' ? 'calculating' : 'waiting', state: compile.artifact?.ok ? 'ready' : compile.artifact?.ok === false ? 'blocked' : 'working' },
-    { label: 'K-code', detail: kcodeStatus === 'ready' ? 'validated' : kcodeStatus === 'failed' ? 'failed' : kcodeStatus === 'converting' ? 'validating' : 'waiting', state: kcodeStatus === 'ready' ? 'ready' : kcodeStatus === 'failed' ? 'blocked' : 'working' },
+    { label: 'KCode', detail: kcode.artifact ? `${kcode.artifact.passCount.toLocaleString()} emitted passes` : kcode.status === 'converting' ? 'lowering' : 'waiting', state: kcode.status === 'failed' ? 'blocked' : kcode.artifact ? 'ready' : 'working' },
+    { label: 'Proof', detail: kcode.status === 'ready' ? kcode.artifact?.ok ? 'trace + replay clear' : 'blocked' : kcode.status === 'failed' ? 'failed' : kcode.status === 'converting' ? 'checking exact output' : 'waiting', state: kcode.status === 'ready' ? kcode.artifact?.ok ? 'ready' : 'blocked' : kcode.status === 'failed' ? 'blocked' : 'working' },
   ];
   return <ol className="compile-pipeline" aria-label="Compile pipeline">{stages.map((stage, index) => <li key={stage.label} className={stage.state}>
     {index > 0 && <i aria-hidden="true" />}
@@ -145,6 +152,25 @@ function EmptyState({ active, onOpen, onDrop }: { active: boolean; onOpen: () =>
   );
 }
 
+function KCodeDialectDialog({ filename, onChoose, onClose }: {
+  filename: string;
+  onChoose: (dialect: KCodeDialect) => void;
+  onClose: () => void;
+}) {
+  const dialogRef = useModalFocusTrap(onClose);
+  return <div className="modal-backdrop project-dialog-backdrop">
+    <article className="project-dialog kcode-dialect-dialog" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="kcode-dialect-title" tabIndex={-1}>
+      <header><div><span className="eyebrow">Explicit parse contract</span><h2 id="kcode-dialect-title">How was this KCode produced?</h2></div><button className="icon-button" type="button" onClick={onClose} aria-label="Cancel KCode import"><X size={16} /></button></header>
+      <div className="kcode-dialect-body">
+        <p><code>{filename}</code> does not identify its raster dialect reliably. Choose the source; Studio will not guess.</p>
+        <button type="button" className="dialect-choice" onClick={() => onChoose('app')}><strong>Kniterate / Customist app</strong><span>For KCode exported by the official design tools.</span><code>dialect: app</code></button>
+        <button type="button" className="dialect-choice" onClick={() => onChoose('knitout-vendor')}><strong>Studio / Knitout backend</strong><span>For KCode emitted by this Studio or the pinned open Knitout backend.</span><code>dialect: knitout-vendor</code></button>
+      </div>
+      <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button></footer>
+    </article>
+  </div>;
+}
+
 function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = false }: {
   passes: readonly MachinePass[];
   selected: number;
@@ -183,7 +209,7 @@ function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = 
   return (
     <div className="pass-table">
       <div className="pass-head" aria-hidden="true">
-        <span>Pass</span><span>Direction</span><span>Carrier</span><span>Action</span><span>{compiled ? 'Status' : 'Bed'}</span><span>{compiled ? 'Design' : 'Needles'}</span><span>Rack</span><span>Speed</span><span>Roller</span>
+        <span>Pass</span><span>Direction</span><span>Carrier</span><span>Action</span><span>{compiled ? 'Bed / mode' : 'Bed'}</span><span>{compiled ? 'Design' : 'Needles'}</span><span>Rack</span><span>Speed</span><span>Roller</span>
       </div>
       <div className="pass-viewport" ref={viewportRef} onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}>
         <div className="pass-spacer" style={{ height: grouped.length * ROW_HEIGHT }}>
@@ -215,54 +241,99 @@ function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = 
   );
 }
 
-function CompiledMachineWorkspace({ artifact, kcode, focusedRowId, onFocusedRowId }: { artifact: BlanketCompileArtifact; kcode: KCodeArtifact | null; focusedRowId: string | null; onFocusedRowId: (rowId: string) => void }) {
+function kcodeOverallContext(kcode: KCodeArtifact): NonNullable<MachineMovementViewProps['overallContext']> {
+  const errorCount = kcode.messages.filter((message) => message.severity === 'error').length;
+  const warningCount = kcode.messages.filter((message) => message.severity === 'warning').length;
+  if (!kcode.ok || errorCount > 0) {
+    const blockingCount = Math.max(1, errorCount);
+    return {
+      status: 'blocked',
+      label: `${blockingCount} blocking exact-output finding${blockingCount === 1 ? '' : 's'} across strict parsing, replay, and scheduled-pass differential checks.`,
+    };
+  }
+  if (warningCount > 0) return {
+    status: 'warning',
+    label: `${warningCount} exact-output warning${warningCount === 1 ? '' : 's'} across the whole artifact.`,
+  };
+  return {
+    status: 'clear',
+    label: 'No error or warning findings from strict parsing, KCode replay, or scheduled-pass differential checks.',
+  };
+}
+
+function documentOverallContext(document: MachineDocument): NonNullable<MachineMovementViewProps['overallContext']> {
+  const errors = document.diagnostics.filter((diagnostic) => diagnostic.severity === 'error').length;
+  const warnings = document.diagnostics.filter((diagnostic) => diagnostic.severity === 'warning').length;
+  if (document.verdict.state === 'blocked' || errors > 0) return { status: 'blocked', label: document.verdict.annotation };
+  if (warnings > 0) return { status: 'warning', label: `${warnings} finding${warnings === 1 ? '' : 's'} across the imported artifact. ${document.verdict.annotation}` };
+  return { status: 'clear', label: document.verdict.annotation };
+}
+
+function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, focusedRowId, onFocusedRowId }: { artifact: BlanketCompileArtifact; kcode: KCodeArtifact | null; outputStatus: 'idle' | 'converting' | 'ready' | 'failed'; outputError: string | null; focusedRowId: string | null; onFocusedRowId: (rowId: string) => void }) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const focusedPass = artifact.rowProvenance.find((row) => row.rowId === focusedRowId)?.passIndices[0] ?? 0;
+  const focusedPass = kcode?.rowPasses.find((row) => row.rowId === focusedRowId)?.passIndices[0] ?? kcode?.scene?.passes[0]?.passIndex ?? 0;
   const [selected, setSelected] = useState(focusedPass);
   useEffect(() => setSelected(focusedPass), [focusedPass]);
-  const passes = useMemo<MachinePass[]>(() => artifact.passes.map((pass, index) => {
-    const designRows = [...new Set((pass.sourceRows ?? []).map((row) => row + 1))];
+  const passes = useMemo<MachinePass[]>(() => (kcode?.scene?.passes ?? []).map((pass, index) => {
+    const provenance = kcode?.passProvenance[index];
+    const coordinates = [...pass.beds.front, ...pass.beds.rear].map((selection) => selection.kcodeColumn);
+    const designRows = (provenance?.rowIds ?? []).flatMap((rowId) => {
+      const row = artifact.rowProvenance.find((item) => item.rowId === rowId);
+      return row ? [`R${row.displayRow}`] : [rowId];
+    });
+    const bedLabel = `${pass.beds.front.length ? 'F' : ''}${pass.beds.front.length && pass.beds.rear.length ? '+' : ''}${pass.beds.rear.length ? 'R' : ''}`;
     return {
-      index,
+      index: pass.passIndex,
       direction: pass.direction,
-      type: pass.type,
-      carriers: pass.carriers,
-      beds: pass.isAutoMove ? 'Auto move' : 'Predicted',
-      needleSpan: designRows.length ? designRows.map((row) => `R${row}`).join(', ') : 'Frame',
-      rack: null,
-      speed: pass.speed,
-      roller: pass.roller,
-      lineStart: 0,
-      lineEnd: 0,
-      section: designRows.length ? 'Body' : 'Frame / finish',
-      ghost: pass.isAutoMove,
+      type: pass.operation,
+      carriers: pass.carrier === '0' ? [] : [pass.carrier],
+      beds: provenance?.isAutoMove ? 'Auto move' : bedLabel || 'Move',
+      needleSpan: coordinates.length ? `K${Math.min(...coordinates)}–K${Math.max(...coordinates)}` : designRows.join(', ') || 'No selections',
+      rack: pass.rack,
+      speed: pass.speed.value,
+      roller: pass.roller.value,
+      lineStart: kcode?.passLines[index]?.lineStart ?? 0,
+      lineEnd: kcode?.passLines[index]?.lineEnd ?? 0,
+      section: programRegionForPass(kcode!, index).replace(/^./, (value) => value.toUpperCase()),
+      ghost: provenance?.isAutoMove ?? false,
     };
-  }), [artifact]);
+  }), [artifact, kcode]);
   const selectPass = (index: number) => {
     setSelected(index);
-    const row = artifact.rowProvenance.find((item) => item.passIndices.includes(index));
-    if (row) onFocusedRowId(row.rowId);
+    const rowId = kcode?.passProvenance[index]?.rowIds[0];
+    if (rowId) onFocusedRowId(rowId);
   };
-  const errors = artifact.messages.filter((message) => message.severity === 'error');
-  const warnings = artifact.messages.filter((message) => message.severity === 'warning');
-  const findingGroups = [...artifact.diagnostics.reduce((groups, diagnostic) => {
-    const group = groups.get(diagnostic.rule);
+  const outputMessages = kcode?.messages ?? [];
+  const errors = [...artifact.messages, ...outputMessages].filter((message) => message.severity === 'error');
+  const outputWarnings = outputMessages.filter((message) => message.severity === 'warning');
+  const findingGroups = [...outputMessages.reduce((groups, message) => {
+    const group = groups.get(message.rule);
     if (group) group.count += 1;
-    else groups.set(diagnostic.rule, { diagnostic, count: 1 });
+    else groups.set(message.rule, {
+      diagnostic: {
+        ...message,
+        passIndex: kcode?.validation?.diagnostics.find((item) => item.rule === message.rule)?.passIndex ?? null,
+      },
+      count: 1,
+    });
     return groups;
-  }, new Map<string, { diagnostic: BlanketCompileArtifact['diagnostics'][number]; count: number }>()).values()];
-  const sourceLines = useMemo(() => kcode?.kcText.split(/\r?\n/) ?? [], [kcode]);
+  }, new Map<string, { diagnostic: { severity: 'error' | 'warning' | 'info'; rule: string; message: string; passIndex: number | null }; count: number }>()).values()];
+  const sourceLines = useMemo(() => kcode?.kcText.split(/\r\n|\r|\n/) ?? [], [kcode]);
   const sourceSpan = kcode?.passLines[selected];
   const sourceFrom = Math.max(1, (sourceSpan?.lineStart ?? 1) - 6);
   const sourceTo = Math.min(sourceLines.length, (sourceSpan?.lineEnd ?? 1) + 6);
   return <div className="workspace">
     <nav className="side-rail" aria-label="Workspace views"><button className="active" type="button" title="Machine passes"><Rows3 size={19} /></button></nav>
     <main className="machine-workspace compiled-workspace">
-      <div className="workspace-head"><div><span className="eyebrow">Compiled project</span><h1>Predicted pass grid</h1></div><div className="stat-strip"><span><b>{artifact.stats.passCount.toLocaleString()}</b> passes</span><span><b>{artifact.stats.patternColors}</b> pattern colors</span><span><b>{artifact.stats.needles}</b> needles</span><span><b>{errors.length}</b> errors</span></div></div>
+      <div className="workspace-head"><div><span className="eyebrow">Compiled project</span><h1>Exact emitted machine trace</h1></div><div className="stat-strip"><span><b>{(kcode?.passCount ?? 0).toLocaleString()}</b> passes</span><span><b>{artifact.stats.patternColors}</b> pattern colors</span><span><b>{artifact.stats.needles}</b> design columns</span><span><b>{errors.length + (outputStatus === 'failed' ? 1 : 0)}</b> errors</span></div></div>
       <div className="compiled-machine-layout">
+        {kcode?.scene ? <MachineMovementView className="compiled-movement" scene={kcode.scene} validation={kcode.validation} overallContext={kcodeOverallContext(kcode)} selectedPass={selected} onSelect={selectPass} />
+          : kcode ? <div className="compiled-movement compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>Exact machine scene blocked</strong><small>{outputMessages.find((message) => message.severity === 'error')?.message ?? 'Strict parsing or MachineTrace projection did not produce an inspectable scene.'}</small></span></div>
+            : outputStatus === 'failed' || outputStatus === 'ready' ? <div className="compiled-movement compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>KCode generation failed</strong><small>{outputError ?? 'Generation completed without an inspectable exact-output artifact.'}</small></span></div>
+              : <div className="compiled-movement compiled-clear" role="status"><span className="spin-dot" /><strong>Strictly parsing and validating emitted KCode…</strong></div>}
         <PassGrid passes={passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={selectPass} compiled />
-        <section className="diagnostics-panel"><div className="panel-title"><span><ListChecks size={15} /> Checks</span><b>{warnings.length} warnings</b></div><div className="diagnostic-list">{artifact.messages.length === 0 ? <div className="compiled-clear"><CheckCircle2 size={18} /><strong>No compiler findings</strong></div> : findingGroups.map(({ diagnostic, count }) => <button type="button" disabled={diagnostic.passIndices.length === 0} onClick={() => { const pass = diagnostic.passIndices[0]; if (pass !== undefined) selectPass(pass); }} className={`compiled-finding severity-${diagnostic.severity}`} key={diagnostic.rule}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}<span><strong>{diagnostic.rule}{count > 1 ? ` · ${count} occurrences` : ''}</strong><small>{diagnostic.message}</small></span></button>)}</div></section>
-        <section className="source-dock"><div className="panel-title"><span><Code2 size={15} /> Generated K-code</span><b>{kcode ? `${kcode.passCount.toLocaleString()} passes · ${kcode.kcHash.slice(0, 12)}` : 'Converting'}</b></div><pre>{kcode ? sourceLines.slice(sourceFrom - 1, sourceTo).map((line, offset) => { const lineNumber = sourceFrom + offset; const highlighted = lineNumber >= (sourceSpan?.lineStart ?? 0) && lineNumber <= (sourceSpan?.lineEnd ?? 0); return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={lineNumber}><i>{lineNumber}</i><code>{line || ' '}</code></span>; }) : <span className="source-line"><i /><code>Waiting for validated conversion…</code></span>}</pre></section>
+        <section className="diagnostics-panel"><div className="panel-title"><span><ListChecks size={15} /> Exact-output checks</span><b>{outputWarnings.length} warnings</b></div><div className="diagnostic-list">{findingGroups.length === 0 ? kcode?.ok ? <div className="compiled-clear"><CheckCircle2 size={18} /><strong>No exact-output findings</strong></div> : <div className="compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>Exact-output evidence unavailable</strong><small>{outputError ?? 'No completed strict KCode artifact is available.'}</small></span></div> : findingGroups.map(({ diagnostic, count }) => <button type="button" disabled={diagnostic.passIndex === null} onClick={() => { if (diagnostic.passIndex !== null) selectPass(diagnostic.passIndex); }} className={`compiled-finding severity-${diagnostic.severity}`} key={diagnostic.rule}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}<span><strong>{diagnostic.rule}{count > 1 ? ` · ${count} occurrences` : ''}</strong><small>{diagnostic.message}</small></span></button>)}</div></section>
+        <section className="source-dock"><div className="panel-title"><span><Code2 size={15} /> Generated K-code</span><b>{kcode ? `${kcode.passCount.toLocaleString()} passes · ${kcode.kcHash.slice(0, 12)}` : outputStatus === 'failed' || outputStatus === 'ready' ? 'Unavailable' : 'Converting'}</b></div><pre>{kcode ? sourceLines.slice(sourceFrom - 1, sourceTo).map((line, offset) => { const lineNumber = sourceFrom + offset; const highlighted = lineNumber >= (sourceSpan?.lineStart ?? 0) && lineNumber <= (sourceSpan?.lineEnd ?? 0); return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={lineNumber}><i>{lineNumber}</i><code>{line || ' '}</code></span>; }) : <span className="source-line"><i /><code>{outputStatus === 'failed' || outputStatus === 'ready' ? outputError ?? 'No exact KCode artifact was produced.' : 'Waiting for validated conversion…'}</code></span>}</pre></section>
       </div>
     </main>
   </div>;
@@ -294,7 +365,7 @@ function Diagnostics({ document, selected, onSelect }: { document: MachineDocume
 
 function SourceDock({ document, selected, preferredLine }: { document: MachineDocument; selected: number; preferredLine: number | null }) {
   const pass = document.passes[selected];
-  const sourceLines = useMemo(() => document.source.split(/\r?\n/), [document.source]);
+  const sourceLines = useMemo(() => document.source.split(/\r\n|\r|\n/), [document.source]);
   const focusLine = preferredLine ?? pass?.lineEnd ?? 1;
   const from = Math.max(1, focusLine - 8);
   const to = Math.min(sourceLines.length, focusLine + 8);
@@ -358,7 +429,7 @@ function AuthoredRunSheet({ project, compiled, kcode, verdict, onClose }: { proj
   const { state } = materializeColorworkProject(project);
   const dialogRef = useModalFocusTrap(onClose);
   const needleEnd = state.machine.needleOffset + state.chart.width - 1;
-  const findings = [...new Map(compiled.messages.filter((message) => message.severity !== 'info').map((message) => [message.rule, message])).values()];
+  const findings = [...new Map([...compiled.messages, ...kcode.messages].filter((message) => message.severity !== 'info').map((message) => [message.rule, message])).values()];
   return <div className="modal-backdrop"><article className="run-sheet" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="authored-run-title" tabIndex={-1}>
     <div className="run-sheet-actions"><button className="secondary-button" type="button" onClick={onClose}><X size={16} /> Close</button><button className="primary-button" type="button" onClick={() => window.print()}><Printer size={16} /> Print</button></div>
     <header><span>KNITERATE STUDIO · RUN SHEET</span><h1 id="authored-run-title">{project.title}</h1><div className={`print-verdict verdict-${verdict.state}`}>{verdict.label}</div></header>
@@ -377,11 +448,28 @@ function DiffView({ base, compare, onOpenCompare, onSelect }: { base: MachineDoc
   if (base.format !== 'kc') return <div className="diff-empty"><ArrowLeftRight size={26} /><h2>Pass diff requires a .kc file</h2></div>;
   if (!compare) return <div className="diff-empty"><FilePlus2 size={26} /><h2>Choose a comparison file</h2><button className="primary-button" type="button" onClick={onOpenCompare}><FilePlus2 size={16} /> Choose .kc</button></div>;
   if (!result) return null;
+  const byteSummary = result.summary.byteIdentical === undefined
+    ? null
+    : result.summary.byteIdentical
+      ? 'KCode bytes are identical.'
+      : `KCode bytes differ${result.summary.firstLineDelta ? `; first source-line delta is line ${result.summary.firstLineDelta.index + 1}` : ''}.`;
+  const capSummary = result.summary.status === 'compared' && result.summary.deltaCount > result.summary.deltas.length
+    ? `Showing the first ${result.summary.deltas.length.toLocaleString()} of ${result.summary.deltaCount.toLocaleString()} exact field deltas; pass windows are limited to this cap, with exact raw pass fields retained for every rendered pass.`
+    : result.summary.status === 'compared' && result.summary.deltaCount > 0
+      ? `Showing all ${result.summary.deltaCount.toLocaleString()} exact field deltas across ${result.windows.length.toLocaleString()} changed pass${result.windows.length === 1 ? '' : 'es'}.`
+      : null;
   return (
     <section className="diff-view">
       <header><div><span className="eyebrow">K-code pass diff</span><h2>{base.filename} <ArrowLeftRight size={16} /> {compare.filename}</h2></div><button className="secondary-button" type="button" onClick={onOpenCompare}><FilePlus2 size={15} /> Replace</button></header>
-      <div className={`diff-summary${result.summary.identical ? ' identical' : ''}`}><strong>{result.summary.identical ? 'Pass-identical' : `${result.summary.deltaCount.toLocaleString()} changed passes`}</strong><span>{result.summary.generatedPassCount.toLocaleString()} vs {result.summary.referencePassCount.toLocaleString()} passes</span></div>
-      <div className="diff-list">{result.windows.map((window) => <button type="button" key={window.index} onClick={() => onSelect(window.index)}><b>Pass {window.index + 1}</b><pre>{window.text}</pre></button>)}</div>
+      <div className={`diff-summary${result.summary.identical ? ' identical' : ''}`}><strong>{result.summary.status === 'blocked' ? 'Strict comparison blocked' : result.summary.identical ? 'Machine-trace identical' : `${result.summary.deltaCount.toLocaleString()} field differences`}</strong><span>{result.summary.generatedPassCount.toLocaleString()} vs {result.summary.referencePassCount.toLocaleString()} passes</span></div>
+      {(byteSummary || capSummary) && <div className="diff-disclosure" role="status">{byteSummary && <span>{byteSummary}</span>}{capSummary && <span>{capSummary}</span>}</div>}
+      <div className="diff-list">{result.windows.map((window) => {
+        const windowId = `strict-diff-window-${window.index}`;
+        return <article className="diff-entry" key={window.index}>
+          {result.summary.status === 'compared' && <button type="button" aria-label={`Open pass ${window.index + 1} in machine view`} onClick={() => onSelect(window.index)}><b>Inspect pass {window.index + 1}</b></button>}
+          <pre id={windowId} tabIndex={0} aria-label={result.summary.status === 'blocked' ? 'Strict comparison blocked details' : `Exact field differences for pass ${window.index + 1}`}>{window.text}</pre>
+        </article>;
+      })}</div>
     </section>
   );
 }
@@ -407,11 +495,15 @@ export function App() {
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const [showNewProject, setShowNewProject] = useState(false);
   const [showProjectSettings, setShowProjectSettings] = useState(false);
+  const [pendingKCodeImport, setPendingKCodeImport] = useState<PendingKCodeImport | null>(null);
   const [autosaveState, setAutosaveState] = useState<'saving' | 'saved' | 'failed'>(initial.recoveredAt ? 'saved' : 'saving');
   const blanketCompile = useBlanketCompiler(project);
   const kcodeState = useKCodeArtifact(blanketCompile.artifact);
   const outputCurrent = blanketCompile.artifact?.inputHash != null
     && kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash;
+  const displayedOutputStatus = outputCurrent || kcodeState.status === 'failed' || kcodeState.status === 'idle'
+    ? kcodeState.status
+    : 'converting';
   const outputReady = outputCurrent && kcodeState.artifact?.ok === true;
   const knitProvenMatch = matchKnitProvenArtifact(
     outputReady ? blanketCompile.artifact?.inputHash : null,
@@ -473,13 +565,27 @@ export function App() {
     URL.revokeObjectURL(link.href);
   };
 
+  const showOpenedDocument = (opened: MachineDocument, comparison: boolean) => {
+    if (comparison) { setCompare(opened); setView('diff'); }
+    else { setDocument(opened); setCompare(null); setSelected(0); setPreferredLine(null); setMobileView(opened.kcode?.scene ? 'movement' : 'passes'); setView('machine'); }
+  };
   const openFile = async (file: File | undefined, comparison = false) => {
     if (!file) return;
-    const source = await file.text();
-    const physicalMatch = file.name.toLowerCase().endsWith('.kc') ? matchKnitProvenKCode(await sha256Text(source)) : null;
-    const opened = openMachineDocument(file.name, source, physicalMatch?.id ?? null);
-    if (comparison) { setCompare(opened); setView('diff'); }
-    else { setDocument(opened); setCompare(null); setSelected(0); setPreferredLine(null); setView('machine'); }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    if (file.name.toLowerCase().endsWith('.kc')) {
+      setPendingKCodeImport({ file, bytes, comparison });
+      return;
+    }
+    showOpenedDocument(openMachineDocument(file.name, bytes, {}), comparison);
+  };
+  const chooseKCodeDialect = (dialect: KCodeDialect) => {
+    if (!pendingKCodeImport) return;
+    const opened = openMachineDocument(pendingKCodeImport.file.name, pendingKCodeImport.bytes, {
+      dialect,
+    });
+    const comparison = pendingKCodeImport.comparison;
+    setPendingKCodeImport(null);
+    showOpenedDocument(opened, comparison);
   };
   const handleInput = (event: ChangeEvent<HTMLInputElement>, comparison = false) => {
     void openFile(event.target.files?.[0], comparison); event.target.value = '';
@@ -502,9 +608,10 @@ export function App() {
     <div className="app-shell" data-theme={theme}>
       <header className="topbar">
         <div className="brand-lockup"><span className="brand-mark" aria-hidden="true"><i /><i /><i /></span><span className="brand-copy"><strong>Kniterate Studio</strong><small>{document ? document.filename : `${project.title} / ${authoredState.chart.width} needles / ${authoredState.chart.height} rows`}</small></span></div>
-        {!document && <CompilePipeline project={project} compile={blanketCompile} kcodeStatus={kcodeState.status} />}
+        {!document && <CompilePipeline project={project} compile={blanketCompile} kcode={kcodeState} />}
         <div className="topbar-actions">
           {document && <button className={`icon-button${view === 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => { setDocument(null); setView('chart'); }} title="Return to authored project" aria-label="Return to authored project"><Grid3X3 size={17} /></button>}
+          {!document && blanketCompile.artifact?.ok && <button className={`icon-button${view === 'machine' ? ' active-tool' : ''}`} type="button" onClick={() => setView(view === 'machine' ? 'chart' : 'machine')} title={view === 'machine' ? 'Return to chart' : 'Inspect exact emitted movement'} aria-label={view === 'machine' ? 'Return to chart' : 'Inspect exact emitted movement'}>{view === 'machine' ? <Grid3X3 size={17} /> : <PanelRight size={17} />}</button>}
           <button className="icon-button" type="button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} title="Toggle theme" aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
           {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
           {!document && authoredVerdict && <AuthoredVerdictBadge verdict={authoredVerdict} onClick={() => setShowVerdict((value) => !value)} />}
@@ -516,7 +623,7 @@ export function App() {
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={kcodeState.status} outputError={kcodeState.error} authoredVerdict={authoredVerdict} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash ? kcodeState.artifact : null} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
+      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} authoredVerdict={authoredVerdict} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>
@@ -528,10 +635,12 @@ export function App() {
               <div className="stat-strip"><span><b>{document.stats.passCount.toLocaleString()}</b> passes</span><span><b>{document.stats.carriers.length}</b> carriers</span><span><b>{document.stats.needleSpan}</b></span><span><b>rack {document.stats.rackRange}</b></span></div>
             </div>
             <div className="mobile-tabs">
+              {document.kcode?.scene && <button className={mobileView === 'movement' ? 'active' : ''} type="button" onClick={() => setMobileView('movement')}>movement</button>}
               {(['passes', 'diagnostics', 'source'] as MobileView[]).map((item) => <button className={mobileView === item ? 'active' : ''} type="button" key={item} onClick={() => setMobileView(item)}>{item}</button>)}
             </div>
             {view === 'machine' ? (
-              <div className={`machine-layout mobile-${mobileView}`}>
+              <div className={`machine-layout${document.kcode?.scene ? ' has-movement' : ''} mobile-${mobileView}`}>
+                {document.kcode?.scene && <MachineMovementView className="machine-movement-panel" scene={document.kcode.scene} validation={document.kcode.validation} overallContext={documentOverallContext(document)} selectedPass={selected} onSelect={(pass) => select(pass)} />}
                 <PassGrid passes={document.passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={(pass) => select(pass)} />
                 <Diagnostics document={document} selected={selected} onSelect={select} />
                 <SourceDock document={document} selected={selected} preferredLine={preferredLine} />
@@ -546,6 +655,7 @@ export function App() {
       {!document && showRunSheet && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
       {showNewProject && <NewProjectDialog onCreate={createProject} onClose={() => setShowNewProject(false)} />}
       {showProjectSettings && <ProjectSettingsDialog project={project} onSave={saveProjectSettings} onClose={() => setShowProjectSettings(false)} />}
+      {pendingKCodeImport && <KCodeDialectDialog filename={pendingKCodeImport.file.name} onChoose={chooseKCodeDialect} onClose={() => setPendingKCodeImport(null)} />}
     </div>
   );
 }

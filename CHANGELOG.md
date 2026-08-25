@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- Added a strict, lossless KCode parser with exact byte round trips, explicit
+  App-versus-Knitout dialect selection, a versioned 7gg machine contract, and
+  fail-closed foreign-file intake.
+- Added exact emitted `MachineTraceV1`, KCode-native carriage/carrier/loop-state
+  validation, full-raster trace diffing, and a synchronized movement instrument
+  for carriage, carrier guide, front/rear beds, transfers, and splits.
+- Replaced approximate authored pass joins with pinned-backend scheduled-pass
+  provenance and exact Knitout source-line-to-design-row links.
+- Added deterministic lowering checks, independent parser/replay oracles,
+  property and grammar/input-mutation rails, seeded backend differential
+  coverage, and `pnpm verify:kcode` with a reproducible software-proof manifest.
+- Kept physical knitting outside the software oracle; the existing hash-bound
+  real-machine trial remains the final release gate.
+
 ## 1.0.0-rc.1 - 2026-07-12
 
 - Added local `.kc` and Knitout intake, virtualized pass inspection, diagnostics,
@@ -17,8 +33,9 @@
 - Added machine-only rectangle topology fixtures, refusal cases, reference
   parity rails, and a reproducible physical blanket trial package.
 - Added hash-checked physical registry scaffolding, fail-closed release
-  promotion, and exact-artifact Knit-proven verdicts for authored and reopened
-  k-code.
+  promotion, and exact-artifact Knit-proven verdicts for authored k-code.
+  Reopened foreign k-code remains Surface-proven until a trusted verifier binds
+  the supplied bytes to a registry entry; import callers cannot supply proof IDs.
 
 The RC remains capped at Surface-proven. Promotion to `1.0.0` requires the
 representative blanket trial documented in `docs/V1-PHYSICAL-TRIAL.md`.

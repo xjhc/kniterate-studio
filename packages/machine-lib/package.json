@@ -15,6 +15,8 @@
     "test:reference-kc": "vitest run test/knitout/reference-kc test/knitout/sim/kc-section.test.ts",
     "test:compiler": "vitest run test/colorwork-chart-intake.test.ts test/knitout/first-body-row-protection.test.ts test/knitout/from-chart-stockinette.test.ts test/knitout/from-chart-jacquard.test.ts test/knitout/from-chart-jacquard-birdseye.test.ts test/knitout/from-chart-jacquard-complement.test.ts test/knitout/from-chart-jacquard-floats.test.ts test/knitout/from-chart-stitch-overrides.test.ts test/knitout/dbj-parity.test.ts test/knitout/plan-roundtrip.test.ts test/knitout/kniterate-topology-oracle.test.ts",
     "test:revalidation": "vitest run test/knitout/kc-to-knitout.test.ts test/knitout/kc-diff.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts",
+    "test:kcode-proof": "vitest run test/public-api.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts",
+    "verify:kcode": "node scripts/kcode-proof-launcher.mjs",
     "benchmark:m3a": "node --import tsx scripts/m3a-blanket-benchmark.ts",
     "kniterate:refusals": "node --import tsx scripts/kniterate-refusal-corpus.ts",
     "kniterate:fixtures": "node --import tsx scripts/generate-rectangle-corpus.ts",

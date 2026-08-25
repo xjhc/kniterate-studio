@@ -1,4 +1,4 @@
-# Handoff — present truth (reconciled 2026-07-12)
+# Handoff — present truth (reconciled 2026-08-25)
 
 > **Read [`STATUS.md`](./STATUS.md) first.** It is the front door: what is shipped
 > vs. proposed, the 3-rung verdict model, and the remaining slices. This file is
@@ -6,23 +6,28 @@
 
 ## Where things actually stand
 
-- Repo at `1.0.0-rc.1`; `pnpm typecheck` + `pnpm test` green.
+- Repo at `1.0.0-rc.1`; `pnpm verify:kcode` is the deterministic KCode software
+  proof and `pnpm verify` is the full local gate.
 - **Both product stories ship** in `apps/studio`: the foreign-`.kc` workspace
   ("S1") and the authored chart→compile→k-code loop ("S2" core). Neither is a
   slice waiting to start — see STATUS for the file map.
 - **Verdict is three rungs** (Blocked / Surface-proven / Knit-proven). Experimental
   and waivers were cut from V1 on 2026-07-12 (SYSTEM-DESIGN R6). Docs, the
   canonical mockup, and the dead UI rung were reconciled to match.
+- **Machine truth now starts at emitted KCode.** Strict byte-preserving parsing,
+  explicit dialects, exact `MachineTraceV1`, loop/kinematic replay, scheduled
+  backend differential checks, and synchronized movement rendering replace the
+  former reconstruction/preview authority. `predictedPasses` remains planning
+  telemetry only.
 - The only `1.0.0` promotion gate is the physical Kniterate run
   (`V1-PHYSICAL-TRIAL.md`). Do not tag `1.0.0` before it succeeds.
 
 ## Next work
 
-The reconcile-first follow-ons are complete: authored verdict policy lives in
-`engine.ts::resolveAuthoredVerdict`, and typed op→row provenance replaces the
-old `row N` comment scan (SYSTEM-DESIGN R11). Next, audit and polish the running
-Studio against the canonical workspace mockup, then execute the release trial
-and hand the generated artifact to the physical Kniterate trial.
+The KCode software compiler workbench is complete under the boundary documented
+in `KCODE-SOFTWARE-PROOF.md`. Next, review the remaining evidence gaps there,
+then execute the hash-bound release trial and hand that exact generated artifact
+to the physical Kniterate trial.
 
 Beyond these: the assistant (S3), swatch-registry UI (S4), and the L3–L5 upper
 editability ladder remain forward design (STATUS "Not yet built").
@@ -33,7 +38,8 @@ editability ladder remain forward design (STATUS "Not yet built").
   Knit-proven only on a physical swatch-registry fingerprint match (registry empty
   today). Three rungs — no waiver/Experimental path in V1.
 - **Four nouns hold:** project, chart, machine view, verdict.
-- **Views render only from `RunArtifact`** — no UI-side machine math (SYSTEM-DESIGN R13).
+- **Views render only from engine projections** — authored intent from
+  `RunArtifact`, exact movement from `MachineSceneV1`; no UI-side machine math.
 - **R1 = B (embedded shared canvas) is decided and shipped** (FOUNDING §80 / ROADMAP M3B).
 - **Machine facts:** 252 needles @ 7gg worsted; carriers C1 draw / C2–C5 pattern /
   C6 waste (5th/6th pattern carrier hard-gated ⇒ Blocked); racking integer or ±0.5,

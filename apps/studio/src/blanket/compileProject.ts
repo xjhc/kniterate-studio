@@ -30,9 +30,12 @@ export interface BlanketCompileArtifact {
   messages: readonly ValidationMessage[];
   knitoutText: string | null;
   passes: readonly PredictedPass[];
+  /** Source design rows aligned one-to-one with serialized Knitout operations. */
+  programOpSourceRows: readonly (readonly number[] | null)[];
   rowProvenance: readonly {
     rowId: string;
     chartRow: number;
+    machineRow: number;
     displayRow: number;
     passIndices: readonly number[];
   }[];
@@ -91,7 +94,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       estimatedKnitTimeSeconds: null,
     },
   };
-  if (setupMessages.length > 0) return { ...base, ok: false, compileVerdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], rowProvenance: [], backFace: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
+  if (setupMessages.length > 0) return { ...base, ok: false, compileVerdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], programOpSourceRows: [], rowProvenance: [], backFace: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
 
   const projected = projectColorworkChartV1(state.chart);
   const yarnBindings: YarnBinding[] = usedPalette.map((entry) => {
@@ -130,6 +133,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     return {
       rowId,
       chartRow,
+      machineRow,
       displayRow: state.chart.rowNumbering === 'bottom-up' ? state.chart.height - chartRow : chartRow + 1,
       passIndices: passIndicesByMachineRow.get(machineRow) ?? [],
     };
@@ -148,6 +152,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     messages,
     knitoutText: artifact.knitoutText,
     passes: artifact.predictedPasses,
+    programOpSourceRows: artifact.programOpSourceRows,
     rowProvenance,
     backFace: projectBackFaceFromArtifact(artifact, state.chart, yarnBindings, state.machine.needleOffset),
     diagnostics,

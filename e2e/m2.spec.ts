@@ -8,8 +8,12 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
   await page.goto('/');
   const machineInput = page.locator('input[accept=".kc,.k,text/plain"]');
   await machineInput.setInputFiles('packages/machine-lib/reference/fairisle.kc');
+  await expect(page.getByRole('dialog', { name: 'How was this KCode produced?' })).toBeVisible();
+  await page.getByRole('button', { name: /Kniterate \/ Customist app/ }).click();
   await expect(page.getByRole('heading', { name: 'Pass grid' })).toBeVisible();
   await expect(page.getByText('Surface-proven (imported)', { exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Exact machine movement' })).toBeVisible();
+  await expect(page.getByText('KCode coordinates; physical needle labels unverified.')).toBeVisible();
   const selectedBefore = await page.locator('.pass-row.selected .pass-number').innerText();
   await page.keyboard.press('ArrowDown');
   await expect(page.locator('.pass-row.selected .pass-number')).not.toHaveText(selectedBefore);
@@ -25,7 +29,8 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
 
   await page.getByTitle('Pass diff').click();
   await page.locator('input[accept=".kc,text/plain"]').setInputFiles('packages/machine-lib/reference/fairisle.kc');
-  await expect(page.getByText('Pass-identical', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /Kniterate \/ Customist app/ }).click();
+  await expect(page.getByText('Machine-trace identical', { exact: true })).toBeVisible();
 
   const refusal = testInfo.outputPath('refusal.k');
   await writeFile(refusal, [';!knitout-2', ';;Machine: kniterate', ';;Carriers: 7', 'in 7', 'knit + f40 7', ''].join('\n'));

@@ -1,0 +1,255 @@
+import { browserKnitoutToKCode } from '@kniterate-studio/machine-lib/browser-converter';
+import {
+  KNITERATE_7GG_KCODE_PROFILE_V1,
+  compareScheduledPassesToMachineTrace,
+  parseKCodeDocument,
+  parseKnitoutProgram,
+  projectKCodeMachineTrace,
+  projectMachineScene,
+  validateKCodeMachineTrace,
+  type ParsedKnitoutDocument,
+  type ValidationMessage,
+} from '@kniterate-studio/machine-lib/browser';
+import type { KCodeArtifact, KCodeConversionRequest, KCodePassProvenance } from './kcodeProtocol';
+import { sha256Text } from './sha256';
+
+function sortedUnique(values: readonly number[]): number[] {
+  return [...new Set(values)].sort((a, b) => a - b);
+}
+
+interface ScheduledProvenancePass {
+  readonly index: number;
+  readonly sourceLines: readonly number[];
+  readonly isAutoMove: boolean;
+  readonly comment?: string;
+}
+
+interface RowProvenance {
+  readonly rowId: string;
+  readonly machineRow: number;
+}
+
+export interface ScheduledProvenanceProjection {
+  readonly ok: boolean;
+  readonly messages: readonly ValidationMessage[];
+  readonly passProvenance: readonly KCodePassProvenance[];
+  readonly rowPasses: readonly { rowId: string; passIndices: readonly number[] }[];
+}
+
+/**
+ * Join backend-only scheduled-pass provenance to Studio rows without trusting
+ * source-line references that the parsed Knitout document cannot account for.
+ * These fields are not encoded in KCode and therefore are not part of the
+ * scheduled-pass/KCode differential proof.
+ */
+export function projectScheduledPassProvenance(input: {
+  readonly parsedKnitout: ParsedKnitoutDocument;
+  readonly scheduledPasses: readonly ScheduledProvenancePass[];
+  readonly programOpSourceRows: readonly (readonly number[] | null)[];
+  readonly rowProvenance: readonly RowProvenance[];
+}): ScheduledProvenanceProjection {
+  const messages: ValidationMessage[] = [];
+  const addError = (rule: string, message: string): void => {
+    messages.push({ severity: 'error', rule, message });
+  };
+
+  if (input.programOpSourceRows.length !== input.parsedKnitout.opLines.length) {
+    addError(
+      'kcode.provenance-op-alignment',
+      `Studio supplied ${input.programOpSourceRows.length} operation-provenance entries for ${input.parsedKnitout.opLines.length} parsed Knitout operations.`,
+    );
+  }
+
+  const opIndexForLine = new Map<number, number>();
+  input.parsedKnitout.opLines.forEach((line, opIndex) => {
+    if (!Number.isInteger(line) || line <= 0 || opIndexForLine.has(line)) {
+      addError(
+        'kcode.provenance-op-alignment',
+        `Parsed Knitout operation ${opIndex} has invalid or duplicate source line ${String(line)}.`,
+      );
+      return;
+    }
+    opIndexForLine.set(line, opIndex);
+  });
+
+  const rowIdForMachineRow = new Map<number, string>();
+  const machineRowForRowId = new Map<string, number>();
+  for (const row of input.rowProvenance) {
+    if (!Number.isInteger(row.machineRow)
+      || row.machineRow < 0
+      || row.rowId.length === 0
+      || rowIdForMachineRow.has(row.machineRow)
+      || machineRowForRowId.has(row.rowId)) {
+      addError(
+        'kcode.provenance-row-contract',
+        `Studio row provenance contains an invalid or duplicate row mapping for row ID ${JSON.stringify(row.rowId)} and machine row ${String(row.machineRow)}.`,
+      );
+      continue;
+    }
+    rowIdForMachineRow.set(row.machineRow, row.rowId);
+    machineRowForRowId.set(row.rowId, row.machineRow);
+  }
+
+  const passProvenance: KCodePassProvenance[] = input.scheduledPasses.map((pass, passIndex) => {
+    if (pass.index !== passIndex) {
+      addError(
+        'kcode.provenance-pass-index',
+        `Scheduled pass at position ${passIndex} reports backend index ${String(pass.index)}.`,
+      );
+    }
+
+    const seenSourceLines = new Set<number>();
+    const sourceRows: number[] = [];
+    for (const line of pass.sourceLines) {
+      if (!Number.isInteger(line) || line <= 0 || seenSourceLines.has(line)) {
+        addError(
+          'kcode.provenance-source-line',
+          `Scheduled pass ${passIndex} contains invalid or duplicate Knitout source line ${String(line)}.`,
+        );
+        continue;
+      }
+      seenSourceLines.add(line);
+      const opIndex = opIndexForLine.get(line);
+      if (opIndex === undefined) {
+        addError(
+          'kcode.provenance-source-line',
+          `Scheduled pass ${passIndex} refers to Knitout source line ${line}, which is not a parsed operation line.`,
+        );
+        continue;
+      }
+      const rows = input.programOpSourceRows[opIndex];
+      if (rows === undefined) {
+        addError(
+          'kcode.provenance-op-alignment',
+          `Scheduled pass ${passIndex} source line ${line} has no operation-provenance entry at index ${opIndex}.`,
+        );
+        continue;
+      }
+      for (const row of rows ?? []) {
+        if (!Number.isInteger(row) || !rowIdForMachineRow.has(row)) {
+          addError(
+            'kcode.provenance-source-row',
+            `Scheduled pass ${passIndex} source line ${line} refers to unknown machine row ${String(row)}.`,
+          );
+          continue;
+        }
+        sourceRows.push(row);
+      }
+    }
+
+    const uniqueSourceRows = sortedUnique(sourceRows);
+    return {
+      passIndex,
+      sourceLines: [...pass.sourceLines],
+      sourceRows: uniqueSourceRows,
+      rowIds: uniqueSourceRows.map((row) => rowIdForMachineRow.get(row)!),
+      isAutoMove: pass.isAutoMove,
+      comment: pass.comment ?? null,
+    };
+  });
+  const rowPasses = input.rowProvenance.map((row) => ({
+    rowId: row.rowId,
+    passIndices: passProvenance.flatMap((pass) => pass.rowIds.includes(row.rowId) ? [pass.passIndex] : []),
+  }));
+
+  return {
+    ok: messages.length === 0,
+    messages,
+    passProvenance,
+    rowPasses,
+  };
+}
+
+function messagesForArtifact(input: {
+  vendorWarnings: readonly string[];
+  knitoutIssues: ReturnType<typeof parseKnitoutProgram>['issues'];
+  parserDiagnostics: KCodeArtifact['parserDiagnostics'];
+  validation: KCodeArtifact['validation'];
+  differential: KCodeArtifact['differential'];
+}): ValidationMessage[] {
+  return [
+    ...input.vendorWarnings.map((message): ValidationMessage => ({ severity: 'info', rule: 'vendor-converter-note', message })),
+    ...input.knitoutIssues.map((issue): ValidationMessage => ({ severity: 'error', rule: issue.rule ?? 'generated-knitout-parse', message: `Knitout line ${issue.line}: ${issue.message}` })),
+    ...input.parserDiagnostics.map((item): ValidationMessage => ({ severity: item.severity, rule: item.rule, message: `KCode ${item.line}:${item.column}: ${item.message}` })),
+    ...(input.validation?.diagnostics ?? []).map((item): ValidationMessage => ({ severity: item.severity, rule: item.rule, message: item.line === null ? item.message : `KCode ${item.line}:${item.column}: ${item.message}` })),
+    ...(input.differential?.mismatches ?? []).map((item): ValidationMessage => ({ severity: 'error', rule: 'kcode.backend-schedule-differential', message: item.message })),
+  ];
+}
+
+export async function compileKCodeArtifact(
+  request: KCodeConversionRequest,
+): Promise<KCodeArtifact> {
+  const converted = browserKnitoutToKCode(request.knitoutText, 'command.k');
+  if (!converted.ok || !converted.kcode || !converted.scheduledPasses) {
+    throw new Error(converted.error ?? 'Vendored converter returned no KCode or scheduled-pass trace.');
+  }
+
+  const parsedKnitout = parseKnitoutProgram(request.knitoutText);
+  const parsed = parseKCodeDocument(converted.kcode, {
+    profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+    dialect: 'knitout-vendor',
+    strict: true,
+  });
+  const trace = parsed.ok
+    ? projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1)
+    : null;
+  const validation = trace === null
+    ? null
+    : validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V1);
+  const scene = trace === null ? null : projectMachineScene(trace);
+  const differential = trace === null
+    ? null
+    : compareScheduledPassesToMachineTrace(converted.scheduledPasses, trace);
+
+  const provenance = projectScheduledPassProvenance({
+    parsedKnitout,
+    scheduledPasses: converted.scheduledPasses,
+    programOpSourceRows: request.programOpSourceRows,
+    rowProvenance: request.rowProvenance,
+  });
+  const passProvenance = provenance.passProvenance;
+  const passLines = trace?.passes.map((pass) => ({
+    passIndex: pass.index,
+    lineStart: pass.source.FRNT.start.line,
+    lineEnd: pass.source.footer.end.line,
+  })) ?? [];
+  const rowPasses = provenance.rowPasses;
+  const rowLines = rowPasses.flatMap((row) => {
+    const spans = row.passIndices.flatMap((passIndex) => passLines[passIndex] ? [passLines[passIndex]!] : []);
+    return spans.length === 0 ? [] : [{
+      rowId: row.rowId,
+      lineStart: Math.min(...spans.map((span) => span.lineStart)),
+      lineEnd: Math.max(...spans.map((span) => span.lineEnd)),
+    }];
+  });
+  const messages = [...messagesForArtifact({
+    vendorWarnings: converted.warnings ?? [],
+    knitoutIssues: parsedKnitout.issues,
+    parserDiagnostics: parsed.diagnostics,
+    validation,
+    differential,
+  }), ...provenance.messages];
+
+  return {
+    inputHash: request.inputHash,
+    kcHash: await sha256Text(converted.kcode),
+    kcText: converted.kcode,
+    passCount: trace?.passes.length ?? 0,
+    messages,
+    parserDiagnostics: parsed.diagnostics,
+    trace,
+    scene,
+    validation,
+    differential,
+    passProvenance,
+    passLines,
+    rowLines,
+    rowPasses,
+    ok: parsed.ok
+      && parsedKnitout.issues.length === 0
+      && validation?.ok === true
+      && differential?.ok === true
+      && provenance.ok
+      && messages.every((message) => message.severity !== 'error'),
+  };
+}

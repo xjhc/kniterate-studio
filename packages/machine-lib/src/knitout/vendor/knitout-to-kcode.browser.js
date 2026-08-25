@@ -208,6 +208,10 @@ const DIRECTION_NONE = '';
 //passesToKCode() can read it for auto-carriage-move emission.
 let _presserSpeed = null;
 let _presserRoller = null;
+// Source line currently being lowered. Each Pass snapshots this immediately,
+// then carries/merges it through scheduling so product surfaces can join an
+// emitted pass back to compiler provenance without guessing from pass index.
+let _sourceLineNumber = null;
 
 //Pass stores information about a single machine pass:
 function Pass(info) {
@@ -226,6 +230,7 @@ function Pass(info) {
 	//to control the speed/roller of auto-inserted carriage moves.
 	this.presserSpeed = _presserSpeed;
 	this.presserRoller = _presserRoller;
+	this.sourceLines = (_sourceLineNumber === null ? [] : [_sourceLineNumber]);
 	if (!('slots' in this)) this.slots = {};
 	if (!('sizes' in this)) this.sizes = {};
 	if (!('carriers' in this)) this.carriers = [];
@@ -383,6 +388,10 @@ Pass.prototype.append = function(pass) {
 
 	this.type = merge_types(this.type, pass.type);
 	console.assert(this.type !== null, "we checked that merge was valid");
+	for (let sourceLine of pass.sourceLines) {
+		if (this.sourceLines.indexOf(sourceLine) === -1) this.sourceLines.push(sourceLine);
+	}
+	this.sourceLines.sort(function(a, b) { return a - b; });
 
 	//merge gripper properties:
 	if (!('gripper' in this) && ('gripper' in pass)) {
@@ -436,6 +445,15 @@ let leftFloor = true,
 // returns {headers, passes}
 // (the knitoutFile parameter is included in error messages)
 function knitoutToPasses(knitout, knitoutFile) {
+	// PATCH (kniterate-studio): every conversion starts from the documented
+	// backend defaults. These values are module-level because the historical
+	// parser and lowering stages communicate through them; without an explicit
+	// reset, browser/in-process output depends on whichever document ran first.
+	carrierSpacing = 2;
+	carrierDistance = 2.5;
+	_presserSpeed = null;
+	_presserRoller = null;
+	_sourceLineNumber = null;
 	let headers = {};
 	let passes = [];
 
@@ -562,10 +580,6 @@ function knitoutToPasses(knitout, knitoutFile) {
 	
 	let roller = 100;
 	let addRoller = 0;
-
-	//PATCH (knitlab2): reset module-level presser state for this run.
-	_presserSpeed = null;
-	_presserRoller = null;
 
 	function slotNumber(bn) {
 		if (bn.isFront()) {
@@ -826,6 +840,7 @@ function knitoutToPasses(knitout, knitoutFile) {
 	//read the remaining lines in the file:
 	for ( ; lineIdx < lines.length; ++lineIdx) {
 		let line = lines[lineIdx];
+		_sourceLineNumber = lineIdx + 1;
 
 		//strip comments:
 		let i = line.indexOf(';');
@@ -1156,13 +1171,34 @@ function knitoutToPasses(knitout, knitoutFile) {
 	//for each operation, translate to color index
 	//call pass.add(...), if fails, make a new pass and call pass.add(...)
 
-	return { headers, passes };
+	// Carry lowering settings with the parse result so the public two-stage API
+	// remains deterministic even when callers parse documents before emitting
+	// them in a different order. Keep a non-enumerable copy on the Pass array
+	// for legacy callers that still invoke `passesToKCode(headers, passes, ...)`.
+	let lowering = {carrierSpacing:carrierSpacing, carrierDistance:carrierDistance};
+	Object.defineProperty(passes, '__kniterateLowering', {
+		value:lowering,
+		enumerable:false,
+		configurable:false,
+		writable:false
+	});
+	return { headers, passes, lowering };
 }
 
 
 //convert passes to kcode, reading values from headers:
 // returns kcode as a string
-function passesToKCode(headers, passes, kcFile) {
+function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
+	// Carrier-spacing alternation is an implementation detail of one lowering
+	// run, never persistent compiler state.
+	leftFloor = true;
+	rightFloor = true;
+	let loweringSettings = lowering || passes.__kniterateLowering || {
+		carrierSpacing:carrierSpacing,
+		carrierDistance:carrierDistance
+	};
+	const runCarrierSpacing = loweringSettings.carrierSpacing;
+	const runCarrierDistance = loweringSettings.carrierDistance;
 
 	//compute minimum and maximum slots both for each pass and for the program as a whole:
 	let minSlot = Infinity;
@@ -1285,6 +1321,7 @@ function passesToKCode(headers, passes, kcFile) {
 			speed:mvSpeed,
 			roller:mvRoller,
 			isAutoMove:true,
+			sourceLines:(nextPass && Array.isArray(nextPass.sourceLines) ? nextPass.sourceLines.slice() : []),
 			//PATCH (knitlab2): App-style auto-moves keep the
 			//"automatically inserted carriage move" comment; explicit
 			//`x-park-carriage` moves (nextPass.isPark) omit it.
@@ -1392,6 +1429,7 @@ function passesToKCode(headers, passes, kcFile) {
 					//auto-move that gets inserted before this transfer.
 					presserSpeed: pass.presserSpeed,
 					presserRoller: pass.presserRoller,
+					sourceLines: pass.sourceLines.slice(),
 				};
 				if (pass.comment) xpass.comment = pass.comment;
 				if (pass.pause && pass.pauseMessage) xpass.pauseMessage = pass.pauseMessage;
@@ -1442,8 +1480,8 @@ function passesToKCode(headers, passes, kcFile) {
 						if (fromBed === 'f') {
 							xpass.FRNT = set(xpass.FRNT, 15 + n);
 							xpass.REAR = set(xpass.REAR, 15 + n - pass.racking);
-							xpass.carriageLeft = Math.min(xpass.carriageLeft, n - carrierDistance);
-							xpass.carriageRight = Math.max(xpass.carriageRight, n + carrierDistance);
+							xpass.carriageLeft = Math.min(xpass.carriageLeft, n - runCarrierDistance);
+							xpass.carriageRight = Math.max(xpass.carriageRight, n + runCarrierDistance);
 
 							//copy sizes:
 							const f = frontNeedleToSlot(n);
@@ -1458,8 +1496,8 @@ function passesToKCode(headers, passes, kcFile) {
 						} else { console.assert(fromBed === 'b', "only two options for fromBed");
 							xpass.FRNT = set(xpass.FRNT, 15 + n + pass.racking);
 							xpass.REAR = set(xpass.REAR, 15 + n);
-							xpass.carriageLeft = Math.min(xpass.carriageLeft, n - carrierDistance);
-							xpass.carriageRight = Math.max(xpass.carriageRight, n + carrierDistance);
+							xpass.carriageLeft = Math.min(xpass.carriageLeft, n - runCarrierDistance);
+							xpass.carriageRight = Math.max(xpass.carriageRight, n + runCarrierDistance);
 
 							//copy sizes:
 							const f = frontNeedleToSlot(n + pass.racking);
@@ -1568,6 +1606,7 @@ function passesToKCode(headers, passes, kcFile) {
 				//upcoming auto-move (carriageMove(kpass)).
 				presserSpeed: pass.presserSpeed,
 				presserRoller: pass.presserRoller,
+				sourceLines: pass.sourceLines.slice(),
 			};
 			if (pass.comment) kpass.comment = pass.comment; //TODO: add header for pause/alert on screen
 			if (pass.pause && pass.pauseMessage) kpass.pauseMessage = pass.pauseMessage;
@@ -1630,7 +1669,7 @@ function passesToKCode(headers, passes, kcFile) {
 				//set carrier stopping points:
 				if (kpass.direction === DIRECTION_LEFT) {
 					kpass.carrierRight = carrierAt[kpass.carrier];
-					kpass.carrierLeft = pass.minSlot + slotToNeedle - carrierDistance;
+					kpass.carrierLeft = pass.minSlot + slotToNeedle - runCarrierDistance;
 					if (pass.gripper === GRIPPER_OUT) {
 						//console.log("Carrier: " + JSON.stringify(pass.carriers[0]));
 						const parkingSpot = CARRIER_PARKING[parseInt(pass.carriers[0])-1];
@@ -1639,13 +1678,13 @@ function passesToKCode(headers, passes, kcFile) {
 						kpass.carrierLeft = parkingSpot;
 					} else {
 						//don't bump when parking carriers:
-						kpass.carrierLeft = bump(kpass.carrier, kpass.carrierLeft, -carrierSpacing); //bump over to avoid stacking
+						kpass.carrierLeft = bump(kpass.carrier, kpass.carrierLeft, -runCarrierSpacing); //bump over to avoid stacking
 					}
 					carrierAt[kpass.carrier] = kpass.carrierLeft;
 				} else { console.assert(kpass.direction === DIRECTION_RIGHT);
 					kpass.carrierLeft = carrierAt[kpass.carrier];
-					kpass.carrierRight = pass.maxSlot + slotToNeedle + carrierDistance;
-					kpass.carrierRight = bump(kpass.carrier, kpass.carrierRight, carrierSpacing); //bump over to avoid stacking
+					kpass.carrierRight = pass.maxSlot + slotToNeedle + runCarrierDistance;
+					kpass.carrierRight = bump(kpass.carrier, kpass.carrierRight, runCarrierSpacing); //bump over to avoid stacking
 					carrierAt[kpass.carrier] = kpass.carrierRight;
 				}
 			}
@@ -1663,21 +1702,21 @@ function passesToKCode(headers, passes, kcFile) {
 			//update carriage starting/stopping points for this pass:
 			if (kpass.direction === DIRECTION_LEFT) {
 				//starting point:
-				rightStop = Math.max(rightStop, pass.maxSlot + slotToNeedle + carrierDistance);
+				rightStop = Math.max(rightStop, pass.maxSlot + slotToNeedle + runCarrierDistance);
 				if (pass.carriers.length !== 0) rightStop = Math.max(rightStop, kpass.carrierRight);
 				//shift previous pass's stop as well:
 				if (kprev) kprev.carriageRight = rightStop;
 				//stopping point:
-				leftStop = pass.minSlot + slotToNeedle - carrierDistance;
+				leftStop = pass.minSlot + slotToNeedle - runCarrierDistance;
 				if (kpass.carrierLeft) leftStop = Math.min(leftStop, kpass.carrierLeft);
 			} else {console.assert(kpass.direction === DIRECTION_RIGHT);
 				//starting point:
-				leftStop = Math.min(leftStop, pass.minSlot + slotToNeedle - carrierDistance);
+				leftStop = Math.min(leftStop, pass.minSlot + slotToNeedle - runCarrierDistance);
 				if (pass.carriers.length !== 0) leftStop = Math.min(leftStop, kpass.carrierLeft);
 				//shift previous pass's stop as well:
 				if (kprev) kprev.carriageLeft = leftStop;
 				//stopping point:
-				rightStop = pass.maxSlot + slotToNeedle + carrierDistance;
+				rightStop = pass.maxSlot + slotToNeedle + runCarrierDistance;
 				if (kpass.carrierRight) rightStop = Math.max(rightStop, kpass.carrierRight);
 			}
 			kpass.carriageLeft = leftStop;
@@ -1866,6 +1905,36 @@ function passesToKCode(headers, passes, kcFile) {
 		op += " " + kpass.speed;
 		op += " " + kpass.roller;
 
+		// PATCH (kniterate-studio): optionally retain the exact scheduled pass
+		// that is about to be serialized.  This is deliberately captured here,
+		// after carriage/carrier markers and look-behind stop adjustments have
+		// been applied, so consumers can differentially check a parsed `.kc`
+		// document against the backend's actual lowering rather than its earlier
+		// logical Pass objects.
+		if (Array.isArray(scheduledTrace)) {
+			let traced = {
+				index:kpassIdx,
+				FRNT:FRNT,
+				STIF:kpass.STIF,
+				REAR:REAR,
+				STIR:kpass.STIR,
+				RACK:kpass.RACK,
+				direction:(kpass.direction === DIRECTION_RIGHT ? ">>" : "<<"),
+				type:kpass.type,
+				carrier:('carrier' in kpass ? String(kpass.carrier) : "0"),
+				speed:Number(kpass.speed),
+				roller:Number(kpass.roller),
+				carriageLeft:kpass.carriageLeft,
+				carriageRight:kpass.carriageRight,
+				isAutoMove:kpass.isAutoMove === true
+			};
+			traced.sourceLines = Array.isArray(kpass.sourceLines) ? kpass.sourceLines.slice() : [];
+			if ('carrierLeft' in kpass) traced.carrierLeft = kpass.carrierLeft;
+			if ('carrierRight' in kpass) traced.carrierRight = kpass.carrierRight;
+			if ('comment' in kpass) traced.comment = kpass.comment;
+			scheduledTrace.push(traced);
+		}
+
 		out("FRNT:" + FRNT);
 		out("STIF:" + kpass.STIF);
 		out("REAR:" + REAR);
@@ -1876,7 +1945,15 @@ function passesToKCode(headers, passes, kcFile) {
 	return kcode.join("\n") + "\n";
 }
 
+// Compile and retain the backend's exact post-lowering pass schedule.  The
+// legacy `passesToKCode` return value and CLI behavior remain unchanged.
+function passesToKCodeWithTrace(headers, passes, kcFile, lowering) {
+	let scheduledPasses = [];
+	let kcode = passesToKCode(headers, passes, kcFile, scheduledPasses, lowering);
+	return {kcode:kcode, passes:scheduledPasses};
+}
+
 
 //-------------------------------
 
-export { knitoutToPasses, passesToKCode };
+export { knitoutToPasses, passesToKCode, passesToKCodeWithTrace };

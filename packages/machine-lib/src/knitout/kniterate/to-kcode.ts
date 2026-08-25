@@ -13,15 +13,39 @@
  */
 
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { KCodeConverter } from '../run-artifact.js';
+import type {
+  VendorLoweringSettings,
+  VendorScheduledKCode,
+  VendorScheduledPass,
+} from './vendor-pass-contract.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const VENDOR_SCRIPT = resolve(__dirname, '..', 'vendor', 'knitout-to-kcode.cjs');
+const requireFromHere = createRequire(import.meta.url);
+
+interface VendorCompilerModule {
+  knitoutToPasses: (
+    knitout: string,
+    filename: string,
+  ) => {
+    headers: Record<string, string[]>;
+    passes: unknown[];
+    lowering: VendorLoweringSettings;
+  };
+  passesToKCodeWithTrace: (
+    headers: Record<string, string[]>,
+    passes: unknown[],
+    filename: string,
+    lowering?: VendorLoweringSettings,
+  ) => VendorScheduledKCode;
+}
 
 export interface KnitoutToKCodeResult {
   ok: boolean;
@@ -29,6 +53,60 @@ export interface KnitoutToKCodeResult {
   stdout: string;
   stderr: string;
   exitCode: number;
+}
+
+export type KnitoutToScheduledKCodeResult =
+  | {
+      readonly ok: true;
+      readonly kcode: string;
+      readonly scheduledPasses: readonly VendorScheduledPass[];
+      readonly warnings: readonly string[];
+    }
+  | {
+      readonly ok: false;
+      readonly error: string;
+      readonly warnings: readonly string[];
+    };
+
+/**
+ * In-process adapter used by conformance tests to retain the backend's exact
+ * scheduled-pass IR. Production conversion can continue using the isolated
+ * subprocess adapter above.
+ */
+export function knitoutToKCodeWithTrace(
+  knitoutText: string,
+  filename = 'command.k',
+): KnitoutToScheduledKCodeResult {
+  const warnings: string[] = [];
+  const originalWarn = console.warn;
+  const originalLog = console.log;
+  console.warn = (...values: unknown[]) => warnings.push(values.map(String).join(' '));
+  console.log = (...values: unknown[]) => warnings.push(values.map(String).join(' '));
+  try {
+    const vendor = requireFromHere(VENDOR_SCRIPT) as VendorCompilerModule;
+    const { headers, passes, lowering } = vendor.knitoutToPasses(knitoutText, filename);
+    const converted = vendor.passesToKCodeWithTrace(
+      headers,
+      passes,
+      filename.replace(/\.k$/i, '.kc'),
+      lowering,
+    );
+    return {
+      ok: true,
+      kcode: converted.kcode,
+      scheduledPasses: converted.passes,
+      warnings,
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+      warnings,
+    };
+  } finally {
+    console.warn = originalWarn;
+    console.log = originalLog;
+  }
 }
 
 /** Run the vendored knitout-to-kcode compiler on a knitout source string.

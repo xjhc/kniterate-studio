@@ -5,11 +5,15 @@ import * as nodeApi from '../src/index';
 describe('machine-lib public boundaries', () => {
   it('keeps the browser surface explicit and free of Node-only adapters', () => {
     expect(Object.keys(browserApi).sort()).toEqual([
-      'compileToRunArtifact', 'diffKc', 'findKnitProvenKCodeMatch', 'findKnitProvenMatch', 'inspectKcDocument',
-      'inspectKnitoutPasses', 'kcToKnitout', 'knitProvenRegistryEntries',
-      'matchKnitProvenArtifact', 'matchKnitProvenKCode', 'parseKnitoutProgram', 'projectBackFaceFromArtifact',
-      'projectColorworkChartV1', 'renderKcPassWindow', 'resolveValidatorMessage',
-      'validateKnitoutProgram',
+      'KNITERATE_7GG_KCODE_PROFILE_V1', 'basePayloadIndexToKCodeColumn',
+      'compareScheduledPassesToMachineTrace', 'compileToRunArtifact', 'diffKCodeMachineTrace', 'diffKc',
+      'emitKCodeDocument', 'emitKCodeDocumentBytes', 'findKnitProvenKCodeMatch', 'findKnitProvenMatch',
+      'inspectKcDocument', 'inspectKnitoutPasses', 'kcToKnitout', 'kcodeColumnToBasePayloadIndex',
+      'kcodeColumnToTraceCoordinate', 'knitProvenRegistryEntries', 'matchKnitProvenArtifact',
+      'matchKnitProvenKCode', 'parseKCodeBytes', 'parseKCodeDocument', 'parseKnitoutProgram',
+      'projectBackFaceFromArtifact', 'projectColorworkChartV1', 'projectKCodeMachineTrace',
+      'projectMachineScene', 'renderKCodeMachineTraceWindow', 'renderKCodeMachineTraceWindowFromTraces', 'renderKcPassWindow',
+      'resolveValidatorMessage', 'validateKCodeMachineTrace', 'validateKnitoutProgram',
     ]);
     expect('nodeKCodeConverter' in browserApi).toBe(false);
     expect('knitoutToKCode' in browserApi).toBe(false);

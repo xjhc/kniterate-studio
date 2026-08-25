@@ -1,0 +1,1282 @@
+{
+  "kind": "kniterate-studio-kcode-software-proof",
+  "schemaVersion": 1,
+  "verdict": "software-proven",
+  "profile": {
+    "id": "kniterate-7gg-kcode",
+    "version": 1,
+    "gauge": 7,
+    "needlesPerBed": 252,
+    "emittedDialect": "knitout-vendor"
+  },
+  "claims": [
+    "strict-lossless-kcode-byte-roundtrip",
+    "deterministic-pinned-backend-lowering",
+    "kcode-encoded-scheduled-pass-to-machine-trace-differential",
+    "kcode-native-loop-and-kinematic-validation",
+    "full-machine-trace-diff",
+    "deterministic-pass-bed-carrier-scene"
+  ],
+  "deterministicSeeds": {
+    "validDocumentProperty": 1262702404,
+    "grammarMutationProperty": 1297437761,
+    "traceDiffProperty": 1262699590,
+    "validatorContainmentProperty": 1447119945,
+    "scheduledBackendDifferential": 1414676803,
+    "independentReferenceOracle": 1330790723
+  },
+  "proofTests": [
+    "test/public-api.test.ts",
+    "test/browser-kcode-converter.test.ts",
+    "test/knitout/browser-converter-source.test.ts",
+    "test/knitout/kcode-machine-profile.test.ts",
+    "test/knitout/strict-kcode-document.test.ts",
+    "test/knitout/kcode-byte-roundtrip.test.ts",
+    "test/knitout/kcode-document-adversarial.test.ts",
+    "test/knitout/kcode-document-property.test.ts",
+    "test/knitout/kcode-machine-trace.test.ts",
+    "test/knitout/kcode-machine-validator.test.ts",
+    "test/knitout/kcode-machine-scene.test.ts",
+    "test/knitout/kcode-independent-oracle.test.ts",
+    "test/knitout/kcode-scheduled-differential.test.ts",
+    "test/knitout/kcode-scheduled-trace-diff.test.ts",
+    "test/knitout/kc-diff.test.ts",
+    "../../apps/studio/src/engine.test.ts",
+    "../../apps/studio/src/blanket/compileProject.test.ts",
+    "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
+    "../../apps/studio/src/kcode/MachineMovementView.test.tsx",
+    "../../apps/studio/src/chart/AuthoredMachinePanel.test.ts"
+  ],
+  "gates": [
+    {
+      "id": "deterministic-kcode-proof-tests",
+      "command": "pnpm exec vitest run test/public-api.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "machine-lib-typecheck",
+      "command": "pnpm typecheck",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "studio-kcode-integration-tests",
+      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/blanket/compileProject.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/chart/AuthoredMachinePanel.test.ts",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "studio-typecheck",
+      "command": "pnpm --dir ../../apps/studio typecheck",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "studio-production-build",
+      "command": "pnpm --dir ../../apps/studio exec vite build",
+      "status": "pass",
+      "exitCode": 0
+    }
+  ],
+  "referenceCorpus": {
+    "dialect": "app",
+    "fixtureCount": 13,
+    "bytes": 25111478,
+    "passes": 20568,
+    "actions": 710063,
+    "manifestSha256": "41446c1f76fa7c78195280b86352bc68f900a1ac91fca9df6c93898714569e21",
+    "fixtures": [
+      {
+        "name": "2x2-rib-beanie.kc",
+        "sha256": "de0002e2ac7f36ea95f87940ac83c39439c97eea8ab9ed98427c5bf29f5c2b4a",
+        "bytes": 644396,
+        "passes": 530,
+        "actions": 46196,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "back.kc",
+        "sha256": "fc7683dba9af398143e2d1d346bc0375635ad106389f2e87f8d9dce0ab450c8b",
+        "bytes": 2571232,
+        "passes": 2108,
+        "actions": 161743,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "color-swatch-bindoff.kc",
+        "sha256": "1584c39f268f63189905582ddd16baa8866046ab1c8b0b8c25f70b6509a62fb8",
+        "bytes": 556629,
+        "passes": 458,
+        "actions": 12707,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "dbj.kc",
+        "sha256": "3e39d3491666afbc70d06986cbcf492844b41812965013bc79726d1e7071f6dd",
+        "bytes": 602338,
+        "passes": 498,
+        "actions": 33187,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "fairisle.kc",
+        "sha256": "0dba85bca3f3251030bd2302a539b26a14870692261313c948007fb99ccae8e7",
+        "bytes": 346337,
+        "passes": 286,
+        "actions": 10949,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "fox-baby-beanie.kc",
+        "sha256": "cab085708317a5e943c1c9976fd1c9646fe11533e31c8794307f7ab139234160",
+        "bytes": 266788,
+        "passes": 220,
+        "actions": 18160,
+        "validationErrors": 0,
+        "validationWarnings": 183
+      },
+      {
+        "name": "front.kc",
+        "sha256": "8f451241667025c6f4dc7cd34a2e832c60bf2998e766371d7951be84ead07fbf",
+        "bytes": 3108405,
+        "passes": 2544,
+        "actions": 158640,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "jacquard.kc",
+        "sha256": "2082bfff804b54efdd9f270941912d563b12a63e1f6430f97b83820d01398efb",
+        "bytes": 423957,
+        "passes": 350,
+        "actions": 17921,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "sleeves.kc",
+        "sha256": "1a092b9665786a0f5a5030d49ff3b2b99371f40923637c9ce302f770a47252af",
+        "bytes": 2433159,
+        "passes": 1994,
+        "actions": 85013,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "sophie.kc",
+        "sha256": "00d75440ac6c47b460caab48aecab8cad40ec730223471d6f855097d0a10da7b",
+        "bytes": 4605174,
+        "passes": 3766,
+        "actions": 44842,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "sophie2.kc",
+        "sha256": "4d6ff927b9c229b7eb131f75ec7768f0af60446477339473206d13c31119ad46",
+        "bytes": 4546374,
+        "passes": 3716,
+        "actions": 46401,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "sophie_stripe.kc",
+        "sha256": "005627ce0953b8d8687956fa76734f2d0ea89d7f76f5c5cade84e541a24c122e",
+        "bytes": 4567907,
+        "passes": 3734,
+        "actions": 46451,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      },
+      {
+        "name": "swatch.kc",
+        "sha256": "ee8807b2f7f50a868cdc6107dfb23c9de2c7fcfe2d10ef79ac124878214c0005",
+        "bytes": 438782,
+        "passes": 364,
+        "actions": 27853,
+        "validationErrors": 0,
+        "validationWarnings": 0
+      }
+    ]
+  },
+  "contract": {
+    "sha256": "cf6040d96269fc163ff1fe08bb93524fdea285050523690bb9b21fc04ad52323",
+    "files": [
+      {
+        "path": "../../apps/studio/index.html",
+        "sha256": "b1c6c06e2ddad3bcd85bd424ec4f4dbc277e7f5f1ee7d95a5ff59449464dd8d9",
+        "bytes": 613
+      },
+      {
+        "path": "../../apps/studio/package.json",
+        "sha256": "0136d60ab3e9dfb981d835ef0c10b7faf445c8fff63d379afcbfc55b8cbb001b",
+        "bytes": 918
+      },
+      {
+        "path": "../../apps/studio/src/App.tsx",
+        "sha256": "fa747c62e19b47aae99bc3a8cc4d4bac7fa1014f0b39ca3d5e89a78ed3ee0dfe",
+        "bytes": 50230
+      },
+      {
+        "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
+        "sha256": "60a338a665cb02a815a3727518eb8f176980d2979b717f2143cc2f011bbeafea",
+        "bytes": 5084
+      },
+      {
+        "path": "../../apps/studio/src/assets/fonts/LICENSE-IBM-Plex.txt",
+        "sha256": "9590325331b1975eac408dc78e7d369c042f565cee8aa9e34d6b40524f400972",
+        "bytes": 4360
+      },
+      {
+        "path": "../../apps/studio/src/assets/fonts/cantarell-vf.woff2",
+        "sha256": "774986aebf8f8817e67439fd82816ec8b2c8f4d1b008de656697168be1871c30",
+        "bytes": 28620
+      },
+      {
+        "path": "../../apps/studio/src/assets/fonts/ibm-plex-mono-regular.woff2",
+        "sha256": "cef70482af09b2b37a582c08867d0ae360c03c66e37b5a275aec3bbf181b9f72",
+        "bytes": 16804
+      },
+      {
+        "path": "../../apps/studio/src/assets/fonts/ibm-plex-mono-semibold.woff2",
+        "sha256": "b32f31d1512cd1e48053a705957ab4cefc12baa36ba4cdbbb862fce4be7b6f3b",
+        "bytes": 17488
+      },
+      {
+        "path": "../../apps/studio/src/blanket/BlanketSetupRail.test.tsx",
+        "sha256": "9d15712480b796bf9d2479f1fed35d3b3467815c705c4fad6255caf7135f52e9",
+        "bytes": 1665
+      },
+      {
+        "path": "../../apps/studio/src/blanket/BlanketSetupRail.tsx",
+        "sha256": "3096724fedd913c917bbdc6df7716ded848e043ac6bf45299b8d9bbdd00b0529",
+        "bytes": 8649
+      },
+      {
+        "path": "../../apps/studio/src/blanket/compile.worker.ts",
+        "sha256": "b35bf1b58b3b21c4137849724cf47ea6d87e1046b7d8d42232fad77d9c717558",
+        "bytes": 1960
+      },
+      {
+        "path": "../../apps/studio/src/blanket/compileProject.test.ts",
+        "sha256": "b1c6788f59f38585c11f2ba4c30fe4e19d8118a37b843ac357eff8a176fbbb21",
+        "bytes": 3498
+      },
+      {
+        "path": "../../apps/studio/src/blanket/compileProject.ts",
+        "sha256": "bcd21fd9badef6f57178dc208a57e50dc11ee07d3ebdc17dfaa237f253379626",
+        "bytes": 8309
+      },
+      {
+        "path": "../../apps/studio/src/blanket/useBlanketCompiler.ts",
+        "sha256": "46a0bb5717aa6256683b927801bb08f4f73bf959efe32c7b4c978a151f92bda5",
+        "bytes": 2391
+      },
+      {
+        "path": "../../apps/studio/src/blanket/workerProtocol.test.ts",
+        "sha256": "c1a4e87fb712aadf251ac7420769c754a20cf3f48732c78f64774c1d2f441d21",
+        "bytes": 469
+      },
+      {
+        "path": "../../apps/studio/src/blanket/workerProtocol.ts",
+        "sha256": "4535584f5a042159ced59ad532bf2de30f91c36b93ef7888a26d7b86a572d9db",
+        "bytes": 760
+      },
+      {
+        "path": "../../apps/studio/src/chart/AuthoredMachinePanel.test.ts",
+        "sha256": "aab2529b5427e47b832d082fbc9247dfc47be59b0ee4a2d4861f75e1fd4a33e2",
+        "bytes": 2922
+      },
+      {
+        "path": "../../apps/studio/src/chart/AuthoredMachinePanel.tsx",
+        "sha256": "4ed7c1d9578e8ce2fcb0074b71eac8318843feb5e0e28764704c7cf7d1eacd68",
+        "bytes": 8946
+      },
+      {
+        "path": "../../apps/studio/src/chart/ChartToolbar.tsx",
+        "sha256": "469140963d43fbfa91298c2cb8edc0b86f94846750f86ea75fba19832fccc912",
+        "bytes": 2809
+      },
+      {
+        "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
+        "sha256": "c80f69c8c3d38e375d3b96697d69ef79ec99f7ddbd09be38bf11ae89e4e3978a",
+        "bytes": 15928
+      },
+      {
+        "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
+        "sha256": "53c28dadb1b2e0ffcf300509ad75772fa11383cc35d2f84f1d9babf247a9a070",
+        "bytes": 14549
+      },
+      {
+        "path": "../../apps/studio/src/chart/GeneratedSourceDock.tsx",
+        "sha256": "4e11612e32aaaa1326ebd046b1fd5a931b0fd048424f27ebed2138faac5b91b1",
+        "bytes": 3202
+      },
+      {
+        "path": "../../apps/studio/src/chart/PaletteRail.tsx",
+        "sha256": "f70bc5a4f50629ac1782edf081e2487cd738c078051e4ad268df59fdd0467f5d",
+        "bytes": 584
+      },
+      {
+        "path": "../../apps/studio/src/chart/ProjectDialogs.tsx",
+        "sha256": "0ccb7a138a124389923f34a7900b659154f7f6809bf61c50056ee56f451e570e",
+        "bytes": 4673
+      },
+      {
+        "path": "../../apps/studio/src/chart/canvasCoordinates.test.ts",
+        "sha256": "ab1a413175fa2deae508fdc7cadad7634a3c20b5172525d21f73e4035ef86e5c",
+        "bytes": 748
+      },
+      {
+        "path": "../../apps/studio/src/chart/canvasCoordinates.ts",
+        "sha256": "3953c6e73f5f268e085c47513339674f15c9d07ad3effce66c786c25e502cd32",
+        "bytes": 803
+      },
+      {
+        "path": "../../apps/studio/src/chart/projectAutosave.test.ts",
+        "sha256": "d50e71d96f8f071a6390b93b3edb0dc6b41d6e89693a2234bd89126f5b9eac18",
+        "bytes": 1039
+      },
+      {
+        "path": "../../apps/studio/src/chart/projectAutosave.ts",
+        "sha256": "06a517971866b2106f0f97d26b2429ff33c0e15a31200c9f8aed2c1fa1712023",
+        "bytes": 1113
+      },
+      {
+        "path": "../../apps/studio/src/chart/projectCanvasAdapter.test.ts",
+        "sha256": "7ea5bcc0ea907d9066ea6530d561b97283a886092ec73caad792c8017973f293",
+        "bytes": 1262
+      },
+      {
+        "path": "../../apps/studio/src/chart/projectCanvasAdapter.ts",
+        "sha256": "f990e7810ce9bbb721293d702d5a91b11d1c5d27eea9be09af22518cd4bd4233",
+        "bytes": 845
+      },
+      {
+        "path": "../../apps/studio/src/chart/projectFile.test.ts",
+        "sha256": "95fc85193a523a5d36a9354a398f9b9a764cd176be21928ea750344d85286fd9",
+        "bytes": 1978
+      },
+      {
+        "path": "../../apps/studio/src/chart/projectFile.ts",
+        "sha256": "c305f65ee7c4cfbcbbc86892d5628e1e31f05cc499675d2a5d7bd0d1e7fbe59c",
+        "bytes": 1387
+      },
+      {
+        "path": "../../apps/studio/src/chartViewModel.test.ts",
+        "sha256": "92562bcea28156ab76fdf4e55f747dae91833d8dacc8387aced8e5324ae23ee1",
+        "bytes": 746
+      },
+      {
+        "path": "../../apps/studio/src/chartViewModel.ts",
+        "sha256": "b36f6ae1fd86c8d3bf260fcea738acf9725cb376ebe2da44822fe6fbb589ff38",
+        "bytes": 478
+      },
+      {
+        "path": "../../apps/studio/src/engine.test.ts",
+        "sha256": "eb3c3fbe185d21cccefaf38c1eed8d8baaeaf782cd12b563e4925ac36edc6eeb",
+        "bytes": 15524
+      },
+      {
+        "path": "../../apps/studio/src/engine.ts",
+        "sha256": "91ced896d493616c208bca7f0b56d901ec776243d7a327caf38942083cbfdf11",
+        "bytes": 21315
+      },
+      {
+        "path": "../../apps/studio/src/kcode/MachineMovementView.css",
+        "sha256": "642d351de03253ac407e7d83a29620138656091b992a8ccc14012890ba5d5783",
+        "bytes": 16711
+      },
+      {
+        "path": "../../apps/studio/src/kcode/MachineMovementView.test.tsx",
+        "sha256": "976659eb9859b408d7ae3ede25986451218acb064c690447769f9ec2f78347af",
+        "bytes": 7123
+      },
+      {
+        "path": "../../apps/studio/src/kcode/MachineMovementView.tsx",
+        "sha256": "2f3f9139dfd801b7d86e74a5e6ced90699104f2b55fb3c186ff23cb91040486d",
+        "bytes": 23787
+      },
+      {
+        "path": "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
+        "sha256": "95cc4308bac9c0e25799b5a8dfbc77f5e67ccd3319dd10c1df8c20cf77aa7792",
+        "bytes": 3986
+      },
+      {
+        "path": "../../apps/studio/src/kcode/compileKCodeArtifact.ts",
+        "sha256": "d52f64f6a08bf43f00ecec4a98efd56932b2b02da769fff82194fdaaa4d0ed47",
+        "bytes": 9650
+      },
+      {
+        "path": "../../apps/studio/src/kcode/convert.worker.ts",
+        "sha256": "7ba61395918307770d303c1b1c2b19e3c41ec3be2496c88d6f5c12a162891108",
+        "bytes": 823
+      },
+      {
+        "path": "../../apps/studio/src/kcode/kcodeProtocol.ts",
+        "sha256": "54d568c4ccd8f2b089b053bb9608db40def6761f276287ead5c5ac37b938e442",
+        "bytes": 1557
+      },
+      {
+        "path": "../../apps/studio/src/kcode/sha256.ts",
+        "sha256": "0983720fa924fa06b20519c39647eb782ac023d803c2ea84329693e9255a7869",
+        "bytes": 483
+      },
+      {
+        "path": "../../apps/studio/src/kcode/useKCodeArtifact.ts",
+        "sha256": "81e11ddd87adbbd6f6b0e0e747d979b8951c2d84b147f1607c2fc8e7358532ac",
+        "bytes": 2175
+      },
+      {
+        "path": "../../apps/studio/src/main.tsx",
+        "sha256": "f6406e11478ea3e58ba521df287d48f47bc2479ee126354cfba677d38ad29882",
+        "bytes": 236
+      },
+      {
+        "path": "../../apps/studio/src/styles.css",
+        "sha256": "1b48492eaa05b5250b2ec84e5ad34eb0033f7c6c21cd93b1cc11960216483b19",
+        "bytes": 47222
+      },
+      {
+        "path": "../../apps/studio/tsconfig.json",
+        "sha256": "67795d43c341bb368fa8071bf1b42c1ceaef294f1ad32837d555226227145af2",
+        "bytes": 229
+      },
+      {
+        "path": "../../apps/studio/vite.config.ts",
+        "sha256": "64e2e9168f8e833ac515093464923f4761cd0afe2958bc9996c3c5736acb6f98",
+        "bytes": 150
+      },
+      {
+        "path": "../../package.json",
+        "sha256": "bf5c2d4ccf68e9979f6d4c57c2b8a901ad2654e2773c3334a4649e41bd0bca9a",
+        "bytes": 893
+      },
+      {
+        "path": "../../pnpm-lock.yaml",
+        "sha256": "83d015dd6c76d94e20f5ebe853b04a5fe11d7bbb4e7623bcc110188384912463",
+        "bytes": 58011
+      },
+      {
+        "path": "../../pnpm-workspace.yaml",
+        "sha256": "253208fa7c1b64372c219b9e19cef15ed70ca93b66a4d5c4c4d2297a5aff8880",
+        "bytes": 36
+      },
+      {
+        "path": "../../tsconfig.base.json",
+        "sha256": "8eca8075a3f2be2879a1a79148a4f8ceae48bb22c945e80c66560fe7d7eb08bf",
+        "bytes": 213
+      },
+      {
+        "path": "package.json",
+        "sha256": "fbfd76d890a0802cf217ae85c772935d168f5195d5bec302c140374c56986642",
+        "bytes": 2804
+      },
+      {
+        "path": "scripts/generate-browser-converter.ts",
+        "sha256": "eacbae0b53a4dc46276b6f7a11e2a14f31d8dfb78bb6a2fdc747aa63580aabaf",
+        "bytes": 1207
+      },
+      {
+        "path": "scripts/generate-rectangle-corpus.ts",
+        "sha256": "e61736e8691107ea83f1e27995dd38703500f6a09e40723d587b73d25bc909ea",
+        "bytes": 3045
+      },
+      {
+        "path": "scripts/kcode-proof-launcher.mjs",
+        "sha256": "77d184b451b2046fa90d6e15b643fb9542a3314c54d9caaf28addbd2f0a96378",
+        "bytes": 1761
+      },
+      {
+        "path": "scripts/kcode-proof.ts",
+        "sha256": "4a61734a4ff6787c2a63d1cd130576371d335cecd41d022d625d07d5f184c684",
+        "bytes": 13178
+      },
+      {
+        "path": "scripts/kniterate-conform.ts",
+        "sha256": "1def428de6fddb934b7fe96aa3ea37258ac53ac07f2f8998969d639c5e9fab1a",
+        "bytes": 2658
+      },
+      {
+        "path": "scripts/kniterate-refusal-corpus.ts",
+        "sha256": "bb51bd9a5ba2aa2776189cef4f7307694a5264637f52c946c46e1a0869be671a",
+        "bytes": 4255
+      },
+      {
+        "path": "scripts/kniterate-swatch-registry-check.ts",
+        "sha256": "181bdbe5b1ca8b45404a66eaeba30c9e4a93a20e3b9d3fa54852b823b248c954",
+        "bytes": 9657
+      },
+      {
+        "path": "scripts/kniterate-topology-oracle.ts",
+        "sha256": "d492e8e7de2b0eb7a62dd6e910daab511b58858b7f4fe3a751310636c66fe8d5",
+        "bytes": 10347
+      },
+      {
+        "path": "scripts/m3a-blanket-benchmark.ts",
+        "sha256": "6d8134bf0fa7a7df9b0a98d42f4d283530d30e5c06726ce1c27a73f697e598b4",
+        "bytes": 4090
+      },
+      {
+        "path": "scripts/registry-support.ts",
+        "sha256": "ea61f912c107c2993bbbbd143d4bcf568f1e5841b2282b50b7dd30dea0f589ae",
+        "bytes": 926
+      },
+      {
+        "path": "src/browser.ts",
+        "sha256": "d66e5b5549c8a3bf5f799ca4dcf6f61836dd4c57c2ad7ba6c20b7acbfad7fb62",
+        "bytes": 3298
+      },
+      {
+        "path": "src/chart-core/__row_space_canary__.ts",
+        "sha256": "c25752906516442e6d27f82c595d7477aeaaff2a48f4f6f6dad57a8b40166510",
+        "bytes": 2940
+      },
+      {
+        "path": "src/chart-core/annotation-registry.ts",
+        "sha256": "a5e72d38cd85bdb4960a6a2ef929de4ecf03d8fabc618ff247478d7dbe5893dc",
+        "bytes": 5684
+      },
+      {
+        "path": "src/chart-core/cable-registry.ts",
+        "sha256": "c2d45d95da95dd9cd1444767f5ab6ecfd71705bb9caacc0a1bfebe9b6e378e8d",
+        "bytes": 8879
+      },
+      {
+        "path": "src/chart-core/chart-intent.ts",
+        "sha256": "3113dab0e3078ad64a005fa8930f3e18f268eb9712a51470fd728067892eef15",
+        "bytes": 13525
+      },
+      {
+        "path": "src/chart-core/fashioning.ts",
+        "sha256": "e70be9cd1472d205698dab3192ab19818b47585302c192893e321a2a00742159",
+        "bytes": 3592
+      },
+      {
+        "path": "src/chart-core/operation-spec.ts",
+        "sha256": "2f425e0ed24214115ce6636babbda4bb38ae5c58c8c6b28e54c34df6aa5358a3",
+        "bytes": 12113
+      },
+      {
+        "path": "src/chart-core/paint-order.ts",
+        "sha256": "7d40a53854657731af94fb85f3413eb6a90b678b1972990abf2a333d484dbc02",
+        "bytes": 2826
+      },
+      {
+        "path": "src/chart-core/projection.ts",
+        "sha256": "5606a5b4f68f301fe6b7ef62b50f5dd5df92943055369a1211b486bb76502dbb",
+        "bytes": 10283
+      },
+      {
+        "path": "src/chart-core/source-mask.ts",
+        "sha256": "373cc89f788b11cf7f5fe96253f111c7046c29fc7334add35d09e3ead3e856a0",
+        "bytes": 1329
+      },
+      {
+        "path": "src/chart-core/spec-registry.ts",
+        "sha256": "0bcec955cd12e4c7f3349b4d18c67278ad4626db130668967b8eaf36f3480408",
+        "bytes": 19671
+      },
+      {
+        "path": "src/chart-core/types.ts",
+        "sha256": "9525f94bb6f35a4cbe8e538c688f06e2d4e2746e81317a45d1bc853177d21c96",
+        "bytes": 6127
+      },
+      {
+        "path": "src/colorwork/beanie-chart-adapter.ts",
+        "sha256": "7c5b03ebe7000bc54ec15ada2b3191c37a08e754c4f6b84b461f42a6180cfa5b",
+        "bytes": 4902
+      },
+      {
+        "path": "src/colorwork/beanie-motif-to-chart.ts",
+        "sha256": "e2d11e2d8b89c29230b59c665309ce7261550f2d2a3ca9b5d1f3022820a358e7",
+        "bytes": 3603
+      },
+      {
+        "path": "src/colorwork/cable-events-from-chart.ts",
+        "sha256": "e39c21039ebf35e94a43cd016aa94a26d5739fe1913e111bf6695c091c88c1d3",
+        "bytes": 5733
+      },
+      {
+        "path": "src/colorwork/chart-builder.ts",
+        "sha256": "26fe8f8238765693a06a28879e4a982186dcad9f9c1eff33628a1aab48c2d884",
+        "bytes": 7307
+      },
+      {
+        "path": "src/colorwork/from-colorwork-chart.ts",
+        "sha256": "4b9cc0d6be2a0b5fc9da6d732f434c8304dce707600ac7a2957d148747189c35",
+        "bytes": 2040
+      },
+      {
+        "path": "src/colorwork/icord-path-from-chart.ts",
+        "sha256": "14b70f6f743f8b2f98fce346d585027de6000f029f758a881d151fe02d59d622",
+        "bytes": 6551
+      },
+      {
+        "path": "src/colorwork/knitlab1-contract.ts",
+        "sha256": "cf56ed76520665dd5647971e3cfe421690e7807f67741176a06f776df7ebc9a3",
+        "bytes": 50570
+      },
+      {
+        "path": "src/colorwork/punchcard.ts",
+        "sha256": "fae61ed1ab2852b4178b252d023f881b66163093279d918fd82bc15e4ba42689",
+        "bytes": 5889
+      },
+      {
+        "path": "src/colorwork/row-rack-schedule.ts",
+        "sha256": "7cdf9e6c913ab193424b074d8bfbd786fee687f06bd74e1849b17d251ab82179",
+        "bytes": 5833
+      },
+      {
+        "path": "src/colorwork/shaped-color-mode.ts",
+        "sha256": "9a0c56d87ab3f9a1ac373b908e57336236a4d3fcc315bd45f2f387331ce6d3b9",
+        "bytes": 3429
+      },
+      {
+        "path": "src/colorwork/shift-events-from-chart.ts",
+        "sha256": "e6e7a47a617b259f990f16c4fdedb105428f4a7f2a8ce1608cb1a1fd0248a69b",
+        "bytes": 3587
+      },
+      {
+        "path": "src/colorwork/tension-swatch-chart.ts",
+        "sha256": "89fc9d5f98048035b65af2fc55f1b7bc6d7c3badae2295efe89b0f77faaf9448",
+        "bytes": 2107
+      },
+      {
+        "path": "src/colorwork/tube-schedule-from-chart.ts",
+        "sha256": "380584c26996697ea5f4cb398826f6b7b565a4afe7725d4ae3aed2f5ae843cd0",
+        "bytes": 2560
+      },
+      {
+        "path": "src/index.ts",
+        "sha256": "5605c40d9cb5e82fef7d7b40881fae94da425cfaad78f64745b65c062c384e5f",
+        "bytes": 3864
+      },
+      {
+        "path": "src/knitout/back-face-projection.ts",
+        "sha256": "a4defe28ba7185d3e15a59b47d6f0c4631471b2ca2f263576ef82d9522a1ef35",
+        "bytes": 3735
+      },
+      {
+        "path": "src/knitout/color-merge.ts",
+        "sha256": "0841c3bf45cbbf061457a016ded62c573d83efcf94fbc8957cc0c07a9e88e5b5",
+        "bytes": 3617
+      },
+      {
+        "path": "src/knitout/compile/custom-op-charts.ts",
+        "sha256": "306c9bc35161e4e5c14629f1ac823958799987867ac95d09db1537511ff64266",
+        "bytes": 6170
+      },
+      {
+        "path": "src/knitout/compile/from-chart.ts",
+        "sha256": "a90622de8775a433dd9647680b241138efd0ba4fa98090220659de62ca8f667e",
+        "bytes": 10000
+      },
+      {
+        "path": "src/knitout/compile/icord-chart.ts",
+        "sha256": "ef018bed48d98ff6caa5aab2e5ff4401a399ca5dbd143375235180db19dd8f47",
+        "bytes": 3692
+      },
+      {
+        "path": "src/knitout/compile/leaf-chart.ts",
+        "sha256": "f50fc69828b177c62c667b464939dd42c18eba08052a8000bd260e22e1e9920e",
+        "bytes": 2450
+      },
+      {
+        "path": "src/knitout/compile/sophie-leaf-chart.ts",
+        "sha256": "aca47c326b5e7a735789c108a4799e18b3980295a2196be92e1bfa5d1f8aa1e7",
+        "bytes": 4121
+      },
+      {
+        "path": "src/knitout/compile/tube-chart.ts",
+        "sha256": "399a171a00eeb0170a6b3b74f04fb01896f2cd87202811c53663e05ef9d6673d",
+        "bytes": 3174
+      },
+      {
+        "path": "src/knitout/emitter.ts",
+        "sha256": "11e0cee8429293fdcb0c68d78ffd4763c38e8570aa7e5b75ecfaa5af46b5a75a",
+        "bytes": 4333
+      },
+      {
+        "path": "src/knitout/export-helpers.ts",
+        "sha256": "16c88f187be58d427fc92a45f1c72504e78e3f6faf5155e4ab054571619c7a2a",
+        "bytes": 51571
+      },
+      {
+        "path": "src/knitout/inspect-program.ts",
+        "sha256": "6ea208cdd1f2a2ad864a3a725546d9aa944e3df2bcbe566965c27d44c3fb0195",
+        "bytes": 3614
+      },
+      {
+        "path": "src/knitout/inspect.ts",
+        "sha256": "1c8d5baa932bc870213b1a8674b62ac78613d014de071ce42e0df0fbde8619cb",
+        "bytes": 6135
+      },
+      {
+        "path": "src/knitout/kc-diff.ts",
+        "sha256": "e8305d6394314752192de207e543b030184e535c3238175ad579df8803123995",
+        "bytes": 25633
+      },
+      {
+        "path": "src/knitout/kc-document.ts",
+        "sha256": "f5ef62e8abf7d532fe337b3ff512529aa260389dde836e571b4738bcec3b5d6d",
+        "bytes": 1163
+      },
+      {
+        "path": "src/knitout/kc-to-knitout.ts",
+        "sha256": "618b558956b5462188b1f250c951397bd88f612a59a8f12c5452d69c53289dfc",
+        "bytes": 9210
+      },
+      {
+        "path": "src/knitout/kcode/bytes.ts",
+        "sha256": "7d19777cdbc53754b0c5e85676f83d12458eb471744bda65caf02775207617de",
+        "bytes": 1520
+      },
+      {
+        "path": "src/knitout/kcode/emitter.ts",
+        "sha256": "fd880acea3ea620196108045c017b2a3e65ccd7ca3a8a7898813dda9a5aa2079",
+        "bytes": 519
+      },
+      {
+        "path": "src/knitout/kcode/machine-profile.ts",
+        "sha256": "7758d1c5d2fad5616ae3bd55dc17bcf98ecdce1c4e0b650cfea3b73db92316b3",
+        "bytes": 13369
+      },
+      {
+        "path": "src/knitout/kcode/machine-scene.ts",
+        "sha256": "48cfa44b6167f1b1281ec2e071fd023e11efc95bb6aa7ccf01cfe6efef42d8d8",
+        "bytes": 10306
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "sha256": "198ec51d9e5ae3b7a993086ecfcd86fd291e2e057e510d1145819c965899a603",
+        "bytes": 18782
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "sha256": "1a6a8c49102255e02e0e69d00d41a283a194fb7545e5d99d934672bc12ff1aab",
+        "bytes": 41580
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "sha256": "e86d7e680dbc8e226e9c99fcae5cbc31b4f9244bf02287065c5edf19b5235504",
+        "bytes": 22436
+      },
+      {
+        "path": "src/knitout/kcode/scheduled-trace-diff.ts",
+        "sha256": "9a89e94b82a2dd2df06b92bce3633d9422177f8a430072d6571cb788f3d1e7a2",
+        "bytes": 3529
+      },
+      {
+        "path": "src/knitout/kcode/types.ts",
+        "sha256": "c31f79dbe39b22f3e0474982716ce6239d40a0edb84cba69c5d78596c6233186",
+        "bytes": 5685
+      },
+      {
+        "path": "src/knitout/kniterate/browser-to-kcode.ts",
+        "sha256": "6b14eab4eba8e775c8146c9477ba8ce52039637fa3bb38faafe003102fc77f5b",
+        "bytes": 2067
+      },
+      {
+        "path": "src/knitout/kniterate/constants.ts",
+        "sha256": "29fbd990ce01274099be02eebbf004638cc84d5647e79cb00a83e28fb8326111",
+        "bytes": 5884
+      },
+      {
+        "path": "src/knitout/kniterate/to-kcode.ts",
+        "sha256": "86ac57186293a39c9ffac6482fbc594c03780d50f05fba1bad964d51b7e4e02c",
+        "bytes": 5024
+      },
+      {
+        "path": "src/knitout/kniterate/vendor-pass-contract.ts",
+        "sha256": "adbb377669c77951fc1ad5c3874ff71aafbe5e79055797c9ac292e7daf61923b",
+        "bytes": 1312
+      },
+      {
+        "path": "src/knitout/parser.ts",
+        "sha256": "db575a7e4c20f5541037bae3e493931d76f1ee7c6972ba5c64f5640bf7413033",
+        "bytes": 6380
+      },
+      {
+        "path": "src/knitout/passes/back-bed-clear.ts",
+        "sha256": "d52c097944fd41ea92a6c4478b7da3efc3954950f83b76d7fbf954553b303b49",
+        "bytes": 7333
+      },
+      {
+        "path": "src/knitout/passes/beanie-readiness.ts",
+        "sha256": "51c2d7778c0b136cdd7cc59f697bc14e9d023f89dba77a45f6329059887e34c0",
+        "bytes": 15027
+      },
+      {
+        "path": "src/knitout/passes/beanie.ts",
+        "sha256": "ba449731815c63007c79c1d45de0fa2c795a5b5a206f2eccb15acc2a9c43b2e1",
+        "bytes": 32389
+      },
+      {
+        "path": "src/knitout/passes/bed-transition.ts",
+        "sha256": "f204d6cde2c39c4cd4b54788e86358f0f5ce0fccac5bebf8337b5c286aced0bd",
+        "bytes": 2917
+      },
+      {
+        "path": "src/knitout/passes/bind-off.ts",
+        "sha256": "2a2cae1a8a4265232622ae1dd7bd89e46fd8805f915163af31a21d91406f4d60",
+        "bytes": 24071
+      },
+      {
+        "path": "src/knitout/passes/cable-cross.ts",
+        "sha256": "19b2fb779b6aeaf42c5077484f4d8b963a251e56e960bde23202e5317f057a21",
+        "bytes": 13932
+      },
+      {
+        "path": "src/knitout/passes/carrier-intro.ts",
+        "sha256": "6aa2b702836fb49caf6bc236b648271d6997083ed5da00715d564f863d1fcd36",
+        "bytes": 14953
+      },
+      {
+        "path": "src/knitout/passes/crown-machine.ts",
+        "sha256": "88cf101fa2fd780a1ccf00c28591ce63dd5b54df1088d19e861e880650c4b6b3",
+        "bytes": 10160
+      },
+      {
+        "path": "src/knitout/passes/first-row-speed.ts",
+        "sha256": "4ce5efd15329ba2de7114341b827f306b24dfd3e2477092380df60b810839cbc",
+        "bytes": 568
+      },
+      {
+        "path": "src/knitout/passes/icord.ts",
+        "sha256": "71c0607ebbc80e98c6303cc5df527c97883199dfe445c4f7b3cd6b32059b6ab2",
+        "bytes": 7395
+      },
+      {
+        "path": "src/knitout/passes/jacquard-birdseye.ts",
+        "sha256": "ce4783721363be7f16b1c4f8804ffd19608a86c07b3fe8088d4db38deeaac12f",
+        "bytes": 14349
+      },
+      {
+        "path": "src/knitout/passes/jacquard-complement.ts",
+        "sha256": "6caf8f14556e60b7a4831a1d8e1e8dc89044266294d353cfcc7a32014121e962",
+        "bytes": 7602
+      },
+      {
+        "path": "src/knitout/passes/jacquard-dbj-full.ts",
+        "sha256": "41dfff3b0b51c2db8ef32200caf237ad57a68dae1f0b651643a8e20d5ac2bec1",
+        "bytes": 9586
+      },
+      {
+        "path": "src/knitout/passes/jacquard-floats.ts",
+        "sha256": "21f64c4893a30a1d2d9b9435fcdfdc9bca58c24eac1cf8eb733c4e59d5825596",
+        "bytes": 9671
+      },
+      {
+        "path": "src/knitout/passes/jacquard-ladder.ts",
+        "sha256": "b8ed879d20908947ddadd148223e3dd9a69864c76a7af5e2ababed507b49cae0",
+        "bytes": 8496
+      },
+      {
+        "path": "src/knitout/passes/jacquard-lined.ts",
+        "sha256": "f8eb09c05437e32f9594a833b9816ebd47ef3aa433aa6fc850104937f879fc05",
+        "bytes": 7746
+      },
+      {
+        "path": "src/knitout/passes/lateral-shift.ts",
+        "sha256": "60ef467eee5255f1824f960d2b7a44117941b6b7326caa7c94f7dcde23c602c4",
+        "bytes": 4609
+      },
+      {
+        "path": "src/knitout/passes/resolve-chart.ts",
+        "sha256": "eef95c0dcb9045fa7fee3a00ac1e58fa06d967cd6127d9b281a2d7da6038b452",
+        "bytes": 5075
+      },
+      {
+        "path": "src/knitout/passes/shaped-tube.ts",
+        "sha256": "9dcd574613daa8207b829f69db6ef67c0e44a3456beb33ed473f8471e0ab1c73",
+        "bytes": 5494
+      },
+      {
+        "path": "src/knitout/passes/short-row-wraps.ts",
+        "sha256": "3e1f46e9392ed2eb4f055953e9b6d399e0d25737b26951786bfa2a7ae399ae13",
+        "bytes": 1066
+      },
+      {
+        "path": "src/knitout/passes/simulator-handoff.ts",
+        "sha256": "4ac404b502825177f5ba08affd32a21a269b51a951f19c8679a991658ef939ae",
+        "bytes": 2232
+      },
+      {
+        "path": "src/knitout/passes/stockinette-shaped.ts",
+        "sha256": "73e93b00a6832d5a28ba39e017396b0056b7ee20f8002e9ff619e7691015cb34",
+        "bytes": 74236
+      },
+      {
+        "path": "src/knitout/passes/stockinette-with-overrides.ts",
+        "sha256": "89a474f554670df96630ee244962a7ac16202aa59dba65c5a8ac53bd476888c7",
+        "bytes": 16698
+      },
+      {
+        "path": "src/knitout/passes/stockinette.ts",
+        "sha256": "2464e2fdda14b446ffc8726a14729b0b9f28d2b77be1aab510ef19f1b53666fe",
+        "bytes": 15695
+      },
+      {
+        "path": "src/knitout/passes/tube-fabric.ts",
+        "sha256": "3841f6e460e5d47653a6678af2feb1a85c259eb1ab1ec81be0c91cd50df25388",
+        "bytes": 8023
+      },
+      {
+        "path": "src/knitout/passes/waste-section.ts",
+        "sha256": "9526c43103251a6c016aac43221ef7dcc39cfcca6cd22b6f8da2ce94852a2523",
+        "bytes": 20455
+      },
+      {
+        "path": "src/knitout/pattern-program.ts",
+        "sha256": "3f2b8482e902799ca890b7a05edd56e050f6e99b032799d21e76f7dc60a88062",
+        "bytes": 6989
+      },
+      {
+        "path": "src/knitout/plan/bed-state.ts",
+        "sha256": "a54fd8b0cd629dec64fb14d72f1404fe3f3281f9f50b48c1ac7677958b3e6420",
+        "bytes": 20226
+      },
+      {
+        "path": "src/knitout/plan/chart-body-walker.ts",
+        "sha256": "e3dc99658bd1be6641bd352b2d654f768b3541115e04c87f12defe89685977f4",
+        "bytes": 20573
+      },
+      {
+        "path": "src/knitout/plan/compile-chart.ts",
+        "sha256": "0f8689678da7744155da208a71c29a14247801910e3003cb738eaa70884e8650",
+        "bytes": 67602
+      },
+      {
+        "path": "src/knitout/plan/kniterate-settings-ops.ts",
+        "sha256": "e8a0c3ebfb2951d9339b1e8614e968720d191c7459db78114e7c17f4e6f11ea1",
+        "bytes": 1787
+      },
+      {
+        "path": "src/knitout/plan/machine-settings-consumption.ts",
+        "sha256": "86478e74e04bec4b3153b78bcb44d9dd7149a835429e7bb302b51986267b7bd3",
+        "bytes": 6347
+      },
+      {
+        "path": "src/knitout/plan/plan-to-knitout.ts",
+        "sha256": "55887eed2c3f75abbe55583305123d666b0756fa3c02e58a8bdada23ead5fe55",
+        "bytes": 1956
+      },
+      {
+        "path": "src/knitout/plan/types.ts",
+        "sha256": "85102536816c2d2eef3015e03ddf3afda13acebe07bba3122199978a16568a85",
+        "bytes": 10520
+      },
+      {
+        "path": "src/knitout/recipes/customist-studio-fairisle-7gg.ts",
+        "sha256": "075d7e5da5252d2702e2b7c30a1d4f4058ca39225d3c54d89e141711042a4778",
+        "bytes": 4044
+      },
+      {
+        "path": "src/knitout/recipes/index.ts",
+        "sha256": "f249cbdb76d2a0dffc927c52f23eb6da6004d2ce17731755f5a674af0e4460b3",
+        "bytes": 1680
+      },
+      {
+        "path": "src/knitout/recipes/profiles.ts",
+        "sha256": "39b63f9083d4c4d9c6280c08f44da139eebbe62f61eab44f4d95e96490fb3a68",
+        "bytes": 1043
+      },
+      {
+        "path": "src/knitout/recipes/recipe-fingerprint.ts",
+        "sha256": "3a62a4365f5d453f6015a5f862db2c3739a8186832ee9cdb9282e12fa75993f9",
+        "bytes": 4318
+      },
+      {
+        "path": "src/knitout/recipes/swatch-7gg.ts",
+        "sha256": "8e7b7618e6985cdb60120942fa51aa2e34d60dd91604b2394b74bf8d0ac994dd",
+        "bytes": 2210
+      },
+      {
+        "path": "src/knitout/recipes/types.ts",
+        "sha256": "e928f968a0e6e0e00275fb91df82e660565ceb27de53b44f96f3e025a05ebc05",
+        "bytes": 8682
+      },
+      {
+        "path": "src/knitout/row-tension-blocks.ts",
+        "sha256": "cff4aa683fca68e2059a94a0a95120492c5a3db122da05ba4d20702fec63b4be",
+        "bytes": 4541
+      },
+      {
+        "path": "src/knitout/run-artifact.ts",
+        "sha256": "f87138ca024451a74bcc6911abba12d3d47b31558030f5b2685598bbab5a20d4",
+        "bytes": 13069
+      },
+      {
+        "path": "src/knitout/sim/carriage-simulator.ts",
+        "sha256": "560711b7d636d03cfe346df53380be29415323f2e31e7821b0457481a90ddf82",
+        "bytes": 52544
+      },
+      {
+        "path": "src/knitout/sim/icord-from-kc.ts",
+        "sha256": "ff43c7557a09ed1dfac371507efe9a8bf60dd2e4e7fa3a96debea6baa2ca2833",
+        "bytes": 3824
+      },
+      {
+        "path": "src/knitout/sim/kc-parse.ts",
+        "sha256": "13c6adb431bf161e347e79ae7f4e3ab634d6bfa713d8d56778eb843ca7a5a74e",
+        "bytes": 1534
+      },
+      {
+        "path": "src/knitout/sim/kc-section.ts",
+        "sha256": "381b57c1390e858a52eac7beea7c6cbc9ebf5f9d29ae50694a24de7e04ced590",
+        "bytes": 2573
+      },
+      {
+        "path": "src/knitout/sim/raw-op-nextdir.ts",
+        "sha256": "e980959cab6415e6e74ebd71a60ae8bef70cb849aeb6ad48b4c6a950e5ce0922",
+        "bytes": 442
+      },
+      {
+        "path": "src/knitout/sim/types.ts",
+        "sha256": "b26053b0771124aab297012fe01db8f4dd9e0a97c2959b43aeb689e39c66ad0b",
+        "bytes": 3140
+      },
+      {
+        "path": "src/knitout/sim/vendor-rules.ts",
+        "sha256": "2d63930116a3ea3562db4cb29b4d4f0c953d708b36ff7a2321ae2e37010fb516",
+        "bytes": 7052
+      },
+      {
+        "path": "src/knitout/sophie/loop-stack-sim.ts",
+        "sha256": "f16e8b80614c616263c4a4e8c8879a9f21805de4191f7b57a12cd8d1d166f4e4",
+        "bytes": 10629
+      },
+      {
+        "path": "src/knitout/sophie/render-kc.ts",
+        "sha256": "35293db99797841b2fabdb331613d2c61fb18598cb7f6dc28b3d300826b33cfc",
+        "bytes": 3984
+      },
+      {
+        "path": "src/knitout/sophie/replay.ts",
+        "sha256": "a9ba8865b37d48b57faf70ad9e73038033fbc117d34e9f3e3a3a80b0fa65da25",
+        "bytes": 17219
+      },
+      {
+        "path": "src/knitout/swatch/tension-swatch-chart.ts",
+        "sha256": "3a3b666b00eed90cdd154565b897cd848f39ae7b72c3dd20a446103ca7cf84cc",
+        "bytes": 7629
+      },
+      {
+        "path": "src/knitout/swatch/tension-swatch.ts",
+        "sha256": "8d5d266844e2844938f885610765a5a83462bbc015930e0524a7aa6b2d0c8c76",
+        "bytes": 17319
+      },
+      {
+        "path": "src/knitout/types.ts",
+        "sha256": "b3133e3e1187e45a67165a46d3f7b649ca066f75457cf42d3bd9a03885f7e680",
+        "bytes": 7618
+      },
+      {
+        "path": "src/knitout/vendor/README.md",
+        "sha256": "1af6ce89ab94ef1dfe8007621bb58fbecf23ae545e4843c6c7f6dab4fd2ba0f6",
+        "bytes": 932
+      },
+      {
+        "path": "src/knitout/vendor/knitout-to-kcode.browser.d.ts",
+        "sha256": "df7067eb51852f9ba7d0dd4f733bc5afceea80495efe1d468dc90b825a6ccecd",
+        "bytes": 601
+      },
+      {
+        "path": "src/knitout/vendor/knitout-to-kcode.browser.js",
+        "sha256": "6c83e2e7a41330ecfa7ab679a94ed4e4220f31b792e75e72dda248b7e0d34c72",
+        "bytes": 76610
+      },
+      {
+        "path": "src/knitout/vendor/knitout-to-kcode.cjs",
+        "sha256": "7946b44b635ceadfec2f861954591ec61c9f4a58c8722c249f84f777a1a3552f",
+        "bytes": 77459
+      },
+      {
+        "path": "src/knitout/vendor/knitout-to-kcode.d.cts",
+        "sha256": "119ebad30d29c098660201842ce6254b00ab03a0e987a6f0661d3c6230c27bc6",
+        "bytes": 268
+      },
+      {
+        "path": "src/knitout/wizard-config-migrate.ts",
+        "sha256": "a035154921f052b8826fb97673583c400069d8dbab48fbc3b00c92d8ae1ee6f8",
+        "bytes": 21709
+      },
+      {
+        "path": "src/knitout/wizard-config.ts",
+        "sha256": "38bb7a06d33c497abf7588a3c02ba7b24d4ce9b6335b2461ed16efef68e9677d",
+        "bytes": 27404
+      },
+      {
+        "path": "src/physical-registry.ts",
+        "sha256": "2423923adff2ea7007474a5acfad9497eb1705f3aa82783e1af27184e972fda0",
+        "bytes": 1966
+      },
+      {
+        "path": "src/primitives/knit-op.ts",
+        "sha256": "bcbae8a4592278317fd315a124184ae128fe84e2613e701e0d3b0c8fdf80c2cd",
+        "bytes": 19535
+      },
+      {
+        "path": "src/raw-imports.d.ts",
+        "sha256": "049ad78c899406ca99cc50204507d6413ccedc5f3cf345aada44fa62719be670",
+        "bytes": 80
+      },
+      {
+        "path": "src/validators/bed-state.ts",
+        "sha256": "239de089f3c67afff9f26c20d68803a990f5939fe142c72d3628c66f48447eef",
+        "bytes": 2859
+      },
+      {
+        "path": "src/validators/carriage-policy.ts",
+        "sha256": "2dd9bfa835c85d2446ebbf09986274cfdd29a6165e5b60643aafce1eea7857e8",
+        "bytes": 2673
+      },
+      {
+        "path": "src/validators/chart-continuity.ts",
+        "sha256": "b78126cd6277951ec865222c8bcf6b0922c44dc9f78c24f693642361ad139db9",
+        "bytes": 29916
+      },
+      {
+        "path": "src/validators/chart-track-a.ts",
+        "sha256": "bb17be322770d8f048982170a693f6a995cfc1fc5eef46c834afd995b117b324",
+        "bytes": 32917
+      },
+      {
+        "path": "src/validators/index.ts",
+        "sha256": "a3632baa1058ed6a86b4b337c1db32512988a5485e49774ace6c0a425c9351ef",
+        "bytes": 370
+      },
+      {
+        "path": "src/validators/knitout-program.ts",
+        "sha256": "3c5c53601d3e6047424ba9ec26e1e5fc99e8832df33daefa6b46c64957536626",
+        "bytes": 11258
+      },
+      {
+        "path": "src/validators/messages.ts",
+        "sha256": "a23ebf2735b6eec0e61e353e8c574f23a4381e01c8a20d1980fe4d31e568c985",
+        "bytes": 38721
+      },
+      {
+        "path": "src/validators/tile-conservation.ts",
+        "sha256": "fac10a9356e70aa4cfdb253db9396d9567e9726e208d82761f585d44bd47e8e9",
+        "bytes": 4915
+      },
+      {
+        "path": "test/browser-kcode-converter.test.ts",
+        "sha256": "a80fb9e70d7b74b22a10c5f296452c43b04966d3825affb741aa14b0c2ffe170",
+        "bytes": 3795
+      },
+      {
+        "path": "test/knitout/browser-converter-source.test.ts",
+        "sha256": "c48f62d7a383815c1b06dfabf59a57c2fcb15c4a09357eaa930378a64b34b2bd",
+        "bytes": 673
+      },
+      {
+        "path": "test/knitout/kc-diff.test.ts",
+        "sha256": "7ba60db88350ebc6fb618991ab1835b71e5df0b625596e3711ac14353481055f",
+        "bytes": 16265
+      },
+      {
+        "path": "test/knitout/kcode-byte-roundtrip.test.ts",
+        "sha256": "0a457f3f2dc2befe4700873c866c46a14eeef42e08eb66916c1a56e53047c192",
+        "bytes": 1583
+      },
+      {
+        "path": "test/knitout/kcode-document-adversarial.test.ts",
+        "sha256": "0c328c843bccaaed4a037433b79b9bf9b27ac3631d3e107986765edd09be418d",
+        "bytes": 13096
+      },
+      {
+        "path": "test/knitout/kcode-document-property.test.ts",
+        "sha256": "dd0516f3938fb832aa9e414e17767df7dd5065fb91ca1a52e444f0bcccd15318",
+        "bytes": 7443
+      },
+      {
+        "path": "test/knitout/kcode-independent-oracle.test.ts",
+        "sha256": "3876dbf885fe22617949ff906a8e6dd8033616882223547b1f3c6679d9f0df10",
+        "bytes": 29799
+      },
+      {
+        "path": "test/knitout/kcode-machine-profile.test.ts",
+        "sha256": "7d731086d07a6b8cf62a9d7cca1fea894503719ac9caff4eba95d1050a848730",
+        "bytes": 5639
+      },
+      {
+        "path": "test/knitout/kcode-machine-scene.test.ts",
+        "sha256": "0e404559efab738063d2621bd375c54fa023d7cc4734185cd6b90335eb17cfc0",
+        "bytes": 11631
+      },
+      {
+        "path": "test/knitout/kcode-machine-trace.test.ts",
+        "sha256": "4ced1df556b3ea4825d9388da94be589ad4595e260490d3c4d116279d3f045cf",
+        "bytes": 11346
+      },
+      {
+        "path": "test/knitout/kcode-machine-validator.test.ts",
+        "sha256": "de42cad865dfb43323483586b3a2ff0b65b33afe12157d4cc52106f7a58d6712",
+        "bytes": 18394
+      },
+      {
+        "path": "test/knitout/kcode-scheduled-differential.test.ts",
+        "sha256": "14fc767834b54d9e112048fef3fa124a3e3d505a90b12d47ebebac87148c7019",
+        "bytes": 7198
+      },
+      {
+        "path": "test/knitout/kcode-scheduled-trace-diff.test.ts",
+        "sha256": "8ec4da04b9f7bccca5cc6ba202c21efc7f86493727b1e827db1a422be3bff7e7",
+        "bytes": 2440
+      },
+      {
+        "path": "test/knitout/strict-kcode-document.test.ts",
+        "sha256": "9f73b6465837605fbaa5c6a974d12f4bcc06352e3a960dbd6e80e430d81632c9",
+        "bytes": 10997
+      },
+      {
+        "path": "test/public-api.test.ts",
+        "sha256": "b68d24cd249d1647bdfadc053ac9de86fe042c6da577d2265274007a2b4fc539",
+        "bytes": 1712
+      },
+      {
+        "path": "tsconfig.json",
+        "sha256": "af8d127eeeb52c1ff3320b3f148a77833cd1a84f6c45a73c3739717e4f11211c",
+        "bytes": 203
+      }
+    ]
+  },
+  "toolchain": {
+    "sha256": "ee75400b38d8535891b222e7d24c3e0e5c24998b9ce7e2613abf8b1fd23fb1db",
+    "node": "v22.16.0",
+    "pnpm": "10.17.1",
+    "declaredPackageManager": "pnpm@10.17.1",
+    "platform": "linux",
+    "architecture": "x64"
+  },
+  "auditFailures": [],
+  "differentialScope": {
+    "compared": "every KCode-encoded scheduled field",
+    "backendOnlyProvenance": [
+      "sourceLines",
+      "isAutoMove",
+      "comment"
+    ],
+    "note": "sourceLines and claimed design rows fail closed against parsed Knitout; isAutoMove and comment are preserved backend annotations. None can be reconstructed from KCode bytes."
+  },
+  "mutationEvidence": {
+    "inputGrammarAndDiffMutations": true,
+    "implementationSourceMutationScoring": false,
+    "opportunity": "Add a deterministic source-mutation score gate for the parser, projector, validator, and trace diff."
+  },
+  "physicalAcceptance": {
+    "included": false,
+    "command": "pnpm release:physical-check",
+    "note": "A machine run is a separate final acceptance gate and is not used as a software oracle."
+  }
+}

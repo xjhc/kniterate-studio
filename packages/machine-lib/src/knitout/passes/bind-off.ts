@@ -384,8 +384,9 @@ function emitWasteAndDrop(input: BindOffInput): BindOffResult {
   // Drop all live stitches on BOTH beds. Charts with purl cells leave
   // some loops on the back bed (back-bed knit for the purl override);
   // dropping front only would leave those stranded. `drop` on an empty
-  // needle is a safe no-op, so dropping the full range on both beds
-  // works regardless of which cells used overrides.
+  // needle does not change the compiler's modeled loop state; its operational
+  // machine consequence remains unverified. The full-range cleanup covers
+  // both front- and back-bed overrides.
   for (let n = needleStart; n <= needleEnd; n++) {
     sim.drop(f(n));
     sim.drop(backBed(n));
@@ -421,7 +422,8 @@ function emitDrop(input: BindOffInput): BindOffResult {
   const drain = () => ops.push(...sim.drainOps());
   // Drop both beds — handles purl overrides (back-bed live loops) and
   // any leftover back-bed waste that didn't get cleared in the cast-on
-  // prologue. `drop` on empty needles is a no-op.
+  // prologue. Empty targets do not change the compiler's modeled loop state;
+  // their operational machine consequence remains unverified.
   for (let n = needleStart; n <= needleEnd; n++) {
     sim.drop(f(n));
     sim.drop(backBed(n));

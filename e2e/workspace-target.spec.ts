@@ -18,6 +18,12 @@ test('keeps chart, strategy, machine truth, source, and refusal state in one V1 
   await page.getByRole('button', { name: /^Birdseye/ }).click();
   await expect(page.getByRole('button', { name: 'Export k-code' })).toBeEnabled({ timeout: 20_000 });
 
+  await page.getByRole('button', { name: 'Inspect exact emitted movement' }).click();
+  await expect(page.getByRole('heading', { name: 'Exact emitted machine trace' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Exact machine movement' })).toBeVisible();
+  await expect(page.getByText('KCode coordinates; physical needle labels unverified.')).toBeVisible();
+  await page.getByRole('button', { name: 'Return to chart' }).click();
+
   await page.getByRole('tab', { name: 'K-code .kc' }).click();
   await expect(page.locator('.generated-source-content')).toContainText('FRNT:');
   await page.getByRole('button', { name: /^Hide/ }).click();

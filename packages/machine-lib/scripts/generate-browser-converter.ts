@@ -12,7 +12,7 @@ export function browserConverterSource(source: string): string {
     throw new Error('Vendored converter markers changed; refusing to generate a partial browser module.');
   }
   const librarySource = source.slice(javascriptStart, driverStart).trimEnd();
-  return `${librarySource}\n\nexport { knitoutToPasses, passesToKCode };\n`;
+  return `${librarySource}\n\nexport { knitoutToPasses, passesToKCode, passesToKCodeWithTrace };\n`;
 }
 
 export function generateBrowserConverter(): void {

@@ -60,7 +60,8 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
   const activePaletteIndex = Math.min(paletteIndex, chart.palette.length - 1);
   const focusedRow = focusedRowId === null ? null : rowIds.indexOf(focusedRowId);
   const focusedProvenance = compile.artifact?.rowProvenance.find((row) => row.rowId === focusedRowId) ?? null;
-  const passCounts = useMemo(() => new Map((compile.artifact?.rowProvenance ?? []).map((row) => [row.chartRow, row.passIndices.length])), [compile.artifact]);
+  const focusedMachinePasses = kcode?.rowPasses.find((row) => row.rowId === focusedRowId)?.passIndices ?? [];
+  const passCounts = useMemo(() => new Map((compile.artifact?.rowProvenance ?? []).map((row) => [row.chartRow, kcode?.rowPasses.find((item) => item.rowId === row.rowId)?.passIndices.length ?? 0])), [compile.artifact, kcode]);
   const commit = (edit: ProjectEdit | null): boolean => {
     if (!edit) return false;
     try { onProject(appendProjectEdit(project, entry(edit))); setIssue(null); return true; }
@@ -71,14 +72,14 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
   useEffect(() => { if (paletteIndex >= chart.palette.length) setPaletteIndex(Math.max(0, chart.palette.length - 1)); }, [paletteIndex, chart.palette.length]);
   useEffect(() => {
     if (!compile.artifact || focusedRowId !== null) return;
-    const first = compile.artifact.rowProvenance.find((row) => row.passIndices.length > 0);
+    const first = compile.artifact.rowProvenance.find((row) => (kcode?.rowPasses.find((item) => item.rowId === row.rowId)?.passIndices.length ?? 0) > 0);
     if (first) onFocusedRowId(first.rowId);
-  }, [compile.artifact, focusedRowId, onFocusedRowId]);
+  }, [compile.artifact, kcode, focusedRowId, onFocusedRowId]);
   useEffect(() => {
-    if (!focusedProvenance?.passIndices.length) return;
+    if (!focusedMachinePasses.length) return;
     setProgramRegion('body');
-    setSelectedPass(focusedProvenance.passIndices[0]!);
-  }, [focusedProvenance]);
+    setSelectedPass(focusedMachinePasses[0]!);
+  }, [focusedRowId, kcode]);
   useEffect(() => {
     if (appliedUrlTechnique.current) return;
     appliedUrlTechnique.current = true;
@@ -105,16 +106,16 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
   const openProject = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; try { const opened = openStudioProjectJson(await file.text()); onProject(opened.project); setSelection(null); setClipboard(null); setPaletteIndex(Math.min(1, opened.project.base.chart.palette.length - 1)); setIssue(null); } catch (error) { setIssue(error instanceof Error ? error.message : String(error)); } };
   const selectProgramRegion = (region: ProgramRegion) => {
     setProgramRegion(region);
-    if (!compile.artifact) return;
-    if (region === 'body' && focusedProvenance?.passIndices[0] !== undefined) setSelectedPass(focusedProvenance.passIndices[0]);
-    else setSelectedPass(compile.artifact.passes.findIndex((_pass, index) => programRegionForPass(compile.artifact!, index) === region));
+    if (!kcode) return;
+    if (region === 'body' && focusedMachinePasses[0] !== undefined) setSelectedPass(focusedMachinePasses[0]);
+    else setSelectedPass((kcode.scene?.passes ?? []).findIndex((_pass, index) => programRegionForPass(kcode, index) === region));
   };
   const selectPass = (index: number) => {
     setSelectedPass(index);
-    if (!compile.artifact) return;
-    setProgramRegion(programRegionForPass(compile.artifact, index));
-    const row = compile.artifact.rowProvenance.find((item) => item.passIndices.includes(index));
-    if (row) onFocusedRowId(row.rowId);
+    if (!kcode) return;
+    setProgramRegion(programRegionForPass(kcode, index));
+    const rowId = kcode.passProvenance[index]?.rowIds[0];
+    if (rowId) onFocusedRowId(rowId);
   };
   const setPanel = (panel: MobilePanel) => setMobilePanel(panel);
 
@@ -140,7 +141,7 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
         </div>
       </section>
       <BlanketSetupRail state={materialized.state} compile={compile} outputStatus={outputStatus} outputError={outputError} authoredVerdict={authoredVerdict} mobileActive={mobilePanel === 'strategy'} onWidth={(width) => Number.isInteger(width) && width > 0 && width <= 252 && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })} onHeight={(height) => { if (!Number.isInteger(height) || height < 1 || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }} onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} onStrategy={(technique) => technique !== materialized.state.strategy.technique && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } })} onBirdseyeMode={(birdseyeMode) => birdseyeMode !== materialized.state.strategy.birdseyeMode && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, birdseyeMode } })} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} onFrame={(frame) => { if (JSON.stringify(frame) !== JSON.stringify(materialized.state.frame)) commit({ kind: 'set-frame', frame }); }} />
-      <AuthoredMachinePanel artifact={compile.artifact} focusedRowId={focusedRowId} selectedPass={selectedPass} region={programRegion} onRegion={selectProgramRegion} onPass={selectPass} mobileActive={mobilePanel === 'machine'} />
+      <AuthoredMachinePanel artifact={compile.artifact} kcode={kcode} outputStatus={outputStatus} outputError={outputError} focusedRowId={focusedRowId} selectedPass={selectedPass} region={programRegion} onRegion={selectProgramRegion} onPass={selectPass} mobileActive={mobilePanel === 'machine'} />
     </div>
     <GeneratedSourceDock artifact={compile.artifact} kcode={kcode} selectedPass={selectedPass} format={sourceFormat} collapsed={sourceCollapsed} onFormat={setSourceFormat} onCollapsed={setSourceCollapsed} />
   </main>;

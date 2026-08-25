@@ -18,7 +18,6 @@ const gates: Gate[] = [
   { layer: 3, name: 'kc revalidation and diff rails', command: 'test:revalidation', status: 'pending', exitCode: null },
   { layer: 4, name: 'rectangle topology oracle', command: 'kniterate:topology', status: 'pending', exitCode: null },
   { layer: 6, name: 'known-bad refusal corpus', command: 'kniterate:refusals', status: 'pending', exitCode: null },
-  { layer: 7, name: 'physical swatch registry integrity', command: 'kniterate:swatches', status: 'pending', exitCode: null },
 ];
 
 function main(): void {
@@ -43,7 +42,11 @@ function main(): void {
     schemaVersion: '1',
     generatedAt: new Date().toISOString(),
     verdict: blocked ? 'Blocked' : 'Verified - swatch recommended',
-    honestyCap: 'Software extraction proof only; Knit-proven requires a matching physical registry entry.',
+    honestyCap: 'Software conformance only. Physical acceptance is a separate release:physical-check gate and never serves as a software oracle.',
+    physicalAcceptance: {
+      included: false,
+      command: 'pnpm release:physical-check',
+    },
     gates: results,
   };
   const destination = resolve(outPath);
