@@ -5,8 +5,8 @@
  * The wizard, the parity test fixtures, and the future Run/Checks tab
  * all read from this artifact instead of assembling state imperatively.
  * The two-phase split keeps the pure compile separate from the
- * effectful `.kc` conversion (which is async-by-environment: browser
- * iframe round-trip or Node `spawnSync`).
+ * effectful `.kc` conversion (which is async-by-environment: a browser
+ * Worker adapter or Node `spawnSync`).
  *
  * See docs/SYSTEM-DESIGN.md §A.5 (component architecture / RunArtifact).
  */
@@ -78,9 +78,9 @@ export interface CompiledRunArtifact {
 
 /**
  * Two-phase RunArtifact. Adds the effectful `kcConversion` to the pure
- * compile output. kc conversion is async-by-environment (browser
- * iframe round-trip with a 30s timeout, OR Node `spawnSync` over the
- * vendored converter); the wrapper isolates that effect.
+ * compile output. KCode conversion is async-by-environment (a browser Worker
+ * adapter or Node `spawnSync` over the vendored converter); the wrapper
+ * isolates that effect.
  */
 export interface RunArtifact extends CompiledRunArtifact {
   readonly kcConversion: {
@@ -251,8 +251,8 @@ function buildCompiledRunArtifact(input: {
 /**
  * Async-but-contained kc conversion wrapper. The actual converter is
  * environment-specific — Node uses `spawnSync` over a vendored CommonJS
- * file (`src/knitout/kniterate/to-kcode.ts`), browser routes through a
- * 1×1 visualizer iframe with `requestKCode`. Both paths take a
+ * file (`src/knitout/kniterate/to-kcode.ts`), while Studio uses the matching
+ * browser module from a dedicated Worker. Both paths take a
  * `KnitoutProgram` (serialized as `.k` text) and yield `.kc` text.
  *
  * Callers pass the converter so this module stays environment-agnostic

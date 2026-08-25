@@ -5,14 +5,20 @@ export {
 } from './knitout/compile/from-chart.js';
 export { writeKnitoutProgram } from './knitout/emitter.js';
 export {
+  KNITOUT_RESOURCE_LIMITS_V1,
+  checkKnitoutSourceResourceLimits,
   parseKnitoutProgram,
+  type KnitoutCapacityIssueV1,
+  type KnitoutResourceProfileV1,
   type KnitoutParseIssue,
+  type ParseKnitoutProgramOptions,
   type ParsedKnitoutDocument,
 } from './knitout/parser.js';
 export { inspectKcDocument, type KcDocumentPass } from './knitout/kc-document.js';
 export { inspectKnitoutPasses, type KnitoutSourcePass } from './knitout/inspect-program.js';
 export {
   knitoutToKCode,
+  authoredKnitoutToKCodeWithTrace,
   knitoutToKCodeWithTrace,
   nodeKCodeConverter,
   type KnitoutToKCodeResult,
@@ -20,6 +26,7 @@ export {
 } from './knitout/kniterate/to-kcode.js';
 export type {
   VendorLoweringSettings,
+  VendorLoweringResourceLimits,
   VendorScheduledKCode,
   VendorScheduledPass,
 } from './knitout/kniterate/vendor-pass-contract.js';
@@ -33,6 +40,7 @@ export {
   type KCodeMachineProfileV1,
 } from './knitout/kcode/machine-profile.js';
 export {
+  KCODE_RESOURCE_LIMITS_V1,
   parseKCodeDocument,
 } from './knitout/kcode/parser.js';
 export {
@@ -75,6 +83,7 @@ export type {
   KCodeDocumentMetadataV1,
   KCodeDocumentV1,
   KCodePassBlock,
+  KCodeResourceProfileV1,
   KCodeSourceSpan,
   ParseKCodeDocumentOptions,
   ParseKCodeDocumentResult,

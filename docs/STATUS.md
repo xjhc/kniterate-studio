@@ -47,8 +47,18 @@ ship," trust this file and the working tree instead.
   implementation-source mutation scoring. Run `pnpm verify:kcode`; its
   deterministic receipt is
   `packages/machine-lib/out/kcode-proof/proof-manifest.json`.
+  Under the current foreign-file verdict policy, 12 of those fixtures open
+  Surface-proven. Five retain 220 depth-three loop-stack observations which the
+  foreign Studio boundary presents as non-blocking information; the shared
+  validator retains them as conservative warnings. `fox-baby-beanie.kc`
+  remains Blocked by 183 empty-drop warnings. All 13 have zero validation
+  errors.
 - **Dark mode**, **local-first** (no backend/login/telemetry), **R1 = B**
   (embedded shared canvas — adopted in FOUNDING §80 / ROADMAP M3B, shipped).
+- **Bounded authored export** uses a named V1 capacity contract rather than the
+  foreign-file limits: the canonical 200x300 four-color Birdseye project
+  exports, recompiles byte-identically, and reimports through the ordinary
+  strict KCode path; oversized projects fail at typed preflight.
 
 ## Software-proof boundary
 
@@ -72,7 +82,11 @@ later carrier-strategy feature can reintroduce the concept through a real projec
 schema.
 
 - **Foreign file** (`engine.ts`): any error **or unresolved warning** ⇒ Blocked
-  (no project context to accept a warning); clean ⇒ Surface-proven (imported).
+  (no project context to accept a warning). The sole evidence-backed V1
+  reclassification is a depth-three loop-stack observation: it remains a
+  conservative validator warning, but is presented as non-blocking information
+  for foreign imports because it occurs in five vendor-validated references.
+  Depth four remains an error. Otherwise clean ⇒ Surface-proven (imported).
   Imported bytes cannot become Knit-proven through caller-supplied registry
   metadata; that requires a future trusted verification seam.
 - **Authored** (`engine.ts::resolveAuthoredVerdict`): compile or output error ⇒ Blocked; clean ⇒

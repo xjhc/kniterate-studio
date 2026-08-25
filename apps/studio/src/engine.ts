@@ -154,6 +154,7 @@ export interface MachineDocument {
     carriers: readonly string[];
     needleSpan: string;
     rackRange: string;
+    infoCount: number;
     warningCount: number;
     errorCount: number;
   };
@@ -342,7 +343,14 @@ function validatorFindings(
   report: MachineValidationReportV1,
 ): MachineDiagnostic[] {
   return report.diagnostics.map((diagnostic, index) => resolveDiagnostic({
-    severity: diagnostic.severity,
+    // Brief depth-three stacks occur across five vendor-validated reference
+    // files. Keep the shared validator's conservative warning evidence intact,
+    // but present that one observation as non-blocking information when Studio
+    // opens a foreign artifact. Depth four remains an error.
+    severity: diagnostic.rule === 'machine-trace.loop-stack-policy'
+      && diagnostic.severity === 'warning'
+      ? 'info'
+      : diagnostic.severity,
     rule: diagnostic.rule,
     message: diagnostic.message,
   }, {
@@ -466,8 +474,10 @@ function finishDocument(input: {
 
   const errors = findings.filter((item) => item.severity === 'error');
   const warnings = findings.filter((item) => item.severity === 'warning');
+  const infos = findings.filter((item) => item.severity === 'info');
   const errorCount = errors.reduce((count, item) => count + item.occurrences, 0);
   const warningCount = warnings.reduce((count, item) => count + item.occurrences, 0);
+  const infoCount = infos.reduce((count, item) => count + item.occurrences, 0);
   const carriers = new Set<string>();
   for (const pass of input.passes) {
     for (const carrier of pass.carriers) carriers.add(carrier);
@@ -478,6 +488,8 @@ function finishDocument(input: {
 
   // Conservative foreign-file policy: imported warnings have no authored
   // review/waiver context, so both errors and warnings block V1 promotion.
+  // The one evidence-backed informational exception is applied above, before
+  // this verdict chokepoint.
   const blocked = errors.length > 0 || warnings.length > 0 || input.passes.length === 0;
   const coordinateSpan = input.coordinateSpan;
   const spanLabel = coordinateSpan
@@ -501,14 +513,15 @@ function finishDocument(input: {
           ? 'Imported warnings remain unresolved, so this foreign file is blocked under the conservative V1 policy.'
           : 'Machine-facing findings must be resolved before this file should be knit.'
         : input.format === 'kc'
-          ? 'Strict KCode parsing, exact MachineTrace projection, and software validation passed. Operational limits and physical knitting remain unproven; use a representative swatch as the final gate.'
-          : 'Pinned backend lowering, strict emitted KCode parsing, scheduled-pass differential checks, exact MachineTrace projection, and loop/kinematic replay passed. Physical yarn, tension, and fabric behavior remain a separate final swatch gate.',
+          ? `Strict KCode parsing, exact MachineTrace projection, and software validation passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Operational limits and physical knitting remain unproven; use a representative swatch as the final gate.`
+          : `Pinned backend lowering, strict emitted KCode parsing, scheduled-pass differential checks, exact MachineTrace projection, and loop/kinematic replay passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Physical yarn, tension, and fabric behavior remain a separate final swatch gate.`,
     },
     stats: {
       passCount: input.passes.length,
       carriers: carrierSet,
       needleSpan: spanLabel,
       rackRange: rackExtent ? `${rackExtent.min} to ${rackExtent.max}` : '0',
+      infoCount,
       warningCount,
       errorCount,
     },

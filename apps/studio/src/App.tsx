@@ -35,6 +35,7 @@ import { programRegionForPass } from './chart/AuthoredMachinePanel';
 import { NewProjectDialog, ProjectSettingsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
 import { readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
 import { indexSourceLines, sourceWindow } from './sourceWindow';
+import { formatForeignRunSheetFindingAnchor, groupForeignRunSheetFindings } from './foreignRunSheetFindings';
 
 const ROW_HEIGHT = 44;
 const CARRIER_COLORS: Record<string, string> = {
@@ -313,10 +314,18 @@ function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, 
     });
     return groups;
   }, new Map<string, { diagnostic: { severity: 'error' | 'warning' | 'info'; rule: string; message: string; passIndex: number | null }; count: number }>()).values()];
-  const sourceLines = useMemo(() => kcode?.kcText.split(/\r\n|\r|\n/) ?? [], [kcode]);
   const sourceSpan = kcode?.passLines[selected];
-  const sourceFrom = Math.max(1, (sourceSpan?.lineStart ?? 1) - 6);
-  const sourceTo = Math.min(sourceLines.length, (sourceSpan?.lineEnd ?? 1) + 6);
+  const sourceIndex = useMemo(() => indexSourceLines(kcode?.kcText ?? ''), [kcode?.kcText]);
+  const sourceFocus = sourceSpan
+    ? Math.floor((sourceSpan.lineStart + sourceSpan.lineEnd) / 2)
+    : 1;
+  const sourceRadius = sourceSpan
+    ? Math.ceil((sourceSpan.lineEnd - sourceSpan.lineStart) / 2) + 6
+    : 6;
+  const sourcePreview = useMemo(
+    () => sourceWindow(kcode?.kcText ?? '', sourceFocus, sourceRadius, 2_048, sourceIndex),
+    [kcode?.kcText, sourceFocus, sourceIndex, sourceRadius],
+  );
   return <div className="workspace">
     <nav className="side-rail" aria-label="Workspace views"><button className="active" type="button" title="Machine passes"><Rows3 size={19} /></button></nav>
     <main className="machine-workspace compiled-workspace">
@@ -328,7 +337,7 @@ function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, 
               : <div className="compiled-movement compiled-clear" role="status"><span className="spin-dot" /><strong>Strictly parsing and validating emitted KCode…</strong></div>}
         <PassGrid passes={passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={selectPass} compiled />
         <section className="diagnostics-panel"><div className="panel-title"><span><ListChecks size={15} /> Exact-output checks</span><b>{outputWarningCount} warnings</b></div><div className="diagnostic-list">{findingGroups.length === 0 ? kcode?.ok ? <div className="compiled-clear"><CheckCircle2 size={18} /><strong>No exact-output findings</strong></div> : <div className="compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>Exact-output evidence unavailable</strong><small>{outputError ?? 'No completed strict KCode artifact is available.'}</small></span></div> : findingGroups.map(({ diagnostic, count }) => <button type="button" disabled={diagnostic.passIndex === null} onClick={() => { if (diagnostic.passIndex !== null) selectPass(diagnostic.passIndex); }} className={`compiled-finding severity-${diagnostic.severity}`} key={diagnostic.rule}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}<span><strong>{diagnostic.rule}{count > 1 ? ` · ${count} occurrences` : ''}</strong><small>{diagnostic.message}</small></span></button>)}</div></section>
-        <section className="source-dock"><div className="panel-title"><span><Code2 size={15} /> Generated K-code</span><b>{kcode ? `${kcode.passCount.toLocaleString()} passes · ${kcode.kcHash.slice(0, 12)}` : outputStatus === 'failed' || outputStatus === 'ready' ? 'Unavailable' : 'Converting'}</b></div><pre>{kcode ? sourceLines.slice(sourceFrom - 1, sourceTo).map((line, offset) => { const lineNumber = sourceFrom + offset; const highlighted = lineNumber >= (sourceSpan?.lineStart ?? 0) && lineNumber <= (sourceSpan?.lineEnd ?? 0); return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={lineNumber}><i>{lineNumber}</i><code>{line || ' '}</code></span>; }) : <span className="source-line"><i /><code>{outputStatus === 'failed' || outputStatus === 'ready' ? outputError ?? 'No exact KCode artifact was produced.' : 'Waiting for validated conversion…'}</code></span>}</pre></section>
+        <section className="source-dock"><div className="panel-title"><span><Code2 size={15} /> Generated K-code</span><b>{kcode ? `${kcode.passCount.toLocaleString()} passes · ${kcode.kcHash.slice(0, 12)}` : outputStatus === 'failed' || outputStatus === 'ready' ? 'Unavailable' : 'Converting'}</b></div><pre>{kcode ? sourcePreview.lines.map((line) => { const highlighted = line.lineNumber >= (sourceSpan?.lineStart ?? 0) && line.lineNumber <= (sourceSpan?.lineEnd ?? 0); return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={line.lineNumber}><i>{line.lineNumber}</i><code>{line.text || ' '}</code></span>; }) : <span className="source-line"><i /><code>{outputStatus === 'failed' || outputStatus === 'ready' ? outputError ?? 'No exact KCode artifact was produced.' : 'Waiting for validated conversion…'}</code></span>}</pre></section>
       </div>
     </main>
   </div>;
@@ -348,7 +357,7 @@ function DiagnosticItem({ item, active, onClick }: { item: MachineDiagnostic; ac
 function Diagnostics({ document, selected, onSelect }: { document: MachineDocument; selected: number; onSelect: (pass: number, line: number | null) => void }) {
   return (
     <aside className="diagnostics-panel" aria-label="Diagnostics">
-      <div className="panel-title"><span><ListChecks size={16} /> Diagnostics</span><b>{document.stats.errorCount} errors · {document.stats.warningCount} warnings</b></div>
+      <div className="panel-title"><span><ListChecks size={16} /> Diagnostics</span><b>{document.stats.errorCount} errors · {document.stats.warningCount} warnings · {document.stats.infoCount} notes</b></div>
       <div className="diagnostic-list">
         {document.diagnostics.length === 0 ? (
           <div className="diagnostic-clear"><CheckCircle2 size={22} /><strong>No validator findings</strong><span>Strict parse, trace projection, and replay completed cleanly.</span></div>
@@ -405,8 +414,9 @@ function AuthoredVerdictPanel({ verdict, onClose }: { verdict: AuthoredVerdict; 
   </div>;
 }
 
-function RunSheet({ document, onClose }: { document: MachineDocument; onClose: () => void }) {
+export function RunSheet({ document, onClose }: { document: MachineDocument; onClose: () => void }) {
   const dialogRef = useModalFocusTrap(onClose);
+  const findingGroups = groupForeignRunSheetFindings(document.diagnostics);
   return (
     <div className="modal-backdrop">
       <article className="run-sheet" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="machine-run-title" tabIndex={-1}>
@@ -415,7 +425,11 @@ function RunSheet({ document, onClose }: { document: MachineDocument; onClose: (
         <p className="run-annotation">{document.verdict.annotation}</p>
         <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Passes</dt><dd>{document.stats.passCount.toLocaleString()}</dd></div><div><dt>Needles</dt><dd>{document.stats.needleSpan}</dd></div><div><dt>Rack range</dt><dd>{document.stats.rackRange}</dd></div></dl></section>
         <section><h2>Carrier map</h2><div className="carrier-map">{document.stats.carriers.length ? document.stats.carriers.map((carrier) => <span key={carrier}><i style={{ background: CARRIER_COLORS[carrier] }} />C{carrier}<b>{carrier === '1' ? 'Draw thread' : carrier === '6' ? 'Waste yarn' : 'Pattern yarn'}</b></span>) : <em>No carriers found</em>}</div></section>
-        {document.diagnostics.length > 0 && <section><h2>Known findings</h2><ul>{document.diagnostics.filter((item) => item.severity !== 'info').map((item) => <li key={item.id}><b>{item.severity.toUpperCase()}</b> {item.title}{item.passIndex !== null ? ` · pass ${item.passIndex + 1}` : ''}</li>)}</ul></section>}
+        {findingGroups.length > 0 && <section><h2>Known findings</h2><ul className="run-sheet-findings">{findingGroups.map((group) => <li key={group.key}>
+          <div><b>{group.severity.toUpperCase()}</b><strong>{group.title}</strong><span> · {group.occurrences.toLocaleString()} occurrence{group.occurrences === 1 ? '' : 's'}</span></div>
+          <p>{group.explanation}</p>
+          <ul className="run-sheet-finding-anchors">{group.representatives.map((representative, index) => <li key={`${formatForeignRunSheetFindingAnchor(representative)}-${index}`}><b>{formatForeignRunSheetFindingAnchor(representative)}</b>{representative.detail !== group.explanation ? ` — ${representative.detail}` : ''}</li>)}</ul>
+        </li>)}</ul></section>}
         <section><h2>Pre-knit check</h2><ul className="checklist"><li>Correct yarns loaded in the carrier map above</li><li>Needle bed is clear and carriage moves freely</li><li>Waste yarn and draw thread are available</li><li>Machine settings match the 7gg worsted profile</li><li>Representative swatch has been knit and inspected</li></ul></section>
         <footer>Generated locally · {new Date().toLocaleDateString()}</footer>
       </article>

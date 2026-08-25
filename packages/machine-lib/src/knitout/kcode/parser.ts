@@ -14,6 +14,7 @@ import type {
   KCodePassFieldRecord,
   KCodeRackRecord,
   KCodeRecord,
+  KCodeResourceProfileV1,
   KCodeSourcePosition,
   KCodeSourceSpan,
   KCodeUnknownRecord,
@@ -37,9 +38,18 @@ const SUPPORTED_OPERATIONS = new Set([
 const SOURCE_BYTE_DETAIL_CODE_UNIT_LIMIT = 64
 const DIAGNOSTIC_RAW_PREVIEW_CODE_UNITS = 120
 export const MAX_KCODE_SOURCE_CODE_UNITS = 64 * 1024 * 1024
-const MAX_KCODE_RECORDS = 50_000
 const MAX_KCODE_RECORD_CODE_UNITS = 2 * 1024 * 1024
 const MAX_KCODE_DIAGNOSTIC_DETAILS = 512
+
+/** Fixed parser allocation envelopes. KCode has no trustworthy in-band origin,
+ * so both contexts share the 100k-record / 8192-pass self-reopen envelope. */
+export const KCODE_RESOURCE_LIMITS_V1 = Object.freeze({
+  'foreign-v1': Object.freeze({ records: 100_000, passRecords: 8_192 }),
+  'authored-v1': Object.freeze({ records: 100_000, passRecords: 8_192 }),
+} as const) satisfies Record<KCodeResourceProfileV1, {
+  readonly records: number
+  readonly passRecords: number
+}>
 
 interface ScannedLine {
   readonly recordIndex: number
@@ -68,7 +78,9 @@ function position(offset: number, line: number, column: number): KCodeSourcePosi
 
 function sourceResourceLimit(
   source: string,
+  resourceProfile: KCodeResourceProfileV1,
 ): { readonly message: string; readonly span: KCodeSourceSpan } | null {
+  const limits = KCODE_RESOURCE_LIMITS_V1[resourceProfile]
   const origin = position(0, 1, 1)
   if (source.length > MAX_KCODE_SOURCE_CODE_UNITS) {
     return {
@@ -80,14 +92,29 @@ function sourceResourceLimit(
   let offset = 0
   let line = 1
   let recordCount = 0
+  let passRecordCount = 0
   while (offset < source.length) {
     const contentStart = offset
     recordCount++
-    if (recordCount > MAX_KCODE_RECORDS) {
+    if (recordCount > limits.records) {
       const point = position(contentStart, line, 1)
       return {
-        message: `KCode source exceeds the ${MAX_KCODE_RECORDS}-record strict-intake limit. The exact raw source is retained, but records were not materialized.`,
+        message: `KCode source exceeds the ${limits.records}-record strict-intake limit. The exact raw source is retained, but records were not materialized.`,
         span: { start: point, end: point },
+      }
+    }
+    const first = source.charCodeAt(contentStart)
+    if (
+      (first === 0x3e && source.charCodeAt(contentStart + 1) === 0x3e)
+      || (first === 0x3c && source.charCodeAt(contentStart + 1) === 0x3c)
+    ) {
+      passRecordCount++
+      if (passRecordCount > limits.passRecords) {
+        const point = position(contentStart, line, 1)
+        return {
+          message: `KCode source exceeds the ${limits.passRecords}-pass-record strict-intake limit. The exact raw source is retained, but records were not materialized.`,
+          span: { start: point, end: point },
+        }
       }
     }
     while (offset < source.length && source[offset] !== '\r' && source[offset] !== '\n') offset++
@@ -128,6 +155,7 @@ function resourceLimitedResult(
         schemaVersion: 1,
         profileId: options.profile.profileId,
         profileVersion: options.profile.profileVersion,
+        resourceProfile: options.resourceProfile ?? 'foreign-v1',
         dialect: options.dialect,
         strict: options.strict,
         parseStatus: 'rejected',
@@ -647,7 +675,8 @@ export function parseKCodeDocument(
   source: string,
   options: ParseKCodeDocumentOptions,
 ): ParseKCodeDocumentResult {
-  const resourceLimit = sourceResourceLimit(source)
+  const resourceProfile = options.resourceProfile ?? 'foreign-v1'
+  const resourceLimit = sourceResourceLimit(source, resourceProfile)
   if (resourceLimit !== null) return resourceLimitedResult(source, options, resourceLimit)
 
   const diagnostics: KCodeDiagnostic[] = []
@@ -923,6 +952,7 @@ export function parseKCodeDocument(
       schemaVersion: 1,
       profileId: options.profile.profileId,
       profileVersion: options.profile.profileVersion,
+      resourceProfile,
       dialect: options.dialect,
       strict: options.strict,
       parseStatus: accepted ? 'accepted' : 'rejected',

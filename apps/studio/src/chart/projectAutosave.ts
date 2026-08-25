@@ -1,4 +1,8 @@
-import { parseColorworkProjectV1, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import {
+  AUTHORED_CAPACITY_LIMITS_V1,
+  parseColorworkProjectV1,
+  type ColorworkProjectV1,
+} from '@kniterate-studio/project-contract';
 
 export const PROJECT_AUTOSAVE_KEY = 'kniterate-studio:active-project:v1';
 
@@ -14,6 +18,7 @@ export function serializeProjectAutosave(project: ColorworkProjectV1, savedAt = 
 
 export function parseProjectAutosave(value: string | null): AutosaveEnvelope | null {
   if (!value) return null;
+  if (value.length > AUTHORED_CAPACITY_LIMITS_V1.projectSourceCodeUnits) return null;
   try {
     const parsed = JSON.parse(value) as Partial<AutosaveEnvelope>;
     if (parsed.schemaVersion !== 1 || typeof parsed.savedAt !== 'string' || parsed.project === undefined) return null;

@@ -687,6 +687,20 @@ const ENTRIES: readonly ValidatorMessage[] = [
     fixActions: [OPEN_CHART_EDITOR],
   },
   {
+    rule: 'machine-trace.loop-stack-policy',
+    title: 'Modeled loop stack exceeds the software threshold',
+    explanation:
+      'Exact KCode replay found a needle stack above Studio\'s conservative threshold for this severity. Review the available pass/source anchor; this is a software policy gate, not an established physical machine limit.',
+    severityHint: 'warning',
+  },
+  {
+    rule: 'machine-trace.drop-empty',
+    title: 'Drop targets an empty modeled needle',
+    explanation:
+      'Empty-bed replay found a drop where no loop is modeled, so the command makes no modeled loop-state change. Review the anchored cleanup pass; its real-machine consequence has not been physically verified.',
+    severityHint: 'warning',
+  },
+  {
     rule: 'xfer-same-bed',
     title: 'Transfer source and target on same bed',
     explanation:

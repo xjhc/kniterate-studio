@@ -5,8 +5,8 @@ import * as nodeApi from '../src/index';
 describe('machine-lib public boundaries', () => {
   it('keeps the browser surface explicit and free of Node-only adapters', () => {
     expect(Object.keys(browserApi).sort()).toEqual([
-      'KNITERATE_7GG_KCODE_PROFILE_V1', 'basePayloadIndexToKCodeColumn',
-      'compareScheduledPassesToMachineTrace', 'compileToRunArtifact', 'diffKCodeMachineTrace', 'diffKc',
+      'KCODE_RESOURCE_LIMITS_V1', 'KNITERATE_7GG_KCODE_PROFILE_V1', 'KNITOUT_RESOURCE_LIMITS_V1', 'basePayloadIndexToKCodeColumn',
+      'checkKnitoutSourceResourceLimits', 'compareScheduledPassesToMachineTrace', 'compileToRunArtifact', 'diffKCodeMachineTrace', 'diffKc',
       'emitKCodeDocument', 'emitKCodeDocumentBytes', 'findKnitProvenKCodeMatch', 'findKnitProvenMatch',
       'inspectKcDocument', 'inspectKnitoutPasses', 'kcToKnitout', 'kcodeColumnToBasePayloadIndex',
       'kcodeColumnToTraceCoordinate', 'knitProvenRegistryEntries', 'matchKnitProvenArtifact',
@@ -21,6 +21,7 @@ describe('machine-lib public boundaries', () => {
 
   it('exposes the compiler and Node converter only from the full package entry', () => {
     expect(nodeApi).toMatchObject({
+      authoredKnitoutToKCodeWithTrace: expect.any(Function),
       compileChartToKnitout: expect.any(Function),
       compileToRunArtifact: expect.any(Function),
       knitoutToKCode: expect.any(Function),

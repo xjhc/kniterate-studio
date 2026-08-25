@@ -1,4 +1,5 @@
 import { parseKnitoutProgram } from '@kniterate-studio/machine-lib/browser';
+import { assessAuthoredCapacityV1, createColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { describe, expect, it } from 'vitest';
 import {
   compileKCodeArtifact,
@@ -20,6 +21,17 @@ const SOURCE = [
   '',
 ].join('\n');
 
+function testCapacity() {
+  const capacity = assessAuthoredCapacityV1(createColorworkProjectV1({
+    kind: 'knitlab-colorwork-chart', version: 1, width: 1, height: 1,
+    rowNumbering: 'bottom-up',
+    palette: [{ id: 'ink', name: 'Ink', hex: '#112233' }],
+    cells: [[0]],
+  }, { id: 'kcode-capacity-test' }));
+  if (capacity.status === 'blocked') throw new Error(capacity.message);
+  return capacity;
+}
+
 describe('compileKCodeArtifact', () => {
   it('proves emitted KCode and joins scheduled passes to authored rows by source line', async () => {
     const parsed = parseKnitoutProgram(SOURCE);
@@ -28,6 +40,7 @@ describe('compileKCodeArtifact', () => {
       kind: 'convert-kcode',
       requestId: 1,
       inputHash: 'test-input',
+      capacity: testCapacity(),
       knitoutText: SOURCE,
       programOpSourceRows,
       rowProvenance: [{ rowId: 'row-0', chartRow: 0, machineRow: 0 }],
@@ -42,6 +55,15 @@ describe('compileKCodeArtifact', () => {
     expect(artifact.rowPasses[0]?.passIndices.length).toBeGreaterThan(0);
     expect(artifact.passProvenance.filter((pass) => pass.rowIds.includes('row-0'))).not.toHaveLength(0);
     expect(artifact.passProvenance.every((pass) => pass.sourceLines.every((line) => Number.isInteger(line) && line > 0))).toBe(true);
+    expect(artifact.capacity).toMatchObject({
+      profile: 'authored-v1',
+      status: 'supported',
+      observed: {
+        loweredPasses: artifact.passCount,
+        selectedCells: expect.any(Number),
+        kcodeRecords: expect.any(Number),
+      },
+    });
   });
 
   it('fails closed when backend-only scheduled provenance names an unknown source line', () => {

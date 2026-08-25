@@ -309,8 +309,12 @@ downstream work forks on them. **R1–R4 should be answered before S2 starts.**
   `.k` intake first runs the pinned backend, then that same emitted-output rail
   plus the scheduled-pass differential. Any error **or unresolved warning** ⇒
   **Blocked** (an imported file has no project context in which to accept a
-  warning). Clean ⇒ **Surface-proven (imported)** — with a mandatory annotation
-  on the badge panel and run sheet. Imported V1 files remain at that rung:
+  warning). One evidence-backed V1 presentation rule is narrower than a waiver:
+  the shared validator's depth-three loop-stack warning is informational at the
+  foreign Studio boundary because five vendor-validated references establish it
+  as ordinary corpus behavior; depth four remains an error. Otherwise clean ⇒
+  **Surface-proven (imported)** — with a mandatory annotation on the badge panel
+  and run sheet. Imported V1 files remain at that rung:
   `openMachineDocument` accepts no registry evidence ID, and a future trusted
   verifier must bind exact input bytes to the physical registry before reopening
   an artifact can become Knit-proven.

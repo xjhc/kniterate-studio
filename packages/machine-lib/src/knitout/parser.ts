@@ -24,9 +24,52 @@ export interface ParsedKnitoutDocument {
 
 const CARRIERS = new Set<string>(ALL_CARRIERS);
 const POSITIONS = new Set<Position>(['Left', 'Center', 'Right', 'Keep']);
-const MAX_KNITOUT_SOURCE_CODE_UNITS = 64 * 1024 * 1024;
-const MAX_KNITOUT_RECORDS = 250_000;
-const MAX_KNITOUT_RECORD_CODE_UNITS = 16_384;
+export type KnitoutResourceProfileV1 = 'foreign-v1' | 'authored-v1';
+
+export interface ParseKnitoutProgramOptions {
+  readonly resourceProfile?: KnitoutResourceProfileV1;
+}
+
+export interface KnitoutCapacityIssueV1 {
+  readonly profile: KnitoutResourceProfileV1;
+  readonly metric:
+    | 'knitout-records'
+    | 'lowered-passes'
+    | 'selected-cells'
+    | 'kcode-records';
+  readonly limit: number;
+  readonly message: string;
+}
+
+/** Named, fixed resource envelopes. Callers choose a product context, never
+ * arbitrary numeric limits. KCode projection keeps an independent 200k-cell
+ * ceiling; its record ceiling matches the named KCode parser profile. */
+export const KNITOUT_RESOURCE_LIMITS_V1 = Object.freeze({
+  'foreign-v1': Object.freeze({
+    sourceCodeUnits: 64 * 1024 * 1024,
+    records: 250_000,
+    recordCodeUnits: 16_384,
+    loweredPasses: 4_096,
+    loweredSelections: 200_000,
+    kcodeRecords: 50_000,
+  }),
+  'authored-v1': Object.freeze({
+    sourceCodeUnits: 64 * 1024 * 1024,
+    records: 600_000,
+    recordCodeUnits: 16_384,
+    loweredPasses: 8_192,
+    loweredSelections: 200_000,
+    kcodeRecords: 100_000,
+  }),
+} as const) satisfies Record<KnitoutResourceProfileV1, {
+  readonly sourceCodeUnits: number;
+  readonly records: number;
+  readonly recordCodeUnits: number;
+  readonly loweredPasses: number;
+  readonly loweredSelections: number;
+  readonly kcodeRecords: number;
+}>;
+
 const MAX_KNITOUT_PARSE_ISSUE_DETAILS = 512;
 
 type AddIssue = (issue: KnitoutParseIssue) => void;
@@ -54,12 +97,16 @@ function number(value: string | undefined): number | null {
 }
 
 /** Cheap allocation-bounded preflight shared by every lowering entrypoint. */
-export function checkKnitoutSourceResourceLimits(text: string): KnitoutParseIssue | null {
-  if (text.length > MAX_KNITOUT_SOURCE_CODE_UNITS) {
+export function checkKnitoutSourceResourceLimits(
+  text: string,
+  profile: KnitoutResourceProfileV1 = 'foreign-v1',
+): KnitoutParseIssue | null {
+  const limits = KNITOUT_RESOURCE_LIMITS_V1[profile];
+  if (text.length > limits.sourceCodeUnits) {
     return {
       line: 1,
       rule: 'knitout-resource-limit',
-      message: `Knitout source exceeds the ${MAX_KNITOUT_SOURCE_CODE_UNITS}-code-unit intake limit; received ${text.length}.`,
+      message: `Knitout source exceeds the ${limits.sourceCodeUnits}-code-unit intake limit; received ${text.length}.`,
     };
   }
   let records = 1;
@@ -69,31 +116,61 @@ export function checkKnitoutSourceResourceLimits(text: string): KnitoutParseIssu
     const contentEnd = offset > lineStart && text.charCodeAt(offset - 1) === 0x0d
       ? offset - 1
       : offset;
-    if (contentEnd - lineStart > MAX_KNITOUT_RECORD_CODE_UNITS) {
+    if (contentEnd - lineStart > limits.recordCodeUnits) {
       return {
         line: records,
         rule: 'knitout-resource-limit',
-        message: `Knitout record ${records} exceeds the ${MAX_KNITOUT_RECORD_CODE_UNITS}-code-unit line limit.`,
+        message: `Knitout record ${records} exceeds the ${limits.recordCodeUnits}-code-unit line limit.`,
       };
     }
     records++;
-    if (records > MAX_KNITOUT_RECORDS) {
+    if (records > limits.records) {
       return {
         line: records,
         rule: 'knitout-resource-limit',
-        message: `Knitout source exceeds the ${MAX_KNITOUT_RECORDS}-record intake limit.`,
+        message: `Knitout source exceeds the ${limits.records}-record intake limit.`,
       };
     }
     lineStart = offset + 1;
   }
-  if (text.length - lineStart > MAX_KNITOUT_RECORD_CODE_UNITS) {
+  if (text.length - lineStart > limits.recordCodeUnits) {
     return {
       line: records,
       rule: 'knitout-resource-limit',
-      message: `Knitout record ${records} exceeds the ${MAX_KNITOUT_RECORD_CODE_UNITS}-code-unit line limit.`,
+      message: `Knitout record ${records} exceeds the ${limits.recordCodeUnits}-code-unit line limit.`,
     };
   }
   return null;
+}
+
+/** Convert only the named capacity refusals exposed to product UI into a typed
+ * result. Syntax errors and line/source byte ceilings remain ordinary errors. */
+export function classifyKnitoutCapacityIssue(
+  message: string,
+  profile: KnitoutResourceProfileV1,
+): KnitoutCapacityIssueV1 | undefined {
+  const limits = KNITOUT_RESOURCE_LIMITS_V1[profile];
+  if (message.includes(`exceeds the ${limits.records}-record intake limit`)) {
+    return { profile, metric: 'knitout-records', limit: limits.records, message };
+  }
+  if (
+    message.includes(`(${limits.loweredPasses} scheduled source passes)`)
+    || message.includes(`(${limits.loweredPasses} emitted passes)`)
+  ) {
+    return { profile, metric: 'lowered-passes', limit: limits.loweredPasses, message };
+  }
+  if (message.includes(`(${limits.loweredSelections} selected raster cells)`)) {
+    return {
+      profile,
+      metric: 'selected-cells',
+      limit: limits.loweredSelections,
+      message,
+    };
+  }
+  if (message.includes(`(${limits.kcodeRecords} emitted KCode records)`)) {
+    return { profile, metric: 'kcode-records', limit: limits.kcodeRecords, message };
+  }
+  return undefined;
 }
 
 function* knitoutLines(text: string): Generator<readonly [number, string]> {
@@ -112,8 +189,14 @@ function* knitoutLines(text: string): Generator<readonly [number, string]> {
 }
 
 /** Parse the Studio-supported Knitout v2 subset with exact op-to-line provenance. */
-export function parseKnitoutProgram(text: string): ParsedKnitoutDocument {
-  const resourceIssue = checkKnitoutSourceResourceLimits(text);
+export function parseKnitoutProgram(
+  text: string,
+  options: ParseKnitoutProgramOptions = {},
+): ParsedKnitoutDocument {
+  const resourceIssue = checkKnitoutSourceResourceLimits(
+    text,
+    options.resourceProfile ?? 'foreign-v1',
+  );
   if (resourceIssue !== null) {
     return {
       program: { version: 2, carriers: [], machine: 'kniterate', yarns: {}, kniterate: {}, ops: [] },

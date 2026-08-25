@@ -3,17 +3,25 @@ import {
   passesToKCode,
   passesToKCodeWithTrace,
 } from '../vendor/knitout-to-kcode.browser.js';
-import { checkKnitoutSourceResourceLimits } from '../parser.js';
-import type {
-  VendorLoweringSettings,
-  VendorScheduledKCode,
-  VendorScheduledPass,
+import {
+  checkKnitoutSourceResourceLimits,
+  classifyKnitoutCapacityIssue,
+  type KnitoutCapacityIssueV1,
+  type KnitoutResourceProfileV1,
+} from '../parser.js';
+import {
+  vendorLoweringResourceLimits,
+  type VendorLoweringResourceLimits,
+  type VendorLoweringSettings,
+  type VendorScheduledKCode,
+  type VendorScheduledPass,
 } from './vendor-pass-contract.js';
 
 interface VendorConverter {
   knitoutToPasses: (
     knitout: string,
     filename: string,
+    resourceLimits?: VendorLoweringResourceLimits,
   ) => {
     headers: Record<string, string[]>;
     passes: unknown[];
@@ -43,10 +51,15 @@ export interface BrowserKCodeResult {
   warningCount?: number;
   /** Exact post-lowering passes from the pinned backend. */
   scheduledPasses?: readonly VendorScheduledPass[];
+  /** Named capacity refusal suitable for product-level diagnostics. */
+  capacityIssue?: KnitoutCapacityIssueV1;
 }
 
-/** Browser-safe adapter over the same vendored converter used by Node. */
-export function browserKnitoutToKCode(knitoutText: string, filename = 'blanket.k'): BrowserKCodeResult {
+function convertBrowserKnitoutToKCode(
+  knitoutText: string,
+  filename: string,
+  resourceProfile: KnitoutResourceProfileV1,
+): BrowserKCodeResult {
   const warnings: string[] = [];
   let warningCount = 0;
   const captureWarning = (...values: unknown[]): void => {
@@ -55,19 +68,26 @@ export function browserKnitoutToKCode(knitoutText: string, filename = 'blanket.k
   };
   const originalWarn = console.warn;
   const originalLog = console.log;
-  const resourceIssue = checkKnitoutSourceResourceLimits(knitoutText);
+  const resourceIssue = checkKnitoutSourceResourceLimits(knitoutText, resourceProfile);
   if (resourceIssue !== null) {
+    const message = `Line ${resourceIssue.line}: ${resourceIssue.message}`;
+    const capacityIssue = classifyKnitoutCapacityIssue(message, resourceProfile);
     return {
       ok: false,
-      error: `Line ${resourceIssue.line}: ${resourceIssue.message}`,
+      error: message,
       warnings,
       warningCount,
+      ...(capacityIssue === undefined ? {} : { capacityIssue }),
     };
   }
   console.warn = captureWarning;
   console.log = () => {};
   try {
-    const { headers, passes, lowering } = browserConverter.knitoutToPasses(knitoutText, filename);
+    const { headers, passes, lowering } = browserConverter.knitoutToPasses(
+      knitoutText,
+      filename,
+      vendorLoweringResourceLimits(resourceProfile),
+    );
     const converted = browserConverter.passesToKCodeWithTrace(
       headers,
       passes,
@@ -82,9 +102,33 @@ export function browserKnitoutToKCode(knitoutText: string, filename = 'blanket.k
       warningCount,
     };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : String(error), warnings, warningCount };
+    const message = error instanceof Error ? error.message : String(error);
+    const capacityIssue = classifyKnitoutCapacityIssue(message, resourceProfile);
+    return {
+      ok: false,
+      error: message,
+      warnings,
+      warningCount,
+      ...(capacityIssue === undefined ? {} : { capacityIssue }),
+    };
   } finally {
     console.warn = originalWarn;
     console.log = originalLog;
   }
+}
+
+/** Browser-safe foreign-file adapter over the same vendored fork used by Node. */
+export function browserKnitoutToKCode(
+  knitoutText: string,
+  filename = 'blanket.k',
+): BrowserKCodeResult {
+  return convertBrowserKnitoutToKCode(knitoutText, filename, 'foreign-v1');
+}
+
+/** Browser-safe authored V1 adapter with the fixed large-canvas envelope. */
+export function browserAuthoredKnitoutToKCode(
+  knitoutText: string,
+  filename = 'blanket.k',
+): BrowserKCodeResult {
+  return convertBrowserKnitoutToKCode(knitoutText, filename, 'authored-v1');
 }

@@ -88,21 +88,36 @@ The gate establishes:
 - lossless one-byte/one-code-unit intake and exact byte re-emission for every
   input within the documented byte ceiling; larger byte arrays remain
   caller-owned, are never decoded, and the emitter refuses them explicitly;
-- fail-closed resource bounds: KCode is limited to 64 Mi code units, 50,000
-  materialized records, 2 Mi code units per record, 200,000 selected raster
-  cells per exact trace, and 512 detailed diagnostics per validation layer;
-  Knitout is limited to 64 Mi code units, 250,000 records, and 16,384 code units
-  per record. Pinned lowering aborts before exceeding 4,096 source-scheduled or
-  emitted passes and before exceeding 200,000 emitted selected cells. Local
-  files over 64 MiB are refused before `arrayBuffer()`. Omitted error and
-  warning totals remain exact and separate; within-limit rejected bytes stay
-  retained for audit and exact KCode re-emission;
+- fail-closed, named resource profiles. Foreign input keeps the conservative
+  envelope: Knitout is limited to 64 Mi code units, 250,000 records, 16,384
+  code units per record, 4,096 source-scheduled/emitted passes, and 200,000
+  emitted selected cells; foreign Knitout conversion also refuses before
+  50,000 emitted KCode records. KCode intake is limited to 64 Mi code units,
+  100,000 materialized records, 8,192 footer/pass records, 2 Mi code units per
+  record, and 200,000 selected cells per exact trace. Both KCode intake labels
+  share that record ceiling because KCode has no reliable in-band origin and
+  an authored export must reopen through the normal import path. Project-derived
+  compiler output uses the fixed `authored-v1` envelope: 600,000 Knitout
+  records, 8,192 passes, 200,000 selected cells, and 100,000
+  emitted/materialized KCode records. The
+  authored KCode ceiling covers the serializer's proved maximum of 12 records
+  per pass plus three headers. Studio projects are admitted before
+  replay/compile under a separate bounded 252-needle by 300-row document
+  contract. Local machine
+  files over 64 MiB and project files over 16 MiB are refused before
+  `arrayBuffer()` / `text()`. Each validation layer retains at most 512 detailed
+  diagnostics while exact omitted error and warning totals remain separate;
+  within-limit rejected bytes stay retained for audit and exact KCode
+  re-emission;
 - strict grammar, record ordering, field widths/alphabets, stop markers,
   footer types, rack values, and rejection of unknown or truncated content;
 - deterministic pinned lowering across repeats, cross-document call ordering,
   and the public two-stage API;
 - exact agreement between every machine-executable scheduled field and parsed
   KCode;
+- cross-section agreement between predicted planning passes and the pinned
+  backend where that planning prefix is defined, plus independent Fairisle
+  footer-equivalence and Kniterate topology-policy oracles;
 - programmed carriage/carrier stops and continuity, selections, traversal
   order, transfer pairing, rack geometry, and action semantics;
 - empty-bed loop-state replay for knit, tuck, drop, transfer, and split;
@@ -110,7 +125,11 @@ The gate establishes:
   error above three) used by planning and KCode replay;
 - full-raster KCode diffing rather than footer-only comparison;
 - deterministic renderer input for synchronized carriage, guide, two beds,
-  actions, and before/after loop counts.
+  actions, and before/after loop counts;
+- fail-closed execution of the checked-in known-bad machine-safety refusal
+  corpus; and
+- byte-identical distribution of the vendored converter's MIT notice in the
+  production Studio build.
 
 The proof includes 2,000 valid-document round trips, 5,000 grammar-critical
 input mutations, 1,296 exhaustive depth-four action sequences, 96 seeded varied
@@ -123,9 +142,16 @@ conservative depth-three loop-stack review warnings across five fixtures, plus
 183 model-observed empty-cleanup warnings in two late `fox-baby-beanie.kc`
 cleanup sweeps. Empty-bed replay observes no modeled loop-state change for
 those drops, but their operational machine consequence is unverified; empty
-transfer/split remains an error. Foreign imports treat every unresolved warning
-as blocking, while the corpus audit records warnings without reclassifying them
-as proven physical hazards.
+transfer/split remains an error. The shared validator and proof receipt retain
+the depth-three observations as conservative warnings. At the foreign Studio
+boundary, those specific observations are presented as non-blocking
+informational evidence because five vendor-validated references establish that
+a brief three-stack is ordinary in the shipped corpus; the error above three
+loops is unchanged. Every other unresolved foreign warning remains blocking.
+The resulting Studio import verdicts are 12 Surface-proven and one Blocked:
+`fox-baby-beanie.kc` remains blocked by its 183 empty-drop warnings. None of the
+13 fixtures is blocked by a validation error. This is a software product policy,
+not an established physical loop-stack limit.
 
 The mutation rail mutates proof inputs and grammar-critical KCode fields. It is
 not implementation-source mutation scoring and makes no source-mutant survival

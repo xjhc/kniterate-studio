@@ -19,8 +19,13 @@ export {
   type KcToKnitoutStats,
 } from './knitout/kc-to-knitout.js';
 export {
+  KNITOUT_RESOURCE_LIMITS_V1,
+  checkKnitoutSourceResourceLimits,
   parseKnitoutProgram,
+  type KnitoutCapacityIssueV1,
+  type KnitoutResourceProfileV1,
   type KnitoutParseIssue,
+  type ParseKnitoutProgramOptions,
   type ParsedKnitoutDocument,
 } from './knitout/parser.js';
 export {
@@ -56,7 +61,7 @@ export {
   type KCodeDialect,
   type KCodeMachineProfileV1,
 } from './knitout/kcode/machine-profile.js';
-export { parseKCodeDocument } from './knitout/kcode/parser.js';
+export { KCODE_RESOURCE_LIMITS_V1, parseKCodeDocument } from './knitout/kcode/parser.js';
 export {
   parseKCodeBytes,
   emitKCodeDocumentBytes,
@@ -97,6 +102,7 @@ export type {
   KCodeDocumentMetadataV1,
   KCodeDocumentV1,
   KCodePassBlock,
+  KCodeResourceProfileV1,
   KCodeSourceSpan,
   ParseKCodeDocumentOptions,
   ParseKCodeDocumentResult,

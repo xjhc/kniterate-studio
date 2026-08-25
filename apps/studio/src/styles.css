@@ -129,6 +129,7 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
 .diagnostic-item:hover, .diagnostic-item.active { background: var(--panel-2); }
 .diagnostic-item.severity-error > svg { color: var(--blocked); }
 .diagnostic-item.severity-warning > svg { color: var(--warning); }
+.diagnostic-item.severity-info > svg { color: var(--surface); }
 .diagnostic-item strong, .diagnostic-item small { display: block; }
 .diagnostic-item strong { margin-bottom: 4px; color: var(--ink); font-size: 11px; }
 .diagnostic-item small { font-size: 10px; line-height: 1.4; }
@@ -210,6 +211,11 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
 .carrier-map b { color: #687069; font-size: 9px; font-weight: 500; text-align: right; }
 .run-sheet ul { margin: 0; padding-left: 18px; font-size: 10px; line-height: 1.8; }
 .run-sheet li b { margin-right: 5px; }
+.run-sheet-findings > li + li { margin-top: 12px; }
+.run-sheet-findings > li > div > strong { font-weight: 700; }
+.run-sheet-findings > li > p { margin: 2px 0 4px; color: #4f5750; line-height: 1.5; }
+.run-sheet .run-sheet-finding-anchors { color: #4f5750; line-height: 1.5; }
+.run-sheet-finding-anchors li + li { margin-top: 3px; }
 .checklist { list-style: none; padding: 0 !important; }
 .checklist li::before { display: inline-block; width: 12px; height: 12px; margin-right: 7px; border: 1px solid #707770; vertical-align: -2px; content: ''; }
 .run-sheet footer { padding-top: 15px; color: #7b827c; font-size: 9px; text-align: right; }

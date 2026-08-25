@@ -55,8 +55,12 @@ First implementation slice (2026-07-12):
 - local `.kc`/`.k` intake, virtualized pass grid, source synchronization,
   validator-derived foreign-file verdict, diagnostics, `.kc` diff, and print
   run sheet
-- all 13 reference `.kc` files open Surface-proven (imported); full repository
-  verification and conformance rails remain green
+- all 13 reference `.kc` files open and render. Twelve open Surface-proven
+  (imported): five retain 220 modeled depth-three loop-stack observations in
+  total, presented as non-blocking informational evidence at the foreign Studio
+  boundary. `fox-baby-beanie.kc` remains Blocked by 183 empty-drop warnings.
+  The shared validator still records depth three as a conservative warning and
+  errors above three; all 13 fixtures have zero validation errors
 
 The six refusal programs are pinned through the browser-facing engine. Checked-in
 Playwright coverage now exercises foreign open, pass navigation, identical diff,
@@ -136,6 +140,10 @@ Completed 2026-07-12:
   C2-C5 yarns, findings, compile identity, and k-code SHA-256
 - browser tests prove gated export, print output, foreign-file revalidation,
   byte-identical save/reopen/recompile, and a responsive 200x300 four-color run
+- the canonical 200x300 four-color Birdseye project is admitted by the fixed
+  `authored-v1` envelope and now proves end-to-end export plus ordinary `.kc`
+  reimport in Chromium and Firefox; projects outside that envelope receive a
+  typed compile-stage capacity finding before compiler/lowering allocation
 
 M3 gate: author/import the four-color fixture, assign yarns, compile, export,
 reopen, and revalidate byte-identically in a browser test.

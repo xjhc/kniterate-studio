@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, Code2 } from 'lucide-react';
 import { useMemo } from 'react';
 import type { BlanketCompileArtifact } from '../blanket/compileProject';
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
+import { indexSourceLines, sourceWindow } from '../sourceWindow';
 
 export type SourceFormat = 'knitout' | 'kcode';
 
@@ -15,11 +16,14 @@ export function GeneratedSourceDock({ artifact, kcode, selectedPass, format, col
   onCollapsed: (collapsed: boolean) => void;
 }) {
   const text = format === 'knitout' ? artifact?.knitoutText ?? '' : kcode?.kcText ?? '';
-  const lines = useMemo(() => text.split(/\r?\n/), [text]);
   const span = format === 'kcode' && selectedPass !== null ? kcode?.passLines[selectedPass] : null;
-  const from = span ? Math.max(1, span.lineStart - 7) : 1;
-  const to = span ? Math.min(lines.length, span.lineEnd + 7) : Math.min(lines.length, 60);
-  const visibleLines = lines.slice(from - 1, to);
+  const sourceIndex = useMemo(() => indexSourceLines(text), [text]);
+  const focusLine = span ? Math.floor((span.lineStart + span.lineEnd) / 2) : 30;
+  const radius = span ? Math.ceil((span.lineEnd - span.lineStart) / 2) + 7 : 30;
+  const visible = useMemo(
+    () => sourceWindow(text, focusLine, radius, 2_048, sourceIndex),
+    [focusLine, radius, sourceIndex, text],
+  );
   const meta = format === 'kcode'
     ? kcode ? `${kcode.passCount.toLocaleString()} passes / ${kcode.kcHash.slice(0, 12)}` : 'converting validated K-code'
     : artifact?.knitoutText ? `${artifact.stats.opCount.toLocaleString()} operations / compiler source` : 'waiting for compile';
@@ -33,10 +37,10 @@ export function GeneratedSourceDock({ artifact, kcode, selectedPass, format, col
       <span className="generated-source-meta">{meta}</span>
       <button className="source-toggle" type="button" onClick={() => onCollapsed(!collapsed)} aria-label={collapsed ? 'Show generated source' : 'Hide generated source'} aria-expanded={!collapsed} aria-controls="generated-source-content" title={collapsed ? 'Show generated source' : 'Hide generated source'}>{collapsed ? <ChevronUp size={14} /> : <ChevronDown size={14} />}<span>{collapsed ? 'Show' : 'Hide'}</span></button>
     </div>
-    <pre id="generated-source-content" className="generated-source-content" role="tabpanel" aria-labelledby={`source-${format}-tab`} tabIndex={0}>{text ? visibleLines.map((line, offset) => {
-      const lineNumber = from + offset;
+    <pre id="generated-source-content" className="generated-source-content" role="tabpanel" aria-labelledby={`source-${format}-tab`} tabIndex={0}>{text ? visible.lines.map((line) => {
+      const lineNumber = line.lineNumber;
       const highlighted = Boolean(span && lineNumber >= span.lineStart && lineNumber <= span.lineEnd);
-      return <span className={`generated-source-line${highlighted ? ' highlighted' : ''}`} key={lineNumber}><i>{lineNumber}</i><code>{line || ' '}</code></span>;
+      return <span className={`generated-source-line${highlighted ? ' highlighted' : ''}`} key={lineNumber}><i>{lineNumber}</i><code>{line.text || ' '}</code></span>;
     }) : <span className="source-waiting">{format === 'kcode' ? 'Waiting for validated conversion...' : 'Waiting for compiler output...'}</span>}</pre>
   </footer>;
 }

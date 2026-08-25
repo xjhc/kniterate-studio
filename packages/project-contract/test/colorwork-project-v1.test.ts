@@ -2,11 +2,16 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  AUTHORED_CAPACITY_LIMITS_V1,
   appendProjectEdit,
+  assessAuthoredCapacityV1,
   createColorworkProjectV1,
+  inspectColorworkProjectStructureCapacityV1,
   materializeColorworkProject,
+  parseColorworkProjectV1,
   parseColorworkProjectV1Json,
   redoProjectEdit,
+  refuseAuthoredCapacityFromLowerBoundV1,
   renameColorworkProject,
   undoProjectEdit,
 } from '../src/index';
@@ -69,6 +74,26 @@ describe('ColorworkProjectV1', () => {
     expect(state.frame).toEqual({ wasteRows: 30, drawThread: true, bindOff: 'machine-bindoff' });
   });
 
+  it('admits the backend minimum of four waste rows and rejects one through three at project boundaries', () => {
+    const base = createColorworkProjectV1(chart, { id: 'waste-row-boundary' });
+    for (const wasteRows of [1, 3]) {
+      const imported = structuredClone(base);
+      imported.base.frame.wasteRows = wasteRows;
+      expect(() => parseColorworkProjectV1Json(JSON.stringify(imported))).toThrow(/>=4/);
+      expect(() => appendProjectEdit(base, {
+        id: `waste-${wasteRows}`,
+        source: 'human',
+        edit: { kind: 'set-frame', frame: { wasteRows, drawThread: true, bindOff: 'machine-bindoff' } },
+      })).toThrow(/>=4/);
+    }
+    const valid = appendProjectEdit(base, {
+      id: 'waste-4',
+      source: 'human',
+      edit: { kind: 'set-frame', frame: { wasteRows: 4, drawThread: true, bindOff: 'machine-bindoff' } },
+    });
+    expect(materializeColorworkProject(valid).state.frame.wasteRows).toBe(4);
+  });
+
   it('renames project metadata and palette entries without breaking checkpoints', () => {
     let project = createColorworkProjectV1(chart, { id: 'metadata' });
     for (let index = 0; index < 50; index += 1) project = appendProjectEdit(project, { id: `paint-${index}`, source: 'human', edit: { kind: 'paint-cells', cells: [{ rowId: 'row_0001', column: 0, paletteIndex: index % 2 }] } });
@@ -117,5 +142,71 @@ describe('ColorworkProjectV1', () => {
     for (let index = 0; index < 50; index += 1) project = appendProjectEdit(project, { id: `paint-${index}`, source: 'human', edit: { kind: 'paint-cells', cells: [{ rowId: 'row_0001', column: 0, paletteIndex: index % 2 }] } });
     project.history.checkpoints[0]!.state.chart.cells[0]![0] = 0;
     expect(() => parseColorworkProjectV1Json(JSON.stringify(project))).toThrow(/checkpoint at cursor 50/);
+  });
+
+  it('rejects oversized raw charts and edit amplification before chart parsing or replay', () => {
+    const oversizedChart = {
+      ...chart,
+      width: 1,
+      height: 50_000,
+      cells: Array.from({ length: 50_000 }, () => [0]),
+    };
+    expect(() => createColorworkProjectV1(oversizedChart, { id: 'oversized-chart' }))
+      .toThrow(/50,000 rows.*capacity is 300/);
+
+    const project = createColorworkProjectV1(chart, { id: 'oversized-edit' });
+    const hostile = structuredClone(project) as unknown as Record<string, unknown>;
+    const history = (hostile.history as { entries: unknown[]; cursor: number });
+    history.entries.push({
+      id: 'grow-hostile',
+      source: 'human',
+      edit: { kind: 'set-height', height: 50_000, fillPaletteIndex: 0, newRowIds: [] },
+    });
+    history.cursor = 1;
+    expect(inspectColorworkProjectStructureCapacityV1(hostile)).toMatchObject({
+      metric: 'chart-height',
+      required: 50_000,
+      limit: AUTHORED_CAPACITY_LIMITS_V1.chartHeight,
+    });
+    expect(() => parseColorworkProjectV1(hostile)).toThrow(/50,000 rows.*capacity is 300/);
+  });
+
+  it('rebases old checkpointed history so ordinary editing stays bounded past 256 gestures', () => {
+    let project = createColorworkProjectV1(chart, { id: 'bounded-history' });
+    for (let index = 0; index < 310; index += 1) {
+      project = appendProjectEdit(project, {
+        id: `bounded-paint-${index}`,
+        source: 'human',
+        edit: {
+          kind: 'paint-cells',
+          cells: [{ rowId: 'row_0001', column: 0, paletteIndex: index % 2 }],
+        },
+      });
+    }
+
+    expect(project.history.entries.length).toBeLessThanOrEqual(AUTHORED_CAPACITY_LIMITS_V1.historyEntries);
+    expect(project.history.cursor).toBe(project.history.entries.length);
+    expect(project.history.checkpoints.length).toBeLessThanOrEqual(AUTHORED_CAPACITY_LIMITS_V1.historyCheckpoints);
+    expect(project.history.entries[0]?.id).toBe('bounded-paint-100');
+    expect(materializeColorworkProject(project).state.chart.cells[0]![0]).toBe(1);
+    expect(parseColorworkProjectV1Json(JSON.stringify(project))).toEqual(project);
+  });
+
+  it('keeps aborted lowering evidence as a lower bound without fabricating an exact observation', () => {
+    const capacity = assessAuthoredCapacityV1(createColorworkProjectV1(chart, { id: 'lower-bound-evidence' }));
+    if (capacity.status === 'blocked') throw new Error(capacity.message);
+    const refused = refuseAuthoredCapacityFromLowerBoundV1(
+      capacity,
+      'lowered-passes',
+      capacity.limits.loweredPasses + 1,
+    );
+    expect(refused).toMatchObject({
+      status: 'blocked',
+      evidence: 'lower-bound',
+      metric: 'lowered-passes',
+      required: capacity.limits.loweredPasses + 1,
+      observed: capacity.observed,
+    });
+    expect(refused.message).toContain(`requires at least ${(capacity.limits.loweredPasses + 1).toLocaleString('en-US')}`);
   });
 });

@@ -444,14 +444,31 @@ let leftFloor = true,
 // Knitout source can expand into an unbounded pass graph or KCode string.
 // All captured references are below 3,800 emitted passes; the trace projector
 // independently enforces the same 200,000 selected-cell ceiling.
-const MAX_LOWERED_PASSES = 4096;
-const MAX_LOWERED_SELECTIONS = 200000;
+const DEFAULT_LOWERING_RESOURCE_LIMITS = Object.freeze({
+	maxPasses:4096,
+	maxSelections:200000,
+	maxKCodeRecords:50000
+});
+
+function resolveLoweringResourceLimits(value) {
+	const limits = value || DEFAULT_LOWERING_RESOURCE_LIMITS;
+	if (!Number.isSafeInteger(limits.maxPasses) || limits.maxPasses <= 0 ||
+		!Number.isSafeInteger(limits.maxSelections) || limits.maxSelections <= 0 ||
+		!Number.isSafeInteger(limits.maxKCodeRecords) || limits.maxKCodeRecords <= 0) {
+		throw new Error("Invalid internal lowering resource limits.");
+	}
+	return {
+		maxPasses:limits.maxPasses,
+		maxSelections:limits.maxSelections,
+		maxKCodeRecords:limits.maxKCodeRecords
+	};
+}
 
 
 //convert knitout code (read as a utf8 string) to a sequence of unified passes:
 // returns {headers, passes}
 // (the knitoutFile parameter is included in error messages)
-function knitoutToPasses(knitout, knitoutFile) {
+function knitoutToPasses(knitout, knitoutFile, loweringResourceLimits) {
 	// PATCH (kniterate-studio): every conversion starts from the documented
 	// backend defaults. These values are module-level because the historical
 	// parser and lowering stages communicate through them; without an explicit
@@ -461,6 +478,7 @@ function knitoutToPasses(knitout, knitoutFile) {
 	_presserSpeed = null;
 	_presserRoller = null;
 	_sourceLineNumber = null;
+	const resourceLimits = resolveLoweringResourceLimits(loweringResourceLimits);
 	let headers = {};
 	let passes = [];
 
@@ -469,8 +487,8 @@ function knitoutToPasses(knitout, knitoutFile) {
 	let lines = knitout.split('\n');
 	let lineIdx = 0;
 	function appendPass(pass) {
-		if (passes.length >= MAX_LOWERED_PASSES) {
-			throw `${knitoutFile}:${lineIdx+1} ERROR: lowering resource limit exceeded (${MAX_LOWERED_PASSES} scheduled source passes); split the artifact.`;
+		if (passes.length >= resourceLimits.maxPasses) {
+			throw `${knitoutFile}:${lineIdx+1} ERROR: lowering resource limit exceeded (${resourceLimits.maxPasses} scheduled source passes); split the artifact.`;
 		}
 		passes.push(pass);
 	}
@@ -1188,7 +1206,11 @@ function knitoutToPasses(knitout, knitoutFile) {
 	// remains deterministic even when callers parse documents before emitting
 	// them in a different order. Keep a non-enumerable copy on the Pass array
 	// for legacy callers that still invoke `passesToKCode(headers, passes, ...)`.
-	let lowering = {carrierSpacing:carrierSpacing, carrierDistance:carrierDistance};
+	let lowering = {
+		carrierSpacing:carrierSpacing,
+		carrierDistance:carrierDistance,
+		resourceLimits:resourceLimits
+	};
 	Object.defineProperty(passes, '__kniterateLowering', {
 		value:lowering,
 		enumerable:false,
@@ -1208,10 +1230,12 @@ function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
 	rightFloor = true;
 	let loweringSettings = lowering || passes.__kniterateLowering || {
 		carrierSpacing:carrierSpacing,
-		carrierDistance:carrierDistance
+		carrierDistance:carrierDistance,
+		resourceLimits:DEFAULT_LOWERING_RESOURCE_LIMITS
 	};
 	const runCarrierSpacing = loweringSettings.carrierSpacing;
 	const runCarrierDistance = loweringSettings.carrierDistance;
+	const runResourceLimits = resolveLoweringResourceLimits(loweringSettings.resourceLimits);
 
 	//compute minimum and maximum slots both for each pass and for the program as a whole:
 	let minSlot = Infinity;
@@ -1254,12 +1278,12 @@ function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
 		return count;
 	}
 	function appendKCodePass(pass) {
-		if (kcodePasses.length >= MAX_LOWERED_PASSES) {
-			throw `KCode lowering resource limit exceeded (${MAX_LOWERED_PASSES} emitted passes); split the artifact.`;
+		if (kcodePasses.length >= runResourceLimits.maxPasses) {
+			throw `KCode lowering resource limit exceeded (${runResourceLimits.maxPasses} emitted passes); split the artifact.`;
 		}
 		const selected = selectedCellCount(pass.FRNT) + selectedCellCount(pass.REAR);
-		if (loweredSelectionCount + selected > MAX_LOWERED_SELECTIONS) {
-			throw `KCode lowering resource limit exceeded (${MAX_LOWERED_SELECTIONS} selected raster cells); split the artifact.`;
+		if (loweredSelectionCount + selected > runResourceLimits.maxSelections) {
+			throw `KCode lowering resource limit exceeded (${runResourceLimits.maxSelections} selected raster cells); split the artifact.`;
 		}
 		loweredSelectionCount += selected;
 		kcodePasses.push(pass);
@@ -1795,6 +1819,9 @@ function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
 	let kcode = [];
 
 	function out(x) {
+		if (kcode.length >= runResourceLimits.maxKCodeRecords) {
+			throw `KCode lowering resource limit exceeded (${runResourceLimits.maxKCodeRecords} emitted KCode records); split the artifact.`;
+		}
 		kcode.push(x);
 		//console.log(x);
 	}

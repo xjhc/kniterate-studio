@@ -6,11 +6,13 @@ import type {
   ScheduledTraceComparisonV1,
   ValidationMessage,
 } from '@kniterate-studio/machine-lib/browser';
+import type { AuthoredCapacityBlockedV1, AuthoredCapacitySupportedV1 } from '@kniterate-studio/project-contract';
 
 export interface KCodeConversionRequest {
   kind: 'convert-kcode';
   requestId: number;
   inputHash: string;
+  capacity: AuthoredCapacitySupportedV1;
   knitoutText: string;
   programOpSourceRows: readonly (readonly number[] | null)[];
   rowProvenance: readonly {
@@ -31,6 +33,7 @@ export interface KCodePassProvenance {
 
 export interface KCodeArtifact {
   inputHash: string;
+  capacity: AuthoredCapacitySupportedV1;
   kcHash: string;
   kcText: string;
   passCount: number;
@@ -55,4 +58,5 @@ export type KCodeConversionResponse = {
   kind: 'kcode-failed';
   requestId: number;
   error: string;
+  capacity: AuthoredCapacityBlockedV1 | null;
 };

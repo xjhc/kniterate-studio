@@ -51,6 +51,9 @@ const PROOF_TESTS = [
   'test/knitout/kcode-scheduled-trace-diff.test.ts',
   'test/knitout/kc-diff.test.ts',
   'test/knitout/loop-stack-software-policy.test.ts',
+  'test/knitout/predicted-vs-vendor.test.ts',
+  'test/knitout/fairisle-parity.test.ts',
+  'test/knitout/kniterate-topology-oracle.test.ts',
 ] as const
 
 const STUDIO_PROOF_TESTS = [
@@ -60,6 +63,8 @@ const STUDIO_PROOF_TESTS = [
   'src/kcode/MachineMovementView.test.tsx',
   'src/chart/AuthoredMachinePanel.test.ts',
   'src/chart/ChartWorkspace.test.ts',
+  'src/chart/GeneratedSourceDock.test.tsx',
+  'src/foreignRunSheetFindings.test.tsx',
   'src/sourceWindow.test.tsx',
 ] as const
 
@@ -113,6 +118,7 @@ const PROOF_HARNESS_SOURCES = [
   '../../tsconfig.base.json',
   '../../apps/studio/package.json',
   '../../apps/studio/index.html',
+  '../../apps/studio/public/THIRD_PARTY_NOTICES.txt',
   '../../apps/studio/tsconfig.json',
   '../../apps/studio/vite.config.ts',
   '../../scripts/build-v1-knit-trial.ts',
@@ -323,6 +329,7 @@ function main(): void {
   const contractBeforeGates = capture('proof-input-fingerprint-before-gates', collectContractFingerprint)
   const gates = [
     runGate('physical-registry-manifest-current', ['kniterate:swatches:check']),
+    runGate('known-bad-refusal-corpus', ['kniterate:refusals']),
     runGate('deterministic-kcode-proof-tests', [
       'exec', 'vitest', 'run', ...PROOF_TESTS,
     ]),
@@ -333,6 +340,9 @@ function main(): void {
     runGate('studio-typecheck', ['--dir', '../../apps/studio', 'typecheck']),
     runGate('studio-production-build', [
       '--dir', '../../apps/studio', 'exec', 'vite', 'build',
+    ]),
+    runGate('studio-third-party-notice-distribution', [
+      'exec', 'node', 'scripts/check-third-party-notices.mjs',
     ]),
   ]
   const corpus = capture('reference-corpus', collectReferenceCorpus)
@@ -372,6 +382,11 @@ function main(): void {
       'kcode-native-loop-and-kinematic-validation',
       'full-machine-trace-diff',
       'deterministic-pass-bed-carrier-scene',
+      'cross-section-predicted-vendor-agreement-prefix',
+      'fairisle-footer-machine-equivalence',
+      'kniterate-topology-policy-oracle',
+      'known-bad-machine-safety-refusal-corpus',
+      'third-party-license-notice-in-production-build',
     ],
     deterministicSeeds: {
       validDocumentProperty: 1262702404,

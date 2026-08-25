@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -628,7 +631,7 @@ describe('Knitout machine document behavior', () => {
     expect(document.verdict.state).toBe('blocked');
   });
 
-  it('applies the shared loop-stack gate to lowered foreign Knitout', () => {
+  it('keeps depth-three foreign loop stacks informational while depth four remains blocked', () => {
     const source = [
       ';!knitout-2',
       ';;Machine: kniterate',
@@ -648,8 +651,64 @@ describe('Knitout machine document behavior', () => {
       finding.rule === 'machine-trace.loop-stack-policy');
 
     expect(document.kcode?.differential?.ok).toBe(true);
-    expect(policy.map((finding) => finding.severity)).toEqual(['warning', 'error']);
+    expect(policy.map((finding) => finding.severity)).toEqual(['info', 'error']);
+    expect(document.stats).toMatchObject({ infoCount: 1, warningCount: 0, errorCount: 1 });
     expect(document.verdict.state).toBe('blocked');
+  });
+
+  it('opens a foreign depth-three loop stack Surface-proven with the observation visible', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      'x-speed-number 300',
+      'x-roller-advance 450',
+      'in 2',
+      'tuck + f40 2',
+      'tuck - f40 2',
+      'tuck + f40 2',
+      'out 2',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('three-tucks.k', source);
+
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'info',
+      rule: 'machine-trace.loop-stack-policy',
+    }));
+    expect(document.stats).toMatchObject({ infoCount: 1, warningCount: 0, errorCount: 0 });
+    expect(document.verdict).toMatchObject({
+      state: 'surface',
+      label: 'Surface-proven (imported)',
+    });
+    expect(document.verdict.annotation).toContain('non-blocking loop-stack observation');
+  });
+
+  it('pins every reference-corpus import verdict to the documented policy', { timeout: 30_000 }, () => {
+    const expected = {
+      '2x2-rib-beanie.kc': 'surface',
+      'back.kc': 'surface',
+      'color-swatch-bindoff.kc': 'surface',
+      'dbj.kc': 'surface',
+      'fairisle.kc': 'surface',
+      'fox-baby-beanie.kc': 'blocked',
+      'front.kc': 'surface',
+      'jacquard.kc': 'surface',
+      'sleeves.kc': 'surface',
+      'sophie.kc': 'surface',
+      'sophie2.kc': 'surface',
+      'sophie_stripe.kc': 'surface',
+      'swatch.kc': 'surface',
+    } as const;
+
+    const observed = Object.fromEntries(Object.entries(expected).map(([filename]) => {
+      const source = readFileSync(resolve('../../packages/machine-lib/reference', filename));
+      const document = openMachineDocument(filename, source, { dialect: 'knitout-vendor' });
+      expect(document.kcode?.validation?.errorCount, filename).toBe(0);
+      return [filename, document.verdict.state];
+    }));
+
+    expect(observed).toEqual(expected);
   });
 
   it('blocks malformed Knitout input', () => {

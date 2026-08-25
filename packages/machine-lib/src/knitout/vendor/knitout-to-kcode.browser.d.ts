@@ -1,4 +1,8 @@
-export function knitoutToPasses(knitout: string, filename: string): {
+export function knitoutToPasses(
+  knitout: string,
+  filename: string,
+  resourceLimits?: import('../kniterate/vendor-pass-contract.js').VendorLoweringResourceLimits,
+): {
   headers: Record<string, string[]>;
   passes: unknown[];
   lowering: import('../kniterate/vendor-pass-contract.js').VendorLoweringSettings;

@@ -1,7 +1,11 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Check, X } from 'lucide-react';
 import type { ColorworkChartPaletteEntry } from '@kniterate-studio/chart-contract';
-import { materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import {
+  AUTHORED_CAPACITY_LIMITS_V1,
+  materializeColorworkProject,
+  type ColorworkProjectV1,
+} from '@kniterate-studio/project-contract';
 
 export const DEFAULT_PROJECT_PALETTE: readonly ColorworkChartPaletteEntry[] = [
   { id: 'natural', name: 'Natural', hex: '#F4F0E6' },
@@ -37,9 +41,9 @@ export function NewProjectDialog({ onCreate, onClose }: { onCreate: (values: New
   };
   return <DialogShell title="New project" onClose={onClose}><form onSubmit={submit}>
     <label>Project name<input autoFocus required maxLength={200} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></label>
-    <div className="project-dialog-grid"><label>Needles<input required type="number" min="1" max="252" value={width} onChange={(event) => setWidth(Number(event.currentTarget.value))} /></label><label>Rows<input required type="number" min="1" max="2000" value={height} onChange={(event) => setHeight(Number(event.currentTarget.value))} /></label></div>
+    <div className="project-dialog-grid"><label>Needles<input required type="number" min="1" max={AUTHORED_CAPACITY_LIMITS_V1.chartWidth} value={width} onChange={(event) => setWidth(Number(event.currentTarget.value))} /></label><label>Rows<input required type="number" min="1" max={AUTHORED_CAPACITY_LIMITS_V1.chartHeight} value={height} onChange={(event) => setHeight(Number(event.currentTarget.value))} /></label></div>
     <fieldset><legend>Pattern colors</legend><div className="color-count-control">{[2, 3, 4].map((count) => <button className={colorCount === count ? 'active' : ''} type="button" key={count} onClick={() => setColorCount(count)}>{count}</button>)}</div></fieldset>
-    <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || width < 1 || width > 252 || height < 1}><Check size={16} /> Create</button></footer>
+    <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || width < 1 || width > AUTHORED_CAPACITY_LIMITS_V1.chartWidth || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight}><Check size={16} /> Create</button></footer>
   </form></DialogShell>;
 }
 

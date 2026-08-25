@@ -49,11 +49,11 @@ test('opens the two 150k-selection corpus files without overflow or page errors'
   await expect(page.locator('.brand-copy small')).toHaveText('back.kc');
   await expect(page.getByRole('heading', { name: 'Pass grid' })).toBeVisible();
   await expect(page.locator('.stat-strip')).toContainText('2,108');
-  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 82 warnings');
+  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 0 warnings · 82 notes');
 
   await machineInput.setInputFiles('packages/machine-lib/reference/front.kc');
   await expect(page.locator('.brand-copy small')).toHaveText('front.kc');
   await expect(page.locator('.stat-strip')).toContainText('2,544');
-  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 64 warnings');
+  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 0 warnings · 64 notes');
   expect(errors).toEqual([]);
 });

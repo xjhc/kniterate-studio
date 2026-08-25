@@ -4,6 +4,16 @@
 uncommitted working tree. Reconcile against `STATUS.md` and the tree before
 acting; this file is a plan, not a status authority.
 
+**Implementation update, 2026-08-25:** Option B is selected and implemented.
+The shared validator still records depth three as a conservative warning and
+errors above three; the foreign Studio boundary presents only the depth-three
+observation as non-blocking informational evidence. The reference import split
+is now 12 Surface-proven / 1 Blocked (`fox-baby-beanie.kc`, on empty-drop
+warnings). The software and runnable-browser gates are green; WebKit remains
+host-blocked before launch by missing `libicu74`. The physical trial is still
+pending, so the workspace remains `1.0.0-rc.1` and no release/deployment claim
+is made. The snapshot below records the starting point for this closeout.
+
 The compiler proof is done and both software gates are green. What remains is
 one policy call, one commit, and one real machine run — in that order.
 
@@ -123,7 +133,7 @@ colours. None of those remain open.
 
 ---
 
-## The one open decision (blocks phase 2)
+## Decision record — Option B selected
 
 **What a warning should mean on someone else's file.** The shared loop-stack
 policy warns when a needle is modeled at three loops and errors at four.
@@ -134,6 +144,12 @@ the vendor's own tools that presumably knit fine.
 
 That is either a correct conservative refusal or a threshold that does not
 match reality. It is a product-contract call.
+
+The closeout selected **Option B**. The evidence is deliberately narrow: five
+vendor-validated fixtures carry the depth-three observation without validation
+errors, so Studio treats that observation as information on foreign imports.
+Other foreign warnings still block, and the shared validator, proof receipt,
+and physical non-claim remain unchanged.
 
 - **Option A — leave it.** Honest and conservative: Studio refuses to bless
   what it cannot model safely. Cost: most of the corpus, and most real vendor

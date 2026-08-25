@@ -1,8 +1,31 @@
 import type { CarrierId } from '../types.js';
+import {
+  KNITOUT_RESOURCE_LIMITS_V1,
+  type KnitoutResourceProfileV1,
+} from '../parser.js';
 
 export interface VendorLoweringSettings {
   readonly carrierSpacing: number;
   readonly carrierDistance: number;
+  readonly resourceLimits: VendorLoweringResourceLimits;
+}
+
+/** Internal adapter context selected from a named Studio resource profile. */
+export interface VendorLoweringResourceLimits {
+  readonly maxPasses: number;
+  readonly maxSelections: number;
+  readonly maxKCodeRecords: number;
+}
+
+export function vendorLoweringResourceLimits(
+  profile: KnitoutResourceProfileV1,
+): VendorLoweringResourceLimits {
+  const limits = KNITOUT_RESOURCE_LIMITS_V1[profile];
+  return {
+    maxPasses: limits.loweredPasses,
+    maxSelections: limits.loweredSelections,
+    maxKCodeRecords: limits.kcodeRecords,
+  };
 }
 
 /**

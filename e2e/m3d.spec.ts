@@ -62,8 +62,11 @@ test('exports validated k-code and reproduces it byte-identically after project 
   expect(errors).toEqual([]);
 });
 
-test('keeps the UI responsive and fails closed when a 200x300 four-color blanket exceeds the Knitout intake budget', async ({ page }, testInfo) => {
-  test.setTimeout(75_000);
+test('exports and reopens the canonical 200x300 four-color authored blanket', async ({ page }, testInfo) => {
+  test.setTimeout(150_000);
+  const errors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  page.on('pageerror', (error) => errors.push(error.message));
   const palette = [
     { id: 'natural', name: 'Natural', hex: '#F1EDE3' },
     { id: 'red', name: 'Red', hex: '#B4423A' },
@@ -82,12 +85,59 @@ test('keeps the UI responsive and fails closed when a 200x300 four-color blanket
   await page.locator('input[accept=".json,application/json"]').setInputFiles(chartPath);
   await page.getByRole('button', { name: 'Toggle theme', exact: true }).click();
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'dark');
-  const resourceDiagnostic = 'Line 250001: Knitout source exceeds the 250000-record intake limit.';
-  await expect(page.locator('.setup-error')).toHaveText(resourceDiagnostic, { timeout: 45_000 });
+  const firstExport = await waitForExport(page, 60_000);
+  const readyAfterMs = Date.now() - started;
+  testInfo.annotations.push({ type: 'benchmark', description: `Canonical authored export ready after ${readyAfterMs} ms` });
+  const firstKc = testInfo.outputPath('canonical-200x300-first.kc');
+  await downloadFrom(page, firstExport, firstKc);
+  const firstBytes = await readFile(firstKc);
+  expect(firstBytes.length).toBeGreaterThan(1_000_000);
+  expect(firstBytes.toString('utf8')).toContain('FRNT:');
+  await expect(page.locator('.compile-stats')).toContainText('5,032');
+
+  const projectDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Save project', exact: true }).click();
+  const projectPath = testInfo.outputPath('canonical-200x300.kniterate-studio.json');
+  await (await projectDownload).saveAs(projectPath);
+  await page.reload();
+  await page.locator('input[accept=".json,application/json"]').setInputFiles(projectPath);
+  const secondExport = await waitForExport(page, 60_000);
+  const secondKc = testInfo.outputPath('canonical-200x300-second.kc');
+  await downloadFrom(page, secondExport, secondKc);
+  expect(await readFile(secondKc)).toEqual(firstBytes);
+
+  await page.locator('input[accept=".kc,.k,text/plain"]').first().setInputFiles(secondKc);
+  await expect(page.getByText('Surface-proven (imported)', { exact: true })).toBeVisible({ timeout: 30_000 });
+  expect(errors).toEqual([]);
+});
+
+test('refuses an oversized authored Birdseye project before compiler allocation', async ({ page }, testInfo) => {
+  test.setTimeout(45_000);
+  const width = 252;
+  const height = 300;
+  const chart = {
+    kind: 'knitlab-colorwork-chart', version: 1, title: 'Oversized authored blanket', width, height,
+    rowNumbering: 'bottom-up',
+    palette: [
+      { id: 'natural', name: 'Natural', hex: '#F1EDE3' },
+      { id: 'red', name: 'Red', hex: '#B4423A' },
+      { id: 'gold', name: 'Gold', hex: '#C99A35' },
+      { id: 'navy', name: 'Navy', hex: '#29445F' },
+    ],
+    cells: Array.from({ length: height }, (_, row) =>
+      Array.from({ length: width }, (_, column) =>
+        (Math.floor(column / 8) + Math.floor(row / 6) + (column % 5 === 0 ? 1 : 0)) % 4)),
+  };
+  const chartPath = testInfo.outputPath('oversized-authored-blanket.json');
+  await writeFile(chartPath, JSON.stringify(chart));
+  await page.goto('/');
+  const started = Date.now();
+  await page.locator('input[accept=".json,application/json"]').setInputFiles(chartPath);
+  await expect(page.locator('.setup-error')).toContainText('authored V1 limit is 600,000', { timeout: 15_000 });
   const blockedAfterMs = Date.now() - started;
-  expect(blockedAfterMs).toBeLessThan(45_000);
-  testInfo.annotations.push({ type: 'benchmark', description: `Resource limit reported after ${blockedAfterMs} ms` });
+  expect(blockedAfterMs).toBeLessThan(15_000);
+  testInfo.annotations.push({ type: 'benchmark', description: `Oversized authored refusal reported after ${blockedAfterMs} ms` });
   await expect(page.locator('.compile-verdict')).toContainText('Blocked');
   await expect(page.getByRole('button', { name: 'Export k-code', exact: true })).toBeDisabled();
-  await expect(page.locator('.compile-stats')).toContainText('5,032');
+  await expect(page.locator('.compile-stats')).toContainText('Operations0');
 });

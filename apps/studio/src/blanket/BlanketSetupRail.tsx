@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle2, LoaderCircle } from 'lucide-react';
-import type { ProjectState } from '@kniterate-studio/project-contract';
+import { AUTHORED_CAPACITY_LIMITS_V1, type ProjectState } from '@kniterate-studio/project-contract';
 import type { BackFaceProjection } from '@kniterate-studio/machine-lib/browser';
 import type { AuthoredVerdict } from '../engine';
 import type { BlanketCompileState } from './useBlanketCompiler';
@@ -11,6 +11,13 @@ const techniques = [
   ['birdseye', 'Birdseye'],
   ['complement', 'Complement'],
 ] as const;
+
+export function parseWasteRowsInputV1(value: string): number | null {
+  const wasteRows = Number(value);
+  return Number.isInteger(wasteRows) && wasteRows >= 4 && wasteRows <= 200
+    ? wasteRows
+    : null;
+}
 
 function BackFaceMini({ projection, palette }: { projection: BackFaceProjection | null | undefined; palette: ProjectState['chart']['palette'] }) {
   if (!projection) return <span className="back-mini pending" />;
@@ -55,8 +62,8 @@ export function BlanketSetupRail({ state, compile, outputStatus, outputError, au
       return <button type="button" className={state.strategy.technique === id ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{label}</b><small>{comparison?.compileVerdict === 'blocked' ? 'Blocked' : delta === null ? 'Calculating' : `${delta >= 0 ? '+' : ''}${delta.toLocaleString()} passes · ${Math.ceil((comparison?.estimatedKnitTimeSeconds ?? 0) / 60)} min`}</small></span></button>;
     })}</div>{state.strategy.technique === 'fairisle' && <label className="strategy-field"><span>Float budget</span><input type="number" min="1" max="30" defaultValue={state.strategy.floatLimit} key={`float-${state.strategy.floatLimit}`} onBlur={(event) => onFloatLimit(Number(event.currentTarget.value))} /></label>}{state.strategy.technique === 'birdseye' && <label className="strategy-field"><span>Color coverage</span><select value={state.strategy.birdseyeMode ?? 'minimal'} onChange={(event) => onBirdseyeMode(event.currentTarget.value as 'minimal' | 'full')}><option value="minimal">Active colors</option><option value="full">All colors</option></select></label>}</section>
     <section><h2>Rectangle</h2>
-      <label className="strategy-field"><span>Needles</span><input type="number" min="1" max="252" defaultValue={state.chart.width} key={`w${state.chart.width}`} onBlur={(event) => onWidth(Number(event.currentTarget.value))} /></label>
-      <label className="strategy-field"><span>Rows</span><input type="number" min="1" defaultValue={state.chart.height} key={`h${state.chart.height}`} onBlur={(event) => onHeight(Number(event.currentTarget.value))} /></label>
+      <label className="strategy-field"><span>Needles</span><input type="number" min="1" max={AUTHORED_CAPACITY_LIMITS_V1.chartWidth} defaultValue={state.chart.width} key={`w${state.chart.width}`} onBlur={(event) => onWidth(Number(event.currentTarget.value))} /></label>
+      <label className="strategy-field"><span>Rows</span><input type="number" min="1" max={AUTHORED_CAPACITY_LIMITS_V1.chartHeight} defaultValue={state.chart.height} key={`h${state.chart.height}`} onBlur={(event) => onHeight(Number(event.currentTarget.value))} /></label>
       <label className="strategy-field"><span>First needle</span><input type="number" min="1" max={253 - state.chart.width} defaultValue={state.machine.needleOffset} key={`n${state.machine.needleOffset}`} onBlur={(event) => onNeedleOffset(Number(event.currentTarget.value))} /></label>
     </section>
     <section><h2>Pattern yarns</h2><div className="assignment-list">{state.chart.palette.map((color) => {
@@ -64,7 +71,7 @@ export function BlanketSetupRail({ state, compile, outputStatus, outputError, au
       if (!assignment) return <div className="assignment-row missing" key={color.id}><i style={{ background: color.hex }} /><span>{color.name}</span><b>Unassigned</b></div>;
       return <div className="assignment-row" key={color.id}><i style={{ background: color.hex }} /><input aria-label={`${color.name} yarn name`} defaultValue={assignment.yarnName} key={`${color.id}-${assignment.yarnName}`} onBlur={(event) => onAssignment(color.id, assignment.carrier, event.currentTarget.value.trim() || color.name)} /><select aria-label={`${color.name} carrier`} value={assignment.carrier} onChange={(event) => onAssignment(color.id, event.currentTarget.value as '2' | '3' | '4' | '5', assignment.yarnName)}>{(['2', '3', '4', '5'] as const).map((carrier) => <option key={carrier} value={carrier} disabled={state.machine.yarnAssignments.some((item) => item.paletteId !== color.id && item.carrier === carrier)}>C{carrier}</option>)}</select></div>;
     })}</div></section>
-    <section><h2>Frame</h2><label className="strategy-field"><span>Waste rows / C6</span><input aria-label="Waste rows" type="number" min="1" max="200" defaultValue={state.frame.wasteRows} key={`f${state.frame.wasteRows}`} onBlur={(event) => onFrame({ ...state.frame, wasteRows: Number(event.currentTarget.value) })} /></label><label className="strategy-field check-label"><span>Draw thread / C1</span><input type="checkbox" checked={state.frame.drawThread} onChange={(event) => onFrame({ ...state.frame, drawThread: event.currentTarget.checked })} /></label><label className="strategy-field"><span>Finish</span><select value={state.frame.bindOff} onChange={(event) => onFrame({ ...state.frame, bindOff: event.currentTarget.value as ProjectState['frame']['bindOff'] })}><option value="machine-bindoff">Machine bind-off</option><option value="waste-and-drop">Waste and drop</option></select></label></section>
+    <section><h2>Frame</h2><label className="strategy-field"><span>Waste rows / C6</span><input aria-label="Waste rows" type="number" min="4" max="200" defaultValue={state.frame.wasteRows} key={`f${state.frame.wasteRows}`} onBlur={(event) => { const wasteRows = parseWasteRowsInputV1(event.currentTarget.value); if (wasteRows !== null && wasteRows !== state.frame.wasteRows) onFrame({ ...state.frame, wasteRows }); }} /></label><label className="strategy-field check-label"><span>Draw thread / C1</span><input type="checkbox" checked={state.frame.drawThread} onChange={(event) => onFrame({ ...state.frame, drawThread: event.currentTarget.checked })} /></label><label className="strategy-field"><span>Finish</span><select value={state.frame.bindOff} onChange={(event) => onFrame({ ...state.frame, bindOff: event.currentTarget.value as ProjectState['frame']['bindOff'] })}><option value="machine-bindoff">Machine bind-off</option><option value="waste-and-drop">Waste and drop</option></select></label></section>
     {compile.artifact && <section className="compile-stats"><h2>Machine estimate</h2><dl><dt>Passes</dt><dd>{compile.artifact.stats.passCount.toLocaleString()}</dd><dt>Operations</dt><dd>{compile.artifact.stats.opCount.toLocaleString()}</dd><dt>Time</dt><dd>{compile.artifact.stats.estimatedKnitTimeSeconds === null ? '-' : `${Math.ceil(compile.artifact.stats.estimatedKnitTimeSeconds / 60)} min`}</dd></dl></section>}
     {(outputError || compile.error || compile.artifact?.messages.find((message) => message.severity === 'error')) && <p className="setup-error" role="alert">{outputError ?? compile.error ?? compile.artifact?.messages.find((message) => message.severity === 'error')?.message}</p>}
     </div>

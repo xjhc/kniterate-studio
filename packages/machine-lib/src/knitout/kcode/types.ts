@@ -112,6 +112,8 @@ export interface KCodeDocumentMetadataV1 {
   readonly schemaVersion: 1
   readonly profileId: string
   readonly profileVersion: number
+  /** Named parser allocation envelope selected by the caller. */
+  readonly resourceProfile: KCodeResourceProfileV1
   /** Always supplied by the caller. The parser never infers this value. */
   readonly dialect: KCodeDialect
   readonly strict: boolean
@@ -206,7 +208,11 @@ export interface ParseKCodeDocumentOptions {
   readonly dialect: KCodeDialect
   /** Strict mode rejects unknown records; inspection mode preserves and warns. */
   readonly strict: boolean
+  /** Allocation envelope; foreign intake remains the fail-closed default. */
+  readonly resourceProfile?: KCodeResourceProfileV1
 }
+
+export type KCodeResourceProfileV1 = 'foreign-v1' | 'authored-v1'
 
 export interface ParseKCodeDocumentResult {
   readonly document: KCodeDocumentV1

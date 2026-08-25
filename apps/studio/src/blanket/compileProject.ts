@@ -1,4 +1,12 @@
-import { appendProjectEdit, materializeColorworkProject, type ColorworkProjectV1, type ProjectState } from '@kniterate-studio/project-contract';
+import {
+  appendProjectEdit,
+  assessAuthoredCapacityV1,
+  materializeColorworkProject,
+  observeAuthoredCapacityV1,
+  type AuthoredCapacityV1,
+  type ColorworkProjectV1,
+  type ProjectState,
+} from '@kniterate-studio/project-contract';
 import {
   compileToRunArtifact,
   projectColorworkChartV1,
@@ -15,6 +23,7 @@ export type BackingTechnique = ProjectState['strategy']['technique'];
 export interface StrategyComparison {
   technique: BackingTechnique;
   compileVerdict: CompileVerdict;
+  capacity: AuthoredCapacityV1;
   passCount: number;
   estimatedKnitTimeSeconds: number | null;
   backFace: BackFaceProjection | null;
@@ -26,6 +35,7 @@ export interface BlanketCompileArtifact {
   technique: BackingTechnique;
   ok: boolean;
   compileVerdict: CompileVerdict;
+  capacity: AuthoredCapacityV1;
   inputHash: string | null;
   messages: readonly ValidationMessage[];
   knitoutText: string | null;
@@ -66,13 +76,52 @@ function setupError(rule: string, message: string): ValidationMessage {
   return { severity: 'error', rule, message };
 }
 
+function sourceRecordCount(source: string): number {
+  let records = 1;
+  for (let index = 0; index < source.length; index++) {
+    if (source.charCodeAt(index) === 0x0a) records++;
+  }
+  return records;
+}
+
 export function compileColorworkProject(project: ColorworkProjectV1): BlanketCompileArtifact {
+  const capacity = assessAuthoredCapacityV1(project);
+  const preflightBase = {
+    revision: projectRevision(project),
+    technique: capacity.project.technique,
+    capacity,
+    stats: {
+      designRows: capacity.project.height,
+      needles: capacity.project.width,
+      patternColors: Math.min(4, capacity.project.activeColors),
+      passCount: 0,
+      opCount: 0,
+      estimatedKnitTimeSeconds: null,
+    },
+  };
+  if (capacity.status === 'blocked') {
+    const message = setupError(capacity.rule, capacity.message);
+    return {
+      ...preflightBase,
+      ok: false,
+      compileVerdict: 'blocked',
+      inputHash: null,
+      messages: [message],
+      knitoutText: null,
+      passes: [],
+      programOpSourceRows: [],
+      rowProvenance: [],
+      backFace: null,
+      diagnostics: [{ ...message, opIndex: null, rowId: null, passIndices: [] }],
+    };
+  }
   const { state, overrides } = materializeColorworkProject(project);
   const usedPaletteIndexes = new Set(state.chart.cells.flat());
   const usedPalette = state.chart.palette.filter((_entry, index) => usedPaletteIndexes.has(index));
   const assignments = new Map(state.machine.yarnAssignments.map((assignment) => [assignment.paletteId, assignment]));
   const setupMessages: ValidationMessage[] = [];
 
+  if (state.frame.wasteRows < 4 || state.frame.wasteRows > 200) setupMessages.push(setupError('project-waste-rows-range', `Waste rows must be between 4 and 200; received ${state.frame.wasteRows}.`));
   if (usedPalette.length > 4) setupMessages.push(setupError('project-pattern-color-limit', `This chart uses ${usedPalette.length} pattern colors; Kniterate Studio v1 supports at most four on reserved carriers C2-C5.`));
   for (const entry of usedPalette) {
     if (!assignments.has(entry.id)) setupMessages.push(setupError('project-yarn-assignment-required', `${entry.name} is used by the chart but has no pattern carrier assignment.`));
@@ -85,6 +134,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   const base = {
     revision: projectRevision(project),
     technique: state.strategy.technique,
+    capacity,
     stats: {
       designRows: state.chart.height,
       needles: state.chart.width,
@@ -119,7 +169,14 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     ...(state.strategy.technique === 'birdseye' ? { birdseyeMode: state.strategy.birdseyeMode ?? 'minimal' } : {}),
     ...(state.strategy.technique === 'fairisle' ? { floatPolicy: { mode: 'warn-above' as const, threshold: state.strategy.floatLimit } } : {}),
   });
-  const messages = [...artifact.chartMessages, ...artifact.programMessages, ...artifact.bedStateMessages, ...artifact.carriageMessages];
+  const exactCapacity = artifact.knitoutText === null
+    ? capacity
+    : observeAuthoredCapacityV1(capacity, { knitoutRecords: sourceRecordCount(artifact.knitoutText) });
+  const capacityMessages = exactCapacity.status === 'blocked'
+    ? [setupError(exactCapacity.rule, exactCapacity.message)]
+    : [];
+  const messages = [...artifact.chartMessages, ...artifact.programMessages, ...artifact.bedStateMessages, ...artifact.carriageMessages, ...capacityMessages];
+  const compileOk = artifact.ok && exactCapacity.status === 'supported';
   const passIndicesByMachineRow = new Map<number, number[]>();
   artifact.predictedPasses.forEach((pass, passIndex) => {
     for (const machineRow of pass.sourceRows ?? []) {
@@ -146,11 +203,12 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   });
   return {
     ...base,
-    ok: artifact.ok,
-    compileVerdict: artifact.ok ? 'surface' : 'blocked',
-    inputHash: artifact.inputHash,
+    capacity: exactCapacity,
+    ok: compileOk,
+    compileVerdict: compileOk ? 'surface' : 'blocked',
+    inputHash: compileOk ? artifact.inputHash : null,
     messages,
-    knitoutText: artifact.knitoutText,
+    knitoutText: compileOk ? artifact.knitoutText : null,
     passes: artifact.predictedPasses,
     programOpSourceRows: artifact.programOpSourceRows,
     rowProvenance,
@@ -169,6 +227,7 @@ export function strategyComparisonFromArtifact(artifact: BlanketCompileArtifact)
   return {
     technique: artifact.technique,
     compileVerdict: artifact.compileVerdict,
+    capacity: artifact.capacity,
     passCount: artifact.stats.passCount,
     estimatedKnitTimeSeconds: artifact.stats.estimatedKnitTimeSeconds,
     backFace: artifact.backFace,

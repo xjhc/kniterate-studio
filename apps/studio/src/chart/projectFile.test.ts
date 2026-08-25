@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { appendProjectEdit, materializeColorworkProject } from '@kniterate-studio/project-contract';
-import { openStudioProjectJson } from './projectFile';
+import { AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, materializeColorworkProject } from '@kniterate-studio/project-contract';
+import { MAX_STUDIO_PROJECT_FILE_BYTES_V1, openStudioProjectFile, openStudioProjectJson } from './projectFile';
 
 const chart = JSON.stringify({
   kind: 'knitlab-colorwork-chart', version: 1, title: 'Shared checker', width: 2, height: 2,
@@ -35,5 +35,30 @@ describe('Studio chart/project intake', () => {
       palette: [{ id: 'natural', name: 'Natural', hex: '#FFFFFF' }], cells: [[0]],
     });
     expect(openStudioProjectJson(oneColor, () => 'one').project.base.chart.palette).toHaveLength(1);
+  });
+
+  it('rejects oversized source before JSON parsing and oversized chart dimensions before chart parsing', () => {
+    const oversizedSource = ' '.repeat(AUTHORED_CAPACITY_LIMITS_V1.projectSourceCodeUnits + 1);
+    expect(() => openStudioProjectJson(oversizedSource)).toThrow(/Project source exceeds.*code-unit authored V1 limit/);
+
+    const oversizedChart = JSON.stringify({
+      kind: 'knitlab-colorwork-chart', version: 1, width: 1, height: 50_000,
+      rowNumbering: 'bottom-up',
+      palette: [{ id: 'ink', name: 'Ink', hex: '#000000' }],
+      cells: Array.from({ length: 50_000 }, () => [0]),
+    });
+    expect(() => openStudioProjectJson(oversizedChart)).toThrow(/50,000 rows.*capacity is 300/);
+  });
+
+  it('rejects an oversized browser project before reading its text', async () => {
+    let textRequested = false;
+    await expect(openStudioProjectFile({
+      size: MAX_STUDIO_PROJECT_FILE_BYTES_V1 + 1,
+      text: async () => {
+        textRequested = true;
+        return chart;
+      },
+    })).rejects.toThrow(/Project file exceeds.*byte authored V1 limit/);
+    expect(textRequested).toBe(false);
   });
 });

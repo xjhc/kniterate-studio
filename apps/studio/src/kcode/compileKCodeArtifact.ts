@@ -1,4 +1,4 @@
-import { browserKnitoutToKCode } from '@kniterate-studio/machine-lib/browser-converter';
+import { browserAuthoredKnitoutToKCode } from '@kniterate-studio/machine-lib/browser-converter';
 import {
   KNITERATE_7GG_KCODE_PROFILE_V1,
   compareScheduledPassesToMachineTrace,
@@ -10,8 +10,51 @@ import {
   type ParsedKnitoutDocument,
   type ValidationMessage,
 } from '@kniterate-studio/machine-lib/browser';
+import {
+  observeAuthoredCapacityV1,
+  refuseAuthoredCapacityFromLowerBoundV1,
+  type AuthoredCapacityBlockedV1,
+  type AuthoredCapacitySupportedV1,
+} from '@kniterate-studio/project-contract';
 import type { KCodeArtifact, KCodeConversionRequest, KCodePassProvenance } from './kcodeProtocol';
 import { sha256Text } from './sha256';
+
+export class AuthoredKCodeCapacityError extends Error {
+  readonly capacity: AuthoredCapacityBlockedV1;
+
+  constructor(capacity: AuthoredCapacityBlockedV1) {
+    super(capacity.message);
+    this.name = 'AuthoredKCodeCapacityError';
+    this.capacity = capacity;
+  }
+}
+
+function kcodeRecordCount(source: string): number {
+  let records = 0;
+  for (let index = 0; index < source.length; index++) {
+    if (source.charCodeAt(index) === 0x0a) records++;
+  }
+  return source.length > 0 && source.charCodeAt(source.length - 1) !== 0x0a ? records + 1 : records;
+}
+
+function selectedRasterCellCount(passes: readonly { readonly FRNT: string; readonly REAR: string }[]): number {
+  let selected = 0;
+  for (const pass of passes) {
+    for (const raster of [pass.FRNT, pass.REAR]) {
+      for (let index = 0; index < raster.length; index++) {
+        if (raster.charCodeAt(index) === 45) selected++;
+      }
+    }
+  }
+  return selected;
+}
+
+function blockedCapacityFromConverterIssue(
+  capacity: AuthoredCapacitySupportedV1,
+  issue: NonNullable<ReturnType<typeof browserAuthoredKnitoutToKCode>['capacityIssue']>,
+): AuthoredCapacityBlockedV1 {
+  return refuseAuthoredCapacityFromLowerBoundV1(capacity, issue.metric, issue.limit + 1);
+}
 
 function sortedUnique(values: readonly number[]): number[] {
   return [...new Set(values)].sort((a, b) => a - b);
@@ -186,16 +229,27 @@ function messagesForArtifact(input: {
 export async function compileKCodeArtifact(
   request: KCodeConversionRequest,
 ): Promise<KCodeArtifact> {
-  const converted = browserKnitoutToKCode(request.knitoutText, 'command.k');
+  const converted = browserAuthoredKnitoutToKCode(request.knitoutText, 'command.k');
   if (!converted.ok || !converted.kcode || !converted.scheduledPasses) {
+    if (converted.capacityIssue !== undefined) {
+      throw new AuthoredKCodeCapacityError(blockedCapacityFromConverterIssue(request.capacity, converted.capacityIssue));
+    }
     throw new Error(converted.error ?? 'Vendored converter returned no KCode or scheduled-pass trace.');
   }
 
-  const parsedKnitout = parseKnitoutProgram(request.knitoutText);
+  const exactCapacity = observeAuthoredCapacityV1(request.capacity, {
+    loweredPasses: converted.scheduledPasses.length,
+    selectedCells: selectedRasterCellCount(converted.scheduledPasses),
+    kcodeRecords: kcodeRecordCount(converted.kcode),
+  });
+  if (exactCapacity.status === 'blocked') throw new AuthoredKCodeCapacityError(exactCapacity);
+
+  const parsedKnitout = parseKnitoutProgram(request.knitoutText, { resourceProfile: 'authored-v1' });
   const parsed = parseKCodeDocument(converted.kcode, {
     profile: KNITERATE_7GG_KCODE_PROFILE_V1,
     dialect: 'knitout-vendor',
     strict: true,
+    resourceProfile: 'authored-v1',
   });
   const trace = parsed.ok
     ? projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1)
@@ -240,6 +294,7 @@ export async function compileKCodeArtifact(
 
   return {
     inputHash: request.inputHash,
+    capacity: exactCapacity,
     kcHash: await sha256Text(converted.kcode),
     kcText: converted.kcode,
     passCount: trace?.passes.length ?? 0,

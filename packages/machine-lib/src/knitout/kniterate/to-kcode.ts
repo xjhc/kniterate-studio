@@ -1,15 +1,14 @@
 /**
- * Wrapper around the vendored knitout-to-kcode.cjs (from
- * textiles-lab/knitout-backend-kniterate). Invokes the script as a
- * Node subprocess: writes the input .k to a temp file, runs the CLI,
- * reads the output .kc, cleans up.
+ * Wrapper around this repository's locally maintained fork of
+ * textiles-lab/knitout-backend-kniterate (see the vendor README for immutable
+ * provenance and the patch ledger). The isolated entrypoint writes the input
+ * .k to a temp file, invokes the CLI, reads the output .kc, and cleans up.
  *
  * Used by:
  *   - scripts/chart-to-knitout.ts (CLI tool)
  *   - test/knitout/to-kcode.test.ts (smoke test)
  *
- * The browser path (for the wizard UI) will load the vendored .cjs as
- * a Worker module instead — that's Phase 7 work.
+ * The browser adapter runs the generated ESM copy of the same local fork.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -20,11 +19,18 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { KCodeConverter } from '../run-artifact.js';
-import { checkKnitoutSourceResourceLimits } from '../parser.js';
-import type {
-  VendorLoweringSettings,
-  VendorScheduledKCode,
-  VendorScheduledPass,
+import {
+  checkKnitoutSourceResourceLimits,
+  classifyKnitoutCapacityIssue,
+  type KnitoutCapacityIssueV1,
+  type KnitoutResourceProfileV1,
+} from '../parser.js';
+import {
+  vendorLoweringResourceLimits,
+  type VendorLoweringResourceLimits,
+  type VendorLoweringSettings,
+  type VendorScheduledKCode,
+  type VendorScheduledPass,
 } from './vendor-pass-contract.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
@@ -35,6 +41,7 @@ interface VendorCompilerModule {
   knitoutToPasses: (
     knitout: string,
     filename: string,
+    resourceLimits?: VendorLoweringResourceLimits,
   ) => {
     headers: Record<string, string[]>;
     passes: unknown[];
@@ -69,6 +76,7 @@ export type KnitoutToScheduledKCodeResult =
       readonly error: string;
       readonly warnings: readonly string[];
       readonly warningCount: number;
+      readonly capacityIssue?: KnitoutCapacityIssueV1;
     };
 
 /**
@@ -76,9 +84,10 @@ export type KnitoutToScheduledKCodeResult =
  * scheduled-pass IR. Production conversion can continue using the isolated
  * subprocess adapter above.
  */
-export function knitoutToKCodeWithTrace(
+function convertKnitoutToKCodeWithTrace(
   knitoutText: string,
-  filename = 'command.k',
+  filename: string,
+  resourceProfile: KnitoutResourceProfileV1,
 ): KnitoutToScheduledKCodeResult {
   const warnings: string[] = [];
   let warningCount = 0;
@@ -88,20 +97,27 @@ export function knitoutToKCodeWithTrace(
   };
   const originalWarn = console.warn;
   const originalLog = console.log;
-  const resourceIssue = checkKnitoutSourceResourceLimits(knitoutText);
+  const resourceIssue = checkKnitoutSourceResourceLimits(knitoutText, resourceProfile);
   if (resourceIssue !== null) {
+    const message = `Line ${resourceIssue.line}: ${resourceIssue.message}`;
+    const capacityIssue = classifyKnitoutCapacityIssue(message, resourceProfile);
     return {
       ok: false,
-      error: `Line ${resourceIssue.line}: ${resourceIssue.message}`,
+      error: message,
       warnings,
       warningCount,
+      ...(capacityIssue === undefined ? {} : { capacityIssue }),
     };
   }
   console.warn = captureWarning;
   console.log = captureWarning;
   try {
     const vendor = requireFromHere(VENDOR_SCRIPT) as VendorCompilerModule;
-    const { headers, passes, lowering } = vendor.knitoutToPasses(knitoutText, filename);
+    const { headers, passes, lowering } = vendor.knitoutToPasses(
+      knitoutText,
+      filename,
+      vendorLoweringResourceLimits(resourceProfile),
+    );
     const converted = vendor.passesToKCodeWithTrace(
       headers,
       passes,
@@ -116,16 +132,33 @@ export function knitoutToKCodeWithTrace(
       warningCount,
     };
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const capacityIssue = classifyKnitoutCapacityIssue(message, resourceProfile);
     return {
       ok: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: message,
       warnings,
       warningCount,
+      ...(capacityIssue === undefined ? {} : { capacityIssue }),
     };
   } finally {
     console.warn = originalWarn;
     console.log = originalLog;
   }
+}
+
+export function knitoutToKCodeWithTrace(
+  knitoutText: string,
+  filename = 'command.k',
+): KnitoutToScheduledKCodeResult {
+  return convertKnitoutToKCodeWithTrace(knitoutText, filename, 'foreign-v1');
+}
+
+export function authoredKnitoutToKCodeWithTrace(
+  knitoutText: string,
+  filename = 'command.k',
+): KnitoutToScheduledKCodeResult {
+  return convertKnitoutToKCodeWithTrace(knitoutText, filename, 'authored-v1');
 }
 
 /** Run the vendored knitout-to-kcode compiler on a knitout source string.

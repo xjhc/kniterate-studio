@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest'
 import { emitKCodeDocumentBytes, parseKCodeBytes } from '../../src/knitout/kcode/bytes.js'
 import { emitKCodeDocument } from '../../src/knitout/kcode/emitter.js'
 import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../../src/knitout/kcode/machine-profile.js'
-import { MAX_KCODE_SOURCE_CODE_UNITS, parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
+import {
+  KCODE_RESOURCE_LIMITS_V1,
+  MAX_KCODE_SOURCE_CODE_UNITS,
+  parseKCodeDocument,
+} from '../../src/knitout/kcode/parser.js'
 import type { KCodeDiagnosticRule } from '../../src/knitout/kcode/types.js'
 
 const STRICT_VENDOR_OPTIONS = {
@@ -390,7 +394,7 @@ describe('strict KCode adversarial rail', () => {
   })
 
   it('fails closed before materializing an adversarial number of short records', () => {
-    const source = '//\n'.repeat(50_001)
+    const source = '//\n'.repeat(100_001)
     const result = parseKCodeDocument(source, STRICT_VENDOR_OPTIONS)
 
     expect(result.ok).toBe(false)
@@ -398,13 +402,78 @@ describe('strict KCode adversarial rail', () => {
       expect.objectContaining({
         rule: 'kcode.resource-limit',
         severity: 'error',
-        line: 50_001,
-        message: expect.stringContaining('50000-record strict-intake limit'),
+        line: 100_001,
+        message: expect.stringContaining('100000-record strict-intake limit'),
       }),
     ])
     expect(result.document.metadata.recordMaterialization).toBe('resource-limited')
+    expect(result.document.metadata.resourceProfile).toBe('foreign-v1')
     expect(result.document.records).toEqual([])
     expect(emitKCodeDocument(result.document)).toBe(source)
+  })
+
+  it('uses a shared 100k record ceiling so authored exports reopen through default intake', () => {
+    expect(Object.isFrozen(KCODE_RESOURCE_LIMITS_V1)).toBe(true)
+    expect(Object.isFrozen(KCODE_RESOURCE_LIMITS_V1['foreign-v1'])).toBe(true)
+    expect(Object.isFrozen(KCODE_RESOURCE_LIMITS_V1['authored-v1'])).toBe(true)
+    expect(KCODE_RESOURCE_LIMITS_V1).toEqual({
+      'foreign-v1': { records: 100_000, passRecords: 8_192 },
+      'authored-v1': { records: 100_000, passRecords: 8_192 },
+    })
+
+    const reopenedAuthoredSize = parseKCodeDocument('//\n'.repeat(50_377), STRICT_VENDOR_OPTIONS)
+    expect(reopenedAuthoredSize.document.metadata).toMatchObject({
+      resourceProfile: 'foreign-v1',
+      recordMaterialization: 'complete',
+    })
+    expect(reopenedAuthoredSize.document.records).toHaveLength(50_377)
+    expect(reopenedAuthoredSize.diagnostics).not.toContainEqual(expect.objectContaining({
+      rule: 'kcode.resource-limit',
+    }))
+
+    const overAuthored = parseKCodeDocument('//\n'.repeat(100_001), {
+      ...STRICT_VENDOR_OPTIONS,
+      resourceProfile: 'authored-v1',
+    })
+    expect(overAuthored).toMatchObject({
+      ok: false,
+      document: {
+        metadata: {
+          resourceProfile: 'authored-v1',
+          recordMaterialization: 'resource-limited',
+        },
+        records: [],
+      },
+      diagnostics: [expect.objectContaining({
+        rule: 'kcode.resource-limit',
+        line: 100_001,
+        message: expect.stringContaining('100000-record strict-intake limit'),
+      })],
+    })
+  })
+
+  it('refuses a pass-record graph over 8192 before materializing source records', () => {
+    const source = '>> Kn-Kn 0 300 450\n'.repeat(8_193)
+    for (const resourceProfile of ['foreign-v1', 'authored-v1'] as const) {
+      const result = parseKCodeDocument(source, {
+        ...STRICT_VENDOR_OPTIONS,
+        resourceProfile,
+      })
+      expect(result).toMatchObject({
+        ok: false,
+        document: {
+          metadata: { resourceProfile, recordMaterialization: 'resource-limited' },
+          rawText: source,
+          records: [],
+          passes: [],
+        },
+        diagnostics: [expect.objectContaining({
+          rule: 'kcode.resource-limit',
+          line: 8_193,
+          message: expect.stringContaining('8192-pass-record strict-intake limit'),
+        })],
+      })
+    }
   })
 
   it('fails closed before materializing one oversized record', () => {
