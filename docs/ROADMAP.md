@@ -169,9 +169,11 @@ route as reference-equivalent until a dedicated walker is proven.
 Register physical swatches and allow a verdict to become Knit-proven only when
 the exact recipe matches the physical registry.
 
-Software readiness is complete: `pnpm release:trial` produces the validated,
-hash-pinned 120x160 four-color blanket package and operator checklist described
-in [`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md). The registration command,
+Software readiness is complete: from a clean tree, `pnpm release:trial`
+produces the validated, commit- and hash-pinned 120x160 four-color blanket
+package and operator checklist described in
+[`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md). Registration requires the
+same clean generating commit. The registration command,
 source-tree/output hash checks, browser registry manifest, exact-artifact
 matcher, Knit-proven setup/run-sheet state, and fail-closed promotion command
 are wired. Physical state remains 0/4 registry entries; actual machine runs are

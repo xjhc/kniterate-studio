@@ -629,17 +629,19 @@ describe('KCode-native MachineTrace validation', () => {
         .filter((diagnostic) => diagnostic.severity === severity)
         .reduce((count, diagnostic) => count + (diagnostic.occurrences ?? 1), 0)
 
-    expect(report.diagnostics.length).toBeLessThanOrEqual(514)
+    expect(report.diagnostics.length).toBeLessThanOrEqual(520)
     expect(represented('error')).toBe(report.errorCount)
     expect(represented('warning')).toBe(report.warningCount)
     expect(report.diagnostics).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        rule: 'machine-trace.diagnostic-summary',
+        rule: 'machine-trace.transfer-source-empty',
         severity: 'error',
+        occurrences: 600,
       }),
       expect.objectContaining({
-        rule: 'machine-trace.diagnostic-summary',
+        rule: 'machine-trace.drop-empty',
         severity: 'warning',
+        occurrences: 88,
       }),
     ]))
   })

@@ -37,7 +37,6 @@ export function groupForeignRunSheetFindings(
   const representativeKeys = new Map<string, Set<string>>();
 
   for (const diagnostic of diagnostics) {
-    if (diagnostic.severity === 'info') continue;
     const key = [
       diagnostic.severity,
       diagnostic.rule,

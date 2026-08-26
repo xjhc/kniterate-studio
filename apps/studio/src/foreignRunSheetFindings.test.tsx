@@ -12,11 +12,12 @@ function diagnostic(input: {
   readonly message: string;
   readonly passIndex: number | null;
   readonly line: number | null;
+  readonly severity?: 'error' | 'warning' | 'info';
   readonly occurrences?: number;
 }): MachineDiagnostic {
   return {
     ...resolveValidatorMessage({
-      severity: 'warning',
+      severity: input.severity ?? 'warning',
       rule: input.rule,
       message: input.message,
     }),
@@ -76,6 +77,26 @@ describe('foreign run-sheet findings', () => {
     });
     expect(groups[0]?.representatives).toHaveLength(3);
     expect(groups[0]?.representatives.map((item) => item.passIndex)).toEqual([6, 8, 10]);
+  });
+
+  it('retains informational observations and their pass anchors for operator handoff', () => {
+    const groups = groupForeignRunSheetFindings([
+      diagnostic({
+        id: 'loop-info',
+        rule: 'machine-trace.loop-stack-policy',
+        severity: 'info',
+        message: 'front:40 reaches 3 modeled loops.',
+        passIndex: 6,
+        line: 70,
+      }),
+    ]);
+
+    expect(groups).toEqual([expect.objectContaining({
+      severity: 'info',
+      rule: 'machine-trace.loop-stack-policy',
+      occurrences: 1,
+      representatives: [expect.objectContaining({ passIndex: 6, line: 70 })],
+    })]);
   });
 
   it('prints grouped reasons, exact counts, and representative pass/source anchors', () => {

@@ -146,19 +146,21 @@ That is either a correct conservative refusal or a threshold that does not
 match reality. It is a product-contract call.
 
 The closeout selected **Option B**. The evidence is deliberately narrow: five
-vendor-validated fixtures carry the depth-three observation without validation
-errors, so Studio treats that observation as information on foreign imports.
-Other foreign warnings still block, and the shared validator, proof receipt,
-and physical non-claim remain unchanged.
+captured fixtures carry the depth-three observation without validation errors,
+so Studio treats that observation as information on foreign imports. The
+fixtures establish observed checked-in corpus behavior, not their external
+producer or a physical loop-stack limit. Other foreign warnings still block,
+and the shared validator, proof receipt, and physical non-claim remain
+unchanged.
 
 - **Option A — leave it.** Honest and conservative: Studio refuses to bless
   what it cannot model safely. Cost: most of the corpus, and most real vendor
   files, cannot reach Surface-proven.
 - **Option B — reclassify depth-three observations as informational
-  (recommended).** Keep the error at four loops. Five vendor-validated
-  references trip depth three, which is evidence that a brief three-stack is
-  ordinary in shipped patterns. Smallest change, no new verdict concepts, and
-  the corpus opens.
+  (recommended).** Keep the error at four loops. Five captured references trip
+  depth three, which is evidence that a brief three-stack recurs in the
+  checked-in corpus. It does not prove the producer or physical behavior.
+  Smallest change, no new verdict concepts, and the corpus opens.
 - **Option C — let imports carry reviewed warnings.** Show warnings without
   blocking. Closest to a waiver, which V1 explicitly cut in SYSTEM-DESIGN R6;
   it needs a real review affordance and a persistence story, so it is the
@@ -215,9 +217,12 @@ clean working tree.
 
 ### 4. Generate the immutable trial package
 
-`pnpm release:trial` writes `out/v1-knit-trial/`: the project and chart, a
-validated `blanket.k` and `blanket.kc`, a manifest carrying the compile hash
-and SHA-256 identities, and the operator checklist. The candidate is a 120×160
+`pnpm release:trial` requires a clean working tree, including no untracked
+files, then writes `out/v1-knit-trial/`: the project and chart, a validated
+`blanket.k` and `blanket.kc`, a manifest carrying the full generating commit,
+clean-worktree assertion, compile hash and SHA-256 identities, and the operator
+checklist. Registration later requires that same clean commit instead of
+relabeling the package with a newer `HEAD`. The candidate is a 120×160
 four-colour birdseye rectangle — roughly 152,000 Knitout operations, 2,662
 emitted passes, about four and a quarter hours of machine time.
 

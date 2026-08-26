@@ -343,10 +343,12 @@ function validatorFindings(
   report: MachineValidationReportV1,
 ): MachineDiagnostic[] {
   return report.diagnostics.map((diagnostic, index) => resolveDiagnostic({
-    // Brief depth-three stacks occur across five vendor-validated reference
-    // files. Keep the shared validator's conservative warning evidence intact,
-    // but present that one observation as non-blocking information when Studio
-    // opens a foreign artifact. Depth four remains an error.
+    // Brief depth-three stacks occur across five captured reference files.
+    // That establishes observed corpus behavior, not external producer or
+    // physical-machine provenance. Keep the shared validator's conservative
+    // warning evidence intact, but present that one observation as non-blocking
+    // information when Studio opens a foreign artifact. Depth four remains an
+    // error.
     severity: diagnostic.rule === 'machine-trace.loop-stack-policy'
       && diagnostic.severity === 'warning'
       ? 'info'

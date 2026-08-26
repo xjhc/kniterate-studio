@@ -1,6 +1,8 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { readCleanV1KnitTrialReleaseSource } from './build-v1-knit-trial.js';
+
+const GIT_COMMIT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 
 const shortName = process.argv.slice(2).find((argument) => argument !== '--');
 if (!shortName || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(shortName)) {
@@ -39,7 +41,17 @@ const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
   identity: { compileHash: string; knitoutSha256: string; kcodeSha256: string };
   compilerFingerprint: string;
   carriers: { carrier: string; role: string; paletteId?: string; yarnName?: string }[];
+  releaseSource: { commit: string; worktree: string };
 };
+if (!manifest.releaseSource
+  || !GIT_COMMIT.test(manifest.releaseSource.commit)
+  || manifest.releaseSource.worktree !== 'clean') {
+  throw new Error('physical trial manifest is not bound to a full clean generating commit; rerun pnpm release:trial from a clean tree');
+}
+const currentReleaseSource = readCleanV1KnitTrialReleaseSource();
+if (currentReleaseSource.commit !== manifest.releaseSource.commit) {
+  throw new Error(`physical trial was generated from ${manifest.releaseSource.commit}, but registration is running at ${currentReleaseSource.commit}; return to the generating commit or regenerate and rerun the physical trial`);
+}
 const date = new Date().toISOString().slice(0, 10);
 const id = `${date}-${shortName}`;
 const registryRoot = resolve(process.env.KNITERATE_SWATCH_ROOT ?? 'packages/machine-lib/registry/swatches');
@@ -55,7 +67,7 @@ for (const [source, target] of [
   ['chart.colorwork.json', 'chart.colorwork.json'],
 ] as const) copyFileSync(resolve(trial, source), resolve(destination, target));
 
-const emitterCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+const emitterCommit = manifest.releaseSource.commit;
 const version = (JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }).version;
 const spec = {
   $schema: '../_schema.json',

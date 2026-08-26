@@ -5,7 +5,7 @@
   "compilerFingerprint": "TODO: SHA-256 of the current compiler and physical-proof contract closure",
   "knitoutSha256": "TODO: SHA-256 of out.k",
   "kcodeSha256": "TODO: SHA-256 of out.kc",
-  "emitterCommit": "TODO: git rev-parse HEAD at compile time",
+  "emitterCommit": "TODO: full Git commit recorded by the clean compile package",
   "compiledAt": "1970-01-01T00:00:00Z",
   "knitlab2Version": "TODO: version from package.json",
   "compileResultOk": null,

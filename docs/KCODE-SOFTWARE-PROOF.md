@@ -145,9 +145,11 @@ those drops, but their operational machine consequence is unverified; empty
 transfer/split remains an error. The shared validator and proof receipt retain
 the depth-three observations as conservative warnings. At the foreign Studio
 boundary, those specific observations are presented as non-blocking
-informational evidence because five vendor-validated references establish that
-a brief three-stack is ordinary in the shipped corpus; the error above three
-loops is unchanged. Every other unresolved foreign warning remains blocking.
+informational evidence because five captured references establish that a brief
+three-stack occurs repeatedly in the checked-in corpus. Those bytes do not
+establish their external producer or a physical loop-stack limit; this remains
+a narrow product presentation policy. The error above three loops is unchanged.
+Every other unresolved foreign warning remains blocking.
 The resulting Studio import verdicts are 12 Surface-proven and one Blocked:
 `fox-baby-beanie.kc` remains blocked by its 183 empty-drop warnings. None of the
 13 fixtures is blocked by a validation error. This is a software product policy,

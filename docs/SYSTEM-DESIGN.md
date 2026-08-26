@@ -311,8 +311,9 @@ downstream work forks on them. **R1–R4 should be answered before S2 starts.**
   **Blocked** (an imported file has no project context in which to accept a
   warning). One evidence-backed V1 presentation rule is narrower than a waiver:
   the shared validator's depth-three loop-stack warning is informational at the
-  foreign Studio boundary because five vendor-validated references establish it
-  as ordinary corpus behavior; depth four remains an error. Otherwise clean ⇒
+  foreign Studio boundary because five captured references establish it as
+  observed corpus behavior. They do not establish an external producer or a
+  physical loop-stack limit; depth four remains an error. Otherwise clean ⇒
   **Surface-proven (imported)** — with a mandatory annotation on the badge panel
   and run sheet. Imported V1 files remain at that rung:
   `openMachineDocument` accepts no registry evidence ID, and a future trusted

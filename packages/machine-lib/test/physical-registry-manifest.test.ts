@@ -17,7 +17,9 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { createColorworkProjectV1 } from '../../project-contract/src/index.js'
 import { compileColorworkProject } from '../../../apps/studio/src/blanket/compileProject.js'
 import {
+  bindV1KnitTrialReleaseSource,
   compileCurrentV1KnitTrial,
+  readCleanV1KnitTrialReleaseSource,
   type V1KnitTrialCompileResult,
 } from '../../../scripts/build-v1-knit-trial.js'
 import { checkCurrentV1PhysicalRelease } from '../../../scripts/check-v1-physical-release.js'
@@ -133,7 +135,7 @@ function writeCurrentEntry(root: string, reemitStatus: 'matches' | 'not-run' = '
     compilerFingerprint: computeCompilerFingerprint(),
     knitoutSha256: sha256Bytes(artifacts.knitoutText),
     kcodeSha256: sha256Bytes(artifacts.kcodeText),
-    emitterCommit: 'deadbeef',
+    emitterCommit: 'd'.repeat(40),
     compiledAt: '2026-08-25T00:00:00Z',
     compileResultOk: true,
     request: { path: 'request.json' },
@@ -655,6 +657,18 @@ describe('generated physical registry manifest', () => {
 })
 
 describe('fresh V1 physical release gate', () => {
+  it('binds generated packages to one full clean Git commit and refuses dirty state', () => {
+    const commit = 'a'.repeat(40)
+    const source = readCleanV1KnitTrialReleaseSource((args) =>
+      args[0] === 'rev-parse' ? `${commit}\n` : '')
+    const bound = bindV1KnitTrialReleaseSource(currentTrial(), source)
+
+    expect(bound.manifest.releaseSource).toEqual({ commit, worktree: 'clean' })
+    expect(() => readCleanV1KnitTrialReleaseSource((args) =>
+      args[0] === 'rev-parse' ? `${commit}\n` : '?? local-file\n'))
+      .toThrow(/requires a clean working tree.*local-file/s)
+  })
+
   it('compiles deterministically with self-consistent hashes and an explicit unverified placement gate', () => {
     const first = currentTrial()
     const second = compileCurrentV1KnitTrial()

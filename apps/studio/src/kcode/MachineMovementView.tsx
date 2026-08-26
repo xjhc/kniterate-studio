@@ -14,6 +14,14 @@ export interface MachineMovementViewProps {
   scene: MachineSceneV1;
   /** Optional KCode-native validator state for loop counts and findings. */
   validation?: MachineValidationReportV1 | null;
+  /** Optional product-boundary severities for display. Raw validator evidence
+   * remains attached through `validation`; this only controls presentation. */
+  displayDiagnostics?: readonly {
+    readonly severity: 'error' | 'warning' | 'info';
+    readonly passIndex: number | null;
+    readonly rule: string;
+    readonly message: string;
+  }[];
   /** MachineScene passIndex, not array position. */
   selectedPass: number | null;
   onSelect: (passIndex: number) => void;
@@ -421,6 +429,7 @@ function rackLedgerWindow(
 export function MachineMovementView({
   scene,
   validation = null,
+  displayDiagnostics,
   selectedPass,
   onSelect,
   overallContext,
@@ -428,11 +437,12 @@ export function MachineMovementView({
 }: MachineMovementViewProps) {
   const pass = scene.passes.find((candidate) => candidate.passIndex === selectedPass) ?? null;
   const passState = validation?.passStates.find((state) => state.passIndex === selectedPass);
-  const passDiagnostics = validation?.diagnostics.filter(
+  const passDiagnostics = (displayDiagnostics ?? validation?.diagnostics)?.filter(
     (diagnostic) => diagnostic.passIndex === selectedPass,
   ) ?? [];
   const passErrors = passDiagnostics.filter((diagnostic) => diagnostic.severity === 'error').length;
   const passWarnings = passDiagnostics.filter((diagnostic) => diagnostic.severity === 'warning').length;
+  const passInfos = passDiagnostics.filter((diagnostic) => diagnostic.severity === 'info').length;
   const validationState = validation === null || pass === null
     ? 'detached'
     : passErrors > 0
@@ -460,7 +470,9 @@ export function MachineMovementView({
             ? `${passErrors} KCode replay error${passErrors === 1 ? '' : 's'} on this pass`
             : passWarnings > 0
               ? `${passWarnings} KCode replay warning${passWarnings === 1 ? '' : 's'} on this pass`
-              : 'No KCode replay findings on this pass'}
+              : passInfos > 0
+                ? `${passInfos} informational KCode replay note${passInfos === 1 ? '' : 's'} on this pass`
+                : 'No KCode replay findings on this pass'}
       </div>
       <div className="mmv-contract">
         <span>{scene.profileId}@{scene.profileVersion}</span>

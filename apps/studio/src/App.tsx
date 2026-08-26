@@ -637,7 +637,7 @@ export function App() {
             </div>
             {view === 'machine' ? (
               <div className={`machine-layout${document.kcode?.scene ? ' has-movement' : ''} mobile-${mobileView}`}>
-                {document.kcode?.scene && <MachineMovementView className="machine-movement-panel" scene={document.kcode.scene} validation={document.kcode.validation} overallContext={documentOverallContext(document)} selectedPass={selected} onSelect={(pass) => select(pass)} />}
+                {document.kcode?.scene && <MachineMovementView className="machine-movement-panel" scene={document.kcode.scene} validation={document.kcode.validation} displayDiagnostics={document.diagnostics.map(({ severity, passIndex, rule, rawMessage }) => ({ severity, passIndex, rule, message: rawMessage }))} overallContext={documentOverallContext(document)} selectedPass={selected} onSelect={(pass) => select(pass)} />}
                 <PassGrid passes={document.passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={(pass) => select(pass)} />
                 <Diagnostics document={document} selected={selected} onSelect={select} />
                 <SourceDock document={document} selected={selected} preferredLine={preferredLine} />

@@ -444,8 +444,12 @@ export function validateKCodeMachineTrace(
   let errorCount = 0
   let warningCount = 0
   let omittedDiagnosticCount = 0
-  let omittedErrorCount = 0
-  let omittedWarningCount = 0
+  const omittedDiagnosticGroups = new Map<string, {
+    severity: MachineValidationSeverityV1
+    class: MachineValidationClassV1
+    rule: MachineValidationRuleV1
+    count: number
+  }>()
   const state: MutableLoopState = new Map()
   const passStates: MachinePassStateSnapshotV1[] = []
 
@@ -476,8 +480,18 @@ export function validateKCodeMachineTrace(
     else warningCount++
     if (diagnostics.length >= MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS) {
       omittedDiagnosticCount++
-      if (severity === 'error') omittedErrorCount++
-      else omittedWarningCount++
+      const groupKey = `${severity}|${diagnosticClass}|${rule}`
+      const group = omittedDiagnosticGroups.get(groupKey)
+      if (group === undefined) {
+        omittedDiagnosticGroups.set(groupKey, {
+          severity,
+          class: diagnosticClass,
+          rule,
+          count: 1,
+        })
+      } else {
+        group.count++
+      }
       return
     }
     diagnostics.push({
@@ -1379,23 +1393,19 @@ export function validateKCodeMachineTrace(
   }
 
   if (omittedDiagnosticCount > 0) {
-    for (const [severity, count] of [
-      ['error', omittedErrorCount],
-      ['warning', omittedWarningCount],
-    ] as const) {
-      if (count === 0) continue
+    for (const group of omittedDiagnosticGroups.values()) {
       diagnostics.push({
-        severity,
-        class: 'structural',
-        rule: 'machine-trace.diagnostic-summary',
-        message: `MachineTrace diagnostics were truncated after ${MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS} detailed findings; omitted ${count} additional ${severity} finding${count === 1 ? '' : 's'} (${omittedDiagnosticCount} findings omitted across all severities).`,
+        severity: group.severity,
+        class: group.class,
+        rule: group.rule,
+        message: `MachineTrace diagnostics for ${group.rule} were truncated after ${MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS} total detailed findings; omitted ${group.count} additional ${group.severity} finding${group.count === 1 ? '' : 's'} (${omittedDiagnosticCount} findings omitted across all rules and severities).`,
         passIndex: null,
         sourceSpan: null,
         line: null,
         column: null,
         endLine: null,
         endColumn: null,
-        occurrences: count,
+        occurrences: group.count,
       })
     }
   }

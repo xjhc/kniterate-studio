@@ -239,7 +239,7 @@
     ]
   },
   "contract": {
-    "sha256": "05f88529aa0afa986f9f541442c56bd0f991751cdfdd1e2cf9eca66387c1aa0e",
+    "sha256": "68d90d59ecf5f9ccb751d09109e55ace05500be03f59b86782e285ca91c0609c",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -273,8 +273,8 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "0d5f29f895f0e632c80a40c5d4e42628f89121b9247aa7d5a3eb9984e8bdb327",
-        "bytes": 50106
+        "sha256": "aa6b9b9bc0d2a40afb3c4f6fff84625289b0ac1d79c8fb82a41646317420ab35",
+        "bytes": 50253
       },
       {
         "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
@@ -443,23 +443,23 @@
       },
       {
         "path": "../../apps/studio/src/engine.test.ts",
-        "sha256": "ad41313eda356b9e7adaf9b02737799f02f1509b3ef2efab05ce8b8c35cdba0b",
-        "bytes": 29447
+        "sha256": "193ee86884f3156c6de1465126008fe0f226c872f30b2c4ba74d5f32a3cf5ea0",
+        "bytes": 30576
       },
       {
         "path": "../../apps/studio/src/engine.ts",
-        "sha256": "b284e6fa490a487170d359d960d7d31ece742e59ef198115819d34b74700fe49",
-        "bytes": 30011
+        "sha256": "58ebb87cc52fff4b3d10a58b711887c6575490538816dabd8bf78d3bd8ba42c3",
+        "bytes": 30114
       },
       {
         "path": "../../apps/studio/src/foreignRunSheetFindings.test.tsx",
-        "sha256": "e36687f01bf2e33a3c4988e4a27543d63133bd0c1982bbe03949bb9503394d6a",
-        "bytes": 5240
+        "sha256": "39122944b2e6b6f745d96a0e7495678a38b1360631e68ba5afb31160781ef1db",
+        "bytes": 5929
       },
       {
         "path": "../../apps/studio/src/foreignRunSheetFindings.ts",
-        "sha256": "60edc60085ab0f384844f7aa59a597f0dabe7e3d3e571f1406b832e4e556db2c",
-        "bytes": 2998
+        "sha256": "ac0382a11c958ff2a3ef83c79d581a4eded659e412f4f5a88964395ebc74759e",
+        "bytes": 2948
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.css",
@@ -468,13 +468,13 @@
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.test.tsx",
-        "sha256": "b25f3282e51b80d6f8d36805f6ed8ad049a6a097ea53f502c9b45547756ab34e",
-        "bytes": 8046
+        "sha256": "a43bbf5cccc0b0bc5a1375a6c58e00f1eb5bdbfa9c5bcd2762c9d64f33ba14f1",
+        "bytes": 9102
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.tsx",
-        "sha256": "3ba101d343bf17245f25cafafed556440d5f8692af87b7edea985b48f18bc902",
-        "bytes": 24540
+        "sha256": "e927baf7052c91448704f9a8cd3e4d14438bc43be9740f68f4f61ce38ae36631",
+        "bytes": 25174
       },
       {
         "path": "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
@@ -593,8 +593,8 @@
       },
       {
         "path": "../../scripts/build-v1-knit-trial.ts",
-        "sha256": "825822f54392a591b8ba011ac07ca6fa861f5a96f5808b1bffd2c511d261192a",
-        "bytes": 8671
+        "sha256": "41f1dab3ea55d68c26f5a5b90a069c7b992c4f69715bfc469fba97c0485f8e31",
+        "bytes": 10581
       },
       {
         "path": "../../scripts/check-v1-physical-release.ts",
@@ -603,8 +603,8 @@
       },
       {
         "path": "../../scripts/register-v1-knit-trial.ts",
-        "sha256": "1fa31587308fefc3bf52415feb7436fbb110b4bbc0c3eb8803a236b0293139c8",
-        "bytes": 7962
+        "sha256": "444a4d810186aede682ced88687cde9421e24cb16a036a472f04e0ea9490868f",
+        "bytes": 8694
       },
       {
         "path": "../../tsconfig.base.json",
@@ -758,7 +758,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "b5616c12a1703912a710d31a81e9cff29f8ae8a641725be3a00f416c39270dd3",
+        "sha256": "74dd20142de631e95494361febb1a9f4ae91fa5e82f820faadc40a92b510ecd5",
         "bytes": 179
       },
       {
@@ -808,8 +808,8 @@
       },
       {
         "path": "registry/swatches/_template/spec.json",
-        "sha256": "415d2924ba39631bd0a43a4b6af27a0c244b585a5dae51197f3b814bd26be719",
-        "bytes": 1306
+        "sha256": "107f1ec057bc5ae6a1c804f795650e3ba4105f44e75e58895d363ba54395722a",
+        "bytes": 1325
       },
       {
         "path": "registry/swatches/_template/yarn.json",
@@ -858,8 +858,8 @@
       },
       {
         "path": "scripts/kniterate-swatch-registry-check.ts",
-        "sha256": "d2f8739682713e863713250422bf32a1ea039b85a28d217fce4de12c4c62e6f4",
-        "bytes": 59707
+        "sha256": "63dc67f8142a097d934098b10365c919b5def5bcf11a39e34ee50a749e71be26",
+        "bytes": 59791
       },
       {
         "path": "scripts/kniterate-topology-oracle.ts",
@@ -1108,8 +1108,8 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "sha256": "2d824be15e7d0911e49af58bce5e0f66f62964ccc27191dba4a5dc6dd3216804",
-        "bytes": 47055
+        "sha256": "10d1d306ade95e81d068901e254fe65df58d3f094c4857e8c04cbee56190e23a",
+        "bytes": 47395
       },
       {
         "path": "src/knitout/kcode/parser.ts",
@@ -1578,8 +1578,8 @@
       },
       {
         "path": "test/knitout/kcode-machine-validator.test.ts",
-        "sha256": "3413ce2b90255044ba59c342e8059043231cd4efd122aff61769515e3c0bb170",
-        "bytes": 24336
+        "sha256": "dfcb4b8fed81e5cb225e706801d65fe48d944562d59b543e78bcc5f01e32cb67",
+        "bytes": 24382
       },
       {
         "path": "test/knitout/kcode-scheduled-differential.test.ts",
@@ -1613,8 +1613,8 @@
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
-        "sha256": "f29974c702a47cec8b57ee5376674c9f458a69840faa2ce10302355bb4dd84bd",
-        "bytes": 29874
+        "sha256": "c9c636c1fb897e805cdb0e8f7bcc9a74604b4b08e1aaa0ffbe21f2e3d2fb4551",
+        "bytes": 30538
       },
       {
         "path": "test/public-api.test.ts",

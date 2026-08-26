@@ -199,6 +199,40 @@ describe('MachineMovementView', () => {
     expect(markup).toContain('Scheduled-pass differential mismatch outside this pass.');
   });
 
+  it('uses product-boundary informational severity without mutating raw validation', () => {
+    const warningValidation: MachineValidationReportV1 = {
+      ...VALIDATION,
+      warningCount: 1,
+      diagnostics: [{
+        severity: 'warning',
+        class: 'operational-advisory',
+        rule: 'machine-trace.loop-stack-policy',
+        message: 'front:40 reaches 3 modeled loops.',
+        passIndex: 0,
+        sourceSpan: null,
+        line: null,
+        column: null,
+        endLine: null,
+        endColumn: null,
+      }],
+    };
+    const markup = renderToStaticMarkup(<MachineMovementView
+      scene={SCENE}
+      validation={warningValidation}
+      displayDiagnostics={[{
+        severity: 'info',
+        passIndex: 0,
+        rule: 'machine-trace.loop-stack-policy',
+        message: 'front:40 reaches 3 modeled loops.',
+      }]}
+      selectedPass={0}
+      onSelect={() => {}}
+    />);
+
+    expect(markup).toContain('1 informational KCode replay note on this pass');
+    expect(markup).not.toContain('KCode replay warning');
+  });
+
   it('renders transfer edges separately from split edges', () => {
     const firstPass = SCENE.passes[0]!;
     const transferScene: MachineSceneV1 = {

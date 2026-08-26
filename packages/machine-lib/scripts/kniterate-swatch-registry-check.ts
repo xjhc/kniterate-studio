@@ -30,6 +30,7 @@ import {
 } from './registry-support.js';
 
 const SHA256 = /^[a-f0-9]{64}$/;
+const GIT_COMMIT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const RFC3339 = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
 const OUTCOMES = ['clean', 'dropped', 'jammed', 'aborted', 'partial'] as const;
@@ -861,7 +862,7 @@ function validateEntry(root: string, id: string, currentCompilerFingerprint: str
   const placeholderScan = scanPlaceholdersBounded([spec, machine, yarn, run, request]);
   if (placeholderScan.placeholder) messages.push('entry still contains TODO/placeholder values');
   if (placeholderScan.limitMessage !== null) messages.push(placeholderScan.limitMessage);
-  if (typeof spec.emitterCommit !== 'string' || spec.emitterCommit.length < 7) messages.push('spec.emitterCommit is required');
+  if (typeof spec.emitterCommit !== 'string' || !GIT_COMMIT.test(spec.emitterCommit)) messages.push('spec.emitterCommit must be a full Git commit identity');
   if (typeof spec.sourceFingerprint !== 'string' || spec.sourceFingerprint.length === 0) messages.push('spec.sourceFingerprint is required');
   if (typeof spec.compilerFingerprint !== 'string' || !SHA256.test(spec.compilerFingerprint)) messages.push('spec.compilerFingerprint must be SHA-256');
   if (typeof spec.knitoutSha256 !== 'string' || !SHA256.test(spec.knitoutSha256)) messages.push('spec.knitoutSha256 must be SHA-256');

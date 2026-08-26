@@ -9,12 +9,14 @@ Kniterate before `1.0.0`. Build the immutable trial package with:
 pnpm release:trial
 ```
 
-The command writes `out/v1-knit-trial/`:
+The command first requires a clean Git worktree, including no untracked files,
+then writes `out/v1-knit-trial/`:
 
 - `project.kniterate-studio.json` and `chart.colorwork.json`
 - validated `blanket.k` and `blanket.kc`
-- `manifest.json` with the compile hash, SHA-256 identities, carrier map,
-  dimensions, frame, pass counts, and estimated time
+- `manifest.json` with the full generating commit, clean-worktree assertion,
+  compile hash, SHA-256 identities, carrier map, dimensions, frame, pass counts,
+  and estimated time
 - `OPERATOR-CHECKLIST.md` for the actual machine session
 
 The manifest range is expressed only in compiler/project coordinates. It is
@@ -37,7 +39,9 @@ tail; body parity and generated-file revalidation gate export.
    bind-off complete without manual source edits.
 3. Photograph front/back and all four boundaries; record rested dimensions and
    every machine stop or intervention.
-4. Run `pnpm release:register -- v1-four-color-blanket`, then complete
+4. From the same clean generating commit, run
+   `pnpm release:register -- v1-four-color-blanket`. Registration refuses a
+   different commit or dirty tree. Then complete
    `machine.json`, `yarn.json`, structured `run.json`, and the narrative
    `outcome.md`. A failed or interrupted run remains valid history but is not
    promotable.

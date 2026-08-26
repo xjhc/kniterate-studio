@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -11,6 +12,33 @@ import { validateKnitoutProgram } from '../packages/machine-lib/src/validators/k
 import { computeCompilerFingerprint, sha256Bytes } from '../packages/machine-lib/scripts/registry-support.js';
 
 export const V1_KNIT_TRIAL_DESTINATION = resolve('out/v1-knit-trial');
+
+const GIT_COMMIT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
+
+export interface V1KnitTrialReleaseSource {
+  readonly commit: string;
+  readonly worktree: 'clean';
+}
+
+type ReadGit = (args: readonly string[]) => string;
+
+/** Resolve the exact source commit and refuse release packaging from any dirty
+ * tree, including untracked files. Internal compile/check helpers remain pure
+ * and bind this evidence only when producing an operator-facing package. */
+export function readCleanV1KnitTrialReleaseSource(
+  readGit: ReadGit = (args) => execFileSync('git', [...args], {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }),
+): V1KnitTrialReleaseSource {
+  const commit = readGit(['rev-parse', 'HEAD']).trim();
+  if (!GIT_COMMIT.test(commit)) throw new Error(`release trial requires a full Git commit identity; received ${JSON.stringify(commit)}`);
+  const status = readGit(['status', '--porcelain=v1', '--untracked-files=all']).trimEnd();
+  if (status.length > 0) {
+    throw new Error(`release trial requires a clean working tree, including no untracked files:\n${status}`);
+  }
+  return { commit, worktree: 'clean' };
+}
 
 const palette = [
   { id: 'natural', name: 'Natural worsted', hex: '#F1EDE3' },
@@ -132,8 +160,23 @@ export function compileCurrentV1KnitTrial() {
 
 export type V1KnitTrialCompileResult = ReturnType<typeof compileCurrentV1KnitTrial>;
 
-export function writeV1KnitTrial(
+export function bindV1KnitTrialReleaseSource(
   result: V1KnitTrialCompileResult,
+  releaseSource: V1KnitTrialReleaseSource,
+) {
+  return {
+    ...result,
+    manifest: {
+      ...result.manifest,
+      releaseSource,
+    },
+  };
+}
+
+export type V1KnitTrialReleaseResult = ReturnType<typeof bindV1KnitTrialReleaseSource>;
+
+export function writeV1KnitTrial(
+  result: V1KnitTrialReleaseResult,
   destination = V1_KNIT_TRIAL_DESTINATION,
 ): void {
   rmSync(destination, { recursive: true, force: true });
@@ -147,9 +190,15 @@ export function writeV1KnitTrial(
 }
 
 function main(): void {
-  const result = compileCurrentV1KnitTrial();
+  const initialSource = readCleanV1KnitTrialReleaseSource();
+  const compiled = compileCurrentV1KnitTrial();
+  const releaseSource = readCleanV1KnitTrialReleaseSource();
+  if (releaseSource.commit !== initialSource.commit) {
+    throw new Error(`release trial source changed during compilation: ${initialSource.commit} -> ${releaseSource.commit}`);
+  }
+  const result = bindV1KnitTrialReleaseSource(compiled, releaseSource);
   writeV1KnitTrial(result);
-  process.stdout.write(`v1 physical trial ready: ${V1_KNIT_TRIAL_DESTINATION}\n${JSON.stringify(result.manifest.output, null, 2)}\n`);
+  process.stdout.write(`v1 physical trial ready from ${releaseSource.commit}: ${V1_KNIT_TRIAL_DESTINATION}\n${JSON.stringify(result.manifest.output, null, 2)}\n`);
 }
 
 const invokedPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : null;

@@ -347,7 +347,7 @@ describe('strict KCode machine document engine', () => {
     expect(document.diagnostics.length).toBeLessThan(520);
     expect(document.diagnostics).toContainEqual(expect.objectContaining({
       severity: 'warning',
-      rule: 'machine-trace.diagnostic-summary',
+      rule: 'machine-trace.drop-empty',
       occurrences: 24_788,
       rawMessage: expect.stringContaining('omitted 24788 additional warning findings'),
     }));
@@ -682,6 +682,41 @@ describe('Knitout machine document behavior', () => {
       label: 'Surface-proven (imported)',
     });
     expect(document.verdict.annotation).toContain('non-blocking loop-stack observation');
+  });
+
+  it('keeps rule-specific truncated depth-three observations informational', () => {
+    const operations = Array.from({ length: 513 }, () => [
+      'tuck + f40 2',
+      'tuck - f40 2',
+      'tuck + f40 2',
+      'drop f40',
+    ]).flat();
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      'x-speed-number 300',
+      'x-roller-advance 450',
+      'in 2',
+      ...operations,
+      'out 2',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('many-three-stacks.k', source);
+    const summaries = document.diagnostics.filter((finding) =>
+      finding.rule === 'machine-trace.loop-stack-policy'
+      && finding.passIndex === null);
+
+    expect(summaries).toContainEqual(expect.objectContaining({
+      severity: 'info',
+      occurrences: 1,
+      rawMessage: expect.stringContaining('omitted 1 additional warning finding'),
+    }));
+    expect(document.stats).toMatchObject({ infoCount: 513, warningCount: 0, errorCount: 0 });
+    expect(document.verdict).toMatchObject({
+      state: 'surface',
+      label: 'Surface-proven (imported)',
+    });
   });
 
   it('pins every reference-corpus import verdict to the documented policy', { timeout: 30_000 }, () => {

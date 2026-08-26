@@ -85,8 +85,10 @@ schema.
   (no project context to accept a warning). The sole evidence-backed V1
   reclassification is a depth-three loop-stack observation: it remains a
   conservative validator warning, but is presented as non-blocking information
-  for foreign imports because it occurs in five vendor-validated references.
-  Depth four remains an error. Otherwise clean ⇒ Surface-proven (imported).
+  for foreign imports because it occurs in five captured reference fixtures.
+  This establishes observed corpus behavior, not who produced the bytes or a
+  physical loop-stack limit. Depth four remains an error. Otherwise clean ⇒
+  Surface-proven (imported).
   Imported bytes cannot become Knit-proven through caller-supplied registry
   metadata; that requires a future trusted verification seam.
 - **Authored** (`engine.ts::resolveAuthoredVerdict`): compile or output error ⇒ Blocked; clean ⇒
@@ -103,8 +105,9 @@ schema.
 
 `1.0.0-rc.1` → `1.0.0` is gated **only** by a successful real-Kniterate run
 (`V1-PHYSICAL-TRIAL.md`). Registration, hash checks, exact-artifact Knit-proven,
-and `release:physical-check` are implemented. **Do not tag `1.0.0` before the
-machine run succeeds.**
+and `release:physical-check` are implemented. `release:trial` requires a clean
+tree and records its full generating commit; registration requires that same
+clean commit. **Do not tag `1.0.0` before the machine run succeeds.**
 
 ## Map of the docs
 
