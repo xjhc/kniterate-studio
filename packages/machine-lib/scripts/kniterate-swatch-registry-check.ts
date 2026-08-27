@@ -28,7 +28,7 @@ import {
   type CurrentRegistryMachineEvidence,
   sha256File,
 } from './registry-support.js';
-import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../src/knitout/kcode/machine-profile.js';
+import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../src/knitout/kcode/machine-profile.js';
 import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js';
 import { validateKCodeMachineTrace } from '../src/knitout/kcode/machine-validator.js';
 import { parseKCodeDocument } from '../src/knitout/kcode/parser.js';
@@ -119,21 +119,21 @@ function readJson(path: string): unknown {
 
 function deriveCommandCoverage(
   kcode: string,
-  messages: string[],
+  currentnessMessages: string[],
 ): Omit<ControllerObservedCoverage, 'machineSerial' | 'controlSoftwareVersion' | 'kcodeSha256'> | null {
   const parsed = parseKCodeDocument(kcode, {
-    profile: KNITERATE_7GG_KCODE_PROFILE_V1,
-    dialect: KNITERATE_7GG_KCODE_PROFILE_V1.dialect,
+    profile: KNITERATE_7GG_KCODE_PROFILE_V2,
+    dialect: KNITERATE_7GG_KCODE_PROFILE_V2.dialect,
     strict: true,
   });
   if (!parsed.ok) {
-    messages.push(`out.kc fails strict command-legality parsing: ${parsed.diagnostics.slice(0, 8).map((diagnostic) => diagnostic.rule).join(', ')}`);
+    currentnessMessages.push(`out.kc is historical under the current profile because strict command-legality parsing fails: ${parsed.diagnostics.slice(0, 8).map((diagnostic) => diagnostic.rule).join(', ')}`);
     return null;
   }
-  const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1);
-  const validation = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V1);
+  const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
+  const validation = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2);
   if (!validation.ok || validation.profileConformance !== 'conformant') {
-    messages.push(`out.kc fails command-legality validation: ${validation.diagnostics.slice(0, 8).map((diagnostic) => diagnostic.rule).join(', ')}`);
+    currentnessMessages.push(`out.kc is historical under the current profile because command-legality validation fails: ${validation.diagnostics.slice(0, 8).map((diagnostic) => diagnostic.rule).join(', ')}`);
     return null;
   }
   const combinations = [...new Map(trace.passes.map((pass) => {
@@ -953,7 +953,7 @@ function validateEntry(root: string, id: string, currentCompilerFingerprint: str
   if (resources.readable.has('out.k') && typeof spec.knitoutSha256 === 'string' && sha256File(outK) !== spec.knitoutSha256) messages.push('spec.knitoutSha256 does not match out.k');
   if (resources.readable.has('out.kc') && typeof spec.kcodeSha256 === 'string' && sha256File(outKc) !== spec.kcodeSha256) messages.push('spec.kcodeSha256 does not match out.kc');
   const commandCoverage = resources.readable.has('out.kc')
-    ? deriveCommandCoverage(readFileSync(outKc, 'utf8'), messages)
+    ? deriveCommandCoverage(readFileSync(outKc, 'utf8'), currentnessMessages)
     : null;
 
   const entryCompilerFingerprint = typeof spec.compilerFingerprint === 'string' ? spec.compilerFingerprint : '';
@@ -1059,10 +1059,10 @@ function aggregateControllerCoverage(results: readonly SwatchEntryResult[]) {
     status: machines.length === 0 ? 'pending' : 'exact-artifact-observed',
     evidenceCount: observed.length,
     profile: {
-      id: KNITERATE_7GG_KCODE_PROFILE_V1.profileId,
-      version: KNITERATE_7GG_KCODE_PROFILE_V1.profileVersion,
-      sha256: sha256Text(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1)),
-      contractSha256: sha256Text(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1.operations)),
+      id: KNITERATE_7GG_KCODE_PROFILE_V2.profileId,
+      version: KNITERATE_7GG_KCODE_PROFILE_V2.profileVersion,
+      sha256: sha256Text(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V2)),
+      contractSha256: sha256Text(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V2.operations)),
     },
     byMachine,
     note: 'Coverage is keyed by machine serial and control-software version and derived only from exact clean, current, non-deviated Knit-proven artifacts; software validation alone never contributes controller-observed evidence.',

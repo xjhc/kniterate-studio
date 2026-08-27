@@ -6,13 +6,13 @@ proves, how it proves it, and where the evidence boundary remains.
 
 ## Fixed target and pipeline
 
-The implemented target is the versioned `kniterate-7gg-kcode@1` profile: a
+The implemented target is the versioned `kniterate-7gg-kcode@2` profile: a
 252-needle-per-bed, six-carrier Kniterate contract. Its operation decision table
 is part of the profile: `Kn-Kn`, `Tu-Tu`, `Kn-Tu`, `Tu-Kn`, `Tr-Rl`, `Tr-Rr`,
 `Rl-Tr`, and `Rr-Tr`, with explicit direction, bed action, carrier-zero,
 carrier-1–6, empty-selection, transfer-source, and rack-target behavior. The
 parser, projector, and validator consume that same table. The public parser keeps an
-explicit dialect label for provenance. Under profile V1, `app` and
+explicit dialect label for provenance. Under the current profile, `app` and
 `knitout-vendor` are semantic aliases with the same marker-free raster mapping;
 Studio therefore applies the canonical `knitout-vendor` label instead of asking
 the user to choose between behaviorally identical options.
@@ -56,7 +56,7 @@ fails unless the tracked receipt already has the exact expected bytes. The full
 physical-registry and conformance-report checks.
 
 The command runs the exact machine-library and Studio proof-test lists, both
-strict TypeScript checks, the KCode-native refusal corpus, the blocking-rule
+strict TypeScript checks, the KCode-native refusal corpus, the named-rule
 witness ledger, source mutation testing, a Studio production build, and audits every reference
 KCode file, and writes a deterministic receipt to:
 
@@ -210,7 +210,7 @@ Software proof does not turn encoded commands into a physical-knit claim.
    built behind the same scheduled-pass contract and differentially tested
    against both the pin and captured references.
 6. **Dialect provenance is external metadata.** The file format does not carry a
-   reliable origin tag. Profile V1's two origin labels currently have identical
+   reliable origin tag. The current profile's two origin labels currently have identical
    movement semantics, so Studio canonicalizes the label. A signed or sidecar
    artifact manifest would still be required to establish who produced bytes
    created outside Studio.
@@ -219,7 +219,7 @@ Software proof does not turn encoded commands into a physical-knit claim.
    defines the serialized `Tr`/`Rr`/`Rl` modes, while the
    [machine manual](https://support.kniterate.com/hc/en-us/article_attachments/360009817198)
    describes bed-transfer direction differently.
-   Profile V1 explicitly makes the official KCode specification authoritative
+   Profile V2 explicitly makes the official KCode specification authoritative
    for serialized logical commands. It does not use either document to infer a
    controller-observed physical direction: that interpretation remains
    unresolved and is carried as an operational-assurance limitation.

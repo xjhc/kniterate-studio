@@ -130,7 +130,8 @@ export const KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1: LoopStackSoftwarePolicyV1 
 export interface KCodeMachineProfileV1 {
   readonly schemaVersion: 1
   readonly profileId: string
-  readonly profileVersion: 1
+  /** Version of the accepted command language, independent of this schema's V1 shape. */
+  readonly profileVersion: 1 | 2
   readonly displayName: string
   /** Dialect emitted by the pinned Knitout backend. */
   readonly dialect: KCodeDialect
@@ -339,15 +340,15 @@ export function kcodeOperationContractV1(
   operation: string,
 ): KCodeOperationContractV1 | null {
   if (!Object.prototype.hasOwnProperty.call(profile.operations, operation)) return null
-  return profile.operations[operation as KCodeOperationV1]
+  return profile.operations[operation as KCodeOperationV1] ?? null
 }
 
-/** Fixed V1 target. Bump `profileVersion` when any accepted structural shape,
- * dialect rule, or evidence-backed target range changes. */
-export const KNITERATE_7GG_KCODE_PROFILE_V1: KCodeMachineProfileV1 = {
+/** Current fixed target. V2 narrows stitch selectors to the official KCode 1.0
+ * alphabet. V1 remains exported below for exact historical intake. */
+export const KNITERATE_7GG_KCODE_PROFILE_V2: KCodeMachineProfileV1 = {
   schemaVersion: 1,
   profileId: 'kniterate-7gg-kcode',
-  profileVersion: 1,
+  profileVersion: 2,
   displayName: 'Kniterate 7gg KCode (252 needles per bed)',
   dialect: 'knitout-vendor',
   supportedDialects: ['app', 'knitout-vendor'],
@@ -361,7 +362,7 @@ export const KNITERATE_7GG_KCODE_PROFILE_V1: KCodeMachineProfileV1 = {
       serializedSpecification: evidence(
         'official-documented',
         [OFFICIAL_KCODE_SPECS],
-        'The official KCode 1.0 specification is authoritative for the logical Tr/Rr/Rl token language accepted by profile V1.',
+        'The official KCode 1.0 specification is authoritative for the logical Tr/Rr/Rl token language accepted by profile V2.',
       ),
       physicalMachineManual: evidence(
         'unverified',
@@ -482,9 +483,39 @@ export const KNITERATE_7GG_KCODE_PROFILE_V1: KCodeMachineProfileV1 = {
   },
 }
 
+/**
+ * Historical profile V1 preserves the previously accepted 0-9/A-Z stitch
+ * selector alphabet. Studio does not emit against this profile; it exists so
+ * stored V1 evidence and foreign artifacts retain their original language
+ * identity instead of being silently reinterpreted by V2.
+ */
+export const KNITERATE_7GG_KCODE_PROFILE_V1: KCodeMachineProfileV1 = {
+  ...KNITERATE_7GG_KCODE_PROFILE_V2,
+  profileVersion: 1,
+  stitchSelectors: {
+    documentedBounds: {
+      lower: bound(0, 'official-documented', [OFFICIAL_KCODE_SPECS]),
+      upper: bound(15, 'official-documented', [OFFICIAL_KCODE_SPECS]),
+    },
+    integerOnly: true,
+    encoding: {
+      alphabet: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      encodableBounds: {
+        lower: bound(0, 'pinned-implementation', [PINNED_BACKEND]),
+        upper: bound(35, 'pinned-implementation', [PINNED_BACKEND]),
+      },
+      evidence: evidence(
+        'pinned-implementation',
+        [PINNED_BACKEND],
+        'Legacy V1 preserves the pinned backend alphabet; selectors above F remain outside documented KCode 1.0 levels.',
+      ),
+    },
+  },
+}
+
 /** Convert an index in a marker-free standard payload into its KCode column. */
 export function basePayloadIndexToKCodeColumn(index: number): number {
-  const { leftPaddingColumns, standardBasePayloadColumns } = KNITERATE_7GG_KCODE_PROFILE_V1.raster
+  const { leftPaddingColumns, standardBasePayloadColumns } = KNITERATE_7GG_KCODE_PROFILE_V2.raster
   if (!Number.isInteger(index) || index < 0 || index >= standardBasePayloadColumns) {
     throw new RangeError(`KCode payload index must be an integer in 0..${standardBasePayloadColumns - 1}`)
   }
@@ -493,11 +524,11 @@ export function basePayloadIndexToKCodeColumn(index: number): number {
 
 /** Convert a standard KCode needle-domain column into a marker-free payload index. */
 export function kcodeColumnToBasePayloadIndex(column: number): number {
-  const { min, max } = KNITERATE_7GG_KCODE_PROFILE_V1.raster.kcodeColumnRange
+  const { min, max } = KNITERATE_7GG_KCODE_PROFILE_V2.raster.kcodeColumnRange
   if (!Number.isInteger(column) || column < min || column > max) {
     throw new RangeError(`KCode column must be an integer in ${min}..${max}`)
   }
-  return column - KNITERATE_7GG_KCODE_PROFILE_V1.coordinates.payloadIndexToKCodeColumnOffset
+  return column - KNITERATE_7GG_KCODE_PROFILE_V2.coordinates.payloadIndexToKCodeColumnOffset
 }
 
 /** Normalize a marker-free KCode column into the dialect-independent trace frame. */
@@ -505,6 +536,6 @@ export function kcodeColumnToTraceCoordinate(
   column: number,
   dialect: KCodeDialect,
 ): number {
-  const contract = KNITERATE_7GG_KCODE_PROFILE_V1.dialects[dialect]
+  const contract = KNITERATE_7GG_KCODE_PROFILE_V2.dialects[dialect]
   return column + contract.markerFreeTraceOffset
 }

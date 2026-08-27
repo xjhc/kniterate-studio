@@ -6,10 +6,10 @@ import {
   emitKCodeDocumentBytes,
   parseKCodeBytes,
 } from '../../src/knitout/kcode/bytes.js'
-import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../../src/knitout/kcode/machine-profile.js'
+import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../../src/knitout/kcode/machine-profile.js'
 
 const options = {
-  profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+  profile: KNITERATE_7GG_KCODE_PROFILE_V2,
   dialect: 'knitout-vendor' as const,
   strict: true,
 }

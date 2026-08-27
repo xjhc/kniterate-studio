@@ -1,7 +1,8 @@
 import { browserAuthoredKnitoutToKCode } from '@kniterate-studio/machine-lib/browser-converter';
 import {
-  KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
   compareScheduledPassesToMachineTrace,
+  isKCodeCommandLegalityExportEligible,
   parseKCodeDocument,
   parseKnitoutProgram,
   projectKCodeMachineTrace,
@@ -246,17 +247,17 @@ export async function compileKCodeArtifact(
 
   const parsedKnitout = parseKnitoutProgram(request.knitoutText, { resourceProfile: 'authored-v1' });
   const parsed = parseKCodeDocument(converted.kcode, {
-    profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+    profile: KNITERATE_7GG_KCODE_PROFILE_V2,
     dialect: 'knitout-vendor',
     strict: true,
     resourceProfile: 'authored-v1',
   });
   const trace = parsed.ok
-    ? projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1)
+    ? projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2)
     : null;
   const validation = trace === null
     ? null
-    : validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V1);
+    : validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2);
   const scene = trace === null ? null : projectMachineScene(trace);
   const differential = trace === null
     ? null
@@ -308,10 +309,8 @@ export async function compileKCodeArtifact(
     passLines,
     rowLines,
     rowPasses,
-    ok: parsed.ok
+    ok: isKCodeCommandLegalityExportEligible({ parseOk: parsed.ok, validation })
       && parsedKnitout.issues.length === 0
-      && validation?.ok === true
-      && validation.profileConformance === 'conformant'
       && differential?.ok === true
       && provenance.ok
       && messages.every((message) => message.severity !== 'error'),

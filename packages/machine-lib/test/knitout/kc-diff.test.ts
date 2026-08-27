@@ -7,7 +7,7 @@ import {
   renderKCodeMachineTraceWindow,
   renderKCodeMachineTraceWindowFromTraces,
 } from '../../src/knitout/kc-diff.js';
-import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../../src/knitout/kcode/machine-profile.js';
+import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../../src/knitout/kcode/machine-profile.js';
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js';
 import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js';
 import { knitoutToKCodeWithTrace } from '../../src/knitout/kniterate/to-kcode.js';
@@ -68,7 +68,7 @@ describe('diffKc', () => {
 });
 
 const DIALECT = 'knitout-vendor' as const;
-const PROFILE = KNITERATE_7GG_KCODE_PROFILE_V1;
+const PROFILE = KNITERATE_7GG_KCODE_PROFILE_V2;
 const KNITOUT = [
   ';!knitout-2',
   ';;Machine: kniterate',

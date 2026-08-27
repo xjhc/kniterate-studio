@@ -4,14 +4,17 @@ import { describe, expect, it } from 'vitest'
 
 import { emitKCodeDocumentBytes, parseKCodeBytes as parseKCodeBytesImpl } from '../../src/knitout/kcode/bytes.js'
 import { emitKCodeDocument } from '../../src/knitout/kcode/emitter.js'
-import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../../src/knitout/kcode/machine-profile.js'
+import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../../src/knitout/kcode/machine-profile.js'
 import {
   KCODE_RESOURCE_LIMITS_V1,
   MAX_KCODE_SOURCE_CODE_UNITS,
   parseKCodeDocument as parseKCodeDocumentImpl,
 } from '../../src/knitout/kcode/parser.js'
 import type { KCodeDiagnosticRule } from '../../src/knitout/kcode/types.js'
-import { recordKCodeRuntimeRules } from '../../scripts/kcode-rule-runtime-ledger.js'
+import {
+  recordKCodeRuntimeRules,
+  recordKCodeTargetedRuntimeWitness,
+} from '../../scripts/kcode-rule-runtime-ledger.js'
 
 const WITNESS_SOURCE = 'test/knitout/kcode-document-adversarial.test.ts'
 
@@ -22,7 +25,7 @@ const parseKCodeDocument = (
   recordKCodeRuntimeRules(
     'raw-kcode-parser',
     WITNESS_SOURCE,
-    result.diagnostics.map((diagnostic) => diagnostic.rule),
+    result.diagnostics,
   )
   return result
 }
@@ -34,27 +37,27 @@ const parseKCodeBytes = (
   recordKCodeRuntimeRules(
     'raw-kcode-parser',
     WITNESS_SOURCE,
-    result.diagnostics.map((diagnostic) => diagnostic.rule),
+    result.diagnostics,
   )
   return result
 }
 
 const STRICT_VENDOR_OPTIONS = {
-  profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+  profile: KNITERATE_7GG_KCODE_PROFILE_V2,
   dialect: 'knitout-vendor' as const,
   strict: true,
 }
 
-const BASE_WIDTH = KNITERATE_7GG_KCODE_PROFILE_V1.raster.standardBasePayloadColumns
-const LEFT_PADDING = KNITERATE_7GG_KCODE_PROFILE_V1.raster.leftPaddingColumns
-const NEEDLE_COLUMNS = KNITERATE_7GG_KCODE_PROFILE_V1.raster.standardNeedleColumns
+const BASE_WIDTH = KNITERATE_7GG_KCODE_PROFILE_V2.raster.standardBasePayloadColumns
+const LEFT_PADDING = KNITERATE_7GG_KCODE_PROFILE_V2.raster.leftPaddingColumns
+const NEEDLE_COLUMNS = KNITERATE_7GG_KCODE_PROFILE_V2.raster.standardNeedleColumns
 
 function markerFreeBed(selected: readonly number[] = [100]): string {
   const needles = Array.from({ length: NEEDLE_COLUMNS }, () => '_')
   for (const needle of selected) needles[needle] = '-'
   return '.'.repeat(LEFT_PADDING)
     + needles.join('')
-    + '.'.repeat(KNITERATE_7GG_KCODE_PROFILE_V1.raster.rightPaddingColumns)
+    + '.'.repeat(KNITERATE_7GG_KCODE_PROFILE_V2.raster.rightPaddingColumns)
 }
 
 function decorateBed(base: string, carrier: '0' | '2' = '2'): string {
@@ -143,6 +146,15 @@ function expectRejected(source: string, rules: readonly KCodeDiagnosticRule[]): 
   expect(result.ok).toBe(false)
   expect(result.diagnostics.some((diagnostic) => diagnostic.severity === 'error')).toBe(true)
   expect(result.diagnostics.map((diagnostic) => diagnostic.rule)).toEqual(expect.arrayContaining(rules))
+  for (const rule of rules) {
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'raw-kcode-parser',
+      sourcePath: WITNESS_SOURCE,
+      caseId: `${rule}:${contractDigest(source).slice(0, 16)}`,
+      expectedRule: rule,
+      diagnostics: result.diagnostics,
+    })
+  }
   expect(emitKCodeDocument(result.document)).toBe(source)
   expect(parseContract(result)).toMatchSnapshot()
 }
@@ -264,6 +276,13 @@ describe('strict KCode adversarial rail', () => {
         },
       }],
     })
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'raw-kcode-parser',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'resource-limit:source-code-units',
+      expectedRule: 'kcode.resource-limit',
+      diagnostics: overResult.diagnostics,
+    })
 
     const exactSourceLimit = `//${'X'.repeat(MAX_KCODE_SOURCE_CODE_UNITS - 2)}`
     expect(parseKCodeDocument(exactSourceLimit, STRICT_VENDOR_OPTIONS)).toMatchObject({
@@ -380,6 +399,13 @@ describe('strict KCode adversarial rail', () => {
 
     expect(summary.span.start.offset).toBeLessThan(1_000)
     expect(summary.span.end.offset).toBeGreaterThan(source.length - 1_000)
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'raw-kcode-parser',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'diagnostic-summary:global-extrema',
+      expectedRule: 'kcode.diagnostic-summary',
+      diagnostics: result.diagnostics,
+    })
   })
 
   it.each([
@@ -656,12 +682,25 @@ describe('strict KCode adversarial rail', () => {
     }))
     expect(result.diagnostics.length).toBeLessThan(10)
     expect(Math.max(...result.diagnostics.map((diagnostic) => diagnostic.message.length))).toBeLessThan(512)
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'raw-kcode-parser',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'source-byte-summary:grouped-invalid-bytes',
+      expectedRule: 'kcode.source-byte-summary',
+      diagnostics: result.diagnostics,
+    })
     expect(result.document.records).toHaveLength(1)
     expect(result.document.records[0]).toMatchObject({ raw: source, lineEnding: '' })
     expect(result.document.records.map((record) => record.raw + record.lineEnding).join('')).toBe(source)
     expect(emitKCodeDocument(result.document)).toBe(source)
     expect(Buffer.compare(Buffer.from(emitKCodeDocumentBytes(result.document)), Buffer.from(bytes))).toBe(0)
     expect(parseKCodeBytes(bytes, STRICT_VENDOR_OPTIONS).diagnostics).toEqual(result.diagnostics)
+  })
+
+  it('zero-pads grouped low control-code diagnostics deterministically', () => {
+    const result = parseKCodeDocument('\u0001\u0001', STRICT_VENDOR_OPTIONS)
+    expect(result.diagnostics.find((diagnostic) => diagnostic.rule === 'kcode.source-byte')?.message)
+      .toBe('KCode source must use printable 7-bit ASCII (plus tab and line endings); found 2 consecutive invalid code units beginning with 0x01.')
   })
 
   it('refuses oversized byte input before one-byte decoding or copying', () => {
@@ -797,6 +836,13 @@ describe('strict KCode adversarial rail', () => {
     expect(first.diagnostics).toEqual(second.diagnostics)
     expect(emitKCodeDocument(first.document)).toBe(source)
     expect(contractDigest(first.diagnostics)).toMatchSnapshot()
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'raw-kcode-parser',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'diagnostic-summary:record-cap',
+      expectedRule: 'kcode.diagnostic-summary',
+      diagnostics: first.diagnostics,
+    })
 
     const singular = parseKCodeDocument('X\n'.repeat(510), STRICT_VENDOR_OPTIONS)
     expect(singular.diagnostics.find((diagnostic) =>

@@ -21,7 +21,7 @@ import {
 } from 'node:fs'
 import { dirname, relative, resolve } from 'node:path'
 
-import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../src/knitout/kcode/machine-profile.js'
+import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../src/knitout/kcode/machine-profile.js'
 import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js'
 import { emitKCodeDocumentBytes, parseKCodeBytes } from '../src/knitout/kcode/bytes.js'
 import { validateKCodeMachineTrace } from '../src/knitout/kcode/machine-validator.js'
@@ -40,6 +40,7 @@ const PROOF_TESTS = [
   'test/browser-kcode-converter.test.ts',
   'test/knitout/browser-converter-source.test.ts',
   'test/knitout/kcode-machine-profile.test.ts',
+  'test/knitout/kcode-mutation-policy.test.ts',
   'test/knitout/strict-kcode-document.test.ts',
   'test/knitout/kcode-byte-roundtrip.test.ts',
   'test/knitout/kcode-document-adversarial.test.ts',
@@ -78,6 +79,7 @@ const CONTRACT_SOURCES = [
   'src/knitout/kcode/bytes.ts',
   'src/knitout/kcode/machine-trace.ts',
   'src/knitout/kcode/machine-validator.ts',
+  'src/knitout/kcode/export-eligibility.ts',
   'src/knitout/kcode/machine-scene.ts',
   'src/knitout/kcode/scheduled-trace-diff.ts',
   'src/knitout/kc-diff.ts',
@@ -159,6 +161,7 @@ function collectFingerprintSources(): string[] {
     ...PROOF_HARNESS_SOURCES,
     ...listFilesRecursively('src'),
     ...listFilesRecursively('scripts'),
+    ...listFilesRecursively('test'),
     ...listFilesRecursively('../../apps/studio/src'),
     ...listFilesRecursively('../chart-contract/src'),
     ...listFilesRecursively('../colorwork-core/src'),
@@ -190,7 +193,7 @@ function runGate(
 }
 
 function collectReferenceCorpus() {
-  // KCode does not encode origin. Profile V1's origin labels share one exact
+  // KCode does not encode origin. The current profile's origin labels share one exact
   // marker-free mapping, so the proof uses Studio's canonical label without
   // claiming that the fixture bytes establish who produced them.
   const corpusDialect = 'knitout-vendor' as const
@@ -202,7 +205,7 @@ function collectReferenceCorpus() {
       const path = resolve(referenceRoot, name)
       const bytes = readFileSync(path)
       const parsed = parseKCodeBytes(bytes, {
-        profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+        profile: KNITERATE_7GG_KCODE_PROFILE_V2,
         dialect: corpusDialect,
         strict: true,
       })
@@ -215,7 +218,7 @@ function collectReferenceCorpus() {
       }
       const trace = projectKCodeMachineTrace(
         parsed.document,
-        KNITERATE_7GG_KCODE_PROFILE_V1,
+        KNITERATE_7GG_KCODE_PROFILE_V2,
       )
       const emitted = emitKCodeDocumentBytes(parsed.document)
       if (!Buffer.from(emitted).equals(bytes)) {
@@ -223,7 +226,7 @@ function collectReferenceCorpus() {
       }
       const validation = validateKCodeMachineTrace(
         trace,
-        KNITERATE_7GG_KCODE_PROFILE_V1,
+        KNITERATE_7GG_KCODE_PROFILE_V2,
       )
       if (!validation.ok) {
         const summary = validation.diagnostics
@@ -318,6 +321,9 @@ function collectMutationEvidence() {
     readonly diagnosticProseExclusionsSha256?: unknown
     readonly equivalentMutantSuppressions?: unknown
     readonly equivalentMutantSuppressionsSha256?: unknown
+    readonly globallyExcludedMutations?: unknown
+    readonly diagnosticProseDirectiveAudit?: unknown
+    readonly misScopedDiagnosticProseExclusions?: unknown
   }
   if (receipt.ok !== true) throw new Error('source-mutation receipt is not successful')
   return {
@@ -329,6 +335,9 @@ function collectMutationEvidence() {
     diagnosticProseExclusionsSha256: receipt.diagnosticProseExclusionsSha256,
     equivalentMutantSuppressions: receipt.equivalentMutantSuppressions,
     equivalentMutantSuppressionsSha256: receipt.equivalentMutantSuppressionsSha256,
+    globallyExcludedMutations: receipt.globallyExcludedMutations,
+    diagnosticProseDirectiveAudit: receipt.diagnosticProseDirectiveAudit,
+    misScopedDiagnosticProseExclusions: receipt.misScopedDiagnosticProseExclusions,
   }
 }
 
@@ -368,7 +377,7 @@ function main(): void {
     runGate('physical-registry-manifest-current', ['kniterate:swatches:check']),
     runGate('known-bad-refusal-corpus', ['kniterate:refusals']),
     runGate('kcode-native-command-refusal-corpus', ['kniterate:kcode-refusals']),
-    runGate('blocking-rule-witness-ledger', ['kniterate:kcode-rule-coverage']),
+    runGate('named-rule-witness-ledger', ['kniterate:kcode-rule-coverage']),
     runGate('deterministic-kcode-proof-tests', [
       'exec', 'vitest', 'run', ...PROOF_TESTS,
     ]),
@@ -389,7 +398,7 @@ function main(): void {
   ]
   const corpus = capture('reference-corpus', collectReferenceCorpus)
   const mutationEvidence = capture('source-mutation-proof', collectMutationEvidence)
-  const ruleCoverage = capture('blocking-rule-witness-ledger', collectKCodeRuleCoverage)
+  const ruleCoverage = capture('named-rule-witness-ledger', collectKCodeRuleCoverage)
   const contractAfterGates = capture('proof-input-fingerprint-after-gates', collectContractFingerprint)
   if (
     contractBeforeGates !== null
@@ -413,18 +422,18 @@ function main(): void {
     schemaVersion: 2,
     verdict: blocked ? 'blocked' : 'software-proven',
     profile: {
-      id: KNITERATE_7GG_KCODE_PROFILE_V1.profileId,
-      version: KNITERATE_7GG_KCODE_PROFILE_V1.profileVersion,
-      gauge: KNITERATE_7GG_KCODE_PROFILE_V1.machine.gauge,
-      needlesPerBed: KNITERATE_7GG_KCODE_PROFILE_V1.machine.needlesPerBed,
-      emittedDialect: KNITERATE_7GG_KCODE_PROFILE_V1.dialect,
+      id: KNITERATE_7GG_KCODE_PROFILE_V2.profileId,
+      version: KNITERATE_7GG_KCODE_PROFILE_V2.profileVersion,
+      gauge: KNITERATE_7GG_KCODE_PROFILE_V2.machine.gauge,
+      needlesPerBed: KNITERATE_7GG_KCODE_PROFILE_V2.machine.needlesPerBed,
+      emittedDialect: KNITERATE_7GG_KCODE_PROFILE_V2.dialect,
     },
     claims: [
       'strict-lossless-kcode-byte-roundtrip',
       'deterministic-pinned-backend-lowering',
       'machine-executable-scheduled-pass-to-machine-trace-differential',
       'kcode-native-loop-and-kinematic-validation',
-      'profile-command-legality-v1',
+      'profile-command-legality-v2',
       'independent-1904-case-command-legality-matrix',
       'kcode-native-invalid-command-refusal-corpus',
       'source-mutation-complete-for-command-proof-rail',
@@ -452,10 +461,10 @@ function main(): void {
       rackValues: 17,
       kcodeNativeRefusalCases: 10,
       oracle: 'test/knitout/kcode-legality-spec.ts',
-      contractSha256: sha256(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1.operations)),
+      contractSha256: sha256(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V2.operations)),
       oracleSha256: sha256(readFileSync(resolve(process.cwd(), 'test/knitout/kcode-legality-spec.ts'))),
       ruleCoverage,
-      profileSha256: sha256(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1)),
+      profileSha256: sha256(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V2)),
     },
     proofTests: [
       ...PROOF_TESTS,

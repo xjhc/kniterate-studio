@@ -4,11 +4,14 @@ import { describe, expect, it } from 'vitest'
 
 import { emitKCodeDocument } from '../../src/knitout/kcode/emitter.js'
 import {
-  KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
   type KCodeDialect,
 } from '../../src/knitout/kcode/machine-profile.js'
 import { parseKCodeDocument as parseKCodeDocumentImpl } from '../../src/knitout/kcode/parser.js'
-import { recordKCodeRuntimeRules } from '../../scripts/kcode-rule-runtime-ledger.js'
+import {
+  recordKCodeRuntimeRules,
+  recordKCodeTargetedRuntimeWitness,
+} from '../../scripts/kcode-rule-runtime-ledger.js'
 
 const WITNESS_SOURCE = 'test/knitout/strict-kcode-document.test.ts'
 const parseKCodeDocument = (
@@ -18,7 +21,7 @@ const parseKCodeDocument = (
   recordKCodeRuntimeRules(
     'raw-kcode-parser',
     WITNESS_SOURCE,
-    result.diagnostics.map((diagnostic) => diagnostic.rule),
+    result.diagnostics,
   )
   return result
 }
@@ -26,7 +29,7 @@ const parseKCodeDocument = (
 const referenceDirectory = resolve(__dirname, '../../reference')
 const swatch = readFileSync(resolve(referenceDirectory, 'swatch.kc'), 'utf8')
 const strictVendorOptions = {
-  profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+  profile: KNITERATE_7GG_KCODE_PROFILE_V2,
   dialect: 'knitout-vendor' as const,
   strict: true,
 }
@@ -193,6 +196,15 @@ describe('strict lossless KCode document parser', () => {
       'kcode.orphan-footer',
       'kcode.no-passes',
     ]))
+    for (const expectedRule of ['kcode.orphan-footer', 'kcode.no-passes']) {
+      recordKCodeTargetedRuntimeWitness({
+        rail: 'raw-kcode-parser',
+        sourcePath: WITNESS_SOURCE,
+        caseId: `footer-only:${expectedRule}`,
+        expectedRule,
+        diagnostics: result.diagnostics,
+      })
+    }
   })
 
   it('requires an initial RACK:0 after HOME and before pass records', () => {
@@ -299,7 +311,7 @@ describe('strict lossless KCode document parser', () => {
     expect(app.ok).toBe(true)
     expect(app.document.metadata).toMatchObject({
       profileId: 'kniterate-7gg-kcode',
-      profileVersion: 1,
+      profileVersion: 2,
       dialect: 'app',
       strict: true,
       parseStatus: 'accepted',
@@ -316,5 +328,12 @@ describe('strict lossless KCode document parser', () => {
       rule: 'kcode.unsupported-dialect',
       severity: 'error',
     }))
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'raw-kcode-parser',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'unsupported-dialect:guessed',
+      expectedRule: 'kcode.unsupported-dialect',
+      diagnostics: unsupported.diagnostics,
+    })
   })
 })

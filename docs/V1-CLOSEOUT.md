@@ -14,21 +14,26 @@ host-blocked before launch by missing `libicu74`. The physical trial is still
 pending, so the workspace remains `1.0.0-rc.1` and no release/deployment claim
 is made. The snapshot below records the starting point for this closeout.
 
-**Command-legality update, 2026-08-26:** `kniterate-7gg-kcode@1` now owns an
+**Command-legality update, 2026-08-27:** `kniterate-7gg-kcode@2` now owns an
 explicit eight-operation command contract consumed by parsing, projection, and
-validation. An independent 1,904-case matrix, boundary partitions, a raw-KCode
-refusal corpus, complete named-rule witness ledger, and Stryker source-mutation
-gate close the former self-consistency gap. Trial packages carry exact legality
-and proof metadata; controller observation remains pending and can accumulate
-only from clean exact-hash physical registry entries.
+validation. Profile V2 narrows stitch selectors to the official 0-9/A-F
+alphabet; the earlier A-Z language remains available explicitly as historical
+profile V1. An independent 1,904-case matrix, boundary partitions, a raw-KCode
+refusal corpus, severity-separated named-rule witness ledger, and Stryker
+source-mutation gate close the former self-consistency gap. Trial packages carry
+exact legality and proof metadata; controller observation remains pending and
+can accumulate only from clean exact-hash physical registry entries.
 
-The compiler proof is done and both software gates are green. What remains is
-one policy call, one commit, and one real machine run — in that order.
+The command-legality software closeout is complete and all software gates are
+green. What remains is the separately authorized, supervised physical machine
+run; until that exact-artifact evidence is registered, controller observation
+and Knit-proven status remain pending.
 
 - `pnpm verify` → exit 0
 - `pnpm verify:kcode` → exit 0
-- 428 tests green on the working tree
-- 1 open policy decision, physical trial pending
+- `pnpm verify:kcode:check` → exit 0 with the tracked receipt current
+- 0 surviving, timed-out, or uncovered in-scope source mutants
+- software work complete; physical trial pending
 
 ---
 

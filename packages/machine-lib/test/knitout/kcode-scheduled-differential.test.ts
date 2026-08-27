@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
 } from '../../src/knitout/kcode/machine-profile.js'
 import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js'
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
@@ -109,7 +109,7 @@ describe('seeded scheduled-pass differential rail', () => {
       if (!compiled.ok) continue
 
       const parsed = parseKCodeDocument(compiled.kcode, {
-        profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+        profile: KNITERATE_7GG_KCODE_PROFILE_V2,
         dialect: 'knitout-vendor',
         strict: true,
       })
@@ -117,7 +117,7 @@ describe('seeded scheduled-pass differential rail', () => {
       expect(parsed.ok, `parse case ${caseIndex}`).toBe(true)
       const trace = projectKCodeMachineTrace(
         parsed.document,
-        KNITERATE_7GG_KCODE_PROFILE_V1,
+        KNITERATE_7GG_KCODE_PROFILE_V2,
       )
 
       expect(trace.passes, `pass count case ${caseIndex}`).toHaveLength(

@@ -80,6 +80,7 @@ export type MachineSceneActionGlyphV1 =
         | 'unsupported-operation'
         | 'empty-transfer'
         | 'unpaired-transfer-selection'
+        | 'operation-contract-carrier-action'
       readonly selections: readonly MachineSceneSelectionV1[]
     }
 

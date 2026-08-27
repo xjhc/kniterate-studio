@@ -1,5 +1,5 @@
 import {
-  KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
   compareScheduledPassesToMachineTrace,
   diffKCodeMachineTrace,
   inspectKnitoutPasses,
@@ -32,7 +32,7 @@ export type MachineSource = string | Uint8Array;
 export const MAX_MACHINE_SOURCE_BYTES_V1 = 64 * 1024 * 1024;
 
 /** Fixed V1 target. Keep this alias local so every Studio KCode seam shares it. */
-const KNITERATE_MACHINE_PROFILE_V1 = KNITERATE_7GG_KCODE_PROFILE_V1;
+const KNITERATE_MACHINE_PROFILE_V1 = KNITERATE_7GG_KCODE_PROFILE_V2;
 
 export interface AuthoredVerdict {
   state: VerdictState;

@@ -13,6 +13,9 @@ const config = {
     related: true,
   },
   coverageAnalysis: 'perTest',
+  // The proof receipt reads this effective value and blocks any global mutator
+  // exclusion. Reviewed site-local directives are the only suppression seam.
+  mutator: { excludedMutations: [] },
   concurrency: 1,
   maxTestRunnerReuse: 100,
   timeoutMS: 20_000,

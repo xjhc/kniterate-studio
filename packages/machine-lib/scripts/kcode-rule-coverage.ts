@@ -16,11 +16,28 @@ const RUNTIME_WITNESS_PATHS = [
   'test/knitout/kcode-machine-validator.test.ts',
 ] as const
 
-interface RuntimeWitnessRecord {
+interface RuntimeObservationRecord {
+  readonly kind: 'observation'
   readonly rail: 'raw-kcode-parser' | 'machine-trace-validator'
   readonly rule: string
   readonly sourcePath: string
+  readonly severity: 'error' | 'warning'
 }
+
+interface RuntimeTargetedRecord {
+  readonly kind: 'targeted'
+  readonly rail: 'raw-kcode-parser' | 'machine-trace-validator'
+  readonly sourcePath: string
+  readonly caseId: string
+  readonly expectedRule: string
+  readonly expectedSeverity?: 'error' | 'warning'
+  readonly diagnostics: ReadonlyArray<{
+    readonly rule: string
+    readonly severity: 'error' | 'warning'
+  }>
+}
+
+type RuntimeWitnessRecord = RuntimeObservationRecord | RuntimeTargetedRecord
 
 function declaredRules(path: string, prefix: 'kcode.' | 'machine-trace.'): string[] {
   const matches = readFileSync(path, 'utf8').matchAll(
@@ -80,46 +97,84 @@ export function collectKCodeRuleCoverage(root = process.cwd()) {
   const validatorRules = declaredRules(resolve(root, 'src/knitout/kcode/machine-validator.ts'), 'machine-trace.')
   const runtime = collectRuntimeWitnesses(root)
   const refusalReport = collectKCodeCommandRefusalReport()
-  const byRule = new Map<string, RuntimeWitnessRecord[]>()
+  const byRule = new Map<string, RuntimeObservationRecord[]>()
+  const targetedByRule = new Map<string, RuntimeTargetedRecord[]>()
   for (const record of runtime.records) {
+    if (record.kind === 'targeted') {
+      const records = targetedByRule.get(record.expectedRule) ?? []
+      if (!records.some((candidate) => candidate.caseId === record.caseId)) {
+        records.push(record)
+        targetedByRule.set(record.expectedRule, records)
+      }
+      continue
+    }
     const records = byRule.get(record.rule) ?? []
-    if (!records.some((candidate) =>
-      candidate.rail === record.rail && candidate.sourcePath === record.sourcePath)) {
+    if (!records.some((candidate) => candidate.rail === record.rail
+      && candidate.sourcePath === record.sourcePath
+      && candidate.severity === record.severity)) {
       records.push(record)
       byRule.set(record.rule, records)
     }
   }
   const rules = [...parserRules, ...validatorRules]
-  const witnesses = rules.map((rule) => ({
-    rule,
-    observations: (byRule.get(rule) ?? []).map((record) => ({
-      rail: record.rail,
-      path: record.sourcePath,
-      sha256: sha256(resolve(root, record.sourcePath)),
-    })),
-  }))
+  const witnesses = rules.map((rule) => {
+    const observations = byRule.get(rule) ?? []
+    const targeted = targetedByRule.get(rule) ?? []
+    const severities = [...new Set(observations.map((record) => record.severity))].sort()
+    const classification = severities.includes('error') ? 'blocking' : 'advisory'
+    return {
+      rule,
+      classification,
+      severities,
+      observations: observations.map((record) => ({
+        rail: record.rail,
+        severity: record.severity,
+        path: record.sourcePath,
+        sha256: sha256(resolve(root, record.sourcePath)),
+      })),
+      targetedWitnesses: targeted.map((record) => ({
+        rail: record.rail,
+        caseId: record.caseId,
+        expectedSeverity: record.expectedSeverity ?? record.diagnostics.find((diagnostic) =>
+          diagnostic.rule === record.expectedRule)?.severity ?? null,
+        actualDiagnostics: record.diagnostics,
+        path: record.sourcePath,
+        sha256: sha256(resolve(root, record.sourcePath)),
+      })),
+    }
+  })
   const missing = witnesses
     .filter((entry) => entry.observations.length === 0)
     .map((entry) => entry.rule)
+  const blockingWithoutTargetedWitness = witnesses
+    .filter((entry) => entry.classification === 'blocking'
+      && !entry.targetedWitnesses.some((witness) => witness.expectedSeverity === 'error'))
+    .map((entry) => entry.rule)
   const ok = runtime.ok
     && missing.length === 0
+    && blockingWithoutTargetedWitness.length === 0
     && refusalReport.ok
     && refusalReport.noInvalidReachedExport
   return {
     kind: 'kniterate-kcode-rule-coverage-ledger',
-    schemaVersion: 2,
+    schemaVersion: 3,
     ok,
     parserRuleCount: parserRules.length,
     validatorRuleCount: validatorRules.length,
     runtimeWitnessedRuleCount: witnesses.length - missing.length,
+    blockingRuleCount: witnesses.filter((entry) => entry.classification === 'blocking').length,
+    advisoryOnlyRuleCount: witnesses.filter((entry) => entry.classification === 'advisory').length,
+    blockingRuleTargetedWitnessCount: witnesses.filter((entry) => entry.classification === 'blocking'
+      && entry.targetedWitnesses.some((witness) => witness.expectedSeverity === 'error')).length,
     runtimeGate: {
       command: runtime.command,
       exitCode: runtime.exitCode,
       status: runtime.ok ? 'pass' : 'fail',
     },
     rawCommandRefusalCoverage: refusalReport,
-    note: 'Witnesses are diagnostics observed at runtime while the named tests pass. Raw invalid commands separately prove parser or validator refusal and export ineligibility; forged MachineTrace witnesses cover defensive post-parse invariants.',
+    note: 'Blocking and advisory rules are separated from observed runtime severity. Every blocking rule must also have an explicitly targeted case that asserts its stable identifier and records the complete diagnostic set. Raw invalid commands separately prove parser or validator refusal through the same command-legality export predicate; forged MachineTrace targets cover defensive post-parse invariants.',
     missing,
+    blockingWithoutTargetedWitness,
     witnesses,
   } as const
 }

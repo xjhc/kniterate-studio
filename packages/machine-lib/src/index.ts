@@ -32,6 +32,7 @@ export type {
 } from './knitout/kniterate/vendor-pass-contract.js';
 export {
   KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
   KNITERATE_KCODE_OPERATION_CONTRACTS_V1,
   basePayloadIndexToKCodeColumn,
   kcodeOperationContractV1,
@@ -82,6 +83,7 @@ export {
   type MachineValidationDiagnosticV1,
   type MachineValidationReportV1,
 } from './knitout/kcode/machine-validator.js';
+export { isKCodeCommandLegalityExportEligible } from './knitout/kcode/export-eligibility.js';
 export {
   compareScheduledPassesToMachineTrace,
   type ScheduledTraceComparisonV1,

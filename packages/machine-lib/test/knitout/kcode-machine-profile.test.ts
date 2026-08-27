@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
   KNITERATE_KCODE_OPERATION_CONTRACTS_V1,
   KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1,
   basePayloadIndexToKCodeColumn,
@@ -10,14 +11,14 @@ import {
   type KCodeMachineProfileV1,
 } from '../../src/knitout/kcode/machine-profile.js'
 
-describe('Kniterate 7gg KCode machine profile V1', () => {
-  const profile: KCodeMachineProfileV1 = KNITERATE_7GG_KCODE_PROFILE_V1
+describe('Kniterate 7gg KCode machine profiles', () => {
+  const profile: KCodeMachineProfileV1 = KNITERATE_7GG_KCODE_PROFILE_V2
 
   it('pins a versioned target and both known KCode dialects', () => {
     expect(profile).toMatchObject({
       schemaVersion: 1,
       profileId: 'kniterate-7gg-kcode',
-      profileVersion: 1,
+      profileVersion: 2,
       dialect: 'knitout-vendor',
       supportedDialects: ['app', 'knitout-vendor'],
     })
@@ -149,6 +150,22 @@ describe('Kniterate 7gg KCode machine profile V1', () => {
       },
       evidence: { confidence: 'official-documented' },
     })
+  })
+
+  it('preserves the previous V1 selector language under its original identity', () => {
+    expect(KNITERATE_7GG_KCODE_PROFILE_V1).toMatchObject({
+      profileId: profile.profileId,
+      profileVersion: 1,
+      operations: profile.operations,
+      stitchSelectors: {
+        encoding: {
+          alphabet: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+          encodableBounds: { lower: { value: 0 }, upper: { value: 35 } },
+        },
+      },
+    })
+    expect(profile.profileVersion).toBe(2)
+    expect(profile.stitchSelectors.encoding.alphabet).toBe('0123456789ABCDEF')
   })
 
   it('makes serialized semantics authoritative without claiming physical transfer direction', () => {

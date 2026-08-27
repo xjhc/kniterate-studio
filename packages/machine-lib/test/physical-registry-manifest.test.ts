@@ -403,7 +403,7 @@ describe('generated physical registry manifest', () => {
     expect(report.controllerObservedCoverage).toMatchObject({
       status: 'exact-artifact-observed',
       evidenceCount: 1,
-      profile: { id: 'kniterate-7gg-kcode', version: 1 },
+      profile: { id: 'kniterate-7gg-kcode', version: 2 },
       byMachine: {
         'fixture-machine-001::fixture-control-1.0': {
           key: 'fixture-machine-001::fixture-control-1.0',
@@ -440,6 +440,43 @@ describe('generated physical registry manifest', () => {
     expect(report.entries[0]).toMatchObject({ ok: true, stale: false, knitProven: false, outcome: 'jammed' })
     expect(report.entries[0]!.messages).toEqual([])
     expect(report.entries[0]!.promotionMessages).toContainEqual(expect.stringContaining('not clean'))
+    expect(report.controllerObservedCoverage).toMatchObject({
+      status: 'pending',
+      evidenceCount: 0,
+      byMachine: {},
+    })
+  })
+
+  it('keeps an exact-hash legacy command as stale history when current legality tightens', () => {
+    const fixture = registryFixture()
+    const dir = writeCurrentEntry(fixture.root)
+    const kcodePath = join(dir, 'out.kc')
+    const currentKcode = readFileSync(kcodePath, 'utf8')
+    const legacyKcode = currentKcode.replace(/^(STIF:[^\n]*?)6/m, '$1G')
+    expect(legacyKcode).not.toBe(currentKcode)
+    writeFileSync(kcodePath, legacyKcode)
+    const legacyHash = sha256Bytes(legacyKcode)
+
+    const specPath = join(dir, 'spec.json')
+    const spec = readObject(specPath)
+    spec.kcodeSha256 = legacyHash
+    writeObject(specPath, spec)
+    const runPath = join(dir, 'run.json')
+    const run = readObject(runPath)
+    run.artifact.loadedKcodeSha256 = legacyHash
+    writeObject(runPath, run)
+
+    const report = jsonReport(fixture.root)
+    expect(report.entries[0]).toMatchObject({
+      ok: true,
+      stale: true,
+      knitProven: false,
+      messages: [],
+    })
+    expect(report.entries[0]!.currentnessMessages).toEqual(expect.arrayContaining([
+      expect.stringContaining('historical under the current profile'),
+      expect.stringContaining('stored out.kc is not byte-identical'),
+    ]))
     expect(report.controllerObservedCoverage).toMatchObject({
       status: 'pending',
       evidenceCount: 0,
@@ -731,6 +768,9 @@ describe('fresh V1 physical release gate', () => {
     expect(readFileSync(join(destination, 'CONTROLLER-REVIEW.md'), 'utf8')).toContain(
       'read by the machine from SD card',
     )
+    const checklist = readFileSync(join(destination, 'OPERATOR-CHECKLIST.md'), 'utf8')
+    expect(checklist).toContain('https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide')
+    expect(checklist).toContain('https://support.kniterate.com/hc/en-us/article_attachments/360009817198')
     expect(() => readCleanV1KnitTrialReleaseSource((args) =>
       args[0] === 'rev-parse' ? `${commit}\n` : '?? local-file\n'))
       .toThrow(/requires a clean working tree.*local-file/s)

@@ -3,23 +3,23 @@ import { describe, expect, it } from 'vitest'
 
 import { emitKCodeDocument } from '../../src/knitout/kcode/emitter.js'
 import {
-  KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
   type KCodeCarrierToken,
 } from '../../src/knitout/kcode/machine-profile.js'
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
 
 const STRICT_VENDOR_OPTIONS = {
-  profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+  profile: KNITERATE_7GG_KCODE_PROFILE_V2,
   dialect: 'knitout-vendor' as const,
   strict: true,
 }
 
 const VALID_DOCUMENT_SEED = 1_262_702_404 // ASCII "KCOD"
 const GRAMMAR_MUTATION_SEED = 1_297_437_761 // ASCII "MUTA"
-const BASE_WIDTH = KNITERATE_7GG_KCODE_PROFILE_V1.raster.standardBasePayloadColumns
-const LEFT_PADDING = KNITERATE_7GG_KCODE_PROFILE_V1.raster.leftPaddingColumns
-const RIGHT_PADDING = KNITERATE_7GG_KCODE_PROFILE_V1.raster.rightPaddingColumns
-const NEEDLE_COLUMNS = KNITERATE_7GG_KCODE_PROFILE_V1.raster.standardNeedleColumns
+const BASE_WIDTH = KNITERATE_7GG_KCODE_PROFILE_V2.raster.standardBasePayloadColumns
+const LEFT_PADDING = KNITERATE_7GG_KCODE_PROFILE_V2.raster.leftPaddingColumns
+const RIGHT_PADDING = KNITERATE_7GG_KCODE_PROFILE_V2.raster.rightPaddingColumns
+const NEEDLE_COLUMNS = KNITERATE_7GG_KCODE_PROFILE_V2.raster.standardNeedleColumns
 
 interface GeneratedPass {
   readonly rack: number
@@ -79,7 +79,7 @@ const needleSetArbitrary = fc.uniqueArray(
 const carrierArbitrary = fc.constantFrom<KCodeCarrierToken>('0', '1', '2', '3', '4', '5', '6')
 
 const passArbitrary: fc.Arbitrary<GeneratedPass> = carrierArbitrary.chain((carrier) => fc.record({
-  rack: fc.constantFrom(...KNITERATE_7GG_KCODE_PROFILE_V1.rack.values),
+  rack: fc.constantFrom(...KNITERATE_7GG_KCODE_PROFILE_V2.rack.values),
   direction: fc.constantFrom('>>' as const, '<<' as const),
   operation: carrier === '0'
     ? fc.constantFrom('Kn-Kn', 'Tr-Rl', 'Tr-Rr', 'Rl-Tr', 'Rr-Tr')
@@ -173,8 +173,8 @@ describe('strict KCode parser properties', () => {
         expect(result.diagnostics).toEqual([])
         expect(result.ok).toBe(true)
         expect(result.document.metadata).toMatchObject({
-          profileId: KNITERATE_7GG_KCODE_PROFILE_V1.profileId,
-          profileVersion: KNITERATE_7GG_KCODE_PROFILE_V1.profileVersion,
+          profileId: KNITERATE_7GG_KCODE_PROFILE_V2.profileId,
+          profileVersion: KNITERATE_7GG_KCODE_PROFILE_V2.profileVersion,
           dialect: 'knitout-vendor',
           strict: true,
         })

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import * as browserApi from '../../src/browser.js'
 
+import { isKCodeCommandLegalityExportEligible } from '../../src/knitout/kcode/export-eligibility.js'
 import {
-  KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
   KNITERATE_KCODE_OPERATION_CONTRACTS_V1,
 } from '../../src/knitout/kcode/machine-profile.js'
 import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js'
@@ -219,17 +220,26 @@ describe('V1 command-legality contract', () => {
               && (expected.family === 'regular' || Number.isInteger(rack))
             for (const rail of LEGALITY_RAILS) {
               const parsed = rail.parse(source, {
-                profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+                profile: KNITERATE_7GG_KCODE_PROFILE_V2,
                 dialect: 'knitout-vendor',
                 strict: true,
               })
               const label = `${rail.id}/${operation}/${direction}/${carrier}/${rack}`
               expect(parsed.ok, `${label} parse`).toBe(true)
-              const trace = rail.project(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1)
-              const report = rail.validate(trace, KNITERATE_7GG_KCODE_PROFILE_V1)
+              const trace = rail.project(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2)
+              const report = rail.validate(trace, KNITERATE_7GG_KCODE_PROFILE_V2)
               expect(report.profileConformance, label).toBe(
                 expectedConformant ? 'conformant' : 'blocked',
               )
+              expect(
+                (rail.id === 'browser-entrypoint'
+                  ? browserApi.isKCodeCommandLegalityExportEligible
+                  : isKCodeCommandLegalityExportEligible)({
+                  parseOk: parsed.ok,
+                  validation: report,
+                }),
+                `${label} export eligibility`,
+              ).toBe(expectedConformant)
               expect(report.controllerAcceptance).toBe(
                 'not-established-by-software-validation',
               )
@@ -246,19 +256,19 @@ describe('V1 command-legality contract', () => {
     const report = (source: string) => {
       const results = LEGALITY_RAILS.map((rail) => {
         const parsed = rail.parse(source, {
-          profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+          profile: KNITERATE_7GG_KCODE_PROFILE_V2,
           dialect: 'knitout-vendor',
           strict: true,
         })
         const trace = parsed.ok
-          ? rail.project(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1)
+          ? rail.project(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2)
           : null
         return {
           parsed,
           trace,
           validation: trace === null
             ? null
-            : rail.validate(trace, KNITERATE_7GG_KCODE_PROFILE_V1)
+            : rail.validate(trace, KNITERATE_7GG_KCODE_PROFILE_V2)
         }
       })
       expect(results[1]!.parsed.diagnostics).toEqual(results[0]!.parsed.diagnostics)

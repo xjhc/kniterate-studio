@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../../src/knitout/kcode/machine-profile.js'
+import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../../src/knitout/kcode/machine-profile.js'
 import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js'
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
 import { compareScheduledPassesToMachineTrace } from '../../src/knitout/kcode/scheduled-trace-diff.js'
@@ -25,14 +25,14 @@ function compileTrace() {
   const compiled = knitoutToKCodeWithTrace(SOURCE, 'scheduled-trace-diff.k')
   if (!compiled.ok) throw new Error(compiled.error)
   const parsed = parseKCodeDocument(compiled.kcode, {
-    profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+    profile: KNITERATE_7GG_KCODE_PROFILE_V2,
     dialect: 'knitout-vendor',
     strict: true,
   })
   if (!parsed.ok) throw new Error(parsed.diagnostics.map((item) => item.message).join('\n'))
   return {
     compiled,
-    trace: projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1),
+    trace: projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2),
   }
 }
 

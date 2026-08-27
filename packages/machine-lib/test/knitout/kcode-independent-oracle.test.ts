@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
-  KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
 } from '../../src/knitout/kcode/machine-profile.js'
 import {
   projectKCodeMachineTrace,
@@ -696,14 +696,14 @@ function generatedSpecs(seed: number, blocks = 6): PassSpec[] {
 
 function parseProjectValidate(source: string) {
   const parsed = parseKCodeDocument(source, {
-    profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+    profile: KNITERATE_7GG_KCODE_PROFILE_V2,
     dialect: 'knitout-vendor',
     strict: true,
   })
   expect(parsed.diagnostics).toEqual([])
   expect(parsed.ok).toBe(true)
-  const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1)
-  const report = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V1)
+  const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2)
+  const report = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2)
   return { trace, report }
 }
 

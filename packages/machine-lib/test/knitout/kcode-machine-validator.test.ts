@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
   type KCodeMachineProfileV1,
 } from '../../src/knitout/kcode/machine-profile.js'
 import {
@@ -22,7 +23,10 @@ import {
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
 import type { KCodeSourceSpan } from '../../src/knitout/kcode/types.js'
 import { knitoutToKCodeWithTrace } from '../../src/knitout/kniterate/to-kcode.js'
-import { recordKCodeRuntimeRules } from '../../scripts/kcode-rule-runtime-ledger.js'
+import {
+  recordKCodeRuntimeRules,
+  recordKCodeTargetedRuntimeWitness,
+} from '../../scripts/kcode-rule-runtime-ledger.js'
 
 const WITNESS_SOURCE = 'test/knitout/kcode-machine-validator.test.ts'
 const validateKCodeMachineTrace = (
@@ -32,7 +36,7 @@ const validateKCodeMachineTrace = (
   recordKCodeRuntimeRules(
     'machine-trace-validator',
     WITNESS_SOURCE,
-    result.diagnostics.map((diagnostic) => diagnostic.rule),
+    result.diagnostics,
   )
   return result
 }
@@ -57,7 +61,7 @@ function compileTrace(source = semanticProgram): MachineTraceV1 {
   const compiled = knitoutToKCodeWithTrace(source, 'validator.k')
   if (!compiled.ok) throw new Error(compiled.error)
   const parsed = parseKCodeDocument(compiled.kcode, {
-    profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+    profile: KNITERATE_7GG_KCODE_PROFILE_V2,
     dialect: 'knitout-vendor',
     strict: true,
   })
@@ -65,7 +69,7 @@ function compileTrace(source = semanticProgram): MachineTraceV1 {
   expect(parsed.ok).toBe(true)
   return projectKCodeMachineTrace(
     parsed.document,
-    KNITERATE_7GG_KCODE_PROFILE_V1,
+    KNITERATE_7GG_KCODE_PROFILE_V2,
   )
 }
 
@@ -84,7 +88,7 @@ function withPasses(
 function rules(trace: MachineTraceV1): string[] {
   return validateKCodeMachineTrace(
     trace,
-    KNITERATE_7GG_KCODE_PROFILE_V1,
+    KNITERATE_7GG_KCODE_PROFILE_V2,
   ).diagnostics.map((diagnostic) => diagnostic.rule)
 }
 
@@ -217,8 +221,8 @@ function smallTrace(sequence: readonly SmallAction[]): MachineTraceV1 {
   return {
     schemaVersion: 1,
     sourceDocumentSchemaVersion: 1,
-    profileId: KNITERATE_7GG_KCODE_PROFILE_V1.profileId,
-    profileVersion: KNITERATE_7GG_KCODE_PROFILE_V1.profileVersion,
+    profileId: KNITERATE_7GG_KCODE_PROFILE_V2.profileId,
+    profileVersion: KNITERATE_7GG_KCODE_PROFILE_V2.profileVersion,
     dialect: 'knitout-vendor',
     rackCommands: rackCommandsForPasses(passes),
     passes,
@@ -242,7 +246,7 @@ describe('KCode-native MachineTrace validation', () => {
     const trace = compileTrace()
     const report = validateKCodeMachineTrace(
       trace,
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
 
     expect(report.ok).toBe(true)
@@ -308,7 +312,7 @@ describe('KCode-native MachineTrace validation', () => {
 
     expect(JSON.stringify(validateKCodeMachineTrace(
       trace,
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     ))).toBe(JSON.stringify(report))
   })
 
@@ -326,7 +330,7 @@ describe('KCode-native MachineTrace validation', () => {
     })
     const report = validateKCodeMachineTrace(
       withPasses(base, passes),
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
 
     expect(report.ok).toBe(true)
@@ -362,7 +366,7 @@ describe('KCode-native MachineTrace validation', () => {
     }])
     const unknownReport = validateKCodeMachineTrace(
       unknown,
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(unknownReport.ok).toBe(false)
     expect(unknownReport.diagnostics).toContainEqual(expect.objectContaining({
@@ -376,14 +380,26 @@ describe('KCode-native MachineTrace validation', () => {
     const xferPass = trace.passes.find((pass) =>
       pass.actions.some((action) => action.kind === 'split'))!
     const emptyXfer = withPasses(trace, [xferPass])
-    expect(rules(emptyXfer)).toContain('machine-trace.transfer-source-empty')
+    const emptyXferReport = validateKCodeMachineTrace(
+      emptyXfer,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
+    )
+    expect(emptyXferReport.diagnostics.map((diagnostic) => diagnostic.rule))
+      .toContain('machine-trace.transfer-source-empty')
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'machine-trace-validator',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'transfer-source-empty:empty-bed-assumption',
+      expectedRule: 'machine-trace.transfer-source-empty',
+      diagnostics: emptyXferReport.diagnostics,
+    })
 
     const dropPass = trace.passes.find((pass) =>
       pass.actions.some((action) => action.kind === 'drop'))!
     const emptyDrop = withPasses(trace, [dropPass])
     const emptyDropReport = validateKCodeMachineTrace(
       emptyDrop,
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(emptyDropReport.ok).toBe(true)
     expect(emptyDropReport).toMatchObject({
@@ -407,7 +423,7 @@ describe('KCode-native MachineTrace validation', () => {
     } as unknown as MachineTraceV1
     expect(() => validateKCodeMachineTrace(
       forgedDialect,
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )).not.toThrow()
     expect(rules(forgedDialect)).toContain('machine-trace.dialect-profile')
 
@@ -445,7 +461,7 @@ describe('KCode-native MachineTrace validation', () => {
       ['machine-trace.profile-mismatch', { ...base, profileId: 'wrong-profile' }],
       ['machine-trace.profile-mismatch', {
         ...base,
-        profileVersion: 2 as MachineTraceV1['profileVersion'],
+        profileVersion: 1 as MachineTraceV1['profileVersion'],
       }],
       ['machine-trace.profile-mismatch', {
         ...base,
@@ -457,9 +473,9 @@ describe('KCode-native MachineTrace validation', () => {
         ...base,
         dialect: 'missing-contract' as MachineTraceV1['dialect'],
       }, {
-        ...KNITERATE_7GG_KCODE_PROFILE_V1,
+        ...KNITERATE_7GG_KCODE_PROFILE_V2,
         supportedDialects: [
-          ...KNITERATE_7GG_KCODE_PROFILE_V1.supportedDialects,
+          ...KNITERATE_7GG_KCODE_PROFILE_V2.supportedDialects,
           'missing-contract' as MachineTraceV1['dialect'],
         ],
       }],
@@ -467,7 +483,7 @@ describe('KCode-native MachineTrace validation', () => {
         ...base,
         dialect: 'app',
       }, {
-        ...KNITERATE_7GG_KCODE_PROFILE_V1,
+        ...KNITERATE_7GG_KCODE_PROFILE_V2,
         supportedDialects: ['knitout-vendor'],
       }],
       ['machine-trace.dialect-profile', {
@@ -763,31 +779,131 @@ describe('KCode-native MachineTrace validation', () => {
     ]
 
     const malformedDigest = createHash('sha256')
-    for (const [rule, trace, profile = KNITERATE_7GG_KCODE_PROFILE_V1] of malformedTraces) {
+    for (const [caseIndex, [rule, trace, profile = KNITERATE_7GG_KCODE_PROFILE_V2]] of malformedTraces.entries()) {
       const report = validateKCodeMachineTrace(
         trace,
         profile,
       )
       expect(report.diagnostics.map((diagnostic) => diagnostic.rule), rule).toContain(rule)
+      recordKCodeTargetedRuntimeWitness({
+        rail: 'machine-trace-validator',
+        sourcePath: WITNESS_SOURCE,
+        caseId: `${rule}:${caseIndex}`,
+        expectedRule: rule,
+        diagnostics: report.diagnostics,
+      })
       malformedDigest.update(JSON.stringify(report))
     }
     expect(malformedDigest.digest('hex')).toBe(
-      '7be958fa28872f35fc2e6707a4bfb67e4e07e7c0934f3c103a6f1d791c48b64f',
+      'e5a7d6df7d65a7c6c84ca6da87de0319fa67ce5204570ba910e80317a50aae2e',
     )
 
     const orphan = parseKCodeDocument('HOME\nRACK:0\nSTIF:_\n', {
-      profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+      profile: KNITERATE_7GG_KCODE_PROFILE_V2,
       dialect: 'knitout-vendor',
       strict: true,
     })
     recordKCodeRuntimeRules(
       'raw-kcode-parser',
       WITNESS_SOURCE,
-      orphan.diagnostics.map((diagnostic) => diagnostic.rule),
+      orphan.diagnostics,
     )
     expect(orphan.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
       'kcode.orphan-field',
     )
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'raw-kcode-parser',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'orphan-field:stif-without-frnt',
+      expectedRule: 'kcode.orphan-field',
+      diagnostics: orphan.diagnostics,
+    })
+  })
+
+  it('treats allowed transfer directions as a membership contract', () => {
+    const trace = smallTrace(['X'])
+    const pass = trace.passes[0]!
+    const wrongDirection = withPasses(trace, [{ ...pass, direction: '<<' }])
+    expect(rules(wrongDirection)).toContain('machine-trace.transfer-operation-direction')
+
+    const operation = KNITERATE_7GG_KCODE_PROFILE_V2.operations[pass.operation]
+    if (operation.family !== 'transfer') throw new Error('Expected transfer contract')
+    const bidirectionalProfile: KCodeMachineProfileV1 = {
+      ...KNITERATE_7GG_KCODE_PROFILE_V2,
+      operations: {
+        ...KNITERATE_7GG_KCODE_PROFILE_V2.operations,
+        [pass.operation]: { ...operation, allowedDirections: ['>>', '<<'] },
+      },
+    }
+    const report = validateKCodeMachineTrace(wrongDirection, bidirectionalProfile)
+    expect(report.diagnostics.map((diagnostic) => diagnostic.rule))
+      .not.toContain('machine-trace.transfer-operation-direction')
+
+    const regularTrace = smallTrace(['K'])
+    const regularPass = regularTrace.passes[0]!
+    const regularOperation = KNITERATE_7GG_KCODE_PROFILE_V2.operations[regularPass.operation]
+    if (regularOperation.family !== 'regular') throw new Error('Expected regular contract')
+    const leftOnlyRegularProfile: KCodeMachineProfileV1 = {
+      ...KNITERATE_7GG_KCODE_PROFILE_V2,
+      operations: {
+        ...KNITERATE_7GG_KCODE_PROFILE_V2.operations,
+        [regularPass.operation]: { ...regularOperation, allowedDirections: ['<<'] },
+      },
+    }
+    const regularDirectionReport = validateKCodeMachineTrace(
+      regularTrace,
+      leftOnlyRegularProfile,
+    )
+    expect(regularDirectionReport.diagnostics.map((diagnostic) => diagnostic.rule))
+      .toContain('machine-trace.operation-direction')
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'machine-trace-validator',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'operation-direction:regular-contract',
+      expectedRule: 'machine-trace.operation-direction',
+      diagnostics: regularDirectionReport.diagnostics,
+    })
+  })
+
+  it('derives regular action legality from family and carrier contract fields', () => {
+    const regularTrace = smallTrace(['K'])
+    const regularPass = regularTrace.passes[0]!
+    const regularContract = KNITERATE_7GG_KCODE_PROFILE_V2.operations[regularPass.operation]
+    if (regularContract.family !== 'regular') throw new Error('Expected regular contract')
+
+    const reportWith = (contract: unknown, trace = regularTrace) =>
+      validateKCodeMachineTrace(trace, {
+        ...KNITERATE_7GG_KCODE_PROFILE_V2,
+        operations: {
+          ...KNITERATE_7GG_KCODE_PROFILE_V2.operations,
+          [regularPass.operation]: contract,
+        },
+      } as KCodeMachineProfileV1)
+
+    const forgedTransferFamily = reportWith({
+      ...KNITERATE_7GG_KCODE_PROFILE_V2.operations['Tr-Rr'],
+      operation: regularPass.operation,
+      carrierAction: 'bed-operation',
+      frontAction: 'knit',
+      rearAction: 'knit',
+    })
+    expect(forgedTransferFamily.diagnostics.map((diagnostic) => diagnostic.rule))
+      .toContain('machine-trace.action-operation')
+
+    const dropTrace = smallTrace(['D'])
+    const carrierZeroChanged = reportWith({
+      ...regularContract,
+      carrierZeroAction: 'xfer',
+    }, dropTrace)
+    expect(carrierZeroChanged.diagnostics.map((diagnostic) => diagnostic.rule))
+      .toContain('machine-trace.action-operation')
+
+    const carrierChanged = reportWith({
+      ...regularContract,
+      carrierAction: 'split',
+    })
+    expect(carrierChanged.diagnostics.map((diagnostic) => diagnostic.rule))
+      .toContain('machine-trace.action-operation')
   })
 
   it('checks rack/bed pairing, stop containment, and programmed continuity', () => {
@@ -840,13 +956,25 @@ describe('KCode-native MachineTrace validation', () => {
     expect(discontinuityRules).toContain('machine-trace.carrier-discontinuity')
     const discontinuityReport = validateKCodeMachineTrace(
       { ...trace, passes: discontinuousPasses },
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(discontinuityReport.diagnostics).toContainEqual(expect.objectContaining({
       rule: 'machine-trace.carriage-discontinuity',
       severity: 'error',
       class: 'kinematic',
     }))
+    for (const expectedRule of [
+      'machine-trace.carriage-discontinuity',
+      'machine-trace.carrier-discontinuity',
+    ]) {
+      recordKCodeTargetedRuntimeWitness({
+        rail: 'machine-trace-validator',
+        sourcePath: WITNESS_SOURCE,
+        caseId: `continuity:${expectedRule}`,
+        expectedRule,
+        diagnostics: discontinuityReport.diagnostics,
+      })
+    }
   })
 
   it('checks traversal order globally across both beds', () => {
@@ -868,7 +996,7 @@ describe('KCode-native MachineTrace validation', () => {
     }
     const report = validateKCodeMachineTrace(
       withPasses(smallTrace(['K']), [outOfOrder]),
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(report.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
       'machine-trace.action-direction-order',
@@ -879,6 +1007,13 @@ describe('KCode-native MachineTrace validation', () => {
       class: 'kinematic',
       actionIndex: 1,
     }))
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'machine-trace-validator',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'action-direction-order:cross-bed',
+      expectedRule: 'machine-trace.action-direction-order',
+      diagnostics: report.diagnostics,
+    })
   })
 
   it.each([
@@ -907,7 +1042,7 @@ describe('KCode-native MachineTrace validation', () => {
         && candidate.selections.rear.length > 0)!
       const report = validateKCodeMachineTrace(
         trace,
-        KNITERATE_7GG_KCODE_PROFILE_V1,
+        KNITERATE_7GG_KCODE_PROFILE_V2,
       )
       const regularActions = pass.actions.filter((action) =>
         action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'drop')
@@ -990,12 +1125,41 @@ describe('KCode-native MachineTrace validation', () => {
       const report = validateKCodeMachineTrace({
         ...trace,
         rackCommands: [{ ...trace.rackCommands[0]!, valueRaw, value }],
-      }, KNITERATE_7GG_KCODE_PROFILE_V1)
+      }, KNITERATE_7GG_KCODE_PROFILE_V2)
       expect(
         report.diagnostics.map((diagnostic) => diagnostic.rule),
         valueRaw,
       ).not.toContain('machine-trace.rack-command-value')
     }
+  })
+
+  it('keeps legacy V1 selectors above F as an explicit documented-range review', () => {
+    const trace = smallTrace(['K'])
+    const pass = trace.passes[0]!
+    const selected = pass.selections.front[0]!
+    const legacySelection: MachineTraceSelectionV1 = {
+      ...selected,
+      stitchSelector: {
+        ...selected.stitchSelector,
+        token: 'G',
+        encodedValue: 16,
+      },
+    }
+    const report = validateKCodeMachineTrace({
+      ...trace,
+      profileVersion: KNITERATE_7GG_KCODE_PROFILE_V1.profileVersion,
+      passes: [{
+        ...pass,
+        selections: { front: [legacySelection], rear: [] },
+        actions: [{ kind: 'knit', at: legacySelection }],
+      }],
+    }, KNITERATE_7GG_KCODE_PROFILE_V1)
+    expect(report.diagnostics).toContainEqual(expect.objectContaining({
+      rule: 'machine-trace.selection-stitch-documented-range',
+      severity: 'warning',
+      class: 'operational-advisory',
+    }))
+    expect(report.profileConformance).toBe('conformant')
   })
 
   it.each([
@@ -1010,7 +1174,7 @@ describe('KCode-native MachineTrace validation', () => {
   }) => {
     const report = validateKCodeMachineTrace(
       smallTrace(Array.from({ length: count }, () => 'T')),
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     const policyDiagnostics = report.diagnostics.filter((diagnostic) =>
       diagnostic.rule === 'machine-trace.loop-stack-policy')
@@ -1025,6 +1189,16 @@ describe('KCode-native MachineTrace validation', () => {
       diagnostic.severity === 'error')).toHaveLength(errorCount)
     expect(policyDiagnostics.every((diagnostic) =>
       diagnostic.class === 'operational-advisory')).toBe(true)
+    if (errorCount > 0) {
+      recordKCodeTargetedRuntimeWitness({
+        rail: 'machine-trace-validator',
+        sourcePath: WITNESS_SOURCE,
+        caseId: `loop-stack-policy:${count}-tucks`,
+        expectedRule: 'machine-trace.loop-stack-policy',
+        expectedSeverity: 'error',
+        diagnostics: report.diagnostics,
+      })
+    }
     expect(policyDiagnostics.every((diagnostic) =>
       diagnostic.message.includes('physical'))).toBe(true)
     expect(report.finalState).toMatchObject({
@@ -1070,7 +1244,7 @@ describe('KCode-native MachineTrace validation', () => {
     }])
     const highSpeedReport = validateKCodeMachineTrace(
       highSpeed,
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(highSpeedReport.ok).toBe(true)
     expect(highSpeedReport).toMatchObject({
@@ -1092,7 +1266,7 @@ describe('KCode-native MachineTrace validation', () => {
     const reportFor = (
       speed: number,
       roller: number,
-      profile: KCodeMachineProfileV1 = KNITERATE_7GG_KCODE_PROFILE_V1,
+      profile: KCodeMachineProfileV1 = KNITERATE_7GG_KCODE_PROFILE_V2,
     ) => validateKCodeMachineTrace(
       withPasses(smallTrace(['K']), [{
         ...first,
@@ -1113,18 +1287,18 @@ describe('KCode-native MachineTrace validation', () => {
     expect(documentedRangeCount(reportFor(801, 1_000))).toBe(2)
 
     const exclusiveProfile: KCodeMachineProfileV1 = {
-      ...KNITERATE_7GG_KCODE_PROFILE_V1,
+      ...KNITERATE_7GG_KCODE_PROFILE_V2,
       processSettings: {
-        ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings,
+        ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings,
         roller: {
-          ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller,
+          ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings.roller,
           editorDocumentedBounds: {
             lower: {
-              ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller.editorDocumentedBounds.lower,
+              ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings.roller.editorDocumentedBounds.lower,
               inclusive: false,
             },
             upper: {
-              ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller.editorDocumentedBounds.upper,
+              ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings.roller.editorDocumentedBounds.upper,
               inclusive: false,
             },
           },
@@ -1136,15 +1310,15 @@ describe('KCode-native MachineTrace validation', () => {
     expect(documentedRangeCount(reportFor(300, 0, exclusiveProfile))).toBe(0)
 
     const unknownUpperProfile: KCodeMachineProfileV1 = {
-      ...KNITERATE_7GG_KCODE_PROFILE_V1,
+      ...KNITERATE_7GG_KCODE_PROFILE_V2,
       processSettings: {
-        ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings,
+        ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings,
         roller: {
-          ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller,
+          ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings.roller,
           editorDocumentedBounds: {
-            ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller.editorDocumentedBounds,
+            ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings.roller.editorDocumentedBounds,
             upper: {
-              ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller.editorDocumentedBounds.upper,
+              ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings.roller.editorDocumentedBounds.upper,
               value: null,
               inclusive: null,
             },
@@ -1174,7 +1348,7 @@ describe('KCode-native MachineTrace validation', () => {
     }
     const report = validateKCodeMachineTrace(
       withPasses(smallTrace(['K']), [pass]),
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(report.finalState.front.map((cell) => cell.traceCoordinate)).toEqual([-2, 2])
     expect(report.finalState.rear.map((cell) => cell.traceCoordinate)).toEqual([3])
@@ -1205,7 +1379,7 @@ describe('KCode-native MachineTrace validation', () => {
     }
     const descendingReport = validateKCodeMachineTrace(
       withPasses(smallTrace(['K']), [descending]),
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(descendingReport.finalState.front.map((cell) =>
       cell.traceCoordinate)).toEqual([1, 3])
@@ -1233,7 +1407,7 @@ describe('KCode-native MachineTrace validation', () => {
       }
       const report = validateKCodeMachineTrace(
         withPasses(smallTrace(['K']), [pass]),
-        KNITERATE_7GG_KCODE_PROFILE_V1,
+        KNITERATE_7GG_KCODE_PROFILE_V2,
       )
       expect(report.diagnostics.map((diagnostic) => diagnostic.rule)).not.toContain(
         'machine-trace.selection-outside-carriage',
@@ -1277,7 +1451,7 @@ describe('KCode-native MachineTrace validation', () => {
     for (const invalid of cases) {
       const report = validateKCodeMachineTrace(
         withPasses(smallTrace(['K']), [producer, invalid]),
-        KNITERATE_7GG_KCODE_PROFILE_V1,
+        KNITERATE_7GG_KCODE_PROFILE_V2,
       )
       expect(report.profileConformance).toBe('blocked')
       expect(report.finalState.stacks['front:0']).toBe(1)
@@ -1302,7 +1476,7 @@ describe('KCode-native MachineTrace validation', () => {
     }
     const wrongSourceReport = validateKCodeMachineTrace(
       withPasses(smallTrace(['K']), [rearProducer, wrongSource]),
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(wrongSourceReport.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
       'machine-trace.action-operation',
@@ -1320,7 +1494,7 @@ describe('KCode-native MachineTrace validation', () => {
     }
     const report = validateKCodeMachineTrace(
       withPasses(smallTrace(['K']), [pass]),
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(report.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
       'machine-trace.action-direction-order',
@@ -1334,7 +1508,7 @@ describe('KCode-native MachineTrace validation', () => {
     }
     const reverseReport = validateKCodeMachineTrace(
       withPasses(smallTrace(['K']), [reversePass]),
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     expect(reverseReport.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
       'machine-trace.action-direction-order',
@@ -1349,7 +1523,7 @@ describe('KCode-native MachineTrace validation', () => {
     const duplicates = validateKCodeMachineTrace(withPasses(base, [{
       ...first,
       selections: { front: [selected, selected, selected], rear: [] },
-    }]), KNITERATE_7GG_KCODE_PROFILE_V1)
+    }]), KNITERATE_7GG_KCODE_PROFILE_V2)
     expect(duplicates.diagnostics.filter((diagnostic) =>
       diagnostic.rule === 'machine-trace.duplicate-selection').map((diagnostic) =>
       diagnostic.message)).toEqual([
@@ -1363,7 +1537,7 @@ describe('KCode-native MachineTrace validation', () => {
         { kind: 'tuck', at: selected },
         { kind: 'tuck', at: selected },
       ],
-    }]), KNITERATE_7GG_KCODE_PROFILE_V1)
+    }]), KNITERATE_7GG_KCODE_PROFILE_V2)
     expect(repeatedActions.diagnostics.filter((diagnostic) =>
       diagnostic.rule === 'machine-trace.action-operation').map((diagnostic) =>
       diagnostic.actionIndex)).toEqual([0, 1])
@@ -1372,12 +1546,19 @@ describe('KCode-native MachineTrace validation', () => {
       ...first,
       carrierStops: { left: 0.5, right: 1.5 },
       actions: [{ kind: 'tuck', at: selected }],
-    }]), KNITERATE_7GG_KCODE_PROFILE_V1)
+    }]), KNITERATE_7GG_KCODE_PROFILE_V2)
     expect(sameActionRules.diagnostics.filter((diagnostic) =>
       diagnostic.actionIndex === 0).map((diagnostic) => diagnostic.rule)).toEqual([
       'machine-trace.action-operation',
       'machine-trace.selection-outside-carrier',
     ])
+    recordKCodeTargetedRuntimeWitness({
+      rail: 'machine-trace-validator',
+      sourcePath: WITNESS_SOURCE,
+      caseId: 'selection-outside-carrier:narrow-stop',
+      expectedRule: 'machine-trace.selection-outside-carrier',
+      diagnostics: sameActionRules.diagnostics,
+    })
   })
 
   it('keeps capped mixed-severity totals exact without reclassifying omissions', () => {
@@ -1386,7 +1567,7 @@ describe('KCode-native MachineTrace validation', () => {
         ...Array.from({ length: 514 }, () => 'D' as const),
         'X',
       ]),
-      KNITERATE_7GG_KCODE_PROFILE_V1,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
     )
     const represented = (severity: 'error' | 'warning'): number =>
       report.diagnostics
@@ -1432,6 +1613,25 @@ describe('KCode-native MachineTrace validation', () => {
     const first = trace.passes.find((pass) =>
       pass.carrier !== '0' && pass.selections.front.length > 0)!
     const operated = first.selections.front[0]!
+
+    const fixedRight = operated.traceCoordinate - 0.5
+    const fixedReport = validateKCodeMachineTrace(withPasses(trace, [{
+      ...first,
+      carriageStops: { left: fixedRight - 1, right: fixedRight },
+      carrierStops: { left: fixedRight - 1, right: fixedRight },
+    }]), KNITERATE_7GG_KCODE_PROFILE_V2)
+    for (const expectedRule of [
+      'machine-trace.selection-outside-carriage',
+      'machine-trace.selection-outside-carrier',
+    ]) {
+      recordKCodeTargetedRuntimeWitness({
+        rail: 'machine-trace-validator',
+        sourcePath: WITNESS_SOURCE,
+        caseId: `stop-containment:${expectedRule}`,
+        expectedRule,
+        diagnostics: fixedReport.diagnostics,
+      })
+    }
 
     fc.assert(fc.property(
       fc.integer({ min: 1, max: 200 }),
@@ -1501,7 +1701,7 @@ describe('KCode-native MachineTrace validation', () => {
 
       const report = validateKCodeMachineTrace(
         smallTrace(sequence),
-        KNITERATE_7GG_KCODE_PROFILE_V1,
+        KNITERATE_7GG_KCODE_PROFILE_V2,
       )
       const ruleCount = (rule: string) => report.diagnostics.filter(
         (diagnostic) => diagnostic.rule === rule,

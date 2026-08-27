@@ -298,11 +298,10 @@ function validateSourceCodeUnits(
       if (detailedLength > 0) {
         const detailEnd = runStart + detailedLength
         const firstCode = line.raw.charCodeAt(runStart)
-        // Stryker disable StringLiteral: Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested.
+        // Stryker disable next-line StringLiteral: Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested.
         const message = detailedLength === 1
           ? `KCode source must use printable 7-bit ASCII (plus tab and line endings); found code unit 0x${firstCode.toString(16).padStart(2, '0')}.`
           : `KCode source must use printable 7-bit ASCII (plus tab and line endings); found ${detailedLength} consecutive invalid code units beginning with 0x${firstCode.toString(16).padStart(2, '0')}.`
-        // Stryker restore StringLiteral
         addDiagnostic(
           'kcode.source-byte',
           message,
@@ -511,11 +510,10 @@ function validateBedMarkers(
     && markers.every(([value], index) => value === expectedMarkers[index])
 
   if (!markerOrderValid) {
-    // Stryker disable StringLiteral: Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently.
+    // Stryker disable next-line StringLiteral: Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently.
     const message = carrier === '0'
       ? `${field.field} requires one ordered /...\\ carriage-marker pair and no carrier markers.`
       : `${field.field} requires one ordered /...\\ carriage-marker pair and exactly two ${carrier} carrier markers.`
-    // Stryker restore StringLiteral
     addDiagnostic(
       'kcode.bed-markers',
       message,

@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import {
-  KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_7GG_KCODE_PROFILE_V2,
   type KCodeCarrierToken,
   type KCodeOperationV1,
   type KCodePassDirectionV1,
@@ -13,6 +13,7 @@ import {
 import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js';
 import { validateKCodeMachineTrace } from '../src/knitout/kcode/machine-validator.js';
 import { parseKCodeDocument } from '../src/knitout/kcode/parser.js';
+import { isKCodeCommandLegalityExportEligible } from '../src/knitout/kcode/export-eligibility.js';
 
 const PADDING = 15;
 const NEEDLE_COLUMNS = 253;
@@ -194,7 +195,7 @@ const CASES: readonly RefusalCase[] = [
 
 function evaluate(source: string): RefusalEvaluation {
   const parsed = parseKCodeDocument(source, {
-    profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+    profile: KNITERATE_7GG_KCODE_PROFILE_V2,
     dialect: 'knitout-vendor',
     strict: true,
   });
@@ -207,13 +208,13 @@ function evaluate(source: string): RefusalEvaluation {
       rejectionStage: 'parser',
     };
   }
-  const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1);
-  const validation = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V1);
+  const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
+  const validation = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2);
   return {
     blockingRules: validation.diagnostics
       .filter((diagnostic) => diagnostic.severity === 'error')
       .map((diagnostic) => diagnostic.rule),
-    exportEligible: validation.ok && validation.profileConformance === 'conformant',
+    exportEligible: isKCodeCommandLegalityExportEligible({ parseOk: parsed.ok, validation }),
     rejectionStage: validation.ok ? 'none' : 'validator',
   };
 }

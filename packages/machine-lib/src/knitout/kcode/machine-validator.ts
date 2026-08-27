@@ -48,6 +48,7 @@ export type MachineValidationRuleV1 =
   | 'machine-trace.selection-payload-coordinate'
   | 'machine-trace.selection-trace-coordinate'
   | 'machine-trace.selection-stitch-selector'
+  | 'machine-trace.selection-stitch-documented-range'
   | 'machine-trace.selection-outside-carriage'
   | 'machine-trace.selection-outside-carrier'
   | 'machine-trace.duplicate-selection'
@@ -57,6 +58,7 @@ export type MachineValidationRuleV1 =
   | 'machine-trace.action-operation'
   | 'machine-trace.action-carrier'
   | 'machine-trace.unknown-action'
+  | 'machine-trace.operation-direction'
   | 'machine-trace.transfer-operation-direction'
   | 'machine-trace.transfer-bed-pair'
   | 'machine-trace.transfer-rack-pair'
@@ -400,14 +402,11 @@ function expectedTransferSourceBed(
   return contract.sourceBed
 }
 
-function expectedTransferDirection(
+function operationDirectionContract(
   profile: KCodeMachineProfileV1,
   operation: string,
-): MachineTracePassV1['direction'] | null {
-  const contract = kcodeOperationContractV1(profile, operation)
-  if (contract === null) return null
-  if (contract.family === 'regular') return null
-  return contract.allowedDirections[0] ?? null
+): ReturnType<typeof kcodeOperationContractV1> {
+  return kcodeOperationContractV1(profile, operation)
 }
 
 function expectedRegularKind(
@@ -419,8 +418,12 @@ function expectedRegularKind(
   const contract = kcodeOperationContractV1(profile, operation)
   if (contract === null) return null
   if (contract.family === 'transfer') return null
-  if (carrier === '0') return 'drop'
-  return bed === 'front' ? contract.frontAction : contract.rearAction
+  if (carrier === '0') {
+    return contract.carrierZeroAction === 'drop' ? 'drop' : null
+  }
+  return contract.carrierAction === 'bed-operation'
+    ? bed === 'front' ? contract.frontAction : contract.rearAction
+    : null
 }
 
 function expectedTransferTarget(
@@ -730,13 +733,17 @@ export function validateKCodeMachineTrace(
       )
     }
 
-    const transferDirection = expectedTransferDirection(profile, pass.operation)
-    if (transferDirection !== null && pass.direction !== transferDirection) {
+    const directionContract = operationDirectionContract(profile, pass.operation)
+    if (directionContract !== null && !directionContract.allowedDirections.includes(pass.direction)) {
+      const isTransfer = directionContract.family === 'transfer'
       add(
         'error',
         'kinematic',
-        'machine-trace.transfer-operation-direction',
-        `Transfer operation ${pass.operation} requires footer direction ${transferDirection}, not ${pass.direction}.`,
+        isTransfer
+          ? 'machine-trace.transfer-operation-direction'
+          : 'machine-trace.operation-direction',
+        // Stryker disable next-line StringLiteral: Diagnostic prose only; family-specific rules and allowed-direction membership remain mutation-tested.
+        `${isTransfer ? 'Transfer operation' : 'Operation'} ${pass.operation} requires footer direction ${directionContract.allowedDirections.join(' or ')}, not ${pass.direction}.`,
         pass.index,
         pass.source.footer,
       )
@@ -1014,6 +1021,19 @@ export function validateKCodeMachineTrace(
             pass.index,
             selection.stitchSelector.sourceSpan,
           )
+        } else if (outsideKnownRange(
+          selection.stitchSelector.encodedValue,
+          profile.stitchSelectors.documentedBounds,
+        )) {
+          add(
+            'warning',
+              'operational-advisory',
+              'machine-trace.selection-stitch-documented-range',
+              // Stryker disable next-line StringLiteral: Diagnostic prose only; selector bounds, severity, class, and stable rule remain mutation-tested.
+              `Stitch selector ${selection.stitchSelector.encodedValue} is accepted only by the legacy profile and is outside the documented KCode 1.0 selector range.`,
+            pass.index,
+            selection.stitchSelector.sourceSpan,
+          )
         }
         const identity = selectionIdentity(selection)
         if (selectionIdentities.has(identity)) {
@@ -1144,12 +1164,12 @@ export function validateKCodeMachineTrace(
             )
           }
           const moveContract = kcodeOperationContractV1(profile, pass.operation)
-          if (moveContract === null || moveContract.family !== 'regular') {
+          if (moveContract === null || moveContract.emptySelectionAction !== 'move') {
             add(
               'error',
               'structural',
               'machine-trace.action-operation',
-              `Move action is inconsistent with transfer operation ${JSON.stringify(pass.operation)}.`,
+              `Move action is inconsistent with operation ${JSON.stringify(pass.operation)} and its empty-selection contract.`,
               pass.index,
               span,
               actionIndex,
@@ -1185,6 +1205,29 @@ export function validateKCodeMachineTrace(
 
         case 'xfer':
         case 'split': {
+          const actionContract = kcodeOperationContractV1(profile, pass.operation)
+          const expectedActionKind = actionContract === null
+            ? null
+            : pass.carrier === '0'
+              ? actionContract.carrierZeroAction
+              : actionContract.carrierAction
+          const normalizedExpectedActionKind = expectedActionKind === 'xfer'
+            ? 'xfer'
+            : expectedActionKind === 'split'
+              ? 'split'
+              : null
+          if (action.kind !== normalizedExpectedActionKind) {
+            add(
+              'error',
+              'structural',
+              'machine-trace.action-carrier',
+              `Operation ${pass.operation} with carrier ${pass.carrier} requires ${normalizedExpectedActionKind ?? 'a non-transfer action'}, not ${action.kind}.`,
+              pass.index,
+              span,
+              actionIndex,
+            )
+            structurallyInvalidActions.add(actionIndex)
+          }
           const expectedSourceBed = expectedTransferSourceBed(profile, pass.operation)
           if (action.source.bed !== expectedSourceBed) {
             add(
@@ -1228,18 +1271,12 @@ export function validateKCodeMachineTrace(
             )
             structurallyInvalidActions.add(actionIndex)
           }
-          if (
-            (action.kind === 'xfer' && pass.carrier !== '0')
-            || (action.kind === 'split'
-              && (pass.carrier === '0' || action.carrier !== pass.carrier))
-          ) {
+          if (action.kind === 'split' && action.carrier !== pass.carrier) {
             add(
               'error',
               'structural',
               'machine-trace.action-carrier',
-              action.kind === 'xfer'
-                ? `Plain xfer requires footer carrier 0; received ${pass.carrier}.`
-                : `Split carrier ${action.carrier} must match nonzero footer carrier ${pass.carrier}.`,
+              `Split carrier ${action.carrier} must match footer carrier ${pass.carrier}.`,
               pass.index,
               span,
               actionIndex,
