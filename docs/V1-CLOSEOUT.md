@@ -14,6 +14,14 @@ host-blocked before launch by missing `libicu74`. The physical trial is still
 pending, so the workspace remains `1.0.0-rc.1` and no release/deployment claim
 is made. The snapshot below records the starting point for this closeout.
 
+**Command-legality update, 2026-08-26:** `kniterate-7gg-kcode@1` now owns an
+explicit eight-operation command contract consumed by parsing, projection, and
+validation. An independent 1,904-case matrix, boundary partitions, a raw-KCode
+refusal corpus, complete named-rule witness ledger, and Stryker source-mutation
+gate close the former self-consistency gap. Trial packages carry exact legality
+and proof metadata; controller observation remains pending and can accumulate
+only from clean exact-hash physical registry entries.
+
 The compiler proof is done and both software gates are green. What remains is
 one policy call, one commit, and one real machine run — in that order.
 
@@ -290,9 +298,9 @@ constrain the product.
 5. **Lowering is pinned, not clean-room.** A native scheduler behind the same
    scheduled-pass contract, differentially tested against both the pin and the
    captured references, would remove the last borrowed component.
-6. **Source mutation scoring.** The current mutation rail perturbs inputs, not
-   implementation source. A real mutation score for the parser, projector, and
-   validator would quantify whether the tests kill injected faults.
+6. **Controller-observed breadth.** The registry can now aggregate accepted
+   command combinations by exact machine/control-software identity, but no
+   qualifying run exists yet.
 7. **M4's wider Knit-proven gate.** Four exact registry entries — tension,
    fairisle, birdseye, complement — not the single blanket that closes V1.
 

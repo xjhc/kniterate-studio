@@ -1,0 +1,1065 @@
+{
+  "kind": "kniterate-kcode-source-mutation-proof",
+  "schemaVersion": 1,
+  "ok": true,
+  "tool": {
+    "name": "StrykerJS",
+    "version": "10.0.0",
+    "testRunner": "vitest"
+  },
+  "targets": [
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "sha256": "a8f47b014287aa74f84cb867a73af262e22720bebe0fd03b501005fb7f475b06"
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "sha256": "da687dd484d023baf7ad4a10cc0e7c62563029cb07c341d66b78839fbc6d6d68"
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "sha256": "8a0a6fab926079ecfe6ba1c9249eb4dfda82291f9507229f3a92c07b089f3b20"
+    },
+    {
+      "path": "src/knitout/kcode/scheduled-trace-diff.ts",
+      "sha256": "976c0cc54823b2568a47e444dbf88a0732d8be10453d077a7e6204fe7a196546"
+    }
+  ],
+  "configSha256": "09869bb6954574e29a82ec1392e2fa70e7e86380911e61bded2be9c0e978216e",
+  "testConfigSha256": "c95269a297475b87d7a05749b9fc5e2f91cf383d04e9455981677d8ae70f9138",
+  "globallyExcludedMutations": [],
+  "diagnosticProseExclusions": [
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 174,
+      "column": 13,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 175,
+      "column": 15,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 175,
+      "column": 62,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 176,
+      "column": 15,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 229,
+      "column": 19,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 229,
+      "column": 36,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 245,
+      "column": 32,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 246,
+      "column": 13,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 246,
+      "column": 8,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 247,
+      "column": 31,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 247,
+      "column": 8,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 252,
+      "column": 22,
+      "mutator": "ConditionalExpression",
+      "replacement": "false",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 252,
+      "column": 22,
+      "mutator": "ConditionalExpression",
+      "replacement": "true",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 252,
+      "column": 22,
+      "mutator": "EqualityOperator",
+      "replacement": "actual.length !== 0",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 252,
+      "column": 44,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 252,
+      "column": 65,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 254,
+      "column": 67,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 254,
+      "column": 7,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 255,
+      "column": 9,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 261,
+      "column": 28,
+      "mutator": "StringLiteral",
+      "replacement": "\"Stryker was here!\"",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 280,
+      "column": 19,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 307,
+      "column": 36,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; marker structure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 324,
+      "column": 7,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the width mismatch failure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 325,
+      "column": 9,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the width mismatch failure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 333,
+      "column": 22,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the width mismatch failure is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 340,
+      "column": 9,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 341,
+      "column": 11,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 374,
+      "column": 41,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 392,
+      "column": 26,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 409,
+      "column": 21,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 411,
+      "column": 19,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 412,
+      "column": 44,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 416,
+      "column": 22,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 429,
+      "column": 59,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 430,
+      "column": 56,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 433,
+      "column": 13,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 435,
+      "column": 15,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 449,
+      "column": 15,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 451,
+      "column": 17,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 458,
+      "column": 30,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 459,
+      "column": 17,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 460,
+      "column": 17,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 465,
+      "column": 13,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 467,
+      "column": 15,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 484,
+      "column": 28,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 487,
+      "column": 28,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 492,
+      "column": 11,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 494,
+      "column": 13,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 518,
+      "column": 10,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 542,
+      "column": 5,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 550,
+      "column": 5,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the rear-bed field label does not affect decoded structure."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 553,
+      "column": 10,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 561,
+      "column": 5,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 571,
+      "column": 5,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 632,
+      "column": 12,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 659,
+      "column": 41,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 660,
+      "column": 10,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 663,
+      "column": 10,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 666,
+      "column": 10,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 669,
+      "column": 10,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 672,
+      "column": 10,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 675,
+      "column": 10,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 682,
+      "column": 7,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 683,
+      "column": 9,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 688,
+      "column": 7,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 689,
+      "column": 9,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1087,
+      "column": 13,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; exact rule, severity, class, action index, and source location remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1183,
+      "column": 15,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; expected-kind control flow and the stable rule remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1183,
+      "column": 96,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; expected-kind control flow and the stable rule remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1398,
+      "column": 16,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1398,
+      "column": 212,
+      "mutator": "ConditionalExpression",
+      "replacement": "false",
+      "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1398,
+      "column": 212,
+      "mutator": "ConditionalExpression",
+      "replacement": "true",
+      "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1398,
+      "column": 212,
+      "mutator": "EqualityOperator",
+      "replacement": "group.count !== 1",
+      "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1398,
+      "column": 232,
+      "mutator": "StringLiteral",
+      "replacement": "\"Stryker was here!\"",
+      "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1398,
+      "column": 237,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 807,
+      "column": 11,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; exact rule, severity, class, and source location remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 303,
+      "column": 13,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 303,
+      "column": 142,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 304,
+      "column": 13,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 304,
+      "column": 196,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 515,
+      "column": 21,
+      "mutator": "ConditionalExpression",
+      "replacement": "false",
+      "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 515,
+      "column": 21,
+      "mutator": "ConditionalExpression",
+      "replacement": "true",
+      "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 515,
+      "column": 33,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 516,
+      "column": 9,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 517,
+      "column": 9,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 714,
+      "column": 7,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the exact unsupported-dialect rule, severity, and profile/dialect branch remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 747,
+      "column": 66,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; pending-field interruption rules and spans remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 747,
+      "column": 75,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; pending-field interruption rules and spans remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 835,
+      "column": 15,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the orphan-field rule, severity, field, and span remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 932,
+      "column": 156,
+      "mutator": "ConditionalExpression",
+      "replacement": "false",
+      "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 932,
+      "column": 156,
+      "mutator": "ConditionalExpression",
+      "replacement": "true",
+      "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 932,
+      "column": 16,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 932,
+      "column": 170,
+      "mutator": "StringLiteral",
+      "replacement": "\"Stryker was here!\"",
+      "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 932,
+      "column": 175,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+    }
+  ],
+  "diagnosticProseExclusionsSha256": "e94e8bc94bd9f855ebb499fce2565548e0ecbe158146ffe23cbd9e2f169b47da",
+  "equivalentMutantSuppressions": [
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 356,
+      "column": 24,
+      "mutator": "ArithmeticOperator",
+      "replacement": "kcodeColumn - offset",
+      "reason": "Equivalent mutant: both V1 dialect offsets are zero, so addition and subtraction are identical."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 377,
+      "column": 24,
+      "mutator": "ArithmeticOperator",
+      "replacement": "coordinate(a) + coordinate(b)",
+      "reason": "Equivalent mutant: multiplication and division by directionFactor have the same comparator sign for +/-1."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 377,
+      "column": 5,
+      "mutator": "ArithmeticOperator",
+      "replacement": "directionFactor / (coordinate(a) - coordinate(b))",
+      "reason": "Equivalent mutant: multiplication and division by directionFactor have the same comparator sign for +/-1."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 443,
+      "column": 28,
+      "mutator": "ArithmeticOperator",
+      "replacement": "selection.traceCoordinate - rack * contract.targetRackMultiplier",
+      "reason": "Equivalent mutant: the V1 rack multiplier is always +/-1, whose product and quotient are equal."
+    },
+    {
+      "path": "src/knitout/kcode/machine-trace.ts",
+      "line": 443,
+      "column": 56,
+      "mutator": "ArithmeticOperator",
+      "replacement": "rack / contract.targetRackMultiplier",
+      "reason": "Equivalent mutant: the V1 rack multiplier is always +/-1, whose product and quotient are equal."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 200,
+      "column": 63,
+      "mutator": "UnaryOperator",
+      "replacement": "+0",
+      "reason": "Equivalent mutant: unary plus cannot distinguish 0 from the normalized -0 key."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 306,
+      "column": 53,
+      "mutator": "ArithmeticOperator",
+      "replacement": "value + 0.5",
+      "reason": "Equivalent mutant: adding or subtracting 0.5 differs by one and therefore has identical integer membership."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 314,
+      "column": 10,
+      "mutator": "EqualityOperator",
+      "replacement": "coordinate < range.left",
+      "reason": "Equivalent mutant: legal stop coordinates are half-integers while operated coordinates are integers, so equality at either boundary is impossible."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 314,
+      "column": 10,
+      "mutator": "EqualityOperator",
+      "replacement": "coordinate > range.left",
+      "reason": "Equivalent mutant: legal stop coordinates are half-integers while operated coordinates are integers, so equality at either boundary is impossible."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 314,
+      "column": 38,
+      "mutator": "EqualityOperator",
+      "replacement": "coordinate < range.right",
+      "reason": "Equivalent mutant: legal stop coordinates are half-integers while operated coordinates are integers, so equality at either boundary is impossible."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 314,
+      "column": 38,
+      "mutator": "EqualityOperator",
+      "replacement": "coordinate > range.right",
+      "reason": "Equivalent mutant: legal stop coordinates are half-integers while operated coordinates are integers, so equality at either boundary is impossible."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 394,
+      "column": 27,
+      "mutator": "StringLiteral",
+      "replacement": "\"\"",
+      "reason": "Equivalent mutant: non-transfer operations are compared only as a source-bed mismatch; null and the absent sourceBed property produce the same blocking result."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 394,
+      "column": 7,
+      "mutator": "ConditionalExpression",
+      "replacement": "false",
+      "reason": "Equivalent mutant: non-transfer operations are compared only as a source-bed mismatch; null and the absent sourceBed property produce the same blocking result."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 394,
+      "column": 7,
+      "mutator": "ConditionalExpression",
+      "replacement": "true",
+      "reason": "Equivalent mutant: non-transfer operations are compared only as a source-bed mismatch; null and the absent sourceBed property produce the same blocking result."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 431,
+      "column": 10,
+      "mutator": "ArithmeticOperator",
+      "replacement": "source.traceCoordinate - rack * contract.targetRackMultiplier",
+      "reason": "Equivalent mutant: the V1 multiplier domain is exactly -1 or 1, for which multiply and divide are identical."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 431,
+      "column": 35,
+      "mutator": "ArithmeticOperator",
+      "replacement": "rack / contract.targetRackMultiplier",
+      "reason": "Equivalent mutant: the V1 multiplier domain is exactly -1 or 1, for which multiply and divide are identical."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 971,
+      "column": 13,
+      "mutator": "ArithmeticOperator",
+      "replacement": "selection.kcodeColumn - dialectContract.markerFreeTraceOffset",
+      "reason": "Equivalent mutant: both V1 dialect offsets are exactly zero."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 247,
+      "column": 30,
+      "mutator": "ConditionalExpression",
+      "replacement": "true",
+      "reason": "Equivalent mutant: when no decimal exists, only an empty unsigned token has index -1 equal to length - 1, and Number already rejects that sign-only token."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 247,
+      "column": 7,
+      "mutator": "ConditionalExpression",
+      "replacement": "false",
+      "reason": "Equivalent mutant: when no decimal exists, only an empty unsigned token has index -1 equal to length - 1, and Number already rejects that sign-only token."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 247,
+      "column": 7,
+      "mutator": "ConditionalExpression",
+      "replacement": "true",
+      "reason": "Equivalent mutant: when no decimal exists, only an empty unsigned token has index -1 equal to length - 1, and Number already rejects that sign-only token."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 247,
+      "column": 7,
+      "mutator": "ConditionalExpression",
+      "replacement": "true",
+      "reason": "Equivalent mutant: when no decimal exists, only an empty unsigned token has index -1 equal to length - 1, and Number already rejects that sign-only token."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 420,
+      "column": 81,
+      "mutator": "StringLiteral",
+      "replacement": "\"Stryker was here!\"",
+      "reason": "Equivalent mutant: the absent-token fallback cannot match any V1 operation, while present tokens bypass it."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 690,
+      "column": 11,
+      "mutator": "EqualityOperator",
+      "replacement": "omittedStart !== null",
+      "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 690,
+      "column": 36,
+      "mutator": "EqualityOperator",
+      "replacement": "span.start.offset <= omittedStart.offset",
+      "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 690,
+      "column": 36,
+      "mutator": "EqualityOperator",
+      "replacement": "span.start.offset >= omittedStart.offset",
+      "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 692,
+      "column": 11,
+      "mutator": "EqualityOperator",
+      "replacement": "omittedEnd !== null",
+      "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 692,
+      "column": 34,
+      "mutator": "EqualityOperator",
+      "replacement": "span.end.offset <= omittedEnd.offset",
+      "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 692,
+      "column": 34,
+      "mutator": "EqualityOperator",
+      "replacement": "span.end.offset >= omittedEnd.offset",
+      "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 87,
+      "column": 39,
+      "mutator": "Regex",
+      "replacement": "/([\\r\\n]*)(\\r\\n|\\r|\\n)|([^\\r\\n]+)$/g",
+      "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 87,
+      "column": 39,
+      "mutator": "Regex",
+      "replacement": "/([^\\r\\n])(\\r\\n|\\r|\\n)|([^\\r\\n]+)$/g",
+      "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 87,
+      "column": 39,
+      "mutator": "Regex",
+      "replacement": "/([^\\r\\n]*)(\\r\\n|\\r|\\n)|([\\r\\n]+)$/g",
+      "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 87,
+      "column": 39,
+      "mutator": "Regex",
+      "replacement": "/([^\\r\\n]*)(\\r\\n|\\r|\\n)|([^\\r\\n])$/g",
+      "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+    },
+    {
+      "path": "src/knitout/kcode/parser.ts",
+      "line": 87,
+      "column": 39,
+      "mutator": "Regex",
+      "replacement": "/([^\\r\\n]*)(\\r\\n|\\r|\\n)|([^\\r\\n]+)/g",
+      "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+    }
+  ],
+  "equivalentMutantSuppressionsSha256": "af54aff0a6c100cafea711d9092b987e863c8748e2778b503aba58ee77385a2a",
+  "unreviewedIgnoredMutants": [],
+  "counts": {
+    "Killed": 2309,
+    "Survived": 0,
+    "Timeout": 0,
+    "NoCoverage": 0,
+    "CompileError": 0,
+    "RuntimeError": 0,
+    "Ignored": 127,
+    "Pending": 0
+  },
+  "mutationScore": 100
+}

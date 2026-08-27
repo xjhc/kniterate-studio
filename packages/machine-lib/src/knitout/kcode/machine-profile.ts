@@ -12,6 +12,53 @@ export type KCodeDialect = 'app' | 'knitout-vendor'
 
 export type KCodeCarrierToken = '0' | '1' | '2' | '3' | '4' | '5' | '6'
 
+export type KCodeOperationV1 =
+  | 'Kn-Kn'
+  | 'Tu-Tu'
+  | 'Kn-Tu'
+  | 'Tu-Kn'
+  | 'Tr-Rl'
+  | 'Tr-Rr'
+  | 'Rl-Tr'
+  | 'Rr-Tr'
+
+export type KCodePassDirectionV1 = '>>' | '<<'
+export type KCodeRegularBedActionV1 = 'knit' | 'tuck'
+export type KCodeTraceBedV1 = 'front' | 'rear'
+
+interface KCodeOperationContractBaseV1 {
+  readonly operation: KCodeOperationV1
+  readonly allowedDirections: readonly KCodePassDirectionV1[]
+  readonly carrierZeroAction: 'drop' | 'xfer'
+  readonly carrierAction: 'bed-operation' | 'split'
+  readonly emptySelectionAction: 'move' | 'invalid'
+  readonly evidence: KCodeEvidence
+}
+
+export interface KCodeRegularOperationContractV1 extends KCodeOperationContractBaseV1 {
+  readonly family: 'regular'
+  readonly frontAction: KCodeRegularBedActionV1
+  readonly rearAction: KCodeRegularBedActionV1
+  readonly carrierZeroAction: 'drop'
+  readonly carrierAction: 'bed-operation'
+  readonly emptySelectionAction: 'move'
+}
+
+export interface KCodeTransferOperationContractV1 extends KCodeOperationContractBaseV1 {
+  readonly family: 'transfer'
+  readonly sourceBed: KCodeTraceBedV1
+  readonly targetBed: KCodeTraceBedV1
+  /** target trace coordinate = source trace coordinate + rack * multiplier */
+  readonly targetRackMultiplier: -1 | 1
+  readonly carrierZeroAction: 'xfer'
+  readonly carrierAction: 'split'
+  readonly emptySelectionAction: 'invalid'
+}
+
+export type KCodeOperationContractV1 =
+  | KCodeRegularOperationContractV1
+  | KCodeTransferOperationContractV1
+
 export type KCodeEvidenceConfidence =
   | 'official-documented'
   | 'pinned-implementation'
@@ -73,6 +120,7 @@ export interface KCodeMachineProfileV1 {
   readonly dialect: KCodeDialect
   readonly supportedDialects: readonly KCodeDialect[]
   readonly dialects: Readonly<Record<KCodeDialect, KCodeDialectContract>>
+  readonly operations: Readonly<Record<KCodeOperationV1, KCodeOperationContractV1>>
 
   readonly machine: {
     readonly gauge: number
@@ -171,6 +219,10 @@ const OFFICIAL_OPTIONS =
 const OFFICIAL_CUSTOMIST_MANUAL = 'https://www.customist.com/documentation'
 const OFFICIAL_MACHINE =
   'https://www.kniterate.com/product/kniterate-the-digital-knitting-machine/'
+const OFFICIAL_KCODE_SPECS =
+  'https://drive.google.com/file/d/1KFiS1Crfaqba8t1vhqk2IqthqDSTyqKS/view'
+const OFFICIAL_MACHINE_MANUAL =
+  'https://support.kniterate.com/hc/en-us/article_attachments/360009817198'
 const PINNED_BACKEND =
   'packages/machine-lib/src/knitout/vendor/knitout-to-kcode.cjs'
 const REPO_CONSTANTS =
@@ -216,6 +268,64 @@ const RACK_VALUES = [
   0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4,
 ] as const
 
+const operationEvidence = evidence(
+  'pinned-implementation',
+  [OFFICIAL_KCODE_SPECS, OFFICIAL_MACHINE_MANUAL, PINNED_BACKEND, REFERENCE_CORPUS],
+  'The official KCode 1.0 specification defines Kn/Tu/Tr/Rr/Rl bed modes and Rr/Rl receive direction. Carrier-0 and carrier-1..6 action behavior is pinned-backend and corpus evidence, not an official controller-acceptance claim. The machine manual describes physical transfer direction differently, so this contract proves serialized command conformance but does not translate a token into controller-observed physical motion.',
+)
+
+const regularOperation = (
+  operation: KCodeOperationV1,
+  frontAction: KCodeRegularBedActionV1,
+  rearAction: KCodeRegularBedActionV1,
+): KCodeRegularOperationContractV1 => ({
+  operation,
+  family: 'regular',
+  allowedDirections: ['>>', '<<'],
+  frontAction,
+  rearAction,
+  carrierZeroAction: 'drop',
+  carrierAction: 'bed-operation',
+  emptySelectionAction: 'move',
+  evidence: operationEvidence,
+})
+
+const transferOperation = (
+  operation: KCodeOperationV1,
+  direction: KCodePassDirectionV1,
+  sourceBed: KCodeTraceBedV1,
+): KCodeTransferOperationContractV1 => ({
+  operation,
+  family: 'transfer',
+  allowedDirections: [direction],
+  sourceBed,
+  targetBed: sourceBed === 'front' ? 'rear' : 'front',
+  targetRackMultiplier: sourceBed === 'front' ? -1 : 1,
+  carrierZeroAction: 'xfer',
+  carrierAction: 'split',
+  emptySelectionAction: 'invalid',
+  evidence: operationEvidence,
+})
+
+export const KNITERATE_KCODE_OPERATION_CONTRACTS_V1 = Object.freeze({
+  'Kn-Kn': regularOperation('Kn-Kn', 'knit', 'knit'),
+  'Tu-Tu': regularOperation('Tu-Tu', 'tuck', 'tuck'),
+  'Kn-Tu': regularOperation('Kn-Tu', 'knit', 'tuck'),
+  'Tu-Kn': regularOperation('Tu-Kn', 'tuck', 'knit'),
+  'Tr-Rl': transferOperation('Tr-Rl', '<<', 'front'),
+  'Tr-Rr': transferOperation('Tr-Rr', '>>', 'front'),
+  'Rl-Tr': transferOperation('Rl-Tr', '<<', 'rear'),
+  'Rr-Tr': transferOperation('Rr-Tr', '>>', 'rear'),
+} as const) satisfies Readonly<Record<KCodeOperationV1, KCodeOperationContractV1>>
+
+export function kcodeOperationContractV1(
+  profile: KCodeMachineProfileV1,
+  operation: string,
+): KCodeOperationContractV1 | null {
+  if (!Object.prototype.hasOwnProperty.call(profile.operations, operation)) return null
+  return profile.operations[operation as KCodeOperationV1]
+}
+
 /** Fixed V1 target. Bump `profileVersion` when any accepted structural shape,
  * dialect rule, or evidence-backed target range changes. */
 export const KNITERATE_7GG_KCODE_PROFILE_V1: KCodeMachineProfileV1 = {
@@ -225,6 +335,7 @@ export const KNITERATE_7GG_KCODE_PROFILE_V1: KCodeMachineProfileV1 = {
   displayName: 'Kniterate 7gg KCode (252 needles per bed)',
   dialect: 'knitout-vendor',
   supportedDialects: ['app', 'knitout-vendor'],
+  operations: KNITERATE_KCODE_OPERATION_CONTRACTS_V1,
   dialects: {
     app: {
       id: 'app',

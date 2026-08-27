@@ -323,5 +323,7 @@ describe('blanket project compiler', () => {
       recordMaterialization: 'complete',
     });
     expect(reopened.verdict).toMatchObject({ state: 'surface', label: 'Surface-proven (imported)' });
+    expect(emitted.validation).toMatchObject({ profileConformance: 'conformant' });
+    expect(reopened.kcode?.validation).toEqual(emitted.validation);
   });
 });

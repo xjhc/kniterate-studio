@@ -100,6 +100,10 @@ const emptyState = {
 
 const VALIDATION: MachineValidationReportV1 = {
   ok: true,
+  profileConformance: 'conformant',
+  modeledState: 'conformant',
+  operationalPolicy: 'clear',
+  controllerAcceptance: 'not-established-by-software-validation',
   diagnostics: [],
   errorCount: 0,
   warningCount: 0,

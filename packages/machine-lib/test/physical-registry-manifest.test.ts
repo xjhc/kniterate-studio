@@ -20,6 +20,7 @@ import {
   bindV1KnitTrialReleaseSource,
   compileCurrentV1KnitTrial,
   readCleanV1KnitTrialReleaseSource,
+  writeV1KnitTrial,
   type V1KnitTrialCompileResult,
 } from '../../../scripts/build-v1-knit-trial.js'
 import { checkCurrentV1PhysicalRelease } from '../../../scripts/check-v1-physical-release.js'
@@ -54,6 +55,28 @@ interface CheckerReport {
   registryMessages: string[]
   manifestMessages: string[]
   entries: CheckerEntryResult[]
+  controllerObservedCoverage: {
+    status: 'pending' | 'exact-artifact-observed'
+    evidenceCount: number
+    profile: { id: string; version: number; sha256: string; contractSha256: string }
+    byMachine: Record<string, {
+      key: string
+      machineSerial: string
+      controlSoftwareVersion: string
+      exactArtifactCount: number
+      kcodeSha256: string[]
+      operations: string[]
+      directions: string[]
+      carriers: string[]
+      racks: number[]
+      combinations: Array<{
+        operation: string
+        direction: string
+        carrier: string
+        rack: number
+      }>
+    }>
+  }
 }
 
 const chart = {
@@ -377,6 +400,24 @@ describe('generated physical registry manifest', () => {
     expect(report.knitProvenCount).toBe(1)
     expect(report.entries[0]).toMatchObject({ ok: true, stale: false, knitProven: true, outcome: 'clean' })
     expect(report.entries[0]!.promotionMessages).toEqual([])
+    expect(report.controllerObservedCoverage).toMatchObject({
+      status: 'exact-artifact-observed',
+      evidenceCount: 1,
+      profile: { id: 'kniterate-7gg-kcode', version: 1 },
+      byMachine: {
+        'fixture-machine-001::fixture-control-1.0': {
+          key: 'fixture-machine-001::fixture-control-1.0',
+          machineSerial: 'fixture-machine-001',
+          controlSoftwareVersion: 'fixture-control-1.0',
+          exactArtifactCount: 1,
+        },
+      },
+    })
+    const observed = report.controllerObservedCoverage.byMachine['fixture-machine-001::fixture-control-1.0']!
+    expect(observed.kcodeSha256).toEqual([
+      sha256Bytes(currentArtifacts().kcodeText),
+    ])
+    expect(observed.combinations.length).toBeGreaterThan(0)
   })
 
   it('keeps a well-formed failed trial valid history but excludes it from promotion', () => {
@@ -399,6 +440,11 @@ describe('generated physical registry manifest', () => {
     expect(report.entries[0]).toMatchObject({ ok: true, stale: false, knitProven: false, outcome: 'jammed' })
     expect(report.entries[0]!.messages).toEqual([])
     expect(report.entries[0]!.promotionMessages).toContainEqual(expect.stringContaining('not clean'))
+    expect(report.controllerObservedCoverage).toMatchObject({
+      status: 'pending',
+      evidenceCount: 0,
+      byMachine: {},
+    })
   })
 
   it('rejects incomplete evidence and non-enum outcome text structurally', () => {
@@ -624,7 +670,7 @@ describe('generated physical registry manifest', () => {
     const fixture = registryFixture()
     const dir = writeCurrentEntry(fixture.root, 'matches')
     const outKcPath = join(dir, 'out.kc')
-    writeFileSync(outKcPath, `${readFileSync(outKcPath, 'utf8')}\n; stale artifact\n`)
+    writeFileSync(outKcPath, `${readFileSync(outKcPath, 'utf8')}\n// stale artifact\n`)
     const specPath = join(dir, 'spec.json')
     const spec = readObject(specPath)
     spec.kcodeSha256 = sha256Bytes(readFileSync(outKcPath))
@@ -661,9 +707,30 @@ describe('fresh V1 physical release gate', () => {
     const commit = 'a'.repeat(40)
     const source = readCleanV1KnitTrialReleaseSource((args) =>
       args[0] === 'rev-parse' ? `${commit}\n` : '')
-    const bound = bindV1KnitTrialReleaseSource(currentTrial(), source)
+    const bound = bindV1KnitTrialReleaseSource(currentTrial(), source, {
+      path: 'packages/machine-lib/out/kcode-proof/proof-manifest.json',
+      sha256: 'b'.repeat(64),
+      verdict: 'software-proven',
+      profileSha256: currentTrial().commandLegality.profile.sha256,
+      contractSha256: currentTrial().commandLegality.contractSha256,
+    })
 
     expect(bound.manifest.releaseSource).toEqual({ commit, worktree: 'clean' })
+    expect(bound.commandLegality.proofReceipt).toMatchObject({
+      sha256: 'b'.repeat(64),
+      verdict: 'software-proven',
+    })
+    const destination = temporaryFile('trial-package')
+    writeV1KnitTrial(bound, destination)
+    const legality = readObject(join(destination, 'command-legality.json'))
+    expect(legality).toMatchObject({
+      controllerObserved: 'pending',
+      proofReceipt: { sha256: 'b'.repeat(64), verdict: 'software-proven' },
+      artifact: { kcodeSha256: bound.manifest.identity.kcodeSha256 },
+    })
+    expect(readFileSync(join(destination, 'CONTROLLER-REVIEW.md'), 'utf8')).toContain(
+      'read by the machine from SD card',
+    )
     expect(() => readCleanV1KnitTrialReleaseSource((args) =>
       args[0] === 'rev-parse' ? `${commit}\n` : '?? local-file\n'))
       .toThrow(/requires a clean working tree.*local-file/s)
@@ -679,6 +746,12 @@ describe('fresh V1 physical release gate', () => {
     expect(first.manifest.identity.kcodeSha256).toBe(sha256Bytes(first.kcodeText))
     expect(first.manifest.machine.coordinateSystem).toContain('physical needle labels unverified')
     expect(first.manifest.physicalPlacementGate.status).toBe('unverified')
+    expect(second.commandLegality).toEqual(first.commandLegality)
+    expect(first.commandLegality.artifact.kcodeSha256).toBe(sha256Bytes(first.kcodeText))
+    expect(first.commandLegality.artifact.profileConformance).toBe('conformant')
+    expect(first.commandLegality.coverage.combinations.length).toBeGreaterThan(0)
+    expect(first.commandLegality.controllerObserved).toBe('pending')
+    expect(first.controllerReview).toContain('controller-observed status is **pending**')
   })
 
   it('blocks an empty physical registry', () => {

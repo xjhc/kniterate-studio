@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_KCODE_OPERATION_CONTRACTS_V1,
   KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1,
   basePayloadIndexToKCodeColumn,
   kcodeColumnToBasePayloadIndex,
@@ -19,6 +20,33 @@ describe('Kniterate 7gg KCode machine profile V1', () => {
       profileVersion: 1,
       dialect: 'knitout-vendor',
       supportedDialects: ['app', 'knitout-vendor'],
+    })
+  })
+
+  it('owns the complete operation legality decision table in the profile', () => {
+    expect(profile.operations).toBe(KNITERATE_KCODE_OPERATION_CONTRACTS_V1)
+    expect(Object.keys(profile.operations).sort()).toEqual([
+      'Kn-Kn', 'Kn-Tu', 'Rl-Tr', 'Rr-Tr', 'Tr-Rl', 'Tr-Rr', 'Tu-Kn', 'Tu-Tu',
+    ])
+    expect(profile.operations['Kn-Tu']).toMatchObject({
+      family: 'regular',
+      allowedDirections: ['>>', '<<'],
+      frontAction: 'knit',
+      rearAction: 'tuck',
+      carrierZeroAction: 'drop',
+      carrierAction: 'bed-operation',
+      emptySelectionAction: 'move',
+    })
+    expect(profile.operations['Tr-Rr']).toMatchObject({
+      family: 'transfer',
+      allowedDirections: ['>>'],
+      sourceBed: 'front',
+      targetBed: 'rear',
+      targetRackMultiplier: -1,
+      carrierZeroAction: 'xfer',
+      carrierAction: 'split',
+      emptySelectionAction: 'invalid',
+      evidence: { confidence: 'pinned-implementation' },
     })
   })
 

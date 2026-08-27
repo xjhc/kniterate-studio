@@ -53,8 +53,7 @@ export function compareScheduledPassesToMachineTrace(
 
   add(null, 'pass count', scheduledPasses.length, trace.passes.length)
   const shared = Math.min(scheduledPasses.length, trace.passes.length)
-  for (let index = 0; index < shared; index++) {
-    const expected = scheduledPasses[index]!
+  for (const [index, expected] of scheduledPasses.slice(0, shared).entries()) {
     const actual = trace.passes[index]!
     comparePass(index, expected, actual, add)
   }

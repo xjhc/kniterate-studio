@@ -25,6 +25,7 @@ import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../src/knitout/kcode/machine-pro
 import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js'
 import { emitKCodeDocumentBytes, parseKCodeBytes } from '../src/knitout/kcode/bytes.js'
 import { validateKCodeMachineTrace } from '../src/knitout/kcode/machine-validator.js'
+import { collectKCodeRuleCoverage } from './kcode-rule-coverage.js'
 
 interface GateResult {
   readonly id: string
@@ -45,6 +46,7 @@ const PROOF_TESTS = [
   'test/knitout/kcode-document-property.test.ts',
   'test/knitout/kcode-machine-trace.test.ts',
   'test/knitout/kcode-machine-validator.test.ts',
+  'test/knitout/kcode-command-legality.test.ts',
   'test/knitout/kcode-machine-scene.test.ts',
   'test/knitout/kcode-independent-oracle.test.ts',
   'test/knitout/kcode-scheduled-differential.test.ts',
@@ -106,6 +108,11 @@ const CONTRACT_SOURCES = [
 
 const PROOF_HARNESS_SOURCES = [
   'scripts/kcode-proof.ts',
+  'scripts/kcode-command-refusal-corpus.ts',
+  'scripts/kcode-mutation.ts',
+  'scripts/kcode-rule-coverage.ts',
+  'stryker.config.mjs',
+  'vitest.stryker.config.ts',
   'package.json',
   'tsconfig.json',
   '../../package.json',
@@ -166,13 +173,17 @@ function sha256(bytes: Uint8Array | string): string {
   return createHash('sha256').update(bytes).digest('hex')
 }
 
-function runGate(id: string, args: readonly string[]): GateResult {
+function runGate(
+  id: string,
+  args: readonly string[],
+  recordedCommand?: string,
+): GateResult {
   process.stdout.write(`\n== KCode proof: ${id} ==\n`)
   const result = spawnSync('pnpm', [...args], { cwd: process.cwd(), stdio: 'inherit', shell: false })
   const exitCode = typeof result.status === 'number' ? result.status : 1
   return {
     id,
-    command: `pnpm ${args.join(' ')}`,
+    command: recordedCommand ?? `pnpm ${args.join(' ')}`,
     status: exitCode === 0 ? 'pass' : 'fail',
     exitCode,
   }
@@ -295,6 +306,32 @@ function collectToolchainFingerprint() {
   }
 }
 
+function collectMutationEvidence() {
+  const path = resolve(process.cwd(), 'out/kcode-proof/mutation-manifest.json')
+  const bytes = readFileSync(path)
+  const receipt = JSON.parse(bytes.toString('utf8')) as {
+    readonly ok?: unknown
+    readonly counts?: unknown
+    readonly mutationScore?: unknown
+    readonly targets?: unknown
+    readonly diagnosticProseExclusions?: unknown
+    readonly diagnosticProseExclusionsSha256?: unknown
+    readonly equivalentMutantSuppressions?: unknown
+    readonly equivalentMutantSuppressionsSha256?: unknown
+  }
+  if (receipt.ok !== true) throw new Error('source-mutation receipt is not successful')
+  return {
+    receiptSha256: sha256(bytes),
+    counts: receipt.counts,
+    mutationScore: receipt.mutationScore,
+    targets: receipt.targets,
+    diagnosticProseExclusions: receipt.diagnosticProseExclusions,
+    diagnosticProseExclusionsSha256: receipt.diagnosticProseExclusionsSha256,
+    equivalentMutantSuppressions: receipt.equivalentMutantSuppressions,
+    equivalentMutantSuppressionsSha256: receipt.equivalentMutantSuppressionsSha256,
+  }
+}
+
 function main(): void {
   const checkOnly = process.argv.includes('--check')
   const outputFlag = process.argv.findIndex((argument) => argument === '--out' || argument === '-o')
@@ -330,10 +367,15 @@ function main(): void {
   const gates = [
     runGate('physical-registry-manifest-current', ['kniterate:swatches:check']),
     runGate('known-bad-refusal-corpus', ['kniterate:refusals']),
+    runGate('kcode-native-command-refusal-corpus', ['kniterate:kcode-refusals']),
+    runGate('blocking-rule-witness-ledger', ['kniterate:kcode-rule-coverage']),
     runGate('deterministic-kcode-proof-tests', [
       'exec', 'vitest', 'run', ...PROOF_TESTS,
     ]),
     runGate('machine-lib-typecheck', ['typecheck']),
+    runGate('kcode-source-mutation-proof', [
+      checkOnly ? 'verify:kcode:mutation:check' : 'verify:kcode:mutation',
+    ], 'pnpm verify:kcode:mutation (write) / pnpm verify:kcode:mutation:check (check)'),
     runGate('studio-kcode-integration-tests', [
       '--dir', '../../apps/studio', 'exec', 'vitest', 'run', ...STUDIO_PROOF_TESTS,
     ]),
@@ -346,6 +388,8 @@ function main(): void {
     ]),
   ]
   const corpus = capture('reference-corpus', collectReferenceCorpus)
+  const mutationEvidence = capture('source-mutation-proof', collectMutationEvidence)
+  const ruleCoverage = capture('blocking-rule-witness-ledger', collectKCodeRuleCoverage)
   const contractAfterGates = capture('proof-input-fingerprint-after-gates', collectContractFingerprint)
   if (
     contractBeforeGates !== null
@@ -366,7 +410,7 @@ function main(): void {
   const blocked = gates.some((gate) => gate.status === 'fail') || auditFailures.length > 0
   const manifest = {
     kind: 'kniterate-studio-kcode-software-proof',
-    schemaVersion: 1,
+    schemaVersion: 2,
     verdict: blocked ? 'blocked' : 'software-proven',
     profile: {
       id: KNITERATE_7GG_KCODE_PROFILE_V1.profileId,
@@ -380,6 +424,10 @@ function main(): void {
       'deterministic-pinned-backend-lowering',
       'machine-executable-scheduled-pass-to-machine-trace-differential',
       'kcode-native-loop-and-kinematic-validation',
+      'profile-command-legality-v1',
+      'independent-1904-case-command-legality-matrix',
+      'kcode-native-invalid-command-refusal-corpus',
+      'source-mutation-complete-for-command-proof-rail',
       'full-machine-trace-diff',
       'deterministic-pass-bed-carrier-scene',
       'cross-section-predicted-vendor-agreement-prefix',
@@ -395,6 +443,19 @@ function main(): void {
       validatorContainmentProperty: 1447119945,
       scheduledBackendDifferential: 1414676803,
       independentReferenceOracle: 1330790723,
+    },
+    legalityCoverage: {
+      coreMatrixCases: 1_904,
+      operations: 8,
+      directions: 2,
+      carrierTokens: 7,
+      rackValues: 17,
+      kcodeNativeRefusalCases: 9,
+      oracle: 'test/knitout/kcode-legality-spec.ts',
+      contractSha256: sha256(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1.operations)),
+      oracleSha256: sha256(readFileSync(resolve(process.cwd(), 'test/knitout/kcode-legality-spec.ts'))),
+      ruleCoverage,
+      profileSha256: sha256(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1)),
     },
     proofTests: [
       ...PROOF_TESTS,
@@ -413,8 +474,8 @@ function main(): void {
     },
     mutationEvidence: {
       inputGrammarAndDiffMutations: true,
-      implementationSourceMutationScoring: false,
-      opportunity: 'Add a deterministic source-mutation score gate for the parser, projector, validator, and trace diff.',
+      implementationSourceMutationScoring: true,
+      ...mutationEvidence,
     },
     physicalAcceptance: {
       included: false,

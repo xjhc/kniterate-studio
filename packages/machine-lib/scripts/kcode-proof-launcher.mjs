@@ -40,7 +40,7 @@ const exitCode = typeof result.status === 'number' ? result.status : 1
 if (!checkOnly && exitCode !== 0 && !existsSync(outputPath)) {
   const manifest = {
     kind: 'kniterate-studio-kcode-software-proof',
-    schemaVersion: 1,
+    schemaVersion: 2,
     verdict: 'blocked',
     auditFailures: [{
       stage: 'proof-harness-execution',

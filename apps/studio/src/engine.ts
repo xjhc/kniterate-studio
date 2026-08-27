@@ -82,7 +82,7 @@ export function resolveAuthoredVerdict(input: AuthoredVerdictInput): AuthoredVer
   return {
     state: 'surface',
     label: 'Surface-proven',
-    annotation: 'The emitted KCode passed strict parsing, scheduled-backend differential checks, exact MachineTrace projection, and loop/kinematic replay. Physical yarn, tension, and fabric behavior remain a separate final swatch gate.',
+    annotation: 'The emitted KCode conforms to the versioned V1 operation, direction, carrier, rack, selection, transfer, stop, and continuity contract and passed exact scheduled-backend differential and empty-bed state replay. Controller acceptance and physical yarn, tension, and fabric behavior remain separate gates.',
     evidenceId: null,
   };
 }
@@ -515,8 +515,8 @@ function finishDocument(input: {
           ? 'Imported warnings remain unresolved, so this foreign file is blocked under the conservative V1 policy.'
           : 'Machine-facing findings must be resolved before this file should be knit.'
         : input.format === 'kc'
-          ? `Strict KCode parsing, exact MachineTrace projection, and software validation passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Operational limits and physical knitting remain unproven; use a representative swatch as the final gate.`
-          : `Pinned backend lowering, strict emitted KCode parsing, scheduled-pass differential checks, exact MachineTrace projection, and loop/kinematic replay passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Physical yarn, tension, and fabric behavior remain a separate final swatch gate.`,
+          ? `Strict KCode parsing and conformance to the V1 operation, direction, carrier, rack, selection, transfer, stop, and continuity contract passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Controller acceptance, operational limits, and physical knitting remain unproven.`
+          : `Pinned backend lowering, strict emitted KCode parsing, V1 command-contract conformance, scheduled-pass differential checks, and empty-bed state replay passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Controller acceptance and physical yarn, tension, and fabric behavior remain separate gates.`,
     },
     stats: {
       passCount: input.passes.length,

@@ -54,12 +54,21 @@ export {
 } from './knitout/back-face-projection.js';
 export {
   KNITERATE_7GG_KCODE_PROFILE_V1,
+  KNITERATE_KCODE_OPERATION_CONTRACTS_V1,
   basePayloadIndexToKCodeColumn,
+  kcodeOperationContractV1,
   kcodeColumnToBasePayloadIndex,
   kcodeColumnToTraceCoordinate,
   type KCodeCarrierToken,
   type KCodeDialect,
   type KCodeMachineProfileV1,
+  type KCodeOperationContractV1,
+  type KCodeOperationV1,
+  type KCodePassDirectionV1,
+  type KCodeRegularBedActionV1,
+  type KCodeRegularOperationContractV1,
+  type KCodeTraceBedV1,
+  type KCodeTransferOperationContractV1,
 } from './knitout/kcode/machine-profile.js';
 export { KCODE_RESOURCE_LIMITS_V1, parseKCodeDocument } from './knitout/kcode/parser.js';
 export {

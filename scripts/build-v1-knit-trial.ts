@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createColorworkProjectV1 } from '../packages/project-contract/src/index.js';
@@ -8,6 +8,10 @@ import { compileColorworkProject } from '../apps/studio/src/blanket/compileProje
 import { inspectKcDocument } from '../packages/machine-lib/src/knitout/kc-document.js';
 import { kcToKnitout } from '../packages/machine-lib/src/knitout/kc-to-knitout.js';
 import { knitoutToKCodeWithTrace } from '../packages/machine-lib/src/knitout/kniterate/to-kcode.js';
+import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../packages/machine-lib/src/knitout/kcode/machine-profile.js';
+import { projectKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-trace.js';
+import { validateKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-validator.js';
+import { parseKCodeDocument } from '../packages/machine-lib/src/knitout/kcode/parser.js';
 import { validateKnitoutProgram } from '../packages/machine-lib/src/validators/knitout-program.js';
 import { computeCompilerFingerprint, sha256Bytes } from '../packages/machine-lib/scripts/registry-support.js';
 
@@ -18,6 +22,14 @@ const GIT_COMMIT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 export interface V1KnitTrialReleaseSource {
   readonly commit: string;
   readonly worktree: 'clean';
+}
+
+export interface V1KCodeProofReceipt {
+  readonly path: 'packages/machine-lib/out/kcode-proof/proof-manifest.json';
+  readonly sha256: string;
+  readonly verdict: 'software-proven';
+  readonly profileSha256: string;
+  readonly contractSha256: string;
 }
 
 type ReadGit = (args: readonly string[]) => string;
@@ -82,6 +94,20 @@ export function compileCurrentV1KnitTrial() {
   }
   const converted = knitoutToKCodeWithTrace(compiled.knitoutText, 'command.k');
   if (!converted.ok) throw new Error(converted.error || 'KCode conversion failed');
+  const parsedKCode = parseKCodeDocument(converted.kcode, {
+    profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+    dialect: KNITERATE_7GG_KCODE_PROFILE_V1.dialect,
+    strict: true,
+    resourceProfile: 'authored-v1',
+  });
+  if (!parsedKCode.ok) {
+    throw new Error(`generated KCode failed strict command parsing: ${parsedKCode.diagnostics.map((diagnostic) => `${diagnostic.rule}: ${diagnostic.message}`).join('; ')}`);
+  }
+  const machineTrace = projectKCodeMachineTrace(parsedKCode.document, KNITERATE_7GG_KCODE_PROFILE_V1);
+  const machineValidation = validateKCodeMachineTrace(machineTrace, KNITERATE_7GG_KCODE_PROFILE_V1);
+  if (!machineValidation.ok || machineValidation.profileConformance !== 'conformant') {
+    throw new Error(`generated KCode failed command-legality validation: ${machineValidation.diagnostics.map((diagnostic) => `${diagnostic.rule}: ${diagnostic.message}`).join('; ')}`);
+  }
   const reconstructed = kcToKnitout(converted.kcode);
   const validation = validateKnitoutProgram(reconstructed.program);
   const errors = validation.messages.filter((message) => message.severity === 'error');
@@ -89,6 +115,49 @@ export function compileCurrentV1KnitTrial() {
     throw new Error(`generated KCode failed revalidation: ${errors.map((message) => message.message).join('; ')}`);
   }
   const compilerFingerprint = computeCompilerFingerprint();
+  const combinations = [...new Map(machineTrace.passes.map((pass) => {
+    const combination = {
+      operation: pass.operation,
+      direction: pass.direction,
+      carrier: pass.carrier,
+      rack: pass.rack,
+    };
+    return [`${combination.operation}|${combination.direction}|${combination.carrier}|${combination.rack}`, combination] as const;
+  })).values()].sort((a, b) =>
+    a.operation.localeCompare(b.operation)
+    || a.direction.localeCompare(b.direction)
+    || a.carrier.localeCompare(b.carrier)
+    || a.rack - b.rack);
+  const commandLegality = {
+    kind: 'kniterate-studio-command-legality-evidence',
+    schemaVersion: 1,
+    profile: {
+      id: KNITERATE_7GG_KCODE_PROFILE_V1.profileId,
+      version: KNITERATE_7GG_KCODE_PROFILE_V1.profileVersion,
+      sha256: sha256Bytes(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1)),
+    },
+    contractSha256: sha256Bytes(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1.operations)),
+    artifact: {
+      kcodeSha256: sha256Bytes(converted.kcode),
+      passes: machineTrace.passes.length,
+      profileConformance: machineValidation.profileConformance,
+      modeledState: machineValidation.modeledState,
+      operationalPolicy: machineValidation.operationalPolicy,
+      controllerAcceptance: machineValidation.controllerAcceptance,
+    },
+    coverage: {
+      operations: [...new Set(machineTrace.passes.map((pass) => pass.operation))].sort(),
+      directions: [...new Set(machineTrace.passes.map((pass) => pass.direction))].sort(),
+      carriers: [...new Set(machineTrace.passes.map((pass) => pass.carrier))].sort(),
+      racks: [...new Set(machineTrace.passes.map((pass) => pass.rack))].sort((a, b) => a - b),
+      combinations,
+    },
+    controllerObserved: 'pending',
+    limitations: [
+      'Software validation establishes profile conformance, not controller acceptance.',
+      'Physical needle numbering, carrier lifecycle, and operational setting safety remain outside this claim.',
+    ],
+  } as const;
   const manifest = {
     kind: 'kniterate-studio-v1-physical-trial', schemaVersion: 1,
     title: project.title, profile: project.base.machine.profile,
@@ -143,10 +212,28 @@ export function compileCurrentV1KnitTrial() {
 2. Load C1 draw thread, C2-C5 according to manifest.json, and C6 waste yarn.
 3. The range ${project.base.machine.needleOffset}-${project.base.machine.needleOffset + width - 1} is expressed only in compiler/project coordinates. It is not a verified physical needle-label range.
 4. Before sending the job, resolve that compiler range to physical needle labels using a documented machine/vendor datum procedure. Have an operator independently verify the placement and record the mapping, method, verifier, and time in run.json. Do not run while this gate is unverified.
-5. Confirm 20 waste rows, draw thread, and machine bind-off, then open blanket.kc in the Kniterate application and compare its pass count to manifest.json before sending.
+5. Confirm 20 waste rows, draw thread, and machine bind-off. The design app does not import .kc files: after independent hash and metadata review, copy the exact bytes of blanket.kc to the SD card as command.kc (the only filename the machine reads), eject the card correctly, and use the documented manual procedure. Retain blanket.kc as the unchanged evidence copy. Do not claim or attempt an automated controller-only dry run.
 6. Watch waste, draw, carrier bring-in, first two body rows, and bind-off. Stop on unexpected carrier position, loop loss, or takedown behavior; record every manual intervention in run.json.
 7. Photograph front, back, cast-on, both edges, and bind-off. Record dimensions off-machine and after 24 hours of rest.
 8. Copy the completed artifact into packages/machine-lib/registry/swatches only after the structured run evidence, narrative outcome, and exact hashes are recorded.
+`;
+  const controllerReview = `# Controller review
+
+This package contains only the exact KCode artifact that passed the V1 software
+command-legality gate. It does not contain deliberately invalid probes.
+
+- Verify the profile, KCode SHA-256, proof-receipt SHA-256, pass count, and command
+  combinations in \`command-legality.json\` before authorizing a machine run.
+- The current controller-observed status is **pending**. Software validation does
+  not prove that a specific Kniterate control-software revision accepts the file.
+- Do not hand-edit or rename the evidence copy. Follow \`OPERATOR-CHECKLIST.md\`
+  and record the exact loaded artifact, machine serial, control-software version,
+  stops, interventions, and outcome in the physical registry.
+- Kniterate documents that .kc files are not imported into the design app and
+  are read by the machine from SD card. Controller review is therefore a
+  separately authorized physical procedure, not an automated software gate.
+- The authorized SD-card transfer copy must be named \`command.kc\`; verify
+  that its bytes still match the KCode SHA-256 after the copy.
 `;
   return {
     project,
@@ -154,21 +241,53 @@ export function compileCurrentV1KnitTrial() {
     knitoutText: compiled.knitoutText,
     kcodeText: converted.kcode,
     manifest,
+    commandLegality,
     operatorChecklist,
+    controllerReview,
   };
 }
 
 export type V1KnitTrialCompileResult = ReturnType<typeof compileCurrentV1KnitTrial>;
 
+export function readCurrentV1KCodeProofReceipt(): V1KCodeProofReceipt {
+  const path = resolve(import.meta.dirname, '../packages/machine-lib/out/kcode-proof/proof-manifest.json');
+  const bytes = readFileSync(path);
+  const manifest = JSON.parse(bytes.toString('utf8')) as {
+    verdict?: unknown;
+    legalityCoverage?: { profileSha256?: unknown; contractSha256?: unknown };
+  };
+  const profileSha256 = sha256Bytes(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1));
+  const contractSha256 = sha256Bytes(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1.operations));
+  if (manifest.verdict !== 'software-proven') throw new Error('tracked KCode proof manifest is not software-proven');
+  if (manifest.legalityCoverage?.profileSha256 !== profileSha256) {
+    throw new Error('tracked KCode proof manifest does not match the current machine profile');
+  }
+  if (manifest.legalityCoverage?.contractSha256 !== contractSha256) {
+    throw new Error('tracked KCode proof manifest does not match the current operation contract');
+  }
+  return {
+    path: 'packages/machine-lib/out/kcode-proof/proof-manifest.json',
+    sha256: sha256Bytes(bytes),
+    verdict: 'software-proven',
+    profileSha256,
+    contractSha256,
+  };
+}
+
 export function bindV1KnitTrialReleaseSource(
   result: V1KnitTrialCompileResult,
   releaseSource: V1KnitTrialReleaseSource,
+  proofReceipt: V1KCodeProofReceipt,
 ) {
   return {
     ...result,
     manifest: {
       ...result.manifest,
       releaseSource,
+    },
+    commandLegality: {
+      ...result.commandLegality,
+      proofReceipt,
     },
   };
 }
@@ -186,17 +305,28 @@ export function writeV1KnitTrial(
   writeFileSync(resolve(destination, 'blanket.k'), result.knitoutText);
   writeFileSync(resolve(destination, 'blanket.kc'), result.kcodeText);
   writeFileSync(resolve(destination, 'manifest.json'), `${JSON.stringify(result.manifest, null, 2)}\n`);
+  writeFileSync(resolve(destination, 'command-legality.json'), `${JSON.stringify(result.commandLegality, null, 2)}\n`);
   writeFileSync(resolve(destination, 'OPERATOR-CHECKLIST.md'), result.operatorChecklist);
+  writeFileSync(resolve(destination, 'CONTROLLER-REVIEW.md'), result.controllerReview);
 }
 
 function main(): void {
   const initialSource = readCleanV1KnitTrialReleaseSource();
+  execFileSync('pnpm', ['verify:kcode:check'], { stdio: 'inherit' });
+  const verifiedSource = readCleanV1KnitTrialReleaseSource();
+  if (verifiedSource.commit !== initialSource.commit) {
+    throw new Error(`release trial source changed during KCode proof: ${initialSource.commit} -> ${verifiedSource.commit}`);
+  }
   const compiled = compileCurrentV1KnitTrial();
   const releaseSource = readCleanV1KnitTrialReleaseSource();
   if (releaseSource.commit !== initialSource.commit) {
     throw new Error(`release trial source changed during compilation: ${initialSource.commit} -> ${releaseSource.commit}`);
   }
-  const result = bindV1KnitTrialReleaseSource(compiled, releaseSource);
+  const result = bindV1KnitTrialReleaseSource(
+    compiled,
+    releaseSource,
+    readCurrentV1KCodeProofReceipt(),
+  );
   writeV1KnitTrial(result);
   process.stdout.write(`v1 physical trial ready from ${releaseSource.commit}: ${V1_KNIT_TRIAL_DESTINATION}\n${JSON.stringify(result.manifest.output, null, 2)}\n`);
 }

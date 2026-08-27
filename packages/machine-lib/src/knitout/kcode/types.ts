@@ -2,6 +2,7 @@ import type {
   KCodeCarrierToken,
   KCodeDialect,
   KCodeMachineProfileV1,
+  KCodeOperationV1,
 } from './machine-profile.js'
 
 export type KCodeLineEnding = '' | '\n' | '\r\n' | '\r'
@@ -72,7 +73,7 @@ export interface KCodeFooterRecord extends KCodeRecordBase {
   readonly kind: 'footer'
   readonly tokens: readonly KCodeFooterToken[]
   readonly direction: '>>' | '<<' | null
-  readonly operation: string | null
+  readonly operation: KCodeOperationV1 | null
   readonly carrier: KCodeCarrierToken | null
   readonly speedRaw: string | null
   readonly speed: number | null

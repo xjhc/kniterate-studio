@@ -1,4 +1,8 @@
-import type { KCodeCarrierToken, KCodeMachineProfileV1 } from './machine-profile.js'
+import {
+  kcodeOperationContractV1,
+  type KCodeCarrierToken,
+  type KCodeMachineProfileV1,
+} from './machine-profile.js'
 import type {
   KCodeBlankRecord,
   KCodeCommentRecord,
@@ -23,18 +27,6 @@ import type {
 } from './types.js'
 
 const FIELD_ORDER = ['FRNT', 'STIF', 'REAR', 'STIR'] as const
-const DECIMAL_NUMBER = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/
-const FOOTER_OPERATION = /^[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z][A-Za-z0-9]*)+$/
-const SUPPORTED_OPERATIONS = new Set([
-  'Kn-Kn',
-  'Tu-Tu',
-  'Kn-Tu',
-  'Tu-Kn',
-  'Tr-Rl',
-  'Tr-Rr',
-  'Rl-Tr',
-  'Rr-Tr',
-])
 const SOURCE_BYTE_DETAIL_CODE_UNIT_LIMIT = 64
 const DIAGNOSTIC_RAW_PREVIEW_CODE_UNITS = 120
 export const MAX_KCODE_SOURCE_CODE_UNITS = 64 * 1024 * 1024
@@ -60,6 +52,14 @@ interface ScannedLine {
   readonly fullSpan: KCodeSourceSpan
 }
 
+interface SourceLineSegment {
+  readonly contentStart: number
+  readonly contentEnd: number
+  readonly fullEnd: number
+  readonly raw: string
+  readonly lineEnding: KCodeLineEnding
+}
+
 interface PendingPass {
   readonly rackAtStart: number
   readonly fields: KCodePassFieldRecord[]
@@ -76,6 +76,30 @@ function position(offset: number, line: number, column: number): KCodeSourcePosi
   return { offset, line, column }
 }
 
+/**
+ * Finite native line iteration. Keeping cursor advancement inside the regular
+ * expression avoids mutation variants that can reverse a synchronous `++`
+ * scanner into a non-terminating loop before the test runner can interrupt it.
+ */
+function sourceLineSegments(source: string): SourceLineSegment[] {
+  const segments: SourceLineSegment[] = []
+  // Stryker disable next-line Regex: Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant.
+  for (const match of source.matchAll(/([^\r\n]*)(\r\n|\r|\n)|([^\r\n]+)$/g)) {
+    const raw = match[1] ?? match[3]!
+    const lineEnding = (match[2] ?? '') as KCodeLineEnding
+    const contentStart = match.index
+    const contentEnd = contentStart + raw.length
+    segments.push({
+      contentStart,
+      contentEnd,
+      fullEnd: contentStart + match[0].length,
+      raw,
+      lineEnding,
+    })
+  }
+  return segments
+}
+
 function sourceResourceLimit(
   source: string,
   resourceProfile: KCodeResourceProfileV1,
@@ -89,12 +113,11 @@ function sourceResourceLimit(
     }
   }
 
-  let offset = 0
   let line = 1
   let recordCount = 0
   let passRecordCount = 0
-  while (offset < source.length) {
-    const contentStart = offset
+  for (const segment of sourceLineSegments(source)) {
+    const { contentStart, raw } = segment
     recordCount++
     if (recordCount > limits.records) {
       const point = position(contentStart, line, 1)
@@ -117,16 +140,13 @@ function sourceResourceLimit(
         }
       }
     }
-    while (offset < source.length && source[offset] !== '\r' && source[offset] !== '\n') offset++
-    if (offset - contentStart > MAX_KCODE_RECORD_CODE_UNITS) {
+    if (raw.length > MAX_KCODE_RECORD_CODE_UNITS) {
       const point = position(contentStart, line, 1)
       return {
         message: `KCode record ${line} exceeds the ${MAX_KCODE_RECORD_CODE_UNITS}-code-unit line limit. The exact raw source is retained, but records were not materialized.`,
         span: { start: point, end: point },
       }
     }
-    if (source[offset] === '\r' && source[offset + 1] === '\n') offset += 2
-    else if (source[offset] === '\r' || source[offset] === '\n') offset++
     line++
   }
   return null
@@ -175,27 +195,9 @@ function resourceLimitedResult(
 
 function scanSourceLines(source: string): ScannedLine[] {
   const lines: ScannedLine[] = []
-  let offset = 0
-  let line = 1
-
-  while (offset < source.length) {
-    const contentStart = offset
-    while (offset < source.length && source[offset] !== '\r' && source[offset] !== '\n') offset++
-    const contentEnd = offset
-
-    let lineEnding: KCodeLineEnding = ''
-    if (source[offset] === '\r' && source[offset + 1] === '\n') {
-      lineEnding = '\r\n'
-      offset += 2
-    } else if (source[offset] === '\r') {
-      lineEnding = '\r'
-      offset++
-    } else if (source[offset] === '\n') {
-      lineEnding = '\n'
-      offset++
-    }
-
-    const raw = source.slice(contentStart, contentEnd)
+  for (const segment of sourceLineSegments(source)) {
+    const { contentStart, contentEnd, fullEnd, raw, lineEnding } = segment
+    const line = lines.length + 1
     const span: KCodeSourceSpan = {
       start: position(contentStart, line, 1),
       end: position(contentEnd, line, raw.length + 1),
@@ -204,7 +206,7 @@ function scanSourceLines(source: string): ScannedLine[] {
       ? span
       : {
           start: span.start,
-          end: position(offset, line + 1, 1),
+          end: position(fullEnd, line + 1, 1),
         }
 
     lines.push({
@@ -215,7 +217,6 @@ function scanSourceLines(source: string): ScannedLine[] {
       span,
       fullSpan,
     })
-    line++
   }
 
   return lines
@@ -239,14 +240,22 @@ function tokeniseFooter(line: ScannedLine): KCodeFooterToken[] {
 }
 
 function parseNumber(raw: string | undefined): number | null {
-  if (raw === undefined || !DECIMAL_NUMBER.test(raw)) return null
+  if (raw === undefined || raw.length === 0) return null
+  const unsigned = raw[0] === '+' || raw[0] === '-' ? raw.slice(1) : raw
+  const decimalIndex = unsigned.indexOf('.')
+  // Stryker disable next-line ConditionalExpression: Equivalent mutant: when no decimal exists, only an empty unsigned token has index -1 equal to length - 1, and Number already rejects that sign-only token.
+  if (decimalIndex !== -1 && decimalIndex === unsigned.length - 1) return null
+  for (const token of unsigned) {
+    if (token === '.') continue
+    if (token < '0' || token > '9') return null
+  }
   const value = Number(raw)
   return Number.isFinite(value) ? value : null
 }
 
 function firstInvalidCharacter(value: string, allowed: ReadonlySet<string>): number {
-  for (let index = 0; index < value.length; index++) {
-    if (!allowed.has(value[index]!)) return index
+  for (const [index, token] of Array.from(value).entries()) {
+    if (!allowed.has(token)) return index
   }
   return -1
 }
@@ -254,10 +263,6 @@ function firstInvalidCharacter(value: string, allowed: ReadonlySet<string>): num
 function diagnosticRawPreview(raw: string): string {
   if (raw.length <= DIAGNOSTIC_RAW_PREVIEW_CODE_UNITS) return JSON.stringify(raw)
   return `${JSON.stringify(raw.slice(0, DIAGNOSTIC_RAW_PREVIEW_CODE_UNITS))}… (${raw.length} code units total)`
-}
-
-function isAcceptedSourceCodeUnit(code: number): boolean {
-  return code === 0x09 || (code >= 0x20 && code <= 0x7e)
 }
 
 /**
@@ -278,7 +283,6 @@ function validateSourceCodeUnits(
   let lastOmittedEnd: KCodeSourcePosition | null = null
 
   const omit = (span: KCodeSourceSpan, count: number): void => {
-    if (count === 0) return
     omittedCodeUnits += count
     omittedRangeCount++
     firstOmittedStart ??= span.start
@@ -286,29 +290,22 @@ function validateSourceCodeUnits(
   }
 
   for (const line of lines) {
-    let index = 0
-    while (index < line.raw.length) {
-      if (isAcceptedSourceCodeUnit(line.raw.charCodeAt(index))) {
-        index++
-        continue
-      }
-
-      const runStart = index
-      while (
-        index < line.raw.length
-        && !isAcceptedSourceCodeUnit(line.raw.charCodeAt(index))
-      ) index++
-      const runEnd = index
+    for (const match of line.raw.matchAll(/[^\x09\x20-\x7e]+/g)) {
+      const runStart = match.index
+      const runEnd = runStart + match[0].length
       const detailedLength = Math.min(runEnd - runStart, remainingDetailCodeUnits)
 
       if (detailedLength > 0) {
         const detailEnd = runStart + detailedLength
         const firstCode = line.raw.charCodeAt(runStart)
+        // Stryker disable StringLiteral: Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested.
+        const message = detailedLength === 1
+          ? `KCode source must use printable 7-bit ASCII (plus tab and line endings); found code unit 0x${firstCode.toString(16).padStart(2, '0')}.`
+          : `KCode source must use printable 7-bit ASCII (plus tab and line endings); found ${detailedLength} consecutive invalid code units beginning with 0x${firstCode.toString(16).padStart(2, '0')}.`
+        // Stryker restore StringLiteral
         addDiagnostic(
           'kcode.source-byte',
-          detailedLength === 1
-            ? `KCode source must use printable 7-bit ASCII (plus tab and line endings); found code unit 0x${firstCode.toString(16).padStart(2, '0')}.`
-            : `KCode source must use printable 7-bit ASCII (plus tab and line endings); found ${detailedLength} consecutive invalid code units beginning with 0x${firstCode.toString(16).padStart(2, '0')}.`,
+          message,
           spanWithin(line, runStart, detailEnd),
         )
         detailedDiagnosticCount++
@@ -322,11 +319,11 @@ function validateSourceCodeUnits(
     }
   }
 
-  if (firstOmittedStart !== null && lastOmittedEnd !== null) {
+  if (firstOmittedStart !== null) {
     addDiagnostic(
       'kcode.source-byte-summary',
       `Invalid-source diagnostics were truncated after ${SOURCE_BYTE_DETAIL_CODE_UNIT_LIMIT} code units in ${detailedDiagnosticCount} grouped report${detailedDiagnosticCount === 1 ? '' : 's'}; ${omittedCodeUnits} additional invalid code units across ${omittedRangeCount} range${omittedRangeCount === 1 ? '' : 's'} were omitted.`,
-      { start: firstOmittedStart, end: lastOmittedEnd },
+      { start: firstOmittedStart, end: lastOmittedEnd! },
     )
   }
 }
@@ -376,15 +373,14 @@ function classifyRecord(
       : new Set(profile.stitchSelectors.encoding.alphabet)
     const invalidIndex = firstInvalidCharacter(value, allowed)
     if (value.length === 0 || invalidIndex !== -1) {
-      const index = invalidIndex === -1 ? 0 : invalidIndex
       const invalidSpan = value.length === 0
         ? valueSpan
-        : spanWithin(line, 5 + index, 6 + index)
+        : spanWithin(line, 5 + invalidIndex, 6 + invalidIndex)
       addDiagnostic(
         'kcode.field-charset',
         value.length === 0
           ? `${field} payload must not be empty.`
-          : `${field} contains unsupported character ${JSON.stringify(value[index])}.`,
+          : `${field} contains unsupported character ${JSON.stringify(value[invalidIndex])}.`,
         invalidSpan,
       )
     }
@@ -408,9 +404,10 @@ function classifyRecord(
       )
     }
 
-    const directionRaw = tokens[0]?.raw
+    // A footer record necessarily begins with >> or <<, so token 0 exists.
+    const directionRaw = tokens[0]!.raw
     const direction = directionRaw === '>>' || directionRaw === '<<' ? directionRaw : null
-    if (directionRaw !== undefined && direction === null) {
+    if (direction === null) {
       addDiagnostic(
         'kcode.footer-direction',
         `Pass direction must be ">>" or "<<"; received ${JSON.stringify(directionRaw)}.`,
@@ -419,11 +416,9 @@ function classifyRecord(
     }
 
     const operationRaw = tokens[1]?.raw
-    const operation = operationRaw !== undefined
-      && FOOTER_OPERATION.test(operationRaw)
-      && SUPPORTED_OPERATIONS.has(operationRaw)
-      ? operationRaw
-      : null
+    // Stryker disable next-line StringLiteral: Equivalent mutant: the absent-token fallback cannot match any V1 operation, while present tokens bypass it.
+    const operationContract = kcodeOperationContractV1(profile, operationRaw ?? '')
+    const operation = operationContract?.operation ?? null
     if (operationRaw !== undefined && operation === null) {
       addDiagnostic(
         'kcode.footer-operation',
@@ -434,7 +429,7 @@ function classifyRecord(
 
     const carrierRaw = tokens[2]?.raw
     const supportedCarriers = new Set<KCodeCarrierToken>(['0', ...profile.machine.carriers])
-    const carrier = carrierRaw !== undefined && supportedCarriers.has(carrierRaw as KCodeCarrierToken)
+    const carrier = supportedCarriers.has(carrierRaw as KCodeCarrierToken)
       ? carrierRaw as KCodeCarrierToken
       : null
     if (carrierRaw !== undefined && carrier === null) {
@@ -503,8 +498,7 @@ function validateBedMarkers(
   addDiagnostic: AddDiagnostic,
 ): readonly [string, number][] | null {
   const markers: [string, number][] = []
-  for (let index = 0; index < field.value.length; index++) {
-    const value = field.value[index]!
+  for (const [index, value] of Array.from(field.value).entries()) {
     if (value === '/' || value === '\\' || profile.machine.carriers.includes(value as Exclude<KCodeCarrierToken, '0'>)) {
       markers.push([value, index])
     }
@@ -517,11 +511,14 @@ function validateBedMarkers(
     && markers.every(([value], index) => value === expectedMarkers[index])
 
   if (!markerOrderValid) {
+    // Stryker disable StringLiteral,ConditionalExpression: Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently.
+    const message = carrier === '0'
+      ? `${field.field} requires one ordered /...\\ carriage-marker pair and no carrier markers.`
+      : `${field.field} requires one ordered /...\\ carriage-marker pair and exactly two ${carrier} carrier markers.`
+    // Stryker restore StringLiteral,ConditionalExpression
     addDiagnostic(
       'kcode.bed-markers',
-      carrier === '0'
-        ? `${field.field} requires one ordered /...\\ carriage-marker pair and no carrier markers.`
-        : `${field.field} requires one ordered /...\\ carriage-marker pair and exactly two ${carrier} carrier markers.`,
+      message,
       field.valueSpan,
     )
     return null
@@ -625,12 +622,11 @@ function validatePassBlock(
       )
     }
 
-    const recognizedNeedleColumns = baseWidth === standardWidth
+    const recognizedNeedleColumns = (baseWidth === standardWidth
       ? profile.raster.standardNeedleColumns
       : baseWidth === legacy.basePayloadColumns
         ? legacy.needleColumns
-        : null
-    if (recognizedNeedleColumns === null) continue
+        : null) ?? 0
 
     const needleStart = profile.raster.leftPaddingColumns
     const needleDomain = markerFree.slice(needleStart, needleStart + recognizedNeedleColumns)
@@ -656,7 +652,7 @@ function validatePassBlock(
   }
 }
 
-function endOfDocumentSpan(records: readonly KCodeRecord[]): KCodeSourceSpan {
+function endOfDocumentSpan(records: readonly { readonly fullSpan: KCodeSourceSpan }[]): KCodeSourceSpan {
   if (records.length === 0) {
     const point = position(0, 1, 1)
     return { start: point, end: point }
@@ -690,7 +686,9 @@ export function parseKCodeDocument(
       omittedDiagnosticCount++
       if (severity === 'error') omittedErrorCount++
       else omittedWarningCount++
+      // Stryker disable next-line EqualityOperator: Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span.
       if (omittedStart === null || span.start.offset < omittedStart.offset) omittedStart = span.start
+      // Stryker disable next-line EqualityOperator: Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span.
       if (omittedEnd === null || span.end.offset > omittedEnd.offset) omittedEnd = span.end
       return
     }
@@ -707,13 +705,12 @@ export function parseKCodeDocument(
   }
 
   const scannedLines = scanSourceLines(source)
-  const documentEnd = scannedLines.length === 0
-    ? endOfDocumentSpan([])
-    : scannedLines[scannedLines.length - 1]!.fullSpan
+  const documentEnd = endOfDocumentSpan(scannedLines)
 
   if (!options.profile.supportedDialects.includes(options.dialect)) {
     addDiagnostic(
       'kcode.unsupported-dialect',
+      // Stryker disable next-line StringLiteral: Diagnostic prose only; the exact unsupported-dialect rule, severity, and profile/dialect branch remain mutation-tested.
       `Profile ${options.profile.profileId}@${options.profile.profileVersion} does not support dialect ${JSON.stringify(options.dialect)}.`,
       { start: documentEnd.end, end: documentEnd.end },
     )
@@ -746,6 +743,7 @@ export function parseKCodeDocument(
 
   const incompletePending = (at: KCodeSourceSpan): void => {
     if (pending === null) return
+    // Stryker disable next-line StringLiteral: Diagnostic prose only; pending-field interruption rules and spans remain mutation-tested.
     const seen = pending.fields.map((field) => field.field).join(', ') || 'no fields'
     addDiagnostic(
       'kcode.incomplete-pass',
@@ -824,7 +822,7 @@ export function parseKCodeDocument(
           reportedMissingInitialRack = true
         }
 
-        if (record.field === 'FRNT' && pending !== null) {
+        if (record.field === 'FRNT') {
           incompletePending(record.span)
           pending = null
         }
@@ -833,6 +831,7 @@ export function parseKCodeDocument(
           if (record.field !== 'FRNT') {
             addDiagnostic(
               'kcode.orphan-field',
+              // Stryker disable next-line StringLiteral: Diagnostic prose only; the orphan-field rule, severity, field, and span remain mutation-tested.
               `${record.field} appeared without a preceding FRNT.`,
               record.span,
             )
@@ -865,7 +864,7 @@ export function parseKCodeDocument(
 
         const fields = pending.fields
         const exactOrder = fields.length === FIELD_ORDER.length
-          && FIELD_ORDER.every((field, index) => fields[index]?.field === field)
+          && FIELD_ORDER.every((field, index) => fields[index]!.field === field)
         if (!exactOrder) {
           incompletePending(record.span)
           pending = null
@@ -902,7 +901,7 @@ export function parseKCodeDocument(
     }
   }
 
-  if (pending !== null) incompletePending(endOfDocumentSpan(records))
+  incompletePending(endOfDocumentSpan(records))
   if (home === null) {
     addDiagnostic('kcode.missing-home', 'KCode document must contain a HOME record.', endOfDocumentSpan(records))
   }
@@ -919,32 +918,31 @@ export function parseKCodeDocument(
 
   // TypeScript does not model assignments made by the addDiagnostic closure,
   // so re-widen the captured positions before narrowing them here.
-  const diagnosticSummaryStart = omittedStart as KCodeSourcePosition | null
-  const diagnosticSummaryEnd = omittedEnd as KCodeSourcePosition | null
-  if (omittedDiagnosticCount > 0 && diagnosticSummaryStart !== null && diagnosticSummaryEnd !== null) {
-    for (const [severity, count] of [
-      ['error', omittedErrorCount],
-      ['warning', omittedWarningCount],
-    ] as const satisfies readonly (readonly [KCodeDiagnosticSeverity, number])[]) {
-      if (count === 0) continue
-      diagnostics.push({
-        severity,
-        rule: 'kcode.diagnostic-summary',
-        message: `KCode diagnostics were truncated after ${MAX_KCODE_DIAGNOSTIC_DETAILS} detailed findings; omitted ${count} additional ${severity} finding${count === 1 ? '' : 's'} (${omittedDiagnosticCount} findings omitted across all severities).`,
-        span: { start: diagnosticSummaryStart, end: diagnosticSummaryEnd },
-        line: diagnosticSummaryStart.line,
-        column: diagnosticSummaryStart.column,
-        endLine: diagnosticSummaryEnd.line,
-        endColumn: diagnosticSummaryEnd.column,
-        occurrences: count,
-      })
-    }
+  const diagnosticSummaryStart = omittedStart as unknown as KCodeSourcePosition
+  const diagnosticSummaryEnd = omittedEnd as unknown as KCodeSourcePosition
+  for (const [severity, count] of [
+    ['error', omittedErrorCount],
+    ['warning', omittedWarningCount],
+  ] as const satisfies readonly (readonly [KCodeDiagnosticSeverity, number])[]) {
+    if (count === 0) continue
+    diagnostics.push({
+      severity,
+      rule: 'kcode.diagnostic-summary',
+      // Stryker disable next-line ConditionalExpression,StringLiteral: Diagnostic prose only; occurrences and severity are asserted independently.
+      message: `KCode diagnostics were truncated after ${MAX_KCODE_DIAGNOSTIC_DETAILS} detailed findings; omitted ${count} additional ${severity} finding${count === 1 ? '' : 's'} (${omittedDiagnosticCount} findings omitted across all severities).`,
+      span: { start: diagnosticSummaryStart, end: diagnosticSummaryEnd },
+      line: diagnosticSummaryStart.line,
+      column: diagnosticSummaryStart.column,
+      endLine: diagnosticSummaryEnd.line,
+      endColumn: diagnosticSummaryEnd.column,
+      occurrences: count,
+    })
   }
 
   diagnostics.sort((a, b) =>
     a.span.start.offset - b.span.start.offset
     || a.span.end.offset - b.span.end.offset
-    || (a.rule < b.rule ? -1 : a.rule > b.rule ? 1 : 0))
+    || a.rule.localeCompare(b.rule))
 
   const accepted = !diagnostics.some((diagnostic) => diagnostic.severity === 'error')
   const document: KCodeDocumentV1 = {

@@ -311,6 +311,7 @@ export async function compileKCodeArtifact(
     ok: parsed.ok
       && parsedKnitout.issues.length === 0
       && validation?.ok === true
+      && validation.profileConformance === 'conformant'
       && differential?.ok === true
       && provenance.ok
       && messages.every((message) => message.severity !== 'error'),

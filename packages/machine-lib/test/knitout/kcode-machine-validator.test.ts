@@ -1,8 +1,11 @@
+import { createHash } from 'node:crypto'
+
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 
 import {
   KNITERATE_7GG_KCODE_PROFILE_V1,
+  type KCodeMachineProfileV1,
 } from '../../src/knitout/kcode/machine-profile.js'
 import {
   projectKCodeMachineTrace,
@@ -229,6 +232,12 @@ describe('KCode-native MachineTrace validation', () => {
     )
 
     expect(report.ok).toBe(true)
+    expect(report).toMatchObject({
+      profileConformance: 'conformant',
+      modeledState: 'conformant',
+      operationalPolicy: 'clear',
+      controllerAcceptance: 'not-established-by-software-validation',
+    })
     expect(report.diagnostics).toEqual([])
     expect(report.passStates).toHaveLength(trace.passes.length)
 
@@ -266,6 +275,9 @@ describe('KCode-native MachineTrace validation', () => {
       totalLoops: 1,
       maxStack: 1,
     })
+    expect(createHash('sha256').update(JSON.stringify(report)).digest('hex')).toBe(
+      'f2fddc4e04a808f736260f19f1be5db38f76079d0db40995c180888e1c1c32b0',
+    )
 
     // The strict marker-free coordinate is the identity shared by a producer
     // pass and its later carrierless transfer source.
@@ -360,6 +372,11 @@ describe('KCode-native MachineTrace validation', () => {
       KNITERATE_7GG_KCODE_PROFILE_V1,
     )
     expect(emptyDropReport.ok).toBe(true)
+    expect(emptyDropReport).toMatchObject({
+      profileConformance: 'conformant',
+      modeledState: 'review',
+      operationalPolicy: 'clear',
+    })
     expect(emptyDropReport.diagnostics).toContainEqual(expect.objectContaining({
       severity: 'warning',
       class: 'semantic',
@@ -386,6 +403,379 @@ describe('KCode-native MachineTrace validation', () => {
       actions: [],
     }])
     expect(rules(noActions)).toContain('machine-trace.action-operation')
+  })
+
+  it('keeps an exact negative witness for every structural command-validation rule', () => {
+    const base = smallTrace(['K'])
+    const basePass = base.passes[0]!
+    const withPass = (pass: MachineTracePassV1): MachineTraceV1 => ({
+      ...base,
+      passes: [pass],
+    })
+    const regularWithSelection = (
+      at: MachineTraceSelectionV1,
+    ): MachineTraceV1 => withPass({
+      ...basePass,
+      selections: { front: [at], rear: [] },
+      actions: [{ kind: 'knit', at }],
+    })
+    const changedSelection = (
+      change: Partial<MachineTraceSelectionV1>,
+    ): MachineTraceSelectionV1 => ({ ...basePass.selections.front[0]!, ...change })
+
+    const malformedTraces: ReadonlyArray<readonly [
+      string,
+      MachineTraceV1,
+      KCodeMachineProfileV1?,
+    ]> = [
+      ['machine-trace.profile-mismatch', { ...base, profileId: 'wrong-profile' }],
+      ['machine-trace.profile-mismatch', {
+        ...base,
+        profileVersion: 2 as MachineTraceV1['profileVersion'],
+      }],
+      ['machine-trace.profile-mismatch', {
+        ...base,
+        profileId: 'wrong-profile',
+        rackCommands: [],
+        passes: [],
+      }],
+      ['machine-trace.dialect-profile', {
+        ...base,
+        dialect: 'missing-contract' as MachineTraceV1['dialect'],
+      }, {
+        ...KNITERATE_7GG_KCODE_PROFILE_V1,
+        supportedDialects: [
+          ...KNITERATE_7GG_KCODE_PROFILE_V1.supportedDialects,
+          'missing-contract' as MachineTraceV1['dialect'],
+        ],
+      }],
+      ['machine-trace.dialect-profile', {
+        ...base,
+        dialect: 'app',
+      }, {
+        ...KNITERATE_7GG_KCODE_PROFILE_V1,
+        supportedDialects: ['knitout-vendor'],
+      }],
+      ['machine-trace.dialect-profile', {
+        ...base,
+        dialect: 'missing-contract' as MachineTraceV1['dialect'],
+        rackCommands: [],
+        passes: [],
+      }],
+      ['machine-trace.passes-required', { ...base, passes: [] }],
+      ['machine-trace.rack-command-index', {
+        ...base,
+        rackCommands: [{ ...base.rackCommands[0]!, index: 9 }],
+      }],
+      ['machine-trace.rack-command-index', {
+        ...base,
+        rackCommands: [{
+          ...base.rackCommands[0]!,
+          index: 9,
+          beforePassIndex: base.passes.length,
+        }],
+      }],
+      ['machine-trace.rack-command-position', {
+        ...base,
+        rackCommands: [{ ...base.rackCommands[0]!, beforePassIndex: 2 }],
+      }],
+      ['machine-trace.rack-command-position', {
+        ...base,
+        rackCommands: [{ ...base.rackCommands[0]!, beforePassIndex: -1 }],
+      }],
+      ['machine-trace.rack-command-position', {
+        ...base,
+        rackCommands: [{ ...base.rackCommands[0]!, beforePassIndex: 0.5 }],
+      }],
+      ['machine-trace.rack-command-position', (() => {
+        const twoPass = withPasses(base, [basePass, smallPass('K', 1)])
+        const span = twoPass.passes[1]!.source.span
+        return {
+          ...twoPass,
+          rackCommands: [
+            twoPass.rackCommands[0]!,
+            { index: 1, beforePassIndex: 1, valueRaw: '0', value: 0, source: { span, fullSpan: span } },
+            { index: 2, beforePassIndex: 0, valueRaw: '0', value: 0, source: { span, fullSpan: span } },
+          ],
+        }
+      })()],
+      ['machine-trace.rack-command-value', {
+        ...base,
+        rackCommands: [{ ...base.rackCommands[0]!, valueRaw: 'not-a-number' }],
+      }],
+      ...['', '+', '-', '.', '0.', '0..0', ' 0', '0 ', '0e0'].map((valueRaw) => [
+        'machine-trace.rack-command-value',
+        {
+          ...base,
+          rackCommands: [{ ...base.rackCommands[0]!, valueRaw }],
+        },
+      ] as const),
+      ['machine-trace.rack-command-value', {
+        ...base,
+        rackCommands: [{ ...base.rackCommands[0]!, valueRaw: '0', value: 1 }],
+      }],
+      ['machine-trace.rack-command-value', {
+        ...base,
+        rackCommands: [{ ...base.rackCommands[0]!, valueRaw: '0.25', value: 0.25 }],
+      }],
+      ['machine-trace.rack-command-value', {
+        ...base,
+        rackCommands: [{ ...base.rackCommands[0]!, valueRaw: 'NaN', value: Number.NaN }],
+      }],
+      ['machine-trace.rack-command-initial', { ...base, rackCommands: [] }],
+      ['machine-trace.rack-state', withPass({ ...basePass, rack: 1 })],
+      ['machine-trace.pass-index', withPass({ ...basePass, index: 1 })],
+      ['machine-trace.rack-profile', withPass({ ...basePass, rack: 0.25 })],
+      ['machine-trace.setting-number', withPass({ ...basePass, speed: Number.NaN })],
+      ['machine-trace.stop-coordinate', withPass({
+        ...basePass,
+        carriageStops: { ...basePass.carriageStops, left: 0 },
+      })],
+      ['machine-trace.stop-coordinate', withPass({
+        ...basePass,
+        carriageStops: { ...basePass.carriageStops, right: Number.POSITIVE_INFINITY },
+      })],
+      ['machine-trace.carriage-stop-order', withPass({
+        ...basePass,
+        carriageStops: { left: 1.5, right: 0.5 },
+      })],
+      ['machine-trace.carriage-stop-order', withPass({
+        ...basePass,
+        carriageStops: { left: 0.5, right: 0.5 },
+      })],
+      ['machine-trace.carrier-stops-required', withPass({ ...basePass, carrierStops: null })],
+      ['machine-trace.carrier-stops-forbidden', withPass({
+        ...smallPass('D', 0),
+        carrierStops: { left: -0.5, right: 1.5 },
+      })],
+      ['machine-trace.carrier-stop-order', withPass({
+        ...basePass,
+        carrierStops: { left: 1.5, right: 0.5 },
+      })],
+      ['machine-trace.carrier-stop-order', withPass({
+        ...basePass,
+        carrierStops: { left: 0.5, right: 0.5 },
+      })],
+      ['machine-trace.stop-coordinate', withPass({
+        ...basePass,
+        carrierStops: { left: 0, right: 1.5 },
+      })],
+      ['machine-trace.stop-coordinate', withPass({
+        ...basePass,
+        carrierStops: { left: -0.5, right: Number.NaN },
+      })],
+      ['machine-trace.carrier-stops-outside-carriage', withPass({
+        ...basePass,
+        carrierStops: { left: -1.5, right: 1.5 },
+      })],
+      ['machine-trace.carrier-stops-outside-carriage', withPass({
+        ...basePass,
+        carrierStops: { left: -0.5, right: 2.5 },
+      })],
+      ['machine-trace.selection-bed', regularWithSelection(changedSelection({ bed: 'rear' }))],
+      ['machine-trace.selection-coordinate', regularWithSelection(changedSelection({ payloadIndex: 15.5 }))],
+      ['machine-trace.selection-payload-coordinate', regularWithSelection(changedSelection({ payloadIndex: 16 }))],
+      ['machine-trace.selection-trace-coordinate', regularWithSelection(changedSelection({ traceCoordinate: 1 }))],
+      ['machine-trace.selection-column-range', regularWithSelection(changedSelection({
+        payloadIndex: 268,
+        kcodeColumn: 253,
+        traceCoordinate: 253,
+      }))],
+      ['machine-trace.selection-column-range', regularWithSelection(changedSelection({
+        payloadIndex: 14,
+        kcodeColumn: -1,
+        traceCoordinate: -1,
+      }))],
+      ['machine-trace.selection-stitch-selector', regularWithSelection(changedSelection({
+        stitchSelector: {
+          ...basePass.selections.front[0]!.stitchSelector,
+          token: '4',
+        },
+      }))],
+      ['machine-trace.selection-stitch-documented-range', regularWithSelection(changedSelection({
+        stitchSelector: {
+          ...basePass.selections.front[0]!.stitchSelector,
+          token: 'G',
+          encodedValue: 16,
+        },
+      }))],
+      ['machine-trace.duplicate-selection', withPass({
+        ...basePass,
+        selections: {
+          front: [
+            basePass.selections.front[0]!,
+            basePass.selections.front[0]!,
+            basePass.selections.front[0]!,
+          ],
+          rear: [],
+        },
+      })],
+      ['machine-trace.action-selection-missing', withPass({
+        ...basePass,
+        actions: [{
+          kind: 'knit',
+          at: changedSelection({ sourceSpan: sourceSpan(999, 99) }),
+        }],
+      })],
+      ['machine-trace.action-selection-coverage', withPass({ ...basePass, actions: [] })],
+      ['machine-trace.action-carrier', withPass({
+        ...basePass,
+        selections: { front: [], rear: [] },
+        actions: [{ kind: 'move', carrier: '3' }],
+      })],
+      ['machine-trace.action-operation', withPass({
+        ...basePass,
+        selections: { front: [], rear: [] },
+        actions: [
+          { kind: 'move', carrier: '2' },
+          { kind: 'move', carrier: '2' },
+        ],
+      })],
+      ['machine-trace.action-operation', withPass({
+        ...basePass,
+        actions: [{ kind: 'move', carrier: '2' }],
+      })],
+      ['machine-trace.action-operation', withPass({
+        ...smallPass('X', 0),
+        selections: { front: [], rear: [] },
+        actions: [{ kind: 'move', carrier: '0' }],
+      })],
+      ['machine-trace.action-operation', withPass({
+        ...basePass,
+        operation: 'Future-Operation' as MachineTracePassV1['operation'],
+        selections: { front: [], rear: [] },
+        actions: [{ kind: 'move', carrier: '2' }],
+      })],
+      ['machine-trace.action-operation', withPass({
+        ...basePass,
+        actions: [{ kind: 'tuck', at: basePass.selections.front[0]! }],
+      })],
+      ['machine-trace.action-operation', withPass({
+        ...basePass,
+        operation: 'Future-Operation' as MachineTracePassV1['operation'],
+      })],
+      ['machine-trace.action-operation', withPass({
+        ...basePass,
+        actions: [{ kind: 'drop', at: basePass.selections.front[0]! }],
+      })],
+      ['machine-trace.unknown-action', withPass({
+        ...basePass,
+        actions: [{
+          kind: 'unknown',
+          operation: basePass.operation,
+          reason: 'forged-validator-witness',
+          selections: basePass.selections.front,
+        }],
+      })],
+      ['machine-trace.action-operation', withPass({
+        ...basePass,
+        carrier: '0',
+        carrierStops: null,
+      })],
+      ['machine-trace.transfer-operation-direction', withPass({
+        ...smallPass('X', 0),
+        direction: '<<',
+      })],
+      ['machine-trace.action-operation', withPass((() => {
+        const pass = smallPass('X', 0)
+        const action = pass.actions[0]!
+        if (action.kind !== 'xfer') throw new Error('Expected transfer witness')
+        return {
+          ...pass,
+          operation: 'Tr-Rr',
+          selections: { front: [action.target], rear: [action.source] },
+          actions: [{ ...action, source: action.target, target: action.source }],
+        }
+      })())],
+      ['machine-trace.action-operation', withPass({
+        ...smallPass('X', 0),
+        operation: 'Kn-Kn',
+      })],
+      ['machine-trace.action-operation', withPass({
+        ...smallPass('X', 0),
+        operation: 'Future-Operation' as MachineTracePassV1['operation'],
+      })],
+      ['machine-trace.action-operation', withPass((() => {
+        const pass = smallPass('X', 0)
+        const front = pass.selections.front[0]!
+        return {
+          ...pass,
+          selections: { front: [front], rear: [] },
+          actions: [{ kind: 'knit' as const, at: front }],
+        }
+      })())],
+      ['machine-trace.transfer-rack-pair', withPass((() => {
+        const pass = smallPass('X', 0)
+        const action = pass.actions[0]!
+        if (action.kind !== 'xfer') throw new Error('Expected transfer witness')
+        const target = { ...action.target, traceCoordinate: 1 }
+        return {
+          ...pass,
+          selections: { front: [action.source], rear: [target] },
+          actions: [{ ...action, target }],
+        }
+      })())],
+      ['machine-trace.action-carrier', withPass({
+        ...smallPass('X', 0),
+        carrier: '2',
+        carrierStops: { left: -0.5, right: 1.5 },
+      })],
+      ['machine-trace.action-carrier', withPass({
+        ...smallPass('S', 0),
+        carrier: '0',
+        carrierStops: null,
+      })],
+      ['machine-trace.action-carrier', withPass((() => {
+        const pass = smallPass('S', 0)
+        const action = pass.actions[0]!
+        if (action.kind !== 'split') throw new Error('Expected split witness')
+        return {
+          ...pass,
+          carrier: '0',
+          carrierStops: null,
+          actions: [{ ...action, carrier: '0' }],
+        }
+      })())],
+      ['machine-trace.action-carrier', withPass((() => {
+        const pass = smallPass('S', 0)
+        const action = pass.actions[0]!
+        if (action.kind !== 'split') throw new Error('Expected split witness')
+        return { ...pass, actions: [{ ...action, carrier: '3' }] }
+      })())],
+      ['machine-trace.transfer-bed-pair', withPass((() => {
+        const pass = smallPass('X', 0)
+        const action = pass.actions[0]!
+        if (action.kind !== 'xfer') throw new Error('Expected transfer witness')
+        const target = { ...action.target, bed: 'front' as const }
+        return {
+          ...pass,
+          selections: { front: [action.source], rear: [target] },
+          actions: [{ ...action, target }],
+        }
+      })())],
+    ]
+
+    const malformedDigest = createHash('sha256')
+    for (const [rule, trace, profile = KNITERATE_7GG_KCODE_PROFILE_V1] of malformedTraces) {
+      const report = validateKCodeMachineTrace(
+        trace,
+        profile,
+      )
+      expect(report.diagnostics.map((diagnostic) => diagnostic.rule), rule).toContain(rule)
+      malformedDigest.update(JSON.stringify(report))
+    }
+    expect(malformedDigest.digest('hex')).toBe(
+      '5b69b9a4fe82371bc2a4df8183e75b0a3ca53f93b9401cd92881c8c100396737',
+    )
+
+    const orphan = parseKCodeDocument('HOME\nRACK:0\nSTIF:_\n', {
+      profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+      dialect: 'knitout-vendor',
+      strict: true,
+    })
+    expect(orphan.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
+      'kcode.orphan-field',
+    )
   })
 
   it('checks rack/bed pairing, stop containment, and programmed continuity', () => {
@@ -436,6 +826,15 @@ describe('KCode-native MachineTrace validation', () => {
     const discontinuityRules = rules({ ...trace, passes: discontinuousPasses })
     expect(discontinuityRules).toContain('machine-trace.carriage-discontinuity')
     expect(discontinuityRules).toContain('machine-trace.carrier-discontinuity')
+    const discontinuityReport = validateKCodeMachineTrace(
+      { ...trace, passes: discontinuousPasses },
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )
+    expect(discontinuityReport.diagnostics).toContainEqual(expect.objectContaining({
+      rule: 'machine-trace.carriage-discontinuity',
+      severity: 'error',
+      class: 'kinematic',
+    }))
   })
 
   it('checks traversal order globally across both beds', () => {
@@ -455,9 +854,19 @@ describe('KCode-native MachineTrace validation', () => {
         { kind: 'knit', at: rear },
       ],
     }
-    expect(rules(withPasses(smallTrace(['K']), [outOfOrder]))).toContain(
+    const report = validateKCodeMachineTrace(
+      withPasses(smallTrace(['K']), [outOfOrder]),
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )
+    expect(report.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
       'machine-trace.action-direction-order',
     )
+    expect(report.diagnostics).toContainEqual(expect.objectContaining({
+      rule: 'machine-trace.action-direction-order',
+      severity: 'error',
+      class: 'kinematic',
+      actionIndex: 1,
+    }))
   })
 
   it.each([
@@ -554,6 +963,29 @@ describe('KCode-native MachineTrace validation', () => {
     expect(rules(badIndex)).toContain('machine-trace.rack-command-index')
   })
 
+  it('accepts every existing exact decimal spelling without widening the rack domain', () => {
+    const underflowNine = `0.${'0'.repeat(400)}9`
+    for (const [valueRaw, value] of [
+      ['0', 0],
+      ['+0', 0],
+      ['-0', -0],
+      ['.0', 0],
+      ['+.0', 0],
+      ['0.0', 0],
+      [underflowNine, 0],
+    ] as const) {
+      const trace = smallTrace(['K'])
+      const report = validateKCodeMachineTrace({
+        ...trace,
+        rackCommands: [{ ...trace.rackCommands[0]!, valueRaw, value }],
+      }, KNITERATE_7GG_KCODE_PROFILE_V1)
+      expect(
+        report.diagnostics.map((diagnostic) => diagnostic.rule),
+        valueRaw,
+      ).not.toContain('machine-trace.rack-command-value')
+    }
+  })
+
   it.each([
     { count: 3, warningCount: 1, errorCount: 0, ok: true },
     { count: 4, warningCount: 1, errorCount: 1, ok: false },
@@ -572,6 +1004,9 @@ describe('KCode-native MachineTrace validation', () => {
       diagnostic.rule === 'machine-trace.loop-stack-policy')
 
     expect(report.ok).toBe(ok)
+    expect(report.profileConformance).toBe('conformant')
+    expect(report.modeledState).toBe(count >= 4 ? 'blocked' : 'review')
+    expect(report.operationalPolicy).toBe(count >= 4 ? 'blocked' : 'review')
     expect(policyDiagnostics.filter((diagnostic) =>
       diagnostic.severity === 'warning')).toHaveLength(warningCount)
     expect(policyDiagnostics.filter((diagnostic) =>
@@ -590,9 +1025,24 @@ describe('KCode-native MachineTrace validation', () => {
       carrierLifecycle: 'not-encoded-in-kcode',
       initialLoopState: 'empty-bed-job-assumption',
     })
-    expect(report.operationalAssurance.limitations.map((item) => item.code)).toContain(
-      'loop-stack-operational-limit-unverified',
-    )
+    expect(report.operationalAssurance.limitations).toEqual([
+      {
+        code: 'physical-needle-numbering-unverified',
+        message: 'Trace coordinates are exact KCode coordinates, not proven physical needle labels.',
+      },
+      {
+        code: 'speed-operational-bounds-unverified',
+        message: 'The profile does not establish operationally safe speed bounds.',
+      },
+      {
+        code: 'roller-operational-bounds-unverified',
+        message: 'The profile does not establish operationally safe signed roller bounds.',
+      },
+      {
+        code: 'loop-stack-operational-limit-unverified',
+        message: 'Stack depth is measured and checked against a conservative software policy; the policy is not a measured physical-safe or physical-failure limit.',
+      },
+    ])
   })
 
   it('keeps documented-setting findings advisory and carrier lifecycle unclaimed', () => {
@@ -607,6 +1057,11 @@ describe('KCode-native MachineTrace validation', () => {
       KNITERATE_7GG_KCODE_PROFILE_V1,
     )
     expect(highSpeedReport.ok).toBe(true)
+    expect(highSpeedReport).toMatchObject({
+      profileConformance: 'conformant',
+      modeledState: 'conformant',
+      operationalPolicy: 'review',
+    })
     expect(highSpeedReport.diagnostics).toContainEqual(expect.objectContaining({
       severity: 'warning',
       class: 'operational-advisory',
@@ -616,11 +1071,304 @@ describe('KCode-native MachineTrace validation', () => {
       diagnostic.rule.includes('carrier-active'))).toBe(false)
   })
 
+  it('honors inclusive, exclusive, known, and unknown documented bounds exactly', () => {
+    const first = smallTrace(['K']).passes[0]!
+    const reportFor = (
+      speed: number,
+      roller: number,
+      profile: KCodeMachineProfileV1 = KNITERATE_7GG_KCODE_PROFILE_V1,
+    ) => validateKCodeMachineTrace(
+      withPasses(smallTrace(['K']), [{
+        ...first,
+        speedRaw: String(speed),
+        speed,
+        rollerRaw: String(roller),
+        roller,
+      }]),
+      profile,
+    )
+    const documentedRangeCount = (report: ReturnType<typeof reportFor>): number =>
+      report.diagnostics.filter((diagnostic) =>
+        diagnostic.rule === 'machine-trace.setting-documented-range').length
+
+    expect(documentedRangeCount(reportFor(-10_000, -500))).toBe(0)
+    expect(documentedRangeCount(reportFor(800, 999))).toBe(0)
+    expect(documentedRangeCount(reportFor(801, -501))).toBe(2)
+    expect(documentedRangeCount(reportFor(801, 1_000))).toBe(2)
+
+    const exclusiveProfile: KCodeMachineProfileV1 = {
+      ...KNITERATE_7GG_KCODE_PROFILE_V1,
+      processSettings: {
+        ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings,
+        roller: {
+          ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller,
+          editorDocumentedBounds: {
+            lower: {
+              ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller.editorDocumentedBounds.lower,
+              inclusive: false,
+            },
+            upper: {
+              ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller.editorDocumentedBounds.upper,
+              inclusive: false,
+            },
+          },
+        },
+      },
+    }
+    expect(documentedRangeCount(reportFor(300, -500, exclusiveProfile))).toBe(1)
+    expect(documentedRangeCount(reportFor(300, 999, exclusiveProfile))).toBe(1)
+    expect(documentedRangeCount(reportFor(300, 0, exclusiveProfile))).toBe(0)
+
+    const unknownUpperProfile: KCodeMachineProfileV1 = {
+      ...KNITERATE_7GG_KCODE_PROFILE_V1,
+      processSettings: {
+        ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings,
+        roller: {
+          ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller,
+          editorDocumentedBounds: {
+            ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller.editorDocumentedBounds,
+            upper: {
+              ...KNITERATE_7GG_KCODE_PROFILE_V1.processSettings.roller.editorDocumentedBounds.upper,
+              value: null,
+              inclusive: null,
+            },
+          },
+        },
+      },
+    }
+    expect(documentedRangeCount(reportFor(300, 100_000, unknownUpperProfile))).toBe(0)
+  })
+
+  it('sorts final loop snapshots by bed and numeric coordinate independent of insertion order', () => {
+    const rear = selection(0, 'rear', 3)
+    const highFront = selection(0, 'front', 2)
+    const lowFront = selection(0, 'front', -2)
+    const base = smallPass('K', 0)
+    const pass: MachineTracePassV1 = {
+      ...base,
+      direction: '>>',
+      carriageStops: { left: -3.5, right: 3.5 },
+      carrierStops: { left: -3.5, right: 3.5 },
+      selections: { front: [highFront, lowFront], rear: [rear] },
+      actions: [
+        { kind: 'knit', at: lowFront },
+        { kind: 'knit', at: highFront },
+        { kind: 'knit', at: rear },
+      ],
+    }
+    const report = validateKCodeMachineTrace(
+      withPasses(smallTrace(['K']), [pass]),
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )
+    expect(report.finalState.front.map((cell) => cell.traceCoordinate)).toEqual([-2, 2])
+    expect(report.finalState.rear.map((cell) => cell.traceCoordinate)).toEqual([3])
+    expect(report.finalState.stacks).toEqual({
+      'front:-2': 1,
+      'front:2': 1,
+      'rear:3': 1,
+    })
+    expect(report.passStates[0]!.stackDeltas.map((cell) =>
+      `${cell.bed}:${cell.traceCoordinate}`)).toEqual([
+      'front:-2',
+      'front:2',
+      'rear:3',
+    ])
+
+    const positiveHigh = selection(0, 'front', 3)
+    const positiveLow = selection(0, 'front', 1)
+    const descending: MachineTracePassV1 = {
+      ...base,
+      direction: '<<',
+      carriageStops: { left: 0.5, right: 3.5 },
+      carrierStops: { left: 0.5, right: 3.5 },
+      selections: { front: [positiveHigh, positiveLow], rear: [] },
+      actions: [
+        { kind: 'knit', at: positiveHigh },
+        { kind: 'knit', at: positiveLow },
+      ],
+    }
+    const descendingReport = validateKCodeMachineTrace(
+      withPasses(smallTrace(['K']), [descending]),
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )
+    expect(descendingReport.finalState.front.map((cell) =>
+      cell.traceCoordinate)).toEqual([1, 3])
+    expect(descendingReport.passStates[0]!.stackDeltas.map((cell) =>
+      cell.traceCoordinate)).toEqual([1, 3])
+  })
+
+  it('uses the transfer source—not a rack-adjusted regular slot—for stop containment', () => {
+    for (const kind of ['xfer', 'split'] as const) {
+      const source = selection(0, 'rear', 0)
+      const target = selection(0, 'front', 2)
+      const carrier = kind === 'xfer' ? '0' as const : '2' as const
+      const pass: MachineTracePassV1 = {
+        ...smallPass(kind === 'xfer' ? 'Y' : 'S', 0),
+        rack: 2,
+        operation: 'Rr-Tr',
+        direction: '>>',
+        carrier,
+        carriageStops: { left: -0.5, right: 0.5 },
+        carrierStops: carrier === '0' ? null : { left: -0.5, right: 0.5 },
+        selections: { front: [target], rear: [source] },
+        actions: [kind === 'xfer'
+          ? { kind, source, target }
+          : { kind, source, target, carrier }],
+      }
+      const report = validateKCodeMachineTrace(
+        withPasses(smallTrace(['K']), [pass]),
+        KNITERATE_7GG_KCODE_PROFILE_V1,
+      )
+      expect(report.diagnostics.map((diagnostic) => diagnostic.rule)).not.toContain(
+        'machine-trace.selection-outside-carriage',
+      )
+      expect(report.passStates[0]!.stackDeltas.map((cell) =>
+        `${cell.bed}:${cell.traceCoordinate}`)).toEqual(['front:2', 'rear:0'])
+    }
+  })
+
+  it('never applies structurally invalid actions to the empty-bed state model', () => {
+    const source = selection(1, 'front', 0)
+    const target = selection(1, 'rear', 0)
+    const producer = smallPass('K', 0)
+    const cases: MachineTracePassV1[] = [
+      {
+        ...smallPass('K', 1),
+        operation: 'Kn-Kn',
+        actions: [{ kind: 'tuck', at: source }],
+      },
+      {
+        ...smallPass('K', 1),
+        carrier: '0',
+        carrierStops: null,
+        actions: [{ kind: 'tuck', at: source }],
+      },
+      {
+        ...smallPass('X', 1),
+        carrier: '2',
+        carrierStops: { left: -0.5, right: 1.5 },
+        actions: [{ kind: 'xfer', source, target }],
+      },
+      (() => {
+        const shiftedTarget = selection(1, 'rear', 1)
+        return {
+          ...smallPass('X', 1),
+          selections: { front: [source], rear: [shiftedTarget] },
+          actions: [{ kind: 'xfer' as const, source, target: shiftedTarget }],
+        }
+      })(),
+    ]
+    for (const invalid of cases) {
+      const report = validateKCodeMachineTrace(
+        withPasses(smallTrace(['K']), [producer, invalid]),
+        KNITERATE_7GG_KCODE_PROFILE_V1,
+      )
+      expect(report.profileConformance).toBe('blocked')
+      expect(report.finalState.stacks['front:0']).toBe(1)
+      expect(report.finalState.stacks['rear:0']).toBeUndefined()
+    }
+
+    const rearSource = selection(0, 'rear', 0)
+    const rearProducer: MachineTracePassV1 = {
+      ...smallPass('K', 0),
+      selections: { front: [], rear: [rearSource] },
+      actions: [{ kind: 'knit', at: rearSource }],
+    }
+    const wrongSource: MachineTracePassV1 = {
+      ...smallPass('X', 1),
+      direction: '>>',
+      selections: { front: [source], rear: [selection(1, 'rear', 0)] },
+      actions: [{
+        kind: 'xfer',
+        source: selection(1, 'rear', 0),
+        target: source,
+      }],
+    }
+    const wrongSourceReport = validateKCodeMachineTrace(
+      withPasses(smallTrace(['K']), [rearProducer, wrongSource]),
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )
+    expect(wrongSourceReport.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
+      'machine-trace.action-operation',
+    )
+    expect(wrongSourceReport.finalState.stacks).toEqual({ 'rear:0': 1 })
+
+    const outOfOrder = selection(0, 'rear', -1)
+    const first = selection(0, 'front', 1)
+    const pass: MachineTracePassV1 = {
+      ...smallPass('K', 0),
+      carriageStops: { left: -1.5, right: 1.5 },
+      carrierStops: { left: -1.5, right: 1.5 },
+      selections: { front: [first], rear: [outOfOrder] },
+      actions: [{ kind: 'knit', at: first }, { kind: 'knit', at: outOfOrder }],
+    }
+    const report = validateKCodeMachineTrace(
+      withPasses(smallTrace(['K']), [pass]),
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )
+    expect(report.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
+      'machine-trace.action-direction-order',
+    )
+    expect(report.finalState.stacks).toEqual({ 'front:1': 1 })
+
+    const reversePass: MachineTracePassV1 = {
+      ...pass,
+      direction: '<<',
+      actions: [{ kind: 'knit', at: outOfOrder }, { kind: 'knit', at: first }],
+    }
+    const reverseReport = validateKCodeMachineTrace(
+      withPasses(smallTrace(['K']), [reversePass]),
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )
+    expect(reverseReport.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
+      'machine-trace.action-direction-order',
+    )
+    expect(reverseReport.finalState.stacks).toEqual({ 'rear:-1': 1 })
+  })
+
+  it('keeps diagnostic ordering deterministic across messages, rules, and action indexes', () => {
+    const base = smallTrace(['K'])
+    const first = base.passes[0]!
+    const selected = first.selections.front[0]!
+    const duplicates = validateKCodeMachineTrace(withPasses(base, [{
+      ...first,
+      selections: { front: [selected, selected, selected], rear: [] },
+    }]), KNITERATE_7GG_KCODE_PROFILE_V1)
+    expect(duplicates.diagnostics.filter((diagnostic) =>
+      diagnostic.rule === 'machine-trace.duplicate-selection').map((diagnostic) =>
+      diagnostic.message)).toEqual([
+      'Needle front:0 is selected more than once in this pass.',
+      'Selection front:0 appears more than once in this pass.',
+    ])
+
+    const repeatedActions = validateKCodeMachineTrace(withPasses(base, [{
+      ...first,
+      actions: [
+        { kind: 'tuck', at: selected },
+        { kind: 'tuck', at: selected },
+      ],
+    }]), KNITERATE_7GG_KCODE_PROFILE_V1)
+    expect(repeatedActions.diagnostics.filter((diagnostic) =>
+      diagnostic.rule === 'machine-trace.action-operation').map((diagnostic) =>
+      diagnostic.actionIndex)).toEqual([0, 1])
+
+    const sameActionRules = validateKCodeMachineTrace(withPasses(base, [{
+      ...first,
+      carrierStops: { left: 0.5, right: 1.5 },
+      actions: [{ kind: 'tuck', at: selected }],
+    }]), KNITERATE_7GG_KCODE_PROFILE_V1)
+    expect(sameActionRules.diagnostics.filter((diagnostic) =>
+      diagnostic.actionIndex === 0).map((diagnostic) => diagnostic.rule)).toEqual([
+      'machine-trace.action-operation',
+      'machine-trace.selection-outside-carrier',
+    ])
+  })
+
   it('keeps capped mixed-severity totals exact without reclassifying omissions', () => {
     const report = validateKCodeMachineTrace(
       smallTrace([
-        ...Array.from({ length: 600 }, () => 'D' as const),
-        ...Array.from({ length: 600 }, () => 'X' as const),
+        ...Array.from({ length: 514 }, () => 'D' as const),
+        'X',
       ]),
       KNITERATE_7GG_KCODE_PROFILE_V1,
     )
@@ -632,16 +1380,28 @@ describe('KCode-native MachineTrace validation', () => {
     expect(report.diagnostics.length).toBeLessThanOrEqual(520)
     expect(represented('error')).toBe(report.errorCount)
     expect(represented('warning')).toBe(report.warningCount)
+    expect(report.diagnostics.slice(0, 2)).toEqual([
+      expect.objectContaining({
+        rule: 'machine-trace.drop-empty',
+        passIndex: null,
+        occurrences: 2,
+      }),
+      expect.objectContaining({
+        rule: 'machine-trace.transfer-source-empty',
+        passIndex: null,
+        occurrences: 1,
+      }),
+    ])
     expect(report.diagnostics).toEqual(expect.arrayContaining([
       expect.objectContaining({
         rule: 'machine-trace.transfer-source-empty',
         severity: 'error',
-        occurrences: 600,
+        occurrences: 1,
       }),
       expect.objectContaining({
         rule: 'machine-trace.drop-empty',
         severity: 'warning',
-        occurrences: 88,
+        occurrences: 2,
       }),
     ]))
   })
@@ -675,6 +1435,7 @@ describe('KCode-native MachineTrace validation', () => {
   it('exhaustively replays all 1,296 depth-four small-state transitions', () => {
     const sequences = allSequences(['K', 'T', 'D', 'X', 'S', 'Y'], 4)
     expect(sequences).toHaveLength(1_296)
+    const reportDigest = createHash('sha256')
 
     for (const sequence of sequences) {
       let front = 0
@@ -733,6 +1494,10 @@ describe('KCode-native MachineTrace validation', () => {
         rear === 0 ? undefined : rear,
       )
       expect(report.passStates, sequence.join('')).toHaveLength(sequence.length)
+      reportDigest.update(JSON.stringify(report))
     }
+    expect(reportDigest.digest('hex')).toBe(
+      'fbb92c8d038c48d3d6352fbc3fce486a95052cacac43ef42849de2190ef7883c',
+    )
   })
 })

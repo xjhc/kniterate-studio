@@ -1,6 +1,6 @@
 {
   "kind": "kniterate-studio-kcode-software-proof",
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "verdict": "software-proven",
   "profile": {
     "id": "kniterate-7gg-kcode",
@@ -14,6 +14,10 @@
     "deterministic-pinned-backend-lowering",
     "machine-executable-scheduled-pass-to-machine-trace-differential",
     "kcode-native-loop-and-kinematic-validation",
+    "profile-command-legality-v1",
+    "independent-1904-case-command-legality-matrix",
+    "kcode-native-invalid-command-refusal-corpus",
+    "source-mutation-complete-for-command-proof-rail",
     "full-machine-trace-diff",
     "deterministic-pass-bed-carrier-scene",
     "cross-section-predicted-vendor-agreement-prefix",
@@ -30,6 +34,786 @@
     "scheduledBackendDifferential": 1414676803,
     "independentReferenceOracle": 1330790723
   },
+  "legalityCoverage": {
+    "coreMatrixCases": 1904,
+    "operations": 8,
+    "directions": 2,
+    "carrierTokens": 7,
+    "rackValues": 17,
+    "kcodeNativeRefusalCases": 9,
+    "oracle": "test/knitout/kcode-legality-spec.ts",
+    "contractSha256": "4924477931acb4a711dc36391fe4849d0b4a2951467232d52990cb8f8ab03a06",
+    "oracleSha256": "eae502e4a399eea38e2fa82299fe68bea0e11912b5f9e10087941ca2d71a9532",
+    "ruleCoverage": {
+      "kind": "kniterate-kcode-rule-coverage-ledger",
+      "schemaVersion": 1,
+      "ok": true,
+      "parserRuleCount": 30,
+      "validatorRuleCount": 42,
+      "witnessedRuleCount": 72,
+      "executionGates": [
+        "deterministic-kcode-proof-tests",
+        "kcode-native-command-refusal-corpus"
+      ],
+      "note": "Only files executed by the named proof gates may satisfy this ledger. Each witness file asserts exact stable rule identifiers; a mention in non-gated source is ignored.",
+      "missing": [],
+      "witnesses": [
+        {
+          "rule": "kcode.bed-markers",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            },
+            {
+              "path": "test/knitout/kcode-command-legality.test.ts",
+              "sha256": "eed2668cb92225f5b6c0fea8d492b94b53cff33bc2e1564a0e41419d64a64620"
+            },
+            {
+              "path": "scripts/kcode-command-refusal-corpus.ts",
+              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.bed-needle-domain",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.bed-padding",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "scripts/kcode-command-refusal-corpus.ts",
+              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.diagnostic-summary",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.duplicate-home",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.field-charset",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.field-order",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.field-width",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.footer-arity",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.footer-carrier",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "scripts/kcode-command-refusal-corpus.ts",
+              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.footer-direction",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.footer-number",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.footer-operation",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            },
+            {
+              "path": "scripts/kcode-command-refusal-corpus.ts",
+              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.footer-whitespace",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.home-order",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.incomplete-pass",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.initial-rack",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.invalid-rack",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "scripts/kcode-command-refusal-corpus.ts",
+              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.missing-home",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.missing-initial-rack",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.no-passes",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.orphan-field",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.orphan-footer",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.pass-interrupted",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.rack-order",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.resource-limit",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.source-byte",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.source-byte-summary",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.unknown-record",
+          "files": [
+            {
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+            },
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "kcode.unsupported-dialect",
+          "files": [
+            {
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.action-carrier",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.action-direction-order",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.action-operation",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.action-selection-coverage",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.action-selection-missing",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.carriage-discontinuity",
+          "files": [
+            {
+              "path": "test/knitout/kcode-command-legality.test.ts",
+              "sha256": "eed2668cb92225f5b6c0fea8d492b94b53cff33bc2e1564a0e41419d64a64620"
+            },
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.carriage-stop-order",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.carrier-discontinuity",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.carrier-stop-order",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.carrier-stops-forbidden",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.carrier-stops-outside-carriage",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.carrier-stops-required",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.dialect-profile",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.drop-empty",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.duplicate-selection",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.loop-stack-policy",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.pass-index",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.passes-required",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.profile-mismatch",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.rack-command-index",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.rack-command-initial",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.rack-command-position",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.rack-command-value",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.rack-profile",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.rack-state",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.selection-bed",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.selection-column-range",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.selection-coordinate",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.selection-outside-carriage",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.selection-outside-carrier",
+          "files": [
+            {
+              "path": "test/knitout/kcode-command-legality.test.ts",
+              "sha256": "eed2668cb92225f5b6c0fea8d492b94b53cff33bc2e1564a0e41419d64a64620"
+            },
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            },
+            {
+              "path": "scripts/kcode-command-refusal-corpus.ts",
+              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.selection-payload-coordinate",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.selection-stitch-documented-range",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.selection-stitch-selector",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.selection-trace-coordinate",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.setting-documented-range",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.setting-number",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.stop-coordinate",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.transfer-bed-pair",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.transfer-operation-direction",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            },
+            {
+              "path": "scripts/kcode-command-refusal-corpus.ts",
+              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.transfer-rack-pair",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.transfer-source-empty",
+          "files": [
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            }
+          ]
+        },
+        {
+          "rule": "machine-trace.unknown-action",
+          "files": [
+            {
+              "path": "test/knitout/kcode-command-legality.test.ts",
+              "sha256": "eed2668cb92225f5b6c0fea8d492b94b53cff33bc2e1564a0e41419d64a64620"
+            },
+            {
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+            },
+            {
+              "path": "scripts/kcode-command-refusal-corpus.ts",
+              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+            }
+          ]
+        }
+      ]
+    },
+    "profileSha256": "a36fa91050ee2cfc6c7f5dbc3621ab40269960ef05fe8e4ec5ed3523e639f5c6"
+  },
   "proofTests": [
     "test/public-api.test.ts",
     "test/physical-registry-manifest.test.ts",
@@ -42,6 +826,7 @@
     "test/knitout/kcode-document-property.test.ts",
     "test/knitout/kcode-machine-trace.test.ts",
     "test/knitout/kcode-machine-validator.test.ts",
+    "test/knitout/kcode-command-legality.test.ts",
     "test/knitout/kcode-machine-scene.test.ts",
     "test/knitout/kcode-independent-oracle.test.ts",
     "test/knitout/kcode-scheduled-differential.test.ts",
@@ -75,14 +860,32 @@
       "exitCode": 0
     },
     {
+      "id": "kcode-native-command-refusal-corpus",
+      "command": "pnpm kniterate:kcode-refusals",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "blocking-rule-witness-ledger",
+      "command": "pnpm kniterate:kcode-rule-coverage",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
       "id": "deterministic-kcode-proof-tests",
-      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
+      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-command-legality.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
       "status": "pass",
       "exitCode": 0
     },
     {
       "id": "machine-lib-typecheck",
       "command": "pnpm typecheck",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
+      "id": "kcode-source-mutation-proof",
+      "command": "pnpm verify:kcode:mutation (write) / pnpm verify:kcode:mutation:check (check)",
       "status": "pass",
       "exitCode": 0
     },
@@ -239,7 +1042,7 @@
     ]
   },
   "contract": {
-    "sha256": "68d90d59ecf5f9ccb751d09109e55ace05500be03f59b86782e285ca91c0609c",
+    "sha256": "d024ac7bd3c2d2cef8a61cd383b5cb2d82411a725db4ebb5ecf2a83eff8aa826",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -318,8 +1121,8 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.test.ts",
-        "sha256": "1b707884552ac9e807d1f4e347b834c18b8ec81e65647d01f7e03933321ae2e0",
-        "bytes": 15071
+        "sha256": "392c7280cbaf4e88f7a1528f9cd5a816e22eb03bf0bce7adc1ad6d08d4aa076d",
+        "bytes": 15223
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.ts",
@@ -448,8 +1251,8 @@
       },
       {
         "path": "../../apps/studio/src/engine.ts",
-        "sha256": "58ebb87cc52fff4b3d10a58b711887c6575490538816dabd8bf78d3bd8ba42c3",
-        "bytes": 30114
+        "sha256": "2ca599d2f659a94d0a68f9f329af523801fd79f072c80eb5291f5826e4208ce5",
+        "bytes": 30249
       },
       {
         "path": "../../apps/studio/src/foreignRunSheetFindings.test.tsx",
@@ -468,8 +1271,8 @@
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.test.tsx",
-        "sha256": "a43bbf5cccc0b0bc5a1375a6c58e00f1eb5bdbfa9c5bcd2762c9d64f33ba14f1",
-        "bytes": 9102
+        "sha256": "ac92612ee4af077bcf221e44f1a62f81b89cfa754d596685df88e55a5fc027c8",
+        "bytes": 9264
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.tsx",
@@ -478,13 +1281,13 @@
       },
       {
         "path": "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
-        "sha256": "a54a9ba39dc9477e3179cfddca4494fccc22a59dd11c67cc0522fbe7fd19a140",
-        "bytes": 4796
+        "sha256": "d048c4ba222d98a848ba93f51a17e1415cb8d7185d6aa451b746a7c5c0744aa4",
+        "bytes": 4923
       },
       {
         "path": "../../apps/studio/src/kcode/compileKCodeArtifact.ts",
-        "sha256": "7f8f2062c926b81c0cff91a653ab0b92b1cfec7f66fcc669d3f623bc1e413f02",
-        "bytes": 12334
+        "sha256": "c6bfe160f0679b05927789b0d56f5b1c4fdc1084cf3d93c7625e6db276beaf9e",
+        "bytes": 12390
       },
       {
         "path": "../../apps/studio/src/kcode/convert.worker.ts",
@@ -583,8 +1386,8 @@
       },
       {
         "path": "../../pnpm-lock.yaml",
-        "sha256": "83d015dd6c76d94e20f5ebe853b04a5fe11d7bbb4e7623bcc110188384912463",
-        "bytes": 58011
+        "sha256": "6eb83f2987c78c0cff3ab52cb09b8ee4a36096088365b1c4ba3bf6e14495873b",
+        "bytes": 106651
       },
       {
         "path": "../../pnpm-workspace.yaml",
@@ -593,8 +1396,8 @@
       },
       {
         "path": "../../scripts/build-v1-knit-trial.ts",
-        "sha256": "41f1dab3ea55d68c26f5a5b90a069c7b992c4f69715bfc469fba97c0485f8e31",
-        "bytes": 10581
+        "sha256": "987b9cfb4fb70830afcb147132935f1abed67fd1c5978e073491d68dcc51c489",
+        "bytes": 17486
       },
       {
         "path": "../../scripts/check-v1-physical-release.ts",
@@ -678,8 +1481,8 @@
       },
       {
         "path": "package.json",
-        "sha256": "85c95f493712334a6f70b85c11887bf9bdea77f9983fdf0114c81b10d53be532",
-        "bytes": 3279
+        "sha256": "26304104b5e8dc58fd83a820602ef4551ff4f614dc8450407e248ca87cec557d",
+        "bytes": 3758
       },
       {
         "path": "reference/2x2-rib-beanie.kc",
@@ -758,7 +1561,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "74dd20142de631e95494361febb1a9f4ae91fa5e82f820faadc40a92b510ecd5",
+        "sha256": "5f902bb36bfb8458b8ab209f617c9b64a09aa525036e7c8c77a20deb86f93bdc",
         "bytes": 179
       },
       {
@@ -832,14 +1635,29 @@
         "bytes": 3045
       },
       {
+        "path": "scripts/kcode-command-refusal-corpus.ts",
+        "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b",
+        "bytes": 6556
+      },
+      {
+        "path": "scripts/kcode-mutation.ts",
+        "sha256": "877adaa76a057150f52055cc2c79aff69c5a260c731713746fb7f9e0b1572c26",
+        "bytes": 5354
+      },
+      {
         "path": "scripts/kcode-proof-launcher.mjs",
-        "sha256": "6a39081f430c986f8a95e571ab9c9fc7acb44ecb75e058e759ba78ada0f23d37",
+        "sha256": "abcb94719a801885d9c921c27d3464c7be7218335d4adc7be141b8dd2f58a669",
         "bytes": 1927
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "583fb6b34fb2f7cbe6eaca2774b7db36155bea72c80fa188eae62dc620e56634",
-        "bytes": 16923
+        "sha256": "9dc49428812c866bfe77b9c87d4a97d33bbea3d86a4ad32c326e7e9a124ae16a",
+        "bytes": 19529
+      },
+      {
+        "path": "scripts/kcode-rule-coverage.ts",
+        "sha256": "4af0ae44c497fd7d6ff3dd846675f82a86f25a8e81049a439fbf7605924c192b",
+        "bytes": 2964
       },
       {
         "path": "scripts/kniterate-conform-launcher.mjs",
@@ -858,8 +1676,8 @@
       },
       {
         "path": "scripts/kniterate-swatch-registry-check.ts",
-        "sha256": "63dc67f8142a097d934098b10365c919b5def5bcf11a39e34ee50a749e71be26",
-        "bytes": 59791
+        "sha256": "192a5ac31a5852628099cb61eeeb544743033da001222e8cf033f87cf2de527e",
+        "bytes": 65685
       },
       {
         "path": "scripts/kniterate-topology-oracle.ts",
@@ -878,8 +1696,8 @@
       },
       {
         "path": "src/browser.ts",
-        "sha256": "412e44cb5d6737dbc840b5c6051834ad24d71f311aa76bf7b2c14dcd5c69c73f",
-        "bytes": 3515
+        "sha256": "9e2d31c008ae7f41d9df089280acaca0b7294849177357465d65a088cf9257c1",
+        "bytes": 3809
       },
       {
         "path": "src/chart-core/__row_space_canary__.ts",
@@ -1003,8 +1821,8 @@
       },
       {
         "path": "src/index.ts",
-        "sha256": "5d9ae9bc8f5f0e87bfedd667a10b9639b9103f1594b2ec6e8479782391225056",
-        "bytes": 4150
+        "sha256": "fb42bde8f92f942eb106ad4abc9401236ea38cdcdebe136e60563f67dd07ca3e",
+        "bytes": 4444
       },
       {
         "path": "src/knitout/back-face-projection.ts",
@@ -1093,8 +1911,8 @@
       },
       {
         "path": "src/knitout/kcode/machine-profile.ts",
-        "sha256": "39c7b4113d997bbe46bfaee1a658024b5fd3fbaa9db934fdf6fd8248bcbd78f1",
-        "bytes": 14207
+        "sha256": "a9e37ddd0b0d93f071b7461601959d7dce01794e8e4e185b0a04cba02188f330",
+        "bytes": 18380
       },
       {
         "path": "src/knitout/kcode/machine-scene.ts",
@@ -1103,28 +1921,28 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "sha256": "8a5703e7e1d0816957c593efd58154b94810df1f9f009a74643e91281b35b921",
-        "bytes": 20620
+        "sha256": "da687dd484d023baf7ad4a10cc0e7c62563029cb07c341d66b78839fbc6d6d68",
+        "bytes": 21841
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "sha256": "10d1d306ade95e81d068901e254fe65df58d3f094c4857e8c04cbee56190e23a",
-        "bytes": 47395
+        "sha256": "8a0a6fab926079ecfe6ba1c9249eb4dfda82291f9507229f3a92c07b089f3b20",
+        "bytes": 49851
       },
       {
         "path": "src/knitout/kcode/parser.ts",
-        "sha256": "ce411e66edd49580f8c321ac61c772b624ce39770972e935e12112fca95ee88e",
-        "bytes": 33767
+        "sha256": "a8f47b014287aa74f84cb867a73af262e22720bebe0fd03b501005fb7f475b06",
+        "bytes": 35279
       },
       {
         "path": "src/knitout/kcode/scheduled-trace-diff.ts",
-        "sha256": "5e4448ecf156b9952283c8e7491f49a00504166cf24ee3e7f4e27db43b4d4d71",
-        "bytes": 3603
+        "sha256": "976c0cc54823b2568a47e444dbf88a0732d8be10453d077a7e6204fe7a196546",
+        "bytes": 3589
       },
       {
         "path": "src/knitout/kcode/types.ts",
-        "sha256": "6db393fd2441350e83c4d08e6e4d2d6d7f5e8d4f3fc62be83be0c6ac24050fc2",
-        "bytes": 7093
+        "sha256": "6ad7d0243e8489c0dbb1e1fbf5d5c0f994ae6e5f690ddd3707759c0271af91d1",
+        "bytes": 7123
       },
       {
         "path": "src/knitout/kniterate/browser-to-kcode.ts",
@@ -1522,6 +2340,11 @@
         "bytes": 4915
       },
       {
+        "path": "stryker.config.mjs",
+        "sha256": "09869bb6954574e29a82ec1392e2fa70e7e86380911e61bded2be9c0e978216e",
+        "bytes": 1055
+      },
+      {
         "path": "test/browser-kcode-converter.test.ts",
         "sha256": "1ff124621894882a363c6b01b0819f8dc7eab657f0f9228c17bba6fc1741f7c0",
         "bytes": 12887
@@ -1547,9 +2370,14 @@
         "bytes": 2126
       },
       {
+        "path": "test/knitout/kcode-command-legality.test.ts",
+        "sha256": "eed2668cb92225f5b6c0fea8d492b94b53cff33bc2e1564a0e41419d64a64620",
+        "bytes": 15006
+      },
+      {
         "path": "test/knitout/kcode-document-adversarial.test.ts",
-        "sha256": "ece2a9fc55e3737cdd5ae0418e8b521f2d211f6fd2bf586e562d9b7a83f301d9",
-        "bytes": 21372
+        "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02",
+        "bytes": 32618
       },
       {
         "path": "test/knitout/kcode-document-property.test.ts",
@@ -1563,8 +2391,8 @@
       },
       {
         "path": "test/knitout/kcode-machine-profile.test.ts",
-        "sha256": "865afe4e51011db1e079453f2d1e39b498398c34f92c6f31a13ee43b15f84293",
-        "bytes": 6095
+        "sha256": "4e451ba16b37daaa29aaa528f1cf50ddc7fba7120c17809a8edf514bc58ee2d9",
+        "bytes": 7099
       },
       {
         "path": "test/knitout/kcode-machine-scene.test.ts",
@@ -1573,13 +2401,13 @@
       },
       {
         "path": "test/knitout/kcode-machine-trace.test.ts",
-        "sha256": "c0cdd91e3c22fe1e10f607c4f167cc45780ae1ff6f7a38edbd114197fe85e76d",
-        "bytes": 12499
+        "sha256": "f42fb5543258520ea72ebd902cbfb65daf1feffa0a8d36afd7b85f02ef4eb482",
+        "bytes": 18733
       },
       {
         "path": "test/knitout/kcode-machine-validator.test.ts",
-        "sha256": "dfcb4b8fed81e5cb225e706801d65fe48d944562d59b543e78bcc5f01e32cb67",
-        "bytes": 24382
+        "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c",
+        "bytes": 52908
       },
       {
         "path": "test/knitout/kcode-scheduled-differential.test.ts",
@@ -1588,8 +2416,8 @@
       },
       {
         "path": "test/knitout/kcode-scheduled-trace-diff.test.ts",
-        "sha256": "8ec4da04b9f7bccca5cc6ba202c21efc7f86493727b1e827db1a422be3bff7e7",
-        "bytes": 2440
+        "sha256": "e972dcabce590b7ff55c43b8d1e2073d35a1aecbe21cd35943dcc57c8eef5d1e",
+        "bytes": 5373
       },
       {
         "path": "test/knitout/kniterate-topology-oracle.test.ts",
@@ -1613,18 +2441,23 @@
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
-        "sha256": "c9c636c1fb897e805cdb0e8f7bcc9a74604b4b08e1aaa0ffbe21f2e3d2fb4551",
-        "bytes": 30538
+        "sha256": "dbdaebd4a98f9f7cd3fd5fef7e3b60d068d93d98c6334ebde3555b10f867206c",
+        "bytes": 33492
       },
       {
         "path": "test/public-api.test.ts",
-        "sha256": "e1cb39ebc4bf19691987f13f5b6382750ff635d9f344bc843f243f0368ebfe91",
-        "bytes": 1867
+        "sha256": "a2485a1bbff3344abe743f936479c3b2d3311dc62d5597d7db612ddbde2e60a9",
+        "bytes": 1937
       },
       {
         "path": "tsconfig.json",
         "sha256": "af8d127eeeb52c1ff3320b3f148a77833cd1a84f6c45a73c3739717e4f11211c",
         "bytes": 203
+      },
+      {
+        "path": "vitest.stryker.config.ts",
+        "sha256": "c95269a297475b87d7a05749b9fc5e2f91cf383d04e9455981677d8ae70f9138",
+        "bytes": 708
       }
     ]
   },
@@ -1650,8 +2483,1059 @@
   },
   "mutationEvidence": {
     "inputGrammarAndDiffMutations": true,
-    "implementationSourceMutationScoring": false,
-    "opportunity": "Add a deterministic source-mutation score gate for the parser, projector, validator, and trace diff."
+    "implementationSourceMutationScoring": true,
+    "receiptSha256": "8cafefa5ef7ad41418dd28dfad9f8f93c4771ed306f3a9ddab1ea830838ad962",
+    "counts": {
+      "Killed": 2309,
+      "Survived": 0,
+      "Timeout": 0,
+      "NoCoverage": 0,
+      "CompileError": 0,
+      "RuntimeError": 0,
+      "Ignored": 127,
+      "Pending": 0
+    },
+    "mutationScore": 100,
+    "targets": [
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "sha256": "a8f47b014287aa74f84cb867a73af262e22720bebe0fd03b501005fb7f475b06"
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "sha256": "da687dd484d023baf7ad4a10cc0e7c62563029cb07c341d66b78839fbc6d6d68"
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "sha256": "8a0a6fab926079ecfe6ba1c9249eb4dfda82291f9507229f3a92c07b089f3b20"
+      },
+      {
+        "path": "src/knitout/kcode/scheduled-trace-diff.ts",
+        "sha256": "976c0cc54823b2568a47e444dbf88a0732d8be10453d077a7e6204fe7a196546"
+      }
+    ],
+    "diagnosticProseExclusions": [
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 174,
+        "column": 13,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 175,
+        "column": 15,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 175,
+        "column": 62,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 176,
+        "column": 15,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 229,
+        "column": 19,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 229,
+        "column": 36,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 245,
+        "column": 32,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 246,
+        "column": 13,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 246,
+        "column": 8,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 247,
+        "column": 31,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 247,
+        "column": 8,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the resource-limit boundary and failure are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 252,
+        "column": 22,
+        "mutator": "ConditionalExpression",
+        "replacement": "false",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 252,
+        "column": 22,
+        "mutator": "ConditionalExpression",
+        "replacement": "true",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 252,
+        "column": 22,
+        "mutator": "EqualityOperator",
+        "replacement": "actual.length !== 0",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 252,
+        "column": 44,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 252,
+        "column": 65,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 254,
+        "column": 67,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 254,
+        "column": 7,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 255,
+        "column": 9,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 261,
+        "column": 28,
+        "mutator": "StringLiteral",
+        "replacement": "\"Stryker was here!\"",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 280,
+        "column": 19,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 307,
+        "column": 36,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; marker structure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 324,
+        "column": 7,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; the width mismatch failure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 325,
+        "column": 9,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; the width mismatch failure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 333,
+        "column": 22,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the width mismatch failure is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 340,
+        "column": 9,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 341,
+        "column": 11,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 374,
+        "column": 41,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 392,
+        "column": 26,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 409,
+        "column": 21,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 411,
+        "column": 19,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 412,
+        "column": 44,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 416,
+        "column": 22,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 429,
+        "column": 59,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 430,
+        "column": 56,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 433,
+        "column": 13,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 435,
+        "column": 15,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 449,
+        "column": 15,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 451,
+        "column": 17,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 458,
+        "column": 30,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 459,
+        "column": 17,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 460,
+        "column": 17,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 465,
+        "column": 13,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 467,
+        "column": 15,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 484,
+        "column": 28,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 487,
+        "column": 28,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 492,
+        "column": 11,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 494,
+        "column": 13,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 518,
+        "column": 10,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 542,
+        "column": 5,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 550,
+        "column": 5,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the rear-bed field label does not affect decoded structure."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 553,
+        "column": 10,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 561,
+        "column": 5,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 571,
+        "column": 5,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 632,
+        "column": 12,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 659,
+        "column": 41,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 660,
+        "column": 10,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 663,
+        "column": 10,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 666,
+        "column": 10,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 669,
+        "column": 10,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 672,
+        "column": 10,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 675,
+        "column": 10,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 682,
+        "column": 7,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 683,
+        "column": 9,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 688,
+        "column": 7,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 689,
+        "column": 9,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 1087,
+        "column": 13,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; exact rule, severity, class, action index, and source location remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 1183,
+        "column": 15,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; expected-kind control flow and the stable rule remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 1183,
+        "column": 96,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; expected-kind control flow and the stable rule remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 1398,
+        "column": 16,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 1398,
+        "column": 212,
+        "mutator": "ConditionalExpression",
+        "replacement": "false",
+        "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 1398,
+        "column": 212,
+        "mutator": "ConditionalExpression",
+        "replacement": "true",
+        "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 1398,
+        "column": 212,
+        "mutator": "EqualityOperator",
+        "replacement": "group.count !== 1",
+        "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 1398,
+        "column": 232,
+        "mutator": "StringLiteral",
+        "replacement": "\"Stryker was here!\"",
+        "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 1398,
+        "column": 237,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 807,
+        "column": 11,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; exact rule, severity, class, and source location remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 303,
+        "column": 13,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 303,
+        "column": 142,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 304,
+        "column": 13,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 304,
+        "column": 196,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 515,
+        "column": 21,
+        "mutator": "ConditionalExpression",
+        "replacement": "false",
+        "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 515,
+        "column": 21,
+        "mutator": "ConditionalExpression",
+        "replacement": "true",
+        "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 515,
+        "column": 33,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 516,
+        "column": 9,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 517,
+        "column": 9,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 714,
+        "column": 7,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; the exact unsupported-dialect rule, severity, and profile/dialect branch remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 747,
+        "column": 66,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; pending-field interruption rules and spans remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 747,
+        "column": 75,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; pending-field interruption rules and spans remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 835,
+        "column": 15,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; the orphan-field rule, severity, field, and span remain mutation-tested."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 932,
+        "column": 156,
+        "mutator": "ConditionalExpression",
+        "replacement": "false",
+        "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 932,
+        "column": 156,
+        "mutator": "ConditionalExpression",
+        "replacement": "true",
+        "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 932,
+        "column": 16,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 932,
+        "column": 170,
+        "mutator": "StringLiteral",
+        "replacement": "\"Stryker was here!\"",
+        "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 932,
+        "column": 175,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
+      }
+    ],
+    "diagnosticProseExclusionsSha256": "e94e8bc94bd9f855ebb499fce2565548e0ecbe158146ffe23cbd9e2f169b47da",
+    "equivalentMutantSuppressions": [
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 356,
+        "column": 24,
+        "mutator": "ArithmeticOperator",
+        "replacement": "kcodeColumn - offset",
+        "reason": "Equivalent mutant: both V1 dialect offsets are zero, so addition and subtraction are identical."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 377,
+        "column": 24,
+        "mutator": "ArithmeticOperator",
+        "replacement": "coordinate(a) + coordinate(b)",
+        "reason": "Equivalent mutant: multiplication and division by directionFactor have the same comparator sign for +/-1."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 377,
+        "column": 5,
+        "mutator": "ArithmeticOperator",
+        "replacement": "directionFactor / (coordinate(a) - coordinate(b))",
+        "reason": "Equivalent mutant: multiplication and division by directionFactor have the same comparator sign for +/-1."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 443,
+        "column": 28,
+        "mutator": "ArithmeticOperator",
+        "replacement": "selection.traceCoordinate - rack * contract.targetRackMultiplier",
+        "reason": "Equivalent mutant: the V1 rack multiplier is always +/-1, whose product and quotient are equal."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 443,
+        "column": 56,
+        "mutator": "ArithmeticOperator",
+        "replacement": "rack / contract.targetRackMultiplier",
+        "reason": "Equivalent mutant: the V1 rack multiplier is always +/-1, whose product and quotient are equal."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 200,
+        "column": 63,
+        "mutator": "UnaryOperator",
+        "replacement": "+0",
+        "reason": "Equivalent mutant: unary plus cannot distinguish 0 from the normalized -0 key."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 306,
+        "column": 53,
+        "mutator": "ArithmeticOperator",
+        "replacement": "value + 0.5",
+        "reason": "Equivalent mutant: adding or subtracting 0.5 differs by one and therefore has identical integer membership."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 314,
+        "column": 10,
+        "mutator": "EqualityOperator",
+        "replacement": "coordinate < range.left",
+        "reason": "Equivalent mutant: legal stop coordinates are half-integers while operated coordinates are integers, so equality at either boundary is impossible."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 314,
+        "column": 10,
+        "mutator": "EqualityOperator",
+        "replacement": "coordinate > range.left",
+        "reason": "Equivalent mutant: legal stop coordinates are half-integers while operated coordinates are integers, so equality at either boundary is impossible."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 314,
+        "column": 38,
+        "mutator": "EqualityOperator",
+        "replacement": "coordinate < range.right",
+        "reason": "Equivalent mutant: legal stop coordinates are half-integers while operated coordinates are integers, so equality at either boundary is impossible."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 314,
+        "column": 38,
+        "mutator": "EqualityOperator",
+        "replacement": "coordinate > range.right",
+        "reason": "Equivalent mutant: legal stop coordinates are half-integers while operated coordinates are integers, so equality at either boundary is impossible."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 394,
+        "column": 27,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Equivalent mutant: non-transfer operations are compared only as a source-bed mismatch; null and the absent sourceBed property produce the same blocking result."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 394,
+        "column": 7,
+        "mutator": "ConditionalExpression",
+        "replacement": "false",
+        "reason": "Equivalent mutant: non-transfer operations are compared only as a source-bed mismatch; null and the absent sourceBed property produce the same blocking result."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 394,
+        "column": 7,
+        "mutator": "ConditionalExpression",
+        "replacement": "true",
+        "reason": "Equivalent mutant: non-transfer operations are compared only as a source-bed mismatch; null and the absent sourceBed property produce the same blocking result."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 431,
+        "column": 10,
+        "mutator": "ArithmeticOperator",
+        "replacement": "source.traceCoordinate - rack * contract.targetRackMultiplier",
+        "reason": "Equivalent mutant: the V1 multiplier domain is exactly -1 or 1, for which multiply and divide are identical."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 431,
+        "column": 35,
+        "mutator": "ArithmeticOperator",
+        "replacement": "rack / contract.targetRackMultiplier",
+        "reason": "Equivalent mutant: the V1 multiplier domain is exactly -1 or 1, for which multiply and divide are identical."
+      },
+      {
+        "path": "src/knitout/kcode/machine-validator.ts",
+        "line": 971,
+        "column": 13,
+        "mutator": "ArithmeticOperator",
+        "replacement": "selection.kcodeColumn - dialectContract.markerFreeTraceOffset",
+        "reason": "Equivalent mutant: both V1 dialect offsets are exactly zero."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 247,
+        "column": 30,
+        "mutator": "ConditionalExpression",
+        "replacement": "true",
+        "reason": "Equivalent mutant: when no decimal exists, only an empty unsigned token has index -1 equal to length - 1, and Number already rejects that sign-only token."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 247,
+        "column": 7,
+        "mutator": "ConditionalExpression",
+        "replacement": "false",
+        "reason": "Equivalent mutant: when no decimal exists, only an empty unsigned token has index -1 equal to length - 1, and Number already rejects that sign-only token."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 247,
+        "column": 7,
+        "mutator": "ConditionalExpression",
+        "replacement": "true",
+        "reason": "Equivalent mutant: when no decimal exists, only an empty unsigned token has index -1 equal to length - 1, and Number already rejects that sign-only token."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 247,
+        "column": 7,
+        "mutator": "ConditionalExpression",
+        "replacement": "true",
+        "reason": "Equivalent mutant: when no decimal exists, only an empty unsigned token has index -1 equal to length - 1, and Number already rejects that sign-only token."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 420,
+        "column": 81,
+        "mutator": "StringLiteral",
+        "replacement": "\"Stryker was here!\"",
+        "reason": "Equivalent mutant: the absent-token fallback cannot match any V1 operation, while present tokens bypass it."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 690,
+        "column": 11,
+        "mutator": "EqualityOperator",
+        "replacement": "omittedStart !== null",
+        "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 690,
+        "column": 36,
+        "mutator": "EqualityOperator",
+        "replacement": "span.start.offset <= omittedStart.offset",
+        "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 690,
+        "column": 36,
+        "mutator": "EqualityOperator",
+        "replacement": "span.start.offset >= omittedStart.offset",
+        "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 692,
+        "column": 11,
+        "mutator": "EqualityOperator",
+        "replacement": "omittedEnd !== null",
+        "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 692,
+        "column": 34,
+        "mutator": "EqualityOperator",
+        "replacement": "span.end.offset <= omittedEnd.offset",
+        "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 692,
+        "column": 34,
+        "mutator": "EqualityOperator",
+        "replacement": "span.end.offset >= omittedEnd.offset",
+        "reason": "Equivalent mutant: replacing an equal-offset position with itself cannot change the summary span."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 87,
+        "column": 39,
+        "mutator": "Regex",
+        "replacement": "/([\\r\\n]*)(\\r\\n|\\r|\\n)|([^\\r\\n]+)$/g",
+        "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 87,
+        "column": 39,
+        "mutator": "Regex",
+        "replacement": "/([^\\r\\n])(\\r\\n|\\r|\\n)|([^\\r\\n]+)$/g",
+        "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 87,
+        "column": 39,
+        "mutator": "Regex",
+        "replacement": "/([^\\r\\n]*)(\\r\\n|\\r|\\n)|([\\r\\n]+)$/g",
+        "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 87,
+        "column": 39,
+        "mutator": "Regex",
+        "replacement": "/([^\\r\\n]*)(\\r\\n|\\r|\\n)|([^\\r\\n])$/g",
+        "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+      },
+      {
+        "path": "src/knitout/kcode/parser.ts",
+        "line": 87,
+        "column": 39,
+        "mutator": "Regex",
+        "replacement": "/([^\\r\\n]*)(\\r\\n|\\r|\\n)|([^\\r\\n]+)/g",
+        "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
+      }
+    ],
+    "equivalentMutantSuppressionsSha256": "af54aff0a6c100cafea711d9092b987e863c8748e2778b503aba58ee77385a2a"
   },
   "physicalAcceptance": {
     "included": false,

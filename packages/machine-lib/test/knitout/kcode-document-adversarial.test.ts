@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import { describe, expect, it } from 'vitest'
 
 import { emitKCodeDocumentBytes, parseKCodeBytes } from '../../src/knitout/kcode/bytes.js'
@@ -65,6 +67,18 @@ function validDocument(options: {
   return lines.join(newline) + (options.finalNewline === false ? '' : newline)
 }
 
+function legacyEmptyMoveDocument(): string {
+  const lines = validDocument({ carrier: '0' }).split('\n')
+  for (const [index, line] of lines.entries()) {
+    if (line.startsWith('FRNT:') || line.startsWith('REAR:')) {
+      lines[index] = line.replace('-', '_').replace('_', '')
+    } else if (line.startsWith('STIF:') || line.startsWith('STIR:')) {
+      lines[index] = line.slice(0, -1)
+    }
+  }
+  return lines.join('\n')
+}
+
 function replaceLine(
   source: string,
   predicate: (line: string) => boolean,
@@ -103,9 +117,244 @@ function expectRejected(source: string, rules: readonly KCodeDiagnosticRule[]): 
   expect(result.diagnostics.some((diagnostic) => diagnostic.severity === 'error')).toBe(true)
   expect(result.diagnostics.map((diagnostic) => diagnostic.rule)).toEqual(expect.arrayContaining(rules))
   expect(emitKCodeDocument(result.document)).toBe(source)
+  expect(parseContract(result)).toMatchSnapshot()
+}
+
+function contractDigest(value: unknown): string {
+  return createHash('sha256').update(JSON.stringify(value)).digest('hex')
+}
+
+function parseContract(result: ReturnType<typeof parseKCodeDocument>): string {
+  return contractDigest(result)
 }
 
 describe('strict KCode adversarial rail', () => {
+  it('locks scanner, prefix, numeric, blank, and incomplete-pass boundaries', () => {
+    const exact = (source: string) => parseContract(
+      parseKCodeDocument(source, STRICT_VENDOR_OPTIONS),
+    )
+    expect(exact('')).toMatchSnapshot()
+    expect(exact(insertAfter(validDocument(), (line) => line === 'RACK:0', ''))).toMatchSnapshot()
+    expect(exact(insertAfter(
+      validDocument(),
+      (line) => line.startsWith('FRNT:'),
+      validDocument().split('\n').find((line) => line.startsWith('FRNT:'))!,
+    ))).toMatchSnapshot()
+    expect(exact('HOME\nRACK:0\nFRNT:_')).toMatchSnapshot()
+    expect(exact('HOME\nRACK:0\nFRNT:_\nHOME\n')).toMatchSnapshot()
+    expect(exact('HOME\nRACK:0\nFRNT:_\nJUNK\n')).toMatchSnapshot()
+    for (const footer of ['>>', '>> Kn-Kn', '>> Kn-Kn 2', '>> Kn-Kn 2 300']) {
+      expect(exact(`HOME\nRACK:0\n${footer}\n`)).toMatchSnapshot()
+    }
+    expect(exact(validDocument().replace(/FRNT:[^\n]+/, 'FRNT:'))).toMatchSnapshot()
+    expect(exact(validDocument().replace(' 300 ', ' .12 '))).toMatchSnapshot()
+    expect(exact(validDocument().replace(' 300 ', ' .a '))).toMatchSnapshot()
+    expect(exact(validDocument().replace(' 300 ', ' 12. '))).toMatchSnapshot()
+    expect(exact(`${'X'.repeat(120)}\n`)).toMatchSnapshot()
+    expect(exact(`${'X'.repeat(121)}\n`)).toMatchSnapshot()
+    const laterBom = `${validDocument()}\ufeffHOME\n`
+    const laterBomResult = parseKCodeDocument(laterBom, STRICT_VENDOR_OPTIONS)
+    expect(laterBomResult.document.records.at(-1)?.kind).toBe('unknown')
+    expect(laterBomResult.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
+      'kcode.unknown-record',
+    )
+    const decimal = parseKCodeDocument(
+      validDocument().replace(' 300 ', ' .12 '),
+      STRICT_VENDOR_OPTIONS,
+    )
+    expect(decimal.document.passes[0]!.footer.speed).toBe(0.12)
+    expect(decimal.diagnostics.map((diagnostic) => diagnostic.rule)).not.toContain(
+      'kcode.footer-number',
+    )
+    const invalidDecimal = parseKCodeDocument(
+      validDocument().replace(' 300 ', ' .a '),
+      STRICT_VENDOR_OPTIONS,
+    )
+    expect(invalidDecimal.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
+      'kcode.footer-number',
+    )
+    const signedDecimal = parseKCodeDocument(
+      validDocument().replace(' 300 ', ' +.12 '),
+      STRICT_VENDOR_OPTIONS,
+    )
+    expect(signedDecimal.document.passes[0]!.footer.speed).toBe(0.12)
+    for (const rack of ['', '+', ' 1']) {
+      expect(parseKCodeDocument(
+        validDocument().replace('RACK:0', `RACK:${rack}`),
+        STRICT_VENDOR_OPTIONS,
+      ).diagnostics.map((diagnostic) => diagnostic.rule)).toContain('kcode.invalid-rack')
+    }
+    expect(parseKCodeDocument(
+      validDocument().replace(' 300 ', ' 1. '),
+      STRICT_VENDOR_OPTIONS,
+    ).diagnostics.map((diagnostic) => diagnostic.rule)).toContain('kcode.footer-number')
+
+    const nonEmptyMissing = parseKCodeDocument('X\n', STRICT_VENDOR_OPTIONS)
+    expect(nonEmptyMissing.diagnostics.find((diagnostic) =>
+      diagnostic.rule === 'kcode.missing-home')?.span.start.offset).toBe(2)
+    expect(exact('>> Kn-Kn 0 300 0\nHOME\nRACK:0\n')).toMatchSnapshot()
+    expect(exact('JUNK\nHOME\n')).toMatchSnapshot()
+
+    const completeLines = validDocument().split('\n')
+    const stirIndex = completeLines.findIndex((line) => line.startsWith('STIR:'))
+    completeLines.splice(stirIndex + 1, 0, completeLines[stirIndex]!)
+    const extraField = parseKCodeDocument(completeLines.join('\n'), STRICT_VENDOR_OPTIONS)
+    expect(extraField.document.passes).toHaveLength(0)
+    expect(extraField.diagnostics.map((diagnostic) => diagnostic.rule)).toEqual(
+      expect.arrayContaining(['kcode.incomplete-pass', 'kcode.no-passes']),
+    )
+
+    const splitInvalidRuns = `${'\u0080'.repeat(64)}A\u0080\n`
+    expect(exact(splitInvalidRuns)).toMatchSnapshot()
+    const multipleInvalidRuns = `${'\u0080'.repeat(32)}A${'\u0080'.repeat(32)}B\u0080C\u0080\n`
+    expect(exact(multipleInvalidRuns)).toMatchSnapshot()
+  })
+
+  it('locks exact parser resource-limit boundaries and both footer prefixes', () => {
+    const overSource = 'X'.repeat(MAX_KCODE_SOURCE_CODE_UNITS + 1)
+    const overResult = parseKCodeDocument(overSource, STRICT_VENDOR_OPTIONS)
+    expect(overResult).toMatchObject({
+      ok: false,
+      document: {
+        metadata: {
+          parseStatus: 'rejected',
+          recordMaterialization: 'resource-limited',
+        },
+        records: [],
+        racks: [],
+        passes: [],
+        unknownRecords: [],
+      },
+      diagnostics: [{
+        rule: 'kcode.resource-limit',
+        severity: 'error',
+        message: expect.stringContaining(
+          `${MAX_KCODE_SOURCE_CODE_UNITS}-code-unit strict-intake limit`,
+        ),
+        span: {
+          start: { offset: 0, line: 1, column: 1 },
+          end: { offset: 0, line: 1, column: 1 },
+        },
+      }],
+    })
+
+    const exactSourceLimit = `//${'X'.repeat(MAX_KCODE_SOURCE_CODE_UNITS - 2)}`
+    expect(parseKCodeDocument(exactSourceLimit, STRICT_VENDOR_OPTIONS)).toMatchObject({
+      document: { metadata: { recordMaterialization: 'resource-limited' } },
+      diagnostics: [{
+        rule: 'kcode.resource-limit',
+        message: expect.stringContaining('2097152-code-unit line limit'),
+      }],
+    })
+
+    const exactRecordLimit = `//${'X'.repeat(2 * 1024 * 1024 - 2)}\n`
+    expect(parseKCodeDocument(exactRecordLimit, STRICT_VENDOR_OPTIONS).document.metadata)
+      .toMatchObject({ recordMaterialization: 'complete' })
+
+    const atRightPrefixLimit = `${'>> Kn-Kn 0 300 0\n'.repeat(8_192)}>X\nX>\n`
+    expect(parseKCodeDocument(atRightPrefixLimit, STRICT_VENDOR_OPTIONS).document.metadata)
+      .toMatchObject({ recordMaterialization: 'complete' })
+    const overLeftPrefixLimit = '<< Kn-Kn 0 300 0\n'.repeat(8_193)
+    const leftResult = parseKCodeDocument(overLeftPrefixLimit, STRICT_VENDOR_OPTIONS)
+    expect(leftResult).toMatchObject({
+      document: { metadata: { recordMaterialization: 'resource-limited' } },
+      diagnostics: [{
+        rule: 'kcode.resource-limit',
+        line: 8_193,
+        span: { start: { offset: 8_192 * '<< Kn-Kn 0 300 0\n'.length } },
+      }],
+    })
+    const atLeftPrefixLimit = `${'<< Kn-Kn 0 300 0\n'.repeat(8_192)}<X\nX<\n`
+    expect(parseKCodeDocument(atLeftPrefixLimit, STRICT_VENDOR_OPTIONS).document.metadata)
+      .toMatchObject({ recordMaterialization: 'complete' })
+  })
+
+  it('locks the reserved legacy empty-move conjunction and padding spans', () => {
+    const legacy = legacyEmptyMoveDocument()
+    expect(parseContract(parseKCodeDocument(legacy, STRICT_VENDOR_OPTIONS))).toMatchSnapshot()
+    expect(parseContract(parseKCodeDocument(
+      legacy.replace(' Kn-Kn 0 ', ' Tu-Tu 0 '),
+      STRICT_VENDOR_OPTIONS,
+    ))).toMatchSnapshot()
+    const wrongLegacyCarrier = parseKCodeDocument(
+      legacy.replace(' Kn-Kn 0 ', ' Kn-Kn 2 '),
+      STRICT_VENDOR_OPTIONS,
+    )
+    expect(wrongLegacyCarrier.diagnostics.filter((diagnostic) =>
+      diagnostic.rule === 'kcode.field-width')).toHaveLength(3)
+    expect(parseContract(parseKCodeDocument(
+      legacy.replace(/FRNT:([^\n]*?)_/, 'FRNT:$1-'),
+      STRICT_VENDOR_OPTIONS,
+    ))).toMatchSnapshot()
+    expect(parseContract(parseKCodeDocument(
+      replaceLine(validDocument(), (line) => line.startsWith('FRNT:'), (line) =>
+        `${line.slice(0, -2)}_${line.slice(-1)}`),
+      STRICT_VENDOR_OPTIONS,
+    ))).toMatchSnapshot()
+
+    const invalidLegacyNeedle = replaceLine(
+      legacy,
+      (line) => line.startsWith('FRNT:'),
+      (line) => {
+        const index = line.lastIndexOf('_')
+        return `${line.slice(0, index)}.${line.slice(index + 1)}`
+      },
+    )
+    expect(parseKCodeDocument(
+      invalidLegacyNeedle,
+      STRICT_VENDOR_OPTIONS,
+    ).diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
+      'kcode.bed-needle-domain',
+    )
+
+    const unrecognizedWidth = legacy.split('\n').map((line) => {
+      if (line.startsWith('FRNT:') || line.startsWith('REAR:')) {
+        const underscore = line.indexOf('_')
+        const shortened = `${line.slice(0, underscore)}${line.slice(underscore + 1)}`
+        if (!line.startsWith('FRNT:')) return shortened
+        const needle = shortened.indexOf('_')
+        return `${shortened.slice(0, needle)}.${shortened.slice(needle + 1)}`
+      }
+      if (line.startsWith('STIF:') || line.startsWith('STIR:')) return line.slice(0, -1)
+      return line
+    }).join('\n')
+    const unrecognizedReport = parseKCodeDocument(
+      unrecognizedWidth,
+      STRICT_VENDOR_OPTIONS,
+    )
+    expect(unrecognizedReport.diagnostics.map((diagnostic) => diagnostic.rule)).not.toContain(
+      'kcode.bed-needle-domain',
+    )
+    expect(unrecognizedReport.diagnostics.filter((diagnostic) =>
+      diagnostic.rule === 'kcode.field-width')).toHaveLength(1)
+
+    const rearMarkerMissing = validDocument().replace(
+      /(REAR:[^/\n]*)\//,
+      '$1_',
+    )
+    expect(() => parseKCodeDocument(rearMarkerMissing, STRICT_VENDOR_OPTIONS)).not.toThrow()
+    expect(parseKCodeDocument(
+      rearMarkerMissing,
+      STRICT_VENDOR_OPTIONS,
+    ).diagnostics.map((diagnostic) => diagnostic.rule)).toContain('kcode.bed-markers')
+  })
+
+  it('keeps omitted-diagnostic summary spans at the true global extrema', () => {
+    const passLines = validDocument().split('\n').slice(3, 8)
+    const passes = Array.from({ length: 600 }, (_, index) => passLines.map((line) => {
+      if (line.startsWith('>>')) return line.replace(' 300 ', ' .a ')
+      if (index === 0 && line.startsWith('STIF:')) return line.slice(0, -1)
+      return line
+    }).join('\n'))
+    const source = `HOME\nRACK:0\n${passes.join('\n')}\n`
+    const result = parseKCodeDocument(source, STRICT_VENDOR_OPTIONS)
+    const summary = result.diagnostics.find((diagnostic) =>
+      diagnostic.rule === 'kcode.diagnostic-summary')!
+
+    expect(summary.span.start.offset).toBeLessThan(1_000)
+    expect(summary.span.end.offset).toBeGreaterThan(source.length - 1_000)
+  })
+
   it.each([
     ['LF with a final newline', validDocument()],
     ['CRLF with a final newline', validDocument({ newline: '\r\n' })],
@@ -118,6 +367,7 @@ describe('strict KCode adversarial rail', () => {
     expect(result.document.metadata.dialect).toBe('knitout-vendor')
     expect(result.document.passes).toHaveLength(1)
     expect(emitKCodeDocument(result.document)).toBe(source)
+    expect(parseContract(result)).toMatchSnapshot()
   })
 
   it('rejects the historical footer-only false positive', () => {
@@ -131,6 +381,7 @@ describe('strict KCode adversarial rail', () => {
       'kcode.no-passes',
     ]))
     expect(emitKCodeDocument(result.document)).toBe(source)
+    expect(parseContract(result)).toMatchSnapshot()
   })
 
   it('rejects the historical truncated-raster false positive', () => {
@@ -200,6 +451,11 @@ describe('strict KCode adversarial rail', () => {
       name: 'comment interrupting a pass block',
       rules: ['kcode.pass-interrupted'] as const,
       mutate: (source: string) => insertAfter(source, (line) => line.startsWith('FRNT:'), '// interruption'),
+    },
+    {
+      name: 'blank record interrupting a pass block',
+      rules: ['kcode.pass-interrupted'] as const,
+      mutate: (source: string) => insertAfter(source, (line) => line.startsWith('FRNT:'), ''),
     },
     {
       name: 'reordered STIF and REAR fields',
@@ -347,6 +603,7 @@ describe('strict KCode adversarial rail', () => {
       'kcode.source-byte',
     ])
     expect(emitKCodeDocument(result.document)).toBe(`\ufeff${validDocument()}`)
+    expect(parseContract(result)).toMatchSnapshot()
   })
 
   it('groups and truncates diagnostics for one megabyte of invalid source without losing a code unit', () => {
@@ -507,6 +764,7 @@ describe('strict KCode adversarial rail', () => {
     })
     expect(first.diagnostics).toEqual(second.diagnostics)
     expect(emitKCodeDocument(first.document)).toBe(source)
+    expect(contractDigest(first.diagnostics)).toMatchSnapshot()
   })
 
   it('summarizes omitted errors and warnings separately in non-strict intake', () => {
@@ -523,5 +781,6 @@ describe('strict KCode adversarial rail', () => {
       expect.objectContaining({ severity: 'error', occurrences: 4 }),
       expect.objectContaining({ severity: 'warning', occurrences: 489 }),
     ]))
+    expect(contractDigest(result.diagnostics)).toMatchSnapshot()
   })
 })

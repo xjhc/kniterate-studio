@@ -39,12 +39,14 @@ ship," trust this file and the working tree instead.
   pinned backend's exact scheduled-pass source lines; the UI does not align
   emitted output by predicted-pass position or scan comments.
 - **KCode proof engine (`packages/machine-lib`).** Strict lossless parser/emitter,
-  explicit versioned machine profile, exact `MachineTraceV1`, KCode-native
+  explicit versioned machine profile and eight-operation command decision table,
+  exact `MachineTraceV1`, KCode-native
   kinematic and loop-state validator, renderer-ready `MachineSceneV1`, strict
   trace diff, deterministic Node/browser lowering, independent test decoder and
   replay oracle, the 13-file reference corpus, and seeded property,
-  grammar/input-mutation, and backend-differential rails. This is not
-  implementation-source mutation scoring. Run `pnpm verify:kcode`; its
+  grammar/input-mutation, 1,904-case independent command-legality matrix,
+  KCode-native refusal/rule-witness ledgers, backend differential, and
+  StrykerJS implementation-source mutation rails. Run `pnpm verify:kcode`; its
   deterministic receipt is
   `packages/machine-lib/out/kcode-proof/proof-manifest.json`.
   Under the current foreign-file verdict policy, 12 of those fixtures open
@@ -64,8 +66,10 @@ ship," trust this file and the working tree instead.
 
 Software now proves KCode grammar and bytes, deterministic pinned lowering,
 equivalence for every machine-executable scheduled field, programmed
-stops/selections/actions, carriage and carrier continuity, transfer pairing,
-and loop-state transitions. It does not
+operation/direction/carrier/rack contract conformance, stops/selections/actions,
+carriage and carrier continuity, transfer pairing, and empty-bed loop-state
+transitions. The validation report separates profile conformance, modeled state,
+operational policy, and controller acceptance. It does not
 claim physical needle-number labels, an operationally safe speed/roller/stack
 envelope, yarn behavior, collision dynamics outside encoded motion, or carrier
 lifecycle for foreign KCode (KCode does not encode `in`/`out`). Those boundaries
@@ -107,7 +111,9 @@ schema.
 (`V1-PHYSICAL-TRIAL.md`). Registration, hash checks, exact-artifact Knit-proven,
 and `release:physical-check` are implemented. `release:trial` requires a clean
 tree and records its full generating commit; registration requires that same
-clean commit. **Do not tag `1.0.0` before the machine run succeeds.**
+clean commit. The trial package now binds exact command-legality and proof
+metadata; controller observation stays pending until an accepted registry run.
+**Do not tag `1.0.0` before the machine run succeeds.**
 
 ## Map of the docs
 

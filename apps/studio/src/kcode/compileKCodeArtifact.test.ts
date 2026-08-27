@@ -48,7 +48,12 @@ describe('compileKCodeArtifact', () => {
 
     expect(artifact.ok).toBe(true);
     expect(artifact.parserDiagnostics).toEqual([]);
-    expect(artifact.validation).toMatchObject({ ok: true, errorCount: 0 });
+    expect(artifact.validation).toMatchObject({
+      ok: true,
+      profileConformance: 'conformant',
+      controllerAcceptance: 'not-established-by-software-validation',
+      errorCount: 0,
+    });
     expect(artifact.differential).toMatchObject({ ok: true, mismatches: [] });
     expect(artifact.scene?.passes).toHaveLength(artifact.passCount);
     expect(artifact.passLines).toHaveLength(artifact.passCount);

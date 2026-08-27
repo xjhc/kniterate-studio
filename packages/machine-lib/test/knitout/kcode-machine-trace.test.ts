@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -58,26 +60,6 @@ const knitoutWithKnitThenTransfer = [
   '',
 ].join('\n')
 
-function fullBedDropKCode(passCount: number): string {
-  const base = `${'.'.repeat(15)}${'-'.repeat(253)}${'.'.repeat(15)}`
-  const decorate = (value: string): string =>
-    `${value.slice(0, 10)}/${value.slice(10, 273)}\\${value.slice(273)}`
-  const selected = decorate(base)
-  const empty = decorate(`${'.'.repeat(15)}${'_'.repeat(253)}${'.'.repeat(15)}`)
-  const stitch = '6'.repeat(283)
-  const lines = ['HOME', 'RACK:0']
-  for (let index = 0; index < passCount; index++) {
-    lines.push(
-      `FRNT:${selected}`,
-      `STIF:${stitch}`,
-      `REAR:${empty}`,
-      `STIR:${stitch}`,
-      `${index % 2 === 0 ? '>>' : '<<'} Kn-Kn 0 300 450`,
-    )
-  }
-  return `${lines.join('\n')}\n`
-}
-
 function compileAndParse(
   dialect: 'app' | 'knitout-vendor',
   knitout = knitoutWithMoveAndTransfer,
@@ -117,6 +99,9 @@ describe('MachineTraceV1 KCode projection', () => {
       valueRaw: '0',
       value: 0,
     })
+    expect(createHash('sha256').update(JSON.stringify(trace)).digest('hex')).toBe(
+      '6f89b5ccb3c40ffe4771323fd3fc864ef69b17914a0c1c8c6ddd642b3e9846c7',
+    )
 
     for (const [index, expected] of compiled.scheduledPasses.entries()) {
       const actual = trace.passes[index]!
@@ -277,6 +262,27 @@ describe('MachineTraceV1 KCode projection', () => {
       { index: 2, beforePassIndex: 0, valueRaw: '0', value: 0, source: 'RACK:0' },
     ])
     expect(projected.passes[0]?.rack).toBe(0)
+
+    const firstFooterIndex = parsed.document.passes[0]!.footer.recordIndex
+    const equalBoundary = projectKCodeMachineTrace({
+      ...parsed.document,
+      racks: parsed.document.racks.map((rack, index) => index === 0
+        ? { ...rack, recordIndex: firstFooterIndex }
+        : rack),
+    }, KNITERATE_7GG_KCODE_PROFILE_V1)
+    expect(equalBoundary.rackCommands[0]!.beforePassIndex).toBe(0)
+
+    const trailingRack = parsed.document.racks[0]!
+    const afterAllPasses = projectKCodeMachineTrace({
+      ...parsed.document,
+      racks: [{
+        ...trailingRack,
+        recordIndex: parsed.document.records.length + 1,
+      }],
+    }, KNITERATE_7GG_KCODE_PROFILE_V1)
+    expect(afterAllPasses.rackCommands[0]!.beforePassIndex).toBe(
+      parsed.document.passes.length,
+    )
   })
 
   it('refuses to project the lossless tree returned for parser-rejected input', () => {
@@ -299,17 +305,34 @@ describe('MachineTraceV1 KCode projection', () => {
   })
 
   it('fails closed before materializing an oversized selection and action graph', () => {
-    const parsed = parseKCodeDocument(fullBedDropKCode(791), {
+    const compiled = knitoutToKCodeWithTrace(knitoutWithMoveAndTransfer, 'command.k')
+    if (!compiled.ok) throw new Error(compiled.error)
+    const parsed = parseKCodeDocument(compiled.kcode, {
       profile: KNITERATE_7GG_KCODE_PROFILE_V1,
       dialect: 'knitout-vendor',
       strict: true,
     })
     expect(parsed.ok).toBe(true)
+    const first = parsed.document.passes[0]!
+    const withSelectedCells = (count: number) => ({
+      ...parsed.document,
+      passes: [{
+        ...first,
+        frnt: { ...first.frnt, value: '-'.repeat(count) },
+      }],
+    })
 
     expect(() => projectKCodeMachineTrace(
-      parsed.document,
+      withSelectedCells(200_001),
       KNITERATE_7GG_KCODE_PROFILE_V1,
     )).toThrow(/software resource limit of 200,000/)
+
+    // Exactly the declared budget proceeds to structural projection. This
+    // forged field then fails on its intentionally absent stop markers.
+    expect(() => projectKCodeMachineTrace(
+      withSelectedCells(200_000),
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    )).toThrow(/FRNT markers must be/)
   })
 
   it('projects knit, tuck, split, drop, and move semantics without physical labels', () => {
@@ -357,5 +380,132 @@ describe('MachineTraceV1 KCode projection', () => {
       ...KNITERATE_7GG_KCODE_PROFILE_V1,
       profileId: 'different-profile',
     })).toThrow(/document targets .* projection received/)
+    expect(() => projectKCodeMachineTrace(parsed.document, {
+      ...KNITERATE_7GG_KCODE_PROFILE_V1,
+      profileVersion: KNITERATE_7GG_KCODE_PROFILE_V1.profileVersion + 1,
+    })).toThrow(/document targets .* projection received/)
+  })
+
+  it('fails closed at every defensive document and profile boundary', () => {
+    const compiled = knitoutToKCodeWithTrace(knitoutWithMoveAndTransfer, 'command.k')
+    if (!compiled.ok) throw new Error(compiled.error)
+    const parsed = parseKCodeDocument(compiled.kcode, {
+      profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+      dialect: 'knitout-vendor',
+      strict: true,
+    })
+    if (!parsed.ok) throw new Error('Expected strict fixture to parse')
+    const document = parsed.document
+    const first = document.passes[0]!
+    const selectedTracePass = projectKCodeMachineTrace(
+      document,
+      KNITERATE_7GG_KCODE_PROFILE_V1,
+    ).passes.find((pass) => pass.selections.front.length > 0)!
+    const selectedPayloadIndex = selectedTracePass.selections.front[0]!.payloadIndex
+    const replaceAt = (value: string, index: number, token: string): string =>
+      `${value.slice(0, index)}${token}${value.slice(index + 1)}`
+    const withFirst = (change: Record<string, unknown>) => ({
+      ...document,
+      passes: [{ ...first, ...change }, ...document.passes.slice(1)],
+    })
+    const assertFailure = (
+      candidate: unknown,
+      profile: unknown,
+      message: RegExp,
+    ): void => {
+      expect(() => projectKCodeMachineTrace(candidate as typeof document, profile as typeof KNITERATE_7GG_KCODE_PROFILE_V1))
+        .toThrow(message)
+    }
+
+    assertFailure({ ...document, metadata: { ...document.metadata, strict: false } }, KNITERATE_7GG_KCODE_PROFILE_V1, /must record strict parsing/)
+    assertFailure({ ...document, unknownRecords: [document.records[0]!] }, KNITERATE_7GG_KCODE_PROFILE_V1, /contains unknown records/)
+    assertFailure({ ...document, home: null }, KNITERATE_7GG_KCODE_PROFILE_V1, /does not contain HOME/)
+    assertFailure({ ...document, initialRack: null }, KNITERATE_7GG_KCODE_PROFILE_V1, /initial RACK:0/)
+    assertFailure({ ...document, passes: [] }, KNITERATE_7GG_KCODE_PROFILE_V1, /complete passes/)
+    assertFailure(document, { ...KNITERATE_7GG_KCODE_PROFILE_V1, supportedDialects: [] }, /does not support dialect/)
+    assertFailure(document, {
+      ...KNITERATE_7GG_KCODE_PROFILE_V1,
+      dialects: {},
+    }, /does not define dialect/)
+    assertFailure(withFirst({
+      frnt: { ...first.frnt, value: first.frnt.value.replace('/', '_') },
+    }), KNITERATE_7GG_KCODE_PROFILE_V1, /FRNT markers must be/)
+    const selectedPass = document.passes[selectedTracePass.index]!
+    const selectedCarrier = selectedPass.footer.carrier!
+    assertFailure({
+      ...document,
+      passes: document.passes.map((pass, index) => index === selectedTracePass.index
+        ? {
+            ...pass,
+            frnt: {
+              ...pass.frnt,
+              value: pass.frnt.value.replace(selectedCarrier, '3'),
+            },
+          }
+        : pass),
+    }, KNITERATE_7GG_KCODE_PROFILE_V1, /FRNT markers must be/)
+    const rearMarkerIndex = first.rear.value.indexOf('/')
+    assertFailure(withFirst({
+      rear: {
+        ...first.rear,
+        value: replaceAt(
+          replaceAt(first.rear.value, rearMarkerIndex, first.rear.value[rearMarkerIndex + 1]!),
+          rearMarkerIndex + 1,
+          '/',
+        ),
+      },
+    }), KNITERATE_7GG_KCODE_PROFILE_V1, /encode different stop coordinates/)
+    assertFailure(withFirst({
+      stif: { ...first.stif, value: first.stif.value.slice(1) },
+    }), KNITERATE_7GG_KCODE_PROFILE_V1, /does not match stitch width/)
+    const selectedPassIndex = selectedTracePass.index
+    assertFailure({
+      ...document,
+      passes: document.passes.map((pass, index) => index === selectedPassIndex
+        ? {
+            ...pass,
+            stif: {
+              ...pass.stif,
+              value: replaceAt(pass.stif.value, selectedPayloadIndex, '?'),
+            },
+          }
+        : pass),
+    }, KNITERATE_7GG_KCODE_PROFILE_V1, /unsupported stitch selector/)
+    const unsupportedTrace = projectKCodeMachineTrace(document, {
+      ...KNITERATE_7GG_KCODE_PROFILE_V1,
+      operations: {
+        ...KNITERATE_7GG_KCODE_PROFILE_V1.operations,
+        [first.footer.operation!]: undefined,
+      },
+    } as typeof KNITERATE_7GG_KCODE_PROFILE_V1)
+    expect(unsupportedTrace.passes[0]!.actions).toEqual([{
+      kind: 'unknown',
+      operation: first.footer.operation,
+      reason: 'unsupported-operation',
+      selections: [
+        ...unsupportedTrace.passes[0]!.selections.front,
+        ...unsupportedTrace.passes[0]!.selections.rear,
+      ],
+    }])
+
+    for (const field of [
+      'direction',
+      'operation',
+      'carrier',
+      'speedRaw',
+      'speed',
+      'rollerRaw',
+      'roller',
+    ] as const) {
+      assertFailure(withFirst({
+        footer: { ...first.footer, [field]: null },
+      }), KNITERATE_7GG_KCODE_PROFILE_V1, /fully parsed footer/)
+    }
+    assertFailure({
+      ...document,
+      racks: document.racks.map((rack, index) => index === 0
+        ? { ...rack, value: null }
+        : rack),
+    }, KNITERATE_7GG_KCODE_PROFILE_V1, /does not have a parsed finite value/)
   })
 })

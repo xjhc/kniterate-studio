@@ -1,7 +1,11 @@
-import type {
-  KCodeCarrierToken,
-  KCodeDialect,
-  KCodeMachineProfileV1,
+import {
+  kcodeOperationContractV1,
+  type KCodeCarrierToken,
+  type KCodeDialect,
+  type KCodeMachineProfileV1,
+  type KCodeOperationV1,
+  type KCodeRegularOperationContractV1,
+  type KCodeTransferOperationContractV1,
 } from './machine-profile.js'
 import type {
   KCodeDocumentV1,
@@ -106,7 +110,7 @@ export interface MachineTracePassV1 {
   readonly source: MachineTracePassSourceV1
   readonly rack: number
   readonly direction: '>>' | '<<'
-  readonly operation: string
+  readonly operation: KCodeOperationV1
   readonly carrier: KCodeCarrierToken
   readonly speedRaw: string
   readonly speed: number
@@ -161,15 +165,17 @@ function enforceSelectionBudget(document: KCodeDocumentV1): void {
   let selectionCount = 0
   for (const pass of document.passes) {
     for (const bed of [pass.frnt.value, pass.rear.value]) {
-      for (let index = 0; index < bed.length; index++) {
-        if (bed.charCodeAt(index) !== 45) continue
+      for (const token of bed) {
+        if (token !== '-') continue
         selectionCount++
         if (selectionCount > MAX_MACHINE_TRACE_SELECTIONS) {
+          // Stryker disable StringLiteral: Diagnostic prose only; the resource-limit boundary and failure are asserted independently.
           fail(
             `selected raster cells exceed the software resource limit of `
             + `${MAX_MACHINE_TRACE_SELECTIONS.toLocaleString('en-US')}; `
             + 'split the artifact before exact trace projection',
           )
+          // Stryker restore StringLiteral
         }
       }
     }
@@ -219,8 +225,7 @@ function decodeBedMarkers(
   const baseToDecoratedIndex: number[] = []
   const markers: DecodedMarker[] = []
 
-  for (let decoratedIndex = 0; decoratedIndex < value.length; decoratedIndex++) {
-    const token = value[decoratedIndex]!
+  for (const [decoratedIndex, token] of Array.from(value).entries()) {
     if (token === '/' || token === '\\' || isCarrierMarker(token, profile)) {
       const baseIndex = base.length
       markers.push({
@@ -242,10 +247,14 @@ function decodeBedMarkers(
     : ['/', carrier, carrier, '\\']
   const actual = markers.map((marker) => marker.token)
   if (actual.length !== expected.length || actual.some((token, index) => token !== expected[index])) {
+    // Stryker disable StringLiteral: Diagnostic prose only; marker structure is asserted independently.
+    // Stryker disable next-line ConditionalExpression,LogicalOperator,EqualityOperator: Diagnostic prose only; marker structure is asserted independently.
+    const received = actual.length === 0 ? 'none' : actual.join(' ... ')
     fail(
       `pass ${passIndex} ${field} markers must be ${expected.join(' ... ')}; `
-      + `received ${actual.join(' ... ') || 'none'}`,
+      + `received ${received}`,
     )
+    // Stryker restore StringLiteral
   }
 
   return {
@@ -256,14 +265,9 @@ function decodeBedMarkers(
 }
 
 function sameMarkers(a: DecodedBed, b: DecodedBed): boolean {
-  return a.markers.length === b.markers.length
-    && a.markers.every((marker, index) => {
-      const other = b.markers[index]
-      return other !== undefined
-        && marker.token === other.token
-        && marker.baseIndex === other.baseIndex
-        && marker.coordinate === other.coordinate
-    })
+  // decodeBedMarkers has already proved equal marker count and token order.
+  return a.markers.every((marker, index) =>
+    marker.baseIndex === b.markers[index]!.baseIndex)
 }
 
 function stopsFromMarkers(
@@ -315,36 +319,40 @@ function selectionsForBed(
   passIndex: number,
 ): MachineTraceSelectionV1[] {
   if (decoded.basePayload.length !== stitch.length) {
+    // Stryker disable StringLiteral: Diagnostic prose only; the width mismatch failure is asserted independently.
     fail(
       `pass ${passIndex} ${bed} marker-free payload width ${decoded.basePayload.length} `
       + `does not match stitch width ${stitch.length}`,
     )
+    // Stryker restore StringLiteral
   }
 
   const offset = traceOffset(profile, dialect)
   const selections: MachineTraceSelectionV1[] = []
-  for (let payloadIndex = 0; payloadIndex < decoded.basePayload.length; payloadIndex++) {
-    if (decoded.basePayload[payloadIndex] !== '-') continue
+  for (const [payloadIndex, selected] of Array.from(decoded.basePayload).entries()) {
+    if (selected !== '-') continue
 
     const token = stitch[payloadIndex]!
     const encodedValue = profile.stitchSelectors.encoding.alphabet.indexOf(token)
     if (encodedValue === -1) {
+      // Stryker disable StringLiteral: Diagnostic prose only; unsupported selector rejection is asserted independently.
       fail(
         `pass ${passIndex} ${bed} selected payload index ${payloadIndex} `
         + `has unsupported stitch selector ${JSON.stringify(token)}`,
       )
+      // Stryker restore StringLiteral
     }
 
-    const decoratedIndex = decoded.baseToDecoratedIndex[payloadIndex]
-    if (decoratedIndex === undefined) {
-      fail(`pass ${passIndex} ${bed} cannot map payload index ${payloadIndex} to source`)
-    }
+    // decodeBedMarkers appends exactly one decorated index for every base
+    // payload token, so this lookup is total by construction.
+    const decoratedIndex = decoded.baseToDecoratedIndex[payloadIndex]!
     const kcodeColumn =
       payloadIndex + profile.coordinates.payloadIndexToKCodeColumnOffset
     selections.push({
       bed,
       payloadIndex,
       kcodeColumn,
+      // Stryker disable next-line ArithmeticOperator: Equivalent mutant: both V1 dialect offsets are zero, so addition and subtraction are identical.
       traceCoordinate: kcodeColumn + offset,
       stitchSelector: {
         token,
@@ -365,6 +373,7 @@ function orderedSelections(
 ): MachineTraceSelectionV1[] {
   const directionFactor = direction === '>>' ? 1 : -1
   return [...selections].sort((a, b) =>
+    // Stryker disable next-line ArithmeticOperator: Equivalent mutant: multiplication and division by directionFactor have the same comparator sign for +/-1.
     directionFactor * (coordinate(a) - coordinate(b))
     || a.bed.localeCompare(b.bed))
 }
@@ -383,17 +392,14 @@ export function regularActionTraversalCoordinate(
     + (selection.bed === 'rear' ? Math.floor(rack) : 0)
 }
 
-function knitTuckActions(
-  operation: string,
+function regularActions(
+  contract: KCodeRegularOperationContractV1,
   carrier: KCodeCarrierToken,
   rack: number,
   direction: '>>' | '<<',
   front: readonly MachineTraceSelectionV1[],
   rear: readonly MachineTraceSelectionV1[],
-): MachineTraceActionV1[] | null {
-  const match = /^(Kn|Tu)-(Kn|Tu)$/.exec(operation)
-  if (match === null) return null
-
+): MachineTraceActionV1[] {
   const selections = orderedSelections(
     [...front, ...rear],
     direction,
@@ -406,32 +412,26 @@ function knitTuckActions(
     return selections.map((at) => ({ kind: 'drop', at }))
   }
 
-  const frontKind = match[1] === 'Kn' ? 'knit' : 'tuck'
-  const rearKind = match[2] === 'Kn' ? 'knit' : 'tuck'
   return selections.map((at) => ({
-    kind: at.bed === 'front' ? frontKind : rearKind,
+    kind: at.bed === 'front' ? contract.frontAction : contract.rearAction,
     at,
   }))
 }
 
 function transferActions(
-  operation: string,
+  contract: KCodeTransferOperationContractV1,
   carrier: KCodeCarrierToken,
   rack: number,
   direction: '>>' | '<<',
   front: readonly MachineTraceSelectionV1[],
   rear: readonly MachineTraceSelectionV1[],
-): MachineTraceActionV1[] | null {
-  const frontToRear = /^Tr-R[lr]$/.test(operation)
-  const rearToFront = /^R[lr]-Tr$/.test(operation)
-  if (!frontToRear && !rearToFront) return null
-
-  const source = orderedSelections(frontToRear ? front : rear, direction)
-  const remainingTargets = [...(frontToRear ? rear : front)]
+): MachineTraceActionV1[] {
+  const source = orderedSelections(contract.sourceBed === 'front' ? front : rear, direction)
+  const remainingTargets = [...(contract.targetBed === 'front' ? front : rear)]
   if (source.length === 0 && remainingTargets.length === 0) {
     return [{
       kind: 'unknown',
-      operation,
+      operation: contract.operation,
       reason: 'empty-transfer',
       selections: [],
     }]
@@ -439,14 +439,15 @@ function transferActions(
 
   const actions: MachineTraceActionV1[] = []
   for (const selection of source) {
-    const expectedTarget = selection.traceCoordinate + (frontToRear ? -rack : rack)
+    // Stryker disable next-line ArithmeticOperator: Equivalent mutant: the V1 rack multiplier is always +/-1, whose product and quotient are equal.
+    const expectedTarget = selection.traceCoordinate + rack * contract.targetRackMultiplier
     const targetIndex = remainingTargets.findIndex(
       (candidate) => candidate.traceCoordinate === expectedTarget,
     )
     if (targetIndex === -1) {
       actions.push({
         kind: 'unknown',
-        operation,
+        operation: contract.operation,
         reason: 'unpaired-transfer-selection',
         selections: [selection],
       })
@@ -462,7 +463,7 @@ function transferActions(
   for (const target of remainingTargets) {
     actions.push({
       kind: 'unknown',
-      operation,
+      operation: contract.operation,
       reason: 'unpaired-transfer-selection',
       selections: [target],
     })
@@ -471,32 +472,21 @@ function transferActions(
 }
 
 function actionsForPass(
-  operation: string,
+  operation: KCodeOperationV1,
   carrier: KCodeCarrierToken,
   rack: number,
   direction: '>>' | '<<',
   front: readonly MachineTraceSelectionV1[],
   rear: readonly MachineTraceSelectionV1[],
+  profile: KCodeMachineProfileV1,
 ): MachineTraceActionV1[] {
-  const knitTuck = knitTuckActions(
-    operation,
-    carrier,
-    rack,
-    direction,
-    front,
-    rear,
-  )
-  if (knitTuck !== null) return knitTuck
-
-  const transfer = transferActions(
-    operation,
-    carrier,
-    rack,
-    direction,
-    front,
-    rear,
-  )
-  if (transfer !== null) return transfer
+  const contract = kcodeOperationContractV1(profile, operation)
+  if (contract?.family === 'regular') {
+    return regularActions(contract, carrier, rack, direction, front, rear)
+  }
+  if (contract?.family === 'transfer') {
+    return transferActions(contract, carrier, rack, direction, front, rear)
+  }
 
   return [{
     kind: 'unknown',
@@ -508,7 +498,7 @@ function actionsForPass(
 
 function requireFooter(pass: KCodePassBlock): {
   readonly direction: '>>' | '<<'
-  readonly operation: string
+  readonly operation: KCodeOperationV1
   readonly carrier: KCodeCarrierToken
   readonly speedRaw: string
   readonly speed: number
@@ -556,6 +546,7 @@ function projectPass(
     footer.carrier,
     profile,
     pass.index,
+    // Stryker disable next-line StringLiteral: Diagnostic prose only; the rear-bed field label does not affect decoded structure.
     'REAR',
   )
   if (!sameMarkers(frontBed, rearBed)) {
@@ -623,6 +614,7 @@ function projectPass(
       footer.direction,
       front,
       rear,
+      profile,
     ),
   }
 }
@@ -630,14 +622,12 @@ function projectPass(
 function projectRackCommands(
   document: KCodeDocumentV1,
 ): MachineTraceRackCommandV1[] {
-  let beforePassIndex = 0
   return document.racks.map((rack, index) => {
-    while (
-      beforePassIndex < document.passes.length
-      && document.passes[beforePassIndex]!.footer.recordIndex < rack.recordIndex
-    ) {
-      beforePassIndex++
-    }
+    const nextPassIndex = document.passes.findIndex((pass) =>
+      pass.footer.recordIndex >= rack.recordIndex)
+    const beforePassIndex = nextPassIndex === -1
+      ? document.passes.length
+      : nextPassIndex
     if (rack.value === null) {
       fail(`rack command ${index} does not have a parsed finite value`)
     }

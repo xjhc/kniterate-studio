@@ -6,7 +6,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   closeSync,
   existsSync,
@@ -28,6 +28,10 @@ import {
   type CurrentRegistryMachineEvidence,
   sha256File,
 } from './registry-support.js';
+import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../src/knitout/kcode/machine-profile.js';
+import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js';
+import { validateKCodeMachineTrace } from '../src/knitout/kcode/machine-validator.js';
+import { parseKCodeDocument } from '../src/knitout/kcode/parser.js';
 
 const SHA256 = /^[a-f0-9]{64}$/;
 const GIT_COMMIT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
@@ -61,6 +65,7 @@ const LIMITS = {
   requestInputs: 64,
 } as const;
 const HOUR_MS = 60 * 60 * 1000;
+const sha256Text = (value: string): string => createHash('sha256').update(value).digest('hex');
 
 interface SwatchEntryResult {
   id: string;
@@ -78,6 +83,24 @@ interface SwatchEntryResult {
     kcodeSha256: string;
     compilerFingerprint: string;
   } | null;
+  controllerObservedCoverage: ControllerObservedCoverage | null;
+}
+
+interface ControllerObservedCoverage {
+  machineSerial: string;
+  controlSoftwareVersion: string;
+  kcodeSha256: string;
+  passes: number;
+  operations: string[];
+  directions: string[];
+  carriers: string[];
+  racks: number[];
+  combinations: Array<{
+    operation: string;
+    direction: string;
+    carrier: string;
+    rack: number;
+  }>;
 }
 
 interface CarrierEvidence {
@@ -92,6 +115,48 @@ interface YarnEvidence {
 
 function readJson(path: string): unknown {
   return JSON.parse(readFileSync(path, 'utf8'));
+}
+
+function deriveCommandCoverage(
+  kcode: string,
+  messages: string[],
+): Omit<ControllerObservedCoverage, 'machineSerial' | 'controlSoftwareVersion' | 'kcodeSha256'> | null {
+  const parsed = parseKCodeDocument(kcode, {
+    profile: KNITERATE_7GG_KCODE_PROFILE_V1,
+    dialect: KNITERATE_7GG_KCODE_PROFILE_V1.dialect,
+    strict: true,
+  });
+  if (!parsed.ok) {
+    messages.push(`out.kc fails strict command-legality parsing: ${parsed.diagnostics.slice(0, 8).map((diagnostic) => diagnostic.rule).join(', ')}`);
+    return null;
+  }
+  const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1);
+  const validation = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V1);
+  if (!validation.ok || validation.profileConformance !== 'conformant') {
+    messages.push(`out.kc fails command-legality validation: ${validation.diagnostics.slice(0, 8).map((diagnostic) => diagnostic.rule).join(', ')}`);
+    return null;
+  }
+  const combinations = [...new Map(trace.passes.map((pass) => {
+    const value = {
+      operation: pass.operation,
+      direction: pass.direction,
+      carrier: pass.carrier,
+      rack: pass.rack,
+    };
+    return [`${value.operation}|${value.direction}|${value.carrier}|${value.rack}`, value] as const;
+  })).values()].sort((a, b) =>
+    a.operation.localeCompare(b.operation)
+    || a.direction.localeCompare(b.direction)
+    || a.carrier.localeCompare(b.carrier)
+    || a.rack - b.rack);
+  return {
+    passes: trace.passes.length,
+    operations: [...new Set(trace.passes.map((pass) => pass.operation))].sort(),
+    directions: [...new Set(trace.passes.map((pass) => pass.direction))].sort(),
+    carriers: [...new Set(trace.passes.map((pass) => pass.carrier))].sort(),
+    racks: [...new Set(trace.passes.map((pass) => pass.rack))].sort((a, b) => a - b),
+    combinations,
+  };
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -887,6 +952,9 @@ function validateEntry(root: string, id: string, currentCompilerFingerprint: str
   const outKc = join(dir, 'out.kc');
   if (resources.readable.has('out.k') && typeof spec.knitoutSha256 === 'string' && sha256File(outK) !== spec.knitoutSha256) messages.push('spec.knitoutSha256 does not match out.k');
   if (resources.readable.has('out.kc') && typeof spec.kcodeSha256 === 'string' && sha256File(outKc) !== spec.kcodeSha256) messages.push('spec.kcodeSha256 does not match out.kc');
+  const commandCoverage = resources.readable.has('out.kc')
+    ? deriveCommandCoverage(readFileSync(outKc, 'utf8'), messages)
+    : null;
 
   const entryCompilerFingerprint = typeof spec.compilerFingerprint === 'string' ? spec.compilerFingerprint : '';
   if (SHA256.test(entryCompilerFingerprint) && entryCompilerFingerprint !== currentCompilerFingerprint) currentnessMessages.push(`compiler fingerprint is stale: entry ${entryCompilerFingerprint}, current ${currentCompilerFingerprint}`);
@@ -942,6 +1010,62 @@ function validateEntry(root: string, id: string, currentCompilerFingerprint: str
       kcodeSha256: String(spec.kcodeSha256),
       compilerFingerprint: entryCompilerFingerprint,
     } : null,
+    controllerObservedCoverage: knitProven && commandCoverage !== null ? {
+      machineSerial: String(machine.machineSerial),
+      controlSoftwareVersion: String(machine.controlSoftwareVersion),
+      kcodeSha256: String(spec.kcodeSha256),
+      ...commandCoverage,
+    } : null,
+  };
+}
+
+function aggregateControllerCoverage(results: readonly SwatchEntryResult[]) {
+  const observed = results.flatMap((result) =>
+    result.controllerObservedCoverage === null ? [] : [result.controllerObservedCoverage]);
+  const coverageByMachine = new Map<string, ControllerObservedCoverage[]>();
+  for (const coverage of observed) {
+    const key = `${coverage.machineSerial}|${coverage.controlSoftwareVersion}`;
+    const entries = coverageByMachine.get(key) ?? [];
+    entries.push(coverage);
+    coverageByMachine.set(key, entries);
+  }
+  const machines = [...coverageByMachine.values()].map((entries) => {
+    const first = entries[0]!;
+    const combinations = [...new Map(entries.flatMap((entry) => entry.combinations).map((value) => [
+      `${value.operation}|${value.direction}|${value.carrier}|${value.rack}`,
+      value,
+    ] as const)).values()].sort((a, b) =>
+      a.operation.localeCompare(b.operation)
+      || a.direction.localeCompare(b.direction)
+      || a.carrier.localeCompare(b.carrier)
+      || a.rack - b.rack);
+    return {
+      key: `${encodeURIComponent(first.machineSerial)}::${encodeURIComponent(first.controlSoftwareVersion)}`,
+      machineSerial: first.machineSerial,
+      controlSoftwareVersion: first.controlSoftwareVersion,
+      exactArtifactCount: entries.length,
+      kcodeSha256: [...new Set(entries.map((entry) => entry.kcodeSha256))].sort(),
+      operations: [...new Set(entries.flatMap((entry) => entry.operations))].sort(),
+      directions: [...new Set(entries.flatMap((entry) => entry.directions))].sort(),
+      carriers: [...new Set(entries.flatMap((entry) => entry.carriers))].sort(),
+      racks: [...new Set(entries.flatMap((entry) => entry.racks))].sort((a, b) => a - b),
+      combinations,
+    };
+  }).sort((a, b) =>
+    a.machineSerial.localeCompare(b.machineSerial)
+    || a.controlSoftwareVersion.localeCompare(b.controlSoftwareVersion));
+  const byMachine = Object.fromEntries(machines.map((machine) => [machine.key, machine]));
+  return {
+    status: machines.length === 0 ? 'pending' : 'exact-artifact-observed',
+    evidenceCount: observed.length,
+    profile: {
+      id: KNITERATE_7GG_KCODE_PROFILE_V1.profileId,
+      version: KNITERATE_7GG_KCODE_PROFILE_V1.profileVersion,
+      sha256: sha256Text(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1)),
+      contractSha256: sha256Text(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1.operations)),
+    },
+    byMachine,
+    note: 'Coverage is keyed by machine serial and control-software version and derived only from exact clean, current, non-deviated Knit-proven artifacts; software validation alone never contributes controller-observed evidence.',
   };
 }
 
@@ -1048,6 +1172,7 @@ function main(): void {
   }
 
   const ok = structurallyValid && manifestMessages.length === 0;
+  const controllerObservedCoverage = aggregateControllerCoverage(results);
   const report = {
     kind: 'kniterate-swatch-registry-report',
     schemaVersion: '1',
@@ -1058,6 +1183,7 @@ function main(): void {
     knitProvenCount: results.filter((result) => result.knitProven).length,
     staleCount: results.filter((result) => result.stale).length,
     nonPromotableCount: results.filter((result) => result.ok && !result.knitProven).length,
+    controllerObservedCoverage,
     templateMessages,
     registryMessages,
     manifestMessages,

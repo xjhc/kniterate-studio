@@ -1,4 +1,7 @@
-import type { KCodeMachineProfileV1 } from './machine-profile.js'
+import {
+  kcodeOperationContractV1,
+  type KCodeMachineProfileV1,
+} from './machine-profile.js'
 import {
   regularActionTraversalCoordinate,
   type MachineTraceActionV1,
@@ -61,7 +64,6 @@ export type MachineValidationRuleV1 =
   | 'machine-trace.transfer-source-empty'
   | 'machine-trace.drop-empty'
   | 'machine-trace.loop-stack-policy'
-  | 'machine-trace.diagnostic-summary'
 
 export interface MachineValidationDiagnosticV1 {
   readonly severity: MachineValidationSeverityV1
@@ -145,8 +147,13 @@ export interface MachineOperationalAssuranceV1 {
 }
 
 export interface MachineValidationReportV1 {
-  /** True only when no proven structural, semantic, or kinematic error exists. */
+  /** True only when no blocking diagnostic of any validation class exists. */
   readonly ok: boolean
+  readonly profileConformance: 'conformant' | 'blocked'
+  /** State result under the report's explicit empty-bed initial-state assumption. */
+  readonly modeledState: 'conformant' | 'review' | 'blocked'
+  readonly operationalPolicy: 'clear' | 'review' | 'blocked'
+  readonly controllerAcceptance: 'not-established-by-software-validation'
   readonly diagnostics: readonly MachineValidationDiagnosticV1[]
   readonly errorCount: number
   readonly warningCount: number
@@ -189,6 +196,7 @@ const OPERATIONAL_ASSURANCE: MachineOperationalAssuranceV1 = {
 
 const MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS = 512
 
+// Stryker disable next-line UnaryOperator: Equivalent mutant: unary plus cannot distinguish 0 from the normalized -0 key.
 const numberKey = (value: number): number => Object.is(value, -0) ? 0 : value
 
 function stackKey(
@@ -228,7 +236,7 @@ function stateMetrics(state: MutableLoopState): MachineLoopStateMetricsV1 {
   let totalLoops = 0
   let maxStack = 0
   for (const cell of state.values()) {
-    if (cell.count <= 0) continue
+    // `setStack` deletes nonpositive cells, so every retained cell is occupied.
     totalLoops += cell.count
     maxStack = Math.max(maxStack, cell.count)
   }
@@ -241,7 +249,6 @@ function stateMetrics(state: MutableLoopState): MachineLoopStateMetricsV1 {
 
 function snapshot(state: MutableLoopState): MachineLoopStateSnapshotV1 {
   const ordered = [...state.values()]
-    .filter((cell) => cell.count > 0)
     .sort((a, b) =>
       (a.bed === b.bed ? 0 : a.bed === 'front' ? -1 : 1)
       || a.traceCoordinate - b.traceCoordinate)
@@ -283,11 +290,19 @@ function outsideKnownRange(
 ): boolean {
   const lower = knownLower(range)
   const upper = knownUpper(range)
-  return (lower !== null && (range.lower.inclusive === false ? value <= lower : value < lower))
-    || (upper !== null && (range.upper.inclusive === false ? value >= upper : value > upper))
+  if (lower !== null) {
+    const belowLower = range.lower.inclusive === false ? value <= lower : value < lower
+    if (belowLower) return true
+  }
+  if (upper !== null) {
+    const aboveUpper = range.upper.inclusive === false ? value >= upper : value > upper
+    if (aboveUpper) return true
+  }
+  return false
 }
 
 function isHalfIntegerStop(value: number): boolean {
+  // Stryker disable next-line ArithmeticOperator: Equivalent mutant: adding or subtracting 0.5 differs by one and therefore has identical integer membership.
   return Number.isFinite(value) && Number.isInteger(value - 0.5)
 }
 
@@ -295,34 +310,26 @@ function contains(
   range: { readonly left: number; readonly right: number },
   coordinate: number,
 ): boolean {
+  // Stryker disable next-line EqualityOperator: Equivalent mutant: legal stop coordinates are half-integers while operated coordinates are integers, so equality at either boundary is impossible.
   return coordinate >= range.left && coordinate <= range.right
 }
 
 function selectionIdentity(selection: MachineTraceSelectionV1): string {
-  return [
+  return JSON.stringify([
     selection.bed,
     selection.payloadIndex,
     selection.kcodeColumn,
     selection.traceCoordinate,
     selection.sourceSpan.start.offset,
     selection.sourceSpan.end.offset,
-  ].join(':')
+  ])
 }
 
 function actionSelections(action: MachineTraceActionV1): readonly MachineTraceSelectionV1[] {
-  switch (action.kind) {
-    case 'knit':
-    case 'tuck':
-    case 'drop':
-      return [action.at]
-    case 'xfer':
-    case 'split':
-      return [action.source, action.target]
-    case 'move':
-      return []
-    case 'unknown':
-      return action.selections
-  }
+  if ('at' in action) return [action.at]
+  if ('source' in action) return [action.source, action.target]
+  if ('selections' in action) return action.selections
+  return []
 }
 
 function touchedActionCoordinates(
@@ -349,19 +356,7 @@ function touchedActionCoordinates(
 function actionPrimarySelection(
   action: MachineTraceActionV1,
 ): MachineTraceSelectionV1 | null {
-  switch (action.kind) {
-    case 'knit':
-    case 'tuck':
-    case 'drop':
-      return action.at
-    case 'xfer':
-    case 'split':
-      return action.source
-    case 'unknown':
-      return action.selections[0] ?? null
-    case 'move':
-      return null
-  }
+  return actionSelections(action)[0] ?? null
 }
 
 /**
@@ -389,41 +384,67 @@ function actionSpan(
   return actionSelections(action)[0]?.sourceSpan ?? pass.source.footer
 }
 
-function expectedTransferSourceBed(operation: string): MachineTraceBedV1 | null {
-  if (/^Tr-R[lr]$/.test(operation)) return 'front'
-  if (/^R[lr]-Tr$/.test(operation)) return 'rear'
-  return null
+function expectedTransferSourceBed(
+  profile: KCodeMachineProfileV1,
+  operation: string,
+): MachineTraceBedV1 | null {
+  const contract = kcodeOperationContractV1(profile, operation)
+  if (contract === null) return null
+  // Stryker disable next-line ConditionalExpression,StringLiteral: Equivalent mutant: non-transfer operations are compared only as a source-bed mismatch; null and the absent sourceBed property produce the same blocking result.
+  if (contract.family === 'regular') return null
+  return contract.sourceBed
 }
 
 function expectedTransferDirection(
+  profile: KCodeMachineProfileV1,
   operation: string,
 ): MachineTracePassV1['direction'] | null {
-  if (operation === 'Tr-Rr' || operation === 'Rr-Tr') return '>>'
-  if (operation === 'Tr-Rl' || operation === 'Rl-Tr') return '<<'
-  return null
+  const contract = kcodeOperationContractV1(profile, operation)
+  if (contract === null) return null
+  if (contract.family === 'regular') return null
+  return contract.allowedDirections[0] ?? null
 }
 
 function expectedRegularKind(
+  profile: KCodeMachineProfileV1,
   operation: string,
   bed: MachineTraceBedV1,
   carrier: MachineTracePassV1['carrier'],
 ): 'knit' | 'tuck' | 'drop' | null {
-  const match = /^(Kn|Tu)-(Kn|Tu)$/.exec(operation)
-  if (match === null) return null
+  const contract = kcodeOperationContractV1(profile, operation)
+  if (contract === null) return null
+  if (contract.family === 'transfer') return null
   if (carrier === '0') return 'drop'
-  const token = bed === 'front' ? match[1] : match[2]
-  return token === 'Kn' ? 'knit' : 'tuck'
+  return bed === 'front' ? contract.frontAction : contract.rearAction
 }
 
 function expectedTransferTarget(
+  profile: KCodeMachineProfileV1,
+  operation: string,
   source: MachineTraceSelectionV1,
   rack: number,
-): number {
-  return source.traceCoordinate + (source.bed === 'front' ? -rack : rack)
+): number | null {
+  const contract = kcodeOperationContractV1(profile, operation)
+  if (contract === null) return null
+  if (contract.family === 'regular') return null
+  // Stryker disable next-line ArithmeticOperator: Equivalent mutant: the V1 multiplier domain is exactly -1 or 1, for which multiply and divide are identical.
+  return source.traceCoordinate + rack * contract.targetRackMultiplier
 }
 
-function sameCoordinate(a: number, b: number): boolean {
-  return Math.abs(a - b) < 1e-9
+function sameCoordinate(a: number, b: number | null): boolean {
+  return a === b
+}
+
+function isExactDecimalValue(raw: string, value: number): boolean {
+  if (raw.length === 0) return false
+  const unsigned = raw[0] === '+' || raw[0] === '-' ? raw.slice(1) : raw
+  for (const token of unsigned) {
+    if (token === '.') continue
+    if (token < '0' || token > '9') return false
+  }
+  if (unsigned.endsWith('.')) return false
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) && Object.is(parsed, value)
 }
 
 /**
@@ -443,7 +464,6 @@ export function validateKCodeMachineTrace(
   const diagnosticKeys = new Set<string>()
   let errorCount = 0
   let warningCount = 0
-  let omittedDiagnosticCount = 0
   const omittedDiagnosticGroups = new Map<string, {
     severity: MachineValidationSeverityV1
     class: MachineValidationClassV1
@@ -462,24 +482,18 @@ export function validateKCodeMachineTrace(
     sourceSpan: KCodeSourceSpan | null,
     actionIndex?: number,
   ): void => {
-    const key = [
+    const key = JSON.stringify([
       severity,
       diagnosticClass,
       rule,
-      passIndex ?? 'trace',
-      actionIndex ?? '',
-      sourceSpan?.start.offset ?? '',
-      sourceSpan?.end.offset ?? '',
       message,
-    ].join('|')
-    if (diagnostics.length < MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS) {
-      if (diagnosticKeys.has(key)) return
-      diagnosticKeys.add(key)
-    }
-    if (severity === 'error') errorCount++
-    else warningCount++
+      passIndex,
+      actionIndex,
+      sourceSpan,
+    ])
     if (diagnostics.length >= MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS) {
-      omittedDiagnosticCount++
+      if (severity === 'error') errorCount++
+      else warningCount++
       const groupKey = `${severity}|${diagnosticClass}|${rule}`
       const group = omittedDiagnosticGroups.get(groupKey)
       if (group === undefined) {
@@ -494,13 +508,17 @@ export function validateKCodeMachineTrace(
       }
       return
     }
+    if (diagnosticKeys.has(key)) return
+    diagnosticKeys.add(key)
+    if (severity === 'error') errorCount++
+    else warningCount++
     diagnostics.push({
       severity,
       class: diagnosticClass,
       rule,
       message,
       passIndex,
-      ...(actionIndex === undefined ? {} : { actionIndex }),
+      actionIndex,
       sourceSpan,
       line: sourceSpan?.start.line ?? null,
       column: sourceSpan?.start.column ?? null,
@@ -585,24 +603,28 @@ export function validateKCodeMachineTrace(
     )
   }
 
-  const rackCommandsByBoundary = new Map<number, MachineTraceRackCommandV1[]>()
+  const rackCommandsByBoundary = new Map<number, MachineTraceRackCommandV1>()
   let priorRackBoundary = -1
-  for (let commandPosition = 0; commandPosition < trace.rackCommands.length; commandPosition++) {
-    const command = trace.rackCommands[commandPosition]!
+  for (const [commandPosition, command] of trace.rackCommands.entries()) {
+    const boundaryInRange = Number.isInteger(command.beforePassIndex)
+      && command.beforePassIndex >= 0
+      && command.beforePassIndex <= trace.passes.length
+    const boundaryPassIndex = boundaryInRange
+      && command.beforePassIndex < trace.passes.length
+      ? command.beforePassIndex
+      : null
     if (command.index !== commandPosition) {
       add(
         'error',
         'structural',
         'machine-trace.rack-command-index',
         `Rack command index ${command.index} does not match ordered command position ${commandPosition}.`,
-        command.beforePassIndex < trace.passes.length ? command.beforePassIndex : null,
+        boundaryPassIndex,
         command.source.span,
       )
     }
     if (
-      !Number.isInteger(command.beforePassIndex)
-      || command.beforePassIndex < 0
-      || command.beforePassIndex > trace.passes.length
+      !boundaryInRange
       || command.beforePassIndex < priorRackBoundary
     ) {
       add(
@@ -610,16 +632,13 @@ export function validateKCodeMachineTrace(
         'structural',
         'machine-trace.rack-command-position',
         `Rack command ${command.index} boundary ${command.beforePassIndex} must be an ordered integer in 0..${trace.passes.length}.`,
-        command.beforePassIndex >= 0 && command.beforePassIndex < trace.passes.length
-          ? command.beforePassIndex
-          : null,
+        boundaryPassIndex,
         command.source.span,
       )
     }
     priorRackBoundary = command.beforePassIndex
 
-    const rawMatches = /^[+-]?(?:\d+(?:\.\d+)?|\.\d+)$/.test(command.valueRaw)
-      && Object.is(Number(command.valueRaw), command.value)
+    const rawMatches = isExactDecimalValue(command.valueRaw, command.value)
     if (
       !Number.isFinite(command.value)
       || !profile.rack.values.includes(command.value)
@@ -630,21 +649,13 @@ export function validateKCodeMachineTrace(
         'structural',
         'machine-trace.rack-command-value',
         `Rack command ${command.index} value ${JSON.stringify(command.valueRaw)} / ${String(command.value)} is not an exact supported profile rack value.`,
-        command.beforePassIndex >= 0 && command.beforePassIndex < trace.passes.length
-          ? command.beforePassIndex
-          : null,
+        boundaryPassIndex,
         command.source.span,
       )
     }
-    if (
-      Number.isInteger(command.beforePassIndex)
-      && command.beforePassIndex >= 0
-      && command.beforePassIndex <= trace.passes.length
-    ) {
-      const commands = rackCommandsByBoundary.get(command.beforePassIndex) ?? []
-      commands.push(command)
-      rackCommandsByBoundary.set(command.beforePassIndex, commands)
-    }
+    // Only the final command at a pass boundary establishes that pass's rack.
+    // Invalid boundaries remain diagnosable history but are never looked up.
+    rackCommandsByBoundary.set(command.beforePassIndex, command)
   }
 
   const firstRackCommand = trace.rackCommands[0]
@@ -667,8 +678,7 @@ export function validateKCodeMachineTrace(
   const carrierEnds = new Map<string, number>()
   let commandedRack = 0
 
-  for (let passPosition = 0; passPosition < trace.passes.length; passPosition++) {
-    const pass = trace.passes[passPosition]!
+  for (const [passPosition, pass] of trace.passes.entries()) {
     const touchedCoordinates = touchedActionCoordinates(pass.actions)
     const beforeCounts = new Map(touchedCoordinates.map((coordinate) => [
       stackKey(coordinate.bed, coordinate.traceCoordinate),
@@ -677,7 +687,9 @@ export function validateKCodeMachineTrace(
     const before = stateMetrics(state)
     const structurallyInvalidActions = new Set<number>()
 
-    for (const command of rackCommandsByBoundary.get(passPosition) ?? []) {
+    const boundaryCommand = rackCommandsByBoundary.get(passPosition)
+    if (boundaryCommand !== undefined) {
+      const command = boundaryCommand
       commandedRack = command.value
     }
     if (!sameCoordinate(pass.rack, commandedRack)) {
@@ -713,7 +725,7 @@ export function validateKCodeMachineTrace(
       )
     }
 
-    const transferDirection = expectedTransferDirection(pass.operation)
+    const transferDirection = expectedTransferDirection(profile, pass.operation)
     if (transferDirection !== null && pass.direction !== transferDirection) {
       add(
         'error',
@@ -787,11 +799,12 @@ export function validateKCodeMachineTrace(
       previousCarriageEnd !== null
       && !sameCoordinate(previousCarriageEnd, currentCarriageStart)
     ) {
-      add(
-        'error',
-        'kinematic',
-        'machine-trace.carriage-discontinuity',
-        `Carriage ended the prior pass at ${previousCarriageEnd}, but pass ${pass.index} starts at ${currentCarriageStart}.`,
+        add(
+          'error',
+          'kinematic',
+          'machine-trace.carriage-discontinuity',
+          // Stryker disable next-line StringLiteral: Diagnostic prose only; exact rule, severity, class, and source location remain mutation-tested.
+          `Carriage ended the prior pass at ${previousCarriageEnd}, but pass ${pass.index} starts at ${currentCarriageStart}.`,
         pass.index,
         pass.source.FRNT,
       )
@@ -952,9 +965,11 @@ export function validateKCodeMachineTrace(
             selection.sourceSpan,
           )
         }
+        // Stryker disable ArithmeticOperator: Equivalent mutant: both V1 dialect offsets are exactly zero.
         const expectedTraceCoordinate = dialectContract === undefined
           ? null
           : selection.kcodeColumn + dialectContract.markerFreeTraceOffset
+        // Stryker restore ArithmeticOperator
         if (
           expectedTraceCoordinate !== null
           && selection.traceCoordinate !== expectedTraceCoordinate
@@ -1035,9 +1050,10 @@ export function validateKCodeMachineTrace(
     }
 
     const selectionUse = new Map<string, number>()
-    let priorActionCoordinate: number | undefined
-    for (let actionIndex = 0; actionIndex < pass.actions.length; actionIndex++) {
-      const action = pass.actions[actionIndex]!
+    let priorActionCoordinate = pass.direction === '>>'
+      ? Number.NEGATIVE_INFINITY
+      : Number.POSITIVE_INFINITY
+    for (const [actionIndex, action] of pass.actions.entries()) {
       const span = actionSpan(action, pass)
       for (const selection of actionSelections(action)) {
         const identity = selectionIdentity(selection)
@@ -1058,52 +1074,46 @@ export function validateKCodeMachineTrace(
 
       const primarySelection = actionPrimarySelection(action)
       const coordinate = actionStopCoordinate(action, pass)
-      const priorCoordinate = primarySelection === null
-        ? undefined
-        : priorActionCoordinate
-      if (coordinate !== null && priorCoordinate !== undefined) {
+      if (coordinate !== null) {
         const outOfOrder = pass.direction === '>>'
-          ? coordinate < priorCoordinate
-          : coordinate > priorCoordinate
+          ? coordinate < priorActionCoordinate
+          : coordinate > priorActionCoordinate
         if (outOfOrder) {
           add(
             'error',
             'kinematic',
             'machine-trace.action-direction-order',
-            `Action at ${coordinate} on the ${primarySelection!.bed} bed is out of ${pass.direction} traversal order after ${priorCoordinate}.`,
+            // Stryker disable next-line StringLiteral: Diagnostic prose only; exact rule, severity, class, action index, and source location remain mutation-tested.
+            `Action at ${coordinate} on the ${primarySelection!.bed} bed is out of ${pass.direction} traversal order after ${priorActionCoordinate}.`,
             pass.index,
             span,
             actionIndex,
           )
           structurallyInvalidActions.add(actionIndex)
         }
-      }
-      if (coordinate !== null && primarySelection !== null) {
         priorActionCoordinate = coordinate
+        // actionStopCoordinate returns a coordinate only when this selection exists.
+        const operatedSelection = primarySelection!
         if (!contains(carriage, coordinate)) {
           add(
             'error',
             'kinematic',
             'machine-trace.selection-outside-carriage',
-            `Operated selection ${primarySelection.bed}:${primarySelection.traceCoordinate} maps to stop coordinate ${coordinate}, outside carriage stops ${carriage.left}..${carriage.right}.`,
+            `Operated selection ${operatedSelection.bed}:${operatedSelection.traceCoordinate} maps to stop coordinate ${coordinate}, outside carriage stops ${carriage.left}..${carriage.right}.`,
             pass.index,
-            primarySelection.sourceSpan,
+            operatedSelection.sourceSpan,
             actionIndex,
           )
           structurallyInvalidActions.add(actionIndex)
         }
-        if (
-          pass.carrier !== '0'
-          && carrierStops !== null
-          && !contains(carrierStops, coordinate)
-        ) {
+        if (carrierStops !== null && !contains(carrierStops, coordinate)) {
           add(
             'error',
             'kinematic',
             'machine-trace.selection-outside-carrier',
-            `Operated selection ${primarySelection.bed}:${primarySelection.traceCoordinate} maps to stop coordinate ${coordinate}, outside carrier ${pass.carrier} stops ${carrierStops.left}..${carrierStops.right}.`,
+            `Operated selection ${operatedSelection.bed}:${operatedSelection.traceCoordinate} maps to stop coordinate ${coordinate}, outside carrier ${pass.carrier} stops ${carrierStops.left}..${carrierStops.right}.`,
             pass.index,
-            primarySelection.sourceSpan,
+            operatedSelection.sourceSpan,
             actionIndex,
           )
           structurallyInvalidActions.add(actionIndex)
@@ -1121,7 +1131,6 @@ export function validateKCodeMachineTrace(
             span,
             actionIndex,
           )
-          structurallyInvalidActions.add(actionIndex)
           break
 
         case 'move': {
@@ -1134,14 +1143,15 @@ export function validateKCodeMachineTrace(
                 : 'machine-trace.action-operation',
               action.carrier !== pass.carrier
                 ? `Move carrier ${action.carrier} does not match footer carrier ${pass.carrier}.`
+                // Stryker disable next-line StringLiteral: Diagnostic prose only; the alternate stable rule identifier remains mutation-tested.
                 : 'Move action requires an empty knit/tuck pass with no selected needles.',
               pass.index,
               span,
               actionIndex,
             )
-            structurallyInvalidActions.add(actionIndex)
           }
-          if (!/^(Kn|Tu)-(Kn|Tu)$/.test(pass.operation)) {
+          const moveContract = kcodeOperationContractV1(profile, pass.operation)
+          if (moveContract === null || moveContract.family !== 'regular') {
             add(
               'error',
               'structural',
@@ -1151,7 +1161,6 @@ export function validateKCodeMachineTrace(
               span,
               actionIndex,
             )
-            structurallyInvalidActions.add(actionIndex)
           }
           break
         }
@@ -1160,6 +1169,7 @@ export function validateKCodeMachineTrace(
         case 'tuck':
         case 'drop': {
           const expected = expectedRegularKind(
+            profile,
             pass.operation,
             action.at.bed,
             pass.carrier,
@@ -1169,22 +1179,8 @@ export function validateKCodeMachineTrace(
               'error',
               'structural',
               'machine-trace.action-operation',
+              // Stryker disable next-line StringLiteral: Diagnostic prose only; expected-kind control flow and the stable rule remain mutation-tested.
               `Operation ${pass.operation} with carrier ${pass.carrier} requires ${expected ?? 'a transfer action'} on the ${action.at.bed} bed, not ${action.kind}.`,
-              pass.index,
-              span,
-              actionIndex,
-            )
-            structurallyInvalidActions.add(actionIndex)
-          }
-          if (
-            (action.kind === 'drop' && pass.carrier !== '0')
-            || (action.kind !== 'drop' && pass.carrier === '0')
-          ) {
-            add(
-              'error',
-              'structural',
-              'machine-trace.action-carrier',
-              `${action.kind} action is inconsistent with footer carrier ${pass.carrier}.`,
               pass.index,
               span,
               actionIndex,
@@ -1196,8 +1192,8 @@ export function validateKCodeMachineTrace(
 
         case 'xfer':
         case 'split': {
-          const expectedSourceBed = expectedTransferSourceBed(pass.operation)
-          if (expectedSourceBed === null || action.source.bed !== expectedSourceBed) {
+          const expectedSourceBed = expectedTransferSourceBed(profile, pass.operation)
+          if (action.source.bed !== expectedSourceBed) {
             add(
               'error',
               'structural',
@@ -1221,7 +1217,12 @@ export function validateKCodeMachineTrace(
             )
             structurallyInvalidActions.add(actionIndex)
           }
-          const expectedTarget = expectedTransferTarget(action.source, pass.rack)
+          const expectedTarget = expectedTransferTarget(
+            profile,
+            pass.operation,
+            action.source,
+            pass.rack,
+          )
           if (!sameCoordinate(action.target.traceCoordinate, expectedTarget)) {
             add(
               'error',
@@ -1272,9 +1273,8 @@ export function validateKCodeMachineTrace(
       }
     }
 
-    for (let actionIndex = 0; actionIndex < pass.actions.length; actionIndex++) {
+    for (const [actionIndex, action] of pass.actions.entries()) {
       if (structurallyInvalidActions.has(actionIndex)) continue
-      const action = pass.actions[actionIndex]!
       const span = actionSpan(action, pass)
       switch (action.kind) {
         case 'knit':
@@ -1367,9 +1367,6 @@ export function validateKCodeMachineTrace(
           break
         }
 
-        case 'move':
-        case 'unknown':
-          break
       }
     }
 
@@ -1392,33 +1389,58 @@ export function validateKCodeMachineTrace(
     })
   }
 
-  if (omittedDiagnosticCount > 0) {
-    for (const group of omittedDiagnosticGroups.values()) {
-      diagnostics.push({
-        severity: group.severity,
-        class: group.class,
-        rule: group.rule,
-        message: `MachineTrace diagnostics for ${group.rule} were truncated after ${MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS} total detailed findings; omitted ${group.count} additional ${group.severity} finding${group.count === 1 ? '' : 's'} (${omittedDiagnosticCount} findings omitted across all rules and severities).`,
-        passIndex: null,
-        sourceSpan: null,
-        line: null,
-        column: null,
-        endLine: null,
-        endColumn: null,
-        occurrences: group.count,
-      })
-    }
+  for (const group of omittedDiagnosticGroups.values()) {
+    diagnostics.push({
+      severity: group.severity,
+      class: group.class,
+      rule: group.rule,
+      // Stryker disable next-line StringLiteral,ConditionalExpression,EqualityOperator: Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested.
+      message: `MachineTrace diagnostics for ${group.rule} were truncated after ${MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS} total detailed findings; omitted ${group.count} additional ${group.severity} finding${group.count === 1 ? '' : 's'}.`,
+      passIndex: null,
+      sourceSpan: null,
+      line: null,
+      column: null,
+      endLine: null,
+      endColumn: null,
+      occurrences: group.count,
+    })
   }
 
   diagnostics.sort((a, b) =>
     (a.passIndex ?? -1) - (b.passIndex ?? -1)
     || (a.sourceSpan?.start.offset ?? -1) - (b.sourceSpan?.start.offset ?? -1)
     || (a.actionIndex ?? -1) - (b.actionIndex ?? -1)
-    || (a.rule < b.rule ? -1 : a.rule > b.rule ? 1 : 0)
-    || (a.message < b.message ? -1 : a.message > b.message ? 1 : 0))
+    || a.rule.localeCompare(b.rule)
+    || a.message.localeCompare(b.message))
+
+  const profileConformance = diagnostics.some((diagnostic) =>
+    diagnostic.severity === 'error'
+    && diagnostic.class !== 'operational-advisory')
+    ? 'blocked'
+    : 'conformant'
+  const stateDiagnostics = diagnostics.filter((diagnostic) =>
+    diagnostic.rule === 'machine-trace.drop-empty'
+    || diagnostic.rule === 'machine-trace.loop-stack-policy')
+  const modeledState = profileConformance === 'blocked'
+    || stateDiagnostics.some((diagnostic) => diagnostic.severity === 'error')
+    ? 'blocked'
+    : stateDiagnostics.length > 0
+      ? 'review'
+      : 'conformant'
+  const operationalDiagnostics = diagnostics.filter((diagnostic) =>
+    diagnostic.class === 'operational-advisory')
+  const operationalPolicy = operationalDiagnostics.some((diagnostic) => diagnostic.severity === 'error')
+    ? 'blocked'
+    : operationalDiagnostics.length > 0
+      ? 'review'
+      : 'clear'
 
   return {
     ok: errorCount === 0,
+    profileConformance,
+    modeledState,
+    operationalPolicy,
+    controllerAcceptance: 'not-established-by-software-validation',
     diagnostics,
     errorCount,
     warningCount,

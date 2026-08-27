@@ -7,7 +7,11 @@ proves, how it proves it, and where the evidence boundary remains.
 ## Fixed target and pipeline
 
 The implemented target is the versioned `kniterate-7gg-kcode@1` profile: a
-252-needle-per-bed, six-carrier Kniterate contract. The public parser keeps an
+252-needle-per-bed, six-carrier Kniterate contract. Its operation decision table
+is part of the profile: `Kn-Kn`, `Tu-Tu`, `Kn-Tu`, `Tu-Kn`, `Tr-Rl`, `Tr-Rr`,
+`Rl-Tr`, and `Rr-Tr`, with explicit direction, bed action, carrier-zero,
+carrier-1–6, empty-selection, transfer-source, and rack-target behavior. The
+parser, projector, and validator consume that same table. The public parser keeps an
 explicit dialect label for provenance. Under profile V1, `app` and
 `knitout-vendor` are semantic aliases with the same marker-free raster mapping;
 Studio therefore applies the canonical `knitout-vendor` label instead of asking
@@ -19,6 +23,7 @@ project/chart
   -> pinned backend lowering + exact scheduled-pass IR
   -> emitted KCode bytes
   -> strict lossless parser
+  -> versioned operation/direction/carrier/rack command contract
   -> MachineTraceV1
   -> KCode-native validator + MachineSceneV1
   -> verdict, exact diff, movement view, source/design provenance
@@ -51,7 +56,8 @@ fails unless the tracked receipt already has the exact expected bytes. The full
 physical-registry and conformance-report checks.
 
 The command runs the exact machine-library and Studio proof-test lists, both
-strict TypeScript checks, a Studio production build, audits every reference
+strict TypeScript checks, the KCode-native refusal corpus, the blocking-rule
+witness ledger, source mutation testing, a Studio production build, and audits every reference
 KCode file, and writes a deterministic receipt to:
 
 ```text
@@ -77,7 +83,9 @@ public barrels, generated browser backend, Studio integration dependencies,
 the chart/project/colorwork workspace dependencies, proof harness and tests,
 package scripts, lockfile, and TypeScript/Vite config.
 It also records the Node/pnpm/platform toolchain, fixed property-test seeds,
-commands, reference hashes, byte/pass/action totals, and validation counts. It
+commands, reference hashes, byte/pass/action totals, validation counts, the
+profile/operation-contract/oracle hashes, the 1,904-case matrix ledger, all
+named rule witnesses, and normalized mutation counts. It
 contains no timestamp, so the same fingerprinted inputs and toolchain produce
 the same receipt.
 
@@ -111,6 +119,12 @@ The gate establishes:
   re-emission;
 - strict grammar, record ordering, field widths/alphabets, stop markers,
   footer types, rack values, and rejection of unknown or truncated content;
+- exhaustive agreement with an independent, production-import-free legality
+  oracle over 8 operations × 2 directions × 7 carrier tokens × 17 rack values
+  (1,904 cases), exercised through both Node modules and the browser entrypoint;
+- boundary partitions for empty, front-only, rear-only, both-bed, left/center/
+  right, selector 0/15, paired/unpaired transfer, marker placement, stop
+  containment, and pass continuity;
 - deterministic pinned lowering across repeats, cross-document call ordering,
   and the public two-stage API;
 - exact agreement between every machine-executable scheduled field and parsed
@@ -127,7 +141,13 @@ The gate establishes:
 - deterministic renderer input for synchronized carriage, guide, two beds,
   actions, and before/after loop counts;
 - fail-closed execution of the checked-in known-bad machine-safety refusal
-  corpus; and
+  corpus and the separate raw-KCode command refusal corpus, with every named
+  parser and command-validation rule tied to an executed witness; and
+- zero surviving, timed-out, uncovered, compile-error, runtime-error, or pending
+  in-scope generated source mutants in the parser, trace projector, machine
+  validator, and scheduled-trace differential. Diagnostic-prose exclusions and
+  reviewed equivalent mutants must be locally reasoned and receipt-fingerprinted;
+  anonymous or global exclusions block the gate; and
 - byte-identical distribution of the vendored converter's MIT notice in the
   production Studio build.
 
@@ -155,9 +175,15 @@ The resulting Studio import verdicts are 12 Surface-proven and one Blocked:
 13 fixtures is blocked by a validation error. This is a software product policy,
 not an established physical loop-stack limit.
 
-The mutation rail mutates proof inputs and grammar-critical KCode fields. It is
-not implementation-source mutation scoring and makes no source-mutant survival
-claim.
+The mutation rail keeps the existing grammar/input mutations and adds
+StrykerJS 10.0.0 implementation-source mutation scoring with the Vitest runner,
+fixed tests, concurrency one, and deterministic normalized evidence at
+`packages/machine-lib/out/kcode-proof/mutation-manifest.json`. Diagnostic prose
+string mutations may be excluded only at diagnostic-prose sites; rule
+identifiers, severities, control flow, conditionals, arithmetic, boundaries,
+and collections remain in scope. Equivalent-mutant suppressions must be
+reviewed next to the affected code with a reason. Both exclusion classes are
+normalized and fingerprinted in the receipt.
 
 ## Explicit non-claims and opportunities
 
@@ -188,9 +214,29 @@ Software proof does not turn encoded commands into a physical-knit claim.
    movement semantics, so Studio canonicalizes the label. A signed or sidecar
    artifact manifest would still be required to establish who produced bytes
    created outside Studio.
-7. **Source mutation scoring is not yet a gate.** Add a deterministic
-   implementation-source mutation score for the parser, projector, validator,
-   and trace differential to quantify whether tests kill injected code faults.
+7. **Official documents do not establish physical motion from tokens.** The
+   [official KCode 1.0 specification](https://drive.google.com/file/d/1KFiS1Crfaqba8t1vhqk2IqthqDSTyqKS/view)
+   defines the serialized `Tr`/`Rr`/`Rl` modes, while the
+   [machine manual](https://support.kniterate.com/hc/en-us/article_attachments/360009817198)
+   describes bed-transfer direction differently.
+   V1 proves conformance to the serialized command contract and keeps
+   controller/physical interpretation explicitly unestablished.
+
+## Controller-observed evidence
+
+`release:trial` first requires the complete read-only KCode gate, then adds
+`command-legality.json` and `CONTROLLER-REVIEW.md` to the clean exact-artifact
+package. They bind the profile, contract, proof receipt, KCode hash, pass count,
+and present command combinations, with `controllerObserved: pending`.
+
+Kniterate's [start-up guide](https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide)
+documents that `.kc` cannot be imported into its design app. The
+machine reads the exact `command.kc` transfer copy from SD card, so Studio does
+not claim an automated controller-only dry run. A clean, complete,
+non-deviated, current registry entry can contribute controller-observed coverage
+only after `out.kc` is independently reparsed and revalidated. Coverage is
+aggregated by machine serial and control-software version; partial, aborted,
+edited, failed, or stale runs remain history and contribute no accepted claim.
 
 The real-machine procedure in `V1-PHYSICAL-TRIAL.md` remains the separate final
 acceptance gate. Its result may promote one exact hash-pinned artifact to
