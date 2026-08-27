@@ -70,6 +70,7 @@ operation/direction/carrier/rack contract conformance, stops/selections/actions,
 carriage and carrier continuity, transfer pairing, and empty-bed loop-state
 transitions. The validation report separates profile conformance, modeled state,
 operational policy, and controller acceptance. It does not
+translate serialized transfer tokens into controller-observed physical direction,
 claim physical needle-number labels, an operationally safe speed/roller/stack
 envelope, yarn behavior, collision dynamics outside encoded motion, or carrier
 lifecycle for foreign KCode (KCode does not encode `in`/`out`). Those boundaries

@@ -124,6 +124,8 @@ exports[`strict KCode adversarial rail > rejects 'reversed carriage markers' and
 
 exports[`strict KCode adversarial rail > rejects 'selected needle changed to a dot insi…' and still preserves the complete source 1`] = `"03c6130a46f81495900000b7d28fabe7270b8764ee5100317378746d28d9a092"`;
 
+exports[`strict KCode adversarial rail > rejects 'selector G above the official KCode 1…' and still preserves the complete source 1`] = `"812dadcc2702d415ffb4acde7c019018b2dd6018f4a8feda7bad26351edf4e60"`;
+
 exports[`strict KCode adversarial rail > rejects 'truncated STIF payload' and still preserves the complete source 1`] = `"63ce6ae3f1c791bf09bad01e29e418646bd76a3323ad37ff6ccb13ee8663cc9e"`;
 
 exports[`strict KCode adversarial rail > rejects 'unknown record before a valid pass' and still preserves the complete source 1`] = `"0c40fcdd6b1d2da8fbed797bb2b49d296bf782f835703daf1b17ac4929591676"`;
@@ -134,6 +136,6 @@ exports[`strict KCode adversarial rail > rejects a leading BOM without cascading
 
 exports[`strict KCode adversarial rail > rejects the historical footer-only false positive 1`] = `"c2714861759ee8b9d1f3db935a58a67a06f5319f0ccbb35c4e913046c054719d"`;
 
-exports[`strict KCode adversarial rail > rejects the historical truncated-raster false positive 1`] = `"ca2bcf6eecf2a228f85e582c4afee8b2c440acb05fa08a6866f75ec7088416e5"`;
+exports[`strict KCode adversarial rail > rejects the historical truncated-raster false positive 1`] = `"e2c01d043f6407ca069cc3f6ffba0c922d87f91721cc44146c82ccb53a3bfe70"`;
 
 exports[`strict KCode adversarial rail > summarizes omitted errors and warnings separately in non-strict intake 1`] = `"97c5c2f605622ed786002ce3a57b44aa520a43b1e72f409326a3b136771f03d4"`;

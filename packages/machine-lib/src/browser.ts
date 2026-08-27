@@ -60,6 +60,7 @@ export {
   kcodeColumnToBasePayloadIndex,
   kcodeColumnToTraceCoordinate,
   type KCodeCarrierToken,
+  type KCodeCommandAuthorityV1,
   type KCodeDialect,
   type KCodeMachineProfileV1,
   type KCodeOperationContractV1,

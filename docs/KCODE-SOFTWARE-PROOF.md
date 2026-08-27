@@ -219,8 +219,10 @@ Software proof does not turn encoded commands into a physical-knit claim.
    defines the serialized `Tr`/`Rr`/`Rl` modes, while the
    [machine manual](https://support.kniterate.com/hc/en-us/article_attachments/360009817198)
    describes bed-transfer direction differently.
-   V1 proves conformance to the serialized command contract and keeps
-   controller/physical interpretation explicitly unestablished.
+   Profile V1 explicitly makes the official KCode specification authoritative
+   for serialized logical commands. It does not use either document to infer a
+   controller-observed physical direction: that interpretation remains
+   unresolved and is carried as an operational-assurance limitation.
 
 ## Controller-observed evidence
 

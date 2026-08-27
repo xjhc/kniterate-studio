@@ -138,7 +138,7 @@ interface ReferenceReplay {
 const PADDING = 15
 const NEEDLE_COLUMNS = 253
 const BASE_WIDTH = PADDING + NEEDLE_COLUMNS + PADDING
-const STITCH_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+const STITCH_ALPHABET = '0123456789ABCDEF'
 const CARRIAGE_MARKERS = { left: -5.5, right: 257.5 } as const
 const CARRIER_MARKERS = { left: 29.5, right: 219.5 } as const
 

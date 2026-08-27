@@ -48,7 +48,6 @@ export type MachineValidationRuleV1 =
   | 'machine-trace.selection-payload-coordinate'
   | 'machine-trace.selection-trace-coordinate'
   | 'machine-trace.selection-stitch-selector'
-  | 'machine-trace.selection-stitch-documented-range'
   | 'machine-trace.selection-outside-carriage'
   | 'machine-trace.selection-outside-carrier'
   | 'machine-trace.duplicate-selection'
@@ -142,6 +141,7 @@ export interface MachineOperationalAssuranceV1 {
       | 'speed-operational-bounds-unverified'
       | 'roller-operational-bounds-unverified'
       | 'loop-stack-operational-limit-unverified'
+      | 'transfer-physical-direction-conflict-unresolved'
     readonly message: string
   }[]
 }
@@ -149,6 +149,7 @@ export interface MachineOperationalAssuranceV1 {
 export interface MachineValidationReportV1 {
   /** True only when no blocking diagnostic of any validation class exists. */
   readonly ok: boolean
+  /** Conformance to the serialized logical profile, not physical controller behavior. */
   readonly profileConformance: 'conformant' | 'blocked'
   /** State result under the report's explicit empty-bed initial-state assumption. */
   readonly modeledState: 'conformant' | 'review' | 'blocked'
@@ -190,6 +191,10 @@ const OPERATIONAL_ASSURANCE: MachineOperationalAssuranceV1 = {
     {
       code: 'loop-stack-operational-limit-unverified',
       message: 'Stack depth is measured and checked against a conservative software policy; the policy is not a measured physical-safe or physical-failure limit.',
+    },
+    {
+      code: 'transfer-physical-direction-conflict-unresolved',
+      message: 'Transfer tokens conform to the official serialized KCode contract; conflicting machine-manual wording leaves controller-observed physical direction unestablished.',
     },
   ],
 }
@@ -1009,18 +1014,6 @@ export function validateKCodeMachineTrace(
             pass.index,
             selection.stitchSelector.sourceSpan,
           )
-        } else if (outsideKnownRange(
-          selection.stitchSelector.encodedValue,
-          profile.stitchSelectors.documentedBounds,
-        )) {
-          add(
-            'warning',
-            'operational-advisory',
-            'machine-trace.selection-stitch-documented-range',
-            `Stitch selector ${selection.stitchSelector.encodedValue} is encodable but outside the documented machine selector range.`,
-            pass.index,
-            selection.stitchSelector.sourceSpan,
-          )
         }
         const identity = selectionIdentity(selection)
         if (selectionIdentities.has(identity)) {
@@ -1394,7 +1387,7 @@ export function validateKCodeMachineTrace(
       severity: group.severity,
       class: group.class,
       rule: group.rule,
-      // Stryker disable next-line StringLiteral,ConditionalExpression,EqualityOperator: Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested.
+      // Stryker disable next-line StringLiteral: Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested.
       message: `MachineTrace diagnostics for ${group.rule} were truncated after ${MAX_MACHINE_VALIDATION_DIAGNOSTIC_DETAILS} total detailed findings; omitted ${group.count} additional ${group.severity} finding${group.count === 1 ? '' : 's'}.`,
       passIndex: null,
       sourceSpan: null,

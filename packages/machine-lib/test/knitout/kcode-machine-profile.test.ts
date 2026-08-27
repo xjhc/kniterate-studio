@@ -136,18 +136,31 @@ describe('Kniterate 7gg KCode machine profile V1', () => {
     })
   })
 
-  it('does not confuse wider backend stitch encoding with documented selector levels', () => {
+  it('accepts only the sixteen official KCode stitch-selector tokens', () => {
     expect(profile.stitchSelectors.documentedBounds).toMatchObject({
       lower: { value: 0, evidence: { confidence: 'official-documented' } },
       upper: { value: 15, evidence: { confidence: 'official-documented' } },
     })
     expect(profile.stitchSelectors.encoding).toMatchObject({
-      alphabet: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      alphabet: '0123456789ABCDEF',
       encodableBounds: {
         lower: { value: 0 },
-        upper: { value: 35 },
+        upper: { value: 15 },
       },
-      evidence: { confidence: 'pinned-implementation' },
+      evidence: { confidence: 'official-documented' },
+    })
+  })
+
+  it('makes serialized semantics authoritative without claiming physical transfer direction', () => {
+    expect(profile.commandAuthority).toMatchObject({
+      serializedCommandSemantics: 'official-kcode-specification-v1',
+      physicalTransferDirection: 'unresolved-authoritative-conflict',
+      validationClaim: 'serialized-command-conformance-only',
+      controllerAcceptance: 'not-established-by-software-validation',
+      evidence: {
+        serializedSpecification: { confidence: 'official-documented' },
+        physicalMachineManual: { confidence: 'unverified' },
+      },
     })
   })
 

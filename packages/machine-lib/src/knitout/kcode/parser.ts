@@ -511,11 +511,11 @@ function validateBedMarkers(
     && markers.every(([value], index) => value === expectedMarkers[index])
 
   if (!markerOrderValid) {
-    // Stryker disable StringLiteral,ConditionalExpression: Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently.
+    // Stryker disable StringLiteral: Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently.
     const message = carrier === '0'
       ? `${field.field} requires one ordered /...\\ carriage-marker pair and no carrier markers.`
       : `${field.field} requires one ordered /...\\ carriage-marker pair and exactly two ${carrier} carrier markers.`
-    // Stryker restore StringLiteral,ConditionalExpression
+    // Stryker restore StringLiteral
     addDiagnostic(
       'kcode.bed-markers',
       message,
@@ -928,7 +928,7 @@ export function parseKCodeDocument(
     diagnostics.push({
       severity,
       rule: 'kcode.diagnostic-summary',
-      // Stryker disable next-line ConditionalExpression,StringLiteral: Diagnostic prose only; occurrences and severity are asserted independently.
+      // Stryker disable next-line StringLiteral: Diagnostic prose only; occurrences and severity are asserted independently.
       message: `KCode diagnostics were truncated after ${MAX_KCODE_DIAGNOSTIC_DETAILS} detailed findings; omitted ${count} additional ${severity} finding${count === 1 ? '' : 's'} (${omittedDiagnosticCount} findings omitted across all severities).`,
       span: { start: diagnosticSummaryStart, end: diagnosticSummaryEnd },
       line: diagnosticSummaryStart.line,

@@ -40,779 +40,967 @@
     "directions": 2,
     "carrierTokens": 7,
     "rackValues": 17,
-    "kcodeNativeRefusalCases": 9,
+    "kcodeNativeRefusalCases": 10,
     "oracle": "test/knitout/kcode-legality-spec.ts",
     "contractSha256": "4924477931acb4a711dc36391fe4849d0b4a2951467232d52990cb8f8ab03a06",
     "oracleSha256": "eae502e4a399eea38e2fa82299fe68bea0e11912b5f9e10087941ca2d71a9532",
     "ruleCoverage": {
       "kind": "kniterate-kcode-rule-coverage-ledger",
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "ok": true,
       "parserRuleCount": 30,
-      "validatorRuleCount": 42,
-      "witnessedRuleCount": 72,
-      "executionGates": [
-        "deterministic-kcode-proof-tests",
-        "kcode-native-command-refusal-corpus"
-      ],
-      "note": "Only files executed by the named proof gates may satisfy this ledger. Each witness file asserts exact stable rule identifiers; a mention in non-gated source is ignored.",
+      "validatorRuleCount": 41,
+      "runtimeWitnessedRuleCount": 71,
+      "runtimeGate": {
+        "command": "pnpm exec vitest run test/knitout/kcode-document-adversarial.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-machine-validator.test.ts --maxWorkers=1",
+        "exitCode": 0,
+        "status": "pass"
+      },
+      "rawCommandRefusalCoverage": {
+        "kind": "kniterate-kcode-command-refusal-report",
+        "schemaVersion": 2,
+        "ok": true,
+        "caseCount": 10,
+        "noInvalidReachedExport": true,
+        "results": [
+          {
+            "id": "unsupported-operation",
+            "expectedBlockingRules": [
+              "kcode.footer-operation"
+            ],
+            "blockingRules": [
+              "kcode.footer-operation"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "parser",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "carrier-seven",
+            "expectedBlockingRules": [
+              "kcode.footer-carrier"
+            ],
+            "blockingRules": [
+              "kcode.footer-carrier"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "parser",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "quarter-pitch-rack",
+            "expectedBlockingRules": [
+              "kcode.invalid-rack"
+            ],
+            "blockingRules": [
+              "kcode.invalid-rack"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "parser",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "missing-carriage-marker",
+            "expectedBlockingRules": [
+              "kcode.bed-markers"
+            ],
+            "blockingRules": [
+              "kcode.bed-markers"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "parser",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "padding-selection",
+            "expectedBlockingRules": [
+              "kcode.bed-padding"
+            ],
+            "blockingRules": [
+              "kcode.bed-padding"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "parser",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "stitch-selector-G",
+            "expectedBlockingRules": [
+              "kcode.field-charset"
+            ],
+            "blockingRules": [
+              "kcode.field-charset"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "parser",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "wrong-transfer-direction",
+            "expectedBlockingRules": [
+              "machine-trace.transfer-operation-direction"
+            ],
+            "blockingRules": [
+              "machine-trace.transfer-operation-direction"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "validator",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "unpaired-transfer",
+            "expectedBlockingRules": [
+              "machine-trace.unknown-action"
+            ],
+            "blockingRules": [
+              "machine-trace.unknown-action"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "validator",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "empty-transfer",
+            "expectedBlockingRules": [
+              "machine-trace.unknown-action"
+            ],
+            "blockingRules": [
+              "machine-trace.unknown-action"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "validator",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "selection-outside-carrier",
+            "expectedBlockingRules": [
+              "machine-trace.selection-outside-carrier"
+            ],
+            "blockingRules": [
+              "machine-trace.selection-outside-carrier"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "validator",
+            "exactRules": true,
+            "refusedExport": true
+          }
+        ]
+      },
+      "note": "Witnesses are diagnostics observed at runtime while the named tests pass. Raw invalid commands separately prove parser or validator refusal and export ineligibility; forged MachineTrace witnesses cover defensive post-parse invariants.",
       "missing": [],
       "witnesses": [
         {
           "rule": "kcode.bed-markers",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
-            },
-            {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/kcode-command-legality.test.ts",
-              "sha256": "eed2668cb92225f5b6c0fea8d492b94b53cff33bc2e1564a0e41419d64a64620"
-            },
-            {
-              "path": "scripts/kcode-command-refusal-corpus.ts",
-              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.bed-needle-domain",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
+            },
+            {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.bed-padding",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
-            },
-            {
-              "path": "scripts/kcode-command-refusal-corpus.ts",
-              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.diagnostic-summary",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.duplicate-home",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.field-charset",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             },
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.field-order",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.field-width",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.footer-arity",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.footer-carrier",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
-            },
-            {
-              "path": "scripts/kcode-command-refusal-corpus.ts",
-              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.footer-direction",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.footer-number",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.footer-operation",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
-            },
-            {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "scripts/kcode-command-refusal-corpus.ts",
-              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.footer-whitespace",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.home-order",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.incomplete-pass",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
+            },
+            {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.initial-rack",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.invalid-rack",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
-            },
-            {
-              "path": "scripts/kcode-command-refusal-corpus.ts",
-              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.missing-home",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.missing-initial-rack",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.no-passes",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             },
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.orphan-field",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "kcode.orphan-footer",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.pass-interrupted",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.rack-order",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.resource-limit",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.source-byte",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.source-byte-summary",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.unknown-record",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             },
             {
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "rail": "raw-kcode-parser",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7"
             }
           ]
         },
         {
           "rule": "kcode.unsupported-dialect",
-          "files": [
+          "observations": [
             {
+              "rail": "raw-kcode-parser",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094"
+              "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023"
             }
           ]
         },
         {
           "rule": "machine-trace.action-carrier",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.action-direction-order",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.action-operation",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.action-selection-coverage",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.action-selection-missing",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.carriage-discontinuity",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-command-legality.test.ts",
-              "sha256": "eed2668cb92225f5b6c0fea8d492b94b53cff33bc2e1564a0e41419d64a64620"
-            },
-            {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.carriage-stop-order",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.carrier-discontinuity",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.carrier-stop-order",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.carrier-stops-forbidden",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.carrier-stops-outside-carriage",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.carrier-stops-required",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.dialect-profile",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.drop-empty",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.duplicate-selection",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.loop-stack-policy",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.pass-index",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.passes-required",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.profile-mismatch",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.rack-command-index",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.rack-command-initial",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.rack-command-position",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.rack-command-value",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.rack-profile",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.rack-state",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.selection-bed",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.selection-column-range",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.selection-coordinate",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.selection-outside-carriage",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.selection-outside-carrier",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-command-legality.test.ts",
-              "sha256": "eed2668cb92225f5b6c0fea8d492b94b53cff33bc2e1564a0e41419d64a64620"
-            },
-            {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
-            },
-            {
-              "path": "scripts/kcode-command-refusal-corpus.ts",
-              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.selection-payload-coordinate",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
-            }
-          ]
-        },
-        {
-          "rule": "machine-trace.selection-stitch-documented-range",
-          "files": [
-            {
-              "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.selection-stitch-selector",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.selection-trace-coordinate",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.setting-documented-range",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.setting-number",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.stop-coordinate",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.transfer-bed-pair",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.transfer-operation-direction",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
-            },
-            {
-              "path": "scripts/kcode-command-refusal-corpus.ts",
-              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.transfer-rack-pair",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.transfer-source-empty",
-          "files": [
+          "observations": [
             {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         },
         {
           "rule": "machine-trace.unknown-action",
-          "files": [
+          "observations": [
             {
-              "path": "test/knitout/kcode-command-legality.test.ts",
-              "sha256": "eed2668cb92225f5b6c0fea8d492b94b53cff33bc2e1564a0e41419d64a64620"
-            },
-            {
+              "rail": "machine-trace-validator",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c"
-            },
-            {
-              "path": "scripts/kcode-command-refusal-corpus.ts",
-              "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b"
+              "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589"
             }
           ]
         }
       ]
     },
-    "profileSha256": "a36fa91050ee2cfc6c7f5dbc3621ab40269960ef05fe8e4ec5ed3523e639f5c6"
+    "profileSha256": "a66013ea003238e4666932cdd6d1ac0f970d67a0ddd5a728363635c433a64324"
   },
   "proofTests": [
     "test/public-api.test.ts",
@@ -1042,7 +1230,7 @@
     ]
   },
   "contract": {
-    "sha256": "d024ac7bd3c2d2cef8a61cd383b5cb2d82411a725db4ebb5ecf2a83eff8aa826",
+    "sha256": "3a6dc1618fde65981617a7d7cfe2a87523c3984d625556d5b82a3cf2bd7b4a00",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -1396,8 +1584,8 @@
       },
       {
         "path": "../../scripts/build-v1-knit-trial.ts",
-        "sha256": "987b9cfb4fb70830afcb147132935f1abed67fd1c5978e073491d68dcc51c489",
-        "bytes": 17486
+        "sha256": "0939f1ef25df4dfd222b3cc9f3ccab01432e41fd3c26570c5b182e8f7f314c9c",
+        "bytes": 18116
       },
       {
         "path": "../../scripts/check-v1-physical-release.ts",
@@ -1561,7 +1749,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "5f902bb36bfb8458b8ab209f617c9b64a09aa525036e7c8c77a20deb86f93bdc",
+        "sha256": "ec33bcec3bc3b1719b9ab52c010b2277bb9b0a349468736409400fa9fd18d298",
         "bytes": 179
       },
       {
@@ -1636,13 +1824,13 @@
       },
       {
         "path": "scripts/kcode-command-refusal-corpus.ts",
-        "sha256": "72a02751bce58ba8b32cfa7865c51d86c8959cbd9362de680c3e240cae2b4c2b",
-        "bytes": 6556
+        "sha256": "d184aa049abaa25d2c223b4214d8e115e7acd1702fd76f8619a17601fe027e7b",
+        "bytes": 8524
       },
       {
         "path": "scripts/kcode-mutation.ts",
-        "sha256": "877adaa76a057150f52055cc2c79aff69c5a260c731713746fb7f9e0b1572c26",
-        "bytes": 5354
+        "sha256": "2bc0029b3dca2f474974fd2ce6129ac3bdba104a2e5b9ad65c9d4b32958d5513",
+        "bytes": 5420
       },
       {
         "path": "scripts/kcode-proof-launcher.mjs",
@@ -1651,13 +1839,18 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "9dc49428812c866bfe77b9c87d4a97d33bbea3d86a4ad32c326e7e9a124ae16a",
-        "bytes": 19529
+        "sha256": "19a96588cd65fbcb9beafcbcd294940e77d0ff9b1e5f784fdff2cc7885d0faf9",
+        "bytes": 19530
       },
       {
         "path": "scripts/kcode-rule-coverage.ts",
-        "sha256": "4af0ae44c497fd7d6ff3dd846675f82a86f25a8e81049a439fbf7605924c192b",
-        "bytes": 2964
+        "sha256": "9183a57170d79fee7eb4c71728a9ba50cb4211eba737ae3d84fef6b6e7d36114",
+        "bytes": 4963
+      },
+      {
+        "path": "scripts/kcode-rule-runtime-ledger.ts",
+        "sha256": "9693c79cbecbb695dac4f8abb2ce894a746432b63bd8b08f2cc6ec3c337a8908",
+        "bytes": 729
       },
       {
         "path": "scripts/kniterate-conform-launcher.mjs",
@@ -1696,8 +1889,8 @@
       },
       {
         "path": "src/browser.ts",
-        "sha256": "9e2d31c008ae7f41d9df089280acaca0b7294849177357465d65a088cf9257c1",
-        "bytes": 3809
+        "sha256": "853e19988622870f3578a7fc1c0a98bcb12fc88aea22199b92cb16de1c5bb240",
+        "bytes": 3841
       },
       {
         "path": "src/chart-core/__row_space_canary__.ts",
@@ -1821,8 +2014,8 @@
       },
       {
         "path": "src/index.ts",
-        "sha256": "fb42bde8f92f942eb106ad4abc9401236ea38cdcdebe136e60563f67dd07ca3e",
-        "bytes": 4444
+        "sha256": "5526b4c45e8268b2c4f578c8c91cdbd9ba2b2d2613b8eed013ccac3168c1df8c",
+        "bytes": 4476
       },
       {
         "path": "src/knitout/back-face-projection.ts",
@@ -1911,8 +2104,8 @@
       },
       {
         "path": "src/knitout/kcode/machine-profile.ts",
-        "sha256": "a9e37ddd0b0d93f071b7461601959d7dce01794e8e4e185b0a04cba02188f330",
-        "bytes": 18380
+        "sha256": "0235f6feec3648594d99d3d8d29b6f66d2cfc68ff933f13b48c168f9af2d1d37",
+        "bytes": 19941
       },
       {
         "path": "src/knitout/kcode/machine-scene.ts",
@@ -1921,18 +2114,18 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "sha256": "da687dd484d023baf7ad4a10cc0e7c62563029cb07c341d66b78839fbc6d6d68",
-        "bytes": 21841
+        "sha256": "4d3475a27dfcfd55478f5839c7485131d9084197f8ea5f2b2341cf1674b1cf0e",
+        "bytes": 21685
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "sha256": "8a0a6fab926079ecfe6ba1c9249eb4dfda82291f9507229f3a92c07b089f3b20",
-        "bytes": 49851
+        "sha256": "6f73896b7240b6eabd288d39f7be74a0358bb04cc6a10fa0914ce1881df7fc46",
+        "bytes": 49653
       },
       {
         "path": "src/knitout/kcode/parser.ts",
-        "sha256": "a8f47b014287aa74f84cb867a73af262e22720bebe0fd03b501005fb7f475b06",
-        "bytes": 35279
+        "sha256": "97489bca7c9ac1c978739245cbe9a50b59d4b92282904105db3138dea2b1a822",
+        "bytes": 35213
       },
       {
         "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -2376,8 +2569,8 @@
       },
       {
         "path": "test/knitout/kcode-document-adversarial.test.ts",
-        "sha256": "22f5eb74ed41ed6a87999f800de2f2d176ed965259037c9db685052198d67f02",
-        "bytes": 32618
+        "sha256": "3ffe4764488288735b1410ffa3b0f0b98f7fb94c409b4db3b3039d3a76f226e7",
+        "bytes": 34167
       },
       {
         "path": "test/knitout/kcode-document-property.test.ts",
@@ -2386,13 +2579,13 @@
       },
       {
         "path": "test/knitout/kcode-independent-oracle.test.ts",
-        "sha256": "faf4fa3a8a808e0f1fa51dd15ab306d13458f6d4d159f41aa3621c0f42dd0ead",
-        "bytes": 33831
+        "sha256": "589a644678dc25087480bf6197900776df1855b7e9df800090643bfc453e650b",
+        "bytes": 33811
       },
       {
         "path": "test/knitout/kcode-machine-profile.test.ts",
-        "sha256": "4e451ba16b37daaa29aaa528f1cf50ddc7fba7120c17809a8edf514bc58ee2d9",
-        "bytes": 7099
+        "sha256": "b419abea08975d153c802d97f2088329f1bf1d8020015c8822095d15d7dfd715",
+        "bytes": 7660
       },
       {
         "path": "test/knitout/kcode-machine-scene.test.ts",
@@ -2401,13 +2594,13 @@
       },
       {
         "path": "test/knitout/kcode-machine-trace.test.ts",
-        "sha256": "f42fb5543258520ea72ebd902cbfb65daf1feffa0a8d36afd7b85f02ef4eb482",
-        "bytes": 18733
+        "sha256": "1ad87af1f624fb2a89e925bcfa1d20c7e82c94d4c4fcdc4bb818fa00e89b9a4b",
+        "bytes": 18785
       },
       {
         "path": "test/knitout/kcode-machine-validator.test.ts",
-        "sha256": "86ac9095cf5196bce804b1b5d78417accede1a4f2c6c024cbc38e99665b5800c",
-        "bytes": 52908
+        "sha256": "19620d8610ae91c55e9b92d7b0ef9fb55a83d2016b8f798cfa90e865ac19b589",
+        "bytes": 54040
       },
       {
         "path": "test/knitout/kcode-scheduled-differential.test.ts",
@@ -2436,13 +2629,13 @@
       },
       {
         "path": "test/knitout/strict-kcode-document.test.ts",
-        "sha256": "e33f362fe4ba1bf082a9dca8ed13caf8d4b05380cb8b7a888ccb808512b8f094",
-        "bytes": 11038
+        "sha256": "7d89c2daa7f649aef3c3d6daa70f3791b2e70f4bdcdafbaf0eebf7b77d346023",
+        "bytes": 12642
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
-        "sha256": "dbdaebd4a98f9f7cd3fd5fef7e3b60d068d93d98c6334ebde3555b10f867206c",
-        "bytes": 33492
+        "sha256": "a6f1d2f24ebdd3cd8f5ee878bd115d32bf85800233fcaabf79894486bbfcee7d",
+        "bytes": 33761
       },
       {
         "path": "test/public-api.test.ts",
@@ -2484,30 +2677,30 @@
   "mutationEvidence": {
     "inputGrammarAndDiffMutations": true,
     "implementationSourceMutationScoring": true,
-    "receiptSha256": "8cafefa5ef7ad41418dd28dfad9f8f93c4771ed306f3a9ddab1ea830838ad962",
+    "receiptSha256": "bcf2e71d9b67dbbaae043204ca8f272de45d41d15bbc7853ee03391ddfc3ca16",
     "counts": {
-      "Killed": 2309,
+      "Killed": 2315,
       "Survived": 0,
       "Timeout": 0,
       "NoCoverage": 0,
       "CompileError": 0,
       "RuntimeError": 0,
-      "Ignored": 127,
+      "Ignored": 117,
       "Pending": 0
     },
     "mutationScore": 100,
     "targets": [
       {
         "path": "src/knitout/kcode/parser.ts",
-        "sha256": "a8f47b014287aa74f84cb867a73af262e22720bebe0fd03b501005fb7f475b06"
+        "sha256": "97489bca7c9ac1c978739245cbe9a50b59d4b92282904105db3138dea2b1a822"
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "sha256": "da687dd484d023baf7ad4a10cc0e7c62563029cb07c341d66b78839fbc6d6d68"
+        "sha256": "4d3475a27dfcfd55478f5839c7485131d9084197f8ea5f2b2341cf1674b1cf0e"
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "sha256": "8a0a6fab926079ecfe6ba1c9249eb4dfda82291f9507229f3a92c07b089f3b20"
+        "sha256": "6f73896b7240b6eabd288d39f7be74a0358bb04cc6a10fa0914ce1881df7fc46"
       },
       {
         "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -2605,31 +2798,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 252,
-        "column": 22,
-        "mutator": "ConditionalExpression",
-        "replacement": "false",
-        "reason": "Diagnostic prose only; marker structure is asserted independently."
-      },
-      {
-        "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 252,
-        "column": 22,
-        "mutator": "ConditionalExpression",
-        "replacement": "true",
-        "reason": "Diagnostic prose only; marker structure is asserted independently."
-      },
-      {
-        "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 252,
-        "column": 22,
-        "mutator": "EqualityOperator",
-        "replacement": "actual.length !== 0",
-        "reason": "Diagnostic prose only; marker structure is asserted independently."
-      },
-      {
-        "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 252,
+        "line": 251,
         "column": 44,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2637,7 +2806,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 252,
+        "line": 251,
         "column": 65,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2645,7 +2814,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 254,
+        "line": 253,
         "column": 67,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2653,7 +2822,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 254,
+        "line": 253,
         "column": 7,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2661,7 +2830,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 255,
+        "line": 254,
         "column": 9,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2669,7 +2838,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 261,
+        "line": 260,
         "column": 28,
         "mutator": "StringLiteral",
         "replacement": "\"Stryker was here!\"",
@@ -2677,7 +2846,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 280,
+        "line": 279,
         "column": 19,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2685,7 +2854,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 307,
+        "line": 306,
         "column": 36,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2693,7 +2862,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 324,
+        "line": 323,
         "column": 7,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2701,7 +2870,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 325,
+        "line": 324,
         "column": 9,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2709,7 +2878,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 333,
+        "line": 332,
         "column": 22,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2717,7 +2886,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 340,
+        "line": 339,
         "column": 9,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2725,7 +2894,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 341,
+        "line": 340,
         "column": 11,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2733,7 +2902,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 374,
+        "line": 373,
         "column": 41,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2741,7 +2910,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 392,
+        "line": 391,
         "column": 26,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2749,7 +2918,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 409,
+        "line": 408,
         "column": 21,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2757,7 +2926,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 411,
+        "line": 410,
         "column": 19,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2765,7 +2934,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 412,
+        "line": 411,
         "column": 44,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2773,7 +2942,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 416,
+        "line": 415,
         "column": 22,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2781,7 +2950,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 429,
+        "line": 428,
         "column": 59,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2789,7 +2958,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 430,
+        "line": 429,
         "column": 56,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2797,7 +2966,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 433,
+        "line": 432,
         "column": 13,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2805,7 +2974,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 435,
+        "line": 434,
         "column": 15,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2813,7 +2982,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 449,
+        "line": 448,
         "column": 15,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2821,7 +2990,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 451,
+        "line": 450,
         "column": 17,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2829,8 +2998,16 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 458,
+        "line": 457,
         "column": 30,
+        "mutator": "StringLiteral",
+        "replacement": "\"\"",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 458,
+        "column": 17,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
         "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
@@ -2845,15 +3022,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 460,
-        "column": 17,
-        "mutator": "StringLiteral",
-        "replacement": "\"\"",
-        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
-      },
-      {
-        "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 465,
+        "line": 464,
         "column": 13,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2861,7 +3030,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 467,
+        "line": 466,
         "column": 15,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2869,7 +3038,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 484,
+        "line": 483,
         "column": 28,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2877,7 +3046,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 487,
+        "line": 486,
         "column": 28,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2885,7 +3054,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 492,
+        "line": 491,
         "column": 11,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2893,7 +3062,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 494,
+        "line": 493,
         "column": 13,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2901,7 +3070,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 518,
+        "line": 517,
         "column": 10,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2909,7 +3078,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 542,
+        "line": 541,
         "column": 5,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2917,7 +3086,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 550,
+        "line": 549,
         "column": 5,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2925,7 +3094,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 553,
+        "line": 552,
         "column": 10,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2933,7 +3102,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 561,
+        "line": 560,
         "column": 5,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2941,7 +3110,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 571,
+        "line": 570,
         "column": 5,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2949,7 +3118,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 632,
+        "line": 631,
         "column": 12,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -2957,7 +3126,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 659,
+        "line": 658,
         "column": 41,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2965,7 +3134,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 660,
+        "line": 659,
         "column": 10,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2973,7 +3142,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 663,
+        "line": 662,
         "column": 10,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2981,7 +3150,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 666,
+        "line": 665,
         "column": 10,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2989,7 +3158,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 669,
+        "line": 668,
         "column": 10,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -2997,7 +3166,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 672,
+        "line": 671,
         "column": 10,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -3005,7 +3174,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 675,
+        "line": 674,
         "column": 10,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -3013,7 +3182,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 682,
+        "line": 681,
         "column": 7,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -3021,8 +3190,16 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 683,
+        "line": 682,
         "column": 9,
+        "mutator": "StringLiteral",
+        "replacement": "``",
+        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
+      },
+      {
+        "path": "src/knitout/kcode/machine-trace.ts",
+        "line": 687,
+        "column": 7,
         "mutator": "StringLiteral",
         "replacement": "``",
         "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
@@ -3030,14 +3207,6 @@
       {
         "path": "src/knitout/kcode/machine-trace.ts",
         "line": 688,
-        "column": 7,
-        "mutator": "StringLiteral",
-        "replacement": "``",
-        "reason": "Diagnostic prose only; unsupported selector rejection is asserted independently."
-      },
-      {
-        "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 689,
         "column": 9,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -3045,7 +3214,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1087,
+        "line": 1080,
         "column": 13,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -3053,7 +3222,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1183,
+        "line": 1176,
         "column": 15,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -3061,7 +3230,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1183,
+        "line": 1176,
         "column": 96,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -3069,7 +3238,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1398,
+        "line": 1391,
         "column": 16,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -3077,31 +3246,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1398,
-        "column": 212,
-        "mutator": "ConditionalExpression",
-        "replacement": "false",
-        "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
-      },
-      {
-        "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1398,
-        "column": 212,
-        "mutator": "ConditionalExpression",
-        "replacement": "true",
-        "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
-      },
-      {
-        "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1398,
-        "column": 212,
-        "mutator": "EqualityOperator",
-        "replacement": "group.count !== 1",
-        "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
-      },
-      {
-        "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1398,
+        "line": 1391,
         "column": 232,
         "mutator": "StringLiteral",
         "replacement": "\"Stryker was here!\"",
@@ -3109,7 +3254,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1398,
+        "line": 1391,
         "column": 237,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -3117,7 +3262,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 807,
+        "line": 812,
         "column": 11,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -3154,22 +3299,6 @@
         "mutator": "StringLiteral",
         "replacement": "\"\"",
         "reason": "Diagnostic prose only; grouped invalid-byte rules, spans, severities, and counts remain mutation-tested."
-      },
-      {
-        "path": "src/knitout/kcode/parser.ts",
-        "line": 515,
-        "column": 21,
-        "mutator": "ConditionalExpression",
-        "replacement": "false",
-        "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
-      },
-      {
-        "path": "src/knitout/kcode/parser.ts",
-        "line": 515,
-        "column": 21,
-        "mutator": "ConditionalExpression",
-        "replacement": "true",
-        "reason": "Diagnostic prose only; the bed-marker rule, severity, and span are asserted independently."
       },
       {
         "path": "src/knitout/kcode/parser.ts",
@@ -3230,22 +3359,6 @@
       {
         "path": "src/knitout/kcode/parser.ts",
         "line": 932,
-        "column": 156,
-        "mutator": "ConditionalExpression",
-        "replacement": "false",
-        "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
-      },
-      {
-        "path": "src/knitout/kcode/parser.ts",
-        "line": 932,
-        "column": 156,
-        "mutator": "ConditionalExpression",
-        "replacement": "true",
-        "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
-      },
-      {
-        "path": "src/knitout/kcode/parser.ts",
-        "line": 932,
         "column": 16,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -3268,11 +3381,11 @@
         "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
       }
     ],
-    "diagnosticProseExclusionsSha256": "e94e8bc94bd9f855ebb499fce2565548e0ecbe158146ffe23cbd9e2f169b47da",
+    "diagnosticProseExclusionsSha256": "b62f59df9a7747e9b60dc493961382ce67cfff9baf6d8162a77a77f91e0dc80f",
     "equivalentMutantSuppressions": [
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 356,
+        "line": 355,
         "column": 24,
         "mutator": "ArithmeticOperator",
         "replacement": "kcodeColumn - offset",
@@ -3280,7 +3393,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 377,
+        "line": 376,
         "column": 24,
         "mutator": "ArithmeticOperator",
         "replacement": "coordinate(a) + coordinate(b)",
@@ -3288,7 +3401,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 377,
+        "line": 376,
         "column": 5,
         "mutator": "ArithmeticOperator",
         "replacement": "directionFactor / (coordinate(a) - coordinate(b))",
@@ -3296,7 +3409,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 443,
+        "line": 442,
         "column": 28,
         "mutator": "ArithmeticOperator",
         "replacement": "selection.traceCoordinate - rack * contract.targetRackMultiplier",
@@ -3304,7 +3417,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 443,
+        "line": 442,
         "column": 56,
         "mutator": "ArithmeticOperator",
         "replacement": "rack / contract.targetRackMultiplier",
@@ -3312,7 +3425,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 200,
+        "line": 205,
         "column": 63,
         "mutator": "UnaryOperator",
         "replacement": "+0",
@@ -3320,7 +3433,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 306,
+        "line": 311,
         "column": 53,
         "mutator": "ArithmeticOperator",
         "replacement": "value + 0.5",
@@ -3328,7 +3441,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 314,
+        "line": 319,
         "column": 10,
         "mutator": "EqualityOperator",
         "replacement": "coordinate < range.left",
@@ -3336,7 +3449,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 314,
+        "line": 319,
         "column": 10,
         "mutator": "EqualityOperator",
         "replacement": "coordinate > range.left",
@@ -3344,7 +3457,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 314,
+        "line": 319,
         "column": 38,
         "mutator": "EqualityOperator",
         "replacement": "coordinate < range.right",
@@ -3352,7 +3465,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 314,
+        "line": 319,
         "column": 38,
         "mutator": "EqualityOperator",
         "replacement": "coordinate > range.right",
@@ -3360,7 +3473,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 394,
+        "line": 399,
         "column": 27,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -3368,7 +3481,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 394,
+        "line": 399,
         "column": 7,
         "mutator": "ConditionalExpression",
         "replacement": "false",
@@ -3376,7 +3489,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 394,
+        "line": 399,
         "column": 7,
         "mutator": "ConditionalExpression",
         "replacement": "true",
@@ -3384,7 +3497,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 431,
+        "line": 436,
         "column": 10,
         "mutator": "ArithmeticOperator",
         "replacement": "source.traceCoordinate - rack * contract.targetRackMultiplier",
@@ -3392,7 +3505,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 431,
+        "line": 436,
         "column": 35,
         "mutator": "ArithmeticOperator",
         "replacement": "rack / contract.targetRackMultiplier",
@@ -3400,7 +3513,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 971,
+        "line": 976,
         "column": 13,
         "mutator": "ArithmeticOperator",
         "replacement": "selection.kcodeColumn - dialectContract.markerFreeTraceOffset",
@@ -3535,7 +3648,7 @@
         "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
       }
     ],
-    "equivalentMutantSuppressionsSha256": "af54aff0a6c100cafea711d9092b987e863c8748e2778b503aba58ee77385a2a"
+    "equivalentMutantSuppressionsSha256": "d9c0a80650020e98855a68257852f4b2d853737c2c01df8c53db0f13e09eebe3"
   },
   "physicalAcceptance": {
     "included": false,

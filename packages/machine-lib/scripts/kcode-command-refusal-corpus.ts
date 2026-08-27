@@ -1,6 +1,9 @@
 #!/usr/bin/env -S node --import tsx
 /** KCode-native refusal gate. Every case keeps one deliberate command defect. */
 
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
 import {
   KNITERATE_7GG_KCODE_PROFILE_V1,
   type KCodeCarrierToken,
@@ -28,8 +31,14 @@ interface PassSpec {
 
 interface RefusalCase {
   id: string;
-  expectedRule: string;
+  expectedBlockingRules: readonly string[];
   source: string;
+}
+
+interface RefusalEvaluation {
+  readonly blockingRules: readonly string[];
+  readonly exportEligible: boolean;
+  readonly rejectionStage: 'parser' | 'validator' | 'none';
 }
 
 function baseBed(selected: readonly number[]): string {
@@ -112,42 +121,53 @@ function replaceLine(
 const CASES: readonly RefusalCase[] = [
   {
     id: 'unsupported-operation',
-    expectedRule: 'kcode.footer-operation',
+    expectedBlockingRules: ['kcode.footer-operation'],
     source: replaceFooter(regular, (line) => line.replace('Kn-Kn', 'No-No')),
   },
   {
     id: 'carrier-seven',
-    expectedRule: 'kcode.footer-carrier',
+    expectedBlockingRules: ['kcode.footer-carrier'],
     source: replaceFooter(regular, (line) => line.replace(' 2 300 ', ' 7 300 ')),
   },
   {
     id: 'quarter-pitch-rack',
-    expectedRule: 'kcode.invalid-rack',
-    source: regular.replace('RACK:0', 'RACK:0.25'),
+    expectedBlockingRules: ['kcode.invalid-rack'],
+    source: regular.replace(
+      '// KCode-native refusal fixture',
+      '// KCode-native refusal fixture\nRACK:0.25',
+    ),
   },
   {
     id: 'missing-carriage-marker',
-    expectedRule: 'kcode.bed-markers',
+    expectedBlockingRules: ['kcode.bed-markers'],
     source: replaceLine(regular, 'FRNT:', (line) => line.replace('/', '_')),
   },
   {
     id: 'padding-selection',
-    expectedRule: 'kcode.bed-padding',
+    expectedBlockingRules: ['kcode.bed-padding'],
     source: regular.replace('FRNT:.....', 'FRNT:...._'),
   },
   {
+    id: 'stitch-selector-G',
+    expectedBlockingRules: ['kcode.field-charset'],
+    source: replaceLine(regular, 'STIF:', (line) => line.replace('6', 'G')),
+  },
+  {
     id: 'wrong-transfer-direction',
-    expectedRule: 'machine-trace.transfer-operation-direction',
-    source: validTransfer.replace('>> Tr-Rr', '<< Tr-Rr'),
+    expectedBlockingRules: ['machine-trace.transfer-operation-direction'],
+    source: render([
+      { rack: 0, direction: '>>', operation: 'Kn-Kn', carrier: '2', front: [100], rear: [] },
+      { rack: 0, direction: '<<', operation: 'Tr-Rr', carrier: '0', front: [100], rear: [100] },
+    ]),
   },
   {
     id: 'unpaired-transfer',
-    expectedRule: 'machine-trace.unknown-action',
+    expectedBlockingRules: ['machine-trace.unknown-action'],
     source: validTransfer.replace(/(REAR:[^\n]*?)-/, '$1_'),
   },
   {
     id: 'empty-transfer',
-    expectedRule: 'machine-trace.unknown-action',
+    expectedBlockingRules: ['machine-trace.unknown-action'],
     source: render([{
       rack: 0,
       direction: '>>',
@@ -159,7 +179,7 @@ const CASES: readonly RefusalCase[] = [
   },
   {
     id: 'selection-outside-carrier',
-    expectedRule: 'machine-trace.selection-outside-carrier',
+    expectedBlockingRules: ['machine-trace.selection-outside-carrier'],
     source: render([{
       rack: 0,
       direction: '>>',
@@ -172,40 +192,68 @@ const CASES: readonly RefusalCase[] = [
   },
 ];
 
-function rules(source: string): string[] {
+function evaluate(source: string): RefusalEvaluation {
   const parsed = parseKCodeDocument(source, {
     profile: KNITERATE_7GG_KCODE_PROFILE_V1,
     dialect: 'knitout-vendor',
     strict: true,
   });
-  if (!parsed.ok) return parsed.diagnostics.map((diagnostic) => diagnostic.rule);
+  if (!parsed.ok) {
+    return {
+      blockingRules: parsed.diagnostics
+        .filter((diagnostic) => diagnostic.severity === 'error')
+        .map((diagnostic) => diagnostic.rule),
+      exportEligible: false,
+      rejectionStage: 'parser',
+    };
+  }
   const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V1);
-  return validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V1)
-    .diagnostics.map((diagnostic) => diagnostic.rule);
+  const validation = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V1);
+  return {
+    blockingRules: validation.diagnostics
+      .filter((diagnostic) => diagnostic.severity === 'error')
+      .map((diagnostic) => diagnostic.rule),
+    exportEligible: validation.ok && validation.profileConformance === 'conformant',
+    rejectionStage: validation.ok ? 'none' : 'validator',
+  };
+}
+
+export function collectKCodeCommandRefusalReport() {
+  const results = CASES.map((testCase) => {
+    const evaluation = evaluate(testCase.source);
+    return {
+      id: testCase.id,
+      expectedBlockingRules: testCase.expectedBlockingRules,
+      ...evaluation,
+      exactRules: JSON.stringify(evaluation.blockingRules)
+        === JSON.stringify(testCase.expectedBlockingRules),
+      refusedExport: !evaluation.exportEligible,
+    };
+  });
+  const noInvalidReachedExport = results.every((result) => result.refusedExport);
+  const ok = noInvalidReachedExport && results.every((result) => result.exactRules);
+  return {
+    kind: 'kniterate-kcode-command-refusal-report',
+    schemaVersion: 2,
+    ok,
+    caseCount: results.length,
+    noInvalidReachedExport,
+    results,
+  } as const;
 }
 
 function main(): void {
-  const results = CASES.map((testCase) => ({
-    id: testCase.id,
-    expectedRule: testCase.expectedRule,
-    matched: rules(testCase.source).includes(testCase.expectedRule),
-  }));
-  const ok = results.every((result) => result.matched);
+  const report = collectKCodeCommandRefusalReport();
   if (process.argv.includes('--json')) {
-    process.stdout.write(`${JSON.stringify({
-      kind: 'kniterate-kcode-command-refusal-report',
-      schemaVersion: 1,
-      ok,
-      caseCount: results.length,
-      results,
-    }, null, 2)}\n`);
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   } else {
-    process.stdout.write(`KCode command refusals: ${results.filter((result) => result.matched).length}/${results.length} pinned${ok ? '' : ' - FAILED'}\n`);
-    for (const result of results) {
-      process.stdout.write(`  ${result.matched ? '✓' : '✗'} ${result.id} -> ${result.expectedRule}\n`);
+    process.stdout.write(`KCode command refusals: ${report.results.filter((result) => result.exactRules && result.refusedExport).length}/${report.results.length} pinned${report.ok ? '' : ' - FAILED'}\n`);
+    for (const result of report.results) {
+      process.stdout.write(`  ${result.exactRules && result.refusedExport ? '✓' : '✗'} ${result.id} -> ${result.expectedBlockingRules.join(', ')} (${result.rejectionStage})\n`);
     }
   }
-  if (!ok) process.exit(2);
+  if (!report.ok) process.exit(2);
 }
 
-main();
+const invokedPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : null;
+if (invokedPath === import.meta.url) main();

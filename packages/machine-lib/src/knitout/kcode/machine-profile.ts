@@ -72,6 +72,22 @@ export interface KCodeEvidence {
   readonly note?: string
 }
 
+/**
+ * Authority boundary for V1 command interpretation. The official KCode
+ * specification governs the serialized logical language. It does not resolve
+ * how a controller revision maps transfer tokens to observed physical motion.
+ */
+export interface KCodeCommandAuthorityV1 {
+  readonly serializedCommandSemantics: 'official-kcode-specification-v1'
+  readonly physicalTransferDirection: 'unresolved-authoritative-conflict'
+  readonly validationClaim: 'serialized-command-conformance-only'
+  readonly controllerAcceptance: 'not-established-by-software-validation'
+  readonly evidence: {
+    readonly serializedSpecification: KCodeEvidence
+    readonly physicalMachineManual: KCodeEvidence
+  }
+}
+
 export interface KCodeNumericBound {
   /** `null` means the contract does not have evidence for this bound. */
   readonly value: number | null
@@ -121,6 +137,7 @@ export interface KCodeMachineProfileV1 {
   readonly supportedDialects: readonly KCodeDialect[]
   readonly dialects: Readonly<Record<KCodeDialect, KCodeDialectContract>>
   readonly operations: Readonly<Record<KCodeOperationV1, KCodeOperationContractV1>>
+  readonly commandAuthority: KCodeCommandAuthorityV1
 
   readonly machine: {
     readonly gauge: number
@@ -177,11 +194,10 @@ export interface KCodeMachineProfileV1 {
   readonly loopStackSoftwarePolicy: LoopStackSoftwarePolicyV1
 
   readonly stitchSelectors: {
-    /** Machine/editor selector levels, not the wider KCode token alphabet. */
+    /** Official KCode 1.0 selector levels. */
     readonly documentedBounds: KCodeNumericRange
     readonly integerOnly: true
-    /** The pinned backend can encode 0-9/A-Z even though 16-35 are not
-     * documented machine selector levels. */
+    /** Accepted serialized alphabet. This may not exceed the official range. */
     readonly encoding: {
       readonly alphabet: string
       readonly encodableBounds: KCodeNumericRange
@@ -336,6 +352,24 @@ export const KNITERATE_7GG_KCODE_PROFILE_V1: KCodeMachineProfileV1 = {
   dialect: 'knitout-vendor',
   supportedDialects: ['app', 'knitout-vendor'],
   operations: KNITERATE_KCODE_OPERATION_CONTRACTS_V1,
+  commandAuthority: {
+    serializedCommandSemantics: 'official-kcode-specification-v1',
+    physicalTransferDirection: 'unresolved-authoritative-conflict',
+    validationClaim: 'serialized-command-conformance-only',
+    controllerAcceptance: 'not-established-by-software-validation',
+    evidence: {
+      serializedSpecification: evidence(
+        'official-documented',
+        [OFFICIAL_KCODE_SPECS],
+        'The official KCode 1.0 specification is authoritative for the logical Tr/Rr/Rl token language accepted by profile V1.',
+      ),
+      physicalMachineManual: evidence(
+        'unverified',
+        [OFFICIAL_MACHINE_MANUAL],
+        'The machine manual describes transfer traverse/bed direction differently. Software validation therefore makes no controller-observed physical-direction claim.',
+      ),
+    },
+  },
   dialects: {
     app: {
       id: 'app',
@@ -401,18 +435,18 @@ export const KNITERATE_7GG_KCODE_PROFILE_V1: KCodeMachineProfileV1 = {
   loopStackSoftwarePolicy: KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1,
   stitchSelectors: {
     documentedBounds: {
-      lower: officialBound(0),
-      upper: officialBound(15),
+      lower: bound(0, 'official-documented', [OFFICIAL_KCODE_SPECS]),
+      upper: bound(15, 'official-documented', [OFFICIAL_KCODE_SPECS]),
     },
     integerOnly: true,
     encoding: {
-      alphabet: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      alphabet: '0123456789ABCDEF',
       encodableBounds: {
-        lower: bound(0, 'pinned-implementation', [PINNED_BACKEND]),
-        upper: bound(35, 'pinned-implementation', [PINNED_BACKEND]),
+        lower: bound(0, 'official-documented', [OFFICIAL_KCODE_SPECS]),
+        upper: bound(15, 'official-documented', [OFFICIAL_KCODE_SPECS]),
       },
-      evidence: evidence('pinned-implementation', [PINNED_BACKEND],
-        'Encoding capacity is not evidence that selectors 16..35 are supported machine settings.'),
+      evidence: evidence('official-documented', [OFFICIAL_KCODE_SPECS],
+        'KCode 1.0 defines the sixteen stitch selector tokens 0-9 and A-F.'),
     },
   },
   processSettings: {

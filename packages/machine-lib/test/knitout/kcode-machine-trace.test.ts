@@ -332,7 +332,7 @@ describe('MachineTraceV1 KCode projection', () => {
     expect(() => projectKCodeMachineTrace(
       withSelectedCells(200_000),
       KNITERATE_7GG_KCODE_PROFILE_V1,
-    )).toThrow(/FRNT markers must be/)
+    )).toThrow(/FRNT markers must be .*; received none/)
   })
 
   it('projects knit, tuck, split, drop, and move semantics without physical labels', () => {
@@ -429,7 +429,7 @@ describe('MachineTraceV1 KCode projection', () => {
     }, /does not define dialect/)
     assertFailure(withFirst({
       frnt: { ...first.frnt, value: first.frnt.value.replace('/', '_') },
-    }), KNITERATE_7GG_KCODE_PROFILE_V1, /FRNT markers must be/)
+    }), KNITERATE_7GG_KCODE_PROFILE_V1, /FRNT markers must be .*; received 2 \.\.\. 2 \.\.\. \\/)
     const selectedPass = document.passes[selectedTracePass.index]!
     const selectedCarrier = selectedPass.footer.carrier!
     assertFailure({

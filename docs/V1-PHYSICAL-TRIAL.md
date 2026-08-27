@@ -19,8 +19,9 @@ then writes `out/v1-knit-trial/`:
   and estimated time
 - `OPERATOR-CHECKLIST.md` for the actual machine session
 - `command-legality.json`, binding the profile/contract, proof receipt, exact
-  KCode hash, pass count, and present command combinations with controller
-  observation explicitly pending
+  KCode hash, pass count, exact scheduled-versus-parsed machine-field match,
+  and present command combinations with controller observation explicitly
+  pending
 - `CONTROLLER-REVIEW.md`, preserving the software/controller evidence boundary
 
 `release:trial` first runs `pnpm verify:kcode:check`; it cannot package an

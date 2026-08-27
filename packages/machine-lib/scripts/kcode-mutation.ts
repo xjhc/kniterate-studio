@@ -83,7 +83,10 @@ function main(): void {
         replacement: mutant.replacement,
         reason: mutant.statusReason ?? '',
       };
-      if (mutant.statusReason?.startsWith('Diagnostic prose only;')) {
+      if (
+        mutant.mutatorName === 'StringLiteral'
+        && mutant.statusReason?.startsWith('Diagnostic prose only;')
+      ) {
         diagnosticProseExclusions.push(normalized);
       } else if (mutant.statusReason?.startsWith('Equivalent mutant:')) {
         equivalentMutantSuppressions.push(normalized);

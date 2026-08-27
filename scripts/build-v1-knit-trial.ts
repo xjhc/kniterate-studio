@@ -12,6 +12,7 @@ import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../packages/machine-lib/src/knit
 import { projectKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-trace.js';
 import { validateKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-validator.js';
 import { parseKCodeDocument } from '../packages/machine-lib/src/knitout/kcode/parser.js';
+import { compareScheduledPassesToMachineTrace } from '../packages/machine-lib/src/knitout/kcode/scheduled-trace-diff.js';
 import { validateKnitoutProgram } from '../packages/machine-lib/src/validators/knitout-program.js';
 import { computeCompilerFingerprint, sha256Bytes } from '../packages/machine-lib/scripts/registry-support.js';
 
@@ -104,6 +105,13 @@ export function compileCurrentV1KnitTrial() {
     throw new Error(`generated KCode failed strict command parsing: ${parsedKCode.diagnostics.map((diagnostic) => `${diagnostic.rule}: ${diagnostic.message}`).join('; ')}`);
   }
   const machineTrace = projectKCodeMachineTrace(parsedKCode.document, KNITERATE_7GG_KCODE_PROFILE_V1);
+  const scheduledTraceComparison = compareScheduledPassesToMachineTrace(
+    converted.scheduledPasses,
+    machineTrace,
+  );
+  if (!scheduledTraceComparison.ok) {
+    throw new Error(`generated KCode differs from its scheduled machine fields: ${scheduledTraceComparison.mismatches.map((mismatch) => mismatch.message).join('; ')}`);
+  }
   const machineValidation = validateKCodeMachineTrace(machineTrace, KNITERATE_7GG_KCODE_PROFILE_V1);
   if (!machineValidation.ok || machineValidation.profileConformance !== 'conformant') {
     throw new Error(`generated KCode failed command-legality validation: ${machineValidation.diagnostics.map((diagnostic) => `${diagnostic.rule}: ${diagnostic.message}`).join('; ')}`);
@@ -144,6 +152,7 @@ export function compileCurrentV1KnitTrial() {
       modeledState: machineValidation.modeledState,
       operationalPolicy: machineValidation.operationalPolicy,
       controllerAcceptance: machineValidation.controllerAcceptance,
+      scheduledTraceComparison,
     },
     coverage: {
       operations: [...new Set(machineTrace.passes.map((pass) => pass.operation))].sort(),
@@ -155,6 +164,7 @@ export function compileCurrentV1KnitTrial() {
     controllerObserved: 'pending',
     limitations: [
       'Software validation establishes profile conformance, not controller acceptance.',
+      'Transfer profile conformance covers serialized logical commands only; controller-observed physical direction remains unresolved.',
       'Physical needle numbering, carrier lifecycle, and operational setting safety remain outside this claim.',
     ],
   } as const;

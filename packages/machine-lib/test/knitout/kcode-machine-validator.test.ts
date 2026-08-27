@@ -17,11 +17,25 @@ import {
   type MachineTraceV1,
 } from '../../src/knitout/kcode/machine-trace.js'
 import {
-  validateKCodeMachineTrace,
+  validateKCodeMachineTrace as validateKCodeMachineTraceImpl,
 } from '../../src/knitout/kcode/machine-validator.js'
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
 import type { KCodeSourceSpan } from '../../src/knitout/kcode/types.js'
 import { knitoutToKCodeWithTrace } from '../../src/knitout/kniterate/to-kcode.js'
+import { recordKCodeRuntimeRules } from '../../scripts/kcode-rule-runtime-ledger.js'
+
+const WITNESS_SOURCE = 'test/knitout/kcode-machine-validator.test.ts'
+const validateKCodeMachineTrace = (
+  ...args: Parameters<typeof validateKCodeMachineTraceImpl>
+): ReturnType<typeof validateKCodeMachineTraceImpl> => {
+  const result = validateKCodeMachineTraceImpl(...args)
+  recordKCodeRuntimeRules(
+    'machine-trace-validator',
+    WITNESS_SOURCE,
+    result.diagnostics.map((diagnostic) => diagnostic.rule),
+  )
+  return result
+}
 
 const semanticProgram = [
   ';!knitout-2',
@@ -276,7 +290,7 @@ describe('KCode-native MachineTrace validation', () => {
       maxStack: 1,
     })
     expect(createHash('sha256').update(JSON.stringify(report)).digest('hex')).toBe(
-      'f2fddc4e04a808f736260f19f1be5db38f76079d0db40995c180888e1c1c32b0',
+      '5a9ae8998b1a8698768b8323a260e09302f6ad8695f1dcb5fffbd1bd976b779d',
     )
 
     // The strict marker-free coordinate is the identity shared by a producer
@@ -592,13 +606,6 @@ describe('KCode-native MachineTrace validation', () => {
           token: '4',
         },
       }))],
-      ['machine-trace.selection-stitch-documented-range', regularWithSelection(changedSelection({
-        stitchSelector: {
-          ...basePass.selections.front[0]!.stitchSelector,
-          token: 'G',
-          encodedValue: 16,
-        },
-      }))],
       ['machine-trace.duplicate-selection', withPass({
         ...basePass,
         selections: {
@@ -765,7 +772,7 @@ describe('KCode-native MachineTrace validation', () => {
       malformedDigest.update(JSON.stringify(report))
     }
     expect(malformedDigest.digest('hex')).toBe(
-      '5b69b9a4fe82371bc2a4df8183e75b0a3ca53f93b9401cd92881c8c100396737',
+      '7be958fa28872f35fc2e6707a4bfb67e4e07e7c0934f3c103a6f1d791c48b64f',
     )
 
     const orphan = parseKCodeDocument('HOME\nRACK:0\nSTIF:_\n', {
@@ -773,6 +780,11 @@ describe('KCode-native MachineTrace validation', () => {
       dialect: 'knitout-vendor',
       strict: true,
     })
+    recordKCodeRuntimeRules(
+      'raw-kcode-parser',
+      WITNESS_SOURCE,
+      orphan.diagnostics.map((diagnostic) => diagnostic.rule),
+    )
     expect(orphan.diagnostics.map((diagnostic) => diagnostic.rule)).toContain(
       'kcode.orphan-field',
     )
@@ -1041,6 +1053,10 @@ describe('KCode-native MachineTrace validation', () => {
       {
         code: 'loop-stack-operational-limit-unverified',
         message: 'Stack depth is measured and checked against a conservative software policy; the policy is not a measured physical-safe or physical-failure limit.',
+      },
+      {
+        code: 'transfer-physical-direction-conflict-unresolved',
+        message: 'Transfer tokens conform to the official serialized KCode contract; conflicting machine-manual wording leaves controller-observed physical direction unestablished.',
       },
     ])
   })
@@ -1404,6 +1420,11 @@ describe('KCode-native MachineTrace validation', () => {
         occurrences: 2,
       }),
     ]))
+    expect(report.diagnostics.slice(0, 2).map((diagnostic) =>
+      diagnostic.message)).toEqual([
+      'MachineTrace diagnostics for machine-trace.drop-empty were truncated after 512 total detailed findings; omitted 2 additional warning findings.',
+      'MachineTrace diagnostics for machine-trace.transfer-source-empty were truncated after 512 total detailed findings; omitted 1 additional error finding.',
+    ])
   })
 
   it('property-checks stop containment with a fixed seed', () => {
@@ -1497,7 +1518,7 @@ describe('KCode-native MachineTrace validation', () => {
       reportDigest.update(JSON.stringify(report))
     }
     expect(reportDigest.digest('hex')).toBe(
-      'fbb92c8d038c48d3d6352fbc3fce486a95052cacac43ef42849de2190ef7883c',
+      'db7e1e91036fd1c17d4eeca0b6cbec0876aa6821147b37b79defe0fabe4b9d8a',
     )
   })
 })

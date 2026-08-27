@@ -248,7 +248,6 @@ function decodeBedMarkers(
   const actual = markers.map((marker) => marker.token)
   if (actual.length !== expected.length || actual.some((token, index) => token !== expected[index])) {
     // Stryker disable StringLiteral: Diagnostic prose only; marker structure is asserted independently.
-    // Stryker disable next-line ConditionalExpression,LogicalOperator,EqualityOperator: Diagnostic prose only; marker structure is asserted independently.
     const received = actual.length === 0 ? 'none' : actual.join(' ... ')
     fail(
       `pass ${passIndex} ${field} markers must be ${expected.join(' ... ')}; `

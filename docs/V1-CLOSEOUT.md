@@ -78,7 +78,7 @@ Excerpt from `packages/machine-lib/reference/fairisle.kc`, columns elided.
 | Row | Meaning |
 | --- | --- |
 | `FRNT` / `REAR` | Per-slot needle selection on each bed. `-` operated, `_` idle, `.` margin. The `/`, `\` and digit glyphs embedded in the row are carriage and carrier **stop markers** — where the hardware starts, stops, and parks. |
-| `STIF` / `STIR` | Per-needle stitch-size selectors, one character each (`0`–`9`, then `A`–`Z`). |
+| `STIF` / `STIR` | Per-needle stitch-size selectors, one character each (the sixteen KCode 1.0 tokens `0`–`9`, then `A`–`F`). |
 | footer | Direction (`>>` / `<<`), cam type (`Kn-Kn` knit, `Tu-Tu` tuck, `Tr-Rr` transfer…), carrier (`0` means none), speed, roller. |
 | geometry | 283 columns per row: 15 padding + a 253-column needle domain + 15 padding, against 252 physical needles per bed. That one-column discrepancy is an open evidence question, not a solved mapping. |
 

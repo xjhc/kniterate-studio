@@ -7,7 +7,21 @@ import {
   KNITERATE_7GG_KCODE_PROFILE_V1,
   type KCodeDialect,
 } from '../../src/knitout/kcode/machine-profile.js'
-import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
+import { parseKCodeDocument as parseKCodeDocumentImpl } from '../../src/knitout/kcode/parser.js'
+import { recordKCodeRuntimeRules } from '../../scripts/kcode-rule-runtime-ledger.js'
+
+const WITNESS_SOURCE = 'test/knitout/strict-kcode-document.test.ts'
+const parseKCodeDocument = (
+  ...args: Parameters<typeof parseKCodeDocumentImpl>
+): ReturnType<typeof parseKCodeDocumentImpl> => {
+  const result = parseKCodeDocumentImpl(...args)
+  recordKCodeRuntimeRules(
+    'raw-kcode-parser',
+    WITNESS_SOURCE,
+    result.diagnostics.map((diagnostic) => diagnostic.rule),
+  )
+  return result
+}
 
 const referenceDirectory = resolve(__dirname, '../../reference')
 const swatch = readFileSync(resolve(referenceDirectory, 'swatch.kc'), 'utf8')
@@ -235,6 +249,36 @@ describe('strict lossless KCode document parser', () => {
 
     expect(result.ok).toBe(false)
     expect(result.diagnostics.map((diagnostic) => diagnostic.rule)).toContain('kcode.bed-markers')
+    expect(result.diagnostics.find((diagnostic) =>
+      diagnostic.rule === 'kcode.bed-markers')?.message).toBe(
+      'FRNT requires one ordered /...\\ carriage-marker pair and exactly two 2 carrier markers.',
+    )
+
+    const carrierless = firstPassDocument(swatch)
+      .split('\n')
+      .map((line) => {
+        if (line.startsWith('FRNT:') || line.startsWith('REAR:')) {
+          return line.replaceAll('2', '')
+        }
+        if (line.startsWith('>>') || line.startsWith('<<')) {
+          return line.replace(' Kn-Kn 2 ', ' Kn-Kn 0 ')
+        }
+        return line
+      })
+      .join('\n')
+    const invalidCarrierless = replaceFirstLine(
+      carrierless,
+      (line) => line.startsWith('FRNT:'),
+      (line) => line.replace('/', '_'),
+    )
+    const carrierlessResult = parseKCodeDocument(
+      invalidCarrierless,
+      strictVendorOptions,
+    )
+    expect(carrierlessResult.diagnostics.find((diagnostic) =>
+      diagnostic.rule === 'kcode.bed-markers')?.message).toBe(
+      'FRNT requires one ordered /...\\ carriage-marker pair and no carrier markers.',
+    )
   })
 
   it('rejects syntactically shaped but unsupported footer operations', () => {

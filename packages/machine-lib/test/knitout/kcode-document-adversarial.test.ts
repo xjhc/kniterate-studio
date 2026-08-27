@@ -2,15 +2,42 @@ import { createHash } from 'node:crypto'
 
 import { describe, expect, it } from 'vitest'
 
-import { emitKCodeDocumentBytes, parseKCodeBytes } from '../../src/knitout/kcode/bytes.js'
+import { emitKCodeDocumentBytes, parseKCodeBytes as parseKCodeBytesImpl } from '../../src/knitout/kcode/bytes.js'
 import { emitKCodeDocument } from '../../src/knitout/kcode/emitter.js'
 import { KNITERATE_7GG_KCODE_PROFILE_V1 } from '../../src/knitout/kcode/machine-profile.js'
 import {
   KCODE_RESOURCE_LIMITS_V1,
   MAX_KCODE_SOURCE_CODE_UNITS,
-  parseKCodeDocument,
+  parseKCodeDocument as parseKCodeDocumentImpl,
 } from '../../src/knitout/kcode/parser.js'
 import type { KCodeDiagnosticRule } from '../../src/knitout/kcode/types.js'
+import { recordKCodeRuntimeRules } from '../../scripts/kcode-rule-runtime-ledger.js'
+
+const WITNESS_SOURCE = 'test/knitout/kcode-document-adversarial.test.ts'
+
+const parseKCodeDocument = (
+  ...args: Parameters<typeof parseKCodeDocumentImpl>
+): ReturnType<typeof parseKCodeDocumentImpl> => {
+  const result = parseKCodeDocumentImpl(...args)
+  recordKCodeRuntimeRules(
+    'raw-kcode-parser',
+    WITNESS_SOURCE,
+    result.diagnostics.map((diagnostic) => diagnostic.rule),
+  )
+  return result
+}
+
+const parseKCodeBytes = (
+  ...args: Parameters<typeof parseKCodeBytesImpl>
+): ReturnType<typeof parseKCodeBytesImpl> => {
+  const result = parseKCodeBytesImpl(...args)
+  recordKCodeRuntimeRules(
+    'raw-kcode-parser',
+    WITNESS_SOURCE,
+    result.diagnostics.map((diagnostic) => diagnostic.rule),
+  )
+  return result
+}
 
 const STRICT_VENDOR_OPTIONS = {
   profile: KNITERATE_7GG_KCODE_PROFILE_V1,
@@ -502,6 +529,11 @@ describe('strict KCode adversarial rail', () => {
       mutate: (source: string) => replaceLine(source, (line) => line.startsWith('STIF:'), (line) => line.replace('6', '*')),
     },
     {
+      name: 'selector G above the official KCode 1.0 range',
+      rules: ['kcode.field-charset'] as const,
+      mutate: (source: string) => replaceLine(source, (line) => line.startsWith('STIF:'), (line) => line.replace('6', 'G')),
+    },
+    {
       name: 'missing carriage marker',
       rules: ['kcode.bed-markers'] as const,
       mutate: (source: string) => replaceLine(source, (line) => line.startsWith('FRNT:'), (line) => line.replace('/', '_')),
@@ -765,6 +797,14 @@ describe('strict KCode adversarial rail', () => {
     expect(first.diagnostics).toEqual(second.diagnostics)
     expect(emitKCodeDocument(first.document)).toBe(source)
     expect(contractDigest(first.diagnostics)).toMatchSnapshot()
+
+    const singular = parseKCodeDocument('X\n'.repeat(510), STRICT_VENDOR_OPTIONS)
+    expect(singular.diagnostics.find((diagnostic) =>
+      diagnostic.rule === 'kcode.diagnostic-summary')).toMatchObject({
+      rule: 'kcode.diagnostic-summary',
+      occurrences: 1,
+      message: 'KCode diagnostics were truncated after 512 detailed findings; omitted 1 additional error finding (1 findings omitted across all severities).',
+    })
   })
 
   it('summarizes omitted errors and warnings separately in non-strict intake', () => {

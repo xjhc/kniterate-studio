@@ -749,6 +749,13 @@ describe('fresh V1 physical release gate', () => {
     expect(second.commandLegality).toEqual(first.commandLegality)
     expect(first.commandLegality.artifact.kcodeSha256).toBe(sha256Bytes(first.kcodeText))
     expect(first.commandLegality.artifact.profileConformance).toBe('conformant')
+    expect(first.commandLegality.artifact.scheduledTraceComparison).toEqual({
+      schemaVersion: 1,
+      ok: true,
+      scheduledPassCount: first.manifest.output.emittedPasses,
+      tracePassCount: first.manifest.output.emittedPasses,
+      mismatches: [],
+    })
     expect(first.commandLegality.coverage.combinations.length).toBeGreaterThan(0)
     expect(first.commandLegality.controllerObserved).toBe('pending')
     expect(first.controllerReview).toContain('controller-observed status is **pending**')

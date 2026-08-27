@@ -450,7 +450,7 @@ function main(): void {
       directions: 2,
       carrierTokens: 7,
       rackValues: 17,
-      kcodeNativeRefusalCases: 9,
+      kcodeNativeRefusalCases: 10,
       oracle: 'test/knitout/kcode-legality-spec.ts',
       contractSha256: sha256(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V1.operations)),
       oracleSha256: sha256(readFileSync(resolve(process.cwd(), 'test/knitout/kcode-legality-spec.ts'))),
