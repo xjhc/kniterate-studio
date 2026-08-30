@@ -1,346 +1,516 @@
-# KCODE-COMPILER-GAPS — verified baseline and gap register
+# KCODE-COMPILER-GAPS — tracked baseline and corrected gap register
 
-**Evidence class: local software only.** Measured 2026-08-29 against the working
-tree at `accumulate` / `cff1d6e`, using `packages/machine-lib`'s public API, with
-the tree left unmodified. No deployed-browser evidence and no physical-machine
-evidence is claimed anywhere in this document.
+**Evidence class: tracked local software evidence plus explicitly labelled external
+documentation.** Revised 2026-08-29 against `accumulate`. The compiler source
+baseline is `cff1d6e`; the reproducible evidence is the checked-in
+[software-proof receipt](../packages/machine-lib/out/kcode-proof/proof-manifest.json)
+and [mutation receipt](../packages/machine-lib/out/kcode-proof/mutation-manifest.json).
+No deployed instance, controller acceptance, physical-machine run, or knitted
+fabric outcome is claimed here.
 
-Written against two external reference points: Agnes Cameron's knitout-js
-cheatsheet and Local First workshop notes
-(`soup.agnescameron.info/2026/04/09/cheatsheet.html`,
-`.../2026/07/09/local-first.html`), and the Customist Studio 2.5 release notes
-and changelog (`kniterate.com`, `editor.kniterate.design/changelog`).
+External reference points:
+
+- Agnes Cameron's
+  [knitout-js cheatsheet](https://soup.agnescameron.info/2026/04/09/cheatsheet.html)
+  and [Local First workshop notes](https://soup.agnescameron.info/2026/07/09/local-first.html);
+- Kniterate's [machine specification](https://www.kniterate.com/product/kniterate-the-digital-knitting-machine/),
+  [options-column documentation](https://support.kniterate.com/hc/en-us/articles/11675168630045-THE-OPTIONS-COLUMN),
+  and [roller guide](https://support.kniterate.com/hc/en-us/articles/360019405297-Adjusting-the-rollers);
+- the [Customist Studio changelog](https://editor.kniterate.design/changelog)
+  and [2.5 release notes](https://www.kniterate.com/2026/07/29/customist-studio-2-5-new-template-editor-and-much-more/).
 
 ---
 
 ## Finding
 
-**The compiler exists. The gaps are at its edges, not its centre.**
+**The compiler and its software-proof rail exist. The remaining gaps are
+supported entry points, higher-level models, and physical evidence.**
 
-`packages/machine-lib` already contains a strict lossless KCode parser, an exact
-machine-movement projection, a 43-rule kinematic and loop-state validator, a
-renderer contract, and a knitout front end that lowers through the pinned vendor
-backend. The full reference corpus and a set of deliberately malformed files were
-run through it; nothing slipped past.
+For the fixed `kniterate-7gg-kcode@2` profile, the repository has lossless
+byte-preserving KCode intake, pinned Knitout lowering, strict emitted-KCode
+inspection, scheduled-pass differential checks, a projection of encoded KCode
+fields into `MachineTraceV1`, a 43-rule structural, semantic, kinematic, and
+operational validator, and deterministic renderer input.
 
-What is missing is everything *around* that core: no way to run it without a
-browser, no motion model, no picture of the fabric, and no bridge from a KCode
-column to a physical needle.
+“Exact” in this document means exact programmed KCode semantics under the pinned
+profile and dialect. It does not mean controller-observed motion, operationally
+safe settings, or the fabric produced by a machine.
+
+The first missing edge is a supported one-file headless verdict command. The
+remaining gaps concern a conditional programmed-motion model, fabric topology
+and rendering, verified coordinate mapping, format-provenance disclosure,
+physical setting evidence, and a legible foreign-file pass metric.
 
 ---
 
-## 1. Verified baseline
+## 1. Tracked baseline
 
-| Metric | Result |
+The baseline intentionally omits the earlier ad hoc timing run,
+hostile-mutation table, and hand-written 688-operation program because their
+exact inputs and outputs were not retained as proof artifacts. The tracked
+receipts establish the following instead.
+
+| Tracked evidence | Result |
 | --- | --- |
-| Reference `.kc` files that parse, trace, validate and project a scene | 13 / 13 |
-| Validation errors across the corpus | 0 |
-| Full chain on the largest file (`sophie.kc`, 4.4 MB, 3,766 passes) | ~0.63 s |
-| Hostile mutations caught | 14 / 14 |
-| Distinct rules | 87 (30 parser + 43 machine + 14 knitout) |
+| Fixed profile | `kniterate-7gg-kcode@2`; 252 needles per bed |
+| Reference corpus | 13 fixtures; 25,111,478 bytes; 20,568 passes; 710,063 projected actions |
+| Reference validation | 0 errors; 403 raw validator warnings |
+| Studio corpus verdicts | 12 `Surface-proven (imported)`; 1 `Blocked` |
+| Warning disposition | 220 depth-three loop-stack observations across five fixtures are non-blocking information at the foreign Studio boundary; `fox-baby-beanie.kc` remains blocked by 183 empty-drop warnings |
+| Command-legality matrix | 1,904 cases: 8 operations × 2 directions × 7 carrier tokens × 17 rack values |
+| Native KCode refusal rail | 10 invalid-command cases; none export-eligible |
+| Named rule ledger | 30 parser rules + 43 validator rules = 73 runtime-witnessed rules; all 70 blocking rules have targeted witnesses; 3 rules are advisory-only |
+| Source mutation rail | 2,420 killed; 0 survived, timed out, uncovered, compile-error, runtime-error, or pending; 60 reviewed ignored mutants |
+| Receipt verdict | `software-proven`; every listed gate passes; `auditFailures` is empty |
+| Physical acceptance | Excluded; the Knit-proven registry has no entries and `pnpm release:physical-check` remains separate |
 
-### 1.1 Corpus timings
+The receipt supplies the per-fixture validator counts. The passing fingerprinted
+Studio integration gate plus [STATUS.md](./STATUS.md) supplies the current
+foreign verdict/reclassification policy, and the swatch-registry check supplies
+the zero-entry physical state:
 
-Parse → `projectKCodeMachineTrace` → `validateKCodeMachineTrace` →
-`projectMachineScene`, `resourceProfile: 'foreign-v1'`, `dialect: 'app'`.
+| Fixture | Passes | Validator errors | Validator warnings | Studio verdict |
+| --- | ---: | ---: | ---: | --- |
+| `2x2-rib-beanie.kc` | 530 | 0 | 1 | `Surface-proven (imported)` |
+| `back.kc` | 2,108 | 0 | 82 | `Surface-proven (imported)` |
+| `color-swatch-bindoff.kc` | 458 | 0 | 0 | `Surface-proven (imported)` |
+| `dbj.kc` | 498 | 0 | 0 | `Surface-proven (imported)` |
+| `fairisle.kc` | 286 | 0 | 0 | `Surface-proven (imported)` |
+| `fox-baby-beanie.kc` | 220 | 0 | 183 | `Blocked` |
+| `front.kc` | 2,544 | 0 | 64 | `Surface-proven (imported)` |
+| `jacquard.kc` | 350 | 0 | 0 | `Surface-proven (imported)` |
+| `sleeves.kc` | 1,994 | 0 | 68 | `Surface-proven (imported)` |
+| `sophie.kc` | 3,766 | 0 | 5 | `Surface-proven (imported)` |
+| `sophie2.kc` | 3,716 | 0 | 0 | `Surface-proven (imported)` |
+| `sophie_stripe.kc` | 3,734 | 0 | 0 | `Surface-proven (imported)` |
+| `swatch.kc` | 364 | 0 | 0 | `Surface-proven (imported)` |
 
-| File | Passes | Parse | Trace | Validate | Scene | Errors | Warnings |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `fairisle.kc` | 286 | 27 ms | 31 ms | 26 ms | 6 ms | 0 | 0 |
-| `fox-baby-beanie.kc` | 220 | 22 ms | 30 ms | 36 ms | 10 ms | 0 | 183 |
-| `jacquard.kc` | 350 | 28 ms | 33 ms | 37 ms | 11 ms | 0 | 0 |
-| `swatch.kc` | 364 | 31 ms | 38 ms | 48 ms | 11 ms | 0 | 0 |
-| `color-swatch-bindoff.kc` | 458 | 44 ms | 37 ms | 28 ms | 8 ms | 0 | 0 |
-| `dbj.kc` | 498 | 46 ms | 42 ms | 58 ms | 17 ms | 0 | 0 |
-| `2x2-rib-beanie.kc` | 530 | 49 ms | 41 ms | 89 ms | 28 ms | 0 | 1 |
-| `sleeves.kc` | 1,994 | 139 ms | 99 ms | 146 ms | 41 ms | 0 | 68 |
-| `back.kc` | 2,108 | 153 ms | 125 ms | 278 ms | 66 ms | 0 | 82 |
-| `front.kc` | 2,544 | 167 ms | 155 ms | 226 ms | 70 ms | 0 | 64 |
-| `sophie2.kc` | 3,716 | 252 ms | 153 ms | 175 ms | 44 ms | 0 | 0 |
-| `sophie_stripe.kc` | 3,734 | 246 ms | 144 ms | 163 ms | 32 ms | 0 | 0 |
-| `sophie.kc` | 3,766 | 273 ms | 156 ms | 118 ms | 86 ms | 0 | 5 |
+Run the deterministic receipt check from the repository root:
 
-This matches the split recorded in `STATUS.md` (12 Surface-proven, 1 Blocked on
-`fox-baby-beanie.kc`'s 183 empty-drop warnings).
+```bash
+pnpm verify:kcode:check
+```
 
-### 1.2 Hostile probe
-
-Each mutation applied to a known-good `fairisle.kc` so only the field under test
-changes.
-
-| Mutation | Caught at | Rule that fired | Rule source |
-| --- | --- | --- | --- |
-| `RACK:5` (beyond ±4) | parse | `kcode.invalid-rack` | documented envelope |
-| `RACK:0.25` (breaks 0.5 step) | parse | `kcode.invalid-rack` | cheatsheet rule |
-| carrier `7` in footer | parse | `kcode.footer-carrier` | cheatsheet rule |
-| stitch selector `G` (above `F`) | parse | `kcode.field-charset` | KCode 1.0 alphabet |
-| `Zz-Zz` operation token | parse | `kcode.footer-operation` | 8-operation contract |
-| remove `HOME` | parse | `kcode.rack-order` | document grammar |
-| remove initial `RACK:0` | parse | `kcode.missing-initial-rack` | document grammar |
-| flip pass 1 direction | validate | `carriage-discontinuity` + `carrier-discontinuity` | kinematic |
-| `Kn-Kn` → `Tr-Rl` on a `>>` pass | validate | `transfer-operation-direction` (+65 more) | operation contract |
-| 4 stacked tucks | validate | `loop-stack-policy` × 32 warnings | cheatsheet: max 2 tucks |
-| 10 stacked tucks | validate | `loop-stack-policy` × 128 errors + 126 warnings | cheatsheet: max 2 tucks |
-| speed `5000` | validate | `setting-documented-range` × 1 warning | advisory only — see gap 06 |
-| roller `-9999` | validate | `setting-documented-range` × 1 warning | advisory only — see gap 06 |
-
-The loop-stack ladder escalates exactly as
-`KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1` specifies (`warningAbove: 2`,
-`errorAbove: 3`), which is the software expression of the cheatsheet's "don't put
-more than two tuck stitches on top of each other".
-
-### 1.3 Hand-written knitout, end to end
-
-A 688-op knitout program was written by hand in exactly the idiom the cheatsheet
-teaches — `in 3`, an alternating tuck cast-on, ten stockinette rows, racked rib
-transfers at `rack 0.5`, drops, `out 3`, needles 50–89.
-
-| Stage | Result |
-| --- | --- |
-| `parseKnitoutProgram` | 688 ops, 0 issues |
-| `validateKnitoutProgram` | clean |
-| `knitoutToKCodeWithTrace` (pinned backend) | ok, 40 scheduled passes, 3 informational warnings |
-| Emitted KCode strict parse | ok, 40 passes |
-| `validateKCodeMachineTrace` | 0 errors, 0 warnings |
-
-**The route the articles describe — write it in JS or knitout, then check it
-before it touches the machine — already works end to end in this repo.**
+The evidence boundary is defined in
+[KCODE-SOFTWARE-PROOF.md](./KCODE-SOFTWARE-PROOF.md). These results establish
+parsing, lowering, encoded command semantics, replay, differential checks where
+a backend schedule exists, and product verdict behavior. They do not establish
+controller acceptance, collision dynamics, safe physical settings, physical
+needle labels, yarn
+behavior, elapsed duration, or knitted outcome.
 
 ---
 
 ## 2. Coverage against both toolchains
 
-The knitout-js chain is JavaScript → Knitout → KCode. Studio's chain is Chart →
-Knitout → KCode. They converge from the knitout stage onward and share every
-downstream guarantee, which is why the gaps cluster at the two ends.
+The external workflow is JavaScript → Knitout → KCode. Studio's authored
+workflow is Chart → Knitout → KCode, while foreign intake can begin at either
+`.k` or `.kc`. The paths share downstream KCode inspection, but `.k` retains
+source information that serialized KCode does not.
 
-| Stage | knitout-js (the articles) | Studio (this repo) |
-| --- | --- | --- |
-| Author | JavaScript | Chart only — **no JS surface (gap 05)** |
-| Knitout | `.k` emit | parse · IR · emit, 14 validator rules |
-| KCode | `.kc` emit | strict parse, 30 rules, byte-exact round trip |
-| Trace | — | `MachineTraceV1`, exact |
-| Validate | author's own concern | 43 rules in 4 classes |
-| Render | CMU visualiser (fabric) | movement yes, **fabric no (gap 03)** |
-| Run | unchecked bytes | physical trial pending |
+| Stage | JavaScript / Knitout workflow | Studio and tracked proof | Remaining boundary |
+| --- | --- | --- | --- |
+| Author | JavaScript emits `.k` | Chart emits deterministic Knitout | Arbitrary JavaScript authoring is outside Studio's compiler contract |
+| File intake | Tool-specific | Browser accepts resource-bounded `.k` and `.kc` | No unified one-file headless verdict; gap 01 |
+| Knitout | Backend input with source lifecycle | Parse and validate, then lower through the pinned backend | Backend warnings remain foreign-file findings |
+| KCode | Backend output | Strict parse under the product's canonical `knitout-vendor` provenance; direct `.kc` intake preserves exact bytes | Serialized bytes do not prove producer, dialect, or source lifecycle; gap 05 |
+| Differential | Usually absent | Foreign `.k` lowering compares scheduled machine fields with the independently parsed emitted trace; direct `.kc` has no backend schedule | Backend-only provenance is not treated as machine state |
+| Trace and validation | Author/tool responsibility | Exact encoded `MachineTraceV1`; 30 parser and 43 validator rules | Not controller-observed movement |
+| Render | External stitch/loop visualizer | Deterministic programmed-movement scene | No proven fabric projection; gap 03 |
+| Verdict | Author/tool policy | `Blocked` or `Surface-proven (imported)` under the foreign policy | Imported files cannot become Knit-proven through software inspection |
+| Run | Machine execution | Exact physical trial remains pending | Physical acceptance is a separate gate |
 
 ---
 
 ## 3. Gap register
 
-Ranked by what each one unblocks per unit of work, not by size.
+Ranked by what each gap unblocks per unit of work, not by nominal size.
 
-### 01 — No headless check command
+### 01 — No unified arbitrary-file headless verdict
 
-**Size: small · Class: software**
+**Size: small–medium · Class: software**
 
-The entire compiler is reachable only by dropping a file into the browser
-workspace or by running a workspace-wide `pnpm` script. No workspace
-`package.json` declares a `bin`, and none of `packages/machine-lib`'s 22 scripts
-accept a single file path — `verify:kcode` and `kniterate:conform` operate on the
-fixed corpus, not on an arbitrary file.
+The browser accepts arbitrary `.k` and `.kc` files, but the workspace has no
+supported single-file command that returns Studio's strict foreign-file verdict.
+The fixed-corpus proof commands are not that interface. The topology oracle does
+accept a `.k` path, but it is a specialized conformance script rather than a
+general parse, lower, validate, and verdict command.
 
-So the exact motion the articles describe — a model writes a `.k` or `.kc`, and
-you check it before it goes near the machine — has no one-line form.
+A proposed interface is:
 
-Every part already exists and is already public API. This is a wrapper around
-`parseKCodeDocument` → `projectKCodeMachineTrace` → `validateKCodeMachineTrace`
-that takes a path, prints the diagnostics, exits non-zero on error, and offers
-`--json`. The probe scripts written for this document are effectively that
-wrapper, written three times.
-
-**Unblocks:** CI, pre-flight checks, model-generated files, other people's tools.
-
-### 02 — No motion model, though the trace already carries every input
-
-**Size: small–medium · Class: software, calibrated by one physical run**
-
-Each `MachineTracePassV1` holds `carriageStops.left`/`right` in needle units and
-`speed` in mm/s. Nothing multiplies them.
-
-The only estimate in the product is `compile-chart.ts:989`:
-
-```ts
-const estimatedKnitTimeSeconds = Math.round(passesForTime * 10 * speedFactor / 50)
+```bash
+pnpm machine:check -- ./pattern.kc
+pnpm machine:check -- ./pattern.k --json
 ```
 
-Its own comment calls it a "crude wall-clock estimate". It is authored-path only,
-blind to carriage travel, and blind to the per-pass speed the file actually
-encodes. Imported KCode gets no estimate at all.
+A correct implementation is not a text-based KCode wrapper and cannot exit zero
+merely because there are no errors. It must share the foreign-document
+inspection and verdict seam with Studio while injecting the environment-specific
+pinned converter:
 
-The kinematic version, computed over the corpus from fields that already exist,
-runs 5–6× the current heuristic:
+1. Check size before reading and enforce the same 64 MiB limit as Studio. Read
+   an accepted file once as bytes.
+2. Accept only `.k` and `.kc`; do not infer a format from content.
+3. For `.kc`, pass the bytes directly to `parseKCodeBytes` with
+   `KNITERATE_7GG_KCODE_PROFILE_V2` and pin the same canonical
+   `knitout-vendor` provenance as Studio's V1 file picker. Record that as a
+   product-selected contract; the bytes do not identify their own dialect. Do
+   not infer a dialect, expose a V1 override, or introduce a UTF-8 round trip.
+   Project the trace, validation report, and deterministic movement scene.
+4. For `.k`, use Studio-equivalent decoding, parse and validate the Knitout,
+   lower through `knitoutToKCodeWithTrace`, strictly parse the emitted KCode,
+   project and validate its trace, project the movement scene, and run the
+   scheduled differential.
+5. Apply the same foreign verdict policy as Studio. Any error or unresolved
+   warning is `Blocked`; only the evidence-backed depth-three
+   `machine-trace.loop-stack-policy` observation is reclassified as
+   non-blocking information. Backend warnings continue to block.
+6. Exit `0` only for `Surface-proven (imported)`, `1` for a checked but blocked
+   file, and `2` for usage, unsupported extension, read failure, or internal
+   checker failure. Do not add a warning waiver or Knit-proven override.
+7. Human output should include verdict, counts, stable rule identifiers,
+   occurrences, and available line/pass anchors. `--json` should emit a
+   versioned, bounded result with byte count, SHA-256, profile, format, dialect,
+   verdict, stats, and diagnostics—not the source or emitted KCode.
 
-| File | Passes | Carriage travel | Kinematic | Current heuristic |
-| --- | ---: | ---: | ---: | ---: |
-| `fairisle.kc` | 286 | 77.3 m | **6 min** | 0.9 min |
-| `dbj.kc` | 498 | 149.6 m | **7 min** | 1.7 min |
-| `2x2-rib-beanie.kc` | 530 | 235.1 m | **16 min** | 1.8 min |
-| `sleeves.kc` | 1,994 | 492.3 m | **28 min** | 6.7 min |
-| `back.kc` | 2,108 | 918.7 m | **47 min** | 7.0 min |
-| `front.kc` | 2,544 | 972.6 m | **49 min** | 8.5 min |
-| `sophie.kc` | 3,766 | 333.0 m | **25 min** | 12.6 min |
+The Node and browser converter adapters also need one warning contract. Studio
+behavior is authoritative: capture `console.warn` as backend warnings and
+suppress or separately classify routine `console.log` chatter as non-diagnostic
+information. The current Node trace adapter counts that chatter as warnings, so
+acceptance must prove normalized Node/browser parity before claiming the same
+verdict.
 
-The model needs one constant Studio does not yet assert: needle pitch. At 7gg
-that is 25.4 / 7 = 3.63 mm, which puts the 252-needle bed at 914 mm — a single
-tape measure on the machine confirms or refutes it.
+Acceptance coverage should include all 13 fixtures plus clean, backend-warning,
+depth-three, depth-four, malformed-byte, and oversized cases for both formats.
+Scheduled-differential cases apply to `.k`; direct `.kc` output must explicitly
+report that no backend schedule exists. In particular, `fox-baby-beanie.kc`
+must exit `1`; an error-only wrapper would incorrectly return success for its
+183 blocking warnings.
 
-Report it as a floor, not a duration: it excludes acceleration,
-direction-reversal dwell, roller time and transfer settling, so the real run is
-longer. Calibrating it against the physical trial turns a guess into a measured
-constant, and gives the yarn-length estimate for free from the same traversal.
+**Unblocks:** repository CI, generated-file preflight, editor integrations, and
+other local tools without weakening Studio's safety policy.
 
-**Unblocks:** run sheet, strategy comparison, yarn estimate.
+### 02 — No trace-derived programmed-motion model
 
-### 03 — Studio shows how the carriage moves, never what it knits
+**Size: small–medium · Class: software model with explicit physical/controller assumptions**
 
-**Size: medium · Class: software**
+Each `MachineTracePassV1` carries encoded half-step
+`carriageStops.left` / `carriageStops.right` coordinates and a footer speed
+whose profile unit is mm/s. The trace can therefore report an exact programmed
+coordinate-distance metric:
 
-The decompiler that would close this is already written. `kcToKnitout`
-(`src/knitout/kc-to-knitout.ts`) recovers knit / tuck / xfer / split / drop /
-rack and carrier lifecycle from raw KCode — its own header states the goal is
-"visualization fidelity" — and it is exported from both `src/index.ts` and
-`src/browser.ts` and covered by tests.
+```text
+programmedTravelUnits = sum(abs(rightStop - leftStop))
+```
 
-**It has zero call sites in `apps/studio`.** The back-face projection that does
-exist is wired only to authored artifacts, never to imported files.
+Converting that value into physical millimetres or seconds is not yet an exact
+trace derivation. Two assumptions remain outside the software proof:
 
-This is the one capability the articles hold up as the reason the CMU visualiser
-matters: you look at the fabric, not the choreography. Closing it makes no new
-machine claim — a stitch mesh is a projection of a trace that has already
-validated, so it inherits the existing evidence boundary rather than extending
-it.
+1. Kniterate's official specification documents 7 gauge, 252 needles per bed,
+   and 3.63 mm needle spacing, and repository comments repeat that pitch. But the
+   KCode raster has 253 columns for 252 needles, and trace stop coordinates are
+   explicitly not physical needle labels. A one-coordinate-unit to one-pitch
+   distance mapping has not been verified.
+2. The encoded speed field is advisory, its operational bounds are unknown, and
+   the profile does not establish how a controller turns the command into
+   observed velocity. The command value is not yet a proven physical upper
+   bound.
 
-Path: `kcToKnitout` → loop-stack replay → stitch mesh, as a third side-rail view
-beside Pass grid and Pass diff.
+An assumption-labelled model may still expose:
 
-**Unblocks:** reviewing foreign files, catching structural mistakes by eye.
+```text
+assumedTravelMm = programmedTravelUnits * assumedPitchMm
+idealizedSeconds = Σ(passTravelUnits[i] * assumedPitchMm / encodedSpeed[i])
+```
 
-### 04 — A KCode column is not yet a needle
+It must name the pitch and controller assumptions, keep the fully encoded
+coordinate metric beside the derived number, and avoid calling the result
+physical travel, elapsed duration, or a physical lower bound. That stronger
+label requires evidence that half-step stop deltas map to physical distance and
+that the recorded controller gives the speed command the required bound
+semantics.
 
-**Size: small software · Class: needs one physical observation**
+If any contributing pass has a nonpositive speed, return `unavailable` with a
+diagnostic. The parser accepts signed and zero numeric settings, while the
+profile has no documented lower operational speed bound; the model must not
+divide by zero, produce a negative duration, or silently substitute a default.
 
-The profile is explicit: `physicalNeedleNumbering.status: 'unverified'`. The
-workspace says *K-code 94–157*, not *needle 94–157*, and the validator's
-`operationalAssurance` block leads with the limitation.
+The earlier 5–6× comparison was invalid. `compile-chart.ts` estimates authored
+plans from the count of timed knit, tuck, miss, transfer, and split operations,
+scaled by an assumed 50 operations per pass. It does not use emitted KCode pass
+count, and imported KCode currently gets no product estimate. A valid comparison
+must use the same candidate's authored
+`KniteratePlan.estimatedKnitTimeSeconds` (as surfaced in compiled Studio stats)
+and its emitted strict KCode trace.
 
-Two consequences follow:
+Even after the coordinate and speed assumptions are established, a
+constant-speed term omits acceleration, reversal and controller dwell, rack or
+roller motion, transfer settling, stops, and intervention. A physical run can
+measure an aggregate residual for that exact artifact, machine serial,
+controller revision, yarn, and settings. One clean run cannot identify the
+component costs or provide a universal multiplier; a reusable duration model
+requires multiple designed workloads or per-component observations.
 
-- A machine movement cannot be stated in the machine's own units.
-- The cheatsheet's most basic placement rule — *don't start at needle zero,
-  centre your design, try 50* — is unenforceable on the `.kc` path, because
-  Studio cannot map a column to a needle to check it. The equivalent rule already
-  exists on the knitout side as `no-needle-zero`.
+Carriage travel also does not yield yarn consumption. That needs a separate
+carrier- and topology-aware loop/float-length model with its own material
+assumptions and calibration.
 
-This is cheap to close and it is the last coordinate gap between "exact trace"
-and "exact machine movement". One marker pass at a known column during the
-physical trial, measured once, fixes the offset for every file thereafter.
+**Unblocks:** exact programmed-coordinate travel now, plus an
+assumption-labelled matched-candidate timing comparison; it does not yet
+unblock a physical duration claim.
 
-**Unblocks:** needle labels, placement rules, operator instructions.
+### 03 — Studio has no verdict-bounded fabric view
 
-### 05 — Carrier lifecycle is invisible on the `.kc` path
+**Size: medium–large · Class: software**
 
-**Size: small (surface the asymmetry) · Class: format limit — not closable**
+`kcToKnitout` exists, is exported, and has no Studio call site, but it is not a
+proven drop-in decompiler for arbitrary accepted KCode.
 
-KCode does not encode `in` or `out`. So `carrier-active`, `carrier-in-twice`,
-`carrier-out-without-in` and `carriers-trailing-at-end` — the rules that enforce
-the cheatsheet's warning that taking a carrier out mid-program "can cause issues"
-— only fire when a `.k` file is imported. The profile declares this correctly as
-a boundary rather than pretending otherwise.
+It bypasses the strict parser/trace and calls legacy `parseKc(kcText)` in its
+default `app` mode. That legacy parser's `knitout-vendor` option applies a −1
+decorated-marker indexing correction to carrier-engaged rows. `kcToKnitout`
+cannot select that legacy source mode, so vendor-origin input can place knit,
+tuck, or split actions in a different recovered frame from carrier-0 transfers.
+Existing tests cover operation multisets and isolated transfer subsets, not loop
+continuity through a mixed knit → transfer → knit sequence.
 
-The underlying limit cannot be closed; the format simply lacks the information.
-But it means **importing knitout is strictly safer than importing KCode**, and
-nothing in the product currently says so. For model-generated files that
-asymmetry is the single most useful thing to tell the user: hand Studio the `.k`,
-not the `.kc`.
+This is a legacy-adapter issue, not a difference in current strict trace
+semantics. In the V2 profile, `app` and `knitout-vendor` are marker-free aliases
+with offset zero; `MachineTraceV1` has already removed the decorated markers.
+The new topology adapter must use those normalized trace coordinates and must
+not apply the legacy −1 correction again.
 
-### 06 — Speed and roller have no proven envelope
+The converter also synthesizes `in` on first carrier use and `out` at the end.
+KCode does not encode source carrier lifecycle, so those operations are preview
+scaffolding, not recovered facts, and must not feed lifecycle verdicts.
 
-**Size: measurement, not code · Class: physical**
+Nor does the current validator's loop replay already contain a stitch mesh: it
+stores loop counts and aggregate changes, not loop identities, yarn edges, or
+mesh connectivity. The vendored `CellMachine` topology model is exercised by a
+Node VM oracle for aggregate conformance, but there is no browser-safe Studio
+renderer.
 
-The profile records the conflict honestly rather than papering over it: the
-specification says 800 mm/s, the manufacturer's own FAQ says the current maximum
-is 0.4 m/s, and no signed roller bound is documented at all. Both settings
-therefore carry `operationalBounds` of `null` and only advisory range checks
-fire. In the probe, speed `5000` and roller `-9999` each produced exactly one
-warning and no error.
+Closing this gap requires a separately proven projection:
 
-That is the correct behaviour for software that refuses to invent limits — but it
-does mean a generated file can encode a physically implausible setting and still
-reach Surface-proven. It belongs on the trial checklist as an observation to
-make, not as a rule to guess at.
+1. Adapt ordered `MachineTraceV1.actions` into an explicit topology model,
+   preserving normalized trace coordinates, rack boundaries, source pass
+   indices, unknown-action failures, loop identities, and yarn edges.
+2. Add sequence-based tests across knit, tuck, transfer, split, drop, rack
+   changes, both dialects, and both beds. Assert topology across operation-family
+   boundaries, not just per-family operation counts.
+3. Mark synthetic carrier entry/exit as preview assumptions and exclude them
+   from verdict computation.
+4. Run the topology work outside the main UI thread and virtualize or bound the
+   mesh for large files.
+5. Prove the topology-to-mesh renderer independently before presenting it as
+   more than approximate preview.
 
-### 07 — Passes are counted; rows are not
+An accepted trace does not automatically prove a new topology model. Even after
+the software rail closes, the result would establish a software projection—not
+controller behavior or the appearance of physically knitted fabric.
 
-**Size: small · Class: software · Parity: Customist 2.5**
+**Unblocks:** trustworthy foreign-file topology preview and visual review of
+structural mistakes.
 
-Studio reports "286 passes". A knitter thinks in rows, and a transfer pass is not
-a row. Customist Studio 2.5 shipped a fix for precisely this — its changelog
-entry reads *"Stitch and Row Counter: counts only knitting rows, ignoring
-transfer rows."*
+### 04 — A KCode column is not yet a physical needle label
 
-The authored path already carries typed design-row provenance; foreign files
-carry none, but transfer passes are trivially separable, since the operation
-contract already tags `Tr-Rl`, `Tr-Rr`, `Rl-Tr` and `Rr-Tr` with
-`family: 'transfer'`.
+**Size: small software bridge · Class: exact-candidate physical evidence**
+
+The profile correctly records
+`physicalNeedleNumbering.status: 'unverified'`. Official pitch documents needle
+spacing; it does not by itself establish physical origin, numbering direction,
+or the relationship between the KCode coordinate frame and the machine's
+labels.
+
+The repository already defines a stronger closure workflow than a one-marker
+observation. [V1-PHYSICAL-TRIAL.md](./V1-PHYSICAL-TRIAL.md), the generated
+checklist in `scripts/build-v1-knit-trial.ts`, and the swatch-registry validator
+require the mapping before a run. The exact candidate must record:
+
+- `compilerCoordinateStart` and `compilerCoordinateEnd`;
+- `physicalNeedleStart` and `physicalNeedleEnd`;
+- a documented machine/vendor datum method;
+- `verifiedAt` before the run; and
+- an independent `verifiedBy` person who is not the run operator.
+
+The validator checks the recorded endpoints, requires equal absolute compiler
+and physical spans, and permits reversed physical numbering. With trusted
+physical observations and the documented datum method, two endpoints support an
+exact-candidate affine 1:1 mapping over that recorded range. They are stronger
+than one marker, but they do not independently prove global scale, every
+intermediate label, or the meaning of half-step carriage-stop coordinates.
+
+One software seam remains: deterministically bridge the generated artifact's
+compiler/project coordinates to strict-trace `kcodeColumn` and normalized
+`traceCoordinate`, test both orientations, and retain the coordinate basis in
+the evidence record. A foreign KCode file without authored compiler-coordinate
+provenance must not silently inherit the mapping. Turning gap 02's idealized
+time into a physical lower-bound claim would additionally require a verified
+half-step stop-distance mapping and controller speed semantics; the integer
+needle endpoint record alone does not supply either.
+
+If a separate marker artifact is needed, make it a hash-bound controlled datum.
+Do not modify the immutable blanket candidate informally. The resulting evidence
+establishes placement for the registered artifact and recorded
+machine/controller configuration; it does not automatically fix every future
+file or turn an encoded trace into observed physical movement.
+
+**Unblocks:** physical labels, placement checks, and operator instructions for an
+exact registered candidate.
+
+### 05 — KCode cannot prove source carrier lifecycle
+
+**Size: small disclosure, bundled with gap 01 · Class: format boundary**
+
+KCode does not encode Knitout `in` or `out` operations. A direct `.kc` import
+therefore cannot run source-lifecycle rules such as `carrier-active`,
+`carrier-in-twice`, `carrier-out-without-in`, or
+`carriers-trailing-at-end`. The strict KCode validator correctly begins from
+what the serialized format actually says instead of inventing source history.
+
+A `.k` import supplies more evidence before lowering: Studio can parse and
+validate lifecycle, lower through the pinned backend, inspect backend warnings,
+strictly parse the emitted KCode, run the scheduled differential, and apply the
+same downstream trace validation. That makes `.k` more informative at the
+source boundary; it does not make a file physically safe or bypass the same
+KCode and physical-evidence limits.
+
+The product and the proposed CLI should state the asymmetry directly:
+
+- prefer `.k` when source lifecycle and lowering provenance are available;
+- treat `.kc` as checkable only within its encoded semantics; and
+- label any synthesized `in`/`out` in a preview as assumptions, never recovered
+  facts.
+
+The format limitation itself is not closable. The disclosure and consistent
+verdict behavior are.
+
+**Unblocks:** accurate generated-file guidance without overstating either import
+path.
+
+### 06 — Editor ranges are not a proven physical operating envelope
+
+**Size: evidence program, not a single code change · Class: physical**
+
+Four different concepts must stay separate:
+
+1. **Serialized syntax.** Speed and roller footers accept finite signed decimal
+   numbers; the syntax itself does not impose the editor's ranges.
+2. **Editor-documented command bounds.** The profile records an official
+   documented speed upper bound of 800 mm/s, no documented editor lower bound,
+   and a roller editor range of −500 to 999.
+3. **Physical operational bounds.** These remain `null`. Current official
+   product text conflicts between an 800 mm/s specification and a 0.4 m/s
+   current maximum; official material does not establish a signed KCode roller
+   operating envelope.
+4. **Studio verdict.** The raw validator reports values outside known editor
+   bounds as advisory warnings because it cannot invent operational limits. The
+   conservative foreign policy still blocks unresolved warnings. Thus a foreign
+   speed-5000 or roller-−9999 file does **not** reach
+   `Surface-proven (imported)`.
+
+A clean physical run at one chosen speed/roller recipe produces one evidence
+point for that exact artifact, machine/controller, yarn, and setup. It does not
+generalize to arbitrary values or prove an envelope. General bounds require an
+authoritative versioned controller source or multiple designed, conservative
+trials across relevant operation mixes. Do not use the machine trial to probe
+unsafe extremes.
+
+Until then, keep the validation advisory, surface the limitation in the run
+sheet, and refuse to turn editor limits or corpus-observed values into physical
+safety claims.
+
+**Unblocks:** a future evidence-backed operational profile; it is not a
+one-session closeout item.
+
+### 07 — Authored rows and foreign loop-forming passes are different metrics
+
+**Size: small · Class: software · Related vendor parity: Customist 2.5**
+
+Studio currently reports pass count. The authored path already has design-row
+provenance and can report authoritative authored rows. A foreign KCode file has
+no such provenance, so Studio must not recover “rows” by merely excluding the
+transfer operation family.
+
+That shortcut is wrong in both directions:
+
+- a transfer-family `split` can form a new loop; and
+- a regular carrier-0 pass can be a drop or repositioning move that forms no
+  row.
+
+For foreign KCode, derive and label a **loop-forming pass count**: a pass is
+loop-forming when its strict trace contains at least one knit, tuck, or split
+action. Keep total programmed passes beside it. Do not call the derived count
+“rows” without source-row provenance.
+
+Customist's changelog says its authored Stitch and Row Counter ignores transfer
+rows. That is valid evidence for its own authored product behavior, not proof
+that arbitrary imported KCode has an authoritative row decomposition.
+
+**Unblocks:** a useful operator-facing metric without fabricating provenance.
 
 ---
 
-## 4. What was not counted as a gap
+## 4. What is not a compiler gap
 
-Most of Customist Studio 2.5 is a garment-design release, not a compiler release:
-the template wizard, multi-panel editing, body measurements and ease, rib fills,
-DXF/SVG shape import, per-panel undo. Those are chart-product features, and this
-repo deliberately puts chart product on the other side of a boundary — Studio
-owns strategy, validation, verdicts and machine files; KnitLab Chart owns
-authoring, with `ColorworkChartV1` plus PNG as the interchange. Chasing them
-would be scope drift, not parity.
+Most Customist Studio 2.5 features are garment-authoring capabilities: its
+template wizard, multi-panel editing, measurements and ease, rib fills, shape
+import, and per-panel undo. This repository deliberately places chart authoring
+across the `ColorworkChartV1` boundary, so matching those features here would be
+product-scope expansion rather than closing a KCode compiler gap.
 
-Two items from that release *are* compiler-adjacent and are worth logging as
-vendor intelligence rather than gaps:
+Two release items are still useful vendor intelligence:
 
-- **Knittability checks.** Customist validates garment measurements against
-  machine limits before shaping — the same instinct as this validator, applied
-  one layer up.
-- **Revised transfer defaults.** Increase transfers moved to speed 120, roller 0,
-  stitch 0 (from 300 / 30 / 3). That is concrete vendor knowledge about safe
-  transfer settings that `src/knitout/recipes/` does not currently encode.
+- **Knittability checks** are template-aware garment and machine constraints one
+  layer above this compiler's command legality; they are not evidence that
+  imported KCode is physically knittable.
+- **Increase Transfers defaults** changed from speed 300, roller 30, stitch 3 to
+  speed 120, roller 0, stitch 0. These are versioned vendor defaults and
+  candidate evidence—not universally safe transfer settings for every file,
+  yarn, machine, or controller.
 
-### One caution about the direction itself
+### Directional caution
 
-The Local First notes record that workshop participants generated KCode directly
-with a model, and that the authors preferred the JavaScript route because "errors
-risk damaging machines". Everything in gaps 01 and 05 points the same way: the
-value here is not a better generator, it is a checker sitting between a generator
-and a machine. Studio already is that checker. It mostly needs a door that is not
-a browser.
+The Local First notes describe experimentation with model-generated direct
+KCode, but the author declined to rely on that path because there was no checker
+and the output produced many errors; the notes are cautious about the JavaScript
+route as well. That supports a checker between any generator and the machine. It
+does not support treating either generation route as safe by itself.
 
 ---
 
 ## 5. Suggested sequence
 
-1. **Gap 01 — the check command.** Smallest change, largest reach. It turns a
-   browser tool into something CI, a script, or a model-driven loop can call.
-   Nothing else on this list changes what the compiler knows; this changes who
-   can ask it.
-2. **Gap 02 — the motion model.** Pure derivation from fields the trace already
-   has. Ship it labelled as a floor, then calibrate the pitch constant and the
-   overhead factor on the trial run.
-3. **Gaps 04 and 06 — the two physical observations.** Add a needle-marker pass
-   and a speed/roller note to the operator checklist in `V1-PHYSICAL-TRIAL.md`
-   before the run, so one machine session closes both. Neither is worth a second
-   trial on its own.
-4. **Gap 03 — the fabric view.** The largest piece of work, and the one that most
-   changes how the tool feels. Worth doing properly rather than early.
-5. **Gaps 05 and 07 — the honesty and legibility fixes.** Say that `.k` import is
-   safer than `.kc` import; count rows as well as passes.
+1. **Bundle gaps 01 and 05: one-file checker plus format disclosure.** This is
+   the smallest broad-access slice, but it is complete only when `.k` and `.kc`
+   share Studio's conservative verdict and warning policy.
+2. **Close gap 04's software seam before the physical trial.** Reuse the existing
+   two-endpoint registry gate and retain exact-candidate mapping evidence; do not
+   add an informal single-marker shortcut.
+3. **Add gap 07's loop-forming pass metric.** Authored rows keep their
+   provenance; foreign files get a deliberately narrower label.
+4. **Add gap 02's programmed-coordinate metric and conditional time model.**
+   Return unavailable for nonpositive speed, expose every assumption, and
+   compare only matched authored/emitted candidates. Do not use the term
+   physical floor until stop-distance and controller-speed semantics are
+   evidenced; keep any physical calibration candidate-specific.
+5. **Build gap 03 as a separately proven topology and rendering slice.** The
+   strict trace is the input, not proof that the renderer is correct.
+6. **Treat gap 06 as an ongoing evidence program.** Record exact-recipe settings
+   during the planned trial, but require authoritative sources or multiple
+   conservative designed workloads before generalizing an operating envelope.
 
 ---
 
 ## Scope note
 
-This document is analysis only. No engine, validator, profile or UI code was
-changed to produce it, and none of the gaps above are implemented. The kinematic
-figures in gap 02 are a derived prediction, not a measurement, and the needle
-pitch they rest on is an unverified assumption until the physical trial confirms
-it.
+This revision changes the analysis only. It does not implement a CLI, estimator,
+topology model, renderer, coordinate bridge, disclosure, operational profile, or
+new metric.
+
+Needle pitch is official-documented and repeated in repository comments, but is
+not yet a numeric field in the versioned KCode profile. Physical coordinate
+origin, orientation, half-step stop distance, and controller speed semantics
+remain unverified. Any future timing result is assumption-derived until those
+inputs and candidate-specific machine evidence are recorded, and physical
+acceptance remains governed by `pnpm release:physical-check`.
