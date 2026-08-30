@@ -22,7 +22,7 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import { matchKnitProvenArtifact } from '@kniterate-studio/machine-lib/browser';
+import { KNITERATE_7GG_KCODE_PROFILE_V2, deriveMachineTraceProgrammedMotionV1, matchKnitProvenArtifact, type MachineTraceProgrammedMotionV1 } from '@kniterate-studio/machine-lib/browser';
 import { MAX_MACHINE_SOURCE_BYTES_V1, compareKcDocuments, openMachineDocument, rejectOversizedMachineDocument, rejectUnreadableMachineDocument, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, renameColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
@@ -415,9 +415,24 @@ function AuthoredVerdictPanel({ verdict, onClose }: { verdict: AuthoredVerdict; 
   </div>;
 }
 
+function formattedMetric(value: number): string {
+  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function idealizedMotionLabel(motion: MachineTraceProgrammedMotionV1 | null): string {
+  if (motion === null) return 'Unavailable · no strict KCode trace';
+  if (motion.assumptionModel.status === 'available') {
+    return `${formattedMetric(motion.assumptionModel.idealizedSeconds!)} s · assumption-derived`;
+  }
+  const reason = motion.assumptionModel.unavailableReason!;
+  return `Unavailable · ${reason.code} at pass ${reason.firstPassIndex + 1}`;
+}
+
 export function RunSheet({ document, onClose }: { document: MachineDocument; onClose: () => void }) {
   const dialogRef = useModalFocusTrap(onClose);
   const findingGroups = groupForeignRunSheetFindings(document.diagnostics);
+  const strictPassMetrics = document.stats.passMetricProvenance === 'strict-kcode-trace';
+  const motion = document.stats.programmedMotion;
   return (
     <div className="modal-backdrop">
       <article className="run-sheet" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="machine-run-title" tabIndex={-1}>
@@ -425,7 +440,7 @@ export function RunSheet({ document, onClose }: { document: MachineDocument; onC
         <header><span>KNITERATE STUDIO · RUN SHEET</span><h1 id="machine-run-title">{document.filename}</h1><div className={`print-verdict verdict-${document.verdict.state}`}>{document.verdict.label}</div></header>
         <p className="run-annotation">{document.verdict.annotation}</p>
         <section><h2>Format evidence</h2><p>{document.sourceDisclosure.summary}</p></section>
-        <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Passes</dt><dd>{document.stats.passCount.toLocaleString()}</dd></div><div><dt>Needles</dt><dd>{document.stats.needleSpan}</dd></div><div><dt>Rack range</dt><dd>{document.stats.rackRange}</dd></div></dl></section>
+        <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Programmed passes</dt><dd>{strictPassMetrics ? document.stats.passCount.toLocaleString() : 'Unavailable'}</dd></div><div><dt>Loop-forming passes</dt><dd>{strictPassMetrics ? document.stats.loopFormingPassCount!.toLocaleString() : 'Unavailable'}</dd></div><div><dt>Authored design rows</dt><dd>Unavailable · foreign file has no row provenance</dd></div><div><dt>Programmed travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.coordinateMetric.programmedTravelUnits)} encoded stop-coordinate units`}</dd></div><div><dt>Assumption-derived travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.assumptionModel.assumedTravelMm)} mm · ${motion.assumptionModel.assumedPitchMmPerCoordinateUnit} mm/unit`}</dd></div><div><dt>Idealized constant-speed term</dt><dd>{idealizedMotionLabel(motion)}</dd></div><div><dt>Needles</dt><dd>{document.stats.needleSpan}</dd></div><div><dt>Rack range</dt><dd>{document.stats.rackRange}</dd></div></dl><p>Only the encoded stop-coordinate total is exact. Millimetres assume one coordinate unit equals one 3.63 mm needle pitch; the time term additionally assumes each encoded speed is constant mm/s. Neither is physical elapsed time or a physical lower bound.</p></section>
         <section><h2>Carrier map</h2><div className="carrier-map">{document.stats.carriers.length ? document.stats.carriers.map((carrier) => <span key={carrier}><i style={{ background: CARRIER_COLORS[carrier] }} />C{carrier}<b>{carrier === '1' ? 'Draw thread' : carrier === '6' ? 'Waste yarn' : 'Pattern yarn'}</b></span>) : <em>No carriers found</em>}</div></section>
         {findingGroups.length > 0 && <section><h2>Known findings</h2><ul className="run-sheet-findings">{findingGroups.map((group) => <li key={group.key}>
           <div><b>{group.severity.toUpperCase()}</b><strong>{group.title}</strong><span> · {group.occurrences.toLocaleString()} occurrence{group.occurrences === 1 ? '' : 's'}</span></div>
@@ -444,11 +459,14 @@ function AuthoredRunSheet({ project, compiled, kcode, verdict, onClose }: { proj
   const dialogRef = useModalFocusTrap(onClose);
   const needleEnd = state.machine.needleOffset + state.chart.width - 1;
   const findings = [...new Map([...compiled.messages, ...kcode.messages].filter((message) => message.severity !== 'info').map((message) => [message.rule, message])).values()];
+  const motion = kcode.trace === null ? null : deriveMachineTraceProgrammedMotionV1(kcode.trace, {
+    assumedPitchMmPerCoordinateUnit: KNITERATE_7GG_KCODE_PROFILE_V2.machine.needlePitchMm,
+  });
   return <div className="modal-backdrop"><article className="run-sheet" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="authored-run-title" tabIndex={-1}>
     <div className="run-sheet-actions"><button className="secondary-button" type="button" onClick={onClose}><X size={16} /> Close</button><button className="primary-button" type="button" onClick={() => window.print()}><Printer size={16} /> Print</button></div>
     <header><span>KNITERATE STUDIO · RUN SHEET</span><h1 id="authored-run-title">{project.title}</h1><div className={`print-verdict verdict-${verdict.state}`}>{verdict.label}</div></header>
     <p className="run-annotation">{verdict.annotation}</p>
-    <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Needles</dt><dd>{state.machine.needleOffset}–{needleEnd} ({state.chart.width})</dd></div><div><dt>Design rows</dt><dd>{state.chart.height}</dd></div><div><dt>Backing</dt><dd>{state.strategy.technique}</dd></div><div><dt>K-code passes</dt><dd>{kcode.passCount.toLocaleString()}</dd></div><div><dt>Estimated time</dt><dd>{compiled.stats.estimatedKnitTimeSeconds === null ? '—' : `${Math.ceil(compiled.stats.estimatedKnitTimeSeconds / 60)} min`}</dd></div></dl></section>
+    <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Needles</dt><dd>{state.machine.needleOffset}–{needleEnd} ({state.chart.width})</dd></div><div><dt>Authored design rows</dt><dd>{state.chart.height}</dd></div><div><dt>Backing</dt><dd>{state.strategy.technique}</dd></div><div><dt>Emitted machine passes</dt><dd>{kcode.passCount.toLocaleString()}</dd></div><div><dt>Authored-plan heuristic</dt><dd>{compiled.stats.estimatedKnitTimeSeconds === null ? '—' : `${Math.ceil(compiled.stats.estimatedKnitTimeSeconds / 60)} min`}</dd></div><div><dt>Emitted programmed travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.coordinateMetric.programmedTravelUnits)} encoded stop-coordinate units`}</dd></div><div><dt>Assumption-derived travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.assumptionModel.assumedTravelMm)} mm · ${motion.assumptionModel.assumedPitchMmPerCoordinateUnit} mm/unit`}</dd></div><div><dt>Idealized constant-speed term</dt><dd>{idealizedMotionLabel(motion)}</dd></div></dl><p>The authored-plan heuristic and emitted KCode term describe this same candidate but use different models. Only programmed stop-coordinate travel is exact; assumed millimetres and constant-speed seconds are not physical elapsed time or a physical lower bound.</p></section>
     <section><h2>Carrier map</h2><div className="carrier-map"><span><i style={{ background: CARRIER_COLORS['1'] }} />C1<b>{state.frame.drawThread ? 'Draw thread' : 'Not used'}</b></span>{state.machine.yarnAssignments.map((assignment) => { const color = state.chart.palette.find((entry) => entry.id === assignment.paletteId); return <span key={assignment.paletteId}><i style={{ background: color?.hex }} />C{assignment.carrier}<b>{assignment.yarnName}</b></span>; })}<span><i style={{ background: CARRIER_COLORS['6'] }} />C6<b>Waste yarn · {state.frame.wasteRows} rows</b></span></div></section>
     <section><h2>Finish and identity</h2><dl><div><dt>Bind-off</dt><dd>{state.frame.bindOff}</dd></div><div><dt>Project revision</dt><dd>{compiled.revision}</dd></div><div><dt>Compile hash</dt><dd>{compiled.inputHash}</dd></div><div><dt>K-code SHA-256</dt><dd>{kcode.kcHash.slice(0, 16)}</dd></div></dl></section>
     {findings.length > 0 && <section><h2>Known findings</h2><ul>{findings.map((finding) => <li key={finding.rule}><b>{finding.severity.toUpperCase()}</b> {finding.message}</li>)}</ul></section>}
@@ -631,7 +649,7 @@ export function App() {
           <main className="machine-workspace">
             <div className="workspace-head">
               <div><span className="eyebrow">Machine truth</span><h1>{view === 'machine' ? 'Pass grid' : 'Compare machine passes'}</h1></div>
-              <div className="stat-strip"><span><b>{document.stats.passCount.toLocaleString()}</b> passes</span><span><b>{document.stats.carriers.length}</b> carriers</span><span><b>{document.stats.needleSpan}</b></span><span><b>rack {document.stats.rackRange}</b></span></div>
+              <div className="stat-strip"><span><b>{document.stats.passMetricProvenance === 'strict-kcode-trace' ? document.stats.passCount.toLocaleString() : '—'}</b> programmed passes</span><span><b>{document.stats.loopFormingPassCount === null ? '—' : document.stats.loopFormingPassCount.toLocaleString()}</b> loop-forming</span><span><b>{document.stats.carriers.length}</b> carriers</span><span><b>{document.stats.needleSpan}</b></span><span><b>rack {document.stats.rackRange}</b></span></div>
             </div>
             <div className="mobile-tabs">
               {document.kcode?.scene && <button className={mobileView === 'movement' ? 'active' : ''} type="button" onClick={() => setMobileView('movement')}>movement</button>}

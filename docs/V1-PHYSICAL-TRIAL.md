@@ -16,7 +16,9 @@ then writes `out/v1-knit-trial/`:
 - validated `blanket.k` and `blanket.kc`
 - `manifest.json` with the full generating commit, clean-worktree assertion,
   compile hash, SHA-256 identities, carrier map, dimensions, frame, pass counts,
-  estimated time, and the hash-bound compiler/KCode/trace coordinate bridge
+  authored-plan time heuristic, exact programmed stop-coordinate travel,
+  assumption-derived travel/time model, and the hash-bound
+  compiler/KCode/trace coordinate bridge
 - `OPERATOR-CHECKLIST.md` for the actual machine session
 - `command-legality.json`, binding the profile/contract, proof receipt, exact
   KCode hash, pass count, exact scheduled-versus-parsed machine-field match,
@@ -37,6 +39,10 @@ The release trial is a 120x160 four-color birdseye rectangle on the fixed 7gg
 profile: C1 draw, C2-C5 pattern yarns, C6 waste, 20 waste rows, and machine
 bind-off. The current generated package has 152,488 Knitout operations, 2,656
 predicted passes, 2,662 vendor-emitted passes, and an estimated 15,102 seconds.
+Its strict trace currently totals 293,022 encoded stop-coordinate units; the
+3.63 mm/unit and per-pass constant-speed assumptions produce a separate
+3,584.83-second idealized term. Those two derived units are not physical
+observations.
 The six-pass preview delta is confined to the known-approximate frame/finish
 tail; body parity and generated-file revalidation gate export.
 
@@ -48,6 +54,23 @@ copy the exact `blanket.kc` bytes to the SD
 card as `command.kc`, verify the copied bytes, eject the card correctly, and let
 the machine read it under the supervised manual procedure. There is no
 automated controller-only dry run in this repository.
+
+## Timing evidence boundary
+
+`manifest.json` keeps three different values separate for the exact candidate:
+the authored plan heuristic, the exact sum of encoded carriage-stop coordinate
+deltas, and an idealized term that assumes one coordinate unit equals the
+documented 3.63 mm needle pitch and each encoded speed is constant mm/s. The
+last two physical interpretations are assumptions, not observed duration or a
+physical lower bound. Any contributing nonpositive speed makes the idealized
+term unavailable.
+
+Record one continuous `run.json.startedAt` / `endedAt` interval around the
+physical attempt plus every stop and intervention. A clean run can yield an
+aggregate ratio or residual only for this KCode hash, machine serial, controller
+revision, yarn, and settings. One blanket run cannot identify acceleration,
+reversal, rack, roller, transfer, or intervention costs and must not become a
+universal calibration constant.
 
 ## Promotion gate
 

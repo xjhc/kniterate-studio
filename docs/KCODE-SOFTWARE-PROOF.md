@@ -50,6 +50,28 @@ includes the input SHA-256 and format-evidence disclosure without embedding
 source or emitted KCode. Use `pnpm --silent machine:check -- <file> --json` when
 stdout must contain JSON only.
 
+Pass and row metrics preserve their evidence boundary. Authored projects retain
+stable design-row identity through typed provenance and label the strict output
+as emitted machine passes. Foreign `.kc` and `.k` files have no authored-row
+identity: their successful strict trace reports total programmed passes and the
+subset containing at least one knit, tuck, or split action as **loop-forming
+passes**. Split counts even though it belongs to the transfer operation family;
+carrier-0 drop and repositioning passes do not. When trace projection is
+unavailable, the foreign pass metrics are unavailable rather than inferred from
+operation names or called rows.
+
+The strict trace also produces an exact **programmed stop-coordinate travel**
+sum. Its adjacent distance/time model is deliberately weaker: it assumes one
+encoded stop-coordinate unit equals the profile's officially documented 3.63
+mm needle pitch and assumes each pass's encoded speed is constant mm/s. The
+time term is summed per pass, not from one aggregate speed. A nonpositive or
+non-finite speed on any contributing pass makes that term unavailable. Studio
+and the checker label the result assumption-derived—not physical travel,
+elapsed duration, or a physical lower bound—and keep it separate from the
+authored plan heuristic. The physical-trial manifest binds both terms to the
+same exact candidate; one observed run may yield only a candidate-specific
+residual, not a universal multiplier.
+
 ## Deterministic gate
 
 Regenerate the deterministic receipt explicitly from the repository root:
@@ -221,7 +243,9 @@ Software proof does not turn encoded commands into a physical-knit claim.
    `in`/`out`; authored compilation retains source provenance, while a foreign
    file cannot prove carrier threading lifecycle from KCode alone.
 4. **Programmed motion is not dynamics.** The validator proves encoded stops,
-   continuity, reach, ordering, and loop topology. It does not model momentum,
+   continuity, reach, ordering, and loop topology. The motion receipt adds an
+   exact encoded-coordinate total and clearly labelled pitch/speed assumptions;
+   it does not model momentum,
    yarn friction, collision tolerances not present in the format, or resulting
    fabric mechanics.
 5. **Lowering is pinned, not clean-room.** Studio now makes the vendored backend

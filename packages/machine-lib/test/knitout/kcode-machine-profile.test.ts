@@ -55,11 +55,13 @@ describe('Kniterate 7gg KCode machine profiles', () => {
     expect(profile.machine).toMatchObject({
       gauge: 7,
       needlesPerBed: 252,
+      needlePitchMm: 3.63,
       addressableNeedleRange: { min: 1, max: 252 },
       carriers: ['1', '2', '3', '4', '5', '6'],
       evidence: {
         gauge: { confidence: 'official-documented' },
         needlesPerBed: { confidence: 'official-documented' },
+        needlePitchMm: { confidence: 'official-documented' },
         addressableNeedleRange: { confidence: 'repository-tested' },
         carriers: { confidence: 'official-documented' },
       },

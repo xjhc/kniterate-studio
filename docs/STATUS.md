@@ -36,6 +36,18 @@ ship," trust this file and the working tree instead.
   basis, including increasing or decreasing physical-label orientation. This
   closes the software seam only; two machine-observed endpoints and independent
   pre-run verification remain required before any physical needle label claim.
+- **Provenance-safe row/pass metrics.** Authored run sheets distinguish design
+  rows from emitted machine passes. Foreign `.kc`/`.k` workspaces, print sheets,
+  and checker receipts expose strict-trace programmed passes and loop-forming
+  passes (knit/tuck/split) while explicitly marking authored rows unavailable;
+  transfer-family split is counted, but drop and repositioning passes are not.
+- **Programmed-motion receipt.** Strict KCode traces expose exact encoded
+  stop-coordinate travel. A separate model uses the profile's documented 3.63
+  mm needle pitch and each pass's encoded speed only as explicit assumptions;
+  nonpositive contributing speed fails the time term closed. Foreign/authored
+  run sheets, checker receipts, and the exact-candidate trial manifest keep this
+  beside—not merged with—the authored-plan heuristic. No physical travel,
+  elapsed-time, lower-bound, or universal-calibration claim is made.
 - **Authored chart → compile → k-code loop (Story 2 / "S2" core).** Embedded
   colorwork chart editor (`src/chart/*`), strategy rail (backing techniques,
   float budget, frame: waste/draw/bind-off), off-thread compile

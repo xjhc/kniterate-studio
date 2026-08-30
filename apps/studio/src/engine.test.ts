@@ -186,6 +186,13 @@ describe('strict KCode machine document engine', () => {
     expect(document.kcode?.trace?.passes).toHaveLength(1);
     expect(document.kcode?.validation).toMatchObject({ ok: true, diagnostics: [] });
     expect(document.kcode?.scene?.passes).toHaveLength(1);
+    expect(document.stats).toMatchObject({
+      passCount: 1,
+      loopFormingPassCount: 1,
+      authoredRowCount: null,
+      passMetricProvenance: 'strict-kcode-trace',
+      authoredRowProvenance: 'unavailable-for-foreign-machine-file',
+    });
 
     const selection = document.kcode?.trace?.passes[0]?.selections.front[0];
     expect(selection?.traceCoordinate).toBe(100);
@@ -305,6 +312,30 @@ describe('strict KCode machine document engine', () => {
     expect(document.verdict.annotation).toContain('conservative V1 policy');
   });
 
+  it('keeps exact programmed travel but withholds the time term for nonpositive speed', () => {
+    const document = openMachineDocument('zero-speed.kc', kcode({ speed: '0' }), {
+      dialect: 'knitout-vendor',
+    });
+
+    expect(document.stats.programmedMotion).toMatchObject({
+      coordinateMetric: {
+        programmedTravelUnits: 263,
+        unit: 'encoded-stop-coordinate-unit',
+        provenance: 'exact-machine-trace',
+      },
+      assumptionModel: {
+        status: 'unavailable',
+        assumedPitchMmPerCoordinateUnit: 3.63,
+        idealizedSeconds: null,
+        unavailableReason: {
+          code: 'nonpositive-speed',
+          firstPassIndex: 0,
+          offendingPassCount: 1,
+        },
+      },
+    });
+  });
+
   it('opens more than 150k selections without whole-document argument spreading', { timeout: 20_000 }, () => {
     const source = largeKCode(594);
     const document = openMachineDocument(
@@ -319,6 +350,7 @@ describe('strict KCode machine document engine', () => {
 
     expect(selectionCount).toBe(150_282);
     expect(document.passes).toHaveLength(594);
+    expect(document.stats.loopFormingPassCount).toBe(594);
     expect(document.stats.needleSpan).toBe('K-code 0-252');
     expect(document.verdict.state).toBe('surface');
   });
@@ -330,6 +362,11 @@ describe('strict KCode machine document engine', () => {
 
     expect(document.verdict.state).toBe('blocked');
     expect(document.kcode?.trace).toBeNull();
+    expect(document.stats).toMatchObject({
+      passCount: 0,
+      loopFormingPassCount: null,
+      passMetricProvenance: 'unavailable',
+    });
     expect(document.kcode?.scene).toBeNull();
     expect(document.diagnostics).toContainEqual(expect.objectContaining({
       severity: 'error',
@@ -349,6 +386,7 @@ describe('strict KCode machine document engine', () => {
       warningCount: 25_300,
     });
     expect(document.stats).toMatchObject({ errorCount: 0, warningCount: 25_300 });
+    expect(document.stats.loopFormingPassCount).toBe(0);
     expect(document.diagnostics.length).toBeLessThan(520);
     expect(document.diagnostics).toContainEqual(expect.objectContaining({
       severity: 'warning',
@@ -829,6 +867,11 @@ describe('one-file machine check contract', () => {
       },
     });
     expect(human).toContain('Surface-proven (imported) · sample.k');
+    expect(human).toContain('2 programmed passes · 1 loop-forming pass');
+    expect(human).toContain('authored design rows unavailable (foreign file)');
+    expect(human).toContain('programmed stop-coordinate units');
+    expect(human).toContain('mm assumption-derived travel');
+    expect(human).toContain('s idealized constant-speed term');
     expect(human).toContain('Knitout source carrier lifecycle is checked');
     expect(human).toContain('Diagnostics: none');
   });

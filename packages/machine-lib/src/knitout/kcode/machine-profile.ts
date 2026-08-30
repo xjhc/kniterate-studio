@@ -143,11 +143,14 @@ export interface KCodeMachineProfileV1 {
   readonly machine: {
     readonly gauge: number
     readonly needlesPerBed: number
+    /** Official physical needle spacing; not a KCode-coordinate scale claim. */
+    readonly needlePitchMm: number
     readonly addressableNeedleRange: { readonly min: number; readonly max: number }
     readonly carriers: readonly Exclude<KCodeCarrierToken, '0'>[]
     readonly evidence: {
       readonly gauge: KCodeEvidence
       readonly needlesPerBed: KCodeEvidence
+      readonly needlePitchMm: KCodeEvidence
       readonly addressableNeedleRange: KCodeEvidence
       readonly carriers: KCodeEvidence
     }
@@ -388,11 +391,14 @@ export const KNITERATE_7GG_KCODE_PROFILE_V2: KCodeMachineProfileV1 = {
   machine: {
     gauge: 7,
     needlesPerBed: 252,
+    needlePitchMm: 3.63,
     addressableNeedleRange: { min: 1, max: 252 },
     carriers: ['1', '2', '3', '4', '5', '6'],
     evidence: {
       gauge: evidence('official-documented', [OFFICIAL_MACHINE]),
       needlesPerBed: evidence('official-documented', [OFFICIAL_MACHINE]),
+      needlePitchMm: evidence('official-documented', [OFFICIAL_MACHINE],
+        'The manufacturer documents physical needle spacing. Treating one encoded stop-coordinate unit as one needle pitch remains an explicit model assumption.'),
       addressableNeedleRange: evidence('repository-tested', [REPO_CONSTANTS],
         'The manufacturer documents the count; 1..252 is the compiler and validator numbering contract.'),
       carriers: evidence('official-documented', [OFFICIAL_CUSTOMIST_MANUAL, OFFICIAL_OPTIONS, OFFICIAL_MACHINE]),

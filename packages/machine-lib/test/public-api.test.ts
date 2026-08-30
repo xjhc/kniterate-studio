@@ -5,16 +5,16 @@ import * as nodeApi from '../src/index';
 describe('machine-lib public boundaries', () => {
   it('keeps the browser surface explicit and free of Node-only adapters', () => {
     expect(Object.keys(browserApi).sort()).toEqual([
-      'KCODE_RESOURCE_LIMITS_V1', 'KNITERATE_7GG_KCODE_PROFILE_V1', 'KNITERATE_7GG_KCODE_PROFILE_V2', 'KNITERATE_KCODE_OPERATION_CONTRACTS_V1', 'KNITOUT_RESOURCE_LIMITS_V1', 'basePayloadIndexToKCodeColumn',
+      'KCODE_RESOURCE_LIMITS_V1', 'KNITERATE_7GG_KCODE_PROFILE_V1', 'KNITERATE_7GG_KCODE_PROFILE_V2', 'KNITERATE_KCODE_OPERATION_CONTRACTS_V1', 'KNITOUT_RESOURCE_LIMITS_V1', 'PROGRAMMED_MOTION_CLAIM_BOUNDARY_V1', 'PROGRAMMED_MOTION_DISTANCE_ASSUMPTION_V1', 'PROGRAMMED_MOTION_SPEED_ASSUMPTION_V1', 'basePayloadIndexToKCodeColumn',
       'checkKnitoutSourceResourceLimits', 'compareScheduledPassesToMachineTrace', 'compileToRunArtifact',
-      'createAuthoredKCodeCoordinateBridgeV1', 'deriveEndpointPhysicalNeedleMappingV1', 'diffKCodeMachineTrace', 'diffKc',
+      'createAuthoredKCodeCoordinateBridgeV1', 'deriveEndpointPhysicalNeedleMappingV1', 'deriveMachineTraceProgrammedMotionV1', 'diffKCodeMachineTrace', 'diffKc',
       'emitKCodeDocument', 'emitKCodeDocumentBytes', 'findKnitProvenKCodeMatch', 'findKnitProvenMatch',
-      'inspectKcDocument', 'inspectKnitoutPasses', 'isKCodeCommandLegalityExportEligible', 'kcToKnitout',
+      'inspectKcDocument', 'inspectKnitoutPasses', 'isKCodeCommandLegalityExportEligible', 'isLoopFormingMachineTracePassV1', 'kcToKnitout',
       'kcodeColumnToBasePayloadIndex', 'kcodeColumnToTraceCoordinate', 'kcodeOperationContractV1', 'knitProvenRegistryEntries', 'matchKnitProvenArtifact',
       'matchKnitProvenKCode', 'parseKCodeBytes', 'parseKCodeDocument', 'parseKnitoutProgram',
       'physicalNeedleForTraceCoordinateV1', 'projectBackFaceFromArtifact', 'projectColorworkChartV1', 'projectKCodeMachineTrace',
       'projectMachineScene', 'renderKCodeMachineTraceWindow', 'renderKCodeMachineTraceWindowFromTraces', 'renderKcPassWindow',
-      'resolveValidatorMessage', 'validateKCodeMachineTrace', 'validateKnitoutProgram',
+      'resolveValidatorMessage', 'summarizeMachineTracePassMetricsV1', 'validateKCodeMachineTrace', 'validateKnitoutProgram',
     ]);
     expect('nodeKCodeConverter' in browserApi).toBe(false);
     expect('knitoutToKCode' in browserApi).toBe(false);

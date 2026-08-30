@@ -184,9 +184,26 @@ clean `.k` exit `0` with source-lifecycle and differential evidence. Direct
 **Now available:** repository CI, generated-file preflight, editor integrations,
 and other local tools without weakening Studio's safety policy.
 
-### 02 — No trace-derived programmed-motion model
+### 02 — Trace-derived programmed motion with bounded assumptions
 
 **Size: small–medium · Class: software model with explicit physical/controller assumptions**
+
+**Status: implemented and software-proven.** The public
+`deriveMachineTraceProgrammedMotionV1` API sums exact encoded stop-coordinate
+travel and separately evaluates the per-pass assumption model. The versioned
+profile now records the official 3.63 mm physical needle pitch while explicitly
+stating that it does not prove KCode-coordinate scale. Studio's foreign and
+authored run sheets and the machine-check receipt expose the exact coordinate
+metric, assumption-derived millimetres, and idealized constant-speed term with
+their claim boundary. Any contributing pass with zero, negative, or non-finite
+speed makes the time term unavailable; no default is substituted.
+
+The exact-candidate trial manifest retains the same motion receipt beside the
+authored-plan heuristic. Its checklist requires one continuous observed run
+interval and confines any ratio or residual to that artifact, machine,
+controller, yarn, and settings. This closes the software/model and trial-
+preparation seam, not the physical assumptions or a reusable elapsed-time
+model.
 
 Each `MachineTracePassV1` carries encoded half-step
 `carriageStops.left` / `carriageStops.right` coordinates and a footer speed
@@ -433,7 +450,16 @@ one-session closeout item.
 
 **Size: small · Class: software · Related vendor parity: Customist 2.5**
 
-Studio currently reports pass count. The authored path already has design-row
+**Status: implemented and software-proven.** Studio's authored run sheet labels
+authoritative design rows and emitted machine passes separately. Foreign `.kc`
+and `.k` intake now reports total programmed passes plus loop-forming passes
+from the successful strict emitted-KCode trace, while carrying an explicit
+`unavailable-for-foreign-machine-file` authored-row provenance marker through
+the UI, printable run sheet, and machine-check JSON/text receipt. If no strict
+trace is available, both derived pass metrics render unavailable instead of as
+recovered rows.
+
+The authored path already has design-row
 provenance and can report authoritative authored rows. A foreign KCode file has
 no such provenance, so Studio must not recover “rows” by merely excluding the
 transfer operation family.
@@ -493,13 +519,13 @@ does not support treating either generation route as safe by itself.
    registry gate now retains exact-candidate compiler/KCode/trace mapping
    evidence and both physical orientations without an informal one-marker
    shortcut. Machine-side endpoint observations remain pending.
-3. **Add gap 07's loop-forming pass metric.** Authored rows keep their
-   provenance; foreign files get a deliberately narrower label.
-4. **Add gap 02's programmed-coordinate metric and conditional time model.**
-   Return unavailable for nonpositive speed, expose every assumption, and
-   compare only matched authored/emitted candidates. Do not use the term
-   physical floor until stop-distance and controller-speed semantics are
-   evidenced; keep any physical calibration candidate-specific.
+3. **Done — gap 07's loop-forming pass metric.** Authored rows keep their
+   provenance; foreign files get strict-trace programmed/loop-forming counts
+   and never receive a fabricated row count.
+4. **Done in software — gap 02's programmed-coordinate metric and conditional
+   time model.** Nonpositive contributing speeds return unavailable; every
+   physical/controller assumption remains explicit and trial calibration is
+   exact-candidate-only.
 5. **Build gap 03 as a separately proven topology and rendering slice.** The
    strict trace is the input, not proof that the renderer is correct.
 6. **Treat gap 06 as an ongoing evidence program.** Record exact-recipe settings
@@ -510,13 +536,14 @@ does not support treating either generation route as safe by itself.
 
 ## Scope note
 
-This ledger now records gaps 01 and 05 plus gap 04's software bridge as
-implemented. It does not yet claim an estimator, topology model, fabric
-renderer, observed physical coordinate mapping, operational profile, or new
-pass metric.
+This ledger now records gaps 01, 02, 05, and 07 plus gap 04's software bridge as
+implemented. It does not yet claim a topology model, fabric renderer, observed
+physical coordinate mapping, operational profile, physical travel, elapsed
+duration, or physical lower bound.
 
-Needle pitch is official-documented and repeated in repository comments, but is
-not yet a numeric field in the versioned KCode profile. Physical coordinate
+Needle pitch is official-documented and now recorded numerically in the
+versioned KCode profile, but one stop-coordinate unit equaling one pitch remains
+an assumption. Physical coordinate
 origin, orientation, half-step stop distance, and controller speed semantics
 remain unverified. Any future timing result is assumption-derived until those
 inputs and candidate-specific machine evidence are recorded, and physical

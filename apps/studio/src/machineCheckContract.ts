@@ -139,6 +139,7 @@ export function createMachineCheckReceipt(
     diagnosticDetailsOmitted: Math.max(0, prioritized.length - details.length),
     disclosure: [
       document.sourceDisclosure.summary,
+      'Programmed travel is exact only in encoded stop-coordinate units. Millimetres and the constant-speed time term assume one coordinate unit equals one 3.63 mm needle pitch and encoded speed is constant mm/s; they are not physical duration or lower-bound claims.',
       'Surface-proven remains software evidence; controller acceptance and physical knitting are separate gates.',
     ],
   };
@@ -152,15 +153,40 @@ function diagnosticAnchor(diagnostic: MachineCheckDiagnosticV1): string {
   return anchors.length === 0 ? '' : ` (${anchors.join(', ')})`;
 }
 
+function countedLabel(count: number, singular: string, plural: string): string {
+  return `${count.toLocaleString('en-US')} ${count === 1 ? singular : plural}`;
+}
+
+function formatMotion(receipt: MachineCheckReceiptV1): string {
+  const motion = receipt.stats.programmedMotion;
+  if (motion === null) return 'Motion: unavailable (no strict KCode trace)';
+  const exact = motion.coordinateMetric.programmedTravelUnits.toLocaleString('en-US');
+  const assumed = motion.assumptionModel.assumedTravelMm.toLocaleString('en-US', {
+    maximumFractionDigits: 2,
+  });
+  if (motion.assumptionModel.status === 'available') {
+    const seconds = motion.assumptionModel.idealizedSeconds!.toLocaleString('en-US', {
+      maximumFractionDigits: 2,
+    });
+    return `Motion: ${exact} programmed stop-coordinate units · ${assumed} mm assumption-derived travel · ${seconds} s idealized constant-speed term`;
+  }
+  const reason = motion.assumptionModel.unavailableReason!;
+  return `Motion: ${exact} programmed stop-coordinate units · ${assumed} mm assumption-derived travel · idealized term unavailable (${reason.code}, ${reason.offendingPassCount.toLocaleString('en-US')} contributing pass${reason.offendingPassCount === 1 ? '' : 'es'}, first pass ${reason.firstPassIndex + 1})`;
+}
+
 export function formatMachineCheckReceipt(receipt: MachineCheckReceiptV1): string {
   const lines = [
     `${receipt.verdict.label} · ${receipt.input.filename}`,
     `${receipt.input.byteCount === null ? 'Unread input' : `${receipt.input.byteCount.toLocaleString('en-US')} bytes`}`
       + `${receipt.input.sha256 === null ? '' : ` · sha256 ${receipt.input.sha256}`}`,
-    `${receipt.stats.passCount.toLocaleString('en-US')} passes`
+    `${receipt.stats.passMetricProvenance === 'strict-kcode-trace'
+      ? `${countedLabel(receipt.stats.passCount, 'programmed pass', 'programmed passes')} · ${countedLabel(receipt.stats.loopFormingPassCount!, 'loop-forming pass', 'loop-forming passes')}`
+      : 'Pass metrics unavailable (no strict KCode trace)'}`
+      + ' · authored design rows unavailable (foreign file)'
       + ` · ${receipt.stats.errorCount.toLocaleString('en-US')} errors`
       + ` · ${receipt.stats.warningCount.toLocaleString('en-US')} warnings`
       + ` · ${receipt.stats.infoCount.toLocaleString('en-US')} information`,
+    formatMotion(receipt),
     receipt.verdict.annotation,
     ...receipt.disclosure.map((item) => `Evidence boundary: ${item}`),
   ];

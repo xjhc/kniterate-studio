@@ -125,6 +125,11 @@ describe('foreign run-sheet findings', () => {
       },
       stats: {
         passCount: 21,
+        loopFormingPassCount: 12,
+        authoredRowCount: null,
+        passMetricProvenance: 'strict-kcode-trace',
+        authoredRowProvenance: 'unavailable-for-foreign-machine-file',
+        programmedMotion: null,
         carriers: [],
         needleSpan: 'K-code 0-252',
         rackRange: '0',
@@ -143,6 +148,10 @@ describe('foreign run-sheet findings', () => {
     expect(html).toContain('pass 11 / source line 110');
     expect(html).not.toContain('pass 13 / source line 130');
     expect(html).toContain('front:40 reaches 3 modeled loops.');
+    expect(html).toContain('Programmed passes');
+    expect(html).toContain('Loop-forming passes');
+    expect(html).toContain('Authored design rows');
+    expect(html).toContain('foreign file has no row provenance');
     expect(html).toContain('Drop targets an empty modeled needle');
     expect(html).toContain('KCode bytes do not encode Knitout carrier in/out lifecycle.');
     expect(html).toContain('1 occurrence');

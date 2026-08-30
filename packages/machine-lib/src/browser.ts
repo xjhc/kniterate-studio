@@ -87,6 +87,19 @@ export {
   type MachineTraceV1,
 } from './knitout/kcode/machine-trace.js';
 export {
+  isLoopFormingMachineTracePassV1,
+  summarizeMachineTracePassMetricsV1,
+  type MachineTracePassMetricsV1,
+} from './knitout/kcode/pass-metrics.js';
+export {
+  PROGRAMMED_MOTION_CLAIM_BOUNDARY_V1,
+  PROGRAMMED_MOTION_DISTANCE_ASSUMPTION_V1,
+  PROGRAMMED_MOTION_SPEED_ASSUMPTION_V1,
+  deriveMachineTraceProgrammedMotionV1,
+  type DeriveMachineTraceProgrammedMotionOptionsV1,
+  type MachineTraceProgrammedMotionV1,
+} from './knitout/kcode/programmed-motion.js';
+export {
   projectMachineScene,
   type MachineSceneActionGlyphV1,
   type MachineSceneMovementV1,

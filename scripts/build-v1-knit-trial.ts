@@ -11,6 +11,7 @@ import { knitoutToKCodeWithTrace } from '../packages/machine-lib/src/knitout/kni
 import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../packages/machine-lib/src/knitout/kcode/machine-profile.js';
 import { createAuthoredKCodeCoordinateBridgeV1 } from '../packages/machine-lib/src/knitout/kcode/coordinate-bridge.js';
 import { projectKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-trace.js';
+import { deriveMachineTraceProgrammedMotionV1 } from '../packages/machine-lib/src/knitout/kcode/programmed-motion.js';
 import { validateKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-validator.js';
 import { parseKCodeDocument } from '../packages/machine-lib/src/knitout/kcode/parser.js';
 import { compareScheduledPassesToMachineTrace } from '../packages/machine-lib/src/knitout/kcode/scheduled-trace-diff.js';
@@ -135,6 +136,10 @@ export function compileCurrentV1KnitTrial() {
     scheduledTraceComparison,
     profile: KNITERATE_7GG_KCODE_PROFILE_V2,
   });
+  const programmedMotion = deriveMachineTraceProgrammedMotionV1(
+    machineTrace,
+    { assumedPitchMmPerCoordinateUnit: KNITERATE_7GG_KCODE_PROFILE_V2.machine.needlePitchMm },
+  );
   const combinations = [...new Map(machineTrace.passes.map((pass) => {
     const combination = {
       operation: pass.operation,
@@ -216,6 +221,7 @@ export function compileCurrentV1KnitTrial() {
       emittedPasses: inspectKcDocument(converted.kcode).length,
       operations: compiled.stats.opCount,
       estimatedKnitTimeSeconds: compiled.stats.estimatedKnitTimeSeconds,
+      programmedMotion,
     },
     identity: {
       compileHash: compiled.inputHash,
@@ -238,7 +244,8 @@ export function compileCurrentV1KnitTrial() {
 5. Confirm 20 waste rows, draw thread, and machine bind-off. Per Kniterate's [start-up guide](https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide) and [machine procedure](https://support.kniterate.com/hc/en-us/article_attachments/360009817198), the design app does not import .kc files: after independent hash and metadata review, copy the exact bytes of blanket.kc to the SD card as command.kc, eject the card correctly, and follow that documented manual procedure. Retain blanket.kc as the unchanged evidence copy. Do not claim or attempt an automated controller-only dry run.
 6. Watch waste, draw, carrier bring-in, first two body rows, and bind-off. Stop on unexpected carrier position, loop loss, or takedown behavior; record every manual intervention in run.json.
 7. Photograph front, back, cast-on, both edges, and bind-off. Record dimensions off-machine and after 24 hours of rest.
-8. Copy the completed artifact into packages/machine-lib/registry/swatches only after the structured run evidence, narrative outcome, and exact hashes are recorded.
+8. Record one continuous startedAt/endedAt interval in run.json around the exact machine run, including every stop or manual intervention. Compare that observed interval only with this manifest's authored-plan heuristic and assumption-derived idealized term. Any residual or ratio is candidate-, machine-, controller-, yarn-, and settings-specific; do not promote one run into a universal duration constant.
+9. Copy the completed artifact into packages/machine-lib/registry/swatches only after the structured run evidence, narrative outcome, and exact hashes are recorded.
 `;
   const controllerReview = `# Controller review
 

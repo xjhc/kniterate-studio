@@ -1,6 +1,7 @@
 import {
   KNITERATE_7GG_KCODE_PROFILE_V2,
   compareScheduledPassesToMachineTrace,
+  deriveMachineTraceProgrammedMotionV1,
   diffKCodeMachineTrace,
   inspectKnitoutPasses,
   parseKCodeBytes,
@@ -10,6 +11,7 @@ import {
   projectMachineScene,
   renderKCodeMachineTraceWindowFromTraces,
   resolveValidatorMessage,
+  summarizeMachineTracePassMetricsV1,
   validateKCodeMachineTrace,
   validateKnitoutProgram,
   type KCodeDialect,
@@ -17,6 +19,7 @@ import {
   type KCodeMachineTraceDiff,
   type KCodeSourceSpan,
   type MachineSceneV1,
+  type MachineTraceProgrammedMotionV1,
   type MachineTracePassV1,
   type MachineTraceV1,
   type MachineValidationReportV1,
@@ -154,7 +157,16 @@ export interface MachineDocument {
     summary: string;
   };
   stats: {
+    /** Total executable passes when a strict KCode trace is available; zero otherwise. */
     passCount: number;
+    /** Strict-trace passes containing knit, tuck, or split; unavailable without a trace. */
+    loopFormingPassCount: number | null;
+    /** Foreign machine files do not carry Studio's authored row identity. */
+    authoredRowCount: null;
+    passMetricProvenance: 'strict-kcode-trace' | 'unavailable';
+    authoredRowProvenance: 'unavailable-for-foreign-machine-file';
+    /** Exact coordinate metric plus explicitly assumption-derived distance/time. */
+    programmedMotion: MachineTraceProgrammedMotionV1 | null;
     carriers: readonly string[];
     needleSpan: string;
     rackRange: string;
@@ -491,6 +503,14 @@ function finishDocument(input: {
   const carrierSet = [...carriers].sort();
   const rackExtent = numberExtent(passRacks(input.passes));
   const legacyNeedleExtent = numberExtent(legacyNeedleNumbers(input.passes));
+  const passMetrics = input.kcode?.trace === null || input.kcode?.trace === undefined
+    ? null
+    : summarizeMachineTracePassMetricsV1(input.kcode.trace);
+  const programmedMotion = input.kcode?.trace === null || input.kcode?.trace === undefined
+    ? null
+    : deriveMachineTraceProgrammedMotionV1(input.kcode.trace, {
+        assumedPitchMmPerCoordinateUnit: KNITERATE_MACHINE_PROFILE_V1.machine.needlePitchMm,
+      });
 
   // Conservative foreign-file policy: imported warnings have no authored
   // review/waiver context, so both errors and warnings block V1 promotion.
@@ -532,7 +552,12 @@ function finishDocument(input: {
           summary: 'KCode bytes do not encode Knitout carrier in/out lifecycle or prove who produced them; checks begin at encoded KCode semantics.',
         },
     stats: {
-      passCount: input.passes.length,
+      passCount: passMetrics?.programmedPassCount ?? 0,
+      loopFormingPassCount: passMetrics?.loopFormingPassCount ?? null,
+      authoredRowCount: null,
+      passMetricProvenance: passMetrics === null ? 'unavailable' : 'strict-kcode-trace',
+      authoredRowProvenance: 'unavailable-for-foreign-machine-file',
+      programmedMotion,
       carriers: carrierSet,
       needleSpan: spanLabel,
       rackRange: rackExtent ? `${rackExtent.min} to ${rackExtent.max}` : '0',
