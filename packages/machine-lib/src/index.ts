@@ -27,6 +27,8 @@ export {
 export type {
   VendorLoweringSettings,
   VendorLoweringResourceLimits,
+  VendorKCodeCoordinateMappingV1,
+  VendorPositionV1,
   VendorScheduledKCode,
   VendorScheduledPass,
 } from './knitout/kniterate/vendor-pass-contract.js';
@@ -89,6 +91,14 @@ export {
   type ScheduledTraceComparisonV1,
   type ScheduledTraceMismatchV1,
 } from './knitout/kcode/scheduled-trace-diff.js';
+export {
+  createAuthoredKCodeCoordinateBridgeV1,
+  deriveEndpointPhysicalNeedleMappingV1,
+  physicalNeedleForTraceCoordinateV1,
+  type AuthoredKCodeCoordinateBridgeV1,
+  type CreateAuthoredKCodeCoordinateBridgeInputV1,
+  type EndpointPhysicalNeedleMappingV1,
+} from './knitout/kcode/coordinate-bridge.js';
 export type {
   KCodeDiagnostic,
   KCodeDiagnosticRule,

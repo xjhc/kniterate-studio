@@ -115,6 +115,7 @@ describe('browser k-code adapter', () => {
     expect(browser.kcode).toBe(node.kcode);
     expect(nodeTrace.ok && nodeTrace.kcode).toBe(node.kcode);
     expect(nodeTrace.ok && nodeTrace.scheduledPasses).toEqual(browser.scheduledPasses);
+    expect(nodeTrace.ok && nodeTrace.coordinateMapping).toEqual(browser.coordinateMapping);
     expect(nodeTrace.warningCount).toBe(browser.warningCount);
     expect(nodeTrace.warnings).toEqual(browser.warnings);
     if (!nodeTrace.ok) throw new Error(nodeTrace.error);
@@ -132,6 +133,7 @@ describe('browser k-code adapter', () => {
     expect(results.every((result) => result.ok)).toBe(true);
     expect(new Set(results.map((result) => result.kcode)).size).toBe(1);
     expect(new Set(results.map((result) => JSON.stringify(result.scheduledPasses))).size).toBe(1);
+    expect(new Set(results.map((result) => JSON.stringify(result.coordinateMapping))).size).toBe(1);
   });
 
   it('does not leak one document\'s lowering settings into the next', () => {

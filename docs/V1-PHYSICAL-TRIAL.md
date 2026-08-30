@@ -16,7 +16,7 @@ then writes `out/v1-knit-trial/`:
 - validated `blanket.k` and `blanket.kc`
 - `manifest.json` with the full generating commit, clean-worktree assertion,
   compile hash, SHA-256 identities, carrier map, dimensions, frame, pass counts,
-  and estimated time
+  estimated time, and the hash-bound compiler/KCode/trace coordinate bridge
 - `OPERATOR-CHECKLIST.md` for the actual machine session
 - `command-legality.json`, binding the profile/contract, proof receipt, exact
   KCode hash, pass count, exact scheduled-versus-parsed machine-field match,
@@ -26,10 +26,12 @@ then writes `out/v1-knit-trial/`:
 
 `release:trial` first runs `pnpm verify:kcode:check`; it cannot package an
 artifact against a stale or incomplete software proof receipt. The manifest
-range is expressed only in compiler/project coordinates. It is
-not a physical needle-label claim. Resolve that range against a documented
-machine/vendor datum procedure and record an independent placement verification
-in `run.json` before sending the job.
+records the exact lowering placement from compiler/project coordinates through
+marker-free KCode columns to normalized trace coordinates. That software bridge
+is not a physical needle-label claim. Resolve both trace endpoints against a
+documented machine/vendor datum procedure, record whether physical labels
+increase or decrease across them, and record an independent placement
+verification in `run.json` before sending the job.
 
 The release trial is a 120x160 four-color birdseye rectangle on the fixed 7gg
 profile: C1 draw, C2-C5 pattern yarns, C6 waste, 20 waste rows, and machine

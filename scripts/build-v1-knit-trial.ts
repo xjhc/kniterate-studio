@@ -9,6 +9,7 @@ import { inspectKcDocument } from '../packages/machine-lib/src/knitout/kc-docume
 import { kcToKnitout } from '../packages/machine-lib/src/knitout/kc-to-knitout.js';
 import { knitoutToKCodeWithTrace } from '../packages/machine-lib/src/knitout/kniterate/to-kcode.js';
 import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../packages/machine-lib/src/knitout/kcode/machine-profile.js';
+import { createAuthoredKCodeCoordinateBridgeV1 } from '../packages/machine-lib/src/knitout/kcode/coordinate-bridge.js';
 import { projectKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-trace.js';
 import { validateKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-validator.js';
 import { parseKCodeDocument } from '../packages/machine-lib/src/knitout/kcode/parser.js';
@@ -123,6 +124,17 @@ export function compileCurrentV1KnitTrial() {
     throw new Error(`generated KCode failed revalidation: ${errors.map((message) => message.message).join('; ')}`);
   }
   const compilerFingerprint = computeCompilerFingerprint();
+  const compilerCoordinateStart = project.base.machine.needleOffset;
+  const compilerCoordinateEnd = project.base.machine.needleOffset + width - 1;
+  const coordinateBridge = createAuthoredKCodeCoordinateBridgeV1({
+    artifactKcodeSha256: sha256Bytes(converted.kcode),
+    compilerCoordinateStart,
+    compilerCoordinateEnd,
+    lowering: converted.coordinateMapping,
+    trace: machineTrace,
+    scheduledTraceComparison,
+    profile: KNITERATE_7GG_KCODE_PROFILE_V2,
+  });
   const combinations = [...new Map(machineTrace.passes.map((pass) => {
     const combination = {
       operation: pass.operation,
@@ -173,9 +185,10 @@ export function compileCurrentV1KnitTrial() {
     title: project.title, profile: project.base.machine.profile,
     chart: { width, height, colors: palette.length, rowNumbering: chart.rowNumbering, palette },
     machine: {
-      coordinateSystem: 'compiler/project coordinates; physical needle labels unverified',
-      compilerCoordinateStart: project.base.machine.needleOffset,
-      compilerCoordinateEnd: project.base.machine.needleOffset + width - 1,
+      coordinateSystem: 'compiler/project coordinates mapped to exact KCode/trace coordinates; physical needle labels unverified',
+      compilerCoordinateStart,
+      compilerCoordinateEnd,
+      coordinateBridge,
       program: {
         gauge: 7,
         position: 'Center',
@@ -213,15 +226,15 @@ export function compileCurrentV1KnitTrial() {
     softwareVerdict: 'Surface-proven', physicalVerdict: 'Pending machine trial',
     physicalPlacementGate: {
       status: 'unverified',
-      requirement: 'Resolve compiler/project coordinates to physical machine needle labels using a documented machine/vendor datum procedure, then record independent operator verification in run.json before sending the job.',
+      requirement: 'Use the hash-bound coordinate bridge and a documented machine/vendor datum procedure to resolve both mapped trace endpoints to physical machine needle labels, then record orientation and independent operator verification in run.json before sending the job.',
     },
   };
   const operatorChecklist = `# V1 physical blanket trial
 
 1. Knit a profile-matched tension swatch with the exact four yarns and record yarn brand, line, lot, fiber, and measured gauge.
 2. Load C1 draw thread, C2-C5 according to manifest.json, and C6 waste yarn.
-3. The range ${project.base.machine.needleOffset}-${project.base.machine.needleOffset + width - 1} is expressed only in compiler/project coordinates. It is not a verified physical needle-label range.
-4. Before sending the job, resolve that compiler range to physical needle labels using a documented machine/vendor datum procedure. Have an operator independently verify the placement and record the mapping, method, verifier, and time in run.json. Do not run while this gate is unverified.
+3. The compiler/project range ${compilerCoordinateStart}-${compilerCoordinateEnd} maps through the exact hash-bound lowering receipt to KCode columns ${coordinateBridge.kcodeColumn.start}-${coordinateBridge.kcodeColumn.end} and normalized trace coordinates ${coordinateBridge.traceCoordinate.start}-${coordinateBridge.traceCoordinate.end}. None of those values is yet a verified physical needle label.
+4. Before sending the job, resolve both trace endpoints to physical needle labels using a documented machine/vendor datum procedure. Record increasing or decreasing physical-label orientation, and have a different person independently verify the endpoints, method, exact artifact hash, and time in run.json. Do not run while this gate is unverified.
 5. Confirm 20 waste rows, draw thread, and machine bind-off. Per Kniterate's [start-up guide](https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide) and [machine procedure](https://support.kniterate.com/hc/en-us/article_attachments/360009817198), the design app does not import .kc files: after independent hash and metadata review, copy the exact bytes of blanket.kc to the SD card as command.kc, eject the card correctly, and follow that documented manual procedure. Retain blanket.kc as the unchanged evidence copy. Do not claim or attempt an automated controller-only dry run.
 6. Watch waste, draw, carrier bring-in, first two body rows, and bind-off. Stop on unexpected carrier position, loop loss, or takedown behavior; record every manual intervention in run.json.
 7. Photograph front, back, cast-on, both edges, and bind-off. Record dimensions off-machine and after 24 hours of rest.

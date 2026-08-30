@@ -17,6 +17,26 @@ export interface VendorLoweringResourceLimits {
   readonly maxKCodeRecords: number;
 }
 
+export type VendorPositionV1 = 'Left' | 'Center' | 'Right' | 'Keep';
+
+/**
+ * Exact affine placement selected by the pinned backend for one lowering run.
+ * A front-bed Knitout needle/slot `s` is serialized at KCode column
+ * `s + frontSourceSlotToKCodeColumnOffset`. Rear-bed selections additionally
+ * depend on the pass rack and are therefore not represented as a fixed source
+ * offset here.
+ */
+export interface VendorKCodeCoordinateMappingV1 {
+  readonly schemaVersion: 1;
+  readonly position: VendorPositionV1;
+  readonly sourceSlotRange: {
+    readonly min: number;
+    readonly max: number;
+  };
+  readonly frontSourceSlotToKCodeColumnOffset: number;
+  readonly formula: 'kcodeColumn=frontSourceSlot+offset';
+}
+
 export function vendorLoweringResourceLimits(
   profile: KnitoutResourceProfileV1,
 ): VendorLoweringResourceLimits {
@@ -61,4 +81,5 @@ export interface VendorScheduledPass {
 export interface VendorScheduledKCode {
   readonly kcode: string;
   readonly passes: readonly VendorScheduledPass[];
+  readonly coordinateMapping: VendorKCodeCoordinateMappingV1;
 }

@@ -51,6 +51,8 @@ export interface BrowserKCodeResult {
   warningCount?: number;
   /** Exact post-lowering passes from the pinned backend. */
   scheduledPasses?: readonly VendorScheduledPass[];
+  /** Exact authored-source to KCode placement selected by this lowering run. */
+  coordinateMapping?: VendorScheduledKCode['coordinateMapping'];
   /** Named capacity refusal suitable for product-level diagnostics. */
   capacityIssue?: KnitoutCapacityIssueV1;
 }
@@ -98,6 +100,7 @@ function convertBrowserKnitoutToKCode(
       ok: true,
       kcode: converted.kcode,
       scheduledPasses: converted.passes,
+      coordinateMapping: converted.coordinateMapping,
       warnings,
       warningCount,
     };

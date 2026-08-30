@@ -29,6 +29,13 @@ ship," trust this file and the working tree instead.
   Blocked, and `2` means usage/read/internal failure. Both the Studio verdict
   panel/run sheet and the CLI disclose that direct KCode cannot prove source
   carrier lifecycle.
+- **Exact authored-coordinate bridge for physical trials.** The pinned lowering
+  receipt now binds compiler/project endpoints to the actual `Position`-derived
+  marker-free KCode columns and normalized trace coordinates for the exact
+  KCode SHA-256. Trial and registry evidence persist and freshly compare that
+  basis, including increasing or decreasing physical-label orientation. This
+  closes the software seam only; two machine-observed endpoints and independent
+  pre-run verification remain required before any physical needle label claim.
 - **Authored chart → compile → k-code loop (Story 2 / "S2" core).** Embedded
   colorwork chart editor (`src/chart/*`), strategy rail (backing techniques,
   float budget, frame: waste/draw/bind-off), off-thread compile

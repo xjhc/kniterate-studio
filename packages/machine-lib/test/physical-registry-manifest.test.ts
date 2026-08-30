@@ -188,6 +188,7 @@ function writeCurrentEntry(root: string, reemitStatus: 'matches' | 'not-run' = '
     program: {
       compilerCoordinateStart: expected.compilerCoordinates.start,
       compilerCoordinateEnd: expected.compilerCoordinates.end,
+      coordinateBridge: expected.coordinateBridge,
       ...expected.program,
     },
     carriers: Object.fromEntries(expected.carriers.map((carrier, index) => [carrier.carrier, {
@@ -236,6 +237,7 @@ function writeCurrentEntry(root: string, reemitStatus: 'matches' | 'not-run' = '
       compilerCoordinateEnd: expected.compilerCoordinates.end,
       physicalNeedleStart: 101,
       physicalNeedleEnd: 104,
+      orientation: 'increasing',
       method: 'Vendor datum card procedure revision 1',
       verifiedBy: 'Placement Verifier',
       verifiedAt: '2026-08-25T00:55:00Z',
@@ -465,6 +467,10 @@ describe('generated physical registry manifest', () => {
     const run = readObject(runPath)
     run.artifact.loadedKcodeSha256 = legacyHash
     writeObject(runPath, run)
+    const machinePath = join(dir, 'machine.json')
+    const machine = readObject(machinePath)
+    machine.program.coordinateBridge.artifactKcodeSha256 = legacyHash
+    writeObject(machinePath, machine)
 
     const report = jsonReport(fixture.root)
     expect(report.entries[0]).toMatchObject({
@@ -545,10 +551,35 @@ describe('generated physical registry manifest', () => {
 
     const report = jsonReport(fixture.root, 2)
     expect(report.entries[0]!.messages).toEqual(expect.arrayContaining([
-      expect.stringContaining('placement span must equal the compiler coordinate span'),
+      expect.stringContaining('placement span must equal the mapped trace-coordinate span'),
       expect.stringContaining('manualInterventions[0].passIndex must be less than the current emitted pass count'),
       expect.stringContaining('observations.stops[0].passIndex must be less than the current emitted pass count'),
     ]))
+  })
+
+  it('accepts both endpoint orientations and rejects a mismatched orientation label', () => {
+    const reversedFixture = registryFixture()
+    const reversedDir = writeCurrentEntry(reversedFixture.root)
+    const reversedPath = join(reversedDir, 'run.json')
+    const reversed = readObject(reversedPath)
+    reversed.physicalPlacement.physicalNeedleStart = 104
+    reversed.physicalPlacement.physicalNeedleEnd = 101
+    reversed.physicalPlacement.orientation = 'decreasing'
+    writeObject(reversedPath, reversed)
+    expect(jsonReport(reversedFixture.root).entries[0]).toMatchObject({
+      ok: true,
+      knitProven: true,
+    })
+
+    const mismatchFixture = registryFixture()
+    const mismatchDir = writeCurrentEntry(mismatchFixture.root)
+    const mismatchPath = join(mismatchDir, 'run.json')
+    const mismatch = readObject(mismatchPath)
+    mismatch.physicalPlacement.orientation = 'decreasing'
+    writeObject(mismatchPath, mismatch)
+    expect(jsonReport(mismatchFixture.root, 2).entries[0]!.messages).toContainEqual(
+      expect.stringContaining('orientation must be increasing'),
+    )
   })
 
   it('requires six distinct photo receipts and verifies referenced local bytes', () => {
@@ -675,6 +706,7 @@ describe('generated physical registry manifest', () => {
         run.physicalPlacement.verified = false
         run.physicalPlacement.physicalNeedleStart = null
         run.physicalPlacement.physicalNeedleEnd = null
+        run.physicalPlacement.orientation = null
         run.physicalPlacement.method = null
         run.physicalPlacement.verifiedBy = null
         run.physicalPlacement.verifiedAt = null
@@ -785,6 +817,17 @@ describe('fresh V1 physical release gate', () => {
     expect(first.manifest.identity.knitoutSha256).toBe(sha256Bytes(first.knitoutText))
     expect(first.manifest.identity.kcodeSha256).toBe(sha256Bytes(first.kcodeText))
     expect(first.manifest.machine.coordinateSystem).toContain('physical needle labels unverified')
+    expect(first.manifest.machine.coordinateBridge).toMatchObject({
+      artifactKcodeSha256: first.manifest.identity.kcodeSha256,
+      compilerProject: { start: 67, end: 186 },
+      kcodeColumn: { start: 66, end: 185 },
+      traceCoordinate: { start: 66, end: 185 },
+      offsets: {
+        compilerProjectToKcodeColumn: -1,
+        kcodeColumnToTraceCoordinate: 0,
+      },
+      physicalNeedleLabels: { status: 'unverified' },
+    })
     expect(first.manifest.physicalPlacementGate.status).toBe('unverified')
     expect(second.commandLegality).toEqual(first.commandLegality)
     expect(first.commandLegality.artifact.kcodeSha256).toBe(sha256Bytes(first.kcodeText))

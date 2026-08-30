@@ -38,8 +38,8 @@ safe settings, or the fabric produced by a machine.
 
 The headless verdict and format-provenance disclosure gaps closed on 2026-08-29.
 The remaining gaps concern a conditional programmed-motion model, fabric
-topology and rendering, verified coordinate mapping, physical setting evidence,
-and a legible foreign-file pass metric.
+topology and rendering, physical coordinate observations, physical setting
+evidence, and a legible foreign-file pass metric.
 
 ---
 
@@ -306,9 +306,9 @@ controller behavior or the appearance of physically knitted fabric.
 **Unblocks:** trustworthy foreign-file topology preview and visual review of
 structural mistakes.
 
-### 04 — A KCode column is not yet a physical needle label
+### 04 — Software bridge closed; physical needle labels still pending
 
-**Size: small software bridge · Class: exact-candidate physical evidence**
+**Status: software seam implemented 2026-08-29 · Class: exact-candidate physical evidence**
 
 The profile correctly records
 `physicalNeedleNumbering.status: 'unverified'`. Official pitch documents needle
@@ -334,14 +334,24 @@ exact-candidate affine 1:1 mapping over that recorded range. They are stronger
 than one marker, but they do not independently prove global scale, every
 intermediate label, or the meaning of half-step carriage-stop coordinates.
 
-One software seam remains: deterministically bridge the generated artifact's
-compiler/project coordinates to strict-trace `kcodeColumn` and normalized
-`traceCoordinate`, test both orientations, and retain the coordinate basis in
-the evidence record. A foreign KCode file without authored compiler-coordinate
-provenance must not silently inherit the mapping. Turning gap 02's idealized
-time into a physical lower-bound claim would additionally require a verified
-half-step stop-distance mapping and controller speed semantics; the integer
-needle endpoint record alone does not supply either.
+The software seam is now closed for authored candidates. The pinned backend
+retains its per-lowering `Position` result and exact affine front-source-slot to
+KCode-column offset. The trial builder binds that placement to the KCode SHA-256,
+the compiler/project endpoints, strict marker-free `kcodeColumn` endpoints,
+normalized `traceCoordinate` endpoints, profile, dialect, and passing scheduled
+differential. This matters because `Position: Center` can recenter a project:
+there is no globally correct fixed `-1` shortcut. A foreign KCode file without
+authored compiler-coordinate provenance has no API path to acquire this bridge.
+
+The registry persists the exact bridge in `machine.json`, compares it with a
+fresh current compile, and requires `run.json` to state whether the independently
+observed physical labels increase or decrease across the two endpoints. Tests
+pin both orientations. The bridge remains explicit that physical labels are
+unverified until the pre-run datum procedure, independent verifier, and time are
+recorded. Turning gap 02's idealized time into a physical lower-bound claim
+would additionally require a verified half-step stop-distance mapping and
+controller speed semantics; the integer needle endpoint record alone does not
+supply either.
 
 If a separate marker artifact is needed, make it a hash-bound controlled datum.
 Do not modify the immutable blanket candidate informally. The resulting evidence
@@ -349,8 +359,9 @@ establishes placement for the registered artifact and recorded
 machine/controller configuration; it does not automatically fix every future
 file or turn an encoded trace into observed physical movement.
 
-**Unblocks:** physical labels, placement checks, and operator instructions for an
-exact registered candidate.
+**Now available:** hash-bound placement checks and unambiguous operator
+instructions for the exact candidate. **Still open:** the machine-side endpoint
+observations needed before any physical needle label can be claimed.
 
 ### 05 — Closed disclosure: KCode cannot prove source carrier lifecycle
 
@@ -478,9 +489,10 @@ does not support treating either generation route as safe by itself.
 
 1. **Done — gaps 01 and 05: one-file checker plus format disclosure.** `.k` and
    `.kc` now share Studio's conservative verdict and warning policy.
-2. **Close gap 04's software seam before the physical trial.** Reuse the existing
-   two-endpoint registry gate and retain exact-candidate mapping evidence; do not
-   add an informal single-marker shortcut.
+2. **Done in software — gap 04's coordinate bridge.** The existing two-endpoint
+   registry gate now retains exact-candidate compiler/KCode/trace mapping
+   evidence and both physical orientations without an informal one-marker
+   shortcut. Machine-side endpoint observations remain pending.
 3. **Add gap 07's loop-forming pass metric.** Authored rows keep their
    provenance; foreign files get a deliberately narrower label.
 4. **Add gap 02's programmed-coordinate metric and conditional time model.**
@@ -498,9 +510,10 @@ does not support treating either generation route as safe by itself.
 
 ## Scope note
 
-This ledger now records gaps 01 and 05 as implemented. It does not yet claim an
-estimator, topology model, fabric renderer, coordinate bridge, operational
-profile, or new pass metric.
+This ledger now records gaps 01 and 05 plus gap 04's software bridge as
+implemented. It does not yet claim an estimator, topology model, fabric
+renderer, observed physical coordinate mapping, operational profile, or new
+pass metric.
 
 Needle pitch is official-documented and repeated in repository comments, but is
 not yet a numeric field in the versioned KCode profile. Physical coordinate

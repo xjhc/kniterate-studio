@@ -9,6 +9,33 @@
   "program": {
     "compilerCoordinateStart": 0,
     "compilerCoordinateEnd": 0,
+    "coordinateBridge": {
+      "kind": "kniterate-authored-kcode-coordinate-bridge",
+      "schemaVersion": 1,
+      "provenance": "authored-project-and-pinned-lowering",
+      "artifactKcodeSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "profile": { "id": "kniterate-7gg-kcode", "version": 2, "dialect": "knitout-vendor" },
+      "lowering": {
+        "schemaVersion": 1,
+        "position": "Center",
+        "sourceSlotRange": { "min": 0, "max": 0 },
+        "frontSourceSlotToKCodeColumnOffset": 0,
+        "formula": "kcodeColumn=frontSourceSlot+offset"
+      },
+      "compilerProject": { "basis": "one-based-knitout-front-bed-needle", "start": 0, "end": 0 },
+      "kcodeColumn": { "basis": "marker-free-raster-column", "start": 0, "end": 0 },
+      "traceCoordinate": { "basis": "dialect-normalized-marker-free-coordinate", "start": 0, "end": 0 },
+      "offsets": {
+        "compilerProjectToKcodeColumn": 0,
+        "kcodeColumnToTraceCoordinate": 0,
+        "compilerProjectToTraceCoordinate": 0
+      },
+      "verification": {
+        "scheduledTraceComparison": "passed",
+        "selectedTraceExtentMatchesMappedEndpoints": true
+      },
+      "physicalNeedleLabels": { "status": "unverified" }
+    },
     "gauge": 7,
     "position": "Center",
     "wastePasses": 20,

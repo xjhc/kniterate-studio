@@ -68,6 +68,7 @@ export type KnitoutToScheduledKCodeResult =
       readonly ok: true;
       readonly kcode: string;
       readonly scheduledPasses: readonly VendorScheduledPass[];
+      readonly coordinateMapping: VendorScheduledKCode['coordinateMapping'];
       readonly warnings: readonly string[];
       readonly warningCount: number;
     }
@@ -131,6 +132,7 @@ function convertKnitoutToKCodeWithTrace(
       ok: true,
       kcode: converted.kcode,
       scheduledPasses: converted.passes,
+      coordinateMapping: converted.coordinateMapping,
       warnings,
       warningCount,
     };

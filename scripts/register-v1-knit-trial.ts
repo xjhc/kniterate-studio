@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 import { readCleanV1KnitTrialReleaseSource } from './build-v1-knit-trial.js';
+import type { AuthoredKCodeCoordinateBridgeV1 } from '../packages/machine-lib/src/knitout/kcode/coordinate-bridge.js';
 
 const GIT_COMMIT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 
@@ -20,6 +21,7 @@ const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
     coordinateSystem: string;
     compilerCoordinateStart: number;
     compilerCoordinateEnd: number;
+    coordinateBridge: AuthoredKCodeCoordinateBridgeV1;
     program: {
       gauge: number;
       position: string;
@@ -132,6 +134,7 @@ const machine = {
   program: {
     compilerCoordinateStart: manifest.machine.compilerCoordinateStart,
     compilerCoordinateEnd: manifest.machine.compilerCoordinateEnd,
+    coordinateBridge: manifest.machine.coordinateBridge,
     ...manifest.machine.program,
   },
   carriers: Object.fromEntries(manifest.carriers.map((carrier, index) => [carrier.carrier, { role: carrier.role, yarnEntry: `yarn.json#yarns[${index}]` }])),
@@ -169,6 +172,7 @@ const run = {
     compilerCoordinateEnd: manifest.machine.compilerCoordinateEnd,
     physicalNeedleStart: null,
     physicalNeedleEnd: null,
+    orientation: null,
     method: 'TODO: documented machine/vendor datum procedure used',
     verifiedBy: 'TODO: independent verifier',
     verifiedAt: null,

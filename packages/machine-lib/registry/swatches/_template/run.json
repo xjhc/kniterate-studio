@@ -17,6 +17,7 @@
     "compilerCoordinateEnd": 0,
     "physicalNeedleStart": null,
     "physicalNeedleEnd": null,
+    "orientation": null,
     "method": "TODO: documented machine/vendor datum procedure used",
     "verifiedBy": "TODO: independent verifier",
     "verifiedAt": null

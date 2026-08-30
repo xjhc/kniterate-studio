@@ -22,6 +22,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { basename, dirname, join, resolve, sep } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import {
   compileRegistryRequestCurrent,
   computeCompilerFingerprint,
@@ -111,6 +112,21 @@ interface CarrierEvidence {
 interface YarnEvidence {
   carrier: string;
   role: string;
+}
+
+interface ValidatedCoordinateBridge {
+  readonly value: Record<string, unknown>;
+  readonly artifactKcodeSha256: string;
+  readonly position: string;
+  readonly compilerStart: number;
+  readonly compilerEnd: number;
+  readonly traceStart: number;
+  readonly traceEnd: number;
+}
+
+interface MachineEvidenceValidation {
+  readonly carrierLinks: Map<string, CarrierEvidence>;
+  readonly coordinateBridge: ValidatedCoordinateBridge | null;
 }
 
 function readJson(path: string): unknown {
@@ -443,6 +459,143 @@ function validateInitialSettings(
   return settings;
 }
 
+function validateCoordinateBridge(
+  value: unknown,
+  path: string,
+  messages: string[],
+): ValidatedCoordinateBridge | null {
+  const bridge = asRecord(value);
+  if (bridge === null) {
+    messages.push(`${path} must be an object`);
+    return null;
+  }
+  exactKeys(bridge, [
+    'kind', 'schemaVersion', 'provenance', 'artifactKcodeSha256', 'profile',
+    'lowering', 'compilerProject', 'kcodeColumn', 'traceCoordinate', 'offsets',
+    'verification', 'physicalNeedleLabels',
+  ], path, messages);
+  if (bridge.kind !== 'kniterate-authored-kcode-coordinate-bridge') messages.push(`${path}.kind is invalid`);
+  if (bridge.schemaVersion !== 1) messages.push(`${path}.schemaVersion must be 1`);
+  if (bridge.provenance !== 'authored-project-and-pinned-lowering') messages.push(`${path}.provenance is invalid`);
+  if (typeof bridge.artifactKcodeSha256 !== 'string' || !SHA256.test(bridge.artifactKcodeSha256)) messages.push(`${path}.artifactKcodeSha256 must be SHA-256`);
+
+  const profile = asRecord(bridge.profile);
+  if (profile === null) messages.push(`${path}.profile must be an object`);
+  else {
+    exactKeys(profile, ['id', 'version', 'dialect'], `${path}.profile`, messages);
+    if (!nonEmpty(profile.id)) messages.push(`${path}.profile.id must be non-empty`);
+    if (!integer(profile.version, 1)) messages.push(`${path}.profile.version must be a positive integer`);
+    if (!['app', 'knitout-vendor'].includes(String(profile.dialect))) messages.push(`${path}.profile.dialect is invalid`);
+  }
+
+  const lowering = asRecord(bridge.lowering);
+  let position: string | null = null;
+  let sourceMin: number | null = null;
+  let sourceMax: number | null = null;
+  let compilerToKcode: number | null = null;
+  if (lowering === null) messages.push(`${path}.lowering must be an object`);
+  else {
+    exactKeys(lowering, ['schemaVersion', 'position', 'sourceSlotRange', 'frontSourceSlotToKCodeColumnOffset', 'formula'], `${path}.lowering`, messages);
+    if (lowering.schemaVersion !== 1) messages.push(`${path}.lowering.schemaVersion must be 1`);
+    if (!['Left', 'Center', 'Right', 'Keep'].includes(String(lowering.position))) messages.push(`${path}.lowering.position is invalid`);
+    else position = String(lowering.position);
+    if (!integer(lowering.frontSourceSlotToKCodeColumnOffset)) messages.push(`${path}.lowering.frontSourceSlotToKCodeColumnOffset must be an integer`);
+    else compilerToKcode = lowering.frontSourceSlotToKCodeColumnOffset;
+    if (lowering.formula !== 'kcodeColumn=frontSourceSlot+offset') messages.push(`${path}.lowering.formula is invalid`);
+    const sourceRange = asRecord(lowering.sourceSlotRange);
+    if (sourceRange === null) messages.push(`${path}.lowering.sourceSlotRange must be an object`);
+    else {
+      exactKeys(sourceRange, ['min', 'max'], `${path}.lowering.sourceSlotRange`, messages);
+      if (typeof sourceRange.min !== 'number' || !Number.isFinite(sourceRange.min)) messages.push(`${path}.lowering.sourceSlotRange.min must be finite`);
+      else sourceMin = sourceRange.min;
+      if (typeof sourceRange.max !== 'number' || !Number.isFinite(sourceRange.max)) messages.push(`${path}.lowering.sourceSlotRange.max must be finite`);
+      else sourceMax = sourceRange.max;
+      if (sourceMin !== null && sourceMax !== null && sourceMin > sourceMax) messages.push(`${path}.lowering.sourceSlotRange min must not exceed max`);
+    }
+  }
+
+  const endpointRange = (
+    candidate: unknown,
+    field: 'compilerProject' | 'kcodeColumn' | 'traceCoordinate',
+    basis: string,
+  ): { start: number; end: number } | null => {
+    const range = asRecord(candidate);
+    const rangePath = `${path}.${field}`;
+    if (range === null) {
+      messages.push(`${rangePath} must be an object`);
+      return null;
+    }
+    exactKeys(range, ['basis', 'start', 'end'], rangePath, messages);
+    if (range.basis !== basis) messages.push(`${rangePath}.basis is invalid`);
+    if (!integer(range.start)) messages.push(`${rangePath}.start must be an integer`);
+    if (!integer(range.end)) messages.push(`${rangePath}.end must be an integer`);
+    if (!integer(range.start) || !integer(range.end)) return null;
+    if (range.start > range.end) messages.push(`${rangePath} start must not exceed end`);
+    return { start: range.start, end: range.end };
+  };
+  const compiler = endpointRange(bridge.compilerProject, 'compilerProject', 'one-based-knitout-front-bed-needle');
+  const kcode = endpointRange(bridge.kcodeColumn, 'kcodeColumn', 'marker-free-raster-column');
+  const trace = endpointRange(bridge.traceCoordinate, 'traceCoordinate', 'dialect-normalized-marker-free-coordinate');
+
+  const offsets = asRecord(bridge.offsets);
+  let kcodeToTrace: number | null = null;
+  if (offsets === null) messages.push(`${path}.offsets must be an object`);
+  else {
+    exactKeys(offsets, ['compilerProjectToKcodeColumn', 'kcodeColumnToTraceCoordinate', 'compilerProjectToTraceCoordinate'], `${path}.offsets`, messages);
+    for (const field of ['compilerProjectToKcodeColumn', 'kcodeColumnToTraceCoordinate', 'compilerProjectToTraceCoordinate'] as const) {
+      if (!integer(offsets[field])) messages.push(`${path}.offsets.${field} must be an integer`);
+    }
+    if (integer(offsets.compilerProjectToKcodeColumn) && compilerToKcode !== null && offsets.compilerProjectToKcodeColumn !== compilerToKcode) messages.push(`${path}.offsets.compilerProjectToKcodeColumn differs from lowering offset`);
+    if (integer(offsets.kcodeColumnToTraceCoordinate)) kcodeToTrace = offsets.kcodeColumnToTraceCoordinate;
+    if (
+      compilerToKcode !== null
+      && kcodeToTrace !== null
+      && integer(offsets.compilerProjectToTraceCoordinate)
+      && offsets.compilerProjectToTraceCoordinate !== compilerToKcode + kcodeToTrace
+    ) messages.push(`${path}.offsets.compilerProjectToTraceCoordinate must equal the two component offsets`);
+  }
+
+  const verification = asRecord(bridge.verification);
+  if (verification === null) messages.push(`${path}.verification must be an object`);
+  else {
+    exactKeys(verification, ['scheduledTraceComparison', 'selectedTraceExtentMatchesMappedEndpoints'], `${path}.verification`, messages);
+    if (verification.scheduledTraceComparison !== 'passed') messages.push(`${path}.verification.scheduledTraceComparison must be passed`);
+    if (verification.selectedTraceExtentMatchesMappedEndpoints !== true) messages.push(`${path}.verification.selectedTraceExtentMatchesMappedEndpoints must be true`);
+  }
+  const physical = asRecord(bridge.physicalNeedleLabels);
+  if (physical === null) messages.push(`${path}.physicalNeedleLabels must be an object`);
+  else {
+    exactKeys(physical, ['status'], `${path}.physicalNeedleLabels`, messages);
+    if (physical.status !== 'unverified') messages.push(`${path}.physicalNeedleLabels.status must remain unverified`);
+  }
+
+  if (compiler !== null && kcode !== null && compilerToKcode !== null) {
+    if (kcode.start !== compiler.start + compilerToKcode || kcode.end !== compiler.end + compilerToKcode) messages.push(`${path}.kcodeColumn endpoints do not match the compiler-to-KCode offset`);
+  }
+  if (kcode !== null && trace !== null && kcodeToTrace !== null) {
+    if (trace.start !== kcode.start + kcodeToTrace || trace.end !== kcode.end + kcodeToTrace) messages.push(`${path}.traceCoordinate endpoints do not match the KCode-to-trace offset`);
+  }
+  if (compiler !== null && compiler.start < 1) messages.push(`${path}.compilerProject must use the one-based authored project domain`);
+  if (compiler !== null && sourceMin !== null && sourceMax !== null && (compiler.start !== sourceMin || compiler.end !== sourceMax)) messages.push(`${path}.compilerProject endpoints must equal the lowered source-slot endpoints`);
+
+  if (
+    typeof bridge.artifactKcodeSha256 !== 'string'
+    || !SHA256.test(bridge.artifactKcodeSha256)
+    || position === null
+    || compiler === null
+    || trace === null
+  ) return null;
+  return {
+    value: bridge,
+    artifactKcodeSha256: bridge.artifactKcodeSha256,
+    position,
+    compilerStart: compiler.start,
+    compilerEnd: compiler.end,
+    traceStart: trace.start,
+    traceEnd: trace.end,
+  };
+}
+
 function expectedProgramFields(expected: CurrentRegistryMachineEvidence): Record<string, unknown> {
   return {
     compilerCoordinateStart: expected.compilerCoordinates.start,
@@ -470,7 +623,7 @@ function validateMachine(
   expected: CurrentRegistryMachineEvidence | null,
   messages: string[],
   promotionMessages: string[],
-): Map<string, CarrierEvidence> {
+): MachineEvidenceValidation {
   exactKeys(machine, ['$schema', 'kind', 'schemaVersion', 'ranAt', 'machineSerial', 'controlSoftwareVersion', 'profile', 'program', 'carriers', 'deviationsFromCompile'], 'machine.json', messages);
   requireHeader(machine, 'machine.json', 'kniterate-machine-run-v1', messages);
   if (!validDateTime(machine.ranAt)) messages.push('machine.json.ranAt must be an RFC3339 date-time');
@@ -480,7 +633,8 @@ function validateMachine(
 
   const program = asRecord(machine.program);
   let initialSettings: Record<string, unknown> | null = null;
-  const programKeys = ['compilerCoordinateStart', 'compilerCoordinateEnd', 'gauge', 'position', 'wastePasses', 'bindOff', 'initialSettings'] as const;
+  let coordinateBridge: ValidatedCoordinateBridge | null = null;
+  const programKeys = ['compilerCoordinateStart', 'compilerCoordinateEnd', 'coordinateBridge', 'gauge', 'position', 'wastePasses', 'bindOff', 'initialSettings'] as const;
   if (program === null) messages.push('machine.json.program must be an object');
   else {
     exactKeys(program, programKeys, 'machine.json.program', messages);
@@ -493,6 +647,12 @@ function validateMachine(
     if (!['Left', 'Center', 'Right', 'Keep'].includes(String(program.position))) messages.push('machine.json.program.position must be Left/Center/Right/Keep');
     if (!integer(program.wastePasses, 0)) messages.push('machine.json.program.wastePasses must be a nonnegative integer');
     if (!['machine-bindoff', 'waste-and-drop'].includes(String(program.bindOff))) messages.push('machine.json.program.bindOff must be machine-bindoff or waste-and-drop');
+    coordinateBridge = validateCoordinateBridge(program.coordinateBridge, 'machine.json.program.coordinateBridge', messages);
+    if (coordinateBridge !== null) {
+      if (integer(program.compilerCoordinateStart) && coordinateBridge.compilerStart !== program.compilerCoordinateStart) messages.push('machine.json.program.coordinateBridge compiler start differs from machine.json.program.compilerCoordinateStart');
+      if (integer(program.compilerCoordinateEnd) && coordinateBridge.compilerEnd !== program.compilerCoordinateEnd) messages.push('machine.json.program.coordinateBridge compiler end differs from machine.json.program.compilerCoordinateEnd');
+      if (coordinateBridge.position !== program.position) messages.push('machine.json.program.coordinateBridge lowering position differs from machine.json.program.position');
+    }
     initialSettings = validateInitialSettings(program.initialSettings, 'machine.json.program.initialSettings', messages);
     if (expected !== null) {
       compareExactValue(machine.profile, expected.profile, 'machine.json.profile', promotionMessages);
@@ -503,6 +663,9 @@ function validateMachine(
         for (const [field, expectedValue] of Object.entries(expected.program.initialSettings)) {
           compareExactValue(initialSettings[field], expectedValue, `machine.json.program.initialSettings.${field}`, promotionMessages);
         }
+      }
+      if (coordinateBridge !== null && !isDeepStrictEqual(coordinateBridge.value, expected.coordinateBridge)) {
+        promotionMessages.push('machine.json.program.coordinateBridge differs from the exact current authored-to-KCode mapping');
       }
     }
   }
@@ -572,7 +735,7 @@ function validateMachine(
     });
     if (machine.deviationsFromCompile.length > 0) promotionMessages.push('machine.json records one or more deviations from the compiled program');
   }
-  return carrierMap;
+  return { carrierLinks: carrierMap, coordinateBridge };
 }
 
 function validateGaugeStage(
@@ -701,6 +864,7 @@ function validateRun(
   machineRanAt: unknown,
   expected: CurrentRegistryMachineEvidence | null,
   currentKcodeSha256: string | null,
+  machineCoordinateBridge: ValidatedCoordinateBridge | null,
   messages: string[],
   promotionMessages: string[],
 ): string | null {
@@ -722,10 +886,12 @@ function validateRun(
 
   const artifact = asRecord(run.artifact);
   let displayedPassCount: number | null = null;
+  let loadedKcodeSha256: string | null = null;
   if (artifact === null) messages.push('run.json.artifact must be an object');
   else {
     exactKeys(artifact, ['loadedKcodeSha256', 'displayedPassCount', 'manualProgramEdits'], 'run.json.artifact', messages);
     if (typeof artifact.loadedKcodeSha256 !== 'string' || !SHA256.test(artifact.loadedKcodeSha256)) messages.push('run.json.artifact.loadedKcodeSha256 must be SHA-256');
+    else loadedKcodeSha256 = artifact.loadedKcodeSha256;
     if (artifact.displayedPassCount !== null && !integer(artifact.displayedPassCount, 0)) messages.push('run.json.artifact.displayedPassCount must be a nonnegative integer or null');
     else if (integer(artifact.displayedPassCount, 0)) displayedPassCount = artifact.displayedPassCount;
     if (typeof artifact.manualProgramEdits !== 'boolean') messages.push('run.json.artifact.manualProgramEdits must be boolean');
@@ -733,14 +899,20 @@ function validateRun(
     if (expected !== null) compareExactValue(artifact.displayedPassCount, expected.emittedPassCount, 'run.json.artifact.displayedPassCount', promotionMessages);
     if (artifact.manualProgramEdits === true) promotionMessages.push('run.json records manual edits to the machine program');
   }
+  if (
+    loadedKcodeSha256 !== null
+    && machineCoordinateBridge !== null
+    && loadedKcodeSha256 !== machineCoordinateBridge.artifactKcodeSha256
+  ) messages.push('machine.json.program.coordinateBridge artifact hash differs from run.json.artifact.loadedKcodeSha256');
 
   const placement = asRecord(run.physicalPlacement);
   if (placement === null) messages.push('run.json.physicalPlacement must be an object');
   else {
-    exactKeys(placement, ['verified', 'compilerCoordinateStart', 'compilerCoordinateEnd', 'physicalNeedleStart', 'physicalNeedleEnd', 'method', 'verifiedBy', 'verifiedAt'], 'run.json.physicalPlacement', messages);
+    exactKeys(placement, ['verified', 'compilerCoordinateStart', 'compilerCoordinateEnd', 'physicalNeedleStart', 'physicalNeedleEnd', 'orientation', 'method', 'verifiedBy', 'verifiedAt'], 'run.json.physicalPlacement', messages);
     if (typeof placement.verified !== 'boolean') messages.push('run.json.physicalPlacement.verified must be boolean');
     for (const name of ['compilerCoordinateStart', 'compilerCoordinateEnd'] as const) if (!integer(placement[name])) messages.push(`run.json.physicalPlacement.${name} must be an integer`);
     for (const name of ['physicalNeedleStart', 'physicalNeedleEnd'] as const) if (placement[name] !== null && !integer(placement[name])) messages.push(`run.json.physicalPlacement.${name} must be an integer or null`);
+    if (placement.orientation !== null && !['increasing', 'decreasing'].includes(String(placement.orientation))) messages.push('run.json.physicalPlacement.orientation must be increasing, decreasing, or null');
     if (integer(placement.compilerCoordinateStart) && integer(placement.compilerCoordinateEnd) && placement.compilerCoordinateStart > placement.compilerCoordinateEnd) messages.push('run.json.physicalPlacement compiler coordinate start must not exceed end');
     for (const name of ['method', 'verifiedBy'] as const) if (placement[name] !== null && !nonEmpty(placement[name])) messages.push(`run.json.physicalPlacement.${name} must be non-empty or null`);
     if (placement.verifiedAt !== null && !validDateTime(placement.verifiedAt)) messages.push('run.json.physicalPlacement.verifiedAt must be an RFC3339 date-time or null');
@@ -748,14 +920,24 @@ function validateRun(
       compareExactValue(placement.compilerCoordinateStart, expected.compilerCoordinates.start, 'run.json.physicalPlacement.compilerCoordinateStart', promotionMessages);
       compareExactValue(placement.compilerCoordinateEnd, expected.compilerCoordinates.end, 'run.json.physicalPlacement.compilerCoordinateEnd', promotionMessages);
     }
-    if (placement.verified !== true) promotionMessages.push('physical placement from compiler coordinates to machine needle labels is unverified');
+    if (placement.verified !== true) {
+      if (placement.orientation !== null) messages.push('run.json.physicalPlacement.orientation must remain null while placement is unverified');
+      promotionMessages.push('physical placement from compiler coordinates to machine needle labels is unverified');
+    }
     else {
       if (!integer(placement.physicalNeedleStart) || !integer(placement.physicalNeedleEnd)) promotionMessages.push('verified physical placement must record both physical needle labels');
-      else if (
-        integer(placement.compilerCoordinateStart)
-        && integer(placement.compilerCoordinateEnd)
-        && Math.abs(placement.physicalNeedleEnd - placement.physicalNeedleStart) !== placement.compilerCoordinateEnd - placement.compilerCoordinateStart
-      ) messages.push('verified physical placement span must equal the compiler coordinate span; physical origin remains independently recorded');
+      else {
+        const expectedSpan = machineCoordinateBridge === null
+          ? integer(placement.compilerCoordinateStart) && integer(placement.compilerCoordinateEnd)
+            ? placement.compilerCoordinateEnd - placement.compilerCoordinateStart
+            : null
+          : machineCoordinateBridge.traceEnd - machineCoordinateBridge.traceStart;
+        if (expectedSpan !== null && Math.abs(placement.physicalNeedleEnd - placement.physicalNeedleStart) !== expectedSpan) messages.push('verified physical placement span must equal the mapped trace-coordinate span; physical origin remains independently recorded');
+        const expectedOrientation = placement.physicalNeedleEnd >= placement.physicalNeedleStart
+          ? 'increasing'
+          : 'decreasing';
+        if (placement.orientation !== expectedOrientation) messages.push(`run.json.physicalPlacement.orientation must be ${expectedOrientation} for the recorded physical endpoints`);
+      }
       if (!nonEmpty(placement.method)) promotionMessages.push('verified physical placement must record its machine/vendor datum method');
       if (!nonEmpty(placement.verifiedBy)) promotionMessages.push('verified physical placement must name an independent verifier');
       if (!validDateTime(placement.verifiedAt)) promotionMessages.push('verified physical placement must record verification time');
@@ -977,9 +1159,9 @@ function validateEntry(root: string, id: string, currentCompilerFingerprint: str
   }
 
   const expectedMachine = current?.expectedMachine ?? null;
-  const carrierLinks = validateMachine(machine, expectedMachine, messages, promotionMessages);
+  const machineEvidence = validateMachine(machine, expectedMachine, messages, promotionMessages);
   const yarns = validateYarn(yarn, expectedMachine, messages, promotionMessages);
-  for (const [carrier, link] of carrierLinks) {
+  for (const [carrier, link] of machineEvidence.carrierLinks) {
     const linked = yarns[link.yarnIndex];
     if (linked === undefined) messages.push(`machine.json carrier ${carrier} references missing yarn.json.yarns[${link.yarnIndex}]`);
     else {
@@ -987,7 +1169,16 @@ function validateEntry(root: string, id: string, currentCompilerFingerprint: str
       if (linked.role !== link.role) messages.push(`machine.json carrier ${carrier} role does not match its yarn record`);
     }
   }
-  const outcome = validateRun(dir, run, machine.ranAt, expectedMachine, current?.kcodeSha256 ?? null, messages, promotionMessages);
+  const outcome = validateRun(
+    dir,
+    run,
+    machine.ranAt,
+    expectedMachine,
+    current?.kcodeSha256 ?? null,
+    machineEvidence.coordinateBridge,
+    messages,
+    promotionMessages,
+  );
   const narrative = resources.readable.has('outcome.md') ? readFileSync(join(dir, 'outcome.md'), 'utf8') : '';
   validateNarrative(narrative, messages);
 

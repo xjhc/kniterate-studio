@@ -139,6 +139,10 @@ The gate establishes:
 - one-file `.k`/`.kc` preflight with Studio-equivalent verdicts, exact input
   SHA-256, bounded human/JSON diagnostics, explicit lifecycle/differential
   evidence, and exit `0` only for `Surface-proven (imported)`;
+- exact authored-candidate coordinate evidence from the pinned backend's actual
+  placement through marker-free KCode columns and normalized trace coordinates,
+  hash-bound to the emitted KCode and tested for both physical endpoint
+  orientations without claiming those endpoints were observed;
 - exact agreement between every machine-executable scheduled field and parsed
   KCode;
 - cross-section agreement between predicted planning passes and the pinned
@@ -201,10 +205,13 @@ normalized and fingerprinted in the receipt.
 
 Software proof does not turn encoded commands into a physical-knit claim.
 
-1. **Physical needle labels are unverified.** The exact marker-free KCode column
-   and trace coordinate are shown, but the 253-column serialized frame versus
-   252 physical needles still needs authoritative mapping evidence before the UI
-   labels a column as a physical needle number.
+1. **Physical needle labels are unverified.** Authored candidates now retain the
+   pinned backend's exact placement offset and a hash-bound bridge from
+   compiler/project endpoints to marker-free KCode columns and normalized trace
+   coordinates. The 253-column serialized frame versus 252 physical needles
+   still needs the documented two-endpoint machine observation before the UI
+   labels a trace coordinate as a physical needle number. Direct foreign KCode
+   has no authored-coordinate provenance and cannot inherit this bridge.
 2. **Operational safety envelopes are incomplete.** Official/editor bounds are
    recorded separately from encodable values. The shared two/three-loop
    thresholds are a conservative software policy, not a physical-safety claim;

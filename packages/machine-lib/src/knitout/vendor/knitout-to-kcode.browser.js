@@ -1223,7 +1223,7 @@ function knitoutToPasses(knitout, knitoutFile, loweringResourceLimits) {
 
 //convert passes to kcode, reading values from headers:
 // returns kcode as a string
-function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
+function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering, scheduledCoordinates) {
 	// Carrier-spacing alternation is an implementation detail of one lowering
 	// run, never persistent compiler state.
 	leftFloor = true;
@@ -1264,6 +1264,13 @@ function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
 	})();
 	function frontNeedleToSlot(n) { return n - slotToNeedle; }
 	function backNeedleToSlot(n, racking) { return n + Math.floor(racking) - slotToNeedle; }
+	if (scheduledCoordinates && typeof(scheduledCoordinates) === 'object') {
+		scheduledCoordinates.schemaVersion = 1;
+		scheduledCoordinates.position = headers.Position;
+		scheduledCoordinates.sourceSlotRange = {min:minSlot, max:maxSlot};
+		scheduledCoordinates.frontSourceSlotToKCodeColumnOffset = slotToNeedle;
+		scheduledCoordinates.formula = 'kcodeColumn=frontSourceSlot+offset';
+	}
 
 
 	//Now convert passes to 'kcode passes' by splitting xfer passes and adding any needed carriage moves:
@@ -2009,8 +2016,9 @@ function passesToKCode(headers, passes, kcFile, scheduledTrace, lowering) {
 // legacy `passesToKCode` return value and CLI behavior remain unchanged.
 function passesToKCodeWithTrace(headers, passes, kcFile, lowering) {
 	let scheduledPasses = [];
-	let kcode = passesToKCode(headers, passes, kcFile, scheduledPasses, lowering);
-	return {kcode:kcode, passes:scheduledPasses};
+	let coordinateMapping = {};
+	let kcode = passesToKCode(headers, passes, kcFile, scheduledPasses, lowering, coordinateMapping);
+	return {kcode:kcode, passes:scheduledPasses, coordinateMapping:coordinateMapping};
 }
 
 

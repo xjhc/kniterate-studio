@@ -6,12 +6,13 @@ describe('machine-lib public boundaries', () => {
   it('keeps the browser surface explicit and free of Node-only adapters', () => {
     expect(Object.keys(browserApi).sort()).toEqual([
       'KCODE_RESOURCE_LIMITS_V1', 'KNITERATE_7GG_KCODE_PROFILE_V1', 'KNITERATE_7GG_KCODE_PROFILE_V2', 'KNITERATE_KCODE_OPERATION_CONTRACTS_V1', 'KNITOUT_RESOURCE_LIMITS_V1', 'basePayloadIndexToKCodeColumn',
-      'checkKnitoutSourceResourceLimits', 'compareScheduledPassesToMachineTrace', 'compileToRunArtifact', 'diffKCodeMachineTrace', 'diffKc',
+      'checkKnitoutSourceResourceLimits', 'compareScheduledPassesToMachineTrace', 'compileToRunArtifact',
+      'createAuthoredKCodeCoordinateBridgeV1', 'deriveEndpointPhysicalNeedleMappingV1', 'diffKCodeMachineTrace', 'diffKc',
       'emitKCodeDocument', 'emitKCodeDocumentBytes', 'findKnitProvenKCodeMatch', 'findKnitProvenMatch',
       'inspectKcDocument', 'inspectKnitoutPasses', 'isKCodeCommandLegalityExportEligible', 'kcToKnitout',
       'kcodeColumnToBasePayloadIndex', 'kcodeColumnToTraceCoordinate', 'kcodeOperationContractV1', 'knitProvenRegistryEntries', 'matchKnitProvenArtifact',
       'matchKnitProvenKCode', 'parseKCodeBytes', 'parseKCodeDocument', 'parseKnitoutProgram',
-      'projectBackFaceFromArtifact', 'projectColorworkChartV1', 'projectKCodeMachineTrace',
+      'physicalNeedleForTraceCoordinateV1', 'projectBackFaceFromArtifact', 'projectColorworkChartV1', 'projectKCodeMachineTrace',
       'projectMachineScene', 'renderKCodeMachineTraceWindow', 'renderKCodeMachineTraceWindowFromTraces', 'renderKcPassWindow',
       'resolveValidatorMessage', 'validateKCodeMachineTrace', 'validateKnitoutProgram',
     ]);

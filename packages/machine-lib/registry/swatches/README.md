@@ -43,9 +43,10 @@ sorts chronologically. Short-name should be descriptive enough to skim
 
 ## Required fields
 
-`machine.json` — what actually ran: machine/control versions, profile, compiler
-coordinate range, gauge/position/frame settings, all initial machine-effective
-settings, carrier-to-yarn links, and deviations. The checker compares every
+`machine.json` — what actually ran: machine/control versions, profile, the
+hash-bound compiler/project → KCode column → trace coordinate bridge,
+gauge/position/frame settings, all initial machine-effective settings,
+carrier-to-yarn links, and deviations. The checker compares every
 compiled setting and carrier with a fresh current compile. Record deviations
 honestly; a well-formed deviated run remains useful history but cannot support
 an exact-artifact Knit-proven claim.
@@ -62,11 +63,14 @@ verification, interventions, section observations, stops, dimensions, and six
 photo receipts. `outcome.md` explains what happened but never supplies proof by
 prose parsing.
 
-The coordinate range in generated artifacts is always labeled
-**compiler/project coordinates; physical needle labels unverified**. Before a
-machine run, an operator must resolve it to physical labels using a documented
-machine/vendor datum procedure and a different person must verify and record
-that mapping in `run.json`. An unverified placement is a hard promotion block.
+Generated authored artifacts retain the backend's actual placement offset and
+map compiler/project endpoints to marker-free KCode columns and normalized trace
+coordinates. The bridge is bound to the exact KCode SHA-256 and remains labeled
+**physical needle labels unverified**. Before a machine run, an operator must
+resolve both trace endpoints to physical labels using a documented
+machine/vendor datum procedure; `run.json` records increasing/decreasing label
+orientation and a different person must verify the endpoints. An unverified
+placement is a hard promotion block.
 
 ## Evidence invariants and limits
 
@@ -86,10 +90,11 @@ The checker enforces these cross-record chronology rules:
 - Rested dimensions must be measured at least 24 hours after `endedAt` and
   must not precede the off-machine measurement.
 
-Compiler and physical coordinate starts must not exceed their ends. For a
-verified placement, the absolute physical needle span must equal the compiler
-coordinate span; reversed physical numbering is allowed because the physical
-origin and direction remain independently observed. Stop and intervention
+Compiler and trace-coordinate starts must not exceed their ends. For a verified
+placement, the absolute physical needle span must equal the hash-bound mapped
+trace span and the recorded orientation must match the endpoints. Reversed
+physical numbering is allowed because the physical origin and direction remain
+independently observed. Stop and intervention
 `passIndex` values are zero-based, nonnegative, or `null` when unknown. A known
 index must be below the freshly emitted pass count and, if the displayed count
 differs, below that count as well. A displayed-count mismatch blocks promotion.

@@ -8,6 +8,14 @@ import {
 } from '../../project-contract/src/index.js';
 import { compileColorworkProject } from '../../../apps/studio/src/blanket/compileProject.js';
 import { knitoutToKCodeWithTrace } from '../src/knitout/kniterate/to-kcode.js';
+import {
+  createAuthoredKCodeCoordinateBridgeV1,
+  type AuthoredKCodeCoordinateBridgeV1,
+} from '../src/knitout/kcode/coordinate-bridge.js';
+import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../src/knitout/kcode/machine-profile.js';
+import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js';
+import { parseKCodeDocument } from '../src/knitout/kcode/parser.js';
+import { compareScheduledPassesToMachineTrace } from '../src/knitout/kcode/scheduled-trace-diff.js';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -125,6 +133,7 @@ export interface CurrentRegistryMachineEvidence {
     readonly start: number;
     readonly end: number;
   };
+  readonly coordinateBridge: AuthoredKCodeCoordinateBridgeV1;
   readonly program: {
     readonly gauge: number;
     readonly position: string;
@@ -373,6 +382,7 @@ function expectedMachineEvidence(
   knitout: string,
   project: ReturnType<typeof parseColorworkProjectV1>,
   emittedPassCount: number,
+  coordinateBridge: AuthoredKCodeCoordinateBridgeV1,
 ): CurrentRegistryMachineEvidence {
   const state = materializeColorworkProject(project).state;
   const position = /^;;Position:\s*(\S(?:.*\S)?)\s*$/m.exec(knitout)?.[1];
@@ -391,6 +401,7 @@ function expectedMachineEvidence(
       start: state.machine.needleOffset,
       end: state.machine.needleOffset + state.chart.width - 1,
     },
+    coordinateBridge,
     program: {
       gauge: requiredNumericSetting(knitout, /^;;Gauge:\s*([0-9]+(?:\.[0-9]+)?)\s*$/m, 'gauge'),
       position,
@@ -447,6 +458,33 @@ export function compileRegistryRequestCurrent(
     }
     const converted = knitoutToKCodeWithTrace(compiled.knitoutText, 'command.k');
     if (!converted.ok) return failedCurrentCompile(true, `current KCode emission failed: ${converted.error}`);
+    const parsedKCode = parseKCodeDocument(converted.kcode, {
+      profile: KNITERATE_7GG_KCODE_PROFILE_V2,
+      dialect: KNITERATE_7GG_KCODE_PROFILE_V2.dialect,
+      strict: true,
+      resourceProfile: 'authored-v1',
+    });
+    if (!parsedKCode.ok) {
+      return failedCurrentCompile(true, `current KCode emission failed strict parsing: ${parsedKCode.diagnostics.slice(0, 8).map((diagnostic) => diagnostic.rule).join(', ')}`);
+    }
+    const trace = projectKCodeMachineTrace(
+      parsedKCode.document,
+      KNITERATE_7GG_KCODE_PROFILE_V2,
+    );
+    const scheduledTraceComparison = compareScheduledPassesToMachineTrace(
+      converted.scheduledPasses,
+      trace,
+    );
+    const state = materializeColorworkProject(project).state;
+    const coordinateBridge = createAuthoredKCodeCoordinateBridgeV1({
+      artifactKcodeSha256: sha256Bytes(converted.kcode),
+      compilerCoordinateStart: state.machine.needleOffset,
+      compilerCoordinateEnd: state.machine.needleOffset + state.chart.width - 1,
+      lowering: converted.coordinateMapping,
+      trace,
+      scheduledTraceComparison,
+      profile: KNITERATE_7GG_KCODE_PROFILE_V2,
+    });
     return {
       supported: true,
       ok: true,
@@ -456,7 +494,12 @@ export function compileRegistryRequestCurrent(
       kcodeText: converted.kcode,
       knitoutSha256: sha256Bytes(compiled.knitoutText),
       kcodeSha256: sha256Bytes(converted.kcode),
-      expectedMachine: expectedMachineEvidence(compiled.knitoutText, project, converted.scheduledPasses.length),
+      expectedMachine: expectedMachineEvidence(
+        compiled.knitoutText,
+        project,
+        converted.scheduledPasses.length,
+        coordinateBridge,
+      ),
     };
   } catch (error) {
     return failedCurrentCompile(true, `current request could not be compiled: ${error instanceof Error ? error.message : String(error)}`);

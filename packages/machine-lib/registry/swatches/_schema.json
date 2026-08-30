@@ -61,15 +61,105 @@
       },
       "additionalProperties": false
     },
+    "coordinateEndpointRange": {
+      "type": "object",
+      "required": ["basis", "start", "end"],
+      "properties": {
+        "basis": { "type": "string", "minLength": 1 },
+        "start": { "type": "integer" },
+        "end": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "coordinateBridge": {
+      "type": "object",
+      "required": [
+        "kind", "schemaVersion", "provenance", "artifactKcodeSha256",
+        "profile", "lowering", "compilerProject", "kcodeColumn",
+        "traceCoordinate", "offsets", "verification", "physicalNeedleLabels"
+      ],
+      "properties": {
+        "kind": { "const": "kniterate-authored-kcode-coordinate-bridge" },
+        "schemaVersion": { "const": 1 },
+        "provenance": { "const": "authored-project-and-pinned-lowering" },
+        "artifactKcodeSha256": { "$ref": "#/$defs/sha256" },
+        "profile": {
+          "type": "object",
+          "required": ["id", "version", "dialect"],
+          "properties": {
+            "id": { "$ref": "#/$defs/nonEmptyString" },
+            "version": { "type": "integer", "minimum": 1 },
+            "dialect": { "enum": ["app", "knitout-vendor"] }
+          },
+          "additionalProperties": false
+        },
+        "lowering": {
+          "type": "object",
+          "required": [
+            "schemaVersion", "position", "sourceSlotRange",
+            "frontSourceSlotToKCodeColumnOffset", "formula"
+          ],
+          "properties": {
+            "schemaVersion": { "const": 1 },
+            "position": { "enum": ["Left", "Center", "Right", "Keep"] },
+            "sourceSlotRange": {
+              "type": "object",
+              "required": ["min", "max"],
+              "properties": {
+                "min": { "type": "number" },
+                "max": { "type": "number" }
+              },
+              "additionalProperties": false
+            },
+            "frontSourceSlotToKCodeColumnOffset": { "type": "integer" },
+            "formula": { "const": "kcodeColumn=frontSourceSlot+offset" }
+          },
+          "additionalProperties": false
+        },
+        "compilerProject": { "$ref": "#/$defs/coordinateEndpointRange" },
+        "kcodeColumn": { "$ref": "#/$defs/coordinateEndpointRange" },
+        "traceCoordinate": { "$ref": "#/$defs/coordinateEndpointRange" },
+        "offsets": {
+          "type": "object",
+          "required": [
+            "compilerProjectToKcodeColumn", "kcodeColumnToTraceCoordinate",
+            "compilerProjectToTraceCoordinate"
+          ],
+          "properties": {
+            "compilerProjectToKcodeColumn": { "type": "integer" },
+            "kcodeColumnToTraceCoordinate": { "type": "integer" },
+            "compilerProjectToTraceCoordinate": { "type": "integer" }
+          },
+          "additionalProperties": false
+        },
+        "verification": {
+          "type": "object",
+          "required": ["scheduledTraceComparison", "selectedTraceExtentMatchesMappedEndpoints"],
+          "properties": {
+            "scheduledTraceComparison": { "const": "passed" },
+            "selectedTraceExtentMatchesMappedEndpoints": { "const": true }
+          },
+          "additionalProperties": false
+        },
+        "physicalNeedleLabels": {
+          "type": "object",
+          "required": ["status"],
+          "properties": { "status": { "const": "unverified" } },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "machineProgram": {
       "type": "object",
       "required": [
-        "compilerCoordinateStart", "compilerCoordinateEnd", "gauge",
+        "compilerCoordinateStart", "compilerCoordinateEnd", "coordinateBridge", "gauge",
         "position", "wastePasses", "bindOff", "initialSettings"
       ],
       "properties": {
         "compilerCoordinateStart": { "type": "integer" },
         "compilerCoordinateEnd": { "type": "integer" },
+        "coordinateBridge": { "$ref": "#/$defs/coordinateBridge" },
         "gauge": { "type": "number", "exclusiveMinimum": 0 },
         "position": { "enum": ["Left", "Center", "Right", "Keep"] },
         "wastePasses": { "type": "integer", "minimum": 0 },
@@ -203,7 +293,7 @@
       "type": "object",
       "required": [
         "verified", "compilerCoordinateStart", "compilerCoordinateEnd",
-        "physicalNeedleStart", "physicalNeedleEnd", "method", "verifiedBy",
+        "physicalNeedleStart", "physicalNeedleEnd", "orientation", "method", "verifiedBy",
         "verifiedAt"
       ],
       "properties": {
@@ -212,6 +302,7 @@
         "compilerCoordinateEnd": { "type": "integer" },
         "physicalNeedleStart": { "type": ["integer", "null"] },
         "physicalNeedleEnd": { "type": ["integer", "null"] },
+        "orientation": { "enum": ["increasing", "decreasing", null] },
         "method": { "type": ["string", "null"] },
         "verifiedBy": { "type": ["string", "null"] },
         "verifiedAt": {
