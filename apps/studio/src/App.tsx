@@ -16,6 +16,7 @@ import {
   Grid3X3,
   ListChecks,
   Moon,
+  Network,
   PanelRight,
   Printer,
   Rows3,
@@ -36,6 +37,7 @@ import { NewProjectDialog, ProjectSettingsDialog, DEFAULT_PROJECT_PALETTE, type 
 import { readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
 import { indexSourceLines, sourceWindow } from './sourceWindow';
 import { formatForeignRunSheetFindingAnchor, groupForeignRunSheetFindings } from './foreignRunSheetFindings';
+import { ForeignFabricView } from './fabric/ForeignFabricView';
 
 const ROW_HEIGHT = 44;
 const CARRIER_COLORS: Record<string, string> = {
@@ -447,7 +449,7 @@ export function RunSheet({ document, onClose }: { document: MachineDocument; onC
           <p>{group.explanation}</p>
           <ul className="run-sheet-finding-anchors">{group.representatives.map((representative, index) => <li key={`${formatForeignRunSheetFindingAnchor(representative)}-${index}`}><b>{formatForeignRunSheetFindingAnchor(representative)}</b>{representative.detail !== group.explanation ? ` — ${representative.detail}` : ''}</li>)}</ul>
         </li>)}</ul></section>}
-        <section><h2>Pre-knit check</h2><ul className="checklist"><li>Correct yarns loaded in the carrier map above</li><li>Needle bed is clear and carriage moves freely</li><li>Waste yarn and draw thread are available</li><li>Machine settings match the 7gg worsted profile</li><li>Representative swatch has been knit and inspected</li></ul></section>
+        <section><h2>Pre-knit check</h2><ul className="checklist"><li>Correct yarns loaded in the carrier map above</li><li>Needle bed is clear and carriage moves freely</li><li>Waste yarn and draw thread are available</li><li>Encoded per-pass speed and roller values have machine-side review; editor/profile checks are not physical safety approval</li><li>Representative swatch has been knit and inspected</li></ul></section>
         <footer>Generated locally · {new Date().toLocaleDateString()}</footer>
       </article>
     </div>
@@ -470,7 +472,7 @@ function AuthoredRunSheet({ project, compiled, kcode, verdict, onClose }: { proj
     <section><h2>Carrier map</h2><div className="carrier-map"><span><i style={{ background: CARRIER_COLORS['1'] }} />C1<b>{state.frame.drawThread ? 'Draw thread' : 'Not used'}</b></span>{state.machine.yarnAssignments.map((assignment) => { const color = state.chart.palette.find((entry) => entry.id === assignment.paletteId); return <span key={assignment.paletteId}><i style={{ background: color?.hex }} />C{assignment.carrier}<b>{assignment.yarnName}</b></span>; })}<span><i style={{ background: CARRIER_COLORS['6'] }} />C6<b>Waste yarn · {state.frame.wasteRows} rows</b></span></div></section>
     <section><h2>Finish and identity</h2><dl><div><dt>Bind-off</dt><dd>{state.frame.bindOff}</dd></div><div><dt>Project revision</dt><dd>{compiled.revision}</dd></div><div><dt>Compile hash</dt><dd>{compiled.inputHash}</dd></div><div><dt>K-code SHA-256</dt><dd>{kcode.kcHash.slice(0, 16)}</dd></div></dl></section>
     {findings.length > 0 && <section><h2>Known findings</h2><ul>{findings.map((finding) => <li key={finding.rule}><b>{finding.severity.toUpperCase()}</b> {finding.message}</li>)}</ul></section>}
-    <section><h2>Pre-knit check</h2><ul className="checklist"><li>C1 draw thread, C6 waste, and C2–C5 pattern yarns match the carrier map</li><li>Needles {state.machine.needleOffset}–{needleEnd} are selected and the remaining bed is clear</li><li>Carriage moves freely and takedown is ready for {state.frame.wasteRows} waste rows</li><li>Machine profile is 7gg worsted and the finish is {state.frame.bindOff}</li><li>A representative swatch has been knit and inspected</li></ul></section>
+    <section><h2>Pre-knit check</h2><ul className="checklist"><li>C1 draw thread, C6 waste, and C2–C5 pattern yarns match the carrier map</li><li>Needles {state.machine.needleOffset}–{needleEnd} are selected and the remaining bed is clear</li><li>Carriage moves freely and takedown is ready for {state.frame.wasteRows} waste rows</li><li>The exact compiled settings recipe has machine-side review; Surface-proven does not establish physical setting safety</li><li>Machine profile is 7gg worsted and the finish is {state.frame.bindOff}</li><li>A representative swatch has been knit and inspected</li></ul></section>
     <footer>Generated locally · {new Date().toLocaleDateString()}</footer>
   </article></div>;
 }
@@ -514,7 +516,7 @@ export function App() {
   const [selected, setSelected] = useState(0);
   const [preferredLine, setPreferredLine] = useState<number | null>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
-  const [view, setView] = useState<'chart' | 'machine' | 'diff'>('chart');
+  const [view, setView] = useState<'chart' | 'machine' | 'diff' | 'fabric'>('chart');
   const [initial] = useState(initialProject);
   const [project, setProject] = useState<ColorworkProjectV1>(initial.project);
   const [mobileView, setMobileView] = useState<MobileView>('passes');
@@ -644,17 +646,18 @@ export function App() {
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>
+            <button className={view === 'fabric' ? 'active' : ''} type="button" onClick={() => setView('fabric')} title="Schematic topology"><Network size={19} /></button>
             <button className={view === 'diff' ? 'active' : ''} type="button" onClick={() => setView('diff')} title="Pass diff"><ArrowLeftRight size={19} /></button>
           </nav>
-          <main className="machine-workspace">
+          <main className={`machine-workspace${view === 'machine' ? '' : ' compact-workspace'}`}>
             <div className="workspace-head">
-              <div><span className="eyebrow">Machine truth</span><h1>{view === 'machine' ? 'Pass grid' : 'Compare machine passes'}</h1></div>
+              <div><span className="eyebrow">Machine truth</span><h1>{view === 'machine' ? 'Pass grid' : view === 'fabric' ? 'Schematic topology' : 'Compare machine passes'}</h1></div>
               <div className="stat-strip"><span><b>{document.stats.passMetricProvenance === 'strict-kcode-trace' ? document.stats.passCount.toLocaleString() : '—'}</b> programmed passes</span><span><b>{document.stats.loopFormingPassCount === null ? '—' : document.stats.loopFormingPassCount.toLocaleString()}</b> loop-forming</span><span><b>{document.stats.carriers.length}</b> carriers</span><span><b>{document.stats.needleSpan}</b></span><span><b>rack {document.stats.rackRange}</b></span></div>
             </div>
-            <div className="mobile-tabs">
+            {view === 'machine' && <div className="mobile-tabs">
               {document.kcode?.scene && <button className={mobileView === 'movement' ? 'active' : ''} type="button" onClick={() => setMobileView('movement')}>movement</button>}
               {(['passes', 'diagnostics', 'source'] as MobileView[]).map((item) => <button className={mobileView === item ? 'active' : ''} type="button" key={item} onClick={() => setMobileView(item)}>{item}</button>)}
-            </div>
+            </div>}
             {view === 'machine' ? (
               <div className={`machine-layout${document.kcode?.scene ? ' has-movement' : ''} mobile-${mobileView}`}>
                 {document.kcode?.scene && <MachineMovementView className="machine-movement-panel" scene={document.kcode.scene} validation={document.kcode.validation} displayDiagnostics={document.diagnostics.map(({ severity, passIndex, rule, rawMessage }) => ({ severity, passIndex, rule, message: rawMessage }))} overallContext={documentOverallContext(document)} selectedPass={selected} onSelect={(pass) => select(pass)} />}
@@ -662,7 +665,9 @@ export function App() {
                 <Diagnostics document={document} selected={selected} onSelect={select} />
                 <SourceDock document={document} selected={selected} preferredLine={preferredLine} />
               </div>
-            ) : <DiffView base={document} compare={compare} onOpenCompare={() => compareInput.current?.click()} onSelect={(index) => select(index)} />}
+            ) : view === 'fabric'
+              ? <ForeignFabricView document={document} />
+              : <DiffView base={document} compare={compare} onOpenCompare={() => compareInput.current?.click()} onSelect={(index) => select(index)} />}
           </main>
         </div>
       )}

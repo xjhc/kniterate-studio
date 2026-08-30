@@ -26,7 +26,8 @@ project/chart
   -> versioned operation/direction/carrier/rack command contract
   -> MachineTraceV1
   -> KCode-native validator + MachineSceneV1
-  -> verdict, exact diff, movement view, source/design provenance
+  -> bounded MachineTopologyV1 + schematic MachineTopologyMeshV1
+  -> verdict, exact diff, movement/topology views, source/design provenance
 ```
 
 The browser worker compares every machine-executable scheduled field with the
@@ -71,6 +72,16 @@ elapsed duration, or a physical lower bound—and keep it separate from the
 authored plan heuristic. The physical-trial manifest binds both terms to the
 same exact candidate; one observed run may yield only a candidate-specific
 residual, not a universal multiplier.
+
+For clean foreign files, the same strict trace can also feed the independent
+`MachineTopologyV1` projector. It records stable loop identities, formed-
+through/tuck/yarn-continuity connections, transfer movements, rack anchors,
+carrier chains, and final stacks. A second deterministic transform produces a
+schematic mesh in normalized trace/pass space. Studio runs the transforms in a
+module Worker with explicit 6,000-loop and 18,000-edge/movement limits, and
+withholds the view for a Blocked file or any failed/over-limit projection. The
+mesh contract and visible disclosure state that this is software topology, not
+physical stitch geometry or knitted-fabric appearance.
 
 ## Deterministic gate
 
@@ -178,6 +189,10 @@ The gate establishes:
 - full-raster KCode diffing rather than footer-only comparison;
 - deterministic renderer input for synchronized carriage, guide, two beds,
   actions, and before/after loop counts;
+- fail-closed loop-identity topology and bounded schematic-mesh projection
+  across knit, tuck, racked transfer/split, drop, both beds, and both current
+  dialect labels, without synthesizing carrier lifecycle or physical fabric
+  facts;
 - fail-closed execution of the checked-in known-bad machine-safety refusal
   corpus and the separate raw-KCode command refusal corpus, with every named
   parser and command-validation rule tied to an executed witness; and
@@ -242,12 +257,14 @@ Software proof does not turn encoded commands into a physical-knit claim.
 3. **Foreign KCode lacks carrier lifecycle.** KCode does not encode Knitout
    `in`/`out`; authored compilation retains source provenance, while a foreign
    file cannot prove carrier threading lifecycle from KCode alone.
-4. **Programmed motion is not dynamics.** The validator proves encoded stops,
-   continuity, reach, ordering, and loop topology. The motion receipt adds an
-   exact encoded-coordinate total and clearly labelled pitch/speed assumptions;
-   it does not model momentum,
-   yarn friction, collision tolerances not present in the format, or resulting
-   fabric mechanics.
+4. **Programmed motion and schematic topology are not dynamics or fabric.** The
+   validator proves encoded stops, continuity, reach, ordering, and aggregate
+   empty-bed loop-state transitions. The separate topology projector proves its
+   deterministic software graph under that assumption, and the motion receipt
+   adds an exact encoded-coordinate total plus clearly labelled pitch/speed
+   assumptions. Neither models momentum, yarn friction, collision tolerances
+   absent from the format, stitch geometry, drape, or resulting fabric
+   mechanics.
 5. **Lowering is pinned, not clean-room.** Studio now makes the vendored backend
    deterministic and auditable. A future native pass scheduler/lowerer could be
    built behind the same scheduled-pass contract and differentially tested
@@ -272,7 +289,11 @@ Software proof does not turn encoded commands into a physical-knit claim.
 `release:trial` first requires the complete read-only KCode gate, then adds
 `command-legality.json` and `CONTROLLER-REVIEW.md` to the clean exact-artifact
 package. They bind the profile, contract, proof receipt, KCode hash, pass count,
-and present command combinations, with `controllerObserved: pending`.
+present command combinations, and the seven-value compiled initial-settings
+receipt, with `controllerObserved: pending` and operational setting safety
+unverified. The operator must compare the loaded recipe independently; the
+physical-registry gate blocks a mismatch, deviation, or intervention. One clean
+recipe still cannot establish a general operating envelope.
 
 Kniterate's [start-up guide](https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide)
 documents that `.kc` cannot be imported into its design app. The

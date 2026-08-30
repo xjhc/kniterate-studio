@@ -154,6 +154,7 @@ describe('foreign run-sheet findings', () => {
     expect(html).toContain('foreign file has no row provenance');
     expect(html).toContain('Drop targets an empty modeled needle');
     expect(html).toContain('KCode bytes do not encode Knitout carrier in/out lifecycle.');
+    expect(html).toContain('editor/profile checks are not physical safety approval');
     expect(html).toContain('1 occurrence');
     expect(html).not.toContain('Compiler reported an issue');
   });

@@ -29857,6 +29857,7 @@
     "test/knitout/kcode-machine-validator.test.ts",
     "test/knitout/kcode-command-legality.test.ts",
     "test/knitout/kcode-machine-scene.test.ts",
+    "test/knitout/kcode-machine-topology.test.ts",
     "test/knitout/kcode-coordinate-bridge.test.ts",
     "test/knitout/kcode-pass-metrics.test.ts",
     "test/knitout/kcode-programmed-motion.test.ts",
@@ -29872,6 +29873,7 @@
     "../../apps/studio/src/blanket/compileProject.test.ts",
     "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
     "../../apps/studio/src/kcode/MachineMovementView.test.tsx",
+    "../../apps/studio/src/fabric/compileForeignFabricPreview.test.tsx",
     "../../apps/studio/src/chart/AuthoredMachinePanel.test.ts",
     "../../apps/studio/src/chart/ChartWorkspace.test.ts",
     "../../apps/studio/src/chart/GeneratedSourceDock.test.tsx",
@@ -29905,7 +29907,7 @@
     },
     {
       "id": "deterministic-kcode-proof-tests",
-      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/kcode-mutation-policy.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-command-legality.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-coordinate-bridge.test.ts test/knitout/kcode-pass-metrics.test.ts test/knitout/kcode-programmed-motion.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
+      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/kcode-mutation-policy.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-command-legality.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-machine-topology.test.ts test/knitout/kcode-coordinate-bridge.test.ts test/knitout/kcode-pass-metrics.test.ts test/knitout/kcode-programmed-motion.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
       "status": "pass",
       "exitCode": 0
     },
@@ -29929,7 +29931,7 @@
     },
     {
       "id": "studio-kcode-integration-tests",
-      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/blanket/compileProject.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/chart/AuthoredMachinePanel.test.ts src/chart/ChartWorkspace.test.ts src/chart/GeneratedSourceDock.test.tsx src/foreignRunSheetFindings.test.tsx src/sourceWindow.test.tsx",
+      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/blanket/compileProject.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/fabric/compileForeignFabricPreview.test.tsx src/chart/AuthoredMachinePanel.test.ts src/chart/ChartWorkspace.test.ts src/chart/GeneratedSourceDock.test.tsx src/foreignRunSheetFindings.test.tsx src/sourceWindow.test.tsx",
       "status": "pass",
       "exitCode": 0
     },
@@ -30080,7 +30082,7 @@
     ]
   },
   "contract": {
-    "sha256": "2811206dc068d5910d21abd5c1183e9ee5349a5ede9aa20690e7f19150ae8039",
+    "sha256": "6fd328b3b122434bc2a361a9a08c6fe32d0a6e9523af58ccfe6a3b275feed09e",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30114,8 +30116,8 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "884d1bb15a19243bf38dcd4a33cee992620f05e61bbce7b62f071db662bd1887",
-        "bytes": 53499
+        "sha256": "94678cc23f1fdddb857b140448828251daa9d8208531837988e0f7a181ad04bd",
+        "bytes": 54168
       },
       {
         "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
@@ -30293,9 +30295,39 @@
         "bytes": 32310
       },
       {
+        "path": "../../apps/studio/src/fabric/ForeignFabricView.tsx",
+        "sha256": "d41869da8b73e5e41679791e2e0eaee355bcd6c1132ea2eae6361af3bb18e793",
+        "bytes": 4493
+      },
+      {
+        "path": "../../apps/studio/src/fabric/compileForeignFabricPreview.test.tsx",
+        "sha256": "ad9a938031aa45ec13a05a125f7948b5d67768e728edd995606c092f9d3b9919",
+        "bytes": 4125
+      },
+      {
+        "path": "../../apps/studio/src/fabric/compileForeignFabricPreview.ts",
+        "sha256": "80a61d55cb36dcdf17ea5c59f9362b740cd908b998c6ce4159ce427f62211868",
+        "bytes": 1546
+      },
+      {
+        "path": "../../apps/studio/src/fabric/fabric.worker.ts",
+        "sha256": "94834c3617e5ff9a249e7b6d57c99ad49d52588e959f0491415219c1d4483966",
+        "bytes": 546
+      },
+      {
+        "path": "../../apps/studio/src/fabric/fabricProtocol.ts",
+        "sha256": "d17aedfc1d07263472df4970287019e103f17f6630d4fc6e7dbb4fc379745d63",
+        "bytes": 796
+      },
+      {
+        "path": "../../apps/studio/src/fabric/useForeignFabricPreview.ts",
+        "sha256": "bdabe0b9bd7a3a64a5ba877e530e50c992f5c10d9382d6f0ca4e14270f6a099c",
+        "bytes": 2444
+      },
+      {
         "path": "../../apps/studio/src/foreignRunSheetFindings.test.tsx",
-        "sha256": "9e3e0ed22e26acd3dfb04f7f0f4bc325d2bcd1a72b6347e3ee6f8fafa36ba250",
-        "bytes": 6624
+        "sha256": "3f1df7baf4c5c601e32936e4b158dd6965908ec392878d3224a9fddd6d34a998",
+        "bytes": 6710
       },
       {
         "path": "../../apps/studio/src/foreignRunSheetFindings.ts",
@@ -30369,8 +30401,8 @@
       },
       {
         "path": "../../apps/studio/src/styles.css",
-        "sha256": "f563f2b9fb7d1c08e533e92adeedc014a9ad14c1ab5892ac2f2a8ac572aea6fe",
-        "bytes": 46761
+        "sha256": "1a48ae516b01289c90b1b053cdc5944e28e14e46fa5bca6e8bb367ded20f9b6e",
+        "bytes": 50077
       },
       {
         "path": "../../apps/studio/tsconfig.json",
@@ -30439,8 +30471,8 @@
       },
       {
         "path": "../../scripts/build-v1-knit-trial.ts",
-        "sha256": "859b55b937e2d9aaf9e7606de53140bec6a49765355b07424dbcfd0cb28d2d22",
-        "bytes": 19918
+        "sha256": "1e7b62768777a296dfce2a54211ea0aefcfefec8b4074b7442902572a3f7e228",
+        "bytes": 21208
       },
       {
         "path": "../../scripts/check-machine-file.ts",
@@ -30529,8 +30561,8 @@
       },
       {
         "path": "package.json",
-        "sha256": "c58839e94f8476d65c8eb0a38f752f400e11f8acd19ba730398cfca4575305ff",
-        "bytes": 3931
+        "sha256": "cb1b11e552cf963310289114ca07998dcce8fa0b9a0c1dff6a06fb00a321e99c",
+        "bytes": 3975
       },
       {
         "path": "reference/2x2-rib-beanie.kc",
@@ -30609,7 +30641,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "43bedb5e934b921e18b2d5ac54e63701e5d20fc9346512b0893efbfbfd40fd3e",
+        "sha256": "b7522087284d44116649117852bf3ec5427525347c49545855b27a489245039e",
         "bytes": 179
       },
       {
@@ -30699,8 +30731,8 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "5a21211726036b86adf4f7e62d7ec80fe514214c813c8dd263927311002ccd90",
-        "bytes": 20516
+        "sha256": "62005c78634e7f4ef81d7016e05c9523561ff2a0650cb20a99c9477235126832",
+        "bytes": 20994
       },
       {
         "path": "scripts/kcode-rule-coverage.ts",
@@ -30749,8 +30781,8 @@
       },
       {
         "path": "src/browser.ts",
-        "sha256": "702a9c56708e03b6dfbebb0dce4236361db750500177f02f77e3def0cc57883c",
-        "bytes": 4745
+        "sha256": "c2a087db6c8a6d302fbf764547d955e60ab54dc3895856da5d7f300fb93c12fc",
+        "bytes": 5553
       },
       {
         "path": "src/chart-core/__row_space_canary__.ts",
@@ -30874,8 +30906,8 @@
       },
       {
         "path": "src/index.ts",
-        "sha256": "0a22852bca4a1daf6c97541e7312ae0a9a3d1490a7cd3e3212daf3baf6ec25df",
-        "bytes": 5434
+        "sha256": "c34ed484390bac4babc57788281f04a163d2721398258b062b6d33442b9bd0dd",
+        "bytes": 6242
       },
       {
         "path": "src/knitout/back-face-projection.ts",
@@ -30981,6 +31013,16 @@
         "path": "src/knitout/kcode/machine-scene.ts",
         "sha256": "1cf85376a8cd9feabadb44573dbbac9e44ef757680c713421a46ec6ecc94d838",
         "bytes": 10352
+      },
+      {
+        "path": "src/knitout/kcode/machine-topology-mesh.ts",
+        "sha256": "54691a9d2fb7046193ab6170fa4e5c25811065175c6a231ececcdad816f866f9",
+        "bytes": 7065
+      },
+      {
+        "path": "src/knitout/kcode/machine-topology.ts",
+        "sha256": "91713681a0384af206e4b9e2c21c9b37a1512047b84215754e90e7b87feedb0e",
+        "bytes": 15029
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
@@ -31563,6 +31605,11 @@
         "bytes": 11631
       },
       {
+        "path": "test/knitout/kcode-machine-topology.test.ts",
+        "sha256": "6d7a860b7d85b79d08722503601a17f9e3283f554881e28799af308da47e89b0",
+        "bytes": 6365
+      },
+      {
         "path": "test/knitout/kcode-machine-trace.test.ts",
         "sha256": "2dafcd3fce81f7189aa5eb73e995d76603f690e62504f7132598e8b6c174afb4",
         "bytes": 25839
@@ -31654,8 +31701,8 @@
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
-        "sha256": "51e7b894d6dfadf97de750bd21beff0a93cc8725442c242e8d2eccfab6df4998",
-        "bytes": 37310
+        "sha256": "b4f07b8be55b9e0f984c9ae0052409282bac3699280db096aec875deb59fc8c0",
+        "bytes": 37875
       },
       {
         "path": "test/physical-registry.test.ts",
@@ -31664,8 +31711,8 @@
       },
       {
         "path": "test/public-api.test.ts",
-        "sha256": "3efcb96e37d0b9e625dd0719a86c9f1fa5c825ef98445794c5d33ff2828e6dc1",
-        "bytes": 2374
+        "sha256": "b11973fa791303f187bcfc9f24eeca808d98fd7a20f198160d85bcc9571c434e",
+        "bytes": 2551
       },
       {
         "path": "tsconfig.json",

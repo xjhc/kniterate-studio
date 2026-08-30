@@ -829,6 +829,13 @@ describe('fresh V1 physical release gate', () => {
       physicalNeedleLabels: { status: 'unverified' },
     })
     expect(first.manifest.physicalPlacementGate.status).toBe('unverified')
+    expect(first.manifest.physicalSettingsGate).toMatchObject({
+      status: 'exact-candidate-recipe-recorded-operational-safety-unverified',
+    })
+    expect(first.operatorChecklist).toContain('controller-loaded initial recipe')
+    expect(first.operatorChecklist).toContain('candidate commands, not a proven safe envelope')
+    expect(first.operatorChecklist).toContain(`speed ${first.manifest.machine.program.initialSettings.speedNumber}`)
+    expect(first.operatorChecklist).toContain(`roller ${first.manifest.machine.program.initialSettings.rollerAdvance}`)
     expect(second.commandLegality).toEqual(first.commandLegality)
     expect(first.commandLegality.artifact.kcodeSha256).toBe(sha256Bytes(first.kcodeText))
     expect(first.commandLegality.artifact.profileConformance).toBe('conformant')

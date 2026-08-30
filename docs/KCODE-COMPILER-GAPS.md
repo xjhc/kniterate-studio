@@ -1,8 +1,8 @@
 # KCODE-COMPILER-GAPS — tracked baseline and corrected gap register
 
 **Evidence class: tracked local software evidence plus explicitly labelled external
-documentation.** Revised 2026-08-29 against `accumulate`. The compiler source
-baseline is `cff1d6e`; the reproducible evidence is the checked-in
+documentation.** Revised 2026-08-29 against `accumulate`. The reproducible
+software baseline is the checked-in
 [software-proof receipt](../packages/machine-lib/out/kcode-proof/proof-manifest.json)
 and [mutation receipt](../packages/machine-lib/out/kcode-proof/mutation-manifest.json).
 No deployed instance, controller acceptance, physical-machine run, or knitted
@@ -23,8 +23,9 @@ External reference points:
 
 ## Finding
 
-**The compiler, its software-proof rail, and a supported one-file checker now
-exist. The remaining gaps are higher-level models and physical evidence.**
+**The compiler, its software-proof rail, its bounded schematic topology view,
+and a supported one-file checker now exist. The remaining closeout gates require
+physical-machine evidence.**
 
 For the fixed `kniterate-7gg-kcode@2` profile, the repository has lossless
 byte-preserving KCode intake, pinned Knitout lowering, strict emitted-KCode
@@ -36,10 +37,11 @@ operational validator, and deterministic renderer input.
 profile and dialect. It does not mean controller-observed motion, operationally
 safe settings, or the fabric produced by a machine.
 
-The headless verdict and format-provenance disclosure gaps closed on 2026-08-29.
-The remaining gaps concern a conditional programmed-motion model, fabric
-topology and rendering, physical coordinate observations, physical setting
-evidence, and a legible foreign-file pass metric.
+The headless verdict, format-provenance disclosure, programmed-motion,
+schematic topology, coordinate-bridge, and provenance-safe pass-metric software
+gaps closed on 2026-08-29. The remaining gaps concern physical coordinate
+observations, controller speed semantics, elapsed duration, physical fabric,
+and operational setting evidence.
 
 ---
 
@@ -116,7 +118,7 @@ source information that serialized KCode does not.
 | KCode | Backend output | Strict parse under the product's canonical `knitout-vendor` provenance; direct `.kc` intake preserves exact bytes and discloses the lifecycle boundary | Serialized bytes still cannot prove producer, dialect, or source lifecycle; gap 05 disclosure closed |
 | Differential | Usually absent | Foreign `.k` lowering compares scheduled machine fields with the independently parsed emitted trace; direct `.kc` has no backend schedule | Backend-only provenance is not treated as machine state |
 | Trace and validation | Author/tool responsibility | Exact encoded `MachineTraceV1`; 30 parser and 43 validator rules | Not controller-observed movement |
-| Render | External stitch/loop visualizer | Deterministic programmed-movement scene | No proven fabric projection; gap 03 |
+| Render | External stitch/loop visualizer | Deterministic programmed-movement scene plus a verdict-bounded, Worker-projected schematic loop topology | Software topology is not controller behavior or physical fabric appearance |
 | Verdict | Author/tool policy | `Blocked` or `Surface-proven (imported)` under the foreign policy | Imported files cannot become Knit-proven through software inspection |
 | Run | Machine execution | Exact physical trial remains pending | Physical acceptance is a separate gate |
 
@@ -270,58 +272,50 @@ assumptions and calibration.
 assumption-labelled matched-candidate timing comparison; it does not yet
 unblock a physical duration claim.
 
-### 03 — Studio has no verdict-bounded fabric view
+### 03 — Closed: verdict-bounded schematic topology view
 
-**Size: medium–large · Class: software**
+**Status: implemented and software-proven 2026-08-29 · Class: software**
 
-`kcToKnitout` exists, is exported, and has no Studio call site, but it is not a
-proven drop-in decompiler for arbitrary accepted KCode.
+Studio now projects accepted foreign files directly from ordered
+`MachineTraceV1.actions`; it does not route accepted KCode through the legacy
+`kcToKnitout` adapter. The projection therefore uses the current strict trace's
+marker-free normalized coordinates and never reapplies the legacy decorated-
+marker −1 correction.
 
-It bypasses the strict parser/trace and calls legacy `parseKc(kcText)` in its
-default `app` mode. That legacy parser's `knitout-vendor` option applies a −1
-decorated-marker indexing correction to carrier-engaged rows. `kcToKnitout`
-cannot select that legacy source mode, so vendor-origin input can place knit,
-tuck, or split actions in a different recovered frame from carrier-0 transfers.
-Existing tests cover operation multisets and isolated transfer subsets, not loop
-continuity through a mixed knit → transfer → knit sequence.
+`MachineTopologyV1` retains stable loop identities, creation and terminal
+anchors, knit/split parentage, tuck co-location, yarn-continuity edges, transfer
+movements, rack commands, carrier chains, and final front/rear stacks. It fails
+closed on unknown actions, a carrier-0 loop-forming action, an empty transfer
+source, invalid limits, or a resource limit. Carrier entry and exit remain
+explicitly `not-encoded-in-kcode`; the projector does not synthesize lifecycle
+facts or feed them back into the verdict.
 
-This is a legacy-adapter issue, not a difference in current strict trace
-semantics. In the V2 profile, `app` and `knitout-vendor` are marker-free aliases
-with offset zero; `MachineTraceV1` has already removed the decorated markers.
-The new topology adapter must use those normalized trace coordinates and must
-not apply the legacy −1 correction again.
+`MachineTopologyMeshV1` is a separate deterministic schematic transform. Its
+nodes use creation pass and normalized trace coordinate, with bed offset only
+for legibility. The output contract literally records
+`schematic-topology-not-physical-fabric` and
+`dialect-normalized-machine-trace`. Studio runs both transforms in a dedicated
+module Worker and bounds the view to 6,000 loops, 18,000 connections, and 18,000
+transfer movements. Over-limit or malformed topology is withheld with an
+anchored failure instead of partially rendered.
 
-The converter also synthesizes `in` on first carrier use and `out` at the end.
-KCode does not encode source carrier lifecycle, so those operations are preview
-scaffolding, not recovered facts, and must not feed lifecycle verdicts.
+The foreign-file view is eligible only when the document has the same clean
+`Surface-proven (imported)` verdict and passing strict validation used by the
+rest of the workspace. A Blocked file receives a withheld panel, not a visual
+surface that could look more trustworthy than its verdict. Sequence tests cover
+tuck → knit → racked split → drop → rear-bed knit, loop identity across the
+transfer boundary, both beds, both current dialect labels, rack records,
+carrier-continuity edges, limits, unknown actions, the mesh transform, the
+withheld UI state, and the production Worker build.
 
-Nor does the current validator's loop replay already contain a stitch mesh: it
-stores loop counts and aggregate changes, not loop identities, yarn edges, or
-mesh connectivity. The vendored `CellMachine` topology model is exercised by a
-Node VM oracle for aggregate conformance, but there is no browser-safe Studio
-renderer.
+This closes the software topology/rendering gap only. The view does not recover
+source carrier lifecycle, label physical needles, model stitch geometry,
+tension, yarn friction, drape, or predict the appearance of machine-produced
+fabric. Those claims require physical evidence.
 
-Closing this gap requires a separately proven projection:
-
-1. Adapt ordered `MachineTraceV1.actions` into an explicit topology model,
-   preserving normalized trace coordinates, rack boundaries, source pass
-   indices, unknown-action failures, loop identities, and yarn edges.
-2. Add sequence-based tests across knit, tuck, transfer, split, drop, rack
-   changes, both dialects, and both beds. Assert topology across operation-family
-   boundaries, not just per-family operation counts.
-3. Mark synthetic carrier entry/exit as preview assumptions and exclude them
-   from verdict computation.
-4. Run the topology work outside the main UI thread and virtualize or bound the
-   mesh for large files.
-5. Prove the topology-to-mesh renderer independently before presenting it as
-   more than approximate preview.
-
-An accepted trace does not automatically prove a new topology model. Even after
-the software rail closes, the result would establish a software projection—not
-controller behavior or the appearance of physically knitted fabric.
-
-**Unblocks:** trustworthy foreign-file topology preview and visual review of
-structural mistakes.
+**Now available:** a verdict-bounded foreign-file schematic for visual review of
+software-projected loop connectivity, with its non-physical evidence boundary
+visible beside the mesh.
 
 ### 04 — Software bridge closed; physical needle labels still pending
 
@@ -411,9 +405,10 @@ verdict behavior are now shipped.
 **Now available:** accurate generated-file guidance without overstating either
 import path.
 
-### 06 — Editor ranges are not a proven physical operating envelope
+### 06 — Exact-candidate settings seam closed; operating envelope remains physical
 
-**Size: evidence program, not a single code change · Class: physical**
+**Status: software preparation implemented 2026-08-29; physical evidence pending
+· Class: physical**
 
 Four different concepts must stay separate:
 
@@ -439,12 +434,23 @@ authoritative versioned controller source or multiple designed, conservative
 trials across relevant operation mixes. Do not use the machine trial to probe
 unsafe extremes.
 
-Until then, keep the validation advisory, surface the limitation in the run
-sheet, and refuse to turn editor limits or corpus-observed values into physical
-safety claims.
+The locally closeable evidence seam is now explicit. The trial manifest extracts
+the exact compiled stitch, transfer-stitch, speed, roller, transfer style,
+carrier spacing, and stopping-distance recipe. Its settings gate remains
+`operational-safety-unverified`; the operator checklist prints all seven values
+for independent comparison with the controller. Registration copies the recipe
+into `machine.json` and `yarn.json`, and the physical-registry checker compares
+it with a fresh current compile. Any mismatch, declared deviation, manual
+intervention, or in-run setting change blocks Knit-proven promotion. The foreign
+and authored run sheets retain the operational and timing limitations.
 
-**Unblocks:** a future evidence-backed operational profile; it is not a
-one-session closeout item.
+Until physical or authoritative evidence exists, keep the validation advisory
+and refuse to turn editor limits, corpus-observed values, or one successful
+candidate recipe into physical safety claims.
+
+**Now available:** an exact-candidate settings receipt and fail-closed promotion
+gate. **Still open:** a future evidence-backed general operational profile; that
+is a machine/controller evidence program, not a remaining software seam.
 
 ### 07 — Authored rows and foreign loop-forming passes are different metrics
 
@@ -526,20 +532,26 @@ does not support treating either generation route as safe by itself.
    time model.** Nonpositive contributing speeds return unavailable; every
    physical/controller assumption remains explicit and trial calibration is
    exact-candidate-only.
-5. **Build gap 03 as a separately proven topology and rendering slice.** The
-   strict trace is the input, not proof that the renderer is correct.
-6. **Treat gap 06 as an ongoing evidence program.** Record exact-recipe settings
-   during the planned trial, but require authoritative sources or multiple
-   conservative designed workloads before generalizing an operating envelope.
+5. **Done — gap 03's separately proven topology and rendering slice.** The
+   strict trace is the input; independent topology/mesh tests and the production
+   Worker build prove the bounded schematic transform without making it fabric
+   evidence.
+6. **Done in software — gap 06's exact-recipe evidence seam.** The planned trial
+   now requires independent comparison of all seven settings and blocks any
+   mismatch/change; authoritative sources or multiple conservative designed
+   workloads remain necessary before generalizing an operating envelope.
 
 ---
 
 ## Scope note
 
-This ledger now records gaps 01, 02, 05, and 07 plus gap 04's software bridge as
-implemented. It does not yet claim a topology model, fabric renderer, observed
-physical coordinate mapping, operational profile, physical travel, elapsed
-duration, or physical lower bound.
+This ledger now records every locally closeable software gap—01, 02, 03, 05,
+and 07 plus gap 04's coordinate bridge and gap 06's exact-settings evidence
+seam—as implemented. The topology view is a schematic software renderer, not a
+physical-fabric renderer.
+The ledger does not claim observed physical coordinate mapping, a physical
+operational profile, physical travel, elapsed duration, a physical lower bound,
+or knitted appearance.
 
 Needle pitch is official-documented and now recorded numerically in the
 versioned KCode profile, but one stop-coordinate unit equaling one pitch remains

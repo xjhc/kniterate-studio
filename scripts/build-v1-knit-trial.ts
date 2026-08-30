@@ -185,6 +185,15 @@ export function compileCurrentV1KnitTrial() {
       'Physical needle numbering, carrier lifecycle, and operational setting safety remain outside this claim.',
     ],
   } as const;
+  const initialSettings = {
+    stitchNumber: firstSetting(compiled.knitoutText, 'x-stitch-number'),
+    xferStitchNumber: firstSetting(compiled.knitoutText, 'x-xfer-stitch-number'),
+    speedNumber: firstSetting(compiled.knitoutText, 'x-speed-number'),
+    rollerAdvance: firstSetting(compiled.knitoutText, 'x-roller-advance'),
+    xferStyle: firstTextSetting(compiled.knitoutText, 'x-xfer-style'),
+    carrierSpacing: firstSetting(compiled.knitoutText, 'x-carrier-spacing'),
+    carrierStoppingDistance: firstSetting(compiled.knitoutText, 'x-carrier-stopping-distance'),
+  } as const;
   const manifest = {
     kind: 'kniterate-studio-v1-physical-trial', schemaVersion: 1,
     title: project.title, profile: project.base.machine.profile,
@@ -199,15 +208,7 @@ export function compileCurrentV1KnitTrial() {
         position: 'Center',
         wastePasses: project.base.frame.wasteRows,
         bindOff: project.base.frame.bindOff,
-        initialSettings: {
-          stitchNumber: firstSetting(compiled.knitoutText, 'x-stitch-number'),
-          xferStitchNumber: firstSetting(compiled.knitoutText, 'x-xfer-stitch-number'),
-          speedNumber: firstSetting(compiled.knitoutText, 'x-speed-number'),
-          rollerAdvance: firstSetting(compiled.knitoutText, 'x-roller-advance'),
-          xferStyle: firstTextSetting(compiled.knitoutText, 'x-xfer-style'),
-          carrierSpacing: firstSetting(compiled.knitoutText, 'x-carrier-spacing'),
-          carrierStoppingDistance: firstSetting(compiled.knitoutText, 'x-carrier-stopping-distance'),
-        },
+        initialSettings,
       },
     },
     carriers: [
@@ -234,6 +235,11 @@ export function compileCurrentV1KnitTrial() {
       status: 'unverified',
       requirement: 'Use the hash-bound coordinate bridge and a documented machine/vendor datum procedure to resolve both mapped trace endpoints to physical machine needle labels, then record orientation and independent operator verification in run.json before sending the job.',
     },
+    physicalSettingsGate: {
+      status: 'exact-candidate-recipe-recorded-operational-safety-unverified',
+      evidence: 'Initial settings are extracted from the exact compiled Knitout, copied into machine.json and yarn.json at registration, and compared with a fresh current compile by the physical-registry gate.',
+      requirement: 'Independently compare the controller-loaded recipe with these seven exact candidate values before the run. Record every difference or in-run setting change. A mismatch, deviation, or manual intervention cannot promote this entry to Knit-proven, and one clean recipe does not establish a general operating envelope.',
+    },
   };
   const operatorChecklist = `# V1 physical blanket trial
 
@@ -241,11 +247,12 @@ export function compileCurrentV1KnitTrial() {
 2. Load C1 draw thread, C2-C5 according to manifest.json, and C6 waste yarn.
 3. The compiler/project range ${compilerCoordinateStart}-${compilerCoordinateEnd} maps through the exact hash-bound lowering receipt to KCode columns ${coordinateBridge.kcodeColumn.start}-${coordinateBridge.kcodeColumn.end} and normalized trace coordinates ${coordinateBridge.traceCoordinate.start}-${coordinateBridge.traceCoordinate.end}. None of those values is yet a verified physical needle label.
 4. Before sending the job, resolve both trace endpoints to physical needle labels using a documented machine/vendor datum procedure. Record increasing or decreasing physical-label orientation, and have a different person independently verify the endpoints, method, exact artifact hash, and time in run.json. Do not run while this gate is unverified.
-5. Confirm 20 waste rows, draw thread, and machine bind-off. Per Kniterate's [start-up guide](https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide) and [machine procedure](https://support.kniterate.com/hc/en-us/article_attachments/360009817198), the design app does not import .kc files: after independent hash and metadata review, copy the exact bytes of blanket.kc to the SD card as command.kc, eject the card correctly, and follow that documented manual procedure. Retain blanket.kc as the unchanged evidence copy. Do not claim or attempt an automated controller-only dry run.
-6. Watch waste, draw, carrier bring-in, first two body rows, and bind-off. Stop on unexpected carrier position, loop loss, or takedown behavior; record every manual intervention in run.json.
-7. Photograph front, back, cast-on, both edges, and bind-off. Record dimensions off-machine and after 24 hours of rest.
-8. Record one continuous startedAt/endedAt interval in run.json around the exact machine run, including every stop or manual intervention. Compare that observed interval only with this manifest's authored-plan heuristic and assumption-derived idealized term. Any residual or ratio is candidate-, machine-, controller-, yarn-, and settings-specific; do not promote one run into a universal duration constant.
-9. Copy the completed artifact into packages/machine-lib/registry/swatches only after the structured run evidence, narrative outcome, and exact hashes are recorded.
+5. Independently compare the controller-loaded initial recipe with the exact candidate receipt: stitch ${initialSettings.stitchNumber}; transfer stitch ${initialSettings.xferStitchNumber}; speed ${initialSettings.speedNumber}; roller ${initialSettings.rollerAdvance}; transfer style ${initialSettings.xferStyle}; carrier spacing ${initialSettings.carrierSpacing}; carrier stopping distance ${initialSettings.carrierStoppingDistance}. These are candidate commands, not a proven safe envelope. Record every difference for machine.json.deviationsFromCompile and every in-run change in run.json; either condition makes the run non-promotable.
+6. Confirm 20 waste rows, draw thread, and machine bind-off. Per Kniterate's [start-up guide](https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide) and [machine procedure](https://support.kniterate.com/hc/en-us/article_attachments/360009817198), the design app does not import .kc files: after independent hash and metadata review, copy the exact bytes of blanket.kc to the SD card as command.kc, eject the card correctly, and follow that documented manual procedure. Retain blanket.kc as the unchanged evidence copy. Do not claim or attempt an automated controller-only dry run.
+7. Watch waste, draw, carrier bring-in, first two body rows, and bind-off. Stop on unexpected carrier position, loop loss, or takedown behavior; record every manual intervention in run.json.
+8. Photograph front, back, cast-on, both edges, and bind-off. Record dimensions off-machine and after 24 hours of rest.
+9. Record one continuous startedAt/endedAt interval in run.json around the exact machine run, including every stop or manual intervention. Compare that observed interval only with this manifest's authored-plan heuristic and assumption-derived idealized term. Any residual or ratio is candidate-, machine-, controller-, yarn-, and settings-specific; do not promote one run into a universal duration constant.
+10. Copy the completed artifact into packages/machine-lib/registry/swatches only after the structured run evidence, narrative outcome, and exact hashes are recorded.
 `;
   const controllerReview = `# Controller review
 

@@ -83,6 +83,30 @@ export {
   type MachineTraceProgrammedMotionV1,
 } from './knitout/kcode/programmed-motion.js';
 export {
+  DEFAULT_MACHINE_TOPOLOGY_LIMITS_V1,
+  MachineTopologyProjectionErrorV1,
+  projectMachineTopologyV1,
+  type MachineTopologyActionAnchorV1,
+  type MachineTopologyCarrierChainV1,
+  type MachineTopologyConnectionV1,
+  type MachineTopologyLimitsV1,
+  type MachineTopologyLocationV1,
+  type MachineTopologyLoopV1,
+  type MachineTopologyMovementV1,
+  type MachineTopologyProjectionErrorCodeV1,
+  type MachineTopologyStackV1,
+  type MachineTopologyV1,
+} from './knitout/kcode/machine-topology.js';
+export {
+  DEFAULT_MACHINE_TOPOLOGY_MESH_LIMITS_V1,
+  projectMachineTopologyMeshV1,
+  type MachineTopologyMeshEdgeV1,
+  type MachineTopologyMeshLimitsV1,
+  type MachineTopologyMeshMovementV1,
+  type MachineTopologyMeshNodeV1,
+  type MachineTopologyMeshV1,
+} from './knitout/kcode/machine-topology-mesh.js';
+export {
   projectMachineScene,
   type MachineSceneActionGlyphV1,
   type MachineSceneMovementV1,

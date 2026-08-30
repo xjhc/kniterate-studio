@@ -29,6 +29,13 @@ ship," trust this file and the working tree instead.
   Blocked, and `2` means usage/read/internal failure. Both the Studio verdict
   panel/run sheet and the CLI disclose that direct KCode cannot prove source
   carrier lifecycle.
+- **Verdict-bounded foreign schematic topology.** A clean imported strict trace
+  can be projected off-thread into stable loop identities, formed-through,
+  tuck, yarn-continuity and transfer edges, rack anchors, and final bed stacks.
+  The separate mesh is bounded to 6,000 loops and 18,000 edges/movements; an
+  over-limit, malformed, or Blocked file gets a withheld panel. Coordinates are
+  normalized trace values, carrier entry/exit remains unknown, and the UI
+  labels the result as schematic software topology—not physical fabric.
 - **Exact authored-coordinate bridge for physical trials.** The pinned lowering
   receipt now binds compiler/project endpoints to the actual `Position`-derived
   marker-free KCode columns and normalized trace coordinates for the exact
@@ -48,6 +55,12 @@ ship," trust this file and the working tree instead.
   run sheets, checker receipts, and the exact-candidate trial manifest keep this
   beside—not merged with—the authored-plan heuristic. No physical travel,
   elapsed-time, lower-bound, or universal-calibration claim is made.
+- **Exact-candidate physical-settings receipt.** The release-trial manifest
+  extracts the compiled stitch, transfer-stitch, speed, roller, transfer style,
+  carrier spacing, and stopping-distance values and prints them for independent
+  controller comparison. Registration and the fresh physical-registry check
+  preserve those settings; any mismatch, deviation, or in-run intervention
+  blocks promotion. This is a candidate recipe, not a safe operating envelope.
 - **Authored chart → compile → k-code loop (Story 2 / "S2" core).** Embedded
   colorwork chart editor (`src/chart/*`), strategy rail (backing techniques,
   float budget, frame: waste/draw/bind-off), off-thread compile
@@ -69,7 +82,8 @@ ship," trust this file and the working tree instead.
 - **KCode proof engine (`packages/machine-lib`).** Strict lossless parser/emitter,
   explicit versioned machine profile and eight-operation command decision table,
   exact `MachineTraceV1`, KCode-native
-  kinematic and loop-state validator, renderer-ready `MachineSceneV1`, strict
+  kinematic and loop-state validator, renderer-ready `MachineSceneV1`, bounded
+  loop-identity `MachineTopologyV1` and schematic mesh, strict
   trace diff, deterministic Node/browser lowering, independent test decoder and
   replay oracle, the 13-file reference corpus, and seeded property,
   grammar/input-mutation, 1,904-case independent command-legality matrix,
@@ -96,13 +110,16 @@ Software now proves KCode grammar and bytes, deterministic pinned lowering,
 equivalence for every machine-executable scheduled field, programmed
 operation/direction/carrier/rack contract conformance, stops/selections/actions,
 carriage and carrier continuity, transfer pairing, and empty-bed loop-state
-transitions. The validation report separates profile conformance, modeled state,
-operational policy, and controller acceptance. It does not
+transitions. Separately tested topology projection establishes a deterministic
+software graph and schematic rendering under that assumption. The validation
+report separates profile conformance, modeled state, operational policy, and
+controller acceptance. It does not
 translate serialized transfer tokens into controller-observed physical direction,
-claim physical needle-number labels, an operationally safe speed/roller/stack
-envelope, yarn behavior, collision dynamics outside encoded motion, or carrier
-lifecycle for foreign KCode (KCode does not encode `in`/`out`). Those boundaries
-remain explicit in the profile, validator report, UI, and proof manifest. See
+claim physical needle-number labels, stitch geometry or fabric appearance, an
+operationally safe speed/roller/stack envelope, yarn behavior, collision
+dynamics outside encoded motion, or carrier lifecycle for foreign KCode (KCode
+does not encode `in`/`out`). Those boundaries remain explicit in the profile,
+validator report, UI, and proof manifest. See
 [`KCODE-SOFTWARE-PROOF.md`](./KCODE-SOFTWARE-PROOF.md).
 
 ## Verdict model (V1 — three rungs, no waivers)

@@ -18,7 +18,8 @@ then writes `out/v1-knit-trial/`:
   compile hash, SHA-256 identities, carrier map, dimensions, frame, pass counts,
   authored-plan time heuristic, exact programmed stop-coordinate travel,
   assumption-derived travel/time model, and the hash-bound
-  compiler/KCode/trace coordinate bridge
+  compiler/KCode/trace coordinate bridge, plus a first-class physical-settings
+  gate for the exact seven-value initial recipe
 - `OPERATOR-CHECKLIST.md` for the actual machine session
 - `command-legality.json`, binding the profile/contract, proof receipt, exact
   KCode hash, pass count, exact scheduled-versus-parsed machine-field match,
@@ -34,6 +35,15 @@ is not a physical needle-label claim. Resolve both trace endpoints against a
 documented machine/vendor datum procedure, record whether physical labels
 increase or decrease across them, and record an independent placement
 verification in `run.json` before sending the job.
+
+The same package extracts stitch, transfer-stitch, speed, roller, transfer
+style, carrier spacing, and carrier stopping distance from the exact compiled
+Knitout. The operator checklist prints those values for independent comparison
+with the controller-loaded recipe. Registration copies them into `machine.json`
+and the tension-swatches settings record; the registry gate compares them with a
+fresh current compile and blocks promotion for any mismatch, recorded deviation,
+or in-run intervention. This establishes an exact-candidate settings receipt,
+not a generally safe speed/roller envelope.
 
 The release trial is a 120x160 four-color birdseye rectangle on the fixed 7gg
 profile: C1 draw, C2-C5 pattern yarns, C6 waste, 20 waste rows, and machine
@@ -76,6 +86,8 @@ universal calibration constant.
 
 1. Complete the operator checklist and record exact yarn brand, line, lot,
    fiber, machine identity, software revision, gauge, and tension settings.
+   Independently compare all seven controller-loaded initial settings with the
+   manifest receipt and record every deviation or later setting change.
 2. Confirm waste, draw thread, carrier bring-in, body, backing, edges, and
    bind-off complete without manual source edits.
 3. Photograph front/back and all four boundaries; record rested dimensions and
