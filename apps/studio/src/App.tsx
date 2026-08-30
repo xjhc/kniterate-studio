@@ -394,6 +394,7 @@ function VerdictPanel({ document, onClose }: { document: MachineDocument; onClos
       <div className="popover-head"><strong>Verdict</strong><button className="icon-button" type="button" onClick={onClose} aria-label="Close verdict"><X size={16} /></button></div>
       <div className={`verdict-summary verdict-${document.verdict.state}`}><span className="verdict-dot" /><strong>{document.verdict.label}</strong></div>
       <p>{document.verdict.annotation}</p>
+      <p><strong>Format evidence</strong> {document.sourceDisclosure.summary}</p>
       <ol className="verdict-ladder">
         <li className={document.verdict.state === 'blocked' ? 'current' : ''}><i />Blocked</li>
         <li className={document.verdict.state === 'surface' ? 'current' : ''}><i />Surface-proven</li>
@@ -423,6 +424,7 @@ export function RunSheet({ document, onClose }: { document: MachineDocument; onC
         <div className="run-sheet-actions"><button className="secondary-button" type="button" onClick={onClose}><X size={16} /> Close</button><button className="primary-button" type="button" onClick={() => window.print()}><Printer size={16} /> Print</button></div>
         <header><span>KNITERATE STUDIO · RUN SHEET</span><h1 id="machine-run-title">{document.filename}</h1><div className={`print-verdict verdict-${document.verdict.state}`}>{document.verdict.label}</div></header>
         <p className="run-annotation">{document.verdict.annotation}</p>
+        <section><h2>Format evidence</h2><p>{document.sourceDisclosure.summary}</p></section>
         <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Passes</dt><dd>{document.stats.passCount.toLocaleString()}</dd></div><div><dt>Needles</dt><dd>{document.stats.needleSpan}</dd></div><div><dt>Rack range</dt><dd>{document.stats.rackRange}</dd></div></dl></section>
         <section><h2>Carrier map</h2><div className="carrier-map">{document.stats.carriers.length ? document.stats.carriers.map((carrier) => <span key={carrier}><i style={{ background: CARRIER_COLORS[carrier] }} />C{carrier}<b>{carrier === '1' ? 'Draw thread' : carrier === '6' ? 'Waste yarn' : 'Pattern yarn'}</b></span>) : <em>No carriers found</em>}</div></section>
         {findingGroups.length > 0 && <section><h2>Known findings</h2><ul className="run-sheet-findings">{findingGroups.map((group) => <li key={group.key}>

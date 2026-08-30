@@ -119,6 +119,10 @@ describe('foreign run-sheet findings', () => {
         label: 'Blocked',
         annotation: 'Imported warnings remain unresolved, so this foreign file is blocked under the conservative V1 policy.',
       },
+      sourceDisclosure: {
+        carrierLifecycle: 'not-encoded-by-kcode',
+        summary: 'KCode bytes do not encode Knitout carrier in/out lifecycle.',
+      },
       stats: {
         passCount: 21,
         carriers: [],
@@ -140,6 +144,7 @@ describe('foreign run-sheet findings', () => {
     expect(html).not.toContain('pass 13 / source line 130');
     expect(html).toContain('front:40 reaches 3 modeled loops.');
     expect(html).toContain('Drop targets an empty modeled needle');
+    expect(html).toContain('KCode bytes do not encode Knitout carrier in/out lifecycle.');
     expect(html).toContain('1 occurrence');
     expect(html).not.toContain('Compiler reported an issue');
   });

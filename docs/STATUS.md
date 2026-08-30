@@ -1,6 +1,6 @@
 # STATUS — what is shipped vs. proposed
 
-**Front door. Read this before any planning doc.** Reconciled 2026-08-25 against
+**Front door. Read this before any planning doc.** Reconciled 2026-08-29 against
 the working tree. Repo at `1.0.0-rc.1`; `pnpm verify:kcode` and `pnpm verify`
 are the software gates.
 
@@ -20,6 +20,15 @@ ship," trust this file and the working tree instead.
   verdict badge. Code:
   `apps/studio/src/engine.ts` (`openMachineDocument`) + `App.tsx`. **This is
   built — it is not a slice waiting to start.**
+- **One-file foreign checker.** `pnpm machine:check -- <file.k|file.kc>` uses
+  the same byte-preserving intake, pinned lowering, scene projection,
+  differential, diagnostics, and conservative warning verdict as Studio.
+  `--json` emits a bounded versioned receipt with SHA-256 and explicit format
+  evidence; use `pnpm --silent machine:check -- <file> --json` when stdout must
+  be JSON only. Exit `0` means Surface-proven (imported), `1` means checked but
+  Blocked, and `2` means usage/read/internal failure. Both the Studio verdict
+  panel/run sheet and the CLI disclose that direct KCode cannot prove source
+  carrier lifecycle.
 - **Authored chart → compile → k-code loop (Story 2 / "S2" core).** Embedded
   colorwork chart editor (`src/chart/*`), strategy rail (backing techniques,
   float budget, frame: waste/draw/bind-off), off-thread compile

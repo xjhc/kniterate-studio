@@ -19,6 +19,20 @@ pnpm verify
 pnpm dev
 ```
 
+Check one foreign machine file with the same conservative verdict policy as
+Studio:
+
+```bash
+pnpm machine:check -- ./pattern.kc
+pnpm --silent machine:check -- ./pattern.k --json
+```
+
+The checker exits `0` only for `Surface-proven (imported)`, `1` for a checked
+but blocked file, and `2` for usage or read failures. JSON receipts include the
+input SHA-256 and format-evidence disclosure, but never source bytes. This is a
+software preflight; controller acceptance and physical knitting remain separate
+gates.
+
 Open `http://127.0.0.1:5173` and import a chart JSON exported by KnitLab Chart.
 `pnpm kniterate:conform` runs the extracted machine confidence ladder.
 

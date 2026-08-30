@@ -110,7 +110,10 @@ function convertKnitoutToKCodeWithTrace(
     };
   }
   console.warn = captureWarning;
-  console.log = captureWarning;
+  // Studio's browser adapter treats routine vendor progress chatter as
+  // non-diagnostic. Keep Node verdicts identical: only console.warn is a
+  // backend warning; console.log is intentionally suppressed.
+  console.log = () => {};
   try {
     const vendor = requireFromHere(VENDOR_SCRIPT) as VendorCompilerModule;
     const { headers, passes, lowering } = vendor.knitoutToPasses(

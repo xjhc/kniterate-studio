@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -10,6 +11,10 @@ import {
   type AuthoredVerdictInput,
   type OpenKCodeDocumentOptions,
 } from './engine';
+import {
+  createMachineCheckReceipt,
+  formatMachineCheckReceipt,
+} from './machineCheckContract';
 
 const BASE_WIDTH = 283;
 const NEEDLE_COLUMNS = 253;
@@ -766,6 +771,150 @@ describe('Knitout machine document behavior', () => {
     const document = openMachineDocument('refusal.k', source);
     expect(document.verdict.label).toBe('Blocked');
     expect(document.diagnostics.some((item) => item.rule === rule)).toBe(true);
+  });
+});
+
+describe('one-file machine check contract', () => {
+  it('preserves direct KCode byte evidence without inventing source lifecycle', () => {
+    const bytes = new TextEncoder().encode(KC);
+    const document = openMachineDocument('sample.kc', bytes, {
+      dialect: 'knitout-vendor',
+    });
+    const receipt = createMachineCheckReceipt(document, {
+      byteCount: bytes.byteLength,
+      sha256: 'a'.repeat(64),
+    });
+
+    expect(receipt).toMatchObject({
+      kind: 'kniterate-machine-check',
+      schemaVersion: 1,
+      input: {
+        filename: 'sample.kc',
+        format: 'kc',
+        byteCount: bytes.byteLength,
+        sha256: 'a'.repeat(64),
+        profile: 'kniterate-7gg-kcode@2',
+        dialect: 'knitout-vendor',
+      },
+      verdict: { state: 'surface', label: 'Surface-proven (imported)' },
+      evidence: {
+        exactInputBytes: 'preserved-kcode-bytes',
+        sourceCarrierLifecycle: 'not-encoded-by-kcode',
+        backendScheduleDifferential: 'not-available-for-direct-kcode',
+        physicalAcceptance: 'not-established',
+      },
+      diagnostics: [],
+      diagnosticDetailsOmitted: 0,
+    });
+    expect(receipt.disclosure.join(' ')).toContain('do not encode Knitout carrier in/out');
+    expect(JSON.stringify(receipt)).not.toContain(KC);
+  });
+
+  it('reports Knitout lifecycle checking and the emitted scheduled differential', () => {
+    const bytes = new TextEncoder().encode(K);
+    const document = openMachineDocument('sample.k', bytes, {});
+    const receipt = createMachineCheckReceipt(document, {
+      byteCount: bytes.byteLength,
+      sha256: 'b'.repeat(64),
+    });
+    const human = formatMachineCheckReceipt(receipt);
+
+    expect(receipt).toMatchObject({
+      verdict: { state: 'surface' },
+      evidence: {
+        exactInputBytes: 'decoded-knitout-text',
+        sourceCarrierLifecycle: 'checked-before-lowering',
+        backendScheduleDifferential: 'passed',
+        physicalAcceptance: 'not-established',
+      },
+    });
+    expect(human).toContain('Surface-proven (imported) · sample.k');
+    expect(human).toContain('Knitout source carrier lifecycle is checked');
+    expect(human).toContain('Diagnostics: none');
+  });
+
+  it('keeps warning-only foreign KCode blocked in machine-readable output', () => {
+    const source = kcode({ speed: '801' });
+    const document = openMachineDocument('warning.kc', new TextEncoder().encode(source), {
+      dialect: 'knitout-vendor',
+    });
+    const receipt = createMachineCheckReceipt(document, {
+      byteCount: source.length,
+      sha256: 'c'.repeat(64),
+    });
+
+    expect(receipt).toMatchObject({
+      verdict: { state: 'blocked', label: 'Blocked' },
+      stats: { errorCount: 0, warningCount: 1 },
+      diagnostics: [{
+        severity: 'warning',
+        rule: 'machine-trace.setting-documented-range',
+      }],
+    });
+  });
+
+  it.each([
+    ['clean KCode', 'packages/machine-lib/reference/fairisle.kc', 0, 'surface', 'not-encoded-by-kcode'],
+    ['warning-blocked KCode', 'packages/machine-lib/reference/fox-baby-beanie.kc', 1, 'blocked', 'not-encoded-by-kcode'],
+    ['clean Knitout', 'packages/machine-lib/test/fixtures/machine-check-clean.k', 0, 'surface', 'checked-before-lowering'],
+  ] as const)(
+    'returns the documented CLI receipt and exit code for %s',
+    (_name, relativePath, exitCode, state, lifecycle) => {
+      const repositoryRoot = resolve('../..');
+      const result = spawnSync(
+        'pnpm',
+        ['--silent', 'machine:check', '--', relativePath, '--json'],
+        {
+          cwd: repositoryRoot,
+          encoding: 'utf8',
+          maxBuffer: 2 * 1024 * 1024,
+        },
+      );
+
+      expect(result.status, result.stderr).toBe(exitCode);
+      const receipt = JSON.parse(result.stdout) as {
+        readonly kind: string;
+        readonly input: { readonly filename: string; readonly sha256: string };
+        readonly verdict: { readonly state: string };
+        readonly evidence: { readonly sourceCarrierLifecycle: string };
+      };
+      expect(receipt).toMatchObject({
+        kind: 'kniterate-machine-check',
+        input: {
+          filename: relativePath.split('/').at(-1),
+          sha256: expect.stringMatching(/^[0-9a-f]{64}$/),
+        },
+        verdict: { state },
+        evidence: { sourceCarrierLifecycle: lifecycle },
+      });
+    },
+  );
+
+  it('returns exit 2 and JSON-only errors for unsupported and unreadable paths', () => {
+    const repositoryRoot = resolve('../..');
+    const unsupported = spawnSync(
+      'pnpm',
+      ['--silent', 'machine:check', '--', 'package.json', '--json'],
+      { cwd: repositoryRoot, encoding: 'utf8' },
+    );
+    const unreadable = spawnSync(
+      'pnpm',
+      ['--silent', 'machine:check', '--', 'missing-machine-file.kc', '--json'],
+      { cwd: repositoryRoot, encoding: 'utf8' },
+    );
+
+    expect(unsupported.status, unsupported.stderr).toBe(2);
+    expect(JSON.parse(unsupported.stdout)).toMatchObject({
+      kind: 'kniterate-machine-check',
+      error: { kind: 'usage', message: 'Only .k and .kc files are supported.' },
+    });
+    expect(unreadable.status, unreadable.stderr).toBe(2);
+    expect(JSON.parse(unreadable.stdout)).toMatchObject({
+      kind: 'kniterate-machine-check',
+      input: { filename: 'missing-machine-file.kc', sha256: null },
+      verdict: { state: 'blocked' },
+      evidence: { exactInputBytes: 'input-not-read' },
+    });
   });
 });
 

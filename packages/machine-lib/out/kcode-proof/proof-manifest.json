@@ -20,6 +20,7 @@
     "source-mutation-complete-for-command-proof-rail",
     "full-machine-trace-diff",
     "deterministic-pass-bed-carrier-scene",
+    "studio-equivalent-one-file-machine-check",
     "cross-section-predicted-vendor-agreement-prefix",
     "fairisle-footer-machine-equivalence",
     "kniterate-topology-policy-oracle",
@@ -29911,6 +29912,12 @@
       "exitCode": 0
     },
     {
+      "id": "machine-check-typecheck",
+      "command": "pnpm --dir ../.. machine:check:typecheck",
+      "status": "pass",
+      "exitCode": 0
+    },
+    {
       "id": "kcode-source-mutation-proof",
       "command": "pnpm verify:kcode:mutation (write) / pnpm verify:kcode:mutation:check (check)",
       "status": "pass",
@@ -30069,7 +30076,7 @@
     ]
   },
   "contract": {
-    "sha256": "cfec58d181d764fb8db3d9ba397cb4e6d797cc0a7c20272c83efa307d681c4b4",
+    "sha256": "e9e1f75cf28a0388ad453d5f97939426b44f2ea2faa96f329aa898db0b01af9f",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30103,8 +30110,8 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "aa6b9b9bc0d2a40afb3c4f6fff84625289b0ac1d79c8fb82a41646317420ab35",
-        "bytes": 50253
+        "sha256": "c24e1ede212d729f049a9f843bc0da86ad66644d7257bc8b5413ea04ca0a444e",
+        "bytes": 50429
       },
       {
         "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
@@ -30273,18 +30280,18 @@
       },
       {
         "path": "../../apps/studio/src/engine.test.ts",
-        "sha256": "193ee86884f3156c6de1465126008fe0f226c872f30b2c4ba74d5f32a3cf5ea0",
-        "bytes": 30576
+        "sha256": "217fa408cd8f01b5f7a7f20ff60475d3b3e77de4efe0aa99e52daabe6d3b29b0",
+        "bytes": 36126
       },
       {
         "path": "../../apps/studio/src/engine.ts",
-        "sha256": "1ce16a20744764ef97251c7bfe71eff825f952438088a50eda875e173de6c768",
-        "bytes": 30249
+        "sha256": "9544a1c1486746b619a494170a619bc3b253326757c86e04beac72ec1c661bbc",
+        "bytes": 30857
       },
       {
         "path": "../../apps/studio/src/foreignRunSheetFindings.test.tsx",
-        "sha256": "39122944b2e6b6f745d96a0e7495678a38b1360631e68ba5afb31160781ef1db",
-        "bytes": 5929
+        "sha256": "90f72a2d50448ca7410f28186438034e7f3a96f7b3a5d04913ad03dd720e5968",
+        "bytes": 6185
       },
       {
         "path": "../../apps/studio/src/foreignRunSheetFindings.ts",
@@ -30335,6 +30342,11 @@
         "path": "../../apps/studio/src/kcode/useKCodeArtifact.ts",
         "sha256": "95d359dcfaa71d58b672dee6fe57970361c9077f2e728bc7dd443446b6c62367",
         "bytes": 2488
+      },
+      {
+        "path": "../../apps/studio/src/machineCheckContract.ts",
+        "sha256": "f237e3bb0b10beb816408fffc8faf55698ea201891b913d5b9c91a878e878e78",
+        "bytes": 6841
       },
       {
         "path": "../../apps/studio/src/main.tsx",
@@ -30403,8 +30415,8 @@
       },
       {
         "path": "../../package.json",
-        "sha256": "1a5bbf8dee847024f47643ca6c05fbda8ca6727f28ba0722663ef87bfc385c22",
-        "bytes": 1144
+        "sha256": "5b827922ed8fdb129a84d62632890b367dc7042b3c7d041314af9c771140daba",
+        "bytes": 1494
       },
       {
         "path": "../../playwright.config.ts",
@@ -30425,6 +30437,11 @@
         "path": "../../scripts/build-v1-knit-trial.ts",
         "sha256": "8a0fe78dec4aef0b72bbfa50a66ad7a3843bce930bf065860c04d3df7b0a94cd",
         "bytes": 18292
+      },
+      {
+        "path": "../../scripts/check-machine-file.ts",
+        "sha256": "464bca121e58c8f8079b492a075fe02e551db65e13611e6ed8f3711d034f528e",
+        "bytes": 5034
       },
       {
         "path": "../../scripts/check-v1-physical-release.ts",
@@ -30588,7 +30605,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "eb8b1b7daf8ad25b8f2a1743f7442d58673f342521b64812f5d380efeab933f6",
+        "sha256": "cba1dff11d8d158c6d279dbfd8dbb723898f0a6e353c7e17665e25fd6ecaa5d0",
         "bytes": 179
       },
       {
@@ -30678,8 +30695,8 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "3570c250fa7ce1f4149762b830d619812f395008f0b8cfae0e0f0fcaea4407ce",
-        "bytes": 20047
+        "sha256": "d28d7547c7ee09fb9dd93e3c76ed646528baa6507ef81fe6aee0510bbcab1001",
+        "bytes": 20225
       },
       {
         "path": "scripts/kcode-rule-coverage.ts",
@@ -30993,8 +31010,8 @@
       },
       {
         "path": "src/knitout/kniterate/to-kcode.ts",
-        "sha256": "b6e3ff23c4815562c650a2a696889b25867f42b34e6afd796246c783b3638644",
-        "bytes": 6978
+        "sha256": "bebbc8a8e8d501bbc40aada003cf1d82d4938e5d33f8b34c5541ecce3165a501",
+        "bytes": 7181
       },
       {
         "path": "src/knitout/kniterate/vendor-pass-contract.ts",
@@ -31388,13 +31405,18 @@
       },
       {
         "path": "test/browser-kcode-converter.test.ts",
-        "sha256": "1ff124621894882a363c6b01b0819f8dc7eab657f0f9228c17bba6fc1741f7c0",
-        "bytes": 12887
+        "sha256": "3dc61bcac8fbe1f551d8ce7b8c7a2b76d6213b5ecb1bd842c36675b6951f6c1d",
+        "bytes": 13008
       },
       {
         "path": "test/colorwork-chart-intake.test.ts",
         "sha256": "e798ceb319030a9f820d95cdaffbea9e7666cfcac64a24abc69b9636a64352eb",
         "bytes": 1967
+      },
+      {
+        "path": "test/fixtures/machine-check-clean.k",
+        "sha256": "5cf269203d696a9df1942a352be5dc27247c84c561b8ba8b50effbe610f1aa06",
+        "bytes": 94
       },
       {
         "path": "test/knitout/__snapshots__/from-chart-jacquard.test.ts.snap",

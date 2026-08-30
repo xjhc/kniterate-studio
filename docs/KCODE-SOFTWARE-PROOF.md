@@ -42,6 +42,14 @@ parse of the emitted KCode, MachineTrace projection, loop/kinematic replay, and
 scheduled-pass differential. A syntactically valid `.k` file cannot earn a clean
 verdict by bypassing its lowered output.
 
+The same rail is available headlessly through
+`pnpm machine:check -- <file.k|file.kc>`. The command reads accepted input once
+as bytes, preserves direct KCode bytes, returns Studio's conservative foreign
+verdict, and exits nonzero for warning-only blockers. Its bounded JSON receipt
+includes the input SHA-256 and format-evidence disclosure without embedding
+source or emitted KCode. Use `pnpm --silent machine:check -- <file> --json` when
+stdout must contain JSON only.
+
 ## Deterministic gate
 
 Regenerate the deterministic receipt explicitly from the repository root:
@@ -55,8 +63,9 @@ fails unless the tracked receipt already has the exact expected bytes. The full
 `pnpm verify` and CI paths use this read-only form, as well as the read-only
 physical-registry and conformance-report checks.
 
-The command runs the exact machine-library and Studio proof-test lists, both
-strict TypeScript checks, the KCode-native refusal corpus, the named-rule
+The command runs the exact machine-library and Studio proof-test lists, their
+strict TypeScript checks plus the checker entrypoint typecheck, the KCode-native
+refusal corpus, the named-rule
 witness ledger, source mutation testing, a Studio production build, and audits every reference
 KCode file, and writes a deterministic receipt to:
 
@@ -127,6 +136,9 @@ The gate establishes:
   containment, and pass continuity;
 - deterministic pinned lowering across repeats, cross-document call ordering,
   and the public two-stage API;
+- one-file `.k`/`.kc` preflight with Studio-equivalent verdicts, exact input
+  SHA-256, bounded human/JSON diagnostics, explicit lifecycle/differential
+  evidence, and exit `0` only for `Surface-proven (imported)`;
 - exact agreement between every machine-executable scheduled field and parsed
   KCode;
 - cross-section agreement between predicted planning passes and the pinned

@@ -131,6 +131,7 @@ const PROOF_HARNESS_SOURCES = [
   '../../apps/studio/tsconfig.json',
   '../../apps/studio/vite.config.ts',
   '../../scripts/build-v1-knit-trial.ts',
+  '../../scripts/check-machine-file.ts',
   '../../scripts/check-v1-physical-release.ts',
   '../../scripts/register-v1-knit-trial.ts',
   '../chart-contract/package.json',
@@ -382,6 +383,7 @@ function main(): void {
       'exec', 'vitest', 'run', ...PROOF_TESTS,
     ]),
     runGate('machine-lib-typecheck', ['typecheck']),
+    runGate('machine-check-typecheck', ['--dir', '../..', 'machine:check:typecheck']),
     runGate('kcode-source-mutation-proof', [
       checkOnly ? 'verify:kcode:mutation:check' : 'verify:kcode:mutation',
     ], 'pnpm verify:kcode:mutation (write) / pnpm verify:kcode:mutation:check (check)'),
@@ -439,6 +441,7 @@ function main(): void {
       'source-mutation-complete-for-command-proof-rail',
       'full-machine-trace-diff',
       'deterministic-pass-bed-carrier-scene',
+      'studio-equivalent-one-file-machine-check',
       'cross-section-predicted-vendor-agreement-prefix',
       'fairisle-footer-machine-equivalence',
       'kniterate-topology-policy-oracle',

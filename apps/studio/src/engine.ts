@@ -149,6 +149,10 @@ export interface MachineDocument {
     label: 'Blocked' | 'Surface-proven (imported)' | 'Knit-proven';
     annotation: string;
   };
+  sourceDisclosure: {
+    carrierLifecycle: 'checked-before-lowering' | 'not-encoded-by-kcode';
+    summary: string;
+  };
   stats: {
     passCount: number;
     carriers: readonly string[];
@@ -518,6 +522,15 @@ function finishDocument(input: {
           ? `Strict KCode parsing and conformance to the V1 operation, direction, carrier, rack, selection, transfer, stop, and continuity contract passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Controller acceptance, operational limits, and physical knitting remain unproven.`
           : `Pinned backend lowering, strict emitted KCode parsing, V1 command-contract conformance, scheduled-pass differential checks, and empty-bed state replay passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Controller acceptance and physical yarn, tension, and fabric behavior remain separate gates.`,
     },
+    sourceDisclosure: input.format === 'k'
+      ? {
+          carrierLifecycle: 'checked-before-lowering',
+          summary: 'Knitout source carrier lifecycle is checked before pinned lowering; emitted KCode remains the downstream machine contract.',
+        }
+      : {
+          carrierLifecycle: 'not-encoded-by-kcode',
+          summary: 'KCode bytes do not encode Knitout carrier in/out lifecycle or prove who produced them; checks begin at encoded KCode semantics.',
+        },
     stats: {
       passCount: input.passes.length,
       carriers: carrierSet,

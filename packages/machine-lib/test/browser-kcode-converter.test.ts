@@ -115,6 +115,8 @@ describe('browser k-code adapter', () => {
     expect(browser.kcode).toBe(node.kcode);
     expect(nodeTrace.ok && nodeTrace.kcode).toBe(node.kcode);
     expect(nodeTrace.ok && nodeTrace.scheduledPasses).toEqual(browser.scheduledPasses);
+    expect(nodeTrace.warningCount).toBe(browser.warningCount);
+    expect(nodeTrace.warnings).toEqual(browser.warnings);
     if (!nodeTrace.ok) throw new Error(nodeTrace.error);
     expect(nodeTrace.scheduledPasses.map((pass) => pass.sourceLines)).toEqual([
       [5],

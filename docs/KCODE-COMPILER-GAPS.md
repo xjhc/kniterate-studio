@@ -23,8 +23,8 @@ External reference points:
 
 ## Finding
 
-**The compiler and its software-proof rail exist. The remaining gaps are
-supported entry points, higher-level models, and physical evidence.**
+**The compiler, its software-proof rail, and a supported one-file checker now
+exist. The remaining gaps are higher-level models and physical evidence.**
 
 For the fixed `kniterate-7gg-kcode@2` profile, the repository has lossless
 byte-preserving KCode intake, pinned Knitout lowering, strict emitted-KCode
@@ -36,10 +36,10 @@ operational validator, and deterministic renderer input.
 profile and dialect. It does not mean controller-observed motion, operationally
 safe settings, or the fabric produced by a machine.
 
-The first missing edge is a supported one-file headless verdict command. The
-remaining gaps concern a conditional programmed-motion model, fabric topology
-and rendering, verified coordinate mapping, format-provenance disclosure,
-physical setting evidence, and a legible foreign-file pass metric.
+The headless verdict and format-provenance disclosure gaps closed on 2026-08-29.
+The remaining gaps concern a conditional programmed-motion model, fabric
+topology and rendering, verified coordinate mapping, physical setting evidence,
+and a legible foreign-file pass metric.
 
 ---
 
@@ -111,9 +111,9 @@ source information that serialized KCode does not.
 | Stage | JavaScript / Knitout workflow | Studio and tracked proof | Remaining boundary |
 | --- | --- | --- | --- |
 | Author | JavaScript emits `.k` | Chart emits deterministic Knitout | Arbitrary JavaScript authoring is outside Studio's compiler contract |
-| File intake | Tool-specific | Browser accepts resource-bounded `.k` and `.kc` | No unified one-file headless verdict; gap 01 |
+| File intake | Tool-specific | Browser and `pnpm machine:check` accept resource-bounded `.k` and `.kc` under one verdict contract | Gap 01 closed |
 | Knitout | Backend input with source lifecycle | Parse and validate, then lower through the pinned backend | Backend warnings remain foreign-file findings |
-| KCode | Backend output | Strict parse under the product's canonical `knitout-vendor` provenance; direct `.kc` intake preserves exact bytes | Serialized bytes do not prove producer, dialect, or source lifecycle; gap 05 |
+| KCode | Backend output | Strict parse under the product's canonical `knitout-vendor` provenance; direct `.kc` intake preserves exact bytes and discloses the lifecycle boundary | Serialized bytes still cannot prove producer, dialect, or source lifecycle; gap 05 disclosure closed |
 | Differential | Usually absent | Foreign `.k` lowering compares scheduled machine fields with the independently parsed emitted trace; direct `.kc` has no backend schedule | Backend-only provenance is not treated as machine state |
 | Trace and validation | Author/tool responsibility | Exact encoded `MachineTraceV1`; 30 parser and 43 validator rules | Not controller-observed movement |
 | Render | External stitch/loop visualizer | Deterministic programmed-movement scene | No proven fabric projection; gap 03 |
@@ -126,27 +126,24 @@ source information that serialized KCode does not.
 
 Ranked by what each gap unblocks per unit of work, not by nominal size.
 
-### 01 — No unified arbitrary-file headless verdict
+### 01 — Closed: unified arbitrary-file headless verdict
 
-**Size: small–medium · Class: software**
+**Status: implemented 2026-08-29 · Class: software**
 
-The browser accepts arbitrary `.k` and `.kc` files, but the workspace has no
-supported single-file command that returns Studio's strict foreign-file verdict.
-The fixed-corpus proof commands are not that interface. The topology oracle does
-accept a `.k` path, but it is a specialized conformance script rather than a
-general parse, lower, validate, and verdict command.
+The workspace now has a supported single-file command that returns Studio's
+strict foreign-file verdict for arbitrary `.k` and `.kc` files. The fixed-corpus
+proof commands and specialized topology oracle remain separate tools.
 
-A proposed interface is:
+The shipped interface is:
 
 ```bash
 pnpm machine:check -- ./pattern.kc
-pnpm machine:check -- ./pattern.k --json
+pnpm --silent machine:check -- ./pattern.k --json
 ```
 
-A correct implementation is not a text-based KCode wrapper and cannot exit zero
-merely because there are no errors. It must share the foreign-document
-inspection and verdict seam with Studio while injecting the environment-specific
-pinned converter:
+The implementation is not a text-based KCode wrapper and cannot exit zero merely
+because there are no errors. It calls Studio's `openMachineDocument` verdict
+seam directly and retains these contracts:
 
 1. Check size before reading and enforce the same 64 MiB limit as Studio. Read
    an accepted file once as bytes.
@@ -173,22 +170,19 @@ pinned converter:
    versioned, bounded result with byte count, SHA-256, profile, format, dialect,
    verdict, stats, and diagnostics—not the source or emitted KCode.
 
-The Node and browser converter adapters also need one warning contract. Studio
-behavior is authoritative: capture `console.warn` as backend warnings and
-suppress or separately classify routine `console.log` chatter as non-diagnostic
-information. The current Node trace adapter counts that chatter as warnings, so
-acceptance must prove normalized Node/browser parity before claiming the same
-verdict.
+The Node and browser converter adapters now share one warning contract: Studio
+behavior is authoritative, `console.warn` is captured as backend warnings, and
+routine `console.log` chatter is suppressed as non-diagnostic information.
+Focused parity tests assert identical warning counts and details.
 
-Acceptance coverage should include all 13 fixtures plus clean, backend-warning,
-depth-three, depth-four, malformed-byte, and oversized cases for both formats.
-Scheduled-differential cases apply to `.k`; direct `.kc` output must explicitly
-report that no backend schedule exists. In particular, `fox-baby-beanie.kc`
-must exit `1`; an error-only wrapper would incorrectly return success for its
-183 blocking warnings.
+The existing Studio policy rail pins all 13 corpus verdicts and the parser,
+resource, depth-three, depth-four, and scheduled-differential boundaries. CLI
+subprocess tests pin a clean `.kc` exit `0`, `fox-baby-beanie.kc` exit `1`, and a
+clean `.k` exit `0` with source-lifecycle and differential evidence. Direct
+`.kc` receipts explicitly report that no backend schedule exists.
 
-**Unblocks:** repository CI, generated-file preflight, editor integrations, and
-other local tools without weakening Studio's safety policy.
+**Now available:** repository CI, generated-file preflight, editor integrations,
+and other local tools without weakening Studio's safety policy.
 
 ### 02 — No trace-derived programmed-motion model
 
@@ -358,9 +352,9 @@ file or turn an encoded trace into observed physical movement.
 **Unblocks:** physical labels, placement checks, and operator instructions for an
 exact registered candidate.
 
-### 05 — KCode cannot prove source carrier lifecycle
+### 05 — Closed disclosure: KCode cannot prove source carrier lifecycle
 
-**Size: small disclosure, bundled with gap 01 · Class: format boundary**
+**Status: implemented with gap 01 · Class: permanent format boundary**
 
 KCode does not encode Knitout `in` or `out` operations. A direct `.kc` import
 therefore cannot run source-lifecycle rules such as `carrier-active`,
@@ -375,7 +369,8 @@ same downstream trace validation. That makes `.k` more informative at the
 source boundary; it does not make a file physically safe or bypass the same
 KCode and physical-evidence limits.
 
-The product and the proposed CLI should state the asymmetry directly:
+Studio's verdict panel and run sheet plus the CLI's human/JSON receipts now state
+the asymmetry directly:
 
 - prefer `.k` when source lifecycle and lowering provenance are available;
 - treat `.kc` as checkable only within its encoded semantics; and
@@ -383,10 +378,10 @@ The product and the proposed CLI should state the asymmetry directly:
   facts.
 
 The format limitation itself is not closable. The disclosure and consistent
-verdict behavior are.
+verdict behavior are now shipped.
 
-**Unblocks:** accurate generated-file guidance without overstating either import
-path.
+**Now available:** accurate generated-file guidance without overstating either
+import path.
 
 ### 06 — Editor ranges are not a proven physical operating envelope
 
@@ -481,9 +476,8 @@ does not support treating either generation route as safe by itself.
 
 ## 5. Suggested sequence
 
-1. **Bundle gaps 01 and 05: one-file checker plus format disclosure.** This is
-   the smallest broad-access slice, but it is complete only when `.k` and `.kc`
-   share Studio's conservative verdict and warning policy.
+1. **Done — gaps 01 and 05: one-file checker plus format disclosure.** `.k` and
+   `.kc` now share Studio's conservative verdict and warning policy.
 2. **Close gap 04's software seam before the physical trial.** Reuse the existing
    two-endpoint registry gate and retain exact-candidate mapping evidence; do not
    add an informal single-marker shortcut.
@@ -504,9 +498,9 @@ does not support treating either generation route as safe by itself.
 
 ## Scope note
 
-This revision changes the analysis only. It does not implement a CLI, estimator,
-topology model, renderer, coordinate bridge, disclosure, operational profile, or
-new metric.
+This ledger now records gaps 01 and 05 as implemented. It does not yet claim an
+estimator, topology model, fabric renderer, coordinate bridge, operational
+profile, or new pass metric.
 
 Needle pitch is official-documented and repeated in repository comments, but is
 not yet a numeric field in the versioned KCode profile. Physical coordinate
