@@ -24,7 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import { KNITERATE_7GG_KCODE_PROFILE_V2, deriveMachineTraceProgrammedMotionV1, matchKnitProvenArtifact, type MachineTraceProgrammedMotionV1 } from '@kniterate-studio/machine-lib/browser';
-import { compareKcDocuments, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
+import { resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDiff, type MachinePass } from './engine';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, renameColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import type { BlanketCompileArtifact } from './blanket/compileProject';
@@ -39,7 +39,9 @@ import { indexSourceLines, sourceWindow } from './sourceWindow';
 import { formatForeignRunSheetFindingAnchor, groupForeignRunSheetFindings } from './foreignRunSheetFindings';
 import { ForeignFabricView, MachineTopologyView } from './fabric/ForeignFabricView';
 import { useMachineExecution } from './kcode/useMachineExecution';
-import { readMachineFile } from './machine/readMachineFile';
+import { readMachineFile, disposeMachineDocument, machineSession } from './machine/readMachineFile';
+import type { MachineDocumentView as MachineDocument } from './machine/inspection';
+import { useImportedMachineExecution } from './machine/useImportedMachineExecution';
 export { readMachineFile } from './machine/readMachineFile';
 
 const ROW_HEIGHT = 44;
@@ -368,7 +370,7 @@ function Diagnostics({ document, selected, onSelect }: { document: MachineDocume
 export function SourceDock({ document, selected, preferredLine, emitted = false, onOriginalSource }: { document: MachineDocument; selected: number; preferredLine: number | null; emitted?: boolean; onOriginalSource?: () => void }) {
   const pass = document.passes[selected];
   const source = emitted ? document.kcode?.document?.rawText ?? document.source : document.source;
-  const focusLine = preferredLine ?? (emitted ? document.kcode?.trace?.passes[selected]?.source.footer.start.line : pass?.lineEnd) ?? 1;
+  const focusLine = preferredLine ?? (emitted ? 1 : pass?.lineEnd) ?? 1;
   const sourceIndex = useMemo(() => indexSourceLines(source), [source]);
   const window = useMemo(
     () => sourceWindow(source, focusLine, 8, 2_048, sourceIndex),
@@ -475,10 +477,21 @@ function AuthoredRunSheet({ project, compiled, kcode, verdict, onClose }: { proj
 }
 
 function DiffView({ base, compare, onOpenCompare, onSelect }: { base: MachineDocument; compare: MachineDocument | null; onOpenCompare: () => void; onSelect: (index: number) => void }) {
-  const result = useMemo(() => compare && base.format === 'kc' && compare.format === 'kc' ? compareKcDocuments(base, compare) : null, [base, compare]);
+  const [response, setResponse] = useState<{ base: MachineDocument; compare: MachineDocument; result: MachineDiff | null; error: string | null } | null>(null);
+  useEffect(() => {
+    if (!compare || base.format !== 'kc' || compare.format !== 'kc') return;
+    let active = true;
+    void machineSession(base).compare(compare).then(
+      (result) => { if (active) setResponse({ base, compare, result, error: null }); },
+      (error) => { if (active) setResponse({ base, compare, result: null, error: error instanceof Error ? error.message : String(error) }); },
+    );
+    return () => { active = false; };
+  }, [base, compare]);
+  const result = response?.base === base && response.compare === compare ? response.result : null;
   if (base.format !== 'kc') return <div className="diff-empty"><ArrowLeftRight size={26} /><h2>Pass diff requires a .kc file</h2></div>;
   if (!compare) return <div className="diff-empty"><FilePlus2 size={26} /><h2>Choose a comparison file</h2><button className="primary-button" type="button" onClick={onOpenCompare}><FilePlus2 size={16} /> Choose .kc</button></div>;
-  if (!result) return null;
+  if (compare.format !== 'kc') return <div className="diff-empty" role="status">Choose a .kc comparison file.</div>;
+  if (!result) return <div className="diff-empty" role="status">{response?.base === base && response.compare === compare && response.error ? response.error : 'Comparing exact KCode off-thread…'}</div>;
   const byteSummary = result.summary.byteIdentical === undefined
     ? null
     : result.summary.byteIdentical
@@ -510,6 +523,8 @@ export function App() {
   const compareInput = useRef<HTMLInputElement>(null);
   const [document, setDocument] = useState<MachineDocument | null>(null);
   const [compare, setCompare] = useState<MachineDocument | null>(null);
+  useEffect(() => () => disposeMachineDocument(document), [document]);
+  useEffect(() => () => disposeMachineDocument(compare), [compare]);
   const importController = useRef<AbortController | null>(null);
   const [importing, setImporting] = useState<string | null>(null);
   useEffect(() => () => importController.current?.abort(), []);
@@ -601,7 +616,7 @@ export function App() {
 
   const showOpenedDocument = (opened: MachineDocument, comparison: boolean) => {
     if (comparison) { setCompare(opened); setView('diff'); }
-    else { setDocument(opened); setCompare(null); setSelected(0); setPreferredLine(null); setEmittedSource(false); setMobileView(opened.kcode?.scene ? 'movement' : 'passes'); setView('machine'); }
+    else { setDocument(opened); setCompare(null); setSelected(0); setPreferredLine(null); setEmittedSource(false); setMobileView(opened.kcode?.inspection?.hasScene ? 'movement' : 'passes'); setView('machine'); }
   };
   const openFile = async (file: File | undefined, comparison = false) => {
     if (!file) return;
@@ -612,6 +627,7 @@ export function App() {
     try {
       const opened = await readMachineFile(file, controller.signal);
       if (!controller.signal.aborted) showOpenedDocument(opened, comparison);
+      else disposeMachineDocument(opened);
     } catch (error) {
       if (!controller.signal.aborted) throw error;
     } finally {
@@ -623,14 +639,14 @@ export function App() {
   };
   const select = (pass: number, line: number | null = null) => {
     const bounded = Math.max(0, Math.min(pass, (document?.passes.length ?? 1) - 1));
-    execution.selectAction(bounded);
-    if (line !== null) { setPreferredLine(line); setEmittedSource(false); }
+    if (line !== null) { setSelected(bounded); setPreferredLine(line); setEmittedSource(false); }
+    else execution.selectAction(bounded);
     setView('machine');
   };
 
-  const execution = useMachineExecution(document?.kcode?.trace ?? null, document?.kcode?.validation ?? null, selected, (pass, line) => {
+  const execution = useImportedMachineExecution(document, selected, (pass, line) => {
     setSelected(pass); setPreferredLine(line); setEmittedSource(true);
-  }, document?.kcode ?? undefined);
+  });
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -675,12 +691,12 @@ export function App() {
               <div className="stat-strip"><span><b>{document.stats.passMetricProvenance === 'strict-kcode-trace' ? document.stats.passCount.toLocaleString() : '—'}</b> programmed passes</span><span><b>{document.stats.loopFormingPassCount === null ? '—' : document.stats.loopFormingPassCount.toLocaleString()}</b> loop-forming</span><span><b>{document.stats.carriers.length}</b> carriers</span><span><b>{document.stats.needleSpan}</b></span><span><b>rack {document.stats.rackRange}</b></span></div>
             </div>
             {view === 'machine' && <div className="mobile-tabs">
-              {document.kcode?.scene && <button className={mobileView === 'movement' ? 'active' : ''} type="button" onClick={() => setMobileView('movement')}>movement</button>}
+              {document.kcode?.inspection?.hasScene && <button className={mobileView === 'movement' ? 'active' : ''} type="button" onClick={() => setMobileView('movement')}>movement</button>}
               {(['passes', 'diagnostics', 'source'] as MobileView[]).map((item) => <button className={mobileView === item ? 'active' : ''} type="button" key={item} onClick={() => setMobileView(item)}>{item}</button>)}
             </div>}
             {view === 'machine' ? (
-              <div className={`machine-layout${document.kcode?.scene ? ' has-movement' : ''} mobile-${mobileView}`}>
-                {document.kcode?.scene && <MachineMovementView className="machine-movement-panel" execution={execution} scene={document.kcode.scene} validation={document.kcode.validation} displayDiagnostics={document.diagnostics.map(({ severity, passIndex, actionIndex, rule, rawMessage }) => ({ severity, passIndex, actionIndex, rule, message: rawMessage }))} overallContext={documentOverallContext(document)} selectedPass={selected} onSelect={(pass) => select(pass)} />}
+              <div className={`machine-layout${document.kcode?.inspection?.hasScene ? ' has-movement' : ''} mobile-${mobileView}`}>
+                {execution.inspection?.scene && <MachineMovementView className="machine-movement-panel" execution={execution} scene={execution.inspection!.scene!} validation={execution.inspection!.validation} navigationPasses={document.kcode?.inspection?.passNavigation} displayDiagnostics={document.diagnostics.map(({ severity, passIndex, actionIndex, rule, rawMessage }) => ({ severity, passIndex, actionIndex, rule, message: rawMessage }))} overallContext={documentOverallContext(document)} selectedPass={selected} onSelect={(pass) => select(pass)} />}
                 <PassGrid passes={document.passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={(pass) => select(pass)} />
                 <Diagnostics document={document} selected={selected} onSelect={select} />
                 <SourceDock document={document} selected={selected} preferredLine={preferredLine} emitted={emittedSource} onOriginalSource={() => { setEmittedSource(false); setPreferredLine(null); }} />

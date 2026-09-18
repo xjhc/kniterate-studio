@@ -118,6 +118,23 @@ stops at the first resource limit before materializing the retained record
 list. Exact accepted input bytes and existing refusal/verdict policies remain
 unchanged.
 
+The import Worker now retains the canonical full document, execution index, and
+lazy topology graph for the lifetime of the open file. RPC responses expose
+compact navigation plus a single pass/state or topology window. Exact diff also
+runs in that owner. Cancellation and replacement dispose the Worker and reject
+pending requests; request IDs and document ownership reject stale responses.
+The large `front.kc` opening response is constrained below 16 MiB JSON, and
+browser tests check replacement cleanup and a 2-second main-thread heartbeat
+ceiling independently of worker compilation time.
+
+Imported inspection checkpoints are limited to 64 KiB and 1,000 unique in-range
+breakpoints. They carry the exact byte-preserving KCode SHA-256, profile/version,
+event count, cursor, and source event anchor. Loading validates the strict shape
+and identity, freshly recomputes the cursor state, then compares its event anchor
+before applying the cursor and breakpoints. Serialized machine state is rejected.
+Checkpoints neither authorize a controller restart nor change validation inputs
+or the verdict; authored checkpoint persistence is not exposed.
+
 Focused local tests cover all 12 accepted reference files through the bounded
 topology pipeline and execution indexing; execution counts agree with validator
 metrics at every pass boundary and with each exact final loop state. These

@@ -3,10 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   MAX_MACHINE_SOURCE_BYTES_V1,
   openMachineDocument,
-  type MachineDocument,
 } from '../engine';
 import type { MachineImportRequest, MachineImportResponse } from './importProtocol';
-import { readMachineFile } from './readMachineFile';
+import { readMachineFile, disposeMachineDocument, machineSession } from './readMachineFile';
+import { createMachineInspector } from './inspection';
 
 class ImportWorker {
   static instances: ImportWorker[] = [];
@@ -45,11 +45,12 @@ function machineFile(values: readonly number[] = [72, 79, 77, 69, 13, 10], name 
   return { file, buffer, read };
 }
 
-function workerResult(worker: ImportWorker): MachineDocument {
+function workerResult(worker: ImportWorker): Extract<MachineImportResponse, { kind: 'opened' }> {
   const request = worker.received;
-  if (request === null) throw new Error('Worker did not receive a machine import.');
-  return openMachineDocument(request.filename, request.bytes,
-    request.filename.toLowerCase().endsWith('.kc') ? { dialect: 'knitout-vendor' } : {});
+  if (request?.kind !== 'open') throw new Error('Worker did not receive a machine import.');
+  const inspector = createMachineInspector(openMachineDocument(request.filename, request.bytes,
+    request.filename.toLowerCase().endsWith('.kc') ? { dialect: 'knitout-vendor' } : {}));
+  return { kind: 'opened', requestId: request.requestId, document: inspector.document, initial: inspector.initial };
 }
 
 async function startedWorker(): Promise<ImportWorker> {
@@ -111,16 +112,18 @@ describe('cancellable machine-file import', () => {
     const current = readMachineFile(machineFile([72, 79, 77, 69], 'current.kc').file);
     const currentWorker = await startedWorker();
     const currentDocument = workerResult(currentWorker);
-    oldWorker.respond({ document: oldDocument });
+    oldWorker.respond(oldDocument);
     expect(onOldCompletion).not.toHaveBeenCalled();
     expect(currentWorker.terminated).toBe(false);
-    currentWorker.respond({ document: currentDocument });
+    currentWorker.respond(currentDocument);
 
-    await expect(current).resolves.toBe(currentDocument);
+    await expect(current).resolves.toBe(currentDocument.document);
+    expect(currentWorker.terminated).toBe(false);
+    disposeMachineDocument(currentDocument.document);
     expect(currentWorker.terminated).toBe(true);
   });
 
-  it('transfers the original bytes unchanged and releases worker and abort listener on completion', async () => {
+  it('transfers original bytes and retains the worker until the document is closed', async () => {
     const original = [72, 79, 77, 69, 13, 10, 0xff, 0xc3, 0x28, 0, 13];
     const { file, buffer } = machineFile(original, 'exact.KC');
     const post = vi.spyOn(ImportWorker.prototype, 'postMessage');
@@ -131,23 +134,27 @@ describe('cancellable machine-file import', () => {
 
     expect(worker.url.pathname).toContain('/import.worker.ts');
     expect(worker.options).toEqual({ type: 'module' });
-    expect(post).toHaveBeenCalledExactlyOnceWith({ filename: 'exact.KC', bytes: expect.any(Uint8Array) }, [buffer]);
-    expect(post.mock.calls[0]![0].bytes.buffer).toBe(buffer);
+    expect(post).toHaveBeenCalledExactlyOnceWith({ kind: 'open', requestId: 1, filename: 'exact.KC', bytes: expect.any(Uint8Array) }, [buffer]);
+    const sent = post.mock.calls[0]![0];
+    if (sent.kind !== 'open' || worker.received?.kind !== 'open') throw new Error('Missing open request.');
+    expect(sent.bytes.buffer).toBe(buffer);
     expect(buffer.byteLength).toBe(0);
-    expect(Array.from(worker.received!.bytes)).toEqual(original);
+    expect(Array.from(worker.received.bytes)).toEqual(original);
 
     const document = workerResult(worker);
-    worker.respond({ document });
-    await expect(importing).resolves.toBe(document);
+    worker.respond(document);
+    await expect(importing).resolves.toBe(document.document);
+    expect(worker.terminated).toBe(false);
+    disposeMachineDocument(document.document);
     expect(worker.terminated).toBe(true);
     expect(removeListener).toHaveBeenCalledWith('abort', expect.any(Function));
-    expect(Array.from(document.source, (character) => character.charCodeAt(0))).toEqual(original);
+    expect(Array.from(document.document.source, (character) => character.charCodeAt(0))).toEqual(original);
   });
 
   it.each(['response', 'event'] as const)('returns a blocked document when the worker fails by %s', async (failure) => {
     const importing = readMachineFile(machineFile().file);
     const worker = await startedWorker();
-    if (failure === 'response') worker.respond({ error: 'Compiler failed during import' });
+    if (failure === 'response') worker.respond({ kind: 'failed', requestId: 1, error: 'Compiler failed during import' });
     else worker.fail('Compiler failed during import');
 
     const document = await importing;
@@ -198,7 +205,27 @@ describe('cancellable machine-file import', () => {
     const { file } = machineFile(original);
     const expected = openMachineDocument(file.name, Uint8Array.from(original), { dialect: 'knitout-vendor' });
 
-    await expect(readMachineFile(file)).resolves.toEqual(expected);
+    await expect(readMachineFile(file)).resolves.toEqual(createMachineInspector(expected).document);
     expect(ImportWorker.instances).toHaveLength(0);
   });
+  it('correlates concurrent inspection requests and rejects pending requests when closed', async () => {
+    const importing = readMachineFile(machineFile().file);
+    const worker = await startedWorker();
+    const opened = workerResult(worker);
+    worker.respond(opened);
+    const document = await importing;
+    const session = machineSession(document);
+    const first = session.inspect({ eventIndex: -1 });
+    const second = session.inspect({ eventIndex: -1 });
+    worker.respond({ kind: 'inspected', requestId: 3, inspection: { ...opened.initial, selectedPass: 2 } });
+    worker.respond({ kind: 'inspected', requestId: 2, inspection: { ...opened.initial, selectedPass: 1 } });
+    await expect(first).resolves.toMatchObject({ selectedPass: 1 });
+    await expect(second).resolves.toMatchObject({ selectedPass: 2 });
+    const pending = session.inspect({ eventIndex: -1 });
+    disposeMachineDocument(document);
+    await expect(pending).rejects.toThrow('closed');
+    await expect(session.inspect({ eventIndex: -1 })).rejects.toThrow('closed');
+    expect(worker.terminated).toBe(true);
+  });
+
 });

@@ -78,6 +78,7 @@ const STUDIO_PROOF_TESTS = [
   'src/sourceWindow.test.tsx',
   'src/machine/readMachineFile.test.ts',
   'src/machine/import.worker.test.ts',
+  'src/machine/inspectionCheckpoint.test.ts',
 ] as const
 
 const CONTRACT_SOURCES = [

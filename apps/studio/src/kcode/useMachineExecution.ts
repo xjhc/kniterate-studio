@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { executionNavigation } from '../machine/inspection';
 import {
   createMachineExecutionIndexV1,
   inspectMachineExecutionV1,
@@ -14,22 +15,15 @@ export function useMachineExecution(
   validation: MachineValidationReportV1 | null,
   selectedPass: number,
   onSelect: (pass: number, line: number | null) => void,
-  prepared?: { executionIndex?: ExecutionIndex | null; executionError?: string | null },
 ) {
   const [result, setResult] = useState<{ trace: MachineTraceV1; index: ExecutionIndex | null; error: string | null } | null>(null);
   const [breakpointState, setBreakpointState] = useState<{ index: ExecutionIndex; events: ReadonlySet<number> } | null>(null);
   const [cursor, setCursor] = useState<{ index: ExecutionIndex; eventIndex: number; pass: number } | null>(null);
-  const preparedIndex = prepared?.executionIndex;
-  const preparedError = prepared?.executionError;
   useEffect(() => {
     setResult(null);
     setCursor(null);
     setBreakpointState(null);
     if (!trace || !validation) return;
-    if (preparedIndex !== undefined) {
-      setResult({ trace, index: preparedIndex, error: preparedError ?? null });
-      return;
-    }
     const worker = new Worker(new URL('./execution.worker.ts', import.meta.url), { type: 'module' });
     worker.onmessage = (event: MessageEvent<{ index: ExecutionIndex } | { error: string }>) => {
       setResult('index' in event.data
@@ -40,8 +34,9 @@ export function useMachineExecution(
     worker.onerror = (event) => { setResult({ trace, index: null, error: event.message || 'Execution inspection failed.' }); worker.terminate(); };
     worker.postMessage({ trace, validation });
     return () => { worker.onmessage = null; worker.onerror = null; worker.terminate(); };
-  }, [trace, validation, preparedIndex, preparedError]);
+  }, [trace, validation]);
   const index = result?.trace === trace ? result.index : null;
+  const navigation = useMemo(() => index === null ? null : executionNavigation(index), [index]);
   const breakpoints = useMemo(() => breakpointState?.index === index ? breakpointState?.events ?? new Set<number>() : new Set<number>(), [breakpointState, index]);
   const toggleBreakpoint = (event: number) => {
     if (!index || event < 0) return;
@@ -67,10 +62,12 @@ export function useMachineExecution(
     selectEvent(actionIndex === undefined ? pass.beginEventIndex : pass.actionEventIndices[actionIndex] ?? pass.beginEventIndex);
   };
   return {
-    index, eventIndex, snapshot, selectEvent, selectAction, selectedPass, breakpoints, toggleBreakpoint,
+    index: navigation, eventIndex, snapshot, selectEvent, selectAction, selectedPass, breakpoints, toggleBreakpoint,
     error: result?.trace === trace ? result.error : null,
     pending: trace !== null && validation !== null && result?.trace !== trace,
   };
 }
 
-export type MachineExecutionController = ReturnType<typeof useMachineExecution>;
+export type MachineExecutionController = ReturnType<typeof useMachineExecution> & {
+  checkpoint?: { save(): Promise<string>; restore(text: string): Promise<void> };
+};

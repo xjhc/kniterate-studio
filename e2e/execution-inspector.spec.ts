@@ -79,3 +79,33 @@ test('shows exact emitted KCode for a Knitout event and preserves access to orig
   await expect(controls).toContainText('Pass 1 · action 1 · tuck');
   expect(errors).toEqual([]);
 });
+
+test('restores an inspection checkpoint only against identical KCode and recomputes state', async ({ page }) => {
+  await page.goto('/');
+  const importer = page.locator('input[accept=".kc,.k,text/plain"]');
+  const fixture = 'packages/machine-lib/reference/fairisle.kc';
+  await importer.setInputFiles(fixture);
+  const controls = page.getByRole('region', { name: 'Execution controls' });
+  await controls.getByRole('button', { name: 'Next event', exact: true }).click();
+  await expect(controls).toContainText('Pass 1 · action 1 · knit');
+  await controls.getByRole('button', { name: 'Set breakpoint', exact: true }).click();
+  const value = await controls.getByRole('slider', { name: 'Execution event' }).inputValue();
+  const download = page.waitForEvent('download');
+  await controls.getByRole('button', { name: 'Save inspection', exact: true }).click();
+  const file = await download;
+  const checkpoint = readFileSync((await file.path())!);
+  const load = () => controls.getByLabel('Inspection checkpoint file').setInputFiles({ name: 'inspection.checkpoint.json', mimeType: 'application/json', buffer: checkpoint });
+  await importer.setInputFiles(fixture);
+  await expect(controls).toContainText('Pass 1 · before actions');
+  await load();
+  await expect(controls).toContainText('Inspection restored from the exact KCode.');
+  await expect(controls.getByRole('slider', { name: 'Execution event' })).toHaveValue(value);
+  await expect(controls.getByRole('button', { name: 'Remove breakpoint', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('region', { name: 'Machine state at cursor' })).toContainText('1 modeled loops');
+  await importer.setInputFiles({ name: 'comment-changed.kc', mimeType: 'text/plain', buffer: Buffer.concat([readFileSync(fixture), Buffer.from('\n// changed bytes\n')]) });
+  await expect(controls).toContainText('Pass 1 · before actions');
+  await load();
+  await expect(controls).toContainText('Inspection checkpoint does not match the exact KCode bytes.');
+  await expect(controls).toContainText('Pass 1 · before actions');
+  await expect(controls.getByLabel('Breakpoints')).toHaveCount(0);
+});

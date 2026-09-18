@@ -29882,7 +29882,8 @@
     "../../apps/studio/src/foreignRunSheetFindings.test.tsx",
     "../../apps/studio/src/sourceWindow.test.tsx",
     "../../apps/studio/src/machine/readMachineFile.test.ts",
-    "../../apps/studio/src/machine/import.worker.test.ts"
+    "../../apps/studio/src/machine/import.worker.test.ts",
+    "../../apps/studio/src/machine/inspectionCheckpoint.test.ts"
   ],
   "gates": [
     {
@@ -29935,7 +29936,7 @@
     },
     {
       "id": "studio-kcode-integration-tests",
-      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/blanket/compileProject.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/fabric/compileForeignFabricPreview.test.tsx src/chart/AuthoredMachinePanel.test.ts src/chart/ChartWorkspace.test.ts src/chart/GeneratedSourceDock.test.tsx src/foreignRunSheetFindings.test.tsx src/sourceWindow.test.tsx src/machine/readMachineFile.test.ts src/machine/import.worker.test.ts",
+      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/blanket/compileProject.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/fabric/compileForeignFabricPreview.test.tsx src/chart/AuthoredMachinePanel.test.ts src/chart/ChartWorkspace.test.ts src/chart/GeneratedSourceDock.test.tsx src/foreignRunSheetFindings.test.tsx src/sourceWindow.test.tsx src/machine/readMachineFile.test.ts src/machine/import.worker.test.ts src/machine/inspectionCheckpoint.test.ts",
       "status": "pass",
       "exitCode": 0
     },
@@ -30086,7 +30087,7 @@
     ]
   },
   "contract": {
-    "sha256": "de315f93bc73f7e28d48d49061c8616107430d6f6fa60c803975226b9164740c",
+    "sha256": "67bef1843b78a45a0ed9cfb3432a9541abfe66078f7ac46b9772bd77dededcd5",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30120,8 +30121,8 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "365f95c60af74efdef6e3f85f1cce6cb475aac867b32438b4810fe2522a50644",
-        "bytes": 56964
+        "sha256": "a08d8784d21373df6bd1a484c31a818e11a355f50ff4e24396f2212f6be42c06",
+        "bytes": 58214
       },
       {
         "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
@@ -30295,8 +30296,8 @@
       },
       {
         "path": "../../apps/studio/src/engine.ts",
-        "sha256": "56f2df09bdf50875382fa64daf22cc805d6e8268751bab68a7a56c3acb2d8198",
-        "bytes": 32508
+        "sha256": "8e7c6e4da6f8211cf2512db45c7cffeed7a664de2f9341d47d3a35e8d3b6bee9",
+        "bytes": 32310
       },
       {
         "path": "../../apps/studio/src/fabric/ForeignFabricView.css",
@@ -30305,8 +30306,8 @@
       },
       {
         "path": "../../apps/studio/src/fabric/ForeignFabricView.tsx",
-        "sha256": "f1561def485479f0f701619ae2c9953a9985c421cf8510b9f782fcfae5311b79",
-        "bytes": 10635
+        "sha256": "eff4821add9a3aa35022a984bde484a7086eec2274e3eadcf3d4bf1caafa80ec",
+        "bytes": 12005
       },
       {
         "path": "../../apps/studio/src/fabric/compileForeignFabricPreview.test.tsx",
@@ -30345,13 +30346,18 @@
       },
       {
         "path": "../../apps/studio/src/kcode/ExecutionControls.css",
-        "sha256": "aa69d2dd511c222ceb782d3b0a60f9de872283a1c9adddaaddffb88248d68f10",
-        "bytes": 3939
+        "sha256": "ae20074ae5713efd4dea4b147c98293e60815e1042b5cfb2ab1d20ab45ea1440",
+        "bytes": 4081
       },
       {
         "path": "../../apps/studio/src/kcode/ExecutionControls.tsx",
-        "sha256": "e5629ff0d3ca106d0ed02f0cbced127c539e56b2fcf2d986706bab150d6d13c9",
-        "bytes": 6037
+        "sha256": "b32cffcbbc2bcd4e835d0ea6bfa85a97f3233edc01769a5f5ef68259d762c24c",
+        "bytes": 6429
+      },
+      {
+        "path": "../../apps/studio/src/kcode/InspectionCheckpointControls.tsx",
+        "sha256": "d86a32258658d01b3417354dc19b6c3ba530ba01becc48e0fe783f747d030938",
+        "bytes": 2614
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.css",
@@ -30365,8 +30371,8 @@
       },
       {
         "path": "../../apps/studio/src/kcode/MachineMovementView.tsx",
-        "sha256": "188e1f8dc25f48fdabb9c7cfbf63017247688ec7fe962735ed741b46bbcb0e0b",
-        "bytes": 26597
+        "sha256": "f9d2935f440fd5ca396bae86e13e0d6b6294a28dba1cdbfc3fe5339d055ace12",
+        "bytes": 26734
       },
       {
         "path": "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
@@ -30405,33 +30411,53 @@
       },
       {
         "path": "../../apps/studio/src/kcode/useMachineExecution.ts",
-        "sha256": "98b8477388ad3f6f3b6f9636e5809aa68146eedd866e5396eb4cb394cd767ade",
-        "bytes": 4100
+        "sha256": "44d8651bc419e61c4c183cf3ac1c11b5d4106050510d89c0a8b7a5ad75ca9059",
+        "bytes": 4000
       },
       {
         "path": "../../apps/studio/src/machine/import.worker.test.ts",
-        "sha256": "23e39e5521a4fa4c05976d22f08bf53e130bc453e3b8a2a40f85cdd4e8dfa99d",
-        "bytes": 4501
+        "sha256": "2be8401d59347268ce514774df17aea258cf8cd38bf29e55d8b9a166d36b0646",
+        "bytes": 5808
       },
       {
         "path": "../../apps/studio/src/machine/import.worker.ts",
-        "sha256": "342c3c6d5624a180894e0bef259fb9cb93d889f849a4fc72d3dfa52fb8d0beee",
-        "bytes": 1142
+        "sha256": "00289f930729302ab0a2ecab29cafb3a0a2773e5da7a3d2152696249fc868f6d",
+        "bytes": 1564
       },
       {
         "path": "../../apps/studio/src/machine/importProtocol.ts",
-        "sha256": "5ac35f6b185a1a64d43af9a7b260211da5cc363a202d87c55c2ded040a91c302",
-        "bytes": 222
+        "sha256": "31203c95fbba3dabcc3413a7f33b46394fa975e7065c7f9439e81fdddde0c310",
+        "bytes": 867
+      },
+      {
+        "path": "../../apps/studio/src/machine/inspection.ts",
+        "sha256": "c841e639d8ecf211b3af8a33bcd1d3376b209e4d379d565dfbba5d21f060e3ff",
+        "bytes": 6131
+      },
+      {
+        "path": "../../apps/studio/src/machine/inspectionCheckpoint.test.ts",
+        "sha256": "344934e69638ee0a38135eba42a1e86617a7134a9f2ff7a5e62d15ee6e12fec9",
+        "bytes": 4709
+      },
+      {
+        "path": "../../apps/studio/src/machine/inspectionCheckpoint.ts",
+        "sha256": "abf9c1c9fe4b02bfd5db8230c5f7392bf8d66c354241b2cfa9b1ec8c7cf70830",
+        "bytes": 4124
       },
       {
         "path": "../../apps/studio/src/machine/readMachineFile.test.ts",
-        "sha256": "24079916ea7066cbbca56e50365916164664bee5c48be64bbf680bd531b1b671",
-        "bytes": 8631
+        "sha256": "fb36afe4539807722665ae4a85e95956a6fa47e5bbf2fa874492e9adc9ca1579",
+        "bytes": 10397
       },
       {
         "path": "../../apps/studio/src/machine/readMachineFile.ts",
-        "sha256": "884400ca2a4149ec234a95073d657ac0ca67debf93f8757db161f5c8fa6936fe",
-        "bytes": 2126
+        "sha256": "d08c48c54e9922f871c493eb8052a4c894809616544175c158553a102125e148",
+        "bytes": 5623
+      },
+      {
+        "path": "../../apps/studio/src/machine/useImportedMachineExecution.ts",
+        "sha256": "01129f874cf9aaf1240fe711dc0c859d520ece585052c5d8b0d32e5ba3ec2ab4",
+        "bytes": 4568
       },
       {
         "path": "../../apps/studio/src/machineCheckContract.ts",
@@ -30470,8 +30496,8 @@
       },
       {
         "path": "../../e2e/execution-inspector.spec.ts",
-        "sha256": "a65febac75aeb146595eab5a1812599521568f6f820be838ddab86d05396afee",
-        "bytes": 5450
+        "sha256": "04b1cb955799b0fe76d078a52747879496c9da4e437659fb534e66dfeabf2088",
+        "bytes": 7622
       },
       {
         "path": "../../e2e/launch-polish.spec.ts",
@@ -30480,8 +30506,8 @@
       },
       {
         "path": "../../e2e/m2.spec.ts",
-        "sha256": "172dd10eabf28bc83d6d9fd8c2df167123dbc8f92d753d29f9684600636346b7",
-        "bytes": 3803
+        "sha256": "3a05d11f94baabd347b44cc666101ab1e7fc3225cdf7656de4408e57f1b163f6",
+        "bytes": 5665
       },
       {
         "path": "../../e2e/m3b.spec.ts",
@@ -30790,8 +30816,8 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "7605c953fab6e20bc876cf07fca33c66392652d5fa0091c4ec3947ad8ccd5dc7",
-        "bytes": 21730
+        "sha256": "f1ecd01c869867a04d5fde3b2f2355b52b1cc422f50fa6efc0621ce625e946a5",
+        "bytes": 21776
       },
       {
         "path": "scripts/kcode-rule-coverage.ts",

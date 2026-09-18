@@ -19,7 +19,6 @@ import {
   type KCodeMachineTraceDiff,
   type KCodeSourceSpan,
   type MachineSceneV1,
-  type MachineExecutionIndexV1,
   type MachineTraceProgrammedMotionV1,
   type MachineTracePassV1,
   type MachineTraceV1,
@@ -127,9 +126,6 @@ export interface MachineDiagnostic extends ResolvedValidatorMessage {
 }
 
 export interface MachineKCodeEvidence {
-  /** Optional browser-worker inspection cache, never part of verdict policy. */
-  executionIndex?: MachineExecutionIndexV1 | null;
-  executionError?: string | null;
   /** Explicit parser contract; Studio imports use the canonical V1 label. */
   dialect: KCodeDialect | null;
   /** Exact strict-parser document, retained even when parsing is blocked. */

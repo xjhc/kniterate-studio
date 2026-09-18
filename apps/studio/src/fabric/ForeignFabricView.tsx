@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, LoaderCircle, Network } from 'lucide-react';
 import type { MachineTopologyLoopV1, MachineTraceV1 } from '@kniterate-studio/machine-lib/browser';
-import type { MachineDocument } from '../engine';
+import type { MachineDocumentView } from '../machine/inspection';
+import { machineSession } from '../machine/readMachineFile';
 import { useForeignFabricPreview, type ForeignFabricPreviewState } from './useForeignFabricPreview';
 import './ForeignFabricView.css';
 
@@ -99,10 +100,31 @@ export function MachineTopologyView({ trace, eligible, blockedReason, selectedPa
   return <FabricPreviewPanel state={state} selectedPass={selectedPass ?? 0} onSelect={onSelect} onLoop={selectLoop} radius={radius} onRadius={setRadius} />;
 }
 
-export function ForeignFabricView({ document, selectedPass, onSelect }: { document: MachineDocument; selectedPass?: number; onSelect?: SelectPass }) {
+export function ForeignFabricView({ document, selectedPass, onSelect }: { document: MachineDocumentView; selectedPass?: number; onSelect?: SelectPass }) {
   const [localPass, setLocalPass] = useState(0);
-  const trace = document.kcode?.trace ?? null;
-  const eligible = document.verdict.state === 'surface' && trace !== null && document.kcode?.validation?.ok === true;
-  const reason = document.verdict.state === 'blocked' ? document.verdict.annotation : trace === null ? 'No strict KCode trace is available for topology projection.' : 'The strict trace did not pass its validation boundary.';
-  return <MachineTopologyView trace={trace} eligible={eligible} blockedReason={reason} selectedPass={selectedPass ?? localPass} onSelect={onSelect ?? setLocalPass} />;
+  const [radius, setRadius] = useState(8);
+  const [selection, setSelection] = useState<{ document: MachineDocumentView; loopId: number } | null>(null);
+  const loopId = selection?.document === document ? selection.loopId : null;
+  const pass = selectedPass ?? localPass;
+  const eligible = document.kcode?.inspection?.topologyEligible === true;
+  const [response, setResponse] = useState<{ document: MachineDocumentView; pass: number; radius: number; loopId: number | null; state: ForeignFabricPreviewState } | null>(null);
+  useEffect(() => {
+    if (!eligible) return;
+    let active = true;
+    void machineSession(document).topology({ requestId: 0, selectedPass: pass, radius, loopId }).then((result) => {
+      if (!active) return;
+      const state: ForeignFabricPreviewState = result.kind === 'foreign-topology-complete'
+        ? { status: 'ready', ...result }
+        : { status: 'failed', code: result.code, error: result.error, passIndex: result.passIndex };
+      setResponse({ document, pass, radius, loopId, state });
+    }, (error) => {
+      if (active) setResponse({ document, pass, radius, loopId, state: { status: 'failed', code: 'worker-error', error: error instanceof Error ? error.message : String(error), passIndex: null } });
+    });
+    return () => { active = false; };
+  }, [document, eligible, pass, radius, loopId]);
+  const state: ForeignFabricPreviewState = !eligible
+    ? { status: 'blocked', reason: document.verdict.annotation }
+    : response?.document === document && response.pass === pass && response.radius === radius && response.loopId === loopId
+      ? response.state : { status: 'projecting' };
+  return <FabricPreviewPanel state={state} selectedPass={pass} onSelect={onSelect ?? setLocalPass} radius={radius} onRadius={setRadius} onLoop={(id) => setSelection({ document, loopId: id })} />;
 }

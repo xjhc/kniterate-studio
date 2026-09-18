@@ -5,17 +5,18 @@ import type {
   MachineScenePassV1,
   MachineSceneSelectionV1,
   MachineSceneV1,
-  MachineValidationReportV1,
 } from '@kniterate-studio/machine-lib/browser';
 import './MachineMovementView.css';
 import { ExecutionControls, ExecutionState } from './ExecutionControls';
 import type { MachineExecutionController } from './useMachineExecution';
+import type { MovementValidation, PassNavigation } from '../machine/inspection';
 
 export interface MachineMovementViewProps {
   /** Renderer-ready exact KCode scene. No machine semantics are derived here. */
   scene: MachineSceneV1;
   /** Optional KCode-native validator state for loop counts and findings. */
-  validation?: MachineValidationReportV1 | null;
+  validation?: MovementValidation | null;
+  navigationPasses?: readonly PassNavigation[];
   /** Optional product-boundary severities for display. Raw validator evidence
    * remains attached through `validation`; this only controls presentation. */
   displayDiagnostics?: readonly {
@@ -63,7 +64,7 @@ function formatCoordinate(value: number): string {
   return Object.is(value, -0) ? '0' : String(value);
 }
 
-function passLabel(pass: MachineScenePassV1): string {
+function passLabel(pass: PassNavigation): string {
   return `Pass ${pass.passIndex + 1}, ${pass.direction === '>>' ? 'right' : 'left'}, ${pass.operation}, carrier ${pass.carrier}`;
 }
 
@@ -315,7 +316,7 @@ function PassTape({
   selectedPass,
   onSelect,
 }: {
-  passes: readonly MachineScenePassV1[];
+  passes: readonly PassNavigation[];
   selectedPass: number | null;
   onSelect: (passIndex: number) => void;
 }) {
@@ -441,6 +442,7 @@ export function MachineMovementView({
   overallContext,
   className = '',
   execution,
+  navigationPasses = scene.passes,
 }: MachineMovementViewProps) {
   const pass = scene.passes.find((candidate) => candidate.passIndex === selectedPass) ?? null;
   const passState = validation?.passStates.find((state) => state.passIndex === selectedPass);
@@ -492,8 +494,8 @@ export function MachineMovementView({
 
     {execution && <ExecutionControls execution={execution} findings={displayDiagnostics ?? validation?.diagnostics ?? []} />}
 
-    {scene.passes.length > 0
-      ? <PassTape passes={scene.passes} selectedPass={selectedPass} onSelect={onSelect} />
+    {navigationPasses.length > 0
+      ? <PassTape passes={navigationPasses} selectedPass={selectedPass} onSelect={onSelect} />
       : null}
 
     {pass === null || scene.displayDomain === null
@@ -532,8 +534,8 @@ export function MachineMovementView({
                 ? <p>No explicit RACK commands.</p>
                 : <>{scene.rackCommands.length > rackLedger.commands.length && <p className="mmv-rack-window">Showing commands #{rackLedger.start + 1}–#{rackLedger.end} of {scene.rackCommands.length.toLocaleString()}; the exact ordered stream remains retained.</p>}<ol>
                     {rackLedger.commands.map((command) => <li className={command.beforePassIndex === pass.passIndex ? 'is-selected-boundary' : ''} key={command.index}>
-                      <span><i>#{command.index}</i><b>{rackBoundaryLabel(command.beforePassIndex, scene.passes.length)}</b></span>
-                      <button type="button" disabled={!execution?.index} aria-label={`Inspect rack command ${command.index + 1}`} onClick={() => { const event = execution?.index?.events.find((event) => event.kind === 'rack' && event.rackCommandIndex === command.index); if (event) execution?.selectEvent(event.index); }}><code>{command.valueRaw}</code></button>
+                      <span><i>#{command.index}</i><b>{rackBoundaryLabel(command.beforePassIndex, navigationPasses.length)}</b></span>
+                      <button type="button" disabled={!execution?.index || execution.pending} aria-label={`Inspect rack command ${command.index + 1}`} onClick={() => { const event = execution?.index?.rackEvents.find((event) => event.rackCommandIndex === command.index); if (event) execution?.selectEvent(event.eventIndex); }}><code>{command.valueRaw}</code></button>
                       <small>{formatCoordinate(command.fromRack)}→{formatCoordinate(command.toRack)}</small>
                     </li>)}
                   </ol></>}

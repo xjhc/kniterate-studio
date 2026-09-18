@@ -56,6 +56,15 @@ ship," trust this file and the working tree instead.
   KCode resource preflight streams line records and stops at the first exceeded
   limit before materializing the record list. Foreign run sheets label carrier
   roles unspecified; they do not inherit authored C1 draw/C6 waste assignments.
+- **Retained foreign inspection and source-bound checkpoints.** One import
+  Worker owns the full parse, trace, validation, execution index, topology, and
+  exact diff. The renderer receives source/verdict summaries, compact navigation,
+  and one inspected pass; replacing a document disposes its Worker. Large-file
+  browser coverage checks both responsiveness and Worker cleanup.
+  Imported `.kc` and KCode emitted from `.k` can save/load a JSON checkpoint
+  containing only a cursor, breakpoints, and exact KCode/profile binding. Restore
+  recomputes state and verifies the event anchor. It does not resume a machine,
+  accept loaded-bed state, or change the verdict.
 - **Exact authored-coordinate bridge for physical trials.** The pinned lowering
   receipt now binds compiler/project endpoints to the actual `Position`-derived
   marker-free KCode columns and normalized trace coordinates for the exact
@@ -168,7 +177,7 @@ schema.
 
 ## Not yet built
 
-- **Loaded-bed/resume input:** no supplied initial loop stacks, carrier state,
+- **Loaded-bed/controller-resume input:** no supplied initial loop stacks, carrier state,
   controller position, or resumed-job contract. Validation, topology, and cursor
   replay still assume an empty bed at the beginning of the complete job.
 - **Physical/controller evidence:** operational speed/roller/stack envelopes,

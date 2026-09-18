@@ -1,3 +1,4 @@
+import { InspectionCheckpointControls } from './InspectionCheckpointControls';
 import { useEffect, useState } from 'react';
 import type { MachineExecutionController, ExecutionSnapshot } from './useMachineExecution';
 import './ExecutionControls.css';
@@ -19,15 +20,15 @@ export function ExecutionControls({ execution, findings }: {
   const [rate, setRate] = useState(4);
   useEffect(() => { setPlaying(false); }, [index]);
   useEffect(() => {
-    if (!playing || !index) return;
-    if (eventIndex >= index.events.length - 1) { setPlaying(false); return; }
+    if (!playing || !index || execution.pending) return;
+    if (eventIndex >= index.eventCount - 1) { setPlaying(false); return; }
     const timeout = window.setTimeout(() => {
       const next = eventIndex + 1;
       selectEvent(next);
       if (breakpoints.has(next)) setPlaying(false);
     }, 1000 / rate);
     return () => window.clearTimeout(timeout);
-  }, [playing, index, eventIndex, breakpoints, rate, selectEvent]);
+  }, [playing, index, eventIndex, breakpoints, rate, selectEvent, execution.pending]);
   if (!index) return <div className="execution-loading" role="status">{execution.error ?? (execution.pending ? 'Preparing execution inspection…' : 'Execution inspection unavailable.')}</div>;
   const jump = (next: number) => { setPlaying(false); selectEvent(next); };
   const nextFinding = findings.flatMap((finding) => {
@@ -36,15 +37,17 @@ export function ExecutionControls({ execution, findings }: {
   }).filter((position) => position > eventIndex).sort((a, b) => a - b)[0];
   return <section className="execution-controls" aria-label="Execution controls">
     <div className="execution-buttons">
-      <button type="button" aria-label="Previous event" disabled={eventIndex < 0} onClick={() => jump(eventIndex - 1)}>← Event</button>
-      <button type="button" aria-label={playing ? 'Pause playback' : 'Play programmed sequence'} disabled={eventIndex >= index.events.length - 1} onClick={() => setPlaying(!playing)}>{playing ? 'Pause' : 'Play'}</button>
-      <button type="button" aria-label="Next event" disabled={eventIndex >= index.events.length - 1} onClick={() => jump(eventIndex + 1)}>Event →</button>
+      <button type="button" aria-label="Previous event" disabled={execution.pending || eventIndex < 0} onClick={() => jump(eventIndex - 1)}>← Event</button>
+      <button type="button" aria-label={playing ? 'Pause playback' : 'Play programmed sequence'} disabled={execution.pending || eventIndex >= index.eventCount - 1} onClick={() => setPlaying(!playing)}>{playing ? 'Pause' : 'Play'}</button>
+      <button type="button" aria-label="Next event" disabled={execution.pending || eventIndex >= index.eventCount - 1} onClick={() => jump(eventIndex + 1)}>Event →</button>
       <label>Playback <select aria-label="Playback rate" value={rate} onChange={(event) => setRate(Number(event.target.value))}><option value={1}>1 event/s</option><option value={4}>4 events/s</option><option value={12}>12 events/s</option></select></label>
-      <label>Pass <input aria-label="Jump to pass" type="number" min={1} max={index.passes.length} value={execution.selectedPass + 1} onChange={(event) => { const pass = index.passes[Number(event.target.value) - 1]; if (pass) jump(pass.beginEventIndex); }} /></label>
-      <button type="button" disabled={nextFinding === undefined} onClick={() => { if (nextFinding !== undefined) jump(nextFinding); }}>Next finding</button>
-      <button type="button" disabled={eventIndex < 0} aria-pressed={breakpoints.has(eventIndex)} onClick={() => toggleBreakpoint(eventIndex)}>{breakpoints.has(eventIndex) ? 'Remove breakpoint' : 'Set breakpoint'}</button>
+      <label>Pass <input aria-label="Jump to pass" disabled={execution.pending} type="number" min={1} max={index.passes.length} value={execution.selectedPass + 1} onChange={(event) => { const pass = index.passes[Number(event.target.value) - 1]; if (pass) jump(pass.beginEventIndex); }} /></label>
+      <button type="button" disabled={execution.pending || nextFinding === undefined} onClick={() => { if (nextFinding !== undefined) jump(nextFinding); }}>Next finding</button>
+      <button type="button" disabled={execution.pending || eventIndex < 0} aria-pressed={breakpoints.has(eventIndex)} onClick={() => toggleBreakpoint(eventIndex)}>{breakpoints.has(eventIndex) ? 'Remove breakpoint' : 'Set breakpoint'}</button>
     </div>
-    <label className="execution-scrubber"><span>Event {eventIndex + 1} / {index.events.length.toLocaleString()}</span><input aria-label="Execution event" type="range" min={-1} max={index.events.length - 1} value={eventIndex} onChange={(event) => jump(Number(event.target.value))} /></label>
+    <InspectionCheckpointControls execution={execution} pause={() => setPlaying(false)} />
+    <label className="execution-scrubber"><span>Event {eventIndex + 1} / {index.eventCount.toLocaleString()}</span><input aria-label="Execution event" type="range" min={-1} max={index.eventCount - 1} value={eventIndex} onChange={(event) => jump(Number(event.target.value))} /></label>
+    {execution.error && <p role="alert">{execution.error}</p>}
     <div className="execution-current"><strong>{eventLabel(snapshot)}</strong><span>{snapshot?.event ? `KCode line ${snapshot.event.sourceSpan.start.line}` : 'Empty-bed initial state'}</span><small>Playback follows programmed order; its rate is not machine time.</small></div>
     {breakpoints.size > 0 && <div className="execution-breakpoints" aria-label="Breakpoints">{[...breakpoints].sort((a, b) => a - b).map((position) => <button type="button" key={position} onClick={() => jump(position)}>Event {position + 1}</button>)}</div>}
   </section>;

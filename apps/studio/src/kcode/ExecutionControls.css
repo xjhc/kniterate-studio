@@ -38,3 +38,6 @@
 @media(max-width: 620px) {
   .machine-movement-view:has(.execution-controls) .mmv-body { height: auto; overflow: visible; }
 }
+
+.inspection-checkpoint { margin-top: 8px; }
+.inspection-checkpoint small, .inspection-checkpoint p { color: var(--ink-3); font-size: 10px; }

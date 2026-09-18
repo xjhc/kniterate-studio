@@ -71,17 +71,27 @@ These are implementation and focused-test results. They do not assert that a
 fresh full proof or deployment has passed; use the exact current proof receipt
 for whole-gate evidence. Software validation and verdict policy are unchanged.
 Carrier lifecycle and within-pass physical motion/timing remain unknown; loop
-replay still uses the empty-bed job assumption. Loaded-bed/resume input is not
+replay still uses the empty-bed job assumption. Loaded-bed/controller-resume input is not
 implemented. Controller-observed behavior, physical operating envelopes,
 coordinate observations, and fabric outcomes remain separate evidence work.
 
-Large-file transport is a remaining performance opportunity. Imports combine the
-document and execution index in one Worker response to preserve shared references,
-but the complete object graph still reaches the main thread. A local development
-Firefox observation completed `front.kc` replacement in about 16.6 seconds, with
-most delay after the Worker response; the production browser regression passed
-its original five-second per-file waits. Compact transport or retaining more
-inspection state in the Worker would reduce this allocation/handling cost.
+The large-file transport gap is closed for imported documents. The import
+Worker retains the canonical full model and serves cursor, topology, and diff
+requests; only compact navigation, source/verdict summaries, and the selected
+pass reach the renderer. The `front.kc` opening response is tested below 16 MiB
+JSON (previous complete-model response approximately 174 MB). Local development
+Chromium/Firefox back→front sequences now complete in roughly 3 seconds, compared
+with the earlier Firefox replacement observation of 16.6 seconds. These are
+local observations, not a device-independent latency guarantee. Browser coverage
+also rejects heartbeat stalls of 2 seconds and checks that replacement closes
+the old Worker. Authored compilation still uses its separate worker pipeline.
+
+Imported inspection checkpoints save a cursor and at most 1,000 breakpoints,
+bound to exact KCode SHA-256, profile version, event count, and source event
+anchor. Loading recomputes execution state and refuses mismatched bytes, profile,
+anchor, unsupported fields, or files over 64 KiB. This restores an inspection
+session only. Supplied loaded-bed state and controller job restart remain outside
+the contract; the empty-bed model and conservative verdict are unchanged.
 
 ---
 
@@ -595,7 +605,8 @@ The original numbered register records its August implementation scope. The
 September milestone above corrects the earlier inference that those component
 closures exhausted local software work: capacity, execution interaction,
 responsive import, and foreign-role disclosure needed further implementation.
-Loaded-bed/resume input remains unimplemented. The topology view remains a
+Loaded-bed/controller-resume input remains unimplemented; source-bound inspection
+resume is implemented for imported documents. The topology view remains a
 schematic software renderer rather than a physical-fabric renderer.
 The ledger does not claim observed physical coordinate mapping, a physical
 operational profile, physical travel, elapsed duration, a physical lower bound,
