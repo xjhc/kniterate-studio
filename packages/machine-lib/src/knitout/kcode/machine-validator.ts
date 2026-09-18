@@ -239,7 +239,9 @@ function setStack(
   })
 }
 
-function stateMetrics(state: MutableLoopState): MachineLoopStateMetricsV1 {
+function stateMetrics(
+  state: ReadonlyMap<MachineLoopStackKeyV1, MachineLoopStackCellV1>,
+): MachineLoopStateMetricsV1 {
   let totalLoops = 0
   let maxStack = 0
   for (const cell of state.values()) {
@@ -254,7 +256,9 @@ function stateMetrics(state: MutableLoopState): MachineLoopStateMetricsV1 {
   }
 }
 
-function snapshot(state: MutableLoopState): MachineLoopStateSnapshotV1 {
+export function snapshotMachineLoopStateV1(
+  state: ReadonlyMap<MachineLoopStackKeyV1, MachineLoopStackCellV1>,
+): MachineLoopStateSnapshotV1 {
   const ordered = [...state.values()]
     .sort((a, b) =>
       (a.bed === b.bed ? 0 : a.bed === 'front' ? -1 : 1)
@@ -273,6 +277,43 @@ function snapshot(state: MutableLoopState): MachineLoopStateSnapshotV1 {
     front: ordered.filter((cell) => cell.bed === 'front'),
     rear: ordered.filter((cell) => cell.bed === 'rear'),
     ...stateMetrics(state),
+  }
+}
+
+/**
+ * Pure loop-state effect shared by validation and execution inspection. The
+ * caller establishes action legality first. Empty transfers have no effect;
+ * their diagnostic remains the validator's responsibility.
+ */
+export function machineLoopActionDeltasV1(
+  action: MachineTraceActionV1,
+  readCount: (bed: MachineTraceBedV1, traceCoordinate: number) => number,
+): readonly MachineLoopStackDeltaV1[] {
+  const delta = (selection: MachineTraceSelectionV1, afterCount: number): MachineLoopStackDeltaV1 => ({
+    bed: selection.bed,
+    traceCoordinate: selection.traceCoordinate,
+    beforeCount: readCount(selection.bed, selection.traceCoordinate),
+    afterCount,
+  })
+  switch (action.kind) {
+    case 'knit':
+      return [delta(action.at, 1)]
+    case 'tuck':
+      return [delta(action.at, readCount(action.at.bed, action.at.traceCoordinate) + 1)]
+    case 'drop':
+      return [delta(action.at, 0)]
+    case 'xfer':
+    case 'split': {
+      const sourceCount = readCount(action.source.bed, action.source.traceCoordinate)
+      if (sourceCount === 0) return []
+      return [
+        delta(action.target, readCount(action.target.bed, action.target.traceCoordinate) + sourceCount),
+        delta(action.source, action.kind === 'split' ? 1 : 0),
+      ]
+    }
+    case 'move':
+    case 'unknown':
+      return []
   }
 }
 
@@ -1306,24 +1347,14 @@ export function validateKCodeMachineTrace(
     for (const [actionIndex, action] of pass.actions.entries()) {
       if (structurallyInvalidActions.has(actionIndex)) continue
       const span = actionSpan(action, pass)
+      const deltas = machineLoopActionDeltasV1(
+        action,
+        (bed, coordinate) => getStack(state, bed, coordinate),
+      )
       switch (action.kind) {
-        case 'knit':
-          // Knit-on-empty is valid loop creation/cast-on/increase.
-          setStack(state, action.at.bed, action.at.traceCoordinate, 1)
-          break
-
         case 'tuck': {
-          // Tuck-on-empty creates a loop; otherwise it adds to the held stack.
-          const nextCount =
-            getStack(state, action.at.bed, action.at.traceCoordinate) + 1
-          setStack(
-            state,
-            action.at.bed,
-            action.at.traceCoordinate,
-            nextCount,
-          )
           checkLoopStackPolicy(
-            nextCount,
+            deltas[0]!.afterCount,
             pass,
             span,
             actionIndex,
@@ -1333,8 +1364,7 @@ export function validateKCodeMachineTrace(
         }
 
         case 'drop': {
-          const count = getStack(state, action.at.bed, action.at.traceCoordinate)
-          if (count === 0) {
+          if (deltas[0]!.beforeCount === 0) {
             add(
               'warning',
               'semantic',
@@ -1344,20 +1374,13 @@ export function validateKCodeMachineTrace(
               span,
               actionIndex,
             )
-          } else {
-            setStack(state, action.at.bed, action.at.traceCoordinate, 0)
           }
           break
         }
 
         case 'xfer':
         case 'split': {
-          const sourceCount = getStack(
-            state,
-            action.source.bed,
-            action.source.traceCoordinate,
-          )
-          if (sourceCount === 0) {
+          if (deltas.length === 0) {
             add(
               'error',
               'semantic',
@@ -1369,26 +1392,8 @@ export function validateKCodeMachineTrace(
             )
             break
           }
-          const targetCount = getStack(
-            state,
-            action.target.bed,
-            action.target.traceCoordinate,
-          )
-          const nextTargetCount = targetCount + sourceCount
-          setStack(
-            state,
-            action.target.bed,
-            action.target.traceCoordinate,
-            nextTargetCount,
-          )
-          setStack(
-            state,
-            action.source.bed,
-            action.source.traceCoordinate,
-            action.kind === 'split' ? 1 : 0,
-          )
           checkLoopStackPolicy(
-            nextTargetCount,
+            deltas[0]!.afterCount,
             pass,
             span,
             actionIndex,
@@ -1396,7 +1401,9 @@ export function validateKCodeMachineTrace(
           )
           break
         }
-
+      }
+      for (const delta of deltas) {
+        setStack(state, delta.bed, delta.traceCoordinate, delta.afterCount)
       }
     }
 
@@ -1475,7 +1482,7 @@ export function validateKCodeMachineTrace(
     errorCount,
     warningCount,
     passStates,
-    finalState: snapshot(state),
+    finalState: snapshotMachineLoopStateV1(state),
     operationalAssurance: OPERATIONAL_ASSURANCE,
   }
 }

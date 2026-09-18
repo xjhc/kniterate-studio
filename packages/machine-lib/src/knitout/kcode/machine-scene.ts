@@ -183,7 +183,7 @@ function directedTravel(
       }
 }
 
-function projectMovement(pass: MachineTracePassV1): MachineSceneMovementV1 {
+export function projectMachineSceneMovementV1(pass: MachineTracePassV1): MachineSceneMovementV1 {
   const carrierGuide = pass.carrierStops === null
     ? null
     : {
@@ -244,7 +244,7 @@ function projectAction(
 }
 
 function projectPass(pass: MachineTracePassV1): MachineScenePassV1 {
-  const movement = projectMovement(pass)
+  const movement = projectMachineSceneMovementV1(pass)
   return {
     passIndex: pass.index,
     direction: pass.direction,

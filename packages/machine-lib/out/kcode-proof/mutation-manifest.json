@@ -10,7 +10,7 @@
   "targets": [
     {
       "path": "src/knitout/kcode/parser.ts",
-      "sha256": "ec3f7642df226b320e6aef6f20ced77891d6fcbb1c56a759f44d05a74b6b68c0"
+      "sha256": "0a3b0ef1e90052bdb45bd9411c7e2da0971d04b1c953209e6014180cd3ae9068"
     },
     {
       "path": "src/knitout/kcode/machine-trace.ts",
@@ -18,7 +18,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "sha256": "2f028924f2bec40184a2379f19e02d131b2132a1b24b63ab400c720396b75ba7"
+      "sha256": "dae44550a85ef78e1be847bc729f0cc7ab0fd756e731b05237a37fd2b284c5f9"
     },
     {
       "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -121,44 +121,44 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "startLine": 746,
-      "endLine": 746,
+      "startLine": 787,
+      "endLine": 787,
       "reason": "Diagnostic prose only; family-specific rules and allowed-direction membership remain mutation-tested."
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "startLine": 819,
-      "endLine": 819,
+      "startLine": 860,
+      "endLine": 860,
       "reason": "Diagnostic prose only; exact rule, severity, class, and source location remain mutation-tested."
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "startLine": 1033,
-      "endLine": 1033,
+      "startLine": 1074,
+      "endLine": 1074,
       "reason": "Diagnostic prose only; selector bounds, severity, class, and stable rule remain mutation-tested."
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "startLine": 1100,
-      "endLine": 1100,
+      "startLine": 1141,
+      "endLine": 1141,
       "reason": "Diagnostic prose only; exact rule, severity, class, action index, and source location remain mutation-tested."
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "startLine": 1160,
-      "endLine": 1160,
+      "startLine": 1201,
+      "endLine": 1201,
       "reason": "Diagnostic prose only; the alternate stable rule identifier remains mutation-tested."
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "startLine": 1196,
-      "endLine": 1196,
+      "startLine": 1237,
+      "endLine": 1237,
       "reason": "Diagnostic prose only; expected-kind control flow and the stable rule remain mutation-tested."
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "startLine": 1428,
-      "endLine": 1428,
+      "startLine": 1435,
+      "endLine": 1435,
       "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
     }
   ],
@@ -221,7 +221,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 1033,
+      "line": 1074,
       "column": 15,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -229,7 +229,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 1100,
+      "line": 1141,
       "column": 13,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -237,7 +237,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 1196,
+      "line": 1237,
       "column": 15,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -245,7 +245,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 1196,
+      "line": 1237,
       "column": 96,
       "mutator": "StringLiteral",
       "replacement": "\"\"",
@@ -253,7 +253,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 1428,
+      "line": 1435,
       "column": 16,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -261,7 +261,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 1428,
+      "line": 1435,
       "column": 232,
       "mutator": "StringLiteral",
       "replacement": "\"Stryker was here!\"",
@@ -269,7 +269,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 1428,
+      "line": 1435,
       "column": 237,
       "mutator": "StringLiteral",
       "replacement": "\"\"",
@@ -277,7 +277,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 746,
+      "line": 787,
       "column": 148,
       "mutator": "StringLiteral",
       "replacement": "\"\"",
@@ -285,7 +285,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 746,
+      "line": 787,
       "column": 25,
       "mutator": "StringLiteral",
       "replacement": "\"\"",
@@ -293,7 +293,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 746,
+      "line": 787,
       "column": 48,
       "mutator": "StringLiteral",
       "replacement": "\"\"",
@@ -301,7 +301,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 746,
+      "line": 787,
       "column": 9,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -309,7 +309,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 819,
+      "line": 860,
       "column": 11,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -380,7 +380,7 @@
       "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
     }
   ],
-  "diagnosticProseExclusionsSha256": "add92fd9159ea4cf2832f05300d1a0f9cdebb6d00850b85928d4bff30bb760b0",
+  "diagnosticProseExclusionsSha256": "35d33a97046f8a21867db327cd05b16695e34b923cb6bb843c10f9ff5331c3ea",
   "equivalentMutantSuppressions": [
     {
       "path": "src/knitout/kcode/machine-trace.ts",
@@ -424,6 +424,14 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
+      "line": 1024,
+      "column": 13,
+      "mutator": "ArithmeticOperator",
+      "replacement": "selection.kcodeColumn - dialectContract.markerFreeTraceOffset",
+      "reason": "Equivalent mutant: both V1 dialect offsets are exactly zero."
+    },
+    {
+      "path": "src/knitout/kcode/machine-validator.ts",
       "line": 207,
       "column": 63,
       "mutator": "UnaryOperator",
@@ -432,7 +440,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 313,
+      "line": 354,
       "column": 53,
       "mutator": "ArithmeticOperator",
       "replacement": "value + 0.5",
@@ -440,7 +448,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 321,
+      "line": 362,
       "column": 10,
       "mutator": "EqualityOperator",
       "replacement": "coordinate < range.left",
@@ -448,7 +456,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 321,
+      "line": 362,
       "column": 10,
       "mutator": "EqualityOperator",
       "replacement": "coordinate > range.left",
@@ -456,7 +464,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 321,
+      "line": 362,
       "column": 38,
       "mutator": "EqualityOperator",
       "replacement": "coordinate < range.right",
@@ -464,7 +472,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 321,
+      "line": 362,
       "column": 38,
       "mutator": "EqualityOperator",
       "replacement": "coordinate > range.right",
@@ -472,7 +480,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 401,
+      "line": 442,
       "column": 27,
       "mutator": "StringLiteral",
       "replacement": "\"\"",
@@ -480,7 +488,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 401,
+      "line": 442,
       "column": 7,
       "mutator": "ConditionalExpression",
       "replacement": "false",
@@ -488,7 +496,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 401,
+      "line": 442,
       "column": 7,
       "mutator": "ConditionalExpression",
       "replacement": "true",
@@ -496,7 +504,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 439,
+      "line": 480,
       "column": 10,
       "mutator": "ArithmeticOperator",
       "replacement": "source.traceCoordinate - rack * contract.targetRackMultiplier",
@@ -504,19 +512,11 @@
     },
     {
       "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 439,
+      "line": 480,
       "column": 35,
       "mutator": "ArithmeticOperator",
       "replacement": "rack / contract.targetRackMultiplier",
       "reason": "Equivalent mutant: the V1 multiplier domain is exactly -1 or 1, for which multiply and divide are identical."
-    },
-    {
-      "path": "src/knitout/kcode/machine-validator.ts",
-      "line": 983,
-      "column": 13,
-      "mutator": "ArithmeticOperator",
-      "replacement": "selection.kcodeColumn - dialectContract.markerFreeTraceOffset",
-      "reason": "Equivalent mutant: both V1 dialect offsets are exactly zero."
     },
     {
       "path": "src/knitout/kcode/parser.ts",
@@ -608,7 +608,7 @@
     },
     {
       "path": "src/knitout/kcode/parser.ts",
-      "line": 87,
+      "line": 88,
       "column": 39,
       "mutator": "Regex",
       "replacement": "/([\\r\\n]*)(\\r\\n|\\r|\\n)|([^\\r\\n]+)$/g",
@@ -616,7 +616,7 @@
     },
     {
       "path": "src/knitout/kcode/parser.ts",
-      "line": 87,
+      "line": 88,
       "column": 39,
       "mutator": "Regex",
       "replacement": "/([^\\r\\n])(\\r\\n|\\r|\\n)|([^\\r\\n]+)$/g",
@@ -624,7 +624,7 @@
     },
     {
       "path": "src/knitout/kcode/parser.ts",
-      "line": 87,
+      "line": 88,
       "column": 39,
       "mutator": "Regex",
       "replacement": "/([^\\r\\n]*)(\\r\\n|\\r|\\n)|([\\r\\n]+)$/g",
@@ -632,7 +632,7 @@
     },
     {
       "path": "src/knitout/kcode/parser.ts",
-      "line": 87,
+      "line": 88,
       "column": 39,
       "mutator": "Regex",
       "replacement": "/([^\\r\\n]*)(\\r\\n|\\r|\\n)|([^\\r\\n])$/g",
@@ -640,18 +640,18 @@
     },
     {
       "path": "src/knitout/kcode/parser.ts",
-      "line": 87,
+      "line": 88,
       "column": 39,
       "mutator": "Regex",
       "replacement": "/([^\\r\\n]*)(\\r\\n|\\r|\\n)|([^\\r\\n]+)/g",
       "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
     }
   ],
-  "equivalentMutantSuppressionsSha256": "69350a3f62ea955baef083e9aa91a5fe3a372753be09e6767dc4ac7da47a63e4",
+  "equivalentMutantSuppressionsSha256": "aeb6f7bec4dbab88f2a8a6f1956b9827855cd08511f547b4ce0c9ccc7c0ea5bf",
   "unreviewedIgnoredMutants": [],
   "misScopedDiagnosticProseExclusions": [],
   "counts": {
-    "Killed": 2420,
+    "Killed": 2440,
     "Survived": 0,
     "Timeout": 0,
     "NoCoverage": 0,

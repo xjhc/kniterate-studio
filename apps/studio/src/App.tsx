@@ -24,7 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import { KNITERATE_7GG_KCODE_PROFILE_V2, deriveMachineTraceProgrammedMotionV1, matchKnitProvenArtifact, type MachineTraceProgrammedMotionV1 } from '@kniterate-studio/machine-lib/browser';
-import { MAX_MACHINE_SOURCE_BYTES_V1, compareKcDocuments, openMachineDocument, rejectOversizedMachineDocument, rejectUnreadableMachineDocument, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
+import { compareKcDocuments, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDocument, type MachinePass } from './engine';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, renameColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import type { BlanketCompileArtifact } from './blanket/compileProject';
@@ -37,7 +37,10 @@ import { NewProjectDialog, ProjectSettingsDialog, DEFAULT_PROJECT_PALETTE, type 
 import { readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
 import { indexSourceLines, sourceWindow } from './sourceWindow';
 import { formatForeignRunSheetFindingAnchor, groupForeignRunSheetFindings } from './foreignRunSheetFindings';
-import { ForeignFabricView } from './fabric/ForeignFabricView';
+import { ForeignFabricView, MachineTopologyView } from './fabric/ForeignFabricView';
+import { useMachineExecution } from './kcode/useMachineExecution';
+import { readMachineFile } from './machine/readMachineFile';
+export { readMachineFile } from './machine/readMachineFile';
 
 const ROW_HEIGHT = 44;
 const CARRIER_COLORS: Record<string, string> = {
@@ -71,22 +74,6 @@ function useModalFocusTrap(onClose: () => void) {
 
 type MobileView = 'movement' | 'passes' | 'diagnostics' | 'source';
 
-export async function readMachineFile(file: File): Promise<MachineDocument> {
-  if (file.size > MAX_MACHINE_SOURCE_BYTES_V1) {
-    return rejectOversizedMachineDocument(file.name, file.size);
-  }
-  try {
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    return file.name.toLowerCase().endsWith('.kc')
-      ? openMachineDocument(file.name, bytes, { dialect: 'knitout-vendor' })
-      : openMachineDocument(file.name, bytes, {});
-  } catch (error) {
-    return rejectUnreadableMachineDocument(
-      file.name,
-      error instanceof Error ? error.message : String(error),
-    );
-  }
-}
 
 function defaultProject(): ColorworkProjectV1 {
   return createColorworkProjectV1({
@@ -269,7 +256,19 @@ function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, 
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const focusedPass = kcode?.rowPasses.find((row) => row.rowId === focusedRowId)?.passIndices[0] ?? kcode?.scene?.passes[0]?.passIndex ?? 0;
   const [selected, setSelected] = useState(focusedPass);
-  useEffect(() => setSelected(focusedPass), [focusedPass]);
+  const [topology, setTopology] = useState(false);
+  const focusOrigin = useRef({ kcode, row: focusedRowId });
+  const execution = useMachineExecution(kcode?.trace ?? null, kcode?.validation ?? null, selected, (pass) => {
+    setSelected(pass);
+    const row = kcode?.passProvenance[pass]?.rowIds[0];
+    if (row) { focusOrigin.current = { kcode, row }; onFocusedRowId(row); }
+  });
+  useEffect(() => {
+    if (focusOrigin.current.kcode !== kcode || focusOrigin.current.row !== focusedRowId) {
+      setSelected(focusedPass);
+      focusOrigin.current = { kcode, row: focusedRowId };
+    }
+  }, [kcode, focusedPass, focusedRowId]);
   const passes = useMemo<MachinePass[]>(() => (kcode?.scene?.passes ?? []).map((pass, index) => {
     const provenance = kcode?.passProvenance[index];
     const coordinates = [...pass.beds.front, ...pass.beds.rear].map((selection) => selection.kcodeColumn);
@@ -294,11 +293,7 @@ function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, 
       ghost: provenance?.isAutoMove ?? false,
     };
   }), [artifact, kcode]);
-  const selectPass = (index: number) => {
-    setSelected(index);
-    const rowId = kcode?.passProvenance[index]?.rowIds[0];
-    if (rowId) onFocusedRowId(rowId);
-  };
+  const selectPass = (index: number) => execution.selectAction(index);
   const outputMessages = kcode?.messages ?? [];
   const errors = [...artifact.messages, ...outputMessages].filter((message) => message.severity === 'error');
   const outputWarnings = outputMessages.filter((message) => message.severity === 'warning');
@@ -318,9 +313,10 @@ function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, 
   }, new Map<string, { diagnostic: { severity: 'error' | 'warning' | 'info'; rule: string; message: string; passIndex: number | null }; count: number }>()).values()];
   const sourceSpan = kcode?.passLines[selected];
   const sourceIndex = useMemo(() => indexSourceLines(kcode?.kcText ?? ''), [kcode?.kcText]);
-  const sourceFocus = sourceSpan
+  const eventLine = execution.snapshot?.event?.sourceSpan.start.line ?? null;
+  const sourceFocus = eventLine ?? (sourceSpan
     ? Math.floor((sourceSpan.lineStart + sourceSpan.lineEnd) / 2)
-    : 1;
+    : 1);
   const sourceRadius = sourceSpan
     ? Math.ceil((sourceSpan.lineEnd - sourceSpan.lineStart) / 2) + 6
     : 6;
@@ -329,18 +325,18 @@ function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, 
     [kcode?.kcText, sourceFocus, sourceIndex, sourceRadius],
   );
   return <div className="workspace">
-    <nav className="side-rail" aria-label="Workspace views"><button className="active" type="button" title="Machine passes"><Rows3 size={19} /></button></nav>
+    <nav className="side-rail" aria-label="Workspace views"><button className={!topology ? 'active' : ''} type="button" title="Machine passes" onClick={() => setTopology(false)}><Rows3 size={19} /></button><button className={topology ? 'active' : ''} type="button" title="Schematic topology" onClick={() => setTopology(true)}><Network size={19} /></button></nav>
     <main className="machine-workspace compiled-workspace">
       <div className="workspace-head"><div><span className="eyebrow">Compiled project</span><h1>Exact emitted machine trace</h1></div><div className="stat-strip"><span><b>{(kcode?.passCount ?? 0).toLocaleString()}</b> passes</span><span><b>{artifact.stats.patternColors}</b> pattern colors</span><span><b>{artifact.stats.needles}</b> design columns</span><span><b>{errorCount + (outputStatus === 'failed' ? 1 : 0)}</b> errors</span></div></div>
-      <div className="compiled-machine-layout">
-        {kcode?.scene ? <MachineMovementView className="compiled-movement" scene={kcode.scene} validation={kcode.validation} overallContext={kcodeOverallContext(kcode)} selectedPass={selected} onSelect={selectPass} />
+      {topology ? <MachineTopologyView trace={kcode?.trace ?? null} eligible={kcode?.ok === true && kcode.validation?.ok === true} blockedReason="Topology requires current validated output." selectedPass={selected} onSelect={(pass, action) => execution.selectAction(pass, action)} /> : <div className="compiled-machine-layout">
+        {kcode?.scene ? <MachineMovementView className="compiled-movement" execution={execution} scene={kcode.scene} validation={kcode.validation} overallContext={kcodeOverallContext(kcode)} selectedPass={selected} onSelect={(pass) => execution.selectAction(pass)} />
           : kcode ? <div className="compiled-movement compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>Exact machine scene blocked</strong><small>{outputMessages.find((message) => message.severity === 'error')?.message ?? 'Strict parsing or MachineTrace projection did not produce an inspectable scene.'}</small></span></div>
             : outputStatus === 'failed' || outputStatus === 'ready' ? <div className="compiled-movement compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>KCode generation failed</strong><small>{outputError ?? 'Generation completed without an inspectable exact-output artifact.'}</small></span></div>
               : <div className="compiled-movement compiled-clear" role="status"><span className="spin-dot" /><strong>Strictly parsing and validating emitted KCode…</strong></div>}
         <PassGrid passes={passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={selectPass} compiled />
         <section className="diagnostics-panel"><div className="panel-title"><span><ListChecks size={15} /> Exact-output checks</span><b>{outputWarningCount} warnings</b></div><div className="diagnostic-list">{findingGroups.length === 0 ? kcode?.ok ? <div className="compiled-clear"><CheckCircle2 size={18} /><strong>No exact-output findings</strong></div> : <div className="compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>Exact-output evidence unavailable</strong><small>{outputError ?? 'No completed strict KCode artifact is available.'}</small></span></div> : findingGroups.map(({ diagnostic, count }) => <button type="button" disabled={diagnostic.passIndex === null} onClick={() => { if (diagnostic.passIndex !== null) selectPass(diagnostic.passIndex); }} className={`compiled-finding severity-${diagnostic.severity}`} key={diagnostic.rule}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}<span><strong>{diagnostic.rule}{count > 1 ? ` · ${count} occurrences` : ''}</strong><small>{diagnostic.message}</small></span></button>)}</div></section>
-        <section className="source-dock"><div className="panel-title"><span><Code2 size={15} /> Generated K-code</span><b>{kcode ? `${kcode.passCount.toLocaleString()} passes · ${kcode.kcHash.slice(0, 12)}` : outputStatus === 'failed' || outputStatus === 'ready' ? 'Unavailable' : 'Converting'}</b></div><pre>{kcode ? sourcePreview.lines.map((line) => { const highlighted = line.lineNumber >= (sourceSpan?.lineStart ?? 0) && line.lineNumber <= (sourceSpan?.lineEnd ?? 0); return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={line.lineNumber}><i>{line.lineNumber}</i><code>{line.text || ' '}</code></span>; }) : <span className="source-line"><i /><code>{outputStatus === 'failed' || outputStatus === 'ready' ? outputError ?? 'No exact KCode artifact was produced.' : 'Waiting for validated conversion…'}</code></span>}</pre></section>
-      </div>
+        <section className="source-dock"><div className="panel-title"><span><Code2 size={15} /> Generated K-code</span><b>{kcode ? `${kcode.passCount.toLocaleString()} passes · ${kcode.kcHash.slice(0, 12)}` : outputStatus === 'failed' || outputStatus === 'ready' ? 'Unavailable' : 'Converting'}</b></div><pre>{kcode ? sourcePreview.lines.map((line) => { const highlighted = eventLine !== null ? line.lineNumber === eventLine : line.lineNumber >= (sourceSpan?.lineStart ?? 0) && line.lineNumber <= (sourceSpan?.lineEnd ?? 0); return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={line.lineNumber}><i>{line.lineNumber}</i><code>{line.text || ' '}</code></span>; }) : <span className="source-line"><i /><code>{outputStatus === 'failed' || outputStatus === 'ready' ? outputError ?? 'No exact KCode artifact was produced.' : 'Waiting for validated conversion…'}</code></span>}</pre></section>
+      </div>}
     </main>
   </div>;
 }
@@ -369,21 +365,22 @@ function Diagnostics({ document, selected, onSelect }: { document: MachineDocume
   );
 }
 
-export function SourceDock({ document, selected, preferredLine }: { document: MachineDocument; selected: number; preferredLine: number | null }) {
+export function SourceDock({ document, selected, preferredLine, emitted = false, onOriginalSource }: { document: MachineDocument; selected: number; preferredLine: number | null; emitted?: boolean; onOriginalSource?: () => void }) {
   const pass = document.passes[selected];
-  const focusLine = preferredLine ?? pass?.lineEnd ?? 1;
-  const sourceIndex = useMemo(() => indexSourceLines(document.source), [document.source]);
+  const source = emitted ? document.kcode?.document?.rawText ?? document.source : document.source;
+  const focusLine = preferredLine ?? (emitted ? document.kcode?.trace?.passes[selected]?.source.footer.start.line : pass?.lineEnd) ?? 1;
+  const sourceIndex = useMemo(() => indexSourceLines(source), [source]);
   const window = useMemo(
-    () => sourceWindow(document.source, focusLine, 8, 2_048, sourceIndex),
-    [document.source, focusLine, sourceIndex],
+    () => sourceWindow(source, focusLine, 8, 2_048, sourceIndex),
+    [source, focusLine, sourceIndex],
   );
   const resourceLimited = document.kcode?.document?.metadata.recordMaterialization === 'resource-limited'
     || document.diagnostics.some((finding) => finding.rule === 'knitout-resource-limit');
   return (
     <section className="source-dock">
-      <div className="panel-title"><span><Code2 size={16} /> Source</span><b>{document.format.toUpperCase()} · lines {window.from}-{window.to} of {window.totalLines.toLocaleString()}</b></div>
+      <div className="panel-title"><span><Code2 size={16} /> Source</span>{emitted && document.format === 'k' && onOriginalSource && <button className="secondary-button source-toggle" type="button" onClick={onOriginalSource}>Show original Knitout</button>}<b>{emitted ? 'Emitted KCode' : document.format.toUpperCase()} · lines {window.from}-{window.to} of {window.totalLines.toLocaleString()}</b></div>
       <pre>{(resourceLimited || window.truncatedLineCount > 0) && <span className="source-preview-note">Preview bounded for safe inspection; the exact imported source remains retained for audit.</span>}{window.lines.map(({ lineNumber, text }) => {
-        const highlighted = lineNumber >= (pass?.lineStart ?? focusLine) && lineNumber <= (pass?.lineEnd ?? focusLine);
+        const highlighted = preferredLine !== null || emitted ? lineNumber === focusLine : lineNumber >= (pass?.lineStart ?? focusLine) && lineNumber <= (pass?.lineEnd ?? focusLine);
         return <span className={highlighted ? 'source-line highlighted' : 'source-line'} key={lineNumber}><i>{lineNumber}</i><code>{text || ' '}</code></span>;
       })}</pre>
     </section>
@@ -443,13 +440,13 @@ export function RunSheet({ document, onClose }: { document: MachineDocument; onC
         <p className="run-annotation">{document.verdict.annotation}</p>
         <section><h2>Format evidence</h2><p>{document.sourceDisclosure.summary}</p></section>
         <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Programmed passes</dt><dd>{strictPassMetrics ? document.stats.passCount.toLocaleString() : 'Unavailable'}</dd></div><div><dt>Loop-forming passes</dt><dd>{strictPassMetrics ? document.stats.loopFormingPassCount!.toLocaleString() : 'Unavailable'}</dd></div><div><dt>Authored design rows</dt><dd>Unavailable · foreign file has no row provenance</dd></div><div><dt>Programmed travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.coordinateMetric.programmedTravelUnits)} encoded stop-coordinate units`}</dd></div><div><dt>Assumption-derived travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.assumptionModel.assumedTravelMm)} mm · ${motion.assumptionModel.assumedPitchMmPerCoordinateUnit} mm/unit`}</dd></div><div><dt>Idealized constant-speed term</dt><dd>{idealizedMotionLabel(motion)}</dd></div><div><dt>Needles</dt><dd>{document.stats.needleSpan}</dd></div><div><dt>Rack range</dt><dd>{document.stats.rackRange}</dd></div></dl><p>Only the encoded stop-coordinate total is exact. Millimetres assume one coordinate unit equals one 3.63 mm needle pitch; the time term additionally assumes each encoded speed is constant mm/s. Neither is physical elapsed time or a physical lower bound.</p></section>
-        <section><h2>Carrier map</h2><div className="carrier-map">{document.stats.carriers.length ? document.stats.carriers.map((carrier) => <span key={carrier}><i style={{ background: CARRIER_COLORS[carrier] }} />C{carrier}<b>{carrier === '1' ? 'Draw thread' : carrier === '6' ? 'Waste yarn' : 'Pattern yarn'}</b></span>) : <em>No carriers found</em>}</div></section>
+        <section><h2>Carrier map</h2><div className="carrier-map">{document.stats.carriers.length ? document.stats.carriers.map((carrier) => <span key={carrier}><i style={{ background: CARRIER_COLORS[carrier] }} />C{carrier}<b>Role unspecified</b></span>) : <em>No carriers found</em>}</div></section>
         {findingGroups.length > 0 && <section><h2>Known findings</h2><ul className="run-sheet-findings">{findingGroups.map((group) => <li key={group.key}>
           <div><b>{group.severity.toUpperCase()}</b><strong>{group.title}</strong><span> · {group.occurrences.toLocaleString()} occurrence{group.occurrences === 1 ? '' : 's'}</span></div>
           <p>{group.explanation}</p>
           <ul className="run-sheet-finding-anchors">{group.representatives.map((representative, index) => <li key={`${formatForeignRunSheetFindingAnchor(representative)}-${index}`}><b>{formatForeignRunSheetFindingAnchor(representative)}</b>{representative.detail !== group.explanation ? ` — ${representative.detail}` : ''}</li>)}</ul>
         </li>)}</ul></section>}
-        <section><h2>Pre-knit check</h2><ul className="checklist"><li>Correct yarns loaded in the carrier map above</li><li>Needle bed is clear and carriage moves freely</li><li>Waste yarn and draw thread are available</li><li>Encoded per-pass speed and roller values have machine-side review; editor/profile checks are not physical safety approval</li><li>Representative swatch has been knit and inspected</li></ul></section>
+        <section><h2>Pre-knit check</h2><ul className="checklist"><li>Carrier yarns and roles confirmed against the original program setup</li><li>Needle bed is clear and carriage moves freely</li><li>Required waste yarn and draw thread confirmed from the original setup</li><li>Encoded per-pass speed and roller values have machine-side review; editor/profile checks are not physical safety approval</li><li>Representative swatch has been knit and inspected</li></ul></section>
         <footer>Generated locally · {new Date().toLocaleDateString()}</footer>
       </article>
     </div>
@@ -513,8 +510,12 @@ export function App() {
   const compareInput = useRef<HTMLInputElement>(null);
   const [document, setDocument] = useState<MachineDocument | null>(null);
   const [compare, setCompare] = useState<MachineDocument | null>(null);
+  const importController = useRef<AbortController | null>(null);
+  const [importing, setImporting] = useState<string | null>(null);
+  useEffect(() => () => importController.current?.abort(), []);
   const [selected, setSelected] = useState(0);
   const [preferredLine, setPreferredLine] = useState<number | null>(null);
+  const [emittedSource, setEmittedSource] = useState(false);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [view, setView] = useState<'chart' | 'machine' | 'diff' | 'fabric'>('chart');
   const [initial] = useState(initialProject);
@@ -600,22 +601,40 @@ export function App() {
 
   const showOpenedDocument = (opened: MachineDocument, comparison: boolean) => {
     if (comparison) { setCompare(opened); setView('diff'); }
-    else { setDocument(opened); setCompare(null); setSelected(0); setPreferredLine(null); setMobileView(opened.kcode?.scene ? 'movement' : 'passes'); setView('machine'); }
+    else { setDocument(opened); setCompare(null); setSelected(0); setPreferredLine(null); setEmittedSource(false); setMobileView(opened.kcode?.scene ? 'movement' : 'passes'); setView('machine'); }
   };
   const openFile = async (file: File | undefined, comparison = false) => {
     if (!file) return;
-    showOpenedDocument(await readMachineFile(file), comparison);
+    importController.current?.abort();
+    const controller = new AbortController();
+    importController.current = controller;
+    setImporting(file.name);
+    try {
+      const opened = await readMachineFile(file, controller.signal);
+      if (!controller.signal.aborted) showOpenedDocument(opened, comparison);
+    } catch (error) {
+      if (!controller.signal.aborted) throw error;
+    } finally {
+      if (importController.current === controller) setImporting(null);
+    }
   };
   const handleInput = (event: ChangeEvent<HTMLInputElement>, comparison = false) => {
     void openFile(event.target.files?.[0], comparison); event.target.value = '';
   };
   const select = (pass: number, line: number | null = null) => {
-    setSelected(Math.max(0, Math.min(pass, (document?.passes.length ?? 1) - 1))); setPreferredLine(line); setView('machine');
+    const bounded = Math.max(0, Math.min(pass, (document?.passes.length ?? 1) - 1));
+    execution.selectAction(bounded);
+    if (line !== null) { setPreferredLine(line); setEmittedSource(false); }
+    setView('machine');
   };
+
+  const execution = useMachineExecution(document?.kcode?.trace ?? null, document?.kcode?.validation ?? null, selected, (pass, line) => {
+    setSelected(pass); setPreferredLine(line); setEmittedSource(true);
+  }, document?.kcode ?? undefined);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (!document || showRunSheet) return;
+      if (!document || showRunSheet || event.defaultPrevented || (event.target as HTMLElement | null)?.closest('input, textarea, select, button')) return;
       if (view === 'machine' && event.key === 'ArrowDown') { event.preventDefault(); select(selected + 1); }
       if (view === 'machine' && event.key === 'ArrowUp') { event.preventDefault(); select(selected - 1); }
       if (event.key === 'Escape') { setShowVerdict(false); setShowRunSheet(false); }
@@ -639,6 +658,7 @@ export function App() {
           <button className="icon-button top-open" type="button" onClick={() => fileInput.current?.click()} title="Open machine file" aria-label="Open machine file"><FileUp size={16} /></button>
         </div>
       </header>
+      {importing && <div className="machine-import-status" role="status"><span>Checking {importing}…</span><button className="secondary-button" type="button" onClick={() => { importController.current?.abort(); setImporting(null); }}>Cancel import</button></div>}
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
@@ -660,13 +680,13 @@ export function App() {
             </div>}
             {view === 'machine' ? (
               <div className={`machine-layout${document.kcode?.scene ? ' has-movement' : ''} mobile-${mobileView}`}>
-                {document.kcode?.scene && <MachineMovementView className="machine-movement-panel" scene={document.kcode.scene} validation={document.kcode.validation} displayDiagnostics={document.diagnostics.map(({ severity, passIndex, rule, rawMessage }) => ({ severity, passIndex, rule, message: rawMessage }))} overallContext={documentOverallContext(document)} selectedPass={selected} onSelect={(pass) => select(pass)} />}
+                {document.kcode?.scene && <MachineMovementView className="machine-movement-panel" execution={execution} scene={document.kcode.scene} validation={document.kcode.validation} displayDiagnostics={document.diagnostics.map(({ severity, passIndex, actionIndex, rule, rawMessage }) => ({ severity, passIndex, actionIndex, rule, message: rawMessage }))} overallContext={documentOverallContext(document)} selectedPass={selected} onSelect={(pass) => select(pass)} />}
                 <PassGrid passes={document.passes} selected={selected} collapsed={collapsed} onToggle={(section) => setCollapsed((current) => { const next = new Set(current); next.has(section) ? next.delete(section) : next.add(section); return next; })} onSelect={(pass) => select(pass)} />
                 <Diagnostics document={document} selected={selected} onSelect={select} />
-                <SourceDock document={document} selected={selected} preferredLine={preferredLine} />
+                <SourceDock document={document} selected={selected} preferredLine={preferredLine} emitted={emittedSource} onOriginalSource={() => { setEmittedSource(false); setPreferredLine(null); }} />
               </div>
             ) : view === 'fabric'
-              ? <ForeignFabricView document={document} />
+              ? <ForeignFabricView document={document} selectedPass={selected} onSelect={(pass, action) => { execution.selectAction(pass, action); }} />
               : <DiffView base={document} compare={compare} onOpenCompare={() => compareInput.current?.click()} onSelect={(index) => select(index)} />}
           </main>
         </div>

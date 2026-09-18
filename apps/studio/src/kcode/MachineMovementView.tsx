@@ -8,6 +8,8 @@ import type {
   MachineValidationReportV1,
 } from '@kniterate-studio/machine-lib/browser';
 import './MachineMovementView.css';
+import { ExecutionControls, ExecutionState } from './ExecutionControls';
+import type { MachineExecutionController } from './useMachineExecution';
 
 export interface MachineMovementViewProps {
   /** Renderer-ready exact KCode scene. No machine semantics are derived here. */
@@ -19,6 +21,7 @@ export interface MachineMovementViewProps {
   displayDiagnostics?: readonly {
     readonly severity: 'error' | 'warning' | 'info';
     readonly passIndex: number | null;
+    readonly actionIndex?: number | null;
     readonly rule: string;
     readonly message: string;
   }[];
@@ -31,6 +34,7 @@ export interface MachineMovementViewProps {
     label: string;
   };
   className?: string;
+  execution?: MachineExecutionController;
 }
 
 interface CoordinateDomain {
@@ -200,10 +204,12 @@ function MachinePlot({
   pass,
   domain,
   passState,
+  visibleActions,
 }: {
   pass: MachineScenePassV1;
   domain: CoordinateDomain;
   passState: MachinePassStateSnapshotV1 | undefined;
+  visibleActions?: number;
 }) {
   const id = useId().replaceAll(':', '');
   const carriageMarker = `mmv-carriage-${id}`;
@@ -280,7 +286,7 @@ function MachinePlot({
       <line x1={plotX(selection.kcodeColumn, domain)} x2={plotX(selection.kcodeColumn, domain)} y1={PLOT.rearY - 9} y2={PLOT.rearY + 9} />
     </g>)}
 
-    {pass.actionGlyphs.map((action, index) => {
+    {pass.actionGlyphs.slice(0, visibleActions).map((action, index) => {
       if (action.geometry === 'point') {
         return <PointGlyph key={`point-${index}`} action={action} domain={domain} passState={passState} />;
       }
@@ -434,6 +440,7 @@ export function MachineMovementView({
   onSelect,
   overallContext,
   className = '',
+  execution,
 }: MachineMovementViewProps) {
   const pass = scene.passes.find((candidate) => candidate.passIndex === selectedPass) ?? null;
   const passState = validation?.passStates.find((state) => state.passIndex === selectedPass);
@@ -454,6 +461,9 @@ export function MachineMovementView({
     ? { start: 0, end: 0, commands: [] as MachineSceneV1['rackCommands'] }
     : rackLedgerWindow(scene.rackCommands, pass.passIndex);
 
+  const currentEvent = execution?.snapshot?.event;
+  const visibleActions = execution?.index ? currentEvent?.kind === 'action'
+    ? currentEvent.actionIndex + 1 : currentEvent?.kind === 'pass-end' ? undefined : 0 : undefined;
   return <section className={`machine-movement-view ${className}`.trim()} aria-label="Exact machine movement">
     <header className="mmv-header">
       <div className="mmv-title-block">
@@ -479,6 +489,8 @@ export function MachineMovementView({
         <span title={`Parser label: ${scene.dialect}`}>canonical raster v1</span>
       </div>
     </header>
+
+    {execution && <ExecutionControls execution={execution} findings={displayDiagnostics ?? validation?.diagnostics ?? []} />}
 
     {scene.passes.length > 0
       ? <PassTape passes={scene.passes} selectedPass={selectedPass} onSelect={onSelect} />
@@ -521,7 +533,7 @@ export function MachineMovementView({
                 : <>{scene.rackCommands.length > rackLedger.commands.length && <p className="mmv-rack-window">Showing commands #{rackLedger.start + 1}–#{rackLedger.end} of {scene.rackCommands.length.toLocaleString()}; the exact ordered stream remains retained.</p>}<ol>
                     {rackLedger.commands.map((command) => <li className={command.beforePassIndex === pass.passIndex ? 'is-selected-boundary' : ''} key={command.index}>
                       <span><i>#{command.index}</i><b>{rackBoundaryLabel(command.beforePassIndex, scene.passes.length)}</b></span>
-                      <code>{command.valueRaw}</code>
+                      <button type="button" disabled={!execution?.index} aria-label={`Inspect rack command ${command.index + 1}`} onClick={() => { const event = execution?.index?.events.find((event) => event.kind === 'rack' && event.rackCommandIndex === command.index); if (event) execution?.selectEvent(event.index); }}><code>{command.valueRaw}</code></button>
                       <small>{formatCoordinate(command.fromRack)}→{formatCoordinate(command.toRack)}</small>
                     </li>)}
                   </ol></>}
@@ -538,6 +550,7 @@ export function MachineMovementView({
               pass={pass}
               domain={scene.displayDomain.kcodeCoordinate}
               passState={passState}
+              visibleActions={visibleActions}
             />
             <dl className="mmv-loop-state">
               <StateMetric label="Loops" before={passState?.before.totalLoops} after={passState?.after.totalLoops} />
@@ -556,15 +569,16 @@ export function MachineMovementView({
               : <ol>
                   {pass.actionGlyphs.map((action, index) => {
                     const label = actionLabel(action, passState);
-                    return <li className={actionClass(action)} key={index}>
+                    return <li className={`${actionClass(action)}${currentEvent?.kind === 'action' && currentEvent.actionIndex === index ? ' is-current' : visibleActions !== undefined && index >= visibleActions ? ' is-future' : ''}`} key={index}>
                       <i aria-hidden="true">{index + 1}</i>
-                      <span><b>{label.title}</b><small>{label.detail}</small></span>
+                      <button type="button" disabled={!execution?.index} aria-label={`Inspect action ${index + 1}`} onClick={() => execution?.selectAction(pass.passIndex, index)}><b>{label.title}</b><small>{label.detail}</small></button>
                     </li>;
                   })}
                 </ol>}
           </aside>
         </div>}
 
+    {execution?.snapshot && <ExecutionState snapshot={execution.snapshot} />}
     <footer className="mmv-footer">
       <p><strong>Coordinate contract</strong> KCode coordinates; physical needle labels unverified.</p>
       {overallContext && <p className={`mmv-overall-context is-${overallContext.status}`}><strong>Whole output</strong> {overallContext.label}</p>}

@@ -77,27 +77,27 @@ function position(offset: number, line: number, column: number): KCodeSourcePosi
 }
 
 /**
- * Finite native line iteration. Keeping cursor advancement inside the regular
- * expression avoids mutation variants that can reverse a synchronous `++`
- * scanner into a non-terminating loop before the test runner can interrupt it.
+ * Lazy native line iteration lets resource preflight stop at the first limit
+ * without allocating segments for the remaining input. Keeping cursor
+ * advancement inside the regular expression avoids mutation variants that can
+ * reverse a synchronous `++` scanner into a non-terminating loop before the
+ * test runner can interrupt it.
  */
-function sourceLineSegments(source: string): SourceLineSegment[] {
-  const segments: SourceLineSegment[] = []
+function* sourceLineSegments(source: string): Generator<SourceLineSegment> {
   // Stryker disable next-line Regex: Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant.
   for (const match of source.matchAll(/([^\r\n]*)(\r\n|\r|\n)|([^\r\n]+)$/g)) {
     const raw = match[1] ?? match[3]!
     const lineEnding = (match[2] ?? '') as KCodeLineEnding
     const contentStart = match.index
     const contentEnd = contentStart + raw.length
-    segments.push({
+    yield {
       contentStart,
       contentEnd,
       fullEnd: contentStart + match[0].length,
       raw,
       lineEnding,
-    })
+    }
   }
-  return segments
 }
 
 function sourceResourceLimit(

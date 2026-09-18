@@ -5,15 +5,15 @@ import * as nodeApi from '../src/index';
 describe('machine-lib public boundaries', () => {
   it('keeps the browser surface explicit and free of Node-only adapters', () => {
     expect(Object.keys(browserApi).sort()).toEqual([
-      'DEFAULT_MACHINE_TOPOLOGY_LIMITS_V1', 'DEFAULT_MACHINE_TOPOLOGY_MESH_LIMITS_V1', 'KCODE_RESOURCE_LIMITS_V1', 'KNITERATE_7GG_KCODE_PROFILE_V1', 'KNITERATE_7GG_KCODE_PROFILE_V2', 'KNITERATE_KCODE_OPERATION_CONTRACTS_V1', 'KNITOUT_RESOURCE_LIMITS_V1', 'MachineTopologyProjectionErrorV1', 'PROGRAMMED_MOTION_CLAIM_BOUNDARY_V1', 'PROGRAMMED_MOTION_DISTANCE_ASSUMPTION_V1', 'PROGRAMMED_MOTION_SPEED_ASSUMPTION_V1', 'basePayloadIndexToKCodeColumn',
+      'DEFAULT_MACHINE_TOPOLOGY_LIMITS_V1', 'DEFAULT_MACHINE_TOPOLOGY_MESH_LIMITS_V1', 'KCODE_RESOURCE_LIMITS_V1', 'KNITERATE_7GG_KCODE_PROFILE_V1', 'KNITERATE_7GG_KCODE_PROFILE_V2', 'KNITERATE_KCODE_OPERATION_CONTRACTS_V1', 'KNITOUT_RESOURCE_LIMITS_V1', 'MACHINE_EXECUTION_LIMITS_V1', 'MACHINE_TOPOLOGY_INSPECTION_LIMITS_V1', 'MACHINE_TOPOLOGY_WINDOW_LIMITS_V1', 'MachineTopologyProjectionErrorV1', 'PROGRAMMED_MOTION_CLAIM_BOUNDARY_V1', 'PROGRAMMED_MOTION_DISTANCE_ASSUMPTION_V1', 'PROGRAMMED_MOTION_SPEED_ASSUMPTION_V1', 'basePayloadIndexToKCodeColumn',
       'checkKnitoutSourceResourceLimits', 'compareScheduledPassesToMachineTrace', 'compileToRunArtifact',
-      'createAuthoredKCodeCoordinateBridgeV1', 'deriveEndpointPhysicalNeedleMappingV1', 'deriveMachineTraceProgrammedMotionV1', 'diffKCodeMachineTrace', 'diffKc',
+      'createAuthoredKCodeCoordinateBridgeV1', 'createMachineExecutionIndexV1', 'deriveEndpointPhysicalNeedleMappingV1', 'deriveMachineTraceProgrammedMotionV1', 'diffKCodeMachineTrace', 'diffKc',
       'emitKCodeDocument', 'emitKCodeDocumentBytes', 'findKnitProvenKCodeMatch', 'findKnitProvenMatch',
-      'inspectKcDocument', 'inspectKnitoutPasses', 'isKCodeCommandLegalityExportEligible', 'isLoopFormingMachineTracePassV1', 'kcToKnitout',
+      'indexMachineTopologyWindowV1', 'inspectKcDocument', 'inspectKnitoutPasses', 'inspectMachineExecutionV1', 'inspectMachineTopologyLoopV1', 'isKCodeCommandLegalityExportEligible', 'isLoopFormingMachineTracePassV1', 'kcToKnitout',
       'kcodeColumnToBasePayloadIndex', 'kcodeColumnToTraceCoordinate', 'kcodeOperationContractV1', 'knitProvenRegistryEntries', 'matchKnitProvenArtifact',
       'matchKnitProvenKCode', 'parseKCodeBytes', 'parseKCodeDocument', 'parseKnitoutProgram',
       'physicalNeedleForTraceCoordinateV1', 'projectBackFaceFromArtifact', 'projectColorworkChartV1', 'projectKCodeMachineTrace',
-      'projectMachineScene', 'projectMachineTopologyMeshV1', 'projectMachineTopologyV1', 'renderKCodeMachineTraceWindow', 'renderKCodeMachineTraceWindowFromTraces', 'renderKcPassWindow',
+      'projectMachineScene', 'projectMachineTopologyMeshV1', 'projectMachineTopologyV1', 'projectMachineTopologyWindowV1', 'renderKCodeMachineTraceWindow', 'renderKCodeMachineTraceWindowFromTraces', 'renderKcPassWindow',
       'resolveValidatorMessage', 'summarizeMachineTracePassMetricsV1', 'validateKCodeMachineTrace', 'validateKnitoutProgram',
     ]);
     expect('nodeKCodeConverter' in browserApi).toBe(false);

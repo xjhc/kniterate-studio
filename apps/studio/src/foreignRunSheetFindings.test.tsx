@@ -130,7 +130,7 @@ describe('foreign run-sheet findings', () => {
         passMetricProvenance: 'strict-kcode-trace',
         authoredRowProvenance: 'unavailable-for-foreign-machine-file',
         programmedMotion: null,
-        carriers: [],
+        carriers: ['1', '2', '6'],
         needleSpan: 'K-code 0-252',
         rackRange: '0',
         infoCount: 0,
@@ -148,6 +148,10 @@ describe('foreign run-sheet findings', () => {
     expect(html).toContain('pass 11 / source line 110');
     expect(html).not.toContain('pass 13 / source line 130');
     expect(html).toContain('front:40 reaches 3 modeled loops.');
+    expect(html.match(/Role unspecified/g)).toHaveLength(3);
+    expect(html).not.toContain('Draw thread</b>');
+    expect(html).not.toContain('Waste yarn</b>');
+    expect(html).toContain('Carrier yarns and roles confirmed against the original program setup');
     expect(html).toContain('Programmed passes');
     expect(html).toContain('Loop-forming passes');
     expect(html).toContain('Authored design rows');

@@ -1,7 +1,9 @@
 # KCODE-COMPILER-GAPS — tracked baseline and corrected gap register
 
 **Evidence class: tracked local software evidence plus explicitly labelled external
-documentation.** Revised 2026-08-29 against `accumulate`. The reproducible
+documentation.** Revised 2026-09-17 against `accumulate`. The historical
+2026-08-29 baseline below is distinct from the debugger implementation update.
+The reproducible
 software baseline is the checked-in
 [software-proof receipt](../packages/machine-lib/out/kcode-proof/proof-manifest.json)
 and [mutation receipt](../packages/machine-lib/out/kcode-proof/mutation-manifest.json).
@@ -23,9 +25,9 @@ External reference points:
 
 ## Finding
 
-**The compiler, its software-proof rail, its bounded schematic topology view,
-and a supported one-file checker now exist. The remaining closeout gates require
-physical-machine evidence.**
+**The compiler and checker already exist. The September debugger milestone
+closes concrete capacity, stepping, and import gaps in that foundation; presence
+of an earlier topology component did not close those workflows.**
 
 For the fixed `kniterate-7gg-kcode@2` profile, the repository has lossless
 byte-preserving KCode intake, pinned Knitout lowering, strict emitted-KCode
@@ -39,9 +41,47 @@ safe settings, or the fabric produced by a machine.
 
 The headless verdict, format-provenance disclosure, programmed-motion,
 schematic topology, coordinate-bridge, and provenance-safe pass-metric software
-gaps closed on 2026-08-29. The remaining gaps concern physical coordinate
-observations, controller speed semantics, elapsed duration, physical fabric,
-and operational setting evidence.
+features existed on 2026-08-29. Their historical closure labels below describe
+that implementation scope, not proof that every file size or inspection workflow
+was usable. The update below supersedes that broader reading.
+
+---
+
+## Debugger milestone — 2026-09-17
+
+The implemented slice addresses the review's measured gaps:
+
+- The topology Worker now retains the full graph under explicit software caps:
+  200,000 loops, 800,000 connections, and 600,000 transfer movements. Indexed
+  render windows stay within 6,000 nodes and 18,000 edges/movements, with explicit
+  boundary counts and lineage lookup. Local integration coverage opens all 12
+  accepted reference files; the old whole-file 6,000-loop UI ceiling no longer
+  rejects them.
+- Authored and imported workspaces share topology inspection and a KCode event
+  cursor. Rack commands, pass begin/end, and individual actions have source
+  anchors; before/after stepping and backward scrubbing expose whole-bed loop
+  counts and all six carriers' last encoded stops. Checkpoints every 256 events
+  bound replay to 255 events, under 400,000-event/1,024-coordinate index limits.
+- Browser machine import runs off-thread and can be canceled. Parser resource
+  preflight iterates line records before allocating the retained record list.
+  Foreign run sheets state that yarn roles are unspecified instead of assuming
+  the authored draw/pattern/waste mapping.
+
+These are implementation and focused-test results. They do not assert that a
+fresh full proof or deployment has passed; use the exact current proof receipt
+for whole-gate evidence. Software validation and verdict policy are unchanged.
+Carrier lifecycle and within-pass physical motion/timing remain unknown; loop
+replay still uses the empty-bed job assumption. Loaded-bed/resume input is not
+implemented. Controller-observed behavior, physical operating envelopes,
+coordinate observations, and fabric outcomes remain separate evidence work.
+
+Large-file transport is a remaining performance opportunity. Imports combine the
+document and execution index in one Worker response to preserve shared references,
+but the complete object graph still reaches the main thread. A local development
+Firefox observation completed `front.kc` replacement in about 16.6 seconds, with
+most delay after the Worker response; the production browser regression passed
+its original five-second per-file waits. Compact transport or retaining more
+inspection state in the Worker would reduce this allocation/handling cost.
 
 ---
 
@@ -49,8 +89,9 @@ and operational setting evidence.
 
 The baseline intentionally omits the earlier ad hoc timing run,
 hostile-mutation table, and hand-written 688-operation program because their
-exact inputs and outputs were not retained as proof artifacts. The tracked
-receipts establish the following instead.
+exact inputs and outputs were not retained as proof artifacts. The 2026-08-29
+tracked receipts established the following instead. These historical mutation
+counts are not a fresh debugger-milestone proof result.
 
 | Tracked evidence | Result |
 | --- | --- |
@@ -295,9 +336,14 @@ nodes use creation pass and normalized trace coordinate, with bed offset only
 for legibility. The output contract literally records
 `schematic-topology-not-physical-fabric` and
 `dialect-normalized-machine-trace`. Studio runs both transforms in a dedicated
-module Worker and bounds the view to 6,000 loops, 18,000 connections, and 18,000
-transfer movements. Over-limit or malformed topology is withheld with an
-anchored failure instead of partially rendered.
+module Worker. As of the September debugger milestone, the full retained graph
+has separate limits of 200,000 loops, 800,000 connections, and 600,000 transfer
+movements. Indexed contiguous pass windows return at most 6,000 nodes, 18,000
+edges, and 18,000 movements. Earlier-pass connections outside the visible window
+are counted explicitly and full lineage remains inspectable by stable loop ID.
+Malformed or over-budget full graphs, or an individual pass that cannot fit a
+window, still fail with an anchored diagnostic. Windowing does not lower the
+validation or verdict gate.
 
 The foreign-file view is eligible only when the document has the same clean
 `Surface-proven (imported)` verdict and passing strict validation used by the
@@ -313,9 +359,9 @@ source carrier lifecycle, label physical needles, model stitch geometry,
 tension, yarn friction, drape, or predict the appearance of machine-produced
 fabric. Those claims require physical evidence.
 
-**Now available:** a verdict-bounded foreign-file schematic for visual review of
-software-projected loop connectivity, with its non-physical evidence boundary
-visible beside the mesh.
+**Now available:** shared authored/imported schematic inspection of
+software-projected loop connectivity, with source/action navigation and its
+non-physical evidence boundary visible beside the mesh.
 
 ### 04 — Software bridge closed; physical needle labels still pending
 
@@ -545,10 +591,12 @@ does not support treating either generation route as safe by itself.
 
 ## Scope note
 
-This ledger now records every locally closeable software gap—01, 02, 03, 05,
-and 07 plus gap 04's coordinate bridge and gap 06's exact-settings evidence
-seam—as implemented. The topology view is a schematic software renderer, not a
-physical-fabric renderer.
+The original numbered register records its August implementation scope. The
+September milestone above corrects the earlier inference that those component
+closures exhausted local software work: capacity, execution interaction,
+responsive import, and foreign-role disclosure needed further implementation.
+Loaded-bed/resume input remains unimplemented. The topology view remains a
+schematic software renderer rather than a physical-fabric renderer.
 The ledger does not claim observed physical coordinate mapping, a physical
 operational profile, physical travel, elapsed duration, a physical lower bound,
 or knitted appearance.

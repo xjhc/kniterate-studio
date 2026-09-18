@@ -1,22 +1,26 @@
 import type {
-  MachineTopologyMeshV1,
+  MachineTopologyLoopInspectionV1,
   MachineTopologyProjectionErrorCodeV1,
-  MachineTopologyV1,
+  MachineTopologyWindowV1,
   MachineTraceV1,
 } from '@kniterate-studio/machine-lib/browser';
 
-export interface ForeignFabricPreviewRequest {
-  readonly kind: 'project-foreign-topology';
+interface TopologyWindowRequest {
   readonly requestId: number;
-  readonly trace: MachineTraceV1;
+  readonly selectedPass?: number;
+  readonly radius?: number;
+  readonly loopId?: number | null;
 }
+export type ForeignFabricPreviewRequest = TopologyWindowRequest & ({
+  readonly kind: 'project-foreign-topology';
+  readonly trace: MachineTraceV1;
+} | { readonly kind: 'window-foreign-topology' });
 
-export type ForeignFabricPreviewResponse = {
+export type ForeignFabricPreviewResponse = ({
   readonly kind: 'foreign-topology-complete';
   readonly requestId: number;
-  readonly mesh: MachineTopologyMeshV1;
-  readonly summary: MachineTopologyV1['summary'];
-} | {
+  readonly inspection: MachineTopologyLoopInspectionV1 | null;
+} & MachineTopologyWindowV1) | {
   readonly kind: 'foreign-topology-failed';
   readonly requestId: number;
   readonly code: MachineTopologyProjectionErrorCodeV1 | 'internal-error';

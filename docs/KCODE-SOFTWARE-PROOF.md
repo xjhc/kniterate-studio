@@ -26,8 +26,9 @@ project/chart
   -> versioned operation/direction/carrier/rack command contract
   -> MachineTraceV1
   -> KCode-native validator + MachineSceneV1
-  -> bounded MachineTopologyV1 + schematic MachineTopologyMeshV1
-  -> verdict, exact diff, movement/topology views, source/design provenance
+  -> checkpointed MachineExecutionIndexV1 + bounded MachineTopologyV1
+  -> indexed pass windows + schematic MachineTopologyMeshV1
+  -> verdict, exact diff, execution/topology inspection, source/design provenance
 ```
 
 The browser worker compares every machine-executable scheduled field with the
@@ -73,15 +74,56 @@ authored plan heuristic. The physical-trial manifest binds both terms to the
 same exact candidate; one observed run may yield only a candidate-specific
 residual, not a universal multiplier.
 
-For clean foreign files, the same strict trace can also feed the independent
+For eligible authored and imported output, the same strict trace feeds the
 `MachineTopologyV1` projector. It records stable loop identities, formed-
 through/tuck/yarn-continuity connections, transfer movements, rack anchors,
-carrier chains, and final stacks. A second deterministic transform produces a
-schematic mesh in normalized trace/pass space. Studio runs the transforms in a
-module Worker with explicit 6,000-loop and 18,000-edge/movement limits, and
-withholds the view for a Blocked file or any failed/over-limit projection. The
-mesh contract and visible disclosure state that this is software topology, not
+carrier chains, and final stacks. A Worker retains the complete graph under
+`MACHINE_TOPOLOGY_INSPECTION_LIMITS_V1`: 200,000 loops, 800,000 connections, and
+600,000 transfer movements. A pass index produces contiguous visible windows
+bounded by `MACHINE_TOPOLOGY_WINDOW_LIMITS_V1`: 6,000 nodes, 18,000 edges, and
+18,000 movements. Boundary connections from earlier passes are disclosed,
+and loop IDs resolve full lineage outside the rendered window. This separates
+whole-graph capacity from display capacity. Blocked inputs, malformed or
+over-budget graphs, and single passes too large for a window remain withheld.
+The mesh remains schematic topology in normalized trace/pass space; it is not
 physical stitch geometry or knitted-fabric appearance.
+
+## Execution-inspection implementation — 2026-09-17
+
+`createMachineExecutionIndexV1(trace, validation)` projects ordered rack records,
+pass-begin/action/pass-end events, and exact emitted-KCode source anchors. The
+shared authored/imported cursor steps before or after individual actions,
+scrubs backward, and links topology selections to their pass/action. Program
+playback rate is a UI rate, not physical machine time.
+
+The structured-clone-safe index stores action loop deltas with a full compact
+checkpoint every 256 events. Its software limits are 400,000 events and 1,024
+loop coordinates; `inspectMachineExecutionV1(index, eventIndex)` replays at most
+255 intervening events, including when scrubbing backward. It exposes complete
+modeled front/rear stacks at the cursor and all six carriers' last encoded stop
+observations. Stops update at pass boundaries; no within-pass position or
+motion timing is interpolated. Unobserved positions remain unknown. Shared
+validator helpers determine loop effects; blocked/unknown replay withholds
+loop state instead of presenting it as certified state.
+
+Both replay and topology retain the empty-bed initial-job assumption. They do
+not accept a supplied loaded-bed or resume state, recover source carrier
+lifecycle, establish physical operational settings, or add controller evidence.
+Foreign run sheets now mark carrier roles unspecified, preserving the
+separation from authored C1 draw/C6 waste bindings.
+
+Browser import executes strict intake and lowering off-thread, with cancellation
+and stale-result refusal. Parser preflight iterates line records lazily and
+stops at the first resource limit before materializing the retained record
+list. Exact accepted input bytes and existing refusal/verdict policies remain
+unchanged.
+
+Focused local tests cover all 12 accepted reference files through the bounded
+topology pipeline and execution indexing; execution counts agree with validator
+metrics at every pass boundary and with each exact final loop state. These
+implementation results do not replace a fresh full gate. The deterministic
+receipt below must match the current source before it certifies the complete
+milestone; no deployment or physical-machine result follows from these tests.
 
 ## Deterministic gate
 
@@ -158,7 +200,8 @@ The gate establishes:
   `arrayBuffer()` / `text()`. Each validation layer retains at most 512 detailed
   diagnostics while exact omitted error and warning totals remain separate;
   within-limit rejected bytes stay retained for audit and exact KCode
-  re-emission;
+  re-emission. Resource preflight streams record boundaries without first
+  building an array for every source line;
 - strict grammar, record ordering, field widths/alphabets, stop markers,
   footer types, rack values, and rejection of unknown or truncated content;
 - exhaustive agreement with an independent, production-import-free legality
@@ -188,11 +231,13 @@ The gate establishes:
   error above three) used by planning and KCode replay;
 - full-raster KCode diffing rather than footer-only comparison;
 - deterministic renderer input for synchronized carriage, guide, two beds,
-  actions, and before/after loop counts;
+  actions, and before/after loop counts; the execution milestone adds bounded
+  event checkpoints, source anchors, and replay at arbitrary cursor positions;
 - fail-closed loop-identity topology and bounded schematic-mesh projection
   across knit, tuck, racked transfer/split, drop, both beds, and both current
   dialect labels, without synthesizing carrier lifecycle or physical fabric
-  facts;
+  facts; the indexed-window milestone separates retained graph and rendered
+  window budgets without truncating retained lineage;
 - fail-closed execution of the checked-in known-bad machine-safety refusal
   corpus and the separate raw-KCode command refusal corpus, with every named
   parser and command-validation rule tied to an executed witness; and
@@ -274,7 +319,11 @@ Software proof does not turn encoded commands into a physical-knit claim.
    movement semantics, so Studio canonicalizes the label. A signed or sidecar
    artifact manifest would still be required to establish who produced bytes
    created outside Studio.
-7. **Official documents do not establish physical motion from tokens.** The
+7. **Loaded-bed and resumed jobs have no input contract.** The current
+   validator, topology, and execution index start from empty modeled beds.
+   They cannot validate an already loaded machine or a partial/resumed program
+   without a future explicit initial-state and evidence contract.
+8. **Official documents do not establish physical motion from tokens.** The
    [official KCode 1.0 specification](https://drive.google.com/file/d/1KFiS1Crfaqba8t1vhqk2IqthqDSTyqKS/view)
    defines the serialized `Tr`/`Rr`/`Rl` modes, while the
    [machine manual](https://support.kniterate.com/hc/en-us/article_attachments/360009817198)

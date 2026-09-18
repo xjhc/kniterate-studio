@@ -39,6 +39,7 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
 });
 
 test('opens the two 150k-selection corpus files without overflow or page errors', async ({ page }) => {
+  test.setTimeout(60_000);
   const errors: string[] = [];
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
   page.on('pageerror', (error) => errors.push(error.message));
@@ -46,13 +47,15 @@ test('opens the two 150k-selection corpus files without overflow or page errors'
   const machineInput = page.locator('input[accept=".kc,.k,text/plain"]');
 
   await machineInput.setInputFiles('packages/machine-lib/reference/back.kc');
-  await expect(page.locator('.brand-copy small')).toHaveText('back.kc');
+  // Imports now yield to the browser while compiling in a Worker. Allow the
+  // unoptimized development build bounded compilation time for these fixtures.
+  await expect(page.locator('.brand-copy small')).toHaveText('back.kc', { timeout: 30_000 });
   await expect(page.getByRole('heading', { name: 'Pass grid' })).toBeVisible();
   await expect(page.locator('.stat-strip')).toContainText('2,108');
   await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 0 warnings · 82 notes');
 
   await machineInput.setInputFiles('packages/machine-lib/reference/front.kc');
-  await expect(page.locator('.brand-copy small')).toHaveText('front.kc');
+  await expect(page.locator('.brand-copy small')).toHaveText('front.kc', { timeout: 30_000 });
   await expect(page.locator('.stat-strip')).toContainText('2,544');
   await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 0 warnings · 64 notes');
   expect(errors).toEqual([]);

@@ -1,53 +1,43 @@
 import {
+  MACHINE_TOPOLOGY_INSPECTION_LIMITS_V1,
   MachineTopologyProjectionErrorV1,
-  projectMachineTopologyMeshV1,
+  indexMachineTopologyWindowV1,
+  inspectMachineTopologyLoopV1,
   projectMachineTopologyV1,
+  projectMachineTopologyWindowV1,
+  type MachineTopologyWindowIndexV1,
 } from '@kniterate-studio/machine-lib/browser';
-import type {
-  ForeignFabricPreviewRequest,
-  ForeignFabricPreviewResponse,
-} from './fabricProtocol';
+import type { ForeignFabricPreviewRequest, ForeignFabricPreviewResponse } from './fabricProtocol';
 
-const STUDIO_TOPOLOGY_LIMITS_V1 = Object.freeze({
-  maxLoops: 6_000,
-  maxConnections: 18_000,
-  maxMovements: 18_000,
-});
-
-export function compileForeignFabricPreview(
-  request: ForeignFabricPreviewRequest,
-): ForeignFabricPreviewResponse {
-  try {
-    const topology = projectMachineTopologyV1(request.trace, STUDIO_TOPOLOGY_LIMITS_V1);
-    const mesh = projectMachineTopologyMeshV1(topology, {
-      maxNodes: STUDIO_TOPOLOGY_LIMITS_V1.maxLoops,
-      maxEdges: STUDIO_TOPOLOGY_LIMITS_V1.maxConnections,
-      maxMovements: STUDIO_TOPOLOGY_LIMITS_V1.maxMovements,
-    });
-    return {
-      kind: 'foreign-topology-complete',
-      requestId: request.requestId,
-      mesh,
-      summary: topology.summary,
-    };
-  } catch (error) {
-    if (error instanceof MachineTopologyProjectionErrorV1) {
+/** Each Worker owns one bounded graph. Navigation transfers only the visible
+ * window; neither the source trace nor full topology is cloned on each step. */
+export function createForeignFabricCompiler() {
+  let index: MachineTopologyWindowIndexV1 | null = null;
+  return (request: ForeignFabricPreviewRequest): ForeignFabricPreviewResponse => {
+    try {
+      if (request.kind === 'project-foreign-topology') {
+        index = null;
+        const topology = projectMachineTopologyV1(request.trace, MACHINE_TOPOLOGY_INSPECTION_LIMITS_V1);
+        index = indexMachineTopologyWindowV1(topology, request.trace.passes.length);
+      }
+      if (index === null) throw new Error('No strict topology is loaded for this window.');
+      const window = projectMachineTopologyWindowV1(index, request.selectedPass ?? 0, request.radius ?? 8);
       return {
-        kind: 'foreign-topology-failed',
-        requestId: request.requestId,
-        code: error.code,
-        error: error.message,
-        passIndex: error.passIndex,
-        actionIndex: error.actionIndex,
+        kind: 'foreign-topology-complete', requestId: request.requestId, ...window,
+        inspection: request.loopId === null || request.loopId === undefined ? null : inspectMachineTopologyLoopV1(index, request.loopId),
+      };
+    } catch (error) {
+      return {
+        kind: 'foreign-topology-failed', requestId: request.requestId,
+        code: error instanceof MachineTopologyProjectionErrorV1 ? error.code : 'internal-error',
+        error: error instanceof Error ? error.message : String(error),
+        passIndex: error instanceof MachineTopologyProjectionErrorV1 ? error.passIndex : null,
+        actionIndex: error instanceof MachineTopologyProjectionErrorV1 ? error.actionIndex : null,
       };
     }
-    return {
-      kind: 'foreign-topology-failed',
-      requestId: request.requestId,
-      code: 'internal-error',
-      error: error instanceof Error ? error.message : String(error),
-      passIndex: null,
-      actionIndex: null,
-    };
-  }
+  };
+}
+
+export function compileForeignFabricPreview(request: ForeignFabricPreviewRequest): ForeignFabricPreviewResponse {
+  return createForeignFabricCompiler()(request);
 }

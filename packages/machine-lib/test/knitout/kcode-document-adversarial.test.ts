@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { emitKCodeDocumentBytes, parseKCodeBytes as parseKCodeBytesImpl } from '../../src/knitout/kcode/bytes.js'
 import { emitKCodeDocument } from '../../src/knitout/kcode/emitter.js'
@@ -738,6 +738,51 @@ describe('strict KCode adversarial rail', () => {
     expect(result.document.metadata.resourceProfile).toBe('foreign-v1')
     expect(result.document.records).toEqual([])
     expect(emitKCodeDocument(result.document)).toBe(source)
+  })
+
+  it('stops reading line matches at the first resource-limit violation', () => {
+    const recordLimit = KCODE_RESOURCE_LIMITS_V1['foreign-v1'].records
+    const source = '\r\n'.repeat(recordLimit + 10_000)
+    const nativeMatchAll = String.prototype.matchAll
+    let consumedLines = 0
+    const matches = vi.spyOn(String.prototype, 'matchAll').mockImplementation(function* (
+      this: string,
+      expression: RegExp,
+    ): Generator<RegExpExecArray, undefined> {
+      for (const match of nativeMatchAll.call(this, expression)) {
+        if (this === source) {
+          consumedLines++
+          // A strict intake must refuse before touching the remaining lines.
+          // This checks bounded work directly, without timing or heap thresholds.
+          if (consumedLines > recordLimit + 1) {
+            throw new Error('Parser scanned beyond the record resource limit.')
+          }
+        }
+        yield match
+      }
+    })
+    try {
+      const result = parseKCodeDocument(source, STRICT_VENDOR_OPTIONS)
+      expect(consumedLines).toBe(recordLimit + 1)
+      expect(result).toMatchObject({
+        ok: false,
+        document: {
+          rawText: source,
+          metadata: { recordMaterialization: 'resource-limited' },
+          records: [],
+        },
+        diagnostics: [{
+          rule: 'kcode.resource-limit',
+          span: {
+            start: { offset: recordLimit * 2, line: recordLimit + 1, column: 1 },
+            end: { offset: recordLimit * 2, line: recordLimit + 1, column: 1 },
+          },
+        }],
+      })
+      expect(emitKCodeDocument(result.document)).toBe(source)
+    } finally {
+      matches.mockRestore()
+    }
   })
 
   it('uses a shared 100k record ceiling so authored exports reopen through default intake', () => {

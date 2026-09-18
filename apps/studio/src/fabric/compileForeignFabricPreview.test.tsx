@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type {
@@ -7,7 +8,8 @@ import type {
   MachineTraceV1,
 } from '@kniterate-studio/machine-lib/browser';
 import { FabricPreviewPanel } from './ForeignFabricView';
-import { compileForeignFabricPreview } from './compileForeignFabricPreview';
+import { openMachineDocument } from '../engine';
+import { compileForeignFabricPreview, createForeignFabricCompiler } from './compileForeignFabricPreview';
 
 const span = {
   start: { offset: 0, line: 1, column: 1 },
@@ -59,6 +61,39 @@ function trace(actions: readonly MachineTraceActionV1[]): MachineTraceV1 {
 }
 
 describe('foreign fabric topology Worker compiler', () => {
+  it('opens every accepted reference through the real import and bounded Worker pipeline', () => {
+    const names = ['2x2-rib-beanie', 'back', 'color-swatch-bindoff', 'dbj', 'fairisle', 'front', 'jacquard', 'sleeves', 'sophie', 'sophie2', 'sophie_stripe', 'swatch'];
+    for (const name of names) {
+      const bytes = new Uint8Array(readFileSync(new URL(`../../../../packages/machine-lib/reference/${name}.kc`, import.meta.url)));
+      const document = openMachineDocument(`${name}.kc`, bytes, { dialect: 'knitout-vendor' });
+      expect(document.verdict.state, name).toBe('surface');
+      const response = compileForeignFabricPreview({ kind: 'project-foreign-topology', requestId: 1, trace: document.kcode!.trace! });
+      expect(response.kind, name).toBe('foreign-topology-complete');
+      if (response.kind !== 'foreign-topology-complete') throw new Error(response.error);
+      expect(response.mesh.nodes.length, name).toBeGreaterThan(0);
+      expect(response.mesh.nodes.length).toBeLessThanOrEqual(6_000);
+      expect(response.mesh.edges.length).toBeLessThanOrEqual(18_000);
+      expect(response.summary.loopCount).toBeGreaterThan(response.mesh.nodes.length);
+    }
+  }, 20_000);
+
+  it('retains full lineage in the Worker while returning only the requested window', () => {
+    const compile = createForeignFabricCompiler();
+    const actions = Array.from({ length: 30 }, () => ({ kind: 'knit' as const, at: selection(4) }));
+    compile({ kind: 'project-foreign-topology', requestId: 1, trace: trace(actions) });
+    const response = compile({ kind: 'window-foreign-topology', requestId: 2, selectedPass: 20, radius: 0, loopId: 20 });
+    expect(response.kind).toBe('foreign-topology-complete');
+    if (response.kind !== 'foreign-topology-complete') throw new Error(response.error);
+    expect(response.mesh.nodes.map(node => node.loopId)).toEqual([20]);
+    expect(response.inspection?.parents.map(loop => loop.id)).toEqual([19]);
+    expect(response.inspection?.previousCarrierLoop?.id).toBe(19);
+    expect(response.incomingBoundaryConnections).toBe(2);
+    expect(response.summary.loopCount).toBe(30);
+    const markup = renderToStaticMarkup(<FabricPreviewPanel state={{ status: 'ready', ...response }} />);
+    expect(markup).toContain('Loop 20 · P20');
+    expect(markup).toContain('Creation: P21, action 1');
+  });
+
   it('returns a deterministic schematic mesh and renders its evidence boundary', () => {
     const first = selection(4);
     const second = selection(4);
@@ -78,8 +113,7 @@ describe('foreign fabric topology Worker compiler', () => {
 
     const markup = renderToStaticMarkup(<FabricPreviewPanel state={{
       status: 'ready',
-      mesh: response.mesh,
-      summary: response.summary,
+      ...response,
     }} />);
     expect(markup).toContain('Surface-proven topology');
     expect(markup).toContain('not physical fabric');

@@ -24,6 +24,7 @@ export interface MachineTopologyMeshNodeV1 {
   readonly bed: MachineTopologyLocationV1['bed']
   readonly traceCoordinate: number
   readonly passIndex: number
+  readonly actionIndex: number
   readonly carrier: string
   readonly creation: 'knit' | 'tuck' | 'split'
   readonly status: 'live' | 'consumed' | 'dropped'
@@ -104,7 +105,7 @@ export function projectMachineTopologyMeshV1(
     )
   }
 
-  if (topology.loops.length === 0) {
+  if (topology.loops.length === 0 && topology.movements.length === 0) {
     return {
       schemaVersion: 1,
       sourceTopologySchemaVersion: topology.schemaVersion,
@@ -147,6 +148,7 @@ export function projectMachineTopologyMeshV1(
     bed: loop.createdAt.location.bed,
     traceCoordinate: loop.createdAt.location.traceCoordinate,
     passIndex: loop.createdAt.passIndex,
+    actionIndex: loop.createdAt.actionIndex,
     carrier: loop.carrier,
     creation: loop.creation,
     status: loop.terminal?.kind ?? 'live',

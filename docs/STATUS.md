@@ -1,8 +1,10 @@
 # STATUS — what is shipped vs. proposed
 
-**Front door. Read this before any planning doc.** Reconciled 2026-08-29 against
+**Front door. Read this before any planning doc.** Reconciled 2026-09-17 against
 the working tree. Repo at `1.0.0-rc.1`; `pnpm verify:kcode` and `pnpm verify`
-are the software gates.
+are the software gates. The debugger milestone below records implementation
+and focused local coverage; full-gate status belongs to the exact current
+proof receipt, not this document date.
 
 The other docs are framed as forward design and drifted behind the code. Where a
 planning doc says a thing is "proposed" / "not built" / "the first slice to
@@ -10,7 +12,7 @@ ship," trust this file and the working tree instead.
 
 ---
 
-## Shipped (in `apps/studio`, live today)
+## Implemented in `apps/studio`
 
 - **Foreign-`.kc`/`.k` workspace (Story 1 / "S1").** Open any `.kc` or Knitout
   `.k` → canonical V1 KCode semantics, strict byte-preserving intake, pinned
@@ -29,13 +31,31 @@ ship," trust this file and the working tree instead.
   Blocked, and `2` means usage/read/internal failure. Both the Studio verdict
   panel/run sheet and the CLI disclose that direct KCode cannot prove source
   carrier lifecycle.
-- **Verdict-bounded foreign schematic topology.** A clean imported strict trace
-  can be projected off-thread into stable loop identities, formed-through,
-  tuck, yarn-continuity and transfer edges, rack anchors, and final bed stacks.
-  The separate mesh is bounded to 6,000 loops and 18,000 edges/movements; an
-  over-limit, malformed, or Blocked file gets a withheld panel. Coordinates are
-  normalized trace values, carrier entry/exit remains unknown, and the UI
-  labels the result as schematic software topology—not physical fabric.
+- **Shared authored/imported topology inspection.** Validated emitted KCode
+  feeds the same schematic view in both workspaces. The Worker retains a full
+  bounded graph of up to 200,000 loops, 800,000 connections, and 600,000 transfer
+  movements. It indexes contiguous pass windows and returns at most 6,000 nodes,
+  18,000 edges, and 18,000 movements to the renderer; reaching a display-window
+  limit no longer rejects the entire accepted file. Stable IDs resolve lineage
+  outside the window, and incoming boundary connections are counted explicitly.
+  Local corpus coverage opens all 12 accepted reference files through this
+  pipeline. Blocked, malformed, or over-budget full graphs remain withheld.
+  Coordinates and geometry remain schematic software topology, not physical
+  fabric.
+- **Execution cursor for authored/imported KCode.** Ordered rack commands,
+  pass boundaries, and actions share source anchors with machine views and
+  topology selections. Step before/after an action, scrub backward, play program
+  order, and inspect full front/rear loop counts and all six carriers' last
+  encoded stops. The off-thread index uses event deltas and a checkpoint every
+  256 events, bounded to 400,000 events and 1,024 loop coordinates; inspection
+  replays at most 255 events. Unobserved carrier positions remain unknown,
+  within-pass motion and physical time are not reconstructed, and loop state
+  uses the empty-bed job assumption. Blocked/unknown loop state is withheld.
+- **Cancelable machine import and honest foreign setup.** Browser imports run
+  strict intake/lowering off-thread with cancellation and stale-result refusal.
+  KCode resource preflight streams line records and stops at the first exceeded
+  limit before materializing the record list. Foreign run sheets label carrier
+  roles unspecified; they do not inherit authored C1 draw/C6 waste assignments.
 - **Exact authored-coordinate bridge for physical trials.** The pinned lowering
   receipt now binds compiler/project endpoints to the actual `Position`-derived
   marker-free KCode columns and normalized trace coordinates for the exact
@@ -83,7 +103,8 @@ ship," trust this file and the working tree instead.
   explicit versioned machine profile and eight-operation command decision table,
   exact `MachineTraceV1`, KCode-native
   kinematic and loop-state validator, renderer-ready `MachineSceneV1`, bounded
-  loop-identity `MachineTopologyV1` and schematic mesh, strict
+  loop-identity `MachineTopologyV1`, indexed schematic windows, and
+  checkpointed `MachineExecutionIndexV1`, strict
   trace diff, deterministic Node/browser lowering, independent test decoder and
   replay oracle, the 13-file reference corpus, and seeded property,
   grammar/input-mutation, 1,904-case independent command-legality matrix,
@@ -146,6 +167,14 @@ schema.
   diagnostics and the run sheet); exact registry match ⇒ Knit-proven.
 
 ## Not yet built
+
+- **Loaded-bed/resume input:** no supplied initial loop stacks, carrier state,
+  controller position, or resumed-job contract. Validation, topology, and cursor
+  replay still assume an empty bed at the beginning of the complete job.
+- **Physical/controller evidence:** operational speed/roller/stack envelopes,
+  controller-observed transfer direction, physical elapsed-time simulation, and
+  fabric mechanics remain unestablished. These are not unlocked by debugger
+  playback or a complete software topology graph.
 
 - **Forward design (still proposed, unbuilt):** the assistant / AI-as-diff (S3),
   swatch-registry UI (S4), and the L3–L5 upper editability ladder (stitch ops,

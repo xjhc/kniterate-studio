@@ -107,6 +107,30 @@ export {
   type MachineTopologyMeshV1,
 } from './knitout/kcode/machine-topology-mesh.js';
 export {
+  MACHINE_TOPOLOGY_INSPECTION_LIMITS_V1,
+  MACHINE_TOPOLOGY_WINDOW_LIMITS_V1,
+  indexMachineTopologyWindowV1,
+  projectMachineTopologyWindowV1,
+  inspectMachineTopologyLoopV1,
+  type MachineTopologyWindowIndexV1,
+  type MachineTopologyWindowV1,
+  type MachineTopologyLoopInspectionV1,
+} from './knitout/kcode/machine-topology-window.js';
+export {
+  MACHINE_EXECUTION_LIMITS_V1,
+  createMachineExecutionIndexV1,
+  inspectMachineExecutionV1,
+  type MachineExecutionAssuranceV1,
+  type MachineExecutionCarrierV1,
+  type MachineExecutionCheckpointV1,
+  type MachineExecutionEventV1,
+  type MachineExecutionIndexV1,
+  type MachineExecutionInspectionV1,
+  type MachineExecutionLoopDeltaV1,
+  type MachineExecutionObservationV1,
+  type MachineExecutionPassV1,
+} from './knitout/kcode/machine-execution.js';
+export {
   projectMachineScene,
   type MachineSceneActionGlyphV1,
   type MachineSceneMovementV1,
