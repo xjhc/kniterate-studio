@@ -62,7 +62,7 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
   const [programRegion, setProgramRegion] = useState<ProgramRegion>(() => searchChoice('region', ['waste', 'draw', 'body', 'finish'], 'body'));
   const [selectedPass, setSelectedPass] = useState<number | null>(null);
   const [sourceFormat, setSourceFormat] = useState<SourceFormat>(() => searchChoice('source', ['knitout', 'kcode'], 'knitout'));
-  const [sourceCollapsed, setSourceCollapsed] = useState(() => searchChoice('dock', ['open', 'closed'], 'open') === 'closed');
+  const [sourceCollapsed, setSourceCollapsed] = useState(() => searchChoice('dock', ['open', 'closed'], 'closed') === 'closed');
   const projectInput = useRef<HTMLInputElement>(null);
   const appliedUrlTechnique = useRef(false);
   const materialized = useMemo(() => materializeColorworkProject(project), [project]);

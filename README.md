@@ -19,6 +19,11 @@ pnpm verify
 pnpm dev
 ```
 
+`pnpm verify` is the full gate used by CI; it ends with the read-only KCode
+proof check, which re-runs mutation testing. While iterating on code that does
+not touch the compiler, converter, or machine output, `pnpm verify:quick` runs
+everything except that proof check.
+
 Check one foreign machine file with the same conservative verdict policy as
 Studio:
 

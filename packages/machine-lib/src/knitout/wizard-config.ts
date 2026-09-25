@@ -189,8 +189,7 @@ export interface KniterateWizardConfig {
   userIntent?: UserIntent
   /** Per-section tension bands for the Screen-3 calibration swatch.
    *  Absent → `deriveSwatchBands` auto-derives [center-1, center,
-   *  center+1] around the effective density. Swatch-only; read by
-   *  `src/knitout/swatch/tension-swatch-chart.ts`. */
+   *  center+1] around the effective density. Swatch-only. */
   swatch?: { tensionBands: SwatchTensionBand[] }
 }
 

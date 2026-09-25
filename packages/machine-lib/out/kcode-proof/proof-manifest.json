@@ -22313,6 +22313,12 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "fa50d2b32d6a6ce12889d4c6be70fb8668936e3f606c6cb42995f6fe48876b91"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
               "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
             },
@@ -22321,12 +22327,6 @@
               "severity": "error",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
               "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
-            {
-              "rail": "raw-kcode-parser",
-              "severity": "error",
-              "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "fa50d2b32d6a6ce12889d4c6be70fb8668936e3f606c6cb42995f6fe48876b91"
             }
           ],
           "targetedWitnesses": [
@@ -24158,6 +24158,12 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "fa50d2b32d6a6ce12889d4c6be70fb8668936e3f606c6cb42995f6fe48876b91"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
               "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
             },
@@ -24166,12 +24172,6 @@
               "severity": "error",
               "path": "test/knitout/kcode-document-adversarial.test.ts",
               "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
-            {
-              "rail": "raw-kcode-parser",
-              "severity": "error",
-              "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "fa50d2b32d6a6ce12889d4c6be70fb8668936e3f606c6cb42995f6fe48876b91"
             }
           ],
           "targetedWitnesses": [
@@ -30087,7 +30087,7 @@
     ]
   },
   "contract": {
-    "sha256": "9b658745129ebadfe9d59a25e815460531093f9a751e312c124044fc6db61ed9",
+    "sha256": "5d1420ce16001f234d8f46fe0899ae1dfff316283c2a5d13a54a30f68064db80",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30211,8 +30211,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "59ae6c2b38f6c0ae1e88fea700ea2a5a9df6460b86452f2063e211eb65a9c0b2",
-        "bytes": 16615
+        "sha256": "268d46a21d7757ef5365ab3ec85b66942bdbe9df1e2de36471d4a63306258203",
+        "bytes": 16617
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
@@ -30536,8 +30536,8 @@
       },
       {
         "path": "../../package.json",
-        "sha256": "5b827922ed8fdb129a84d62632890b367dc7042b3c7d041314af9c771140daba",
-        "bytes": 1494
+        "sha256": "4f51dff629ec4e39983310e5bf493ae83fa1ccf6be89d15bdbc300271fbf026d",
+        "bytes": 1623
       },
       {
         "path": "../../playwright.config.ts",
@@ -30726,7 +30726,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "74f9aab5f8308e6e7bb82060c8e4e47ebdd0c36145237af4d6424b945c26ff0e",
+        "sha256": "212d6f7b120ea39abbc3f89d83e48337e5d246415058bcdf100b74204eff21c0",
         "bytes": 179
       },
       {
@@ -30885,11 +30885,6 @@
         "bytes": 8879
       },
       {
-        "path": "src/chart-core/chart-intent.ts",
-        "sha256": "3113dab0e3078ad64a005fa8930f3e18f268eb9712a51470fd728067892eef15",
-        "bytes": 13525
-      },
-      {
         "path": "src/chart-core/fashioning.ts",
         "sha256": "e70be9cd1472d205698dab3192ab19818b47585302c192893e321a2a00742159",
         "bytes": 3592
@@ -30940,11 +30935,6 @@
         "bytes": 5733
       },
       {
-        "path": "src/colorwork/chart-builder.ts",
-        "sha256": "26fe8f8238765693a06a28879e4a982186dcad9f9c1eff33628a1aab48c2d884",
-        "bytes": 7307
-      },
-      {
         "path": "src/colorwork/from-colorwork-chart.ts",
         "sha256": "4b9cc0d6be2a0b5fc9da6d732f434c8304dce707600ac7a2957d148747189c35",
         "bytes": 2040
@@ -30978,11 +30968,6 @@
         "path": "src/colorwork/shift-events-from-chart.ts",
         "sha256": "e6e7a47a617b259f990f16c4fdedb105428f4a7f2a8ce1608cb1a1fd0248a69b",
         "bytes": 3587
-      },
-      {
-        "path": "src/colorwork/tension-swatch-chart.ts",
-        "sha256": "89fc9d5f98048035b65af2fc55f1b7bc6d7c3badae2295efe89b0f77faaf9448",
-        "bytes": 2107
       },
       {
         "path": "src/colorwork/tube-schedule-from-chart.ts",
@@ -31415,11 +31400,6 @@
         "bytes": 2573
       },
       {
-        "path": "src/knitout/sim/raw-op-nextdir.ts",
-        "sha256": "e980959cab6415e6e74ebd71a60ae8bef70cb849aeb6ad48b4c6a950e5ce0922",
-        "bytes": 442
-      },
-      {
         "path": "src/knitout/sim/types.ts",
         "sha256": "b26053b0771124aab297012fe01db8f4dd9e0a97c2959b43aeb689e39c66ad0b",
         "bytes": 3140
@@ -31443,11 +31423,6 @@
         "path": "src/knitout/sophie/replay.ts",
         "sha256": "a9ba8865b37d48b57faf70ad9e73038033fbc117d34e9f3e3a3a80b0fa65da25",
         "bytes": 17219
-      },
-      {
-        "path": "src/knitout/swatch/tension-swatch-chart.ts",
-        "sha256": "3a3b666b00eed90cdd154565b897cd848f39ae7b72c3dd20a446103ca7cf84cc",
-        "bytes": 7629
       },
       {
         "path": "src/knitout/swatch/tension-swatch.ts",
@@ -31490,14 +31465,9 @@
         "bytes": 749
       },
       {
-        "path": "src/knitout/wizard-config-migrate.ts",
-        "sha256": "a035154921f052b8826fb97673583c400069d8dbab48fbc3b00c92d8ae1ee6f8",
-        "bytes": 21709
-      },
-      {
         "path": "src/knitout/wizard-config.ts",
-        "sha256": "38bb7a06d33c497abf7588a3c02ba7b24d4ce9b6335b2461ed16efef68e9677d",
-        "bytes": 27404
+        "sha256": "49b4d7a87c5b1fe8fb01f2f616a5f765aa64c7dd55376523e0ee2dc63c3901dd",
+        "bytes": 27344
       },
       {
         "path": "src/physical-registry.ts",
