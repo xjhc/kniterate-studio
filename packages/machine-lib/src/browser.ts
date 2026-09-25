@@ -87,10 +87,23 @@ export {
   type MachineTraceV1,
 } from './knitout/kcode/machine-trace.js';
 export {
+  MACHINE_TRACE_PASS_ROLES_V1,
+  classifyMachineTracePassRoleV1,
   isLoopFormingMachineTracePassV1,
   summarizeMachineTracePassMetricsV1,
+  summarizeMachineTracePassRolesV1,
   type MachineTracePassMetricsV1,
+  type MachineTracePassRoleV1,
 } from './knitout/kcode/pass-metrics.js';
+export {
+  DEFAULT_MAX_FLOAT_DISTANCE_V1,
+  MACHINE_TRACE_ADVISORY_RULES_V1,
+  deriveMachineTraceAdvisoriesV1,
+  type DeriveMachineTraceAdvisoriesOptionsV1,
+  type MachineTraceAdvisoryReportV1,
+  type MachineTraceAdvisoryRuleV1,
+  type MachineTraceAdvisoryV1,
+} from './knitout/kcode/machine-advisories.js';
 export {
   PROGRAMMED_MOTION_CLAIM_BOUNDARY_V1,
   PROGRAMMED_MOTION_DISTANCE_ASSUMPTION_V1,

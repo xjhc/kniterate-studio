@@ -694,6 +694,20 @@ const ENTRIES: readonly ValidatorMessage[] = [
     severityHint: 'warning',
   },
   {
+    rule: 'machine-advisory.float-distance',
+    title: 'Yarn floats farther than the advisory maximum',
+    explanation:
+      'A carrier travels more needles between two consecutive stitches than the official editor\'s default float limit. Long floats can snag or pull; KCode does not record carrier in/out, so a gap spanning many passes may be a parked or cut yarn. Non-blocking advisory only.',
+    severityHint: 'info',
+  },
+  {
+    rule: 'machine-advisory.facing-needle-outside-domain',
+    title: 'Stitch near the bed edge at this rack',
+    explanation:
+      'At the current racking, the needle facing this stitch on the other bed falls outside the KCode column domain. The official editor warns about this unsafe bed range; move the work inward or reduce the rack. Non-blocking advisory in KCode column terms, not physical needle labels.',
+    severityHint: 'info',
+  },
+  {
     rule: 'machine-trace.drop-empty',
     title: 'Drop targets an empty modeled needle',
     explanation:

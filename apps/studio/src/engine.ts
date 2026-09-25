@@ -1,6 +1,8 @@
 import {
   KNITERATE_7GG_KCODE_PROFILE_V2,
   compareScheduledPassesToMachineTrace,
+  classifyMachineTracePassRoleV1,
+  deriveMachineTraceAdvisoriesV1,
   deriveMachineTraceProgrammedMotionV1,
   diffKCodeMachineTrace,
   inspectKnitoutPasses,
@@ -12,6 +14,7 @@ import {
   renderKCodeMachineTraceWindowFromTraces,
   resolveValidatorMessage,
   summarizeMachineTracePassMetricsV1,
+  summarizeMachineTracePassRolesV1,
   validateKCodeMachineTrace,
   validateKnitoutProgram,
   type KCodeDialect,
@@ -19,6 +22,8 @@ import {
   type KCodeMachineTraceDiff,
   type KCodeSourceSpan,
   type MachineSceneV1,
+  type MachineTraceAdvisoryReportV1,
+  type MachineTracePassRoleV1,
   type MachineTraceProgrammedMotionV1,
   type MachineTracePassV1,
   type MachineTraceV1,
@@ -104,7 +109,19 @@ export interface MachinePass {
   lineEnd: number;
   section: string;
   ghost: boolean;
+  /** Foreign machine files only: what the strict-trace pass does. */
+  role?: MachineTracePassRoleV1;
+  /**
+   * Foreign machine files only. Knitout imports join each emitted pass to the
+   * pinned backend's scheduled source lines; direct KCode records no origin.
+   */
+  origin?: MachinePassOrigin;
 }
+
+export type MachinePassOrigin =
+  | 'knitout-directed'
+  | 'backend-inserted'
+  | 'not-recorded-in-kcode';
 
 export type MachineDiagnosticClass =
   | 'syntax'
@@ -167,6 +184,8 @@ export interface MachineDocument {
     authoredRowProvenance: 'unavailable-for-foreign-machine-file';
     /** Exact coordinate metric plus explicitly assumption-derived distance/time. */
     programmedMotion: MachineTraceProgrammedMotionV1 | null;
+    /** Strict-trace pass counts by role; unavailable without a trace. */
+    passRoles: Readonly<Record<MachineTracePassRoleV1, number>> | null;
     carriers: readonly string[];
     needleSpan: string;
     rackRange: string;
@@ -188,6 +207,35 @@ export interface OpenMachineDocumentOptions {
 
 export interface OpenKCodeDocumentOptions extends OpenMachineDocumentOptions {
   readonly dialect: KCodeDialect;
+}
+
+export const MACHINE_PASS_ROLE_LABELS: Readonly<Record<MachineTracePassRoleV1, string>> = {
+  'loop-forming': 'Loop-forming',
+  transfer: 'Transfer',
+  drop: 'Drop',
+  'carrier-move': 'Carrier move',
+  'carriage-move': 'Carriage move',
+  unclassified: 'Unclassified',
+};
+
+export const MACHINE_PASS_ORIGIN_LABELS: Readonly<Record<MachinePassOrigin, string>> = {
+  'knitout-directed': 'requested by its Knitout line',
+  'backend-inserted': 'inserted by the pinned backend',
+  'not-recorded-in-kcode': 'origin not recorded in KCode',
+};
+
+/** Pass label; a backend-inserted carrier move is the official editor's kickback. */
+export function machinePassRoleLabel(pass: Pick<MachinePass, 'role' | 'origin'>): string | null {
+  if (pass.role === undefined) return null;
+  if (pass.role === 'carrier-move' && pass.origin === 'backend-inserted') return 'Kickback';
+  return MACHINE_PASS_ROLE_LABELS[pass.role];
+}
+
+export function formatPassRoleCounts(roles: Readonly<Record<MachineTracePassRoleV1, number>>): string {
+  return (Object.keys(MACHINE_PASS_ROLE_LABELS) as MachineTracePassRoleV1[])
+    .filter((role) => roles[role] > 0 || role === 'loop-forming')
+    .map((role) => `${roles[role].toLocaleString('en-US')} ${MACHINE_PASS_ROLE_LABELS[role].toLowerCase().replace(' ', '-')}`)
+    .join(' · ');
 }
 
 function formatNeedles(min: number | null, max: number | null): string {
@@ -301,14 +349,38 @@ function normalizeOptions(
   return value;
 }
 
+/** Knitout ops which explicitly request a selection-free carrier pass. */
+const DIRECTED_CARRIER_MOVE_OPS: ReadonlySet<string> = new Set(['miss', 'in', 'out']);
+
+/**
+ * The pinned backend stamps each scheduled pass with the Knitout line being
+ * lowered. A carrier-only pass stamped with a knit/tuck/xfer line is therefore
+ * a kickback the backend inserted to serve that line; carriage-only moves have
+ * no Knitout spelling and are always backend-inserted.
+ */
+function knitoutPassOrigin(
+  role: MachineTracePassRoleV1,
+  sourceLines: readonly number[],
+  opKindsByLine: ReadonlyMap<number, readonly string[]>,
+): MachinePassOrigin {
+  if (sourceLines.length === 0 || role === 'carriage-move') return 'backend-inserted';
+  if (role !== 'carrier-move') return 'knitout-directed';
+  return sourceLines.some((line) =>
+    (opKindsByLine.get(line) ?? []).some((kind) => DIRECTED_CARRIER_MOVE_OPS.has(kind)))
+    ? 'knitout-directed'
+    : 'backend-inserted';
+}
+
 function tracePass(
   pass: MachineTracePassV1,
   presentation?: {
     /** Knitout source lines which caused this emitted pass; empty means backend-only. */
     readonly sourceLines: readonly number[];
     readonly section: string;
+    readonly opKindsByLine: ReadonlyMap<number, readonly string[]>;
   },
 ): MachinePass {
+  const role = classifyMachineTracePassRoleV1(pass);
   const coordinateSpan = numberExtent(traceCoordinates(pass));
   const sourceSpan = presentation === undefined
     ? { min: pass.source.span.start.line, max: pass.source.footer.end.line }
@@ -335,6 +407,10 @@ function tracePass(
     lineEnd: sourceSpan?.max ?? 0,
     section: presentation?.section ?? 'K-code passes',
     ghost: pass.actions.length > 0 && pass.actions.every((action) => action.kind === 'move'),
+    role,
+    origin: presentation === undefined
+      ? 'not-recorded-in-kcode'
+      : knitoutPassOrigin(role, presentation.sourceLines, presentation.opKindsByLine),
   };
 }
 
@@ -380,6 +456,46 @@ function validatorFindings(
     classification: diagnostic.class,
     occurrences: diagnostic.occurrences,
   }));
+}
+
+/**
+ * Float and bed-edge advisories mirror the official editor's knitter-facing
+ * checks. They carry no physical failure evidence, so foreign imports present
+ * them as non-blocking information rather than verdict-gating warnings.
+ */
+function advisoryFindings(
+  report: MachineTraceAdvisoryReportV1,
+  emitted: boolean,
+): MachineDiagnostic[] {
+  const findings = report.advisories.map((advisory, index) => resolveDiagnostic({
+    severity: 'info',
+    rule: advisory.rule,
+    message: advisory.message,
+  }, {
+    id: `${emitted ? 'emitted-' : ''}${advisory.rule}-${advisory.passIndex}-${advisory.actionIndex}-${index}`,
+    passIndex: advisory.passIndex,
+    actionIndex: advisory.actionIndex,
+    // Emitted locations belong to generated KCode, not the imported Knitout source.
+    line: emitted ? null : advisory.sourceSpan.start.line,
+    sourceSpan: emitted ? null : advisory.sourceSpan,
+    classification: 'operational-advisory',
+  }));
+  for (const [rule, count] of Object.entries(report.counts)) {
+    const detailed = report.advisories.filter((advisory) => advisory.rule === rule).length;
+    if (count <= detailed) continue;
+    findings.push(resolveDiagnostic({
+      severity: 'info',
+      rule,
+      message: `Advisories for ${rule} were truncated after ${detailed} detailed findings; omitted ${count - detailed} additional findings.`,
+    }, {
+      id: `${emitted ? 'emitted-' : ''}${rule}-summary`,
+      passIndex: null,
+      line: null,
+      classification: 'operational-advisory',
+      occurrences: count - detailed,
+    }));
+  }
+  return findings;
 }
 
 function emittedParserFindings(
@@ -506,6 +622,9 @@ function finishDocument(input: {
   const passMetrics = input.kcode?.trace === null || input.kcode?.trace === undefined
     ? null
     : summarizeMachineTracePassMetricsV1(input.kcode.trace);
+  const passRoles = input.kcode?.trace === null || input.kcode?.trace === undefined
+    ? null
+    : summarizeMachineTracePassRolesV1(input.kcode.trace);
   const programmedMotion = input.kcode?.trace === null || input.kcode?.trace === undefined
     ? null
     : deriveMachineTraceProgrammedMotionV1(input.kcode.trace, {
@@ -517,6 +636,17 @@ function finishDocument(input: {
   // The one evidence-backed informational exception is applied above, before
   // this verdict chokepoint.
   const blocked = errors.length > 0 || warnings.length > 0 || input.passes.length === 0;
+  const informationCount = (predicate: (finding: MachineDiagnostic) => boolean) =>
+    infos.filter(predicate).reduce((count, item) => count + item.occurrences, 0);
+  const loopStackInfoCount = informationCount((item) => item.rule === 'machine-trace.loop-stack-policy');
+  const advisoryInfoCount = informationCount((item) => item.rule.startsWith('machine-advisory.'));
+  const informationParts = [
+    ...(loopStackInfoCount > 0 ? [`${loopStackInfoCount.toLocaleString()} non-blocking loop-stack observation${loopStackInfoCount === 1 ? '' : 's'}`] : []),
+    ...(advisoryInfoCount > 0 ? [`${advisoryInfoCount.toLocaleString()} non-blocking float or bed-edge advisor${advisoryInfoCount === 1 ? 'y' : 'ies'}`] : []),
+  ];
+  const informationSummary = informationParts.length > 0
+    ? ` ${informationParts.join(' and ')} remain visible as informational evidence.`
+    : '';
   const coordinateSpan = input.coordinateSpan;
   const spanLabel = coordinateSpan
     ? formatTraceCoordinates(coordinateSpan.min, coordinateSpan.max)
@@ -539,8 +669,8 @@ function finishDocument(input: {
           ? 'Imported warnings remain unresolved, so this foreign file is blocked under the conservative V1 policy.'
           : 'Machine-facing findings must be resolved before this file should be knit.'
         : input.format === 'kc'
-          ? `Strict KCode parsing and conformance to the V1 operation, direction, carrier, rack, selection, transfer, stop, and continuity contract passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Controller acceptance, operational limits, and physical knitting remain unproven.`
-          : `Pinned backend lowering, strict emitted KCode parsing, V1 command-contract conformance, scheduled-pass differential checks, and empty-bed state replay passed.${infoCount > 0 ? ` ${infoCount.toLocaleString()} non-blocking loop-stack observation${infoCount === 1 ? '' : 's'} remain visible as informational evidence.` : ''} Controller acceptance and physical yarn, tension, and fabric behavior remain separate gates.`,
+          ? `Strict KCode parsing and conformance to the V1 operation, direction, carrier, rack, selection, transfer, stop, and continuity contract passed.${informationSummary} Controller acceptance, operational limits, and physical knitting remain unproven.`
+          : `Pinned backend lowering, strict emitted KCode parsing, V1 command-contract conformance, scheduled-pass differential checks, and empty-bed state replay passed.${informationSummary} Controller acceptance and physical yarn, tension, and fabric behavior remain separate gates.`,
     },
     sourceDisclosure: input.format === 'k'
       ? {
@@ -558,6 +688,7 @@ function finishDocument(input: {
       passMetricProvenance: passMetrics === null ? 'unavailable' : 'strict-kcode-trace',
       authoredRowProvenance: 'unavailable-for-foreign-machine-file',
       programmedMotion,
+      passRoles,
       carriers: carrierSet,
       needleSpan: spanLabel,
       rackRange: rackExtent ? `${rackExtent.min} to ${rackExtent.max}` : '0',
@@ -661,6 +792,7 @@ function openKCodeDocument(
       validation = validateKCodeMachineTrace(trace, KNITERATE_MACHINE_PROFILE_V1);
       scene = projectMachineScene(trace);
       appendAll(findings, validatorFindings(validation));
+      appendAll(findings, advisoryFindings(deriveMachineTraceAdvisoriesV1(trace, KNITERATE_MACHINE_PROFILE_V1), false));
     } catch (error) {
       findings.push(projectionFinding(error));
     }
@@ -719,6 +851,14 @@ function openKnitoutDocument(
   let differential: ScheduledTraceComparisonV1 | null = null;
   let passes: MachinePass[] = [];
   let coordinateSpan: NumberExtent | null = null;
+  const opKindsByLine = new Map<number, string[]>();
+  for (const [index, op] of parsed.program.ops.entries()) {
+    const line = parsed.opLines[index];
+    if (line === undefined) continue;
+    const kinds = opKindsByLine.get(line);
+    if (kinds === undefined) opKindsByLine.set(line, [op.kind]);
+    else kinds.push(op.kind);
+  }
 
   if (!findings.some((finding) => finding.severity === 'error')) {
     const converted = browserKnitoutToKCode(source, filename);
@@ -759,9 +899,11 @@ function openKnitoutDocument(
           differential = compareScheduledPassesToMachineTrace(converted.scheduledPasses, trace);
           appendAll(findings, emittedValidatorFindings(validation));
           appendAll(findings, differentialFindings(differential));
+          appendAll(findings, advisoryFindings(deriveMachineTraceAdvisoriesV1(trace, KNITERATE_MACHINE_PROFILE_V1), true));
           passes = trace.passes.map((pass, index) => tracePass(pass, {
             sourceLines: converted.scheduledPasses?.[index]?.sourceLines ?? [],
             section: 'Pinned backend / emitted KCode',
+            opKindsByLine,
           }));
           coordinateSpan = numberExtent(documentTraceCoordinates(trace));
         } catch (error) {

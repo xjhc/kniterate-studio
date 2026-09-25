@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   compareKcDocuments,
+  formatPassRoleCounts,
+  machinePassRoleLabel,
   openMachineDocument,
   resolveAuthoredVerdict,
   type AuthoredVerdictInput,
@@ -727,6 +729,69 @@ describe('Knitout machine document behavior', () => {
     expect(document.verdict.annotation).toContain('non-blocking loop-stack observation');
   });
 
+  it('labels pass roles and separates requested carrier moves from backend kickbacks', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      'x-speed-number 300',
+      'x-roller-advance 450',
+      'in 2',
+      'knit + f40 2',
+      'miss - f30 2',
+      'knit - f60 2',
+      'xfer f60 b60',
+      'drop b60',
+      'out 2',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('roles.k', source);
+    const byLine = (line: number) => document.passes.filter((pass) => pass.lineStart === line);
+
+    expect(document.verdict.state).toBe('surface');
+    expect(byLine(8)).toEqual([expect.objectContaining({ role: 'carrier-move', origin: 'knitout-directed' })]);
+    expect(byLine(9)).toEqual([
+      expect.objectContaining({ role: 'carrier-move', origin: 'backend-inserted' }),
+      expect.objectContaining({ role: 'loop-forming', origin: 'knitout-directed' }),
+    ]);
+    expect(machinePassRoleLabel(byLine(9)[0]!)).toBe('Kickback');
+    expect(machinePassRoleLabel(byLine(8)[0]!)).toBe('Carrier move');
+    expect(byLine(10)).toEqual([expect.objectContaining({ role: 'transfer', origin: 'knitout-directed' })]);
+    expect(byLine(11)).toEqual([expect.objectContaining({ role: 'drop', origin: 'knitout-directed' })]);
+    const roles = document.stats.passRoles!;
+    expect(Object.values(roles).reduce((sum, count) => sum + count, 0)).toBe(document.stats.passCount);
+    expect(roles.unclassified).toBe(0);
+  });
+
+  it('reports float advisories as non-blocking information for foreign Knitout', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      'x-speed-number 300',
+      'x-roller-advance 450',
+      'in 2',
+      'knit + f40 2',
+      'knit + f50 2',
+      'out 2',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('float.k', source);
+    const [advisory] = document.diagnostics.filter((finding) => finding.rule === 'machine-advisory.float-distance');
+
+    expect(advisory).toMatchObject({
+      severity: 'info',
+      classification: 'operational-advisory',
+      title: 'Yarn floats farther than the advisory maximum',
+      passIndex: 0,
+      line: null,
+      sourceSpan: null,
+    });
+    expect(document.stats).toMatchObject({ infoCount: 1, warningCount: 0, errorCount: 0 });
+    expect(document.verdict.state).toBe('surface');
+    expect(document.verdict.annotation).toContain('1 non-blocking float or bed-edge advisory remain visible');
+  });
+
   it('keeps rule-specific truncated depth-three observations informational', () => {
     const operations = Array.from({ length: 513 }, () => [
       'tuck + f40 2',
@@ -932,6 +997,29 @@ describe('one-file machine check contract', () => {
       });
     },
   );
+
+  it('carries pass roles and source-anchored advisories for a direct KCode reference', () => {
+    const bytes = readFileSync(resolve('../../packages/machine-lib/reference/2x2-rib-beanie.kc'));
+    const document = openMachineDocument('2x2-rib-beanie.kc', bytes, { dialect: 'knitout-vendor' });
+    const floats = document.diagnostics.filter((finding) => finding.rule === 'machine-advisory.float-distance');
+
+    expect(document.verdict.state).toBe('surface');
+    expect(document.passes.every((pass) => pass.origin === 'not-recorded-in-kcode')).toBe(true);
+    expect(document.stats.passRoles).toEqual({
+      'loop-forming': 245,
+      transfer: 271,
+      drop: 2,
+      'carrier-move': 5,
+      'carriage-move': 7,
+      unclassified: 0,
+    });
+    expect(floats).toHaveLength(5);
+    expect(floats.every((finding) => finding.severity === 'info' && finding.line !== null && finding.sourceSpan !== null)).toBe(true);
+
+    const text = formatMachineCheckReceipt(createMachineCheckReceipt(document, { byteCount: bytes.length, sha256: 'd'.repeat(64) }));
+    expect(text).toContain(`Pass roles: ${formatPassRoleCounts(document.stats.passRoles!)}`);
+    expect(formatPassRoleCounts(document.stats.passRoles!)).toBe('245 loop-forming · 271 transfer · 2 drop · 5 carrier-move · 7 carriage-move');
+  });
 
   it('returns exit 2 and JSON-only errors for unsupported and unreadable paths', () => {
     const repositoryRoot = resolve('../..');

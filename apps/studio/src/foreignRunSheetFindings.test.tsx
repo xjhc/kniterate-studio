@@ -130,6 +130,7 @@ describe('foreign run-sheet findings', () => {
         passMetricProvenance: 'strict-kcode-trace',
         authoredRowProvenance: 'unavailable-for-foreign-machine-file',
         programmedMotion: null,
+        passRoles: null,
         carriers: ['1', '2', '6'],
         needleSpan: 'K-code 0-252',
         rackRange: '0',

@@ -1,7 +1,8 @@
-import type {
-  MachineDiagnostic,
-  MachineDocument,
-  MachineFormat,
+import {
+  formatPassRoleCounts,
+  type MachineDiagnostic,
+  type MachineDocument,
+  type MachineFormat,
 } from './engine';
 
 export const MACHINE_CHECK_RECEIPT_KIND_V1 = 'kniterate-machine-check';
@@ -186,6 +187,9 @@ export function formatMachineCheckReceipt(receipt: MachineCheckReceiptV1): strin
       + ` · ${receipt.stats.errorCount.toLocaleString('en-US')} errors`
       + ` · ${receipt.stats.warningCount.toLocaleString('en-US')} warnings`
       + ` · ${receipt.stats.infoCount.toLocaleString('en-US')} information`,
+    receipt.stats.passRoles === null
+      ? 'Pass roles: unavailable (no strict KCode trace)'
+      : `Pass roles: ${formatPassRoleCounts(receipt.stats.passRoles)}`,
     formatMotion(receipt),
     receipt.verdict.annotation,
     ...receipt.disclosure.map((item) => `Evidence boundary: ${item}`),

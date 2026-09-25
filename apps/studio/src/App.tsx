@@ -24,7 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import { KNITERATE_7GG_KCODE_PROFILE_V2, deriveMachineTraceProgrammedMotionV1, matchKnitProvenArtifact, type MachineTraceProgrammedMotionV1 } from '@kniterate-studio/machine-lib/browser';
-import { resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDiff, type MachinePass } from './engine';
+import { MACHINE_PASS_ORIGIN_LABELS, formatPassRoleCounts, machinePassRoleLabel, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDiff, type MachinePass } from './engine';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, renameColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import type { BlanketCompileArtifact } from './blanket/compileProject';
@@ -207,15 +207,17 @@ function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = 
               </button>
             );
             const pass = row.pass;
+            const roleLabel = machinePassRoleLabel(pass);
             return (
               <button
                 className={`pass-row${pass.index === selected ? ' selected' : ''}${pass.ghost ? ' ghost' : ''}`}
                 style={{ top: rowIndex * ROW_HEIGHT }} key={pass.index} type="button" onClick={() => onSelect(pass.index)}
+                title={roleLabel === null ? undefined : `${roleLabel} pass${pass.origin === undefined ? '' : ` · ${MACHINE_PASS_ORIGIN_LABELS[pass.origin]}`}`}
               >
                 <span className="pass-number">{pass.index + 1}</span>
                 <span className="direction">{pass.direction ?? '•'}</span>
                 <span>{pass.carriers.length ? pass.carriers.map((carrier) => <i className="carrier-chip" style={{ '--carrier': CARRIER_COLORS[carrier] } as CSSProperties} key={carrier}>C{carrier}</i>) : <em>none</em>}</span>
-                <span><code>{pass.type}</code></span><span>{pass.beds}</span><span>{pass.needleSpan}</span>
+                <span><code>{pass.type}</code></span><span>{pass.ghost && roleLabel !== null ? roleLabel : pass.beds}</span><span>{pass.needleSpan}</span>
                 <span>{pass.rack ?? '—'}</span><span>{pass.speed ?? '—'}</span><span>{pass.roller ?? '—'}</span>
               </button>
             );
@@ -441,7 +443,7 @@ export function RunSheet({ document, onClose }: { document: MachineDocument; onC
         <header><span>KNITERATE STUDIO · RUN SHEET</span><h1 id="machine-run-title">{document.filename}</h1><div className={`print-verdict verdict-${document.verdict.state}`}>{document.verdict.label}</div></header>
         <p className="run-annotation">{document.verdict.annotation}</p>
         <section><h2>Format evidence</h2><p>{document.sourceDisclosure.summary}</p></section>
-        <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Programmed passes</dt><dd>{strictPassMetrics ? document.stats.passCount.toLocaleString() : 'Unavailable'}</dd></div><div><dt>Loop-forming passes</dt><dd>{strictPassMetrics ? document.stats.loopFormingPassCount!.toLocaleString() : 'Unavailable'}</dd></div><div><dt>Authored design rows</dt><dd>Unavailable · foreign file has no row provenance</dd></div><div><dt>Programmed travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.coordinateMetric.programmedTravelUnits)} encoded stop-coordinate units`}</dd></div><div><dt>Assumption-derived travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.assumptionModel.assumedTravelMm)} mm · ${motion.assumptionModel.assumedPitchMmPerCoordinateUnit} mm/unit`}</dd></div><div><dt>Idealized constant-speed term</dt><dd>{idealizedMotionLabel(motion)}</dd></div><div><dt>Needles</dt><dd>{document.stats.needleSpan}</dd></div><div><dt>Rack range</dt><dd>{document.stats.rackRange}</dd></div></dl><p>Only the encoded stop-coordinate total is exact. Millimetres assume one coordinate unit equals one 3.63 mm needle pitch; the time term additionally assumes each encoded speed is constant mm/s. Neither is physical elapsed time or a physical lower bound.</p></section>
+        <section><h2>Machine program</h2><dl><div><dt>Profile</dt><dd>7gg worsted · 252-needle bed</dd></div><div><dt>Programmed passes</dt><dd>{strictPassMetrics ? document.stats.passCount.toLocaleString() : 'Unavailable'}</dd></div><div><dt>Loop-forming passes</dt><dd>{strictPassMetrics ? document.stats.loopFormingPassCount!.toLocaleString() : 'Unavailable'}</dd></div><div><dt>Pass roles</dt><dd>{document.stats.passRoles === null ? 'Unavailable' : formatPassRoleCounts(document.stats.passRoles)}</dd></div><div><dt>Authored design rows</dt><dd>Unavailable · foreign file has no row provenance</dd></div><div><dt>Programmed travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.coordinateMetric.programmedTravelUnits)} encoded stop-coordinate units`}</dd></div><div><dt>Assumption-derived travel</dt><dd>{motion === null ? 'Unavailable' : `${formattedMetric(motion.assumptionModel.assumedTravelMm)} mm · ${motion.assumptionModel.assumedPitchMmPerCoordinateUnit} mm/unit`}</dd></div><div><dt>Idealized constant-speed term</dt><dd>{idealizedMotionLabel(motion)}</dd></div><div><dt>Needles</dt><dd>{document.stats.needleSpan}</dd></div><div><dt>Rack range</dt><dd>{document.stats.rackRange}</dd></div></dl><p>Only the encoded stop-coordinate total is exact. Millimetres assume one coordinate unit equals one 3.63 mm needle pitch; the time term additionally assumes each encoded speed is constant mm/s. Neither is physical elapsed time or a physical lower bound.</p></section>
         <section><h2>Carrier map</h2><div className="carrier-map">{document.stats.carriers.length ? document.stats.carriers.map((carrier) => <span key={carrier}><i style={{ background: CARRIER_COLORS[carrier] }} />C{carrier}<b>Role unspecified</b></span>) : <em>No carriers found</em>}</div></section>
         {findingGroups.length > 0 && <section><h2>Known findings</h2><ul className="run-sheet-findings">{findingGroups.map((group) => <li key={group.key}>
           <div><b>{group.severity.toUpperCase()}</b><strong>{group.title}</strong><span> · {group.occurrences.toLocaleString()} occurrence{group.occurrences === 1 ? '' : 's'}</span></div>
@@ -688,7 +690,7 @@ export function App() {
           <main className={`machine-workspace${view === 'machine' ? '' : ' compact-workspace'}`}>
             <div className="workspace-head">
               <div><span className="eyebrow">Machine truth</span><h1>{view === 'machine' ? 'Pass grid' : view === 'fabric' ? 'Schematic topology' : 'Compare machine passes'}</h1></div>
-              <div className="stat-strip"><span><b>{document.stats.passMetricProvenance === 'strict-kcode-trace' ? document.stats.passCount.toLocaleString() : '—'}</b> programmed passes</span><span><b>{document.stats.loopFormingPassCount === null ? '—' : document.stats.loopFormingPassCount.toLocaleString()}</b> loop-forming</span><span><b>{document.stats.carriers.length}</b> carriers</span><span><b>{document.stats.needleSpan}</b></span><span><b>rack {document.stats.rackRange}</b></span></div>
+              <div className="stat-strip"><span><b>{document.stats.passMetricProvenance === 'strict-kcode-trace' ? document.stats.passCount.toLocaleString() : '—'}</b> programmed passes</span><span><b>{document.stats.loopFormingPassCount === null ? '—' : document.stats.loopFormingPassCount.toLocaleString()}</b> loop-forming</span>{document.stats.passRoles !== null && <span><b>{(document.stats.passRoles['carrier-move'] + document.stats.passRoles['carriage-move']).toLocaleString()}</b> carrier/carriage moves</span>}<span><b>{document.stats.carriers.length}</b> carriers</span><span><b>{document.stats.needleSpan}</b></span><span><b>rack {document.stats.rackRange}</b></span></div>
             </div>
             {view === 'machine' && <div className="mobile-tabs">
               {document.kcode?.inspection?.hasScene && <button className={mobileView === 'movement' ? 'active' : ''} type="button" onClick={() => setMobileView('movement')}>movement</button>}

@@ -77,6 +77,22 @@ ship," trust this file and the working tree instead.
   and checker receipts expose strict-trace programmed passes and loop-forming
   passes (knit/tuck/split) while explicitly marking authored rows unavailable;
   transfer-family split is counted, but drop and repositioning passes are not.
+- **Pass roles and knitter-facing advisories.** Every strict-trace pass is
+  labelled loop-forming, transfer, drop, carrier move, carriage move, or
+  unclassified (`pass-metrics.ts`). Knitout imports join each emitted pass to
+  the pinned backend's scheduled source line, so a carrier-only pass stamped
+  with a knit/tuck/xfer line is shown as a backend-inserted kickback, while a
+  `miss`/`in`/`out` line is a requested carrier move; direct KCode records no
+  origin. `machine-advisories.ts` recomputes the official editor's float-distance
+  (default maximum 7, in the front-bed frame including rack) and unsafe
+  bed-range checks (facing needle outside the KCode column domain at the
+  current rack). Both are non-blocking information for foreign files and
+  never change the verdict. The 13-file corpus yields 10 float advisories
+  (2x2-rib-beanie 5, back 2, front 2, sophie_stripe 1), all between passes, and
+  no bed-range advisories. KCode does not encode carrier in/out, so a
+  between-pass float can be a parked or cut yarn; floats are not a physical
+  failure claim. Roles and advisories reach Studio, the run sheet, and
+  `machine:check`.
 - **Programmed-motion receipt.** Strict KCode traces expose exact encoded
   stop-coordinate travel. A separate model uses the profile's documented 3.63
   mm needle pitch and each pass's encoded speed only as explicit assumptions;

@@ -76,12 +76,15 @@ test('opens the two 150k-selection corpus files without overflow or page errors'
   await expect(page.locator('.brand-copy small')).toHaveText('back.kc', { timeout: 30_000 });
   await expect(page.getByRole('heading', { name: 'Pass grid' })).toBeVisible();
   await expect(page.locator('.stat-strip')).toContainText('2,108');
-  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 0 warnings · 82 notes');
+  // 82 depth-three loop-stack observations plus 2 non-blocking float advisories.
+  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 0 warnings · 84 notes');
+  await expect(page.locator('.diagnostics-panel')).toContainText('Yarn floats farther than the advisory maximum');
+  await expect(page.locator('.stat-strip')).toContainText('carrier/carriage moves');
 
   await machineInput.setInputFiles('packages/machine-lib/reference/front.kc');
   await expect(page.locator('.brand-copy small')).toHaveText('front.kc', { timeout: 30_000 });
   await expect(page.locator('.stat-strip')).toContainText('2,544');
-  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 0 warnings · 64 notes');
+  await expect(page.locator('.diagnostics-panel')).toContainText('0 errors · 0 warnings · 66 notes');
   const audit = await page.evaluate(() => {
     const value = (window as unknown as { inspectionAudit: { maximumGapMs: number; liveWorkers: number; imported: number; terminated: number; timer: number } }).inspectionAudit;
     window.clearInterval(value.timer); return value;
