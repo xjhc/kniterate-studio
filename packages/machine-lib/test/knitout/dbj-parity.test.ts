@@ -36,6 +36,10 @@ import {
 } from '../../src/knitout/wizard-config.js';
 import { writeKnitoutProgram } from '../../src/knitout/emitter.js';
 import { diffKc } from '../../src/knitout/kc-diff.js';
+import { diffTraceStitchesV1 } from '../../src/knitout/kcode/trace-stitch-diff.js';
+import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js';
+import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js';
+import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../../src/knitout/kcode/machine-profile.js';
 import { knitoutToKCode } from '../../src/knitout/kniterate/to-kcode.js';
 import type { CompileChartResult } from '../../src/knitout/compile/from-chart.js';
 import { decodeCustomistDesign } from './reference-kc/customist-design-decode.js';
@@ -191,5 +195,19 @@ describe('dbj.kc machine-equivalent parity', () => {
   it('matches the reference at machine-equivalent footer parity', () => {
     expect(diff.deltaCount).toBe(0);
     expect(diff.deltas).toEqual([]);
+  });
+
+  it('pins the stitch-level parity baseline against the reference', () => {
+    const trace = (kcode: string) => {
+      const parsed = parseKCodeDocument(kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true });
+      if (!parsed.ok) throw new Error('not strict KCode');
+      return projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
+    };
+    const stitches = diffTraceStitchesV1(trace(REFERENCE), trace(wizardKc));
+    // Footer parity above says nothing about needle selection. This pins
+    // the stitch-level baseline (identical knit/tuck/drop/transfer sets per
+    // pass) as a ratchet: raise it as the engine converges, never lower it.
+    expect(stitches.comparedPasses).toBe(498);
+    expect(stitches.identicalPasses).toBe(167);
   });
 });

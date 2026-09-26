@@ -30087,7 +30087,7 @@
     ]
   },
   "contract": {
-    "sha256": "233fa1a97c079d83fa66947481864b6bdb6791a8c03b3b286e7ea93b47313eea",
+    "sha256": "96b8470312811d34de61708072ea6384892d44df8e4fedbe619471008b4ece99",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30736,7 +30736,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "d955c8925fd009df2cc611c6bdc9fcae025b35f5e86a1c420f5c66acb8803b12",
+        "sha256": "234d9149c0d9945b420ef52ea7103cf4ce57405b8390e917ca7524164e0ee656",
         "bytes": 179
       },
       {
@@ -31153,6 +31153,11 @@
         "path": "src/knitout/kcode/scheduled-trace-diff.ts",
         "sha256": "976c0cc54823b2568a47e444dbf88a0732d8be10453d077a7e6204fe7a196546",
         "bytes": 3589
+      },
+      {
+        "path": "src/knitout/kcode/trace-stitch-diff.ts",
+        "sha256": "972031152770f5ee4a66b55b20f11de59ef2c3ce9608ad9ca745c5caf99196f9",
+        "bytes": 3337
       },
       {
         "path": "src/knitout/kcode/types.ts",
@@ -31591,13 +31596,13 @@
       },
       {
         "path": "test/knitout/dbj-parity.test.ts",
-        "sha256": "7d9502f07a7360b678f394c2597fe62dc41400a775ba64dfc251c4c8aa599ad1",
-        "bytes": 6498
+        "sha256": "f8aebf3abf414118d2780fdb55873cb2fb9cfa8597287b7309cd4d4384212593",
+        "bytes": 7642
       },
       {
         "path": "test/knitout/fairisle-parity.test.ts",
-        "sha256": "7554b618f5eb32f4cc07a83bd012e378fb4ece237e8a8d2087e5a4dde7c5e418",
-        "bytes": 6440
+        "sha256": "ee4adff2892fe0b2c2cd32027140f6207e02f237a977fbf0aa42296a4204270b",
+        "bytes": 7584
       },
       {
         "path": "test/knitout/first-body-row-protection.test.ts",
@@ -31676,8 +31681,8 @@
       },
       {
         "path": "test/knitout/kcode-knitted-faces.test.ts",
-        "sha256": "3ba27d01a61d730218726b4db1c37e3da58437cdc0be2102f1020506734fffea",
-        "bytes": 3492
+        "sha256": "ce237415c441feb70e209cb6113b233fa13ccfc3ec75d1999a521405754e7f20",
+        "bytes": 4884
       },
       {
         "path": "test/knitout/kcode-legality-spec.ts",

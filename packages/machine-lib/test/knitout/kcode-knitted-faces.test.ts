@@ -12,6 +12,7 @@ import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
 import { knitoutToKCodeWithTrace } from '../../src/knitout/kniterate/to-kcode.js'
 import { compileToRunArtifact } from '../../src/knitout/run-artifact.js'
 import { projectColorworkChartV1 } from '../../src/colorwork/from-colorwork-chart.js'
+import { diffTraceStitchesV1 } from '../../src/knitout/kcode/trace-stitch-diff.js'
 
 function traceOf(kcode: string) {
   const parsed = parseKCodeDocument(kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true })
@@ -62,5 +63,20 @@ describe('knitted face projection', () => {
       matchingRows: faces.front.rows.length,
       offset: 0,
     })
+  })
+})
+
+describe('trace stitch diff', () => {
+  it('finds identical passes under a needle offset and reports differing ones', () => {
+    const reference = traceOf(readFileSync('reference/jacquard.kc', 'utf8'))
+    const shifted = { passes: reference.passes.map((pass) => ({ ...pass, actions: pass.actions.map((action) => (action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'drop')
+      ? { ...action, at: { ...action.at, traceCoordinate: action.at.traceCoordinate + 2 } }
+      : action.kind === 'xfer' || action.kind === 'split'
+        ? { ...action, source: { ...action.source, traceCoordinate: action.source.traceCoordinate + 2 }, target: { ...action.target, traceCoordinate: action.target.traceCoordinate + 2 } }
+        : action) })) }
+    expect(diffTraceStitchesV1(reference, shifted)).toMatchObject({ identicalPasses: reference.passes.length, differingPassIndices: [] })
+    const firstKnit = reference.passes.findIndex((pass) => pass.actions.some((action) => action.kind === 'knit'))
+    const damaged = { passes: reference.passes.map((pass, index) => index === firstKnit ? { ...pass, actions: pass.actions.slice(1) } : pass) }
+    expect(diffTraceStitchesV1(reference, damaged)).toMatchObject({ identicalPasses: reference.passes.length - 1, differingPassIndices: [firstKnit] })
   })
 })
