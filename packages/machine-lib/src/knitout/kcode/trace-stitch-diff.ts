@@ -5,7 +5,8 @@ import type { MachineTraceActionV1, MachineTracePassV1, MachineTraceV1 } from '.
  *
  * Footer-level parity (direction, operation, carrier, speed, roller) says
  * nothing about which needles a pass selects. This compares, for each pass
- * index, the exact multiset of knit/tuck/drop/transfer/split actions after
+ * index, the exact multiset of knit/tuck/drop/transfer/split actions,
+ * including each action's encoded stitch size (tension), after
  * aligning both programs by a single needle offset (the best within
  * `maxOffset` of their leftmost knit coordinates). Carrier moves compare as
  * `move`. Traces of different length compare over the shorter prefix and
@@ -26,10 +27,10 @@ function actionSignature(action: MachineTraceActionV1, origin: number): string {
     case 'knit':
     case 'tuck':
     case 'drop':
-      return `${action.kind}:${action.at.bed}:${action.at.traceCoordinate - origin}`
+      return `${action.kind}:${action.at.bed}:${action.at.traceCoordinate - origin}@${action.at.stitchSelector.encodedValue}`
     case 'xfer':
     case 'split':
-      return `${action.kind}:${action.source.bed}:${action.source.traceCoordinate - origin}>${action.target.bed}:${action.target.traceCoordinate - origin}`
+      return `${action.kind}:${action.source.bed}:${action.source.traceCoordinate - origin}@${action.source.stitchSelector.encodedValue}>${action.target.bed}:${action.target.traceCoordinate - origin}`
     case 'move':
       return 'move'
     case 'unknown':

@@ -165,9 +165,13 @@ describe('fairisle.kc byte-parity (recipe path)', () => {
     const stitches = diffTraceStitchesV1(trace(REFERENCE), trace(recipeKc));
     // Footer parity above says nothing about needle selection. This pins
     // the stitch-level baseline (identical knit/tuck/drop/transfer sets per
-    // pass) as a ratchet: raise it as the engine converges, never lower it.
+    // pass, including stitch size) as a ratchet: raise it as the engine
+    // converges, never lower it. The six remaining passes (116, 149, 173,
+    // 197, 221, 245) are Customist catch loops: the ground yarn also knits a
+    // needle the motif yarn knits in that row (row 2 interior, and needle 0
+    // every eight rows). The rule is not derivable from this one reference.
     expect(stitches.comparedPasses).toBe(286);
-    expect(stitches.identicalPasses).toBe(211);
+    expect(stitches.identicalPasses).toBe(280);
   });
 
   it('Studio\'s Customist-matched fairisle input compiles to the same .kc as the recipe path', () => {

@@ -45,16 +45,22 @@ fresh current compile and blocks promotion for any mismatch, recorded deviation,
 or in-run intervention. This establishes an exact-candidate settings receipt,
 not a generally safe speed/roller envelope.
 
-The release trial is a 120x160 four-color birdseye rectangle on the fixed 7gg
-profile: C1 draw, C2-C5 pattern yarns, C6 waste, 20 waste rows, and machine
-bind-off. The current generated package has 152,488 Knitout operations, 2,656
-predicted passes, 2,662 vendor-emitted passes, and an estimated 15,102 seconds.
-Its strict trace currently totals 293,022 encoded stop-coordinate units; the
-3.63 mm/unit and per-pass constant-speed assumptions produce a separate
-3,584.83-second idealized term. Those two derived units are not physical
-observations.
-The six-pass preview delta is confined to the known-approximate frame/finish
-tail; body parity and generated-file revalidation gate export.
+The release trial reproduces a captured Customist Studio program rather than
+an original design, so the first machine run knits a program already knit by
+Kniterate users: the `reference/fairisle.kc` design (64x50, two colors;
+`fixtures/colorwork-chart-v1/customist-fairisle-reference.json`) with ground on
+C4 (casts on and leads) and motif on C3, compiled through Studio's
+Customist-matched fairisle frame (87 waste passes on C6, C1 draw yarn,
+Customist cast-on and transfers, closing waste with park-out and final drop).
+The generated package has 14,209 Knitout operations, 286 predicted and
+emitted passes, and an authored-plan estimate of 2,081 seconds. Against the
+reference, the manifest's `customistParity` records 0 footer differences and
+280 of 286 passes stitch-identical (including stitch size) at the same bed
+position; the six differing passes are Customist catch loops the engine does
+not reproduce. Its strict trace totals 21,300 encoded stop-coordinate units;
+the 3.63 mm/unit and constant-speed assumptions give a separate 342-second
+idealized term. These are software comparisons and derived units, not
+physical observations.
 
 Kniterate's [start-up guide](https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide)
 says `.kc` cannot be imported into the design app, and its
@@ -93,7 +99,7 @@ universal calibration constant.
 3. Photograph front/back and all four boundaries; record rested dimensions and
    every machine stop or intervention.
 4. From the same clean generating commit, run
-   `pnpm release:register -- v1-four-color-blanket`. Registration refuses a
+   `pnpm release:register -- v1-customist-fairisle`. Registration refuses a
    different commit or dirty tree. Then complete
    `machine.json`, `yarn.json`, structured `run.json`, and the narrative
    `outcome.md`. A failed or interrupted run remains valid history but is not

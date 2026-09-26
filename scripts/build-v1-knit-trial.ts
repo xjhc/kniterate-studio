@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { createColorworkProjectV1 } from '../packages/project-contract/src/index.js';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject } from '../packages/project-contract/src/index.js';
 import type { ColorworkChartV1 } from '../packages/chart-contract/src/index.js';
 import { compileColorworkProject } from '../apps/studio/src/blanket/compileProject.js';
 import { inspectKcDocument } from '../packages/machine-lib/src/knitout/kc-document.js';
@@ -12,6 +12,8 @@ import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../packages/machine-lib/src/knit
 import { createAuthoredKCodeCoordinateBridgeV1 } from '../packages/machine-lib/src/knitout/kcode/coordinate-bridge.js';
 import { projectKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-trace.js';
 import { deriveMachineTraceProgrammedMotionV1 } from '../packages/machine-lib/src/knitout/kcode/programmed-motion.js';
+import { diffTraceStitchesV1 } from '../packages/machine-lib/src/knitout/kcode/trace-stitch-diff.js';
+import { diffKc } from '../packages/machine-lib/src/knitout/kc-diff.js';
 import { validateKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-validator.js';
 import { parseKCodeDocument } from '../packages/machine-lib/src/knitout/kcode/parser.js';
 import { compareScheduledPassesToMachineTrace } from '../packages/machine-lib/src/knitout/kcode/scheduled-trace-diff.js';
@@ -55,26 +57,27 @@ export function readCleanV1KnitTrialReleaseSource(
   return { commit, worktree: 'clean' };
 }
 
-const palette = [
-  { id: 'natural', name: 'Natural worsted', hex: '#F1EDE3' },
-  { id: 'red', name: 'Red worsted', hex: '#B4423A' },
-  { id: 'gold', name: 'Gold worsted', hex: '#C99A35' },
-  { id: 'navy', name: 'Navy worsted', hex: '#29445F' },
-];
-const width = 120;
-const height = 160;
+/**
+ * The trial candidate reproduces a captured Customist Studio program: the
+ * fairisle.kc design (ground C4 casts on and leads, motif C3), compiled
+ * through Studio's Customist-matched fairisle frame. The first physical run
+ * therefore knits a program structurally matched to one Kniterate users
+ * already knit; the manifest records the exact remaining differences.
+ */
+const TRIAL_CHART_PATH = 'fixtures/colorwork-chart-v1/customist-fairisle-reference.json';
+const CUSTOMIST_REFERENCE_PATH = 'packages/machine-lib/reference/fairisle.kc';
+const TRIAL_CARRIERS: Readonly<Record<string, '3' | '4'>> = { ground: '4', motif: '3' };
+
+const REPOSITORY_ROOT = fileURLToPath(new URL('..', import.meta.url));
 
 function trialChart(): ColorworkChartV1 {
-  return {
-    kind: 'knitlab-colorwork-chart', version: 1, title: 'V1 four-color blanket trial', width, height,
-    rowNumbering: 'bottom-up', palette,
-    cells: Array.from({ length: height }, (_, row) => Array.from({ length: width }, (_, column) => {
-      const border = row < 6 || row >= height - 6 || column < 6 || column >= width - 6;
-      if (border) return (Math.floor(row / 2) + Math.floor(column / 2)) % 2;
-      return (Math.floor((row - 6) / 8) + Math.floor((column - 6) / 8) + (column % 7 === 0 ? 1 : 0)) % 4;
-    })),
-  };
+  return JSON.parse(readFileSync(resolve(REPOSITORY_ROOT, TRIAL_CHART_PATH), 'utf8')) as ColorworkChartV1;
 }
+
+const trialChartValue = trialChart();
+const palette = trialChartValue.palette;
+const width = trialChartValue.width;
+const height = trialChartValue.height;
 
 function firstSetting(knitoutText: string, name: string): number {
   const value = new RegExp(`^${name} ([0-9.]+)$`, 'm').exec(knitoutText)?.[1];
@@ -90,7 +93,17 @@ function firstTextSetting(knitoutText: string, name: string): string {
 
 export function compileCurrentV1KnitTrial() {
   const chart = trialChart();
-  const project = createColorworkProjectV1(chart, { id: 'v1-four-color-blanket-trial', title: chart.title });
+  let project = createColorworkProjectV1(chart, { id: 'v1-customist-fairisle-trial', title: chart.title });
+  for (const entry of chart.palette) {
+    const carrier = TRIAL_CARRIERS[entry.id];
+    if (carrier === undefined) throw new Error(`trial palette entry ${entry.id} has no Customist carrier`);
+    project = appendProjectEdit(project, {
+      id: `trial-carrier-${entry.id}`,
+      source: 'system',
+      edit: { kind: 'set-yarn-assignment', assignment: { paletteId: entry.id, carrier, yarnName: entry.name } },
+    });
+  }
+  const state = materializeColorworkProject(project).state;
   const compiled = compileColorworkProject(project);
   if (!compiled.ok || !compiled.knitoutText || !compiled.inputHash || !compiled.frame || compiled.frame.wastePasses === null || compiled.frame.bindOff === null || compiled.frame.wasteCarrier === null) {
     throw new Error(compiled.messages.map((message) => `${message.severity}: ${message.message}`).join('\n'));
@@ -125,8 +138,8 @@ export function compileCurrentV1KnitTrial() {
     throw new Error(`generated KCode failed revalidation: ${errors.map((message) => message.message).join('; ')}`);
   }
   const compilerFingerprint = computeCompilerFingerprint();
-  const compilerCoordinateStart = project.base.machine.needleOffset;
-  const compilerCoordinateEnd = project.base.machine.needleOffset + width - 1;
+  const compilerCoordinateStart = state.machine.needleOffset;
+  const compilerCoordinateEnd = state.machine.needleOffset + width - 1;
   const coordinateBridge = createAuthoredKCodeCoordinateBridgeV1({
     artifactKcodeSha256: sha256Bytes(converted.kcode),
     compilerCoordinateStart,
@@ -194,9 +207,31 @@ export function compileCurrentV1KnitTrial() {
     carrierSpacing: firstSetting(compiled.knitoutText, 'x-carrier-spacing'),
     carrierStoppingDistance: firstSetting(compiled.knitoutText, 'x-carrier-stopping-distance'),
   } as const;
+  // Software comparison against the captured Customist program this
+  // candidate reproduces: footer fields and exact per-pass stitch sets
+  // (including stitch size). Not physical evidence.
+  const referenceKCode = readFileSync(resolve(REPOSITORY_ROOT, CUSTOMIST_REFERENCE_PATH), 'utf8');
+  const referenceParsed = parseKCodeDocument(referenceKCode, {
+    profile: KNITERATE_7GG_KCODE_PROFILE_V2,
+    dialect: KNITERATE_7GG_KCODE_PROFILE_V2.dialect,
+    strict: true,
+  });
+  if (!referenceParsed.ok) throw new Error(`${CUSTOMIST_REFERENCE_PATH} is not strict KCode`);
+  const stitchParity = diffTraceStitchesV1(projectKCodeMachineTrace(referenceParsed.document, KNITERATE_7GG_KCODE_PROFILE_V2), machineTrace);
+  const footerParity = diffKc(converted.kcode, referenceKCode, { maxDeltas: 50 });
+  const customistParity = {
+    reference: CUSTOMIST_REFERENCE_PATH,
+    referenceSha256: sha256Bytes(referenceKCode),
+    footerDeltas: footerParity.deltaCount,
+    comparedPasses: stitchParity.comparedPasses,
+    stitchIdenticalPasses: stitchParity.identicalPasses,
+    needleOffset: stitchParity.offset,
+    differingPassIndices: stitchParity.differingPassIndices,
+    note: 'Differing passes are Customist catch loops (the ground yarn also knits a needle the motif yarn knits in that row). Software comparison only.',
+  } as const;
   const manifest = {
     kind: 'kniterate-studio-v1-physical-trial', schemaVersion: 1,
-    title: project.title, profile: project.base.machine.profile,
+    title: project.title, profile: state.machine.profile,
     chart: { width, height, colors: palette.length, rowNumbering: chart.rowNumbering, palette },
     machine: {
       coordinateSystem: 'compiler/project coordinates mapped to exact KCode/trace coordinates; physical needle labels unverified',
@@ -213,10 +248,11 @@ export function compileCurrentV1KnitTrial() {
     },
     carriers: [
       ...compiled.frame.frameCarriers.map((carrier) => ({ carrier, role: 'draw' })),
-      ...project.base.machine.yarnAssignments.map((assignment) => ({ carrier: assignment.carrier, role: 'pattern', paletteId: assignment.paletteId, yarnName: assignment.yarnName })),
+      ...state.machine.yarnAssignments.map((assignment) => ({ carrier: assignment.carrier, role: 'pattern', paletteId: assignment.paletteId, yarnName: assignment.yarnName })),
       { carrier: compiled.frame.wasteCarrier, role: 'waste' },
     ].sort((left, right) => Number(left.carrier) - Number(right.carrier)),
-    frame: compiled.frame, strategy: project.base.strategy,
+    frame: compiled.frame, strategy: state.strategy,
+    customistParity,
     output: {
       predictedPasses: compiled.stats.passCount,
       emittedPasses: inspectKcDocument(converted.kcode).length,
@@ -243,8 +279,10 @@ export function compileCurrentV1KnitTrial() {
   };
   const operatorChecklist = `# V1 physical blanket trial
 
-1. Knit a profile-matched tension swatch with the exact four yarns and record yarn brand, line, lot, fiber, and measured gauge.
-2. Load every carrier in manifest.json: frame yarn${compiled.frame.frameCarriers.length === 1 ? '' : 's'} ${compiled.frame.frameCarriers.map((carrier) => `C${carrier}`).join(', ') || 'none'} (Customist draw/cameo), C2-C5 pattern yarns, and C${compiled.frame.wasteCarrier} waste yarn.
+This candidate reproduces the captured Customist program ${CUSTOMIST_REFERENCE_PATH}: ${customistParity.stitchIdenticalPasses}/${customistParity.comparedPasses} passes stitch-identical, ${customistParity.footerDeltas} footer differences (software comparison only).
+
+1. Knit a profile-matched tension swatch with the exact two pattern yarns and record yarn brand, line, lot, fiber, and measured gauge.
+2. Load every carrier in manifest.json: frame yarn${compiled.frame.frameCarriers.length === 1 ? '' : 's'} ${compiled.frame.frameCarriers.map((carrier) => `C${carrier}`).join(', ') || 'none'} (Customist draw/cameo), pattern yarns ${state.machine.yarnAssignments.map((assignment) => `C${assignment.carrier} ${assignment.yarnName}`).join(', ')}, and C${compiled.frame.wasteCarrier} waste yarn.
 3. The compiler/project range ${compilerCoordinateStart}-${compilerCoordinateEnd} maps through the exact hash-bound lowering receipt to KCode columns ${coordinateBridge.kcodeColumn.start}-${coordinateBridge.kcodeColumn.end} and normalized trace coordinates ${coordinateBridge.traceCoordinate.start}-${coordinateBridge.traceCoordinate.end}. None of those values is yet a verified physical needle label.
 4. Before sending the job, resolve both trace endpoints to physical needle labels using a documented machine/vendor datum procedure. Record increasing or decreasing physical-label orientation, and have a different person independently verify the endpoints, method, exact artifact hash, and time in run.json. Do not run while this gate is unverified.
 5. Independently compare the controller-loaded initial recipe with the exact candidate receipt: stitch ${initialSettings.stitchNumber}; transfer stitch ${initialSettings.xferStitchNumber}; speed ${initialSettings.speedNumber}; roller ${initialSettings.rollerAdvance}; transfer style ${initialSettings.xferStyle}; carrier spacing ${initialSettings.carrierSpacing}; carrier stopping distance ${initialSettings.carrierStoppingDistance}. These are candidate commands, not a proven safe envelope. Record every difference for machine.json.deviationsFromCompile and every in-run change in run.json; either condition makes the run non-promotable.

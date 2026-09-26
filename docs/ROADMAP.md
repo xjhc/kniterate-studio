@@ -170,7 +170,7 @@ Register physical swatches and allow a verdict to become Knit-proven only when
 the exact recipe matches the physical registry.
 
 Software readiness is complete: from a clean tree, `pnpm release:trial`
-produces the validated, commit- and hash-pinned 120x160 four-color blanket
+produces the validated, commit- and hash-pinned Customist fairisle reproduction
 package and operator checklist described in
 [`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md). Registration requires the
 same clean generating commit. The registration command,

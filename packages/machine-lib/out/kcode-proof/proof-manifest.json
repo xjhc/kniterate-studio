@@ -30087,7 +30087,7 @@
     ]
   },
   "contract": {
-    "sha256": "68a8eadd88772f29bb7fd68bc2d8c34d2c15ef947b5ca40fcc10270dbac2cc3c",
+    "sha256": "84fe6bceb88d33c0bc16061ea64263272cbdbfd0a8d235d1a70ba6ddbb6b52cd",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30151,8 +30151,8 @@
       },
       {
         "path": "../../apps/studio/src/authoredPipeline.test.ts",
-        "sha256": "38895a9bf16bee93be2ef3313f15ac6ce0f4d296d8c036b88b34515b1945c86b",
-        "bytes": 1591
+        "sha256": "4065a25073bae27d4d3cebab10d339693acb6e283ae0657e1ab9262eafe83462",
+        "bytes": 3530
       },
       {
         "path": "../../apps/studio/src/authoredPipeline.ts",
@@ -30176,7 +30176,7 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.test.ts",
-        "sha256": "8c09dad526fe6f4085b93a8c1956167e9814fdf4fadf81ebbef00cf37c2d8ccf",
+        "sha256": "a73989bf05d06faa3f2e03be973cffd8ca3a297a67c640ecfd7bbff13a5c4ba7",
         "bytes": 18999
       },
       {
@@ -30566,8 +30566,8 @@
       },
       {
         "path": "../../scripts/build-v1-knit-trial.ts",
-        "sha256": "fa89a23c9732297816778ebf5582fdb20b6ce1ea72ef346bc38d3eafdf85b4d8",
-        "bytes": 21804
+        "sha256": "2b2319d37e9f7f6ec33652facd350c495a1172c822454e851f24940ca8734328",
+        "bytes": 24367
       },
       {
         "path": "../../scripts/check-machine-file.ts",
@@ -30581,8 +30581,8 @@
       },
       {
         "path": "../../scripts/register-v1-knit-trial.ts",
-        "sha256": "2ffdc5c404e9a07ab5a4af6aa9256b32e51a5819e6d48efc336030d3dee3b1fd",
-        "bytes": 8952
+        "sha256": "860305abd747106cd4cf95a2b87c8afb60c4ed5814b45484531c2cc19b3f201a",
+        "bytes": 8961
       },
       {
         "path": "../../tsconfig.base.json",
@@ -30736,7 +30736,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "e9b734a194c381b5fe6411f6fbc0efa4aac7efdd353eec285e4c8a7ec3bad480",
+        "sha256": "a86f34ca26f4cd1d769eca79726e9c3ff39ef1e2e0f0ae29dab624abff5c4158",
         "bytes": 179
       },
       {
@@ -30876,8 +30876,8 @@
       },
       {
         "path": "src/browser.ts",
-        "sha256": "0f6e0aee709f3433f69e10d93875095ab1a5398909c52837135cd324339f5d41",
-        "bytes": 7008
+        "sha256": "cfd037f83bb549e6c55469112d00fa9ff904ab41ac8c5a09e3df7c951810a3a8",
+        "bytes": 7138
       },
       {
         "path": "src/chart-core/__row_space_canary__.ts",
@@ -30986,8 +30986,8 @@
       },
       {
         "path": "src/index.ts",
-        "sha256": "c89afdd0ac6cadbbfbd5bb548d913ac5b54d3ed31f59c852664b77ceed073bbc",
-        "bytes": 7697
+        "sha256": "0d91d09321c25db6b937b99b924685cbe61953e1aa80535ab55e7159e74759c2",
+        "bytes": 7827
       },
       {
         "path": "src/knitout/back-face-projection.ts",
@@ -31156,8 +31156,8 @@
       },
       {
         "path": "src/knitout/kcode/trace-stitch-diff.ts",
-        "sha256": "972031152770f5ee4a66b55b20f11de59ef2c3ce9608ad9ca745c5caf99196f9",
-        "bytes": 3337
+        "sha256": "3a385f40b2aa33d80ac4d8fdd4329d0ed2a469f08b396bbd030d88a7641499a7",
+        "bytes": 3482
       },
       {
         "path": "src/knitout/kcode/types.ts",
@@ -31211,8 +31211,8 @@
       },
       {
         "path": "src/knitout/passes/bind-off.ts",
-        "sha256": "2a2cae1a8a4265232622ae1dd7bd89e46fd8805f915163af31a21d91406f4d60",
-        "bytes": 24071
+        "sha256": "f9de6972c519ce428bd8e2beaf3c03f84b9c54399334666dd8b04ae0eb601438",
+        "bytes": 24307
       },
       {
         "path": "src/knitout/passes/cable-cross.ts",
@@ -31230,9 +31230,14 @@
         "bytes": 10160
       },
       {
+        "path": "src/knitout/passes/customist-fairisle-frame.ts",
+        "sha256": "43598359562cb10984a9673f640b726235bb80541a769ddf2289152438fc7796",
+        "bytes": 8670
+      },
+      {
         "path": "src/knitout/passes/first-row-speed.ts",
-        "sha256": "4ce5efd15329ba2de7114341b827f306b24dfd3e2477092380df60b810839cbc",
-        "bytes": 568
+        "sha256": "d9eae9a5b824176e16a1c2c141e781b59a619a59b8fc3c41bca8fdb5cb32153d",
+        "bytes": 937
       },
       {
         "path": "src/knitout/passes/icord.ts",
@@ -31336,8 +31341,8 @@
       },
       {
         "path": "src/knitout/plan/compile-chart.ts",
-        "sha256": "9f3fb0cdea930b2617c83e4d942c548d54ce84ef5ea35179f2175900baf49573",
-        "bytes": 68451
+        "sha256": "087286864025929fc386a28ba829b61534c538141657038cab2e3879a9fab9dc",
+        "bytes": 70567
       },
       {
         "path": "src/knitout/plan/kniterate-settings-ops.ts",
@@ -31606,13 +31611,13 @@
       },
       {
         "path": "test/knitout/dbj-parity.test.ts",
-        "sha256": "3585b90dcb0afb2189358e13336873b044e6f2ccf532d3da1de95952ef7c9711",
+        "sha256": "7c680c971be07cc77d73190140f8ade54e8dd0f43913945cb26e7b72174bf251",
         "bytes": 7576
       },
       {
         "path": "test/knitout/fairisle-parity.test.ts",
-        "sha256": "2f0d065f83a58c21162cfb66615b8d16131b4aef827a5c15f355c7dc6a3a1256",
-        "bytes": 8074
+        "sha256": "5def43027bcf252a23b31279566ebfcef339bccb26715617147a92db2badb8d9",
+        "bytes": 8377
       },
       {
         "path": "test/knitout/first-body-row-protection.test.ts",
@@ -31631,8 +31636,8 @@
       },
       {
         "path": "test/knitout/from-chart-jacquard-floats.test.ts",
-        "sha256": "844c3c86cfd2c3b6471aecd4ce8a2b5f8289f53a7d6c9805218745474bfd33aa",
-        "bytes": 26304
+        "sha256": "726a7db0b19d971c1fedb32116b44f079b706f8448b78afe748fb95be27d80d4",
+        "bytes": 26699
       },
       {
         "path": "test/knitout/from-chart-jacquard.test.ts",
@@ -31821,7 +31826,7 @@
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
-        "sha256": "b4f07b8be55b9e0f984c9ae0052409282bac3699280db096aec875deb59fc8c0",
+        "sha256": "87e26a59c0747f1ab363531cd1a33b3f6fa2dc23e29494307871ebeb990b26bd",
         "bytes": 37875
       },
       {
@@ -31831,8 +31836,8 @@
       },
       {
         "path": "test/public-api.test.ts",
-        "sha256": "6304d1692858c41d44a2b1c2d279b77b93fe4c32f97d81058e5ddc16e7ae911e",
-        "bytes": 3094
+        "sha256": "626e44b3b4e23d8d019214e1d580eadb0c7a05a99ec3fb1f1afc56a61128c05d",
+        "bytes": 3142
       },
       {
         "path": "tsconfig.json",

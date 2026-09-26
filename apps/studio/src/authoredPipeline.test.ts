@@ -29,3 +29,25 @@ describe('headless authored pipeline', () => {
     expect(result.kcode).toBeNull();
   });
 });
+
+describe('Customist fairisle reproduction (physical trial candidate)', () => {
+  it('compiles the trial chart to the captured Customist program through the Studio pipeline', { timeout: 60_000 }, async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const { diffKc, diffTraceStitchesV1, parseKCodeDocument, projectKCodeMachineTrace, KNITERATE_7GG_KCODE_PROFILE_V2 } = await import('@kniterate-studio/machine-lib/browser');
+    const root = resolve(__dirname, '../../..');
+    const chart = JSON.parse(readFileSync(resolve(root, 'fixtures/colorwork-chart-v1/customist-fairisle-reference.json'), 'utf8'));
+    const reference = readFileSync(resolve(root, 'packages/machine-lib/reference/fairisle.kc'), 'utf8');
+    let project = createColorworkProjectV1(chart, { id: 'customist-fairisle-reproduction' });
+    project = appendProjectEdit(project, { id: 'ground', source: 'system', edit: { kind: 'set-yarn-assignment', assignment: { paletteId: 'ground', carrier: '4', yarnName: 'Ground' } } });
+    project = appendProjectEdit(project, { id: 'motif', source: 'system', edit: { kind: 'set-yarn-assignment', assignment: { paletteId: 'motif', carrier: '3', yarnName: 'Motif' } } });
+    const result = await runAuthoredPipeline(project);
+    expect(result.exportReady).toBe(true);
+    expect(diffKc(result.kcode!.kcText, reference).deltaCount).toBe(0);
+    const parsed = parseKCodeDocument(reference, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true });
+    if (!parsed.ok) throw new Error('reference is not strict KCode');
+    const stitches = diffTraceStitchesV1(projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2), result.kcode!.trace!);
+    // Same bed position; only the six Customist catch-loop passes differ.
+    expect(stitches).toMatchObject({ comparedPasses: 286, identicalPasses: 280, offset: 0 });
+  });
+});

@@ -819,9 +819,9 @@ describe('fresh V1 physical release gate', () => {
     expect(first.manifest.machine.coordinateSystem).toContain('physical needle labels unverified')
     expect(first.manifest.machine.coordinateBridge).toMatchObject({
       artifactKcodeSha256: first.manifest.identity.kcodeSha256,
-      compilerProject: { start: 67, end: 186 },
-      kcodeColumn: { start: 66, end: 185 },
-      traceCoordinate: { start: 66, end: 185 },
+      compilerProject: { start: 95, end: 158 },
+      kcodeColumn: { start: 94, end: 157 },
+      traceCoordinate: { start: 94, end: 157 },
       offsets: {
         compilerProjectToKcodeColumn: -1,
         kcodeColumnToTraceCoordinate: 0,

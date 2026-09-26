@@ -64,9 +64,14 @@ ship," trust this file and the working tree instead.
   reference and block with `project-technique-unmatched`; single-color charts
   knit jersey inside the fairisle frame. Parity with the references is exact
   at footer level (direction, operation, carrier, speed, roller; the only
-  Birdseye difference is Studio's slow first body row) but **not yet at stitch
-  level**: `diffTraceStitchesV1` pins 211/286 identical passes for fairisle and
-  167/498 for dbj. Birdseye's rear-bed backing is the largest remaining
+  Birdseye difference is Studio's slow first body row). At stitch level
+  (`diffTraceStitchesV1`, exact per-pass action sets including stitch size)
+  fairisle is 280/286: `passes/customist-fairisle-frame.ts` reproduces
+  Customist's Waste & Cast-on (waste interlock, yarn insertions, draw, rear
+  drop, zig-zag cast-on, tubular rows, transfers) and the park bind-off drops
+  every front loop at the end as Customist does; the six remaining passes are
+  Customist catch loops whose rule is not derivable from one reference.
+  Birdseye (dbj) is 129/498; its rear-bed backing is the largest remaining
   divergence. Trial and registry evidence now record the compiled frame.
   Machine-safety invariant: every carrier a compiled program brings in must be
   an assigned pattern yarn, the waste carrier, or the preset's declared frame
@@ -253,6 +258,11 @@ schema.
   pass overrides, machine-code editing stays read-only per FOUNDING §2).
 
 ## The one real promotion gate
+
+The trial candidate is a Studio reproduction of the captured Customist
+`reference/fairisle.kc` program (see `V1-PHYSICAL-TRIAL.md`), chosen so the
+first machine run knits a program structurally matched to one already knit
+with Customist; its manifest records the remaining differences.
 
 `1.0.0-rc.1` → `1.0.0` is gated **only** by a successful real-Kniterate run
 (`V1-PHYSICAL-TRIAL.md`). Registration, hash checks, exact-artifact Knit-proven,

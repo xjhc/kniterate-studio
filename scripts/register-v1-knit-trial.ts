@@ -98,7 +98,7 @@ const spec = {
     bindOff: manifest.frame.bindOff,
     profile: manifest.profile,
   },
-  notes: 'V1 representative four-color rectangular blanket release trial.',
+  notes: 'V1 release trial reproducing the captured Customist fairisle.kc program.',
 };
 const request = {
   $schema: '../_schema.json',

@@ -196,7 +196,7 @@ describe('blanket project compiler', () => {
     const compiled = compileColorworkProject(project);
     expect(compiled.ok).toBe(true);
     if (compiled.capacity.status === 'blocked') throw new Error(compiled.capacity.message);
-    expect(compiled.passes).toHaveLength(160);
+    expect(compiled.passes).toHaveLength(158);
     const emitted = await compileKCodeArtifact({
       kind: 'convert-kcode',
       requestId: 1,
@@ -230,11 +230,11 @@ describe('blanket project compiler', () => {
       status: 'supported',
       evidence: null,
       project: { width: 200, height: 300, paletteColors: 4, activeColors: 4, technique: 'birdseye', birdseyeMode: 'minimal' },
-      observed: { knitoutRecords: 265_862 },
+      observed: { knitoutRecords: 266_061 },
     });
     expect(compiled.capacity.estimate.knitoutRecords).toBeGreaterThanOrEqual(compiled.capacity.observed.knitoutRecords ?? Infinity);
     expect(compiled.capacity.estimate.kcodeRecords).toBeLessThanOrEqual(AUTHORED_CAPACITY_LIMITS_V1.kcodeRecords);
-    expect(compiled.stats).toMatchObject({ designRows: 300, needles: 200, passCount: 1_650, opCount: 265_850 });
+    expect(compiled.stats).toMatchObject({ designRows: 300, needles: 200, passCount: 1_650, opCount: 266_049 });
   });
 
   it('refuses a structurally valid oversized Birdseye project before compiler allocation', () => {
@@ -269,7 +269,7 @@ describe('blanket project compiler', () => {
     expect(compiled.capacity).toMatchObject({
       status: 'supported',
       project: { paletteColors: 4, activeColors: 2 },
-      observed: { knitoutRecords: 182_201 },
+      observed: { knitoutRecords: 182_082 },
     });
 
     project = appendProjectEdit(project, {

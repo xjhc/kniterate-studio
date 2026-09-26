@@ -58,7 +58,8 @@ import { cableEventsFromChart } from '../../colorwork/cable-events-from-chart.js
 import { shiftEventsFromChart, type ChartShiftEvent } from '../../colorwork/shift-events-from-chart.js';
 import { rowPauseSetFromAnnotations, rowRackScheduleFromAnnotations, rowStitchScheduleFromAnnotations } from '../../colorwork/row-rack-schedule.js';
 import { castOnBedPattern } from '../passes/stockinette-with-overrides.js';
-import { emitWasteSection, type WasteMachineConfig } from '../passes/waste-section.js';
+import { FAIRISLE_PARK_WASTE_DEFAULTS, emitWasteSection, type WasteMachineConfig } from '../passes/waste-section.js';
+import { emitCustomistFairisleFrame } from '../passes/customist-fairisle-frame.js';
 import {
   seedSimulatorCarrierFromHandoff,
   simulatorHandoffFromBoundary,
@@ -683,8 +684,37 @@ export function compileChartToKniteratePlan(
         )
       : patternCarriers;
 
-  // Pass 1 — waste section + cast-on prologue.
-  const wasteResult = emitWasteSection({
+  // Pass 1 — waste section + cast-on prologue. The Customist fairisle
+  // recipe (carrier intro requested) emits Customist's complete Waste &
+  // Cast-on frame instead: waste, insertions, draw, cast-on, transfers.
+  const customistIntro: FairisleCarrierIntro = {
+    ...FAIRISLE_CARRIER_INTRO_DEFAULTS,
+    ...(typeof input.fairisleCarrierIntro === 'object' ? input.fairisleCarrierIntro : {}),
+  };
+  const customistDrawCarrier = customistIntro.cameoCarriers.find((carrier) => !patternCarriers.includes(carrier));
+  const customistFrame = wantsIntro && customistDrawCarrier !== undefined
+    ? emitCustomistFairisleFrame({
+      needleStart: wastePlan.needleStart,
+      needleEnd: wastePlan.needleEnd,
+      wasteCarrier,
+      bodyCarriers: patternCarriers,
+      drawCarrier: customistDrawCarrier,
+      wastePasses,
+      waste: { ...FAIRISLE_PARK_WASTE_DEFAULTS, ...input.wasteMachineConfig },
+      intro: customistIntro,
+      ...(settings.xferStitchNumber !== undefined ? { restoreXferStitch: settings.xferStitchNumber } : {}),
+      initialNextDirection: threadedNextDirection,
+    })
+    : null;
+  const wasteResult = customistFrame ? {
+    ops: customistFrame.ops,
+    handoff: simulatorHandoffFromBoundary(customistFrame),
+    activeCarriers: [...customistFrame.finalCarrierStates.keys()],
+    castOnDirection: '+' as Direction,
+    residualBackBedCols: [] as ('f' | 'b')[],
+    predictedPasses: customistFrame.predictedPasses,
+    finalNextDirection: customistFrame.finalNextDirection,
+  } : emitWasteSection({
     needleStart: wastePlan.needleStart,
     needleEnd: wastePlan.needleEnd,
     wasteCarrier,
@@ -776,7 +806,7 @@ export function compileChartToKniteratePlan(
       ? input.fairisleCarrierIntro
       : {}),
   };
-  if (wantsIntro) {
+  if (wantsIntro && !customistFrame) {
     // Carrier intro order = highest-numbered pattern carrier first
     // (matches the fairisle reference: 4 → 3 → 1). Sort descending.
     const introOrder = [...patternCarriers].sort((a, b) => Number(b) - Number(a));
@@ -812,7 +842,7 @@ export function compileChartToKniteratePlan(
   // single-bed chart leaves cast-on loops on the back bed for the entire run
   // and rejects on bed-state validation at bind-off.
   const needsBackBedClear = input.backBedStyle === 'floats' || bodyWalkerDispatch.kind === 'single-color-stockinette';
-  if (needsBackBedClear) {
+  if (needsBackBedClear && !customistFrame) {
     // The cast-on row direction is encoded in where `castOnCarrier`
     // ended up: a '+' pass moves it from left → right, a '-' pass
     // moves it right → left. Since the cast-on always starts from
@@ -893,9 +923,19 @@ export function compileChartToKniteratePlan(
     floatsBodyAutoMovePresser: wantsIntro
       ? CUSTOMIST_FLOATS_BODY_AUTO_MOVE_PRESSER
       : undefined,
-    firstRowSpeedOverride: input.protectFirstBodyRow !== false && settings.speedNumber !== undefined
-      ? { speed: introTransition.rampSpeed, restoreSpeed: settings.speedNumber }
-      : undefined,
+    // Customist's first body row runs at ramp speed and the handoff stitch
+    // (reference/fairisle.kc pass 112) whether or not protection is on.
+    firstRowSpeedOverride: customistFrame && settings.speedNumber !== undefined
+      ? {
+        speed: introTransition.rampSpeed,
+        restoreSpeed: settings.speedNumber,
+        ...(introTransition.rampStitches[2] !== undefined && settings.stitchNumber !== undefined
+          ? { stitch: introTransition.rampStitches[2], restoreStitch: settings.stitchNumber }
+          : {}),
+      }
+      : input.protectFirstBodyRow !== false && settings.speedNumber !== undefined
+        ? { speed: introTransition.rampSpeed, restoreSpeed: settings.speedNumber }
+        : undefined,
     needleStart,
     needleEnd,
     handoff: currentHandoff,

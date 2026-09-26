@@ -255,7 +255,7 @@ demands: machine identity and software revision, yarn brand, line, lot and
 fibre, gauge and tension, rested dimensions, photographs of both faces and all
 four boundaries, and every stop or manual intervention.
 
-Then `pnpm release:register -- v1-four-color-blanket`, complete `machine.json`,
+Then `pnpm release:register -- v1-customist-fairisle`, complete `machine.json`,
 `yarn.json`, structured `run.json` and the narrative `outcome.md`, and run
 `pnpm release:physical-check`. It recompiles and re-emits the trial in process
 and demands one clean, complete, non-deviated entry whose Knitout and KCode

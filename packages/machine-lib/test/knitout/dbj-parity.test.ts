@@ -167,7 +167,7 @@ describe('dbj.kc machine-equivalent parity', () => {
     // the stitch-level baseline (identical knit/tuck/drop/transfer sets per
     // pass) as a ratchet: raise it as the engine converges, never lower it.
     expect(stitches.comparedPasses).toBe(498);
-    expect(stitches.identicalPasses).toBe(167);
+    expect(stitches.identicalPasses).toBe(129);
   });
 
   it('Studio\'s Customist-matched birdseye input differs only by first-body-row protection', () => {

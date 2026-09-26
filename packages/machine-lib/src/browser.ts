@@ -102,6 +102,11 @@ export {
   type CustomistMatchedTechniqueV1,
 } from './knitout/recipes/customist-matched.js';
 export {
+  diffTraceStitchesV1,
+  passStitchSignatureV1,
+  type TraceStitchDiffV1,
+} from './knitout/kcode/trace-stitch-diff.js';
+export {
   DEFAULT_MAX_FLOAT_DISTANCE_V1,
   MACHINE_TRACE_ADVISORY_RULES_V1,
   deriveMachineTraceAdvisoriesV1,
