@@ -51,6 +51,29 @@ ship," trust this file and the working tree instead.
   sweater, and shaped-garment references need capabilities Studio does not
   author yet. Face equality is programmed loop formation, not fabric
   appearance or physical evidence.
+- **Customist-matched frames for authored backings.** Studio authors only the
+  backings that compile through a configuration matched to a captured
+  Customist program: Fairisle (`customist-studio-fairisle-7gg`, matched to
+  `reference/fairisle.kc`) and Birdseye (`customist-studio-birdseye-7gg`,
+  matched to `reference/dbj.kc`), via
+  `machine-lib::buildCustomistMatchedCompileInputV1`. Waste, carrier intro,
+  finish, carrier roles, and per-section speed/stitch/roller come from that
+  configuration; project `frame` fields no longer change the program and the
+  UI shows a read-only frame summary, including frame yarns (e.g. C1) the
+  program brings in. Ladder, Lined, and Complement have no Customist
+  reference and block with `project-technique-unmatched`; single-color charts
+  knit jersey inside the fairisle frame. Parity with the references is exact
+  at footer level (direction, operation, carrier, speed, roller; the only
+  Birdseye difference is Studio's slow first body row) but **not yet at stitch
+  level**: `diffTraceStitchesV1` pins 211/286 identical passes for fairisle and
+  167/498 for dbj. Birdseye's rear-bed backing is the largest remaining
+  divergence. Trial and registry evidence now record the compiled frame.
+  Machine-safety invariant: every carrier a compiled program brings in must be
+  an assigned pattern yarn, the waste carrier, or the preset's declared frame
+  yarn (C1); otherwise compilation blocks with `project-unassigned-carrier`.
+  This refuses the matched birdseye program for fewer than four colors, since
+  it is laid out for C2-C5. New projects default to Birdseye only for
+  four-color palettes, Fairisle otherwise.
 - **Active overrides fail closed.** Stitch/pass overrides are schema-valid
   project intent, but the compiler does not consume them yet; any active
   override blocks compilation (`project-override-unsupported`) rather than

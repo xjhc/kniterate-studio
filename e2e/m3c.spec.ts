@@ -9,7 +9,9 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   await page.locator('input[accept=".json,application/json"]').setInputFiles('fixtures/colorwork-chart-v1/four-color-checker.json');
   await expect(page.locator('.compile-verdict')).toContainText('Surface-proven', { timeout: 15_000 });
   await expect(page.getByRole('button', { name: /Fairisle/ })).not.toContainText('Calculating', { timeout: 15_000 });
-  await expect(page.getByRole('button', { name: /Complement/ })).toContainText('Blocked');
+  // Only backings with a Customist-matched reference program are offered.
+  await expect(page.locator('.strategy-segments button')).toHaveCount(2);
+  await expect(page.locator('.frame-summary')).toContainText('Customist');
 
   await page.getByRole('button', { name: /Fairisle/ }).click();
   await page.getByLabel('Float budget', { exact: true }).fill('7');
@@ -18,17 +20,12 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   await page.locator('canvas.chart-canvas').first().focus();
   await expect(page.locator('.authored-pass-row.active')).toContainText('R3');
 
-  await page.getByRole('button', { name: /Complement/ }).click();
-  await expect(page.locator('.compile-verdict')).toContainText('Blocked');
-  await expect(page.locator('.setup-error')).toContainText('exactly two used colors');
   await page.getByRole('button', { name: /Birdseye/ }).click();
 
   await page.getByLabel('Needles', { exact: true }).fill('6');
   await page.getByLabel('Needles', { exact: true }).press('Tab');
   await page.getByLabel('Rows', { exact: true }).fill('5');
   await page.getByLabel('Rows', { exact: true }).press('Tab');
-  await page.getByLabel('Waste rows', { exact: true }).fill('24');
-  await page.getByLabel('Waste rows', { exact: true }).press('Tab');
   await expect(page.locator('.compile-verdict')).toContainText('Surface-proven', { timeout: 15_000 });
   await expect(page.locator('.compile-stats')).toContainText('Passes');
 
@@ -38,10 +35,10 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   await (await downloadEvent).saveAs(path);
   const project = JSON.parse(await readFile(path, 'utf8'));
   expect(project.history.entries.map((entry: { edit: { kind: string } }) => entry.edit.kind)).toEqual([
-    'set-strategy', 'set-strategy', 'set-strategy', 'set-strategy', 'set-width', 'set-height', 'set-frame',
+    'set-strategy', 'set-strategy', 'set-strategy', 'set-width', 'set-height',
   ]);
   expect(project.history.entries[1].edit.strategy.floatLimit).toBe(7);
-  expect(project.history.cursor).toBe(7);
+  expect(project.history.cursor).toBe(5);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('tab', { name: 'machine', exact: true }).click();
   await expect(page.locator('.authored-machine')).toBeVisible();

@@ -69,9 +69,10 @@ for (const name of ['fairisle', 'jacquard', 'dbj'] as const) {
       name: `${name}.colorwork.json`, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(chart)),
     });
     await expect(page.locator('.brand-copy small')).toContainText(`${name} reference pattern`);
-    if (name !== 'fairisle') {
+    // The Customist-matched birdseye program is laid out for four colors (dbj);
+    // two-color designs compile as fairisle.
+    if (name === 'dbj') {
       await page.getByRole('button', { name: /^Birdseye/ }).click();
-      await page.getByLabel('Color coverage').selectOption('full');
     }
     const exportButton = page.getByRole('button', { name: 'Export k-code' });
     await expect(exportButton).toBeEnabled({ timeout: 20_000 });

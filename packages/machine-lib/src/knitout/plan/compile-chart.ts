@@ -908,9 +908,25 @@ export function compileChartToKniteratePlan(
   for (const op of bodyWalkerResult.ops) bodyOps.push(op);
   for (const pass of bodyWalkerResult.predictedPasses) predictedPasses.push(pass);
   threadedNextDirection = bodyWalkerResult.finalNextDirection;
+  // A carrier active before the body that no body op references (e.g. the
+  // continuous-waste carrier or a frame yarn under a walker that only
+  // reports its own carriers) stays exactly where it was; dropping it from
+  // the handoff would make the finish bring it in a second time.
+  const bodyCarriers = new Set<CarrierId>();
+  for (const op of bodyWalkerResult.ops) {
+    if ('carriers' in op) for (const carrier of op.carriers) bodyCarriers.add(carrier);
+  }
+  const preBodyHandoff = currentHandoff;
   currentHandoff = simulatorHandoffFromBoundary({
     finalCarrierStates: bodyWalkerResult.finalCarrierStates,
   });
+  if ([...preBodyHandoff.keys()].some((carrier) => !bodyCarriers.has(carrier) && !currentHandoff.has(carrier))) {
+    const merged = new Map(currentHandoff);
+    for (const [carrier, state] of preBodyHandoff) {
+      if (!bodyCarriers.has(carrier) && !merged.has(carrier)) merged.set(carrier, state);
+    }
+    currentHandoff = merged;
+  }
   messages.push(...bodyWalkerResult.messages);
   const bindOffNeedleStart = bodyWalkerResult.bindOffNeedleStart;
   const bindOffNeedleEnd = bodyWalkerResult.bindOffNeedleEnd;

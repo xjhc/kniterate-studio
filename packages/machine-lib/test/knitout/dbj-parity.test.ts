@@ -27,7 +27,7 @@ import {
 import {
   compileExportFromState,
 } from '../../src/knitout/export-helpers.js';
-import { FAIRISLE_PARK_BINDOFF_DEFAULTS } from '../../src/knitout/passes/bind-off.js';
+import { CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES } from '../../src/knitout/recipes/customist-studio-birdseye-7gg.js';
 import {
   DEFAULT_KNITERATE_WIZARD_CONFIG,
   deriveKniterateExportState,
@@ -36,6 +36,8 @@ import {
 } from '../../src/knitout/wizard-config.js';
 import { writeKnitoutProgram } from '../../src/knitout/emitter.js';
 import { diffKc } from '../../src/knitout/kc-diff.js';
+import { buildCustomistMatchedCompileInputV1 } from '../../src/knitout/recipes/customist-matched.js';
+import { compileChartToKnitout } from '../../src/knitout/compile/from-chart.js';
 import { diffTraceStitchesV1 } from '../../src/knitout/kcode/trace-stitch-diff.js';
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js';
 import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js';
@@ -61,50 +63,7 @@ const BINDINGS = [
   { keyId: KEY_ID_COLOR_TEAL, carrier: '5' as const, name: 'c5' },
 ];
 
-const DBJ_MANUAL_OVERRIDES: RecipeOverrides = {
-  body: {
-    stitchNumber: 7,
-    speedNumber: 400,
-    rollerAdvance: 450,
-    xferStitchNumber: 5,
-    backBedStyle: 'birdseye',
-    birdseyeMode: 'full',
-  },
-  start: {
-    wastePasses: 80,
-    wasteCarrierOverride: '6',
-    drawCarrierOverride: 'none',
-    wasteMachineConfig: {
-      stitchNumber: 5,
-      castOnSpeed: 100,
-      castOnRoller: 440,
-      castOnPasses: 1,
-      castOnTuckPasses: 0,
-      castOnTuckSpeed: 300,
-      castOnTuckRoller: 0,
-      wasteSpeed: 400,
-      flatRollerPasses: 4,
-      rampRollerLeft: 440,
-      rampRollerRight: 0,
-      castOnFirstBed: 'front',
-      edgeInertNeedles: 0,
-    },
-  },
-  finish: {
-    bindOff: 'fairisle-park-bindoff',
-    fairisleParkConfig: {
-      ...FAIRISLE_PARK_BINDOFF_DEFAULTS,
-      closingWasteSpeed: 300,
-      closingWasteRoller: 450,
-      closingWasteStitchRamp: Array.from({ length: 20 }, () => 6),
-      parkSpeed: 300,
-      parkRoller: 450,
-      parkStitch: 6,
-      parkAutoMoveSpeed: 600,
-      parkAutoMoveRoller: 0,
-    },
-  },
-};
+const DBJ_MANUAL_OVERRIDES: RecipeOverrides = CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES;
 
 function buildDbjChart() {
   const design = decodeCustomistDesign(REFERENCE);
@@ -209,5 +168,15 @@ describe('dbj.kc machine-equivalent parity', () => {
     // pass) as a ratchet: raise it as the engine converges, never lower it.
     expect(stitches.comparedPasses).toBe(498);
     expect(stitches.identicalPasses).toBe(167);
+  });
+
+  it('Studio\'s Customist-matched birdseye input differs only by first-body-row protection', () => {
+    const { annotations: _annotations, ...plain } = chart;
+    const input = buildCustomistMatchedCompileInputV1({ technique: 'birdseye', chart: plain, keyPalette: PALETTE, yarnBindings: BINDINGS });
+    const studioDiff = diffKc(toKc(compileChartToKnitout(input)), REFERENCE, { maxDeltas: 400 });
+    // Product exports slow the first body row (speed 100); the captured
+    // reference knits it at body speed. Nothing else may differ.
+    expect(studioDiff.deltas.every((delta) => delta.field === 'speed')).toBe(true);
+    expect(studioDiff.deltaCount).toBeLessThanOrEqual(BINDINGS.length);
   });
 });

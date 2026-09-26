@@ -38,7 +38,7 @@ const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
       };
     };
   };
-  frame: { wasteRows: number; bindOff: string };
+  frame: { wastePasses: number; bindOff: string };
   strategy: { technique: string };
   identity: { compileHash: string; knitoutSha256: string; kcodeSha256: string };
   compilerFingerprint: string;
@@ -94,7 +94,7 @@ const spec = {
     compilerCoordinateStart: manifest.machine.compilerCoordinateStart,
     compilerCoordinateEnd: manifest.machine.compilerCoordinateEnd,
     rows: manifest.chart.height,
-    wastePasses: manifest.frame.wasteRows,
+    wastePasses: manifest.frame.wastePasses,
     bindOff: manifest.frame.bindOff,
     profile: manifest.profile,
   },

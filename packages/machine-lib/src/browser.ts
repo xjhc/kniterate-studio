@@ -96,6 +96,12 @@ export {
   type MachineTracePassRoleV1,
 } from './knitout/kcode/pass-metrics.js';
 export {
+  CUSTOMIST_MATCHED_PRESETS_V1,
+  buildCustomistMatchedCompileInputV1,
+  type CustomistMatchedCompileRequestV1,
+  type CustomistMatchedTechniqueV1,
+} from './knitout/recipes/customist-matched.js';
+export {
   DEFAULT_MAX_FLOAT_DISTANCE_V1,
   MACHINE_TRACE_ADVISORY_RULES_V1,
   deriveMachineTraceAdvisoriesV1,

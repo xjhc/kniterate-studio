@@ -23,6 +23,7 @@ import {
   recoverColorworkFromFrontFaceV1,
   type KnittedFacesV1,
 } from '../packages/machine-lib/src/knitout/kcode/knitted-faces.ts';
+import { diffTraceStitchesV1 } from '../packages/machine-lib/src/knitout/kcode/trace-stitch-diff.ts';
 import { runAuthoredPipeline } from '../apps/studio/src/authoredPipeline.ts';
 
 type Strategy = ProjectState['strategy'];
@@ -43,7 +44,7 @@ interface Reference {
 // knits both beds on every needle); Studio casts on alternate needles.
 const REFERENCES: readonly Reference[] = [
   { id: 'swatch', group: 'colorwork', waste: '2', strategy: { technique: 'fairisle', floatLimit: 30 }, gaps: ['Customist full-needle cast-on row'] },
-  { id: 'jacquard', group: 'colorwork', waste: '6', strategy: { technique: 'ladder-back', floatLimit: 30 }, gaps: ['Customist full-needle cast-on row'] },
+  { id: 'jacquard', group: 'colorwork', waste: '6', strategy: { technique: 'birdseye', floatLimit: 30 }, gaps: ['Customist full-needle cast-on row'] },
   { id: 'fairisle', group: 'colorwork', waste: '6', strategy: { technique: 'fairisle', floatLimit: 30 }, gaps: ['Customist full-needle cast-on row'] },
   { id: 'color-swatch-bindoff', group: 'colorwork', waste: '5', strategy: { technique: 'fairisle', floatLimit: 30 }, gaps: ['Customist full-needle cast-on row'] },
   { id: 'dbj', group: 'colorwork', waste: '6', strategy: { technique: 'birdseye', floatLimit: 30, birdseyeMode: 'full' }, gaps: ['full-needle jacquard (rack 0.5)', 'jacquard border closing', 'Customist full-needle cast-on row'] },
@@ -59,10 +60,14 @@ const REFERENCES: readonly Reference[] = [
 
 const PALETTE = ['#F4F0E6', '#24415D', '#C2413A', '#D6A633'];
 
-function faces(kcode: string, waste: Carrier): KnittedFacesV1 {
+function trace(kcode: string) {
   const parsed = parseKCodeDocument(kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true });
   if (!parsed.ok) throw new Error('reference is not strict KCode');
-  return projectKnittedFacesV1(projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2), { drawCarrier: '1', wasteCarrier: waste });
+  return projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
+}
+
+function faces(kcode: string, waste: Carrier): KnittedFacesV1 {
+  return projectKnittedFacesV1(trace(kcode), { drawCarrier: '1', wasteCarrier: waste });
 }
 
 interface Row {
@@ -71,16 +76,19 @@ interface Row {
   status: 'reproduced' | 'partial' | 'not-yet';
   front: string | null;
   rear: string | null;
+  /** Passes with identical stitch sets (Studio vs reference), aligned by pass index. */
+  stitches: string | null;
   verdict: string | null;
   gaps: readonly string[];
 }
 
 async function score(reference: Reference): Promise<Row> {
   const base = { id: reference.id, group: reference.group, gaps: reference.gaps };
-  if (!reference.strategy) return { ...base, status: 'not-yet', front: null, rear: null, verdict: null };
-  const referenceFaces = faces(await readFile(`packages/machine-lib/reference/${reference.id}.kc`, 'utf8'), reference.waste);
+  if (!reference.strategy) return { ...base, status: 'not-yet', front: null, rear: null, stitches: null, verdict: null };
+  const referenceText = await readFile(`packages/machine-lib/reference/${reference.id}.kc`, 'utf8');
+  const referenceFaces = faces(referenceText, reference.waste);
   const recovered = recoverColorworkFromFrontFaceV1(referenceFaces.front);
-  if (!recovered || recovered.carriers.length > 4) return { ...base, status: 'not-yet', front: null, rear: null, verdict: null };
+  if (!recovered || recovered.carriers.length > 4) return { ...base, status: 'not-yet', front: null, rear: null, stitches: null, verdict: null };
 
   let project = createColorworkProjectV1({
     kind: 'knitlab-colorwork-chart', version: 1, title: reference.id,
@@ -90,7 +98,7 @@ async function score(reference: Reference): Promise<Row> {
   }, { id: `parity-${reference.id}`, needleOffset: Math.max(1, referenceFaces.front.firstCoordinate ?? 1) });
   project = appendProjectEdit(project, { id: 'recipe', source: 'system', edit: { kind: 'set-strategy', strategy: reference.strategy } });
   const result = await runAuthoredPipeline(project);
-  if (!result.kcode) return { ...base, status: 'not-yet', front: null, rear: null, verdict: result.verdict.label };
+  if (!result.kcode) return { ...base, status: 'not-yet', front: null, rear: null, stitches: null, verdict: result.verdict.label };
 
   // Studio assigns palette entries to C2.. in palette order.
   const carrierMap = new Map(project.base.machine.yarnAssignments.map((assignment) => [assignment.paletteId.slice(1), assignment.carrier as string]));
@@ -98,6 +106,7 @@ async function score(reference: Reference): Promise<Row> {
   const complete = { ...referenceFaces.front, rows: referenceFaces.front.rows.filter((row) => !row.includes(' ')) };
   const front = compareKnittedFaceRowsV1(complete, { ...ours.front, rows: ours.front.rows.filter((row) => !row.includes(' ')) }, carrierMap);
   const rear = compareKnittedFaceRowsV1(referenceFaces.rear, ours.rear, carrierMap);
+  const stitchDiff = diffTraceStitchesV1(trace(referenceText), result.kcode.trace ?? trace(result.kcode.kcText));
   const frontExact = front.matchingRows === front.expectedRows;
   const rearExact = rear.matchingRows === rear.expectedRows;
   return {
@@ -105,6 +114,7 @@ async function score(reference: Reference): Promise<Row> {
     status: frontExact && rearExact && result.exportReady ? 'reproduced' : frontExact && result.exportReady ? 'partial' : 'not-yet',
     front: `${front.matchingRows}/${front.expectedRows}`,
     rear: `${rear.matchingRows}/${rear.expectedRows}`,
+    stitches: `${stitchDiff.identicalPasses}/${stitchDiff.expectedPasses}`,
     verdict: result.verdict.label,
   };
 }
@@ -122,9 +132,9 @@ async function main(): Promise<void> {
     process.stdout.write(`${JSON.stringify({ kind: 'kniterate-studio-parity-scoreboard', schemaVersion: 1, counts, references: rows }, null, 2)}\n`);
     return;
   }
-  process.stdout.write(`Customist parity: ${counts.reproduced} reproduced, ${counts.partial} front-face only, of ${counts.total} references\n\n`);
+  process.stdout.write(`Customist parity: ${counts.reproduced} reproduced, ${counts.partial} front-face only, of ${counts.total} references\n(Stitch-identical passes compare the whole program, frame included, pass by pass.)\n\n`);
   for (const row of rows) {
-    const faces = row.front === null ? '' : ` front ${row.front} rear ${row.rear} · ${row.verdict}`;
+    const faces = row.front === null ? '' : ` front ${row.front} rear ${row.rear} · stitch-identical passes ${row.stitches} · ${row.verdict}`;
     process.stdout.write(`${row.status.padEnd(10)} ${row.id.padEnd(21)} ${row.group.padEnd(15)}${faces}\n`);
     if (row.gaps.length > 0) process.stdout.write(`${' '.repeat(11)}needs: ${row.gaps.join(', ')}\n`);
   }

@@ -646,7 +646,7 @@ function validateMachine(
     if (!finiteNumber(program.gauge, 0, true)) messages.push('machine.json.program.gauge must be a finite positive number');
     if (!['Left', 'Center', 'Right', 'Keep'].includes(String(program.position))) messages.push('machine.json.program.position must be Left/Center/Right/Keep');
     if (!integer(program.wastePasses, 0)) messages.push('machine.json.program.wastePasses must be a nonnegative integer');
-    if (!['machine-bindoff', 'waste-and-drop'].includes(String(program.bindOff))) messages.push('machine.json.program.bindOff must be machine-bindoff or waste-and-drop');
+    if (!['machine-bindoff', 'waste-and-drop', 'fairisle-park-bindoff'].includes(String(program.bindOff))) messages.push('machine.json.program.bindOff must be machine-bindoff, waste-and-drop, or fairisle-park-bindoff');
     coordinateBridge = validateCoordinateBridge(program.coordinateBridge, 'machine.json.program.coordinateBridge', messages);
     if (coordinateBridge !== null) {
       if (integer(program.compilerCoordinateStart) && coordinateBridge.compilerStart !== program.compilerCoordinateStart) messages.push('machine.json.program.coordinateBridge compiler start differs from machine.json.program.compilerCoordinateStart');

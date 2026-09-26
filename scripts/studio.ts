@@ -119,7 +119,6 @@ function describeProject(project: ColorworkProjectV1, includeCells: boolean) {
     },
     machine: state.machine,
     strategy: state.strategy,
-    frame: state.frame,
     overrides,
   };
 }

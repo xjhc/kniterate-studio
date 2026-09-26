@@ -40,6 +40,8 @@ import { CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE } from '../../src/knitout/recipes/
 import { writeKnitoutProgram } from '../../src/knitout/emitter.js';
 import { knitoutToKCode } from '../../src/knitout/kniterate/to-kcode.js';
 import { diffKc } from '../../src/knitout/kc-diff.js';
+import { buildCustomistMatchedCompileInputV1 } from '../../src/knitout/recipes/customist-matched.js';
+import { compileChartToKnitout } from '../../src/knitout/compile/from-chart.js';
 import { diffTraceStitchesV1 } from '../../src/knitout/kcode/trace-stitch-diff.js';
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js';
 import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js';
@@ -166,5 +168,10 @@ describe('fairisle.kc byte-parity (recipe path)', () => {
     // pass) as a ratchet: raise it as the engine converges, never lower it.
     expect(stitches.comparedPasses).toBe(286);
     expect(stitches.identicalPasses).toBe(211);
+  });
+
+  it('Studio\'s Customist-matched fairisle input compiles to the same .kc as the recipe path', () => {
+    const input = buildCustomistMatchedCompileInputV1({ technique: 'fairisle', chart, keyPalette: PALETTE, yarnBindings: BINDINGS });
+    expect(toKc(compileChartToKnitout(input))).toBe(recipeKc);
   });
 });

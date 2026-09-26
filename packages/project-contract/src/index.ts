@@ -587,36 +587,40 @@ function currentCapacityProjectV1(project: ColorworkProjectV1): AuthoredCapacity
   };
 }
 
+/**
+ * Upper bound on frame passes (waste interlock, carrier intro, closing waste,
+ * park-out) in the Customist-matched configurations authored backings compile
+ * through: 87 interlock passes plus intro and closing sections.
+ */
+const CUSTOMIST_FRAME_PASS_BOUND_V1 = 160;
+
 function capacityEstimateV1(project: AuthoredCapacityProjectV1): AuthoredCapacityEstimateV1 {
-  // These are conservative upper bounds for the fixed V1 rectangular compiler:
-  // every design cell can expand once per active carrier, with an extra backing
-  // action for Ladder/Lined and two actions per carrier for Birdseye. Frame and
-  // carrier setup are bounded separately. Exact post-compile/lowering counts are
-  // still recorded and checked before output can become Surface-proven.
+  // Conservative upper bounds for the fixed V1 rectangular compiler: every
+  // design cell can expand to two actions per active carrier (measured at
+  // about 1.1 per carrier for both backings), and every frame pass can select
+  // the full width on both beds.
+  // Exact post-compile/lowering counts are still recorded and checked before
+  // output can become Surface-proven.
   const colors = Math.max(1, Math.min(4, project.activeColors));
-  const recordMultiplier = project.technique === 'birdseye'
-    ? colors * 2
-    : project.technique === 'ladder-back' || project.technique === 'lined'
-      ? colors + 1
-      : project.technique === 'complement'
-        ? 2
-        : colors;
+  const recordMultiplier = colors * 2;
   // At most 16 body/positioning passes per design row, four bind-off
-  // movements per needle, two passes per waste row, and 24 fixed setup/
-  // teardown passes. The width-aware bind-off term is material at short,
-  // full-bed charts where a height-only estimate under-counts lowering.
+  // movements per needle, and the fixed frame bound. The width-aware
+  // bind-off term is material at short, full-bed charts where a height-only
+  // estimate under-counts lowering.
   const loweredPasses = project.height * 16
     + project.width * 4
-    + Math.max(4, project.wasteRows) * 2
-    + 24;
+    + CUSTOMIST_FRAME_PASS_BOUND_V1 * 2;
   return {
     knitoutRecords: recordMultiplier * project.width * project.height
-      + project.width * (project.wasteRows + 15)
+      + 2 * project.width * CUSTOMIST_FRAME_PASS_BOUND_V1
       + 1_200,
     loweredPasses,
-    selectedCells: 2 * project.width * project.height
-      + project.width * project.wasteRows
-      + 30_000,
+    // Measured body selections are 1.41-1.43 per design cell at two colors
+    // and up to 2.43 at four, for both backings; frame selections are about
+    // 130 per needle of width.
+    selectedCells: Math.ceil((1 + 0.4 * colors) * project.width * project.height)
+      + 140 * project.width
+      + 10_000,
     // The pinned serializer emits at most 12 records per pass plus three
     // document headers. This keeps every pass-admitted authored artifact below
     // the shared KCode parser/materialization ceiling.
@@ -989,7 +993,8 @@ export function createColorworkProjectV1(chartValue: unknown, options: { id: str
       needleOffset,
       yarnAssignments: chart.palette.slice(0, 4).map((entry, index) => ({ paletteId: entry.id, carrier: carriers[index]!, yarnName: entry.name })),
     },
-    strategy: { technique: chart.palette.length === 2 ? 'fairisle' : 'birdseye', birdseyeMode: 'minimal', floatLimit: 5 },
+    // Studio's Customist-matched birdseye program is laid out for four colors on C2-C5.
+    strategy: { technique: chart.palette.length === 4 ? 'birdseye' : 'fairisle', birdseyeMode: 'minimal', floatLimit: 5 },
     frame: { wasteRows: 20, drawThread: true, bindOff: 'machine-bindoff' },
     overrides: [],
   };

@@ -24,6 +24,7 @@ function artifactWithSource(knitoutText: string): BlanketCompileArtifact {
     programOpSourceRows: [],
     rowProvenance: [],
     backFace: null,
+    frame: null,
     diagnostics: [],
     stats: {
       designRows: 1,

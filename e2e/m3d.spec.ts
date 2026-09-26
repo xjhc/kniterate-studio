@@ -21,11 +21,8 @@ test('exports validated k-code and reproduces it byte-identically after project 
   await page.locator('input[accept=".json,application/json"]').setInputFiles('fixtures/colorwork-chart-v1/four-color-checker.json');
   await expect(page.locator('.compile-verdict')).toContainText('Surface-proven', { timeout: 15_000 });
 
-  await page.getByRole('button', { name: /Complement/ }).click();
-  await expect(page.getByRole('button', { name: 'Export k-code', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: /Fairisle/ }).click();
   await page.getByRole('button', { name: /Birdseye/ }).click();
-  await page.getByLabel('Waste rows', { exact: true }).fill('24');
-  await page.getByLabel('Waste rows', { exact: true }).press('Tab');
 
   const firstExport = await waitForExport(page);
   const firstKc = testInfo.outputPath('first.kc');
@@ -93,7 +90,7 @@ test('exports and reopens the canonical 200x300 four-color authored blanket', as
   const firstBytes = await readFile(firstKc);
   expect(firstBytes.length).toBeGreaterThan(1_000_000);
   expect(firstBytes.toString('utf8')).toContain('FRNT:');
-  await expect(page.locator('.compile-stats')).toContainText('5,032');
+  await expect(page.locator('.compile-stats')).toContainText('1,650');
 
   const projectDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save project', exact: true }).click();

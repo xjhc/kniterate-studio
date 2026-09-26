@@ -90,6 +90,7 @@ export function emitJacquardDbjFullWalk(input: JacquardDbjFullInput): JacquardDb
 
   const bodyRows = resolved.rows;
   for (let r = 0; r < bodyRows; r++) {
+    sim.setSourceRows([r]);
     ops.push(...sim.drainOps());
     ops.push(comment(`row ${r}`));
     applyFirstRowSpeedOverride(sim, r, firstRowSpeedOverride);
@@ -115,6 +116,7 @@ export function emitJacquardDbjFullWalk(input: JacquardDbjFullInput): JacquardDb
     restoreFirstRowSpeedOverride(sim, r, firstRowSpeedOverride);
   }
 
+  sim.setSourceRows();
   ops.push(...sim.drainOps());
   ops.push(comment('--- DBJ FULL-BACK TRANSFER + CLOSING SETUP ---'));
   sim.setSpeed(DBJ_FULL_BODY_SPEED);

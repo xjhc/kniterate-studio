@@ -12,9 +12,9 @@ test('keeps chart, strategy, machine truth, source, and refusal state in one V1 
   await expect(page.locator('.authored-machine')).toBeVisible();
   for (const region of ['Waste yarn', 'Draw thread', 'Blanket body', 'Finish']) await expect(page.getByRole('button', { name: new RegExp(`^${region}`) })).toBeVisible();
 
-  await page.getByRole('button', { name: /^Complement/ }).click();
-  await expect(page.getByLabel('Verdict: Blocked')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Export k-code' })).toBeDisabled();
+  await expect(page.locator('.strategy-segments button')).toHaveCount(2);
+  await expect(page.locator('.frame-summary')).toContainText('Customist');
+  await page.getByRole('button', { name: /^Fairisle/ }).click();
   await page.getByRole('button', { name: /^Birdseye/ }).click();
   await expect(page.getByRole('button', { name: 'Export k-code' })).toBeEnabled({ timeout: 20_000 });
 

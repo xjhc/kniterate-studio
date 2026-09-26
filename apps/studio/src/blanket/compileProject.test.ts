@@ -93,11 +93,65 @@ describe('blanket project compiler', () => {
     expect(artifact.messages.filter((message) => message.rule === 'project-override-unsupported')).toHaveLength(2);
   });
 
-  it('blocks complement when the project does not use exactly two colors', () => {
+  it('blocks backings without a Customist-matched reference program', () => {
+    for (const technique of ['ladder-back', 'lined', 'complement'] as const) {
+      let project = createColorworkProjectV1(chart, { id: `unmatched-${technique}` });
+      project = appendProjectEdit(project, { id: 'strategy', source: 'human', edit: { kind: 'set-strategy', strategy: { technique, floatLimit: 5 } } });
+      const artifact = compileColorworkProject(project);
+      expect(artifact.ok, technique).toBe(false);
+      expect(artifact.messages).toContainEqual(expect.objectContaining({ rule: 'project-technique-unmatched' }));
+    }
+    // A single-color chart has no backing and knits jersey inside the fairisle frame.
     const oneColor = { ...chart, palette: chart.palette.slice(0, 1), cells: chart.cells.map((row) => row.map(() => 0)) };
-    let project = createColorworkProjectV1(oneColor, { id: 'bad-complement' });
-    project = appendProjectEdit(project, { id: 'complement', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'complement', floatLimit: 5 } } });
-    expect(compileColorworkProject(project).messages).toContainEqual(expect.objectContaining({ rule: 'project-complement-two-colors' }));
+    const single = compileColorworkProject(createColorworkProjectV1(oneColor, { id: 'single-color' }));
+    expect(single.ok).toBe(true);
+    expect(single.frame).toMatchObject({ preset: 'customist-studio-fairisle-7gg' });
+  });
+
+  it('compiles through the Customist-matched frame for each authored backing', () => {
+    for (const [technique, preset, reference] of [
+      ['fairisle', 'customist-studio-fairisle-7gg', 'reference/fairisle.kc'],
+      ['birdseye', 'customist-studio-birdseye-7gg', 'reference/dbj.kc'],
+    ] as const) {
+      let project = createColorworkProjectV1(fourColorChart(24, 12, `Matched ${technique}`), { id: `matched-${technique}`, needleOffset: 40 });
+      project = appendProjectEdit(project, { id: 'strategy', source: 'human', edit: { kind: 'set-strategy', strategy: { technique, floatLimit: 5 } } });
+      // Project frame edits no longer change the program.
+      const edited = appendProjectEdit(project, { id: 'frame', source: 'human', edit: { kind: 'set-frame', frame: { wasteRows: 200, drawThread: false, bindOff: 'waste-and-drop' } } });
+      const artifact = compileColorworkProject(project);
+      expect(artifact.ok, technique).toBe(true);
+      expect(artifact.frame).toMatchObject({ preset, reference, wasteCarrier: '6' });
+      expect(compileColorworkProject(edited).knitoutText).toBe(artifact.knitoutText);
+    }
+  });
+
+  it('refuses a program that would knit a carrier with no assigned yarn', () => {
+    // The matched birdseye program is laid out for four colors on C2-C5; with
+    // two colors it would bring in C4/C5 with no yarn loaded.
+    let project = createColorworkProjectV1(chart, { id: 'birdseye-two-colors', needleOffset: 40 });
+    project = appendProjectEdit(project, { id: 'strategy', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'birdseye', floatLimit: 5 } } });
+    const artifact = compileColorworkProject(project);
+    expect(artifact.ok).toBe(false);
+    expect(artifact.knitoutText).toBeNull();
+    expect(artifact.messages).toContainEqual(expect.objectContaining({ rule: 'project-unassigned-carrier', severity: 'error' }));
+  });
+
+  it('keeps row provenance and declares only the preset frame yarn for four-color birdseye', () => {
+    const project = createColorworkProjectV1(fourColorChart(24, 12, 'Four-color provenance'), { id: 'birdseye-provenance', needleOffset: 40 });
+    const artifact = compileColorworkProject(project);
+    expect(artifact.technique).toBe('birdseye');
+    expect(artifact.ok).toBe(true);
+    expect(artifact.frame?.frameCarriers).toEqual(['1']);
+    expect(artifact.rowProvenance.every((row) => row.passIndices.length > 0)).toBe(true);
+  });
+
+  it('compiles one-color-per-row stripes under the Customist fairisle frame without re-introducing carriers', () => {
+    const stripes = { ...chart, width: 20, height: 12, cells: Array.from({ length: 12 }, (_, row) => Array.from({ length: 20 }, () => Math.floor(row / 4) % 2)) };
+    let project = createColorworkProjectV1(stripes, { id: 'stripes-fairisle', needleOffset: 40 });
+    project = appendProjectEdit(project, { id: 'strategy', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'fairisle', floatLimit: 5 } } });
+    const artifact = compileColorworkProject(project);
+    expect(artifact.ok).toBe(true);
+    const introduced = [...artifact.knitoutText!.matchAll(/^in ([1-6])$/gm)].map((match) => match[1]);
+    expect(introduced).toHaveLength(new Set(introduced).size);
   });
 
   it('joins op diagnostics to chart rows through typed engine provenance', () => {
@@ -138,16 +192,11 @@ describe('blanket project compiler', () => {
       source: 'human',
       edit: { kind: 'set-strategy', strategy: { technique: 'fairisle', floatLimit: 1 } },
     });
-    project = appendProjectEdit(project, {
-      id: 'short-frame',
-      source: 'human',
-      edit: { kind: 'set-frame', frame: { wasteRows: 4, drawThread: false, bindOff: 'waste-and-drop' } },
-    });
 
     const compiled = compileColorworkProject(project);
     expect(compiled.ok).toBe(true);
     if (compiled.capacity.status === 'blocked') throw new Error(compiled.capacity.message);
-    expect(compiled.passes).toHaveLength(40);
+    expect(compiled.passes).toHaveLength(160);
     const emitted = await compileKCodeArtifact({
       kind: 'convert-kcode',
       requestId: 1,
@@ -159,12 +208,12 @@ describe('blanket project compiler', () => {
     });
 
     expect(emitted.ok).toBe(true);
-    expect(emitted.passCount).toBe(70);
-    expect(compiled.rowProvenance[0]).toMatchObject({ rowId: 'row_0001', passIndices: [28, 29] });
-    expect(emitted.rowPasses[0]).toEqual({ rowId: 'row_0001', passIndices: [30, 31] });
+    expect(emitted.passCount).toBe(158);
+    expect(compiled.rowProvenance[0]).toMatchObject({ rowId: 'row_0001', passIndices: [132, 133] });
+    expect(emitted.rowPasses[0]).toEqual({ rowId: 'row_0001', passIndices: [130, 131] });
     expect(compiled.diagnostics.find((item) => item.rowId === 'row_0001')).toMatchObject({
       rule: 'bed-state-long-float',
-      passIndices: [28, 29],
+      passIndices: [132, 133],
     });
   });
 
@@ -181,11 +230,11 @@ describe('blanket project compiler', () => {
       status: 'supported',
       evidence: null,
       project: { width: 200, height: 300, paletteColors: 4, activeColors: 4, technique: 'birdseye', birdseyeMode: 'minimal' },
-      observed: { knitoutRecords: 487_940 },
+      observed: { knitoutRecords: 265_862 },
     });
     expect(compiled.capacity.estimate.knitoutRecords).toBeGreaterThanOrEqual(compiled.capacity.observed.knitoutRecords ?? Infinity);
     expect(compiled.capacity.estimate.kcodeRecords).toBeLessThanOrEqual(AUTHORED_CAPACITY_LIMITS_V1.kcodeRecords);
-    expect(compiled.stats).toMatchObject({ designRows: 300, needles: 200, passCount: 5_032, opCount: 487_928 });
+    expect(compiled.stats).toMatchObject({ designRows: 300, needles: 200, passCount: 1_650, opCount: 265_850 });
   });
 
   it('refuses a structurally valid oversized Birdseye project before compiler allocation', () => {
@@ -214,12 +263,13 @@ describe('blanket project compiler', () => {
     const source = fourColorChart(252, 300, 'Two active colors, four declared');
     const twoUsed = { ...source, cells: source.cells.map((row) => row.map((cell) => cell % 2)) };
     let project = createColorworkProjectV1(twoUsed, { id: 'two-active-full-bed' });
+    project = appendProjectEdit(project, { id: 'fairisle', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'fairisle', floatLimit: 5 } } });
     const compiled = compileColorworkProject(project);
     expect(compiled.ok).toBe(true);
     expect(compiled.capacity).toMatchObject({
       status: 'supported',
       project: { paletteColors: 4, activeColors: 2 },
-      observed: { knitoutRecords: 312_154 },
+      observed: { knitoutRecords: 182_201 },
     });
 
     project = appendProjectEdit(project, {
@@ -249,17 +299,11 @@ describe('blanket project compiler', () => {
   it('keeps the conservative Knitout estimate above exact output across authored strategies', { timeout: 20_000 }, () => {
     const cases = [
       { technique: 'fairisle', birdseyeMode: undefined },
-      { technique: 'ladder-back', birdseyeMode: undefined },
-      { technique: 'lined', birdseyeMode: undefined },
-      { technique: 'birdseye', birdseyeMode: 'minimal' },
-      { technique: 'birdseye', birdseyeMode: 'full' },
-      { technique: 'complement', birdseyeMode: undefined },
+      { technique: 'birdseye', birdseyeMode: undefined },
     ] as const;
     for (const item of cases) {
       const sourceChart = fourColorChart(80, 60, `Estimate ${item.technique} ${item.birdseyeMode ?? ''}`);
-      const strategyChart = item.technique === 'complement'
-        ? { ...sourceChart, palette: sourceChart.palette.slice(0, 2), cells: sourceChart.cells.map((row) => row.map((cell) => cell % 2)) }
-        : sourceChart;
+      const strategyChart = sourceChart;
       let project = createColorworkProjectV1(
         strategyChart,
         { id: `estimate-${item.technique}-${item.birdseyeMode ?? 'default'}` },
@@ -284,16 +328,11 @@ describe('blanket project compiler', () => {
   });
 
   it('keeps the width-aware pass estimate above exact lowering for short full-bed charts', { timeout: 20_000 }, () => {
-    for (const [height, exactPasses] of [[1, 1_044], [10, 1_170]] as const) {
+    for (const [height, exactPasses] of [[1, 154], [10, 198]] as const) {
       let project = createColorworkProjectV1(
         fourColorChart(252, height, `Full-bed ${height}`),
         { id: `full-bed-${height}` },
       );
-      project = appendProjectEdit(project, {
-        id: 'minimum-waste',
-        source: 'system',
-        edit: { kind: 'set-frame', frame: { wasteRows: 4, drawThread: true, bindOff: 'machine-bindoff' } },
-      });
       const compiled = compileColorworkProject(project);
       expect(compiled.ok).toBe(true);
       const converted = browserAuthoredKnitoutToKCode(compiled.knitoutText!, 'short-full-bed.k');
@@ -303,16 +342,11 @@ describe('blanket project compiler', () => {
     }
   });
 
-  it('reopens an authored export above the former 50k KCode intake ceiling through the normal import path', { timeout: 30_000 }, async () => {
+  it('reopens the canonical authored export through the normal import path', { timeout: 30_000 }, async () => {
     let project = createColorworkProjectV1(
       fourColorChart(200, 300, 'Large authored self-reopen'),
       { id: 'large-authored-self-reopen' },
     );
-    project = appendProjectEdit(project, {
-      id: 'maximum-waste',
-      source: 'system',
-      edit: { kind: 'set-frame', frame: { wasteRows: 200, drawThread: true, bindOff: 'machine-bindoff' } },
-    });
     const compiled = compileColorworkProject(project);
     expect(compiled.ok).toBe(true);
     if (compiled.capacity.status === 'blocked') throw new Error(compiled.capacity.message);
@@ -325,7 +359,7 @@ describe('blanket project compiler', () => {
       programOpSourceRows: compiled.programOpSourceRows,
       rowProvenance: compiled.rowProvenance,
     });
-    expect(emitted.capacity.observed.kcodeRecords).toBe(50_377);
+    expect(emitted.capacity.observed.kcodeRecords).toBe(15_155);
     const reopened = openMachineDocument('large-authored-self-reopen.kc', emitted.kcText, {
       dialect: 'knitout-vendor',
     });

@@ -92,7 +92,7 @@ export function compileCurrentV1KnitTrial() {
   const chart = trialChart();
   const project = createColorworkProjectV1(chart, { id: 'v1-four-color-blanket-trial', title: chart.title });
   const compiled = compileColorworkProject(project);
-  if (!compiled.ok || !compiled.knitoutText || !compiled.inputHash) {
+  if (!compiled.ok || !compiled.knitoutText || !compiled.inputHash || !compiled.frame || compiled.frame.wastePasses === null || compiled.frame.bindOff === null || compiled.frame.wasteCarrier === null) {
     throw new Error(compiled.messages.map((message) => `${message.severity}: ${message.message}`).join('\n'));
   }
   const converted = knitoutToKCodeWithTrace(compiled.knitoutText, 'command.k');
@@ -206,17 +206,17 @@ export function compileCurrentV1KnitTrial() {
       program: {
         gauge: 7,
         position: 'Center',
-        wastePasses: project.base.frame.wasteRows,
-        bindOff: project.base.frame.bindOff,
+        wastePasses: compiled.frame.wastePasses,
+        bindOff: compiled.frame.bindOff,
         initialSettings,
       },
     },
     carriers: [
-      { carrier: '1', role: 'draw' },
+      ...compiled.frame.frameCarriers.map((carrier) => ({ carrier, role: 'draw' })),
       ...project.base.machine.yarnAssignments.map((assignment) => ({ carrier: assignment.carrier, role: 'pattern', paletteId: assignment.paletteId, yarnName: assignment.yarnName })),
-      { carrier: '6', role: 'waste' },
-    ],
-    frame: project.base.frame, strategy: project.base.strategy,
+      { carrier: compiled.frame.wasteCarrier, role: 'waste' },
+    ].sort((left, right) => Number(left.carrier) - Number(right.carrier)),
+    frame: compiled.frame, strategy: project.base.strategy,
     output: {
       predictedPasses: compiled.stats.passCount,
       emittedPasses: inspectKcDocument(converted.kcode).length,
@@ -244,11 +244,11 @@ export function compileCurrentV1KnitTrial() {
   const operatorChecklist = `# V1 physical blanket trial
 
 1. Knit a profile-matched tension swatch with the exact four yarns and record yarn brand, line, lot, fiber, and measured gauge.
-2. Load C1 draw thread, C2-C5 according to manifest.json, and C6 waste yarn.
+2. Load every carrier in manifest.json: frame yarn${compiled.frame.frameCarriers.length === 1 ? '' : 's'} ${compiled.frame.frameCarriers.map((carrier) => `C${carrier}`).join(', ') || 'none'} (Customist draw/cameo), C2-C5 pattern yarns, and C${compiled.frame.wasteCarrier} waste yarn.
 3. The compiler/project range ${compilerCoordinateStart}-${compilerCoordinateEnd} maps through the exact hash-bound lowering receipt to KCode columns ${coordinateBridge.kcodeColumn.start}-${coordinateBridge.kcodeColumn.end} and normalized trace coordinates ${coordinateBridge.traceCoordinate.start}-${coordinateBridge.traceCoordinate.end}. None of those values is yet a verified physical needle label.
 4. Before sending the job, resolve both trace endpoints to physical needle labels using a documented machine/vendor datum procedure. Record increasing or decreasing physical-label orientation, and have a different person independently verify the endpoints, method, exact artifact hash, and time in run.json. Do not run while this gate is unverified.
 5. Independently compare the controller-loaded initial recipe with the exact candidate receipt: stitch ${initialSettings.stitchNumber}; transfer stitch ${initialSettings.xferStitchNumber}; speed ${initialSettings.speedNumber}; roller ${initialSettings.rollerAdvance}; transfer style ${initialSettings.xferStyle}; carrier spacing ${initialSettings.carrierSpacing}; carrier stopping distance ${initialSettings.carrierStoppingDistance}. These are candidate commands, not a proven safe envelope. Record every difference for machine.json.deviationsFromCompile and every in-run change in run.json; either condition makes the run non-promotable.
-6. Confirm 20 waste rows, draw thread, and machine bind-off. Per Kniterate's [start-up guide](https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide) and [machine procedure](https://support.kniterate.com/hc/en-us/article_attachments/360009817198), the design app does not import .kc files: after independent hash and metadata review, copy the exact bytes of blanket.kc to the SD card as command.kc, eject the card correctly, and follow that documented manual procedure. Retain blanket.kc as the unchanged evidence copy. Do not claim or attempt an automated controller-only dry run.
+6. Confirm the Customist-matched frame (${compiled.frame.preset}, matched to ${compiled.frame.reference}): ${compiled.frame.wastePasses} waste passes and ${compiled.frame.bindOff} finish. Per Kniterate's [start-up guide](https://support.kniterate.com/hc/en-us/articles/18230075945885-Start-up-guide) and [machine procedure](https://support.kniterate.com/hc/en-us/article_attachments/360009817198), the design app does not import .kc files: after independent hash and metadata review, copy the exact bytes of blanket.kc to the SD card as command.kc, eject the card correctly, and follow that documented manual procedure. Retain blanket.kc as the unchanged evidence copy. Do not claim or attempt an automated controller-only dry run.
 7. Watch waste, draw, carrier bring-in, first two body rows, and bind-off. Stop on unexpected carrier position, loop loss, or takedown behavior; record every manual intervention in run.json.
 8. Photograph front, back, cast-on, both edges, and bind-off. Record dimensions off-machine and after 24 hours of rest.
 9. Record one continuous startedAt/endedAt interval in run.json around the exact machine run, including every stop or manual intervention. Compare that observed interval only with this manifest's authored-plan heuristic and assumption-derived idealized term. Any residual or ratio is candidate-, machine-, controller-, yarn-, and settings-specific; do not promote one run into a universal duration constant.

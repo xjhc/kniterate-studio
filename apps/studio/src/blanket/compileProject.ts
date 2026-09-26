@@ -8,6 +8,8 @@ import {
   type ProjectState,
 } from '@kniterate-studio/project-contract';
 import {
+  CUSTOMIST_MATCHED_PRESETS_V1,
+  buildCustomistMatchedCompileInputV1,
   compileToRunArtifact,
   projectColorworkChartV1,
   projectBackFaceFromArtifact,
@@ -18,6 +20,24 @@ import {
 } from '@kniterate-studio/machine-lib/browser';
 
 export type CompileVerdict = 'blocked' | 'surface';
+
+export interface CompiledFrame {
+  preset: string;
+  reference: string;
+  wastePasses: number | null;
+  wasteCarrier: string | null;
+  drawCarrier: string | null;
+  bindOff: string | null;
+  /** Carriers the program brings in beyond the pattern yarns and waste (for example a Customist draw/cameo yarn). */
+  frameCarriers: string[];
+}
+
+/** Backings Studio authors: each compiles through a Customist-matched configuration. */
+export const AUTHORED_TECHNIQUES = ['fairisle', 'birdseye'] as const satisfies readonly BackingTechnique[];
+
+function isAuthoredTechnique(technique: BackingTechnique): technique is (typeof AUTHORED_TECHNIQUES)[number] {
+  return (AUTHORED_TECHNIQUES as readonly BackingTechnique[]).includes(technique);
+}
 export type BackingTechnique = ProjectState['strategy']['technique'];
 
 export interface StrategyComparison {
@@ -50,6 +70,8 @@ export interface BlanketCompileArtifact {
     passIndices: readonly number[];
   }[];
   backFace: BackFaceProjection | null;
+  /** Frame and settings source. Studio compiles only through configurations matched to a captured Customist program. */
+  frame: CompiledFrame | null;
   diagnostics: readonly {
     severity: ValidationMessage['severity'];
     rule: string;
@@ -112,6 +134,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       programOpSourceRows: [],
       rowProvenance: [],
       backFace: null,
+      frame: null,
       diagnostics: [{ ...message, opIndex: null, rowId: null, passIndices: [] }],
     };
   }
@@ -121,12 +144,11 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   const assignments = new Map(state.machine.yarnAssignments.map((assignment) => [assignment.paletteId, assignment]));
   const setupMessages: ValidationMessage[] = [];
 
-  if (state.frame.wasteRows < 4 || state.frame.wasteRows > 200) setupMessages.push(setupError('project-waste-rows-range', `Waste rows must be between 4 and 200; received ${state.frame.wasteRows}.`));
+  if (!isAuthoredTechnique(state.strategy.technique)) setupMessages.push(setupError('project-technique-unmatched', `The ${state.strategy.technique} backing has no Customist-matched reference program yet; choose Fairisle or Birdseye.`));
   if (usedPalette.length > 4) setupMessages.push(setupError('project-pattern-color-limit', `This chart uses ${usedPalette.length} pattern colors; Kniterate Studio v1 supports at most four on reserved carriers C2-C5.`));
   for (const entry of usedPalette) {
     if (!assignments.has(entry.id)) setupMessages.push(setupError('project-yarn-assignment-required', `${entry.name} is used by the chart but has no pattern carrier assignment.`));
   }
-  if (state.strategy.technique === 'complement' && usedPalette.length !== 2) setupMessages.push(setupError('project-complement-two-colors', `Complement backing requires exactly two used colors; this chart uses ${usedPalette.length}.`));
   for (const resolved of overrides) {
     if (resolved.status === 'quarantined') setupMessages.push(setupError('project-override-quarantined', resolved.reason ?? `Override ${resolved.override.id} is quarantined.`));
     // The compiler does not consume overrides yet; refuse rather than export
@@ -147,39 +169,61 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       estimatedKnitTimeSeconds: null,
     },
   };
-  if (setupMessages.length > 0) return { ...base, ok: false, compileVerdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], programOpSourceRows: [], rowProvenance: [], backFace: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
+  if (setupMessages.length > 0 || !isAuthoredTechnique(state.strategy.technique)) return { ...base, ok: false, compileVerdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], programOpSourceRows: [], rowProvenance: [], backFace: null, frame: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
 
   const projected = projectColorworkChartV1(state.chart);
   const yarnBindings: YarnBinding[] = usedPalette.map((entry) => {
     const assignment = assignments.get(entry.id)!;
     return { keyId: entry.id, carrier: assignment.carrier, name: assignment.yarnName };
   });
-  const backBedStyle = state.strategy.technique === 'fairisle' ? 'floats'
-    : state.strategy.technique === 'ladder-back' ? 'ladder'
-    : state.strategy.technique === 'lined' ? 'lined'
-    : 'birdseye';
-  const artifact = compileToRunArtifact({
+  // A single-color chart has no backing: it knits plain jersey inside the
+  // Customist fairisle frame whichever backing is selected.
+  const technique = usedPalette.length < 2 ? 'fairisle' : state.strategy.technique;
+  const input = buildCustomistMatchedCompileInputV1({
+    technique,
     chart: projected.chart,
     keyPalette: projected.palette,
     yarnBindings,
     needleOffset: state.machine.needleOffset,
-    wastePasses: state.frame.wasteRows,
-    wasteCarrierOverride: '6',
-    drawCarrierOverride: state.frame.drawThread ? '1' : 'none',
-    bindOff: state.frame.bindOff,
-    backBedStyle,
-    ...(state.strategy.technique === 'complement' ? { dbjBackingStrategy: 'complement' as const } : {}),
-    ...(state.strategy.technique === 'birdseye' ? { birdseyeMode: state.strategy.birdseyeMode ?? 'minimal' } : {}),
-    ...(state.strategy.technique === 'fairisle' ? { floatPolicy: { mode: 'warn-above' as const, threshold: state.strategy.floatLimit } } : {}),
+    ...(technique === 'fairisle' ? { floatPolicy: { mode: 'warn-above' as const, threshold: state.strategy.floatLimit } } : {}),
   });
+  const artifact = compileToRunArtifact(input);
+  const frame: CompiledFrame = {
+    preset: CUSTOMIST_MATCHED_PRESETS_V1[technique].id,
+    reference: CUSTOMIST_MATCHED_PRESETS_V1[technique].reference,
+    wastePasses: input.wastePasses ?? null,
+    wasteCarrier: input.wasteCarrierOverride ?? null,
+    drawCarrier: input.drawCarrierOverride === undefined || input.drawCarrierOverride === 'none' ? null : input.drawCarrierOverride,
+    bindOff: input.bindOff ?? null,
+    frameCarriers: [],
+  };
+  // Machine safety: every carrier the program brings in must carry a declared
+  // yarn (an assigned pattern yarn, the waste, or the preset's frame yarn).
+  // A legal program that knits an unassigned carrier would pass every KCode
+  // check yet knit with no yarn loaded.
+  const carrierMessages: ValidationMessage[] = [];
+  if (artifact.knitoutText !== null) {
+    const patternCarriers = new Set<string>(yarnBindings.map((binding) => binding.carrier));
+    const presetFrameCarriers = new Set<string>(CUSTOMIST_MATCHED_PRESETS_V1[technique].frameCarriers);
+    const introduced = new Set<string>();
+    for (const match of artifact.knitoutText.matchAll(/^in ([1-6](?: [1-6])*)$/gm)) {
+      for (const carrier of match[1]!.split(' ')) introduced.add(carrier);
+    }
+    const extra = [...introduced].filter((carrier) => !patternCarriers.has(carrier) && carrier !== frame.wasteCarrier).sort();
+    frame.frameCarriers = extra.filter((carrier) => presetFrameCarriers.has(carrier));
+    const unassigned = extra.filter((carrier) => !presetFrameCarriers.has(carrier));
+    if (unassigned.length > 0) {
+      carrierMessages.push(setupError('project-unassigned-carrier', `The compiled ${technique} program uses ${unassigned.map((carrier) => `C${carrier}`).join(', ')}, which ${unassigned.length === 1 ? 'has' : 'have'} no yarn assigned.${technique === 'birdseye' ? ' The Customist-matched birdseye program is laid out for four colors on C2-C5; use four colors or Fairisle.' : ''}`));
+    }
+  }
   const exactCapacity = artifact.knitoutText === null
     ? capacity
     : observeAuthoredCapacityV1(capacity, { knitoutRecords: sourceRecordCount(artifact.knitoutText) });
   const capacityMessages = exactCapacity.status === 'blocked'
     ? [setupError(exactCapacity.rule, exactCapacity.message)]
     : [];
-  const messages = [...artifact.chartMessages, ...artifact.programMessages, ...artifact.bedStateMessages, ...artifact.carriageMessages, ...capacityMessages];
-  const compileOk = artifact.ok && exactCapacity.status === 'supported';
+  const messages = [...artifact.chartMessages, ...artifact.programMessages, ...artifact.bedStateMessages, ...artifact.carriageMessages, ...capacityMessages, ...carrierMessages];
+  const compileOk = artifact.ok && exactCapacity.status === 'supported' && carrierMessages.length === 0;
   const passIndicesByMachineRow = new Map<number, number[]>();
   artifact.predictedPasses.forEach((pass, passIndex) => {
     for (const machineRow of pass.sourceRows ?? []) {
@@ -216,6 +260,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     programOpSourceRows: artifact.programOpSourceRows,
     rowProvenance,
     backFace: projectBackFaceFromArtifact(artifact, state.chart, yarnBindings, state.machine.needleOffset),
+    frame,
     diagnostics,
     stats: {
       ...base.stats,

@@ -381,6 +381,7 @@ function requiredTextSetting(knitout: string, pattern: RegExp, label: string): s
 function expectedMachineEvidence(
   knitout: string,
   project: ReturnType<typeof parseColorworkProjectV1>,
+  frame: NonNullable<ReturnType<typeof compileColorworkProject>['frame']>,
   emittedPassCount: number,
   coordinateBridge: AuthoredKCodeCoordinateBridgeV1,
 ): CurrentRegistryMachineEvidence {
@@ -388,12 +389,15 @@ function expectedMachineEvidence(
   const position = /^;;Position:\s*(\S(?:.*\S)?)\s*$/m.exec(knitout)?.[1];
   if (position === undefined) throw new Error('current compile is missing ;;Position');
   const carriers: CurrentRegistryMachineEvidence['carriers'][number][] = [];
-  if (state.frame.drawThread) carriers.push({ carrier: '1', role: 'draw' });
+  // Frame yarns and waste come from the compiled Customist-matched frame, not project fields.
+  carriers.push(...frame.frameCarriers.map((carrier) => ({ carrier, role: 'draw' as const })));
   carriers.push(...state.machine.yarnAssignments.map((assignment) => ({
     carrier: assignment.carrier,
     role: 'pattern' as const,
   })));
-  carriers.push({ carrier: '6', role: 'waste' });
+  if (frame.wasteCarrier === null) throw new Error('current compile has no waste carrier');
+  carriers.push({ carrier: frame.wasteCarrier, role: 'waste' });
+  if (frame.wastePasses === null || frame.bindOff === null) throw new Error('current compile has an incomplete frame');
   carriers.sort((left, right) => Number(left.carrier) - Number(right.carrier));
   return {
     profile: state.machine.profile,
@@ -405,8 +409,8 @@ function expectedMachineEvidence(
     program: {
       gauge: requiredNumericSetting(knitout, /^;;Gauge:\s*([0-9]+(?:\.[0-9]+)?)\s*$/m, 'gauge'),
       position,
-      wastePasses: state.frame.wasteRows,
-      bindOff: state.frame.bindOff,
+      wastePasses: frame.wastePasses!,
+      bindOff: frame.bindOff!,
       initialSettings: {
         stitchNumber: requiredNumericSetting(knitout, /^x-stitch-number\s+([0-9]+(?:\.[0-9]+)?)\s*$/m, 'stitch number'),
         xferStitchNumber: requiredNumericSetting(knitout, /^x-xfer-stitch-number\s+([0-9]+(?:\.[0-9]+)?)\s*$/m, 'transfer stitch number'),
@@ -497,6 +501,7 @@ export function compileRegistryRequestCurrent(
       expectedMachine: expectedMachineEvidence(
         compiled.knitoutText,
         project,
+        compiled.frame!,
         converted.scheduledPasses.length,
         coordinateBridge,
       ),
