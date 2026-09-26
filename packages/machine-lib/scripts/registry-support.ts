@@ -50,6 +50,8 @@ export const COMPILER_FINGERPRINT_INPUTS = [
   'packages/chart-contract/src',
   'packages/project-contract/src',
   'apps/studio/src/blanket/compileProject.ts',
+  'fixtures/colorwork-chart-v1/customist-fairisle-reference.json',
+  'packages/machine-lib/reference/fairisle.kc',
   'scripts/build-v1-knit-trial.ts',
   'scripts/check-v1-physical-release.ts',
   'scripts/register-v1-knit-trial.ts',

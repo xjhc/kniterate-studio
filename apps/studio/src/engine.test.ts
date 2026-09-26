@@ -998,7 +998,7 @@ describe('one-file machine check contract', () => {
     },
   );
 
-  it('carries pass roles and source-anchored advisories for a direct KCode reference', () => {
+  it('carries pass roles without stale transfer-endpoint advisories for a direct KCode reference', () => {
     const bytes = readFileSync(resolve('../../packages/machine-lib/reference/2x2-rib-beanie.kc'));
     const document = openMachineDocument('2x2-rib-beanie.kc', bytes, { dialect: 'knitout-vendor' });
     const floats = document.diagnostics.filter((finding) => finding.rule === 'machine-advisory.float-distance');
@@ -1013,12 +1013,19 @@ describe('one-file machine check contract', () => {
       'carriage-move': 7,
       unclassified: 0,
     });
-    expect(floats).toHaveLength(5);
-    expect(floats.every((finding) => finding.severity === 'info' && finding.line !== null && finding.sourceSpan !== null)).toBe(true);
+    expect(floats).toHaveLength(0);
 
     const text = formatMachineCheckReceipt(createMachineCheckReceipt(document, { byteCount: bytes.length, sha256: 'd'.repeat(64) }));
     expect(text).toContain(`Pass roles: ${formatPassRoleCounts(document.stats.passRoles!)}`);
     expect(formatPassRoleCounts(document.stats.passRoles!)).toBe('245 loop-forming · 271 transfer · 2 drop · 5 carrier-move · 7 carriage-move');
+  });
+
+  it('anchors genuine direct KCode float advisories to their source selection', () => {
+    const document = openMachineDocument('float.kc', kcode({ front: [100, 110] }), { dialect: 'knitout-vendor' });
+    const floats = document.diagnostics.filter((finding) => finding.rule === 'machine-advisory.float-distance');
+    expect(floats).toHaveLength(1);
+    expect(floats[0]).toMatchObject({ severity: 'info', passIndex: 0, line: 4, sourceSpan: { start: { line: 4 } } });
+    expect(document.verdict.state).toBe('surface');
   });
 
   it('returns exit 2 and JSON-only errors for unsupported and unreadable paths', () => {

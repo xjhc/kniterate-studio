@@ -27,7 +27,8 @@ everything except that proof check.
 Author, compile, and export a project headlessly (for scripts and agents). Every
 command prints JSON and uses the same compiler, strict KCode validation, and
 verdict policy as the Studio UI; `export` writes a `.kc` only when Studio's
-Export button would be enabled:
+Export button would be enabled. Compile/export receipts include the compiled frame
+and all required carrier roles, including frame and waste yarns:
 
 ```bash
 pnpm --silent studio -- new fixtures/colorwork-chart-v1/four-color-checker.json -o project.json
@@ -37,8 +38,9 @@ pnpm --silent studio -- export project.json -o command.kc
 pnpm --silent studio -- schema   # JSON Schema for edits
 ```
 
-Score which captured Customist reference pieces Studio can author natively
-(front/rear knitted-face comparison through the same pipeline):
+Compare authored output against captured Customist references. Exact reproduction
+requires strict whole-program trace equality; face and stitch comparisons are
+separate diagnostics:
 
 ```bash
 pnpm --silent parity
@@ -68,14 +70,14 @@ package `apps/studio/dist`, and deploy it through the `github-pages`
 environment. In the repository settings, select **GitHub Actions** under
 **Pages → Build and deployment → Source** before the first deployment.
 
-For an authored blanket, Studio keeps design rows intact, compares five backing
-choices, compiles off the UI thread, validates the vendored `.kc`, and enables
+For an authored blanket, Studio keeps design rows intact, supports Fairisle and
+Birdseye through reference-derived frames, compiles off the UI thread, validates the vendored `.kc`, and enables
 export only for the current validated project revision. Project JSON and the
 printed run sheet retain the carrier, frame, strategy, and artifact identities
 needed to reproduce a run.
 
 The software is currently `1.0.0-rc.1`. Run `pnpm release:trial` to generate the
-hash-pinned four-color physical-knit package. Promotion to `1.0.0` is reserved
+hash-pinned two-color fairisle physical-knit package. Promotion to `1.0.0` is reserved
 for a successful run of that exact package on a real Kniterate; see
 [`docs/V1-PHYSICAL-TRIAL.md`](./docs/V1-PHYSICAL-TRIAL.md).
 

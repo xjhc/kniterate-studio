@@ -1,6 +1,6 @@
 # STATUS — what is shipped vs. proposed
 
-**Front door. Read this before any planning doc.** Reconciled 2026-09-17 against
+**Front door. Read this before any planning doc.** Reconciled 2026-09-26 against
 the working tree. Repo at `1.0.0-rc.1`; `pnpm verify:kcode` and `pnpm verify`
 are the software gates. The debugger milestone below records implementation
 and focused local coverage; full-gate status belongs to the exact current
@@ -38,19 +38,23 @@ ship," trust this file and the working tree instead.
   conversion, registry match, and `resolveAuthoredVerdict` seams as the UI, and
   `export` writes a `.kc` only when the UI Export gate would allow it. All
   output is JSON; exit `0` ok/export-ready, `1` blocked, `2` usage/read error.
-- **Customist parity scoreboard.** `pnpm parity [--json]` scores the 13
-  captured reference `.kc` pieces. `knitted-faces.ts` projects per-bed knit
-  grids from a strict trace (body window after the draw thread, skipping an
-  alternate-needle cast-on) and recovers a carrier colorwork chart from the
-  front face. For each reference with a recipe, the scoreboard recovers its
-  chart, authors it as a Studio project with the recipe's backing, runs the UI
-  pipeline, and compares front/rear faces under a carrier bijection. Current
-  result: all 5 colorwork references reproduce their front face exactly and
-  export Surface-proven; rear faces differ only by Customist's full-needle
-  cast-on row, except `dbj` (full-needle jacquard, border closing). The 8 rib,
-  sweater, and shaped-garment references need capabilities Studio does not
-  author yet. Face equality is programmed loop formation, not fabric
-  appearance or physical evidence.
+  Compile/export receipts include the canonical compiled frame and every emitted
+  carrier requirement, including C1 frame yarn and C6 waste, not just palette yarns.
+- **Customist parity scoreboard.** `pnpm parity [--json]` compares the 13
+  captured references. Schema v2 reserves `reproduced` for an export-ready,
+  strict whole-program machine-trace match, including rack, settings, stops,
+  rasters, and both transfer stitch selectors. Current result: **0 exact,
+  4 partial, 1 blocked, 8 unsupported**. Fairisle uses the checked-in 64×50
+  trial chart with C4/C3 assignments and matches 280/286 stitch passes at
+  offset zero; six passes have additional C4 front knits in the reference. Other colorwork candidates are
+  explicitly inferred knit-column inputs, with any trimmed edge rows disclosed.
+  Jacquard's two-color candidate blocks because its frame requires C2–C5.
+  `knitted-faces.ts` preserves coordinate holes and alternating-needle passes;
+  optional explicit pass windows avoid the default inferred window, which can
+  include cast-on and finish. Recovery refuses interior partial rows. Face
+  equality requires equal row counts and is only a relative knit-column
+  comparison: it ignores transfers and is not loop topology, authored-course
+  recovery, fabric appearance, or physical evidence.
 - **Customist-matched frames for authored backings.** Studio authors only the
   backings that compile through a configuration matched to a captured
   Customist program: Fairisle (`customist-studio-fairisle-7gg`, matched to
@@ -62,17 +66,19 @@ ship," trust this file and the working tree instead.
   UI shows a read-only frame summary, including frame yarns (e.g. C1) the
   program brings in. Ladder, Lined, and Complement have no Customist
   reference and block with `project-technique-unmatched`; single-color charts
-  knit jersey inside the fairisle frame. Parity with the references is exact
-  at footer level (direction, operation, carrier, speed, roller; the only
-  Birdseye difference is Studio's slow first body row). At stitch level
-  (`diffTraceStitchesV1`, exact per-pass action sets including stitch size)
-  fairisle is 280/286: `passes/customist-fairisle-frame.ts` reproduces
-  Customist's Waste & Cast-on (waste interlock, yarn insertions, draw, rear
-  drop, zig-zag cast-on, tubular rows, transfers) and the park bind-off drops
-  every front loop at the end as Customist does; the six remaining passes are
-  Customist catch loops whose rule is not derivable from one reference.
-  Birdseye (dbj) is 129/498; its rear-bed backing is the largest remaining
-  divergence. Trial and registry evidence now record the compiled frame.
+  knit jersey inside the fairisle frame. The fairisle trial has 280/286
+  identical stitch passes and zero footer differences; the strict full-trace
+  comparison limits differences to six passes with reference-only C4 front knits.
+  The general catch-loop rule and physical effect of those 21 extra knits remain
+  unresolved. Birdseye uses the reference-derived DBJ
+  introduction and finish with the established generic body: every requested
+  front stitch plus one rear stitch per needle per design row, partitioned
+  across C2–C5. It no longer applies fixture-specific row ordering or omits the
+  final carrier. This body differs from Customist's full-needle DBJ backing;
+  footer or whole-program DBJ parity is not claimed. Exact emitted-trace tests
+  cover all final-row colors, sparse rows, stripes, carrier permutations, width
+  one, and rows beyond the old fixture's special range. Trial and registry
+  evidence record the compiled frame.
   Machine-safety invariant: every carrier a compiled program brings in must be
   an assigned pattern yarn, the waste carrier, or the preset's declared frame
   yarn (C1); otherwise compilation blocks with `project-unassigned-carrier`.
@@ -139,9 +145,12 @@ ship," trust this file and the working tree instead.
   (default maximum 7, in the front-bed frame including rack) and unsafe
   bed-range checks (facing needle outside the KCode column domain at the
   current rack). Both are non-blocking information for foreign files and
-  never change the verdict. The 13-file corpus yields 10 float advisories
-  (2x2-rib-beanie 5, back 2, front 2, sophie_stripe 1), all between passes, and
-  no bed-range advisories. KCode does not encode carrier in/out, so a
+  never change the verdict. Endpoints retain bed/needle coordinates, use the
+  current rack, follow transfers/splits, and invalidate on drops or unknown
+  operations. The 13-file corpus now yields zero float and zero bed-range
+  advisories; the previous ten float findings used stale transferred/dropped
+  endpoints. Real synthetic long-float cases remain covered. KCode does not
+  encode carrier in/out, so a
   between-pass float can be a parked or cut yarn; floats are not a physical
   failure claim. Roles and advisories reach Studio, the run sheet, and
   `machine:check`.
@@ -259,10 +268,10 @@ schema.
 
 ## The one real promotion gate
 
-The trial candidate is a Studio reproduction of the captured Customist
-`reference/fairisle.kc` program (see `V1-PHYSICAL-TRIAL.md`), chosen so the
-first machine run knits a program structurally matched to one already knit
-with Customist; its manifest records the remaining differences.
+The trial candidate partially reproduces the captured Customist
+`reference/fairisle.kc` program (see `V1-PHYSICAL-TRIAL.md`): 280/286 passes
+match at stitch level. Its manifest records the strict full-trace differences.
+The modified candidate has no controller or physical-run evidence.
 
 `1.0.0-rc.1` → `1.0.0` is gated **only** by a successful real-Kniterate run
 (`V1-PHYSICAL-TRIAL.md`). Registration, hash checks, exact-artifact Knit-proven,

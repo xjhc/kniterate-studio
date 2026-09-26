@@ -45,9 +45,8 @@ fresh current compile and blocks promotion for any mismatch, recorded deviation,
 or in-run intervention. This establishes an exact-candidate settings receipt,
 not a generally safe speed/roller envelope.
 
-The release trial reproduces a captured Customist Studio program rather than
-an original design, so the first machine run knits a program already knit by
-Kniterate users: the `reference/fairisle.kc` design (64x50, two colors;
+The release trial partially reproduces a captured Customist Studio program:
+the `reference/fairisle.kc` design (64x50, two colors;
 `fixtures/colorwork-chart-v1/customist-fairisle-reference.json`) with ground on
 C4 (casts on and leads) and motif on C3, compiled through Studio's
 Customist-matched fairisle frame (87 waste passes on C6, C1 draw yarn,
@@ -55,9 +54,12 @@ Customist cast-on and transfers, closing waste with park-out and final drop).
 The generated package has 14,209 Knitout operations, 286 predicted and
 emitted passes, and an authored-plan estimate of 2,081 seconds. Against the
 reference, the manifest's `customistParity` records 0 footer differences and
-280 of 286 passes stitch-identical (including stitch size) at the same bed
-position; the six differing passes are Customist catch loops the engine does
-not reproduce. Its strict trace totals 21,300 encoded stop-coordinate units;
+280 of 286 passes stitch-identical (including both transfer selectors) at the
+same bed position, plus the full strict machine-trace comparison. The six
+differing passes contain 21 extra C4 front knits in the reference. The intended
+catch-loop rule is not established from this single captured file. The modified
+candidate has no controller or physical-run evidence.
+Its strict trace totals 21,300 encoded stop-coordinate units;
 the 3.63 mm/unit and constant-speed assumptions give a separate 342-second
 idealized term. These are software comparisons and derived units, not
 physical observations.

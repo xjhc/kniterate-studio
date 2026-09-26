@@ -90,7 +90,9 @@ test('exports and reopens the canonical 200x300 four-color authored blanket', as
   const firstBytes = await readFile(firstKc);
   expect(firstBytes.length).toBeGreaterThan(1_000_000);
   expect(firstBytes.toString('utf8')).toContain('FRNT:');
-  await expect(page.locator('.compile-stats')).toContainText('1,650');
+  // The corrected generic body emits all front and rear passes. This is
+  // the plan estimate; the exact emitted trace contains 3,148 passes.
+  await expect(page.locator('.compile-stats')).toContainText('3,150');
 
   const projectDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save project', exact: true }).click();

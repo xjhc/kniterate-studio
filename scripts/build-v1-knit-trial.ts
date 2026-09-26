@@ -13,7 +13,7 @@ import { createAuthoredKCodeCoordinateBridgeV1 } from '../packages/machine-lib/s
 import { projectKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-trace.js';
 import { deriveMachineTraceProgrammedMotionV1 } from '../packages/machine-lib/src/knitout/kcode/programmed-motion.js';
 import { diffTraceStitchesV1 } from '../packages/machine-lib/src/knitout/kcode/trace-stitch-diff.js';
-import { diffKc } from '../packages/machine-lib/src/knitout/kc-diff.js';
+import { diffKc, diffKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kc-diff.js';
 import { validateKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-validator.js';
 import { parseKCodeDocument } from '../packages/machine-lib/src/knitout/kcode/parser.js';
 import { compareScheduledPassesToMachineTrace } from '../packages/machine-lib/src/knitout/kcode/scheduled-trace-diff.js';
@@ -58,11 +58,11 @@ export function readCleanV1KnitTrialReleaseSource(
 }
 
 /**
- * The trial candidate reproduces a captured Customist Studio program: the
+ * The trial candidate is a partial reproduction of a captured Customist program:
  * fairisle.kc design (ground C4 casts on and leads, motif C3), compiled
- * through Studio's Customist-matched fairisle frame. The first physical run
- * therefore knits a program structurally matched to one Kniterate users
- * already knit; the manifest records the exact remaining differences.
+ * through Studio's Customist-matched fairisle frame. The manifest records
+ * exact software differences from that reference.
+ * Neither the comparison nor the reference establishes physical equivalence.
  */
 const TRIAL_CHART_PATH = 'fixtures/colorwork-chart-v1/customist-fairisle-reference.json';
 const CUSTOMIST_REFERENCE_PATH = 'packages/machine-lib/reference/fairisle.kc';
@@ -208,8 +208,8 @@ export function compileCurrentV1KnitTrial() {
     carrierStoppingDistance: firstSetting(compiled.knitoutText, 'x-carrier-stopping-distance'),
   } as const;
   // Software comparison against the captured Customist program this
-  // candidate reproduces: footer fields and exact per-pass stitch sets
-  // (including stitch size). Not physical evidence.
+  // candidate partially reproduces. Strict machine fields are authoritative;
+  // footer and stitch-set summaries remain separately labelled views.
   const referenceKCode = readFileSync(resolve(REPOSITORY_ROOT, CUSTOMIST_REFERENCE_PATH), 'utf8');
   const referenceParsed = parseKCodeDocument(referenceKCode, {
     profile: KNITERATE_7GG_KCODE_PROFILE_V2,
@@ -219,7 +219,14 @@ export function compileCurrentV1KnitTrial() {
   if (!referenceParsed.ok) throw new Error(`${CUSTOMIST_REFERENCE_PATH} is not strict KCode`);
   const stitchParity = diffTraceStitchesV1(projectKCodeMachineTrace(referenceParsed.document, KNITERATE_7GG_KCODE_PROFILE_V2), machineTrace);
   const footerParity = diffKc(converted.kcode, referenceKCode, { maxDeltas: 50 });
+  const machineTraceComparison = diffKCodeMachineTrace(converted.kcode, referenceKCode, {
+    profile: KNITERATE_7GG_KCODE_PROFILE_V2,
+    dialect: KNITERATE_7GG_KCODE_PROFILE_V2.dialect,
+    maxDeltas: 50,
+  });
+  if (machineTraceComparison.status !== 'compared') throw new Error('trial/reference strict machine-trace comparison was blocked');
   const customistParity = {
+    reproduction: machineTraceComparison.identical ? 'machine-trace-identical' : 'partial',
     reference: CUSTOMIST_REFERENCE_PATH,
     referenceSha256: sha256Bytes(referenceKCode),
     footerDeltas: footerParity.deltaCount,
@@ -227,7 +234,11 @@ export function compileCurrentV1KnitTrial() {
     stitchIdenticalPasses: stitchParity.identicalPasses,
     needleOffset: stitchParity.offset,
     differingPassIndices: stitchParity.differingPassIndices,
-    note: 'Differing passes are Customist catch loops (the ground yarn also knits a needle the motif yarn knits in that row). Software comparison only.',
+    machineTraceComparison: {
+      ...machineTraceComparison,
+      detailsTruncated: machineTraceComparison.deltas.length < machineTraceComparison.deltaCount,
+    },
+    note: 'Partial reproduction; the strict machine-trace comparison reports the full differing-field count with bounded details. Footer and stitch-set summaries do not establish program equivalence. The physical effect of the differences remains unestablished.',
   } as const;
   const manifest = {
     kind: 'kniterate-studio-v1-physical-trial', schemaVersion: 1,
@@ -279,7 +290,7 @@ export function compileCurrentV1KnitTrial() {
   };
   const operatorChecklist = `# V1 physical blanket trial
 
-This candidate reproduces the captured Customist program ${CUSTOMIST_REFERENCE_PATH}: ${customistParity.stitchIdenticalPasses}/${customistParity.comparedPasses} passes stitch-identical, ${customistParity.footerDeltas} footer differences (software comparison only).
+This candidate is a partial reproduction of ${CUSTOMIST_REFERENCE_PATH}: ${customistParity.stitchIdenticalPasses}/${customistParity.comparedPasses} passes stitch-identical, ${customistParity.footerDeltas} legacy footer differences, and ${machineTraceComparison.deltaCount} strict machine-trace field differences. The manifest retains the first ${machineTraceComparison.deltas.length} field details; review the complete programs before the trial. This software comparison does not establish physical equivalence.
 
 1. Knit a profile-matched tension swatch with the exact two pattern yarns and record yarn brand, line, lot, fiber, and measured gauge.
 2. Load every carrier in manifest.json: frame yarn${compiled.frame.frameCarriers.length === 1 ? '' : 's'} ${compiled.frame.frameCarriers.map((carrier) => `C${carrier}`).join(', ') || 'none'} (Customist draw/cameo), pattern yarns ${state.machine.yarnAssignments.map((assignment) => `C${assignment.carrier} ${assignment.yarnName}`).join(', ')}, and C${compiled.frame.wasteCarrier} waste yarn.

@@ -13,7 +13,7 @@ import {
   type ColorworkProjectV1,
   type ProjectEdit,
 } from '../packages/project-contract/src/index.ts';
-import { runAuthoredPipeline } from '../apps/studio/src/authoredPipeline.ts';
+import { runAuthoredPipeline, type AuthoredPipelineResult } from '../apps/studio/src/authoredPipeline.ts';
 import { openStudioProjectJson } from '../apps/studio/src/chart/projectFile.ts';
 
 const USAGE = `Usage: pnpm --silent studio -- <command> [args]
@@ -23,13 +23,14 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
   new <chart.json|project.json> -o <project.json> [--id <id>]
       Start a project from a ColorworkChartV1 file (or normalize an existing project).
   show <project.json> [--cells]
-      Materialized state: chart size, palette, row ids, yarns, strategy, frame, overrides.
+      Materialized state: chart size, palette, row ids, yarns, strategy, overrides.
   edit <project.json> <edit> [--source human|assistant] [-o <out.json>]
       Apply one typed edit or an array of edits. <edit> is inline JSON, a file path, or - for stdin.
       Writes back to <project.json> unless -o is given.
   undo <project.json> | redo <project.json>
   compile <project.json>
-      Compile, convert, and validate exactly as Studio does; prints verdict and findings.
+      Compile, convert, and validate exactly as Studio does; prints verdict, findings,
+      compiled frame, and every carrier required by the emitted program.
   export <project.json> -o <file.kc>
       Write the validated .kc only when the verdict allows export.
   schema
@@ -127,13 +128,32 @@ function print(value: unknown): void {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 }
 
+/** The emitted trace owns which carriers are required; project intent names yarns. */
+function carrierRequirements(project: ColorworkProjectV1, result: AuthoredPipelineResult) {
+  const trace = result.kcode?.trace;
+  if (trace === null || trace === undefined) return null;
+  const { state } = materializeColorworkProject(project);
+  const frame = result.compiled?.frame;
+  return [...new Set(trace.passes.map((pass) => pass.carrier).filter((carrier) => carrier !== '0'))]
+    .sort()
+    .map((carrier) => {
+      const assignment = state.machine.yarnAssignments.find((item) => item.carrier === carrier);
+      const role = assignment !== undefined ? 'pattern'
+        : carrier === frame?.wasteCarrier ? 'waste'
+        : frame?.frameCarriers.includes(carrier) || carrier === frame?.drawCarrier ? 'frame'
+        : 'unassigned';
+      return { carrier, role, paletteId: assignment?.paletteId ?? null, yarnName: assignment?.yarnName ?? null };
+    });
+}
+
 async function main(): Promise<number> {
   const parsed = parseArguments(process.argv.slice(2));
   switch (parsed.command) {
     case null:
+      throw new UsageError('A command is required.');
     case 'help':
-      process.stdout.write(`${USAGE}\n`);
-      return parsed.command === null ? 2 : 0;
+      print({ usage: USAGE });
+      return 0;
     case 'schema':
       print(ProjectEditSchema.toJSONSchema());
       return 0;
@@ -185,6 +205,8 @@ async function main(): Promise<number> {
         ...(parsed.command === 'export' ? { exported: exported ? parsed.out : null } : {}),
         compileError: result.compileError,
         outputError: result.outputError,
+        frame: result.compiled?.frame ?? null,
+        carrierRequirements: carrierRequirements(project, result),
         stats: result.compiled ? { ...result.compiled.stats, emittedPasses: result.kcode?.passCount ?? null } : null,
         hashes: { compileInput: result.compiled?.inputHash ?? null, kcodeSha256: result.kcode?.kcHash ?? null },
         findingCount: findings.length,
@@ -199,6 +221,11 @@ async function main(): Promise<number> {
 
 main().then((code) => { process.exitCode = code; }, (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`${error instanceof UsageError ? `${message}\n\n${USAGE}` : `studio: ${message}`}\n`);
+  print({
+    kind: 'kniterate-studio-cli-error',
+    schemaVersion: 1,
+    error: { kind: error instanceof UsageError ? 'usage' : 'input-or-io', message },
+    ...(error instanceof UsageError ? { usage: USAGE } : {}),
+  });
   process.exitCode = 2;
 });

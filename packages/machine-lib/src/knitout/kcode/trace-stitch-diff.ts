@@ -6,7 +6,7 @@ import type { MachineTraceActionV1, MachineTracePassV1, MachineTraceV1 } from '.
  * Footer-level parity (direction, operation, carrier, speed, roller) says
  * nothing about which needles a pass selects. This compares, for each pass
  * index, the exact multiset of knit/tuck/drop/transfer/split actions,
- * including each action's encoded stitch size (tension), after
+ * including source and target encoded stitch selectors, after
  * aligning both programs by a single needle offset (the best within
  * `maxOffset` of their leftmost knit coordinates). Carrier moves compare as
  * `move`. Traces of different length compare over the shorter prefix and
@@ -30,7 +30,7 @@ function actionSignature(action: MachineTraceActionV1, origin: number): string {
       return `${action.kind}:${action.at.bed}:${action.at.traceCoordinate - origin}@${action.at.stitchSelector.encodedValue}`
     case 'xfer':
     case 'split':
-      return `${action.kind}:${action.source.bed}:${action.source.traceCoordinate - origin}@${action.source.stitchSelector.encodedValue}>${action.target.bed}:${action.target.traceCoordinate - origin}`
+      return `${action.kind}:${action.source.bed}:${action.source.traceCoordinate - origin}@${action.source.stitchSelector.encodedValue}>${action.target.bed}:${action.target.traceCoordinate - origin}@${action.target.stitchSelector.encodedValue}`
     case 'move':
       return 'move'
     case 'unknown':
@@ -58,6 +58,7 @@ export function diffTraceStitchesV1(
   actual: Pick<MachineTraceV1, 'passes'>,
   maxOffset = 4,
 ): TraceStitchDiffV1 {
+  if (!Number.isSafeInteger(maxOffset) || maxOffset < 0) throw new RangeError('maxOffset must be a nonnegative safe integer')
   const expectedOrigin = leftmostKnitCoordinate(expected)
   const actualOrigin = leftmostKnitCoordinate(actual)
   const compared = Math.min(expected.passes.length, actual.passes.length)
@@ -68,14 +69,15 @@ export function diffTraceStitchesV1(
     for (let index = 0; index < compared; index += 1) {
       if (passStitchSignatureV1(actual.passes[index]!, actualOrigin + offset) !== expectedSignatures[index]) differing.push(index)
     }
-    if (best === null || differing.length < best.differing.length) best = { offset, differing }
+    if (best === null || differing.length < best.differing.length
+      || (differing.length === best.differing.length && Math.abs(offset) < Math.abs(best.offset))) best = { offset, differing }
   }
   return {
     expectedPasses: expected.passes.length,
     actualPasses: actual.passes.length,
     comparedPasses: compared,
     identicalPasses: compared - best!.differing.length,
-    offset: best!.offset,
+    offset: expectedOrigin - actualOrigin - best!.offset,
     differingPassIndices: best!.differing,
   }
 }

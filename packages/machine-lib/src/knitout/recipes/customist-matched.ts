@@ -1,11 +1,10 @@
 /**
- * Compile inputs matched to captured Customist Studio programs.
+ * Compile inputs with frames derived from captured Customist Studio programs.
  *
- * Studio's authored backings compile only through configurations that
- * reproduce a captured Customist reference: fairisle through
+ * Studio's authored backings use reference-derived configurations: fairisle through
  * `CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE` (reference/fairisle.kc) and
  * birdseye through `CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES`
- * (reference/dbj.kc, full double-bed jacquard). Frame, carrier roles, and
+ * (reference/dbj.kc frame, generic Birdseye body). Frame, carrier roles, and
  * machine settings come from those configurations, not from the caller.
  * This routes through `buildCompileInputForExport` so the input is the one
  * the parity harnesses verify.

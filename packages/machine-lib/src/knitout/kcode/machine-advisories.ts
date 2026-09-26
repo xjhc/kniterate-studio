@@ -51,11 +51,11 @@ export interface DeriveMachineTraceAdvisoriesOptionsV1 {
 
 interface LastLoop {
   readonly passIndex: number
-  readonly position: number
+  readonly at: Pick<MachineTraceSelectionV1, 'bed' | 'traceCoordinate'>
 }
 
 /** Position in the front-bed frame: rear column `r` faces front `r + rack`. */
-function frontFramePosition(selection: MachineTraceSelectionV1, rack: number): number {
+function frontFramePosition(selection: LastLoop['at'], rack: number): number {
   return selection.traceCoordinate + (selection.bed === 'rear' ? rack : 0)
 }
 
@@ -86,6 +86,24 @@ export function deriveMachineTraceAdvisoriesV1(
 
   for (const pass of trace.passes) {
     for (const [actionIndex, action] of pass.actions.entries()) {
+      // A held rear loop moves with the bed, not with the rack value at which
+      // it was formed. Keep its bed coordinate and follow exact loop moves.
+      if (action.kind === 'xfer' || action.kind === 'split') {
+        for (const [carrier, previous] of lastLoopByCarrier) {
+          if (previous.at.bed === action.source.bed && previous.at.traceCoordinate === action.source.traceCoordinate) {
+            lastLoopByCarrier.set(carrier, { ...previous, at: action.target })
+          }
+        }
+      } else if (action.kind === 'drop') {
+        for (const [carrier, previous] of lastLoopByCarrier) {
+          if (previous.at.bed === action.at.bed && previous.at.traceCoordinate === action.at.traceCoordinate) {
+            lastLoopByCarrier.delete(carrier)
+          }
+        }
+      } else if (action.kind === 'unknown') {
+        // Unknown loop effects cannot support a later distance claim.
+        lastLoopByCarrier.clear()
+      }
       if (action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'drop') {
         const { at } = action
         const facing = at.bed === 'front'
@@ -108,9 +126,9 @@ export function deriveMachineTraceAdvisoriesV1(
       if (formed === null) continue
       const position = frontFramePosition(formed, pass.rack)
       const previous = lastLoopByCarrier.get(pass.carrier)
-      lastLoopByCarrier.set(pass.carrier, { passIndex: pass.index, position })
+      lastLoopByCarrier.set(pass.carrier, { passIndex: pass.index, at: formed })
       if (previous === undefined) continue
-      const distance = Math.abs(position - previous.position)
+      const distance = Math.abs(position - frontFramePosition(previous.at, pass.rack))
       if (distance <= maxFloatDistance) continue
       const gap = pass.index - previous.passIndex
       record({

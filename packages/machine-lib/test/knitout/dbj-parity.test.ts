@@ -1,13 +1,8 @@
 /**
- * DBJ machine-equivalent parity harness.
- *
- * Drives the same productized seam as the Kniterate wizard:
- *   decode reference design -> author chart + dbj-backing: full ->
- *   detached wizard config -> compile -> vendor k-code -> diffKc.
- *
- * This is footer-level machine parity (direction / pass type / carrier /
- * speed / roller), matching the fairisle parity bar. Raw FRNT/REAR byte
- * layout is intentionally outside this test.
+ * DBJ reference comparison. The frame comes from the captured program;
+ * the authored body uses the generic Birdseye contract, not its fixture-
+ * specific full-back schedule. Exact authored row coverage is tested through
+ * the Studio pipeline in birdseyeBody.test.ts.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -122,9 +117,9 @@ function compileViaDetachedWizardConfig(chart: KnitlabChartState): string {
   return toKc(compileExportFromState(chart, PALETTE, state, { developerMode: true }));
 }
 
-const BODY_REGION = { start: 112, end: 459 };
+const BODY_START_PASS = 112;
 
-describe('dbj.kc machine-equivalent parity', () => {
+describe('dbj.kc frame comparison and explicit body divergence', () => {
   const { design, chart } = buildDbjChart();
   const wizardKc = compileViaDetachedWizardConfig(chart);
   const diff = diffKc(wizardKc, REFERENCE, { maxDeltas: 400 });
@@ -144,39 +139,33 @@ describe('dbj.kc machine-equivalent parity', () => {
     expect(config.protectFirstBodyRow).toBe(false);
   });
 
-  it('the entire body footer schedule matches the reference', () => {
-    const bodyDeltas = diff.deltas.filter(
-      d => d.index >= BODY_REGION.start && d.index <= BODY_REGION.end,
-    );
-    expect(bodyDeltas).toHaveLength(0);
+  it('preserves the captured introduction footer schedule', () => {
+    const frameDeltas = diff.deltas.filter((delta) => delta.index < BODY_START_PASS);
+    expect(frameDeltas).toEqual([]);
   });
 
-  it('matches the reference at machine-equivalent footer parity', () => {
-    expect(diff.deltaCount).toBe(0);
-    expect(diff.deltas).toEqual([]);
-  });
-
-  it('pins the stitch-level parity baseline against the reference', () => {
+  it('reports the generic Birdseye body as different from the captured full-back program', () => {
     const trace = (kcode: string) => {
       const parsed = parseKCodeDocument(kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true });
       if (!parsed.ok) throw new Error('not strict KCode');
       return projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
     };
-    const stitches = diffTraceStitchesV1(trace(REFERENCE), trace(wizardKc));
-    // Footer parity above says nothing about needle selection. This pins
-    // the stitch-level baseline (identical knit/tuck/drop/transfer sets per
-    // pass) as a ratchet: raise it as the engine converges, never lower it.
-    expect(stitches.comparedPasses).toBe(498);
-    expect(stitches.identicalPasses).toBe(129);
+    const reference = trace(REFERENCE);
+    const authored = trace(wizardKc);
+    const stitches = diffTraceStitchesV1(reference, authored);
+    // A score or matching footer is not a correctness gate. Generic
+    // front/back passes deliberately differ; do not bless this as exact
+    // Customist parity by pinning a replacement identical-pass count.
+    expect(diff.deltaCount).toBeGreaterThan(0);
+    expect(stitches.actualPasses).toBeGreaterThan(stitches.expectedPasses);
+    expect(stitches.differingPassIndices.some((index) => index >= BODY_START_PASS)).toBe(true);
   });
 
-  it('Studio\'s Customist-matched birdseye input differs only by first-body-row protection', () => {
+  it('Studio and the detached configuration share the same body, apart from first-row protection', () => {
     const { annotations: _annotations, ...plain } = chart;
     const input = buildCustomistMatchedCompileInputV1({ technique: 'birdseye', chart: plain, keyPalette: PALETTE, yarnBindings: BINDINGS });
-    const studioDiff = diffKc(toKc(compileChartToKnitout(input)), REFERENCE, { maxDeltas: 400 });
-    // Product exports slow the first body row (speed 100); the captured
-    // reference knits it at body speed. Nothing else may differ.
+    const studioDiff = diffKc(toKc(compileChartToKnitout(input)), wizardKc, { maxDeltas: 400 });
     expect(studioDiff.deltas.every((delta) => delta.field === 'speed')).toBe(true);
-    expect(studioDiff.deltaCount).toBeLessThanOrEqual(BINDINGS.length);
+    expect(studioDiff.deltaCount).toBeGreaterThan(0);
   });
 });

@@ -20,6 +20,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { dirname, relative, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../src/knitout/kcode/machine-profile.js'
 import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js'
@@ -37,6 +38,7 @@ interface GateResult {
 const PROOF_TESTS = [
   'test/public-api.test.ts',
   'test/physical-registry-manifest.test.ts',
+  'test/proof-fingerprint.test.ts',
   'test/browser-kcode-converter.test.ts',
   'test/knitout/browser-converter-source.test.ts',
   'test/knitout/kcode-machine-profile.test.ts',
@@ -54,6 +56,8 @@ const PROOF_TESTS = [
   'test/knitout/kcode-machine-execution.test.ts',
   'test/knitout/kcode-coordinate-bridge.test.ts',
   'test/knitout/kcode-pass-metrics.test.ts',
+  'test/knitout/kcode-machine-advisories.test.ts',
+  'test/knitout/kcode-knitted-faces.test.ts',
   'test/knitout/kcode-programmed-motion.test.ts',
   'test/knitout/kcode-independent-oracle.test.ts',
   'test/knitout/kcode-scheduled-differential.test.ts',
@@ -62,12 +66,17 @@ const PROOF_TESTS = [
   'test/knitout/loop-stack-software-policy.test.ts',
   'test/knitout/predicted-vs-vendor.test.ts',
   'test/knitout/fairisle-parity.test.ts',
+  'test/knitout/dbj-parity.test.ts',
   'test/knitout/kniterate-topology-oracle.test.ts',
 ] as const
 
 const STUDIO_PROOF_TESTS = [
   'src/engine.test.ts',
+  'src/authoredPipeline.test.ts',
+  'src/studioCli.test.ts',
+  'src/parity.test.ts',
   'src/blanket/compileProject.test.ts',
+  'src/blanket/birdseyeBody.test.ts',
   'src/kcode/compileKCodeArtifact.test.ts',
   'src/kcode/MachineMovementView.test.tsx',
   'src/fabric/compileForeignFabricPreview.test.tsx',
@@ -174,32 +183,35 @@ const PROOF_HARNESS_SOURCES = [
   ...STUDIO_PROOF_TESTS.map((path) => `../../apps/studio/${path}`),
 ] as const
 
-function listFilesRecursively(root: string): string[] {
-  const absoluteRoot = resolve(process.cwd(), root)
+function listFilesRecursively(root: string, baseDirectory: string): string[] {
+  const absoluteRoot = resolve(baseDirectory, root)
   const visit = (directory: string): string[] => readdirSync(directory, { withFileTypes: true })
     .sort((a, b) => a.name.localeCompare(b.name))
     .flatMap((entry) => {
       const path = resolve(directory, entry.name)
       if (entry.isDirectory()) return visit(path)
-      return entry.isFile() ? [relative(process.cwd(), path)] : []
+      return entry.isFile() ? [relative(baseDirectory, path)] : []
     })
   return visit(absoluteRoot)
 }
 
-function collectFingerprintSources(): string[] {
+function collectFingerprintSources(root: string): string[] {
+  const filesUnder = (path: string) => listFilesRecursively(path, root)
   return [...new Set<string>([
     ...CONTRACT_SOURCES,
     ...PROOF_HARNESS_SOURCES,
-    ...listFilesRecursively('src'),
-    ...listFilesRecursively('scripts'),
-    ...listFilesRecursively('test'),
-    ...listFilesRecursively('../../apps/studio/src'),
-    ...listFilesRecursively('../chart-contract/src'),
-    ...listFilesRecursively('../colorwork-core/src'),
-    ...listFilesRecursively('../project-contract/src'),
-    ...listFilesRecursively('reference'),
-    ...listFilesRecursively('registry/swatches'),
-    ...listFilesRecursively('../../e2e'),
+    ...filesUnder('src'),
+    ...filesUnder('scripts'),
+    ...filesUnder('test'),
+    ...filesUnder('../../scripts'),
+    ...filesUnder('../../fixtures/colorwork-chart-v1'),
+    ...filesUnder('../../apps/studio/src'),
+    ...filesUnder('../chart-contract/src'),
+    ...filesUnder('../colorwork-core/src'),
+    ...filesUnder('../project-contract/src'),
+    ...filesUnder('reference'),
+    ...filesUnder('registry/swatches'),
+    ...filesUnder('../../e2e'),
   ])].sort()
 }
 
@@ -302,11 +314,11 @@ function collectReferenceCorpus() {
   }
 }
 
-function collectContractFingerprint() {
+export function collectContractFingerprint(root = process.cwd()) {
   // Re-enumerate on every pre/post capture so file additions and removals are
   // drift, not merely modifications to the inventory observed at process load.
-  const files = collectFingerprintSources().map((path) => {
-    const bytes = readFileSync(resolve(process.cwd(), path))
+  const files = collectFingerprintSources(root).map((path) => {
+    const bytes = readFileSync(resolve(root, path))
     return { path, sha256: sha256(bytes), bytes: bytes.byteLength }
   })
   return {
@@ -545,4 +557,5 @@ function main(): void {
   if (blocked) process.exit(2)
 }
 
-main()
+const invokedPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : null
+if (invokedPath === import.meta.url) main()

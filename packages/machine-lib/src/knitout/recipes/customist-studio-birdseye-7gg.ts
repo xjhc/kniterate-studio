@@ -1,11 +1,11 @@
 /**
- * Customist Studio birdseye (full double-bed jacquard) configuration, 7gg.
+ * Reference-derived DBJ frame with a generic Birdseye body, 7gg.
  *
- * Detached recipe overrides that reproduce `reference/dbj.kc` at footer
- * level (direction / operation / carrier / speed / roller) through the
- * wizard-config derivation; see `test/knitout/dbj-parity.test.ts`, which
- * also pins the current stitch-level parity. Studio's birdseye backing
- * compiles through this configuration.
+ * Waste, introduction, settings, and finish are derived from `reference/dbj.kc`.
+ * The body uses the general Birdseye rule: every requested front stitch and
+ * one rear stitch per needle per design row. It does not reproduce Customist's
+ * full-needle DBJ backing. See `test/knitout/dbj-parity.test.ts` for the explicit
+ * comparison boundary and Studio's birdseyeBody.test.ts for row coverage.
  */
 
 import { FAIRISLE_PARK_BINDOFF_DEFAULTS } from '../passes/bind-off.js'

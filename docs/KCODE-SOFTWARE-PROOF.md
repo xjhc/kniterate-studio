@@ -144,6 +144,14 @@ milestone; no deployment or physical-machine result follows from these tests.
 
 ## Deterministic gate
 
+The September 26 corrective slice adds exact emitted Birdseye row coverage,
+whole-trace parity verdicts, target-selector and coordinate-gap comparison cases,
+rack/transfer/drop-aware float checks, and actual-command authoring CLI tests.
+Software fingerprints include root CLI scripts and chart fixtures; the physical
+compiler fingerprint includes the exact fairisle trial chart and captured reference.
+Changing these inputs invalidates the corresponding evidence. A reference-derived
+frame or matching face projection cannot substitute for full trace equality.
+
 Regenerate the deterministic receipt explicitly from the repository root:
 
 ```bash

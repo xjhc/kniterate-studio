@@ -113,6 +113,8 @@ export interface JacquardBirdseyeInput {
   /** Slow the first actual body row after cast-on, then restore body
    *  speed for row 1+. */
   firstRowSpeedOverride?: FirstRowSpeedOverride;
+  /** A surrounding frame can own the final rear-to-front transfers. */
+  homeBackBed?: boolean;
 }
 
 export interface JacquardBirdseyeResult {
@@ -212,7 +214,7 @@ export function emitJacquardBirdseyeWalk(input: JacquardBirdseyeInput): Jacquard
   // top lining row at finish. `machine-bindoff` consumes the resulting
   // doubles via its `linedBackBed` consolidation row.
   const homeCols = finalRowLinedCols(resolved, bindings, allColors, N, mode, strategy);
-  if (homeCols.length > 0) {
+  if (input.homeBackBed !== false && homeCols.length > 0) {
     ops.push(comment('-- lined finish: home final-row lining b->f --'));
     ops.push(...emitNonAdjacentXferBatches(
       homeCols.map(c => ({ needle: needleStart + c, direction: 'b-to-f' as const })),

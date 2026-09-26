@@ -47,6 +47,31 @@ was usable. The update below supersedes that broader reading.
 
 ---
 
+## Authored correctness and comparison corrections — 2026-09-26
+
+The review of the new Customist recipes found a fixture-specific DBJ schedule
+being applied to arbitrary Birdseye charts. The corrected body uses the general
+Birdseye walker inside the reference-derived frame: every chart stitch is emitted
+on the front and each needle receives one rear stitch per design row. Exact
+emitted-trace regressions cover final-row colors, stripes, sparse rows, carrier
+permutations, width one, and tall charts. Customist's heavier full-needle DBJ
+backing remains a separate missing algorithm; the frame is not proof of body parity.
+
+The corrected scoreboard reserves reproduction for strict whole-program trace
+equality. Current candidates yield 0 exact, 4 partial, 1 blocked, and 8 unsupported
+references. The 64×50 fairisle trial uses its actual chart and C4/C3 assignments:
+280/286 stitch passes match, with six passes with reference-only C4 front knits remaining. The next
+comparison milestone needs additional source designs and explicit body windows to
+establish general catch-loop and DBJ rules, rather than fitting one captured file.
+
+Face diagnostics retain needle gaps, do not discard alternating design passes,
+and disclose inferred boundaries. Transfer/split signatures include target stitch
+selectors and alignment reports the actual signed coordinate shift. Float
+advisories track current rack and transferred/dropped endpoints. CLI compile/export
+receipts expose all emitted yarn requirements and the canonical compiled frame.
+These fixes strengthen software evidence; controller observation and physical
+knitting remain separate gates.
+
 ## Debugger milestone — 2026-09-17
 
 The implemented slice addresses the review's measured gaps:

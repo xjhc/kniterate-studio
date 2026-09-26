@@ -230,11 +230,11 @@ describe('blanket project compiler', () => {
       status: 'supported',
       evidence: null,
       project: { width: 200, height: 300, paletteColors: 4, activeColors: 4, technique: 'birdseye', birdseyeMode: 'minimal' },
-      observed: { knitoutRecords: 266_061 },
+      observed: { knitoutRecords: 506_665 },
     });
     expect(compiled.capacity.estimate.knitoutRecords).toBeGreaterThanOrEqual(compiled.capacity.observed.knitoutRecords ?? Infinity);
     expect(compiled.capacity.estimate.kcodeRecords).toBeLessThanOrEqual(AUTHORED_CAPACITY_LIMITS_V1.kcodeRecords);
-    expect(compiled.stats).toMatchObject({ designRows: 300, needles: 200, passCount: 1_650, opCount: 266_049 });
+    expect(compiled.stats).toMatchObject({ designRows: 300, needles: 200, passCount: 3_150, opCount: 506_653 });
   });
 
   it('refuses a structurally valid oversized Birdseye project before compiler allocation', () => {
@@ -328,7 +328,7 @@ describe('blanket project compiler', () => {
   });
 
   it('keeps the width-aware pass estimate above exact lowering for short full-bed charts', { timeout: 20_000 }, () => {
-    for (const [height, exactPasses] of [[1, 154], [10, 198]] as const) {
+    for (const [height, exactPasses] of [[1, 158], [10, 248]] as const) {
       let project = createColorworkProjectV1(
         fourColorChart(252, height, `Full-bed ${height}`),
         { id: `full-bed-${height}` },
@@ -359,7 +359,7 @@ describe('blanket project compiler', () => {
       programOpSourceRows: compiled.programOpSourceRows,
       rowProvenance: compiled.rowProvenance,
     });
-    expect(emitted.capacity.observed.kcodeRecords).toBe(15_155);
+    expect(emitted.capacity.observed.kcodeRecords).toBe(29_555);
     const reopened = openMachineDocument('large-authored-self-reopen.kc', emitted.kcText, {
       dialect: 'knitout-vendor',
     });

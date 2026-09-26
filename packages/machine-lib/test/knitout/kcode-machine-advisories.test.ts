@@ -129,6 +129,39 @@ describe('strict KCode advisories', () => {
     expect(() => deriveMachineTraceAdvisoriesV1(trace, profile, { maxFloatDistance: -1 })).toThrow(RangeError)
   })
 
+  it('measures both held-loop endpoints under the current rack', () => {
+    const withinLimit = deriveMachineTraceAdvisoriesV1(
+      traceFor(['in 2', 'knit + b40 2', 'rack -4', 'knit - b34 2', 'out 2']), profile,
+    )
+    // Both rear needles move together: their separation stays six needles.
+    expect(withinLimit.counts['machine-advisory.float-distance']).toBe(0)
+
+    const beyondLimit = deriveMachineTraceAdvisoriesV1(
+      traceFor(['in 2', 'knit + b40 2', 'rack 4', 'knit - b31 2', 'out 2']), profile,
+    )
+    expect(beyondLimit.counts['machine-advisory.float-distance']).toBe(1)
+    expect(beyondLimit.advisories[0]!.message).toContain('floats 9 needles')
+
+    const acrossBeds = deriveMachineTraceAdvisoriesV1(
+      traceFor(['in 2', 'knit + b40 2', 'rack 4', 'knit - f34 2', 'out 2']), profile,
+    )
+    expect(acrossBeds.counts['machine-advisory.float-distance']).toBe(1)
+    expect(acrossBeds.advisories[0]!.message).toContain('floats 10 needles')
+  })
+
+  it('follows a transferred endpoint and forgets a dropped endpoint', () => {
+    const transferred = deriveMachineTraceAdvisoriesV1(
+      traceFor(['in 2', 'knit + b40 2', 'rack 4', 'xfer b40 f44', 'rack 0', 'knit - f35 2', 'out 2']), profile,
+    )
+    expect(transferred.counts['machine-advisory.float-distance']).toBe(1)
+    expect(transferred.advisories[0]!.message).toContain('floats 9 needles')
+
+    const dropped = deriveMachineTraceAdvisoriesV1(
+      traceFor(['in 2', 'knit + f40 2', 'drop f40', 'knit - f30 2', 'out 2']), profile,
+    )
+    expect(dropped.counts['machine-advisory.float-distance']).toBe(0)
+  })
+
   it('reports a stitch whose facing needle falls outside the KCode column domain at the current rack', () => {
     const trace = traceFor(['in 2', 'knit + f1 2', 'knit + f2 2', 'rack 2', 'knit - f2 2', 'knit - f1 2', 'out 2'], 'Keep')
     const report = deriveMachineTraceAdvisoriesV1(trace, profile)
@@ -139,7 +172,7 @@ describe('strict KCode advisories', () => {
     ])
   })
 
-  it('keeps the reference corpus float findings exact and bed-edge findings absent', () => {
+  it('keeps the reference corpus free of floats after endpoint transfers and drops', () => {
     const floats: Record<string, number> = {}
     for (const name of readdirSync(resolve(__dirname, '../../reference')).filter((item) => item.endsWith('.kc'))) {
       const report = deriveMachineTraceAdvisoriesV1(traceForReference(name), profile)
@@ -148,11 +181,8 @@ describe('strict KCode advisories', () => {
         floats[name] = report.counts['machine-advisory.float-distance']
       }
     }
-    expect(floats).toEqual({
-      '2x2-rib-beanie.kc': 5,
-      'back.kc': 2,
-      'front.kc': 2,
-      'sophie_stripe.kc': 1,
-    })
+    // The former ten between-pass reports used stale endpoints: eight had
+    // moved with transfers and two had been explicitly dropped.
+    expect(floats).toEqual({})
   }, 30_000)
 })
