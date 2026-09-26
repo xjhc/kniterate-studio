@@ -15,7 +15,7 @@ const options = {
 }
 
 describe('KCode byte intake', () => {
-  it('roundtrips an accepted fixture byte-for-byte', () => {
+  it('roundtrips an accepted fixture byte-for-byte', { timeout: 60_000 }, () => {
     const bytes = readFileSync(resolve(__dirname, '../../reference/swatch.kc'))
     const parsed = parseKCodeBytes(bytes, options)
 

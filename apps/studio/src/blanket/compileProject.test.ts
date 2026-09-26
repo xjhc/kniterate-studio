@@ -81,6 +81,18 @@ describe('blanket project compiler', () => {
     expect(artifact.knitoutText).toBeNull();
   });
 
+  it('refuses active overrides instead of compiling output that omits them', () => {
+    let project = createColorworkProjectV1(chart, { id: 'active-overrides' });
+    const rowId = project.base.rowIds[0]!;
+    project = appendProjectEdit(project, { id: 'tuck', source: 'assistant', edit: { kind: 'add-override', override: { id: 'tuck-1', kind: 'stitch', anchor: { rowId, needleIndex: 1 }, operation: 'tuck' } } });
+    project = appendProjectEdit(project, { id: 'speed', source: 'assistant', edit: { kind: 'add-override', override: { id: 'speed-1', kind: 'pass', anchor: { rowId, purpose: 'body', ordinal: 0 }, setting: { kind: 'speed', value: 220 } } } });
+    const artifact = compileColorworkProject(project);
+    expect(artifact.ok).toBe(false);
+    expect(artifact.compileVerdict).toBe('blocked');
+    expect(artifact.knitoutText).toBeNull();
+    expect(artifact.messages.filter((message) => message.rule === 'project-override-unsupported')).toHaveLength(2);
+  });
+
   it('blocks complement when the project does not use exactly two colors', () => {
     const oneColor = { ...chart, palette: chart.palette.slice(0, 1), cells: chart.cells.map((row) => row.map(() => 0)) };
     let project = createColorworkProjectV1(oneColor, { id: 'bad-complement' });

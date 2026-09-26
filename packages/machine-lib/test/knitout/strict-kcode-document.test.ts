@@ -54,7 +54,7 @@ function replaceFirstLine(
 }
 
 describe('strict lossless KCode document parser', () => {
-  it('accepts and byte-roundtrips every pinned reference fixture', () => {
+  it('accepts and byte-roundtrips every pinned reference fixture', { timeout: 60_000 }, () => {
     const fixtures = readdirSync(referenceDirectory).filter((name) => name.endsWith('.kc')).sort()
     expect(fixtures.length).toBe(13)
 

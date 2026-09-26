@@ -24,6 +24,19 @@ proof check, which re-runs mutation testing. While iterating on code that does
 not touch the compiler, converter, or machine output, `pnpm verify:quick` runs
 everything except that proof check.
 
+Author, compile, and export a project headlessly (for scripts and agents). Every
+command prints JSON and uses the same compiler, strict KCode validation, and
+verdict policy as the Studio UI; `export` writes a `.kc` only when Studio's
+Export button would be enabled:
+
+```bash
+pnpm --silent studio -- new fixtures/colorwork-chart-v1/four-color-checker.json -o project.json
+pnpm --silent studio -- edit project.json '{"kind":"set-strategy","strategy":{"technique":"birdseye","floatLimit":5}}'
+pnpm --silent studio -- compile project.json
+pnpm --silent studio -- export project.json -o command.kc
+pnpm --silent studio -- schema   # JSON Schema for edits
+```
+
 Check one foreign machine file with the same conservative verdict policy as
 Studio:
 

@@ -31,6 +31,17 @@ ship," trust this file and the working tree instead.
   Blocked, and `2` means usage/read/internal failure. Both the Studio verdict
   panel/run sheet and the CLI disclose that direct KCode cannot prove source
   carrier lifecycle.
+- **Headless authoring CLI.** `pnpm --silent studio -- new|show|edit|undo|redo|compile|export|schema`
+  drives authored projects without a browser for scripts and agents. Edits are
+  the typed `ProjectEdit` log (recorded as `assistant` by default);
+  `apps/studio/src/authoredPipeline.ts` composes the same compile, strict KCode
+  conversion, registry match, and `resolveAuthoredVerdict` seams as the UI, and
+  `export` writes a `.kc` only when the UI Export gate would allow it. All
+  output is JSON; exit `0` ok/export-ready, `1` blocked, `2` usage/read error.
+- **Active overrides fail closed.** Stitch/pass overrides are schema-valid
+  project intent, but the compiler does not consume them yet; any active
+  override blocks compilation (`project-override-unsupported`) rather than
+  exporting output that silently omits it.
 - **Shared authored/imported topology inspection.** Validated emitted KCode
   feeds the same schematic view in both workspaces. The Worker retains a full
   bounded graph of up to 200,000 loops, 800,000 connections, and 600,000 transfer

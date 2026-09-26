@@ -129,6 +129,9 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   if (state.strategy.technique === 'complement' && usedPalette.length !== 2) setupMessages.push(setupError('project-complement-two-colors', `Complement backing requires exactly two used colors; this chart uses ${usedPalette.length}.`));
   for (const resolved of overrides) {
     if (resolved.status === 'quarantined') setupMessages.push(setupError('project-override-quarantined', resolved.reason ?? `Override ${resolved.override.id} is quarantined.`));
+    // The compiler does not consume overrides yet; refuse rather than export
+    // output that silently omits recorded intent.
+    else setupMessages.push(setupError('project-override-unsupported', `Override ${resolved.override.id} (${resolved.override.kind}) cannot be compiled yet; remove it to export.`));
   }
 
   const base = {

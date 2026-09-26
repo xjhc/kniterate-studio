@@ -215,7 +215,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -577,7 +577,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -22320,7 +22320,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -22454,7 +22454,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -22684,7 +22684,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -23049,7 +23049,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -23303,7 +23303,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -23492,7 +23492,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -23773,7 +23773,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -24106,7 +24106,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -24165,7 +24165,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -24224,7 +24224,7 @@
                 }
               ],
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ]
         },
@@ -24328,7 +24328,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -24387,7 +24387,7 @@
                 }
               ],
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ]
         },
@@ -24402,7 +24402,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -24536,7 +24536,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -24822,7 +24822,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -25088,13 +25088,13 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "warning",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
@@ -25153,7 +25153,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -25185,7 +25185,7 @@
                 }
               ],
               "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143"
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ]
         },
@@ -30087,7 +30087,7 @@
     ]
   },
   "contract": {
-    "sha256": "5d1420ce16001f234d8f46fe0899ae1dfff316283c2a5d13a54a30f68064db80",
+    "sha256": "d5f7e195e21d2c4985392071cb9294993982cbad5234fabe19fc22295104be87",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30150,6 +30150,16 @@
         "bytes": 17488
       },
       {
+        "path": "../../apps/studio/src/authoredPipeline.test.ts",
+        "sha256": "38895a9bf16bee93be2ef3313f15ac6ce0f4d296d8c036b88b34515b1945c86b",
+        "bytes": 1591
+      },
+      {
+        "path": "../../apps/studio/src/authoredPipeline.ts",
+        "sha256": "1a720928b1a47fa8f3db9eeb4f6185f3ba144c56058849152d503bf84ecfa8c5",
+        "bytes": 2960
+      },
+      {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.test.tsx",
         "sha256": "3d112683d6ae12c9ba97ffc6f9dc212774009fb9fda9cb5912b4382ba923562a",
         "bytes": 2220
@@ -30166,13 +30176,13 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.test.ts",
-        "sha256": "392c7280cbaf4e88f7a1528f9cd5a816e22eb03bf0bce7adc1ad6d08d4aa076d",
-        "bytes": 15223
+        "sha256": "49c9f2ab3f28b611319893b414c5c16ce8f950a0ca28c7867d24fcec907c7d95",
+        "bytes": 16195
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.ts",
-        "sha256": "293a773ad00a26eb389d212fd6279a757120e518123adb42cdd2e673828b1822",
-        "bytes": 10264
+        "sha256": "e0f3f7ebeaf57b598c3e0f4c9c5c45886bd37ed4cb96c7441dadee335c7a73b9",
+        "bytes": 10575
       },
       {
         "path": "../../apps/studio/src/blanket/useBlanketCompiler.ts",
@@ -30536,8 +30546,8 @@
       },
       {
         "path": "../../package.json",
-        "sha256": "4f51dff629ec4e39983310e5bf493ae83fa1ccf6be89d15bdbc300271fbf026d",
-        "bytes": 1623
+        "sha256": "0a3bc35da2f09a66c8cc0288d3ef74cd1a2efac6f685ce77d56ba8f8cf894c79",
+        "bytes": 1686
       },
       {
         "path": "../../playwright.config.ts",
@@ -30726,7 +30736,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "212d6f7b120ea39abbc3f89d83e48337e5d246415058bcdf100b74204eff21c0",
+        "sha256": "8d6be0bc29a1d079ce1189bdb29755957171d4158b14cfce38aa8a850dbdaf97",
         "bytes": 179
       },
       {
@@ -31631,8 +31641,8 @@
       },
       {
         "path": "test/knitout/kcode-byte-roundtrip.test.ts",
-        "sha256": "0f33261884476ede1bb5a10f37e75452b39288ab1e179f03a01e4e23f0da6c4d",
-        "bytes": 2126
+        "sha256": "d1d01f5e33bc542f8fcc7d6faa32925a2d422ed1457d61a53e0b2b25a7231d89",
+        "bytes": 2147
       },
       {
         "path": "test/knitout/kcode-command-legality.test.ts",
@@ -31781,8 +31791,8 @@
       },
       {
         "path": "test/knitout/strict-kcode-document.test.ts",
-        "sha256": "019b37af1342eb6f5a6d572c3bd7ec140ff259dbb90328b1829cf32be186c143",
-        "bytes": 13210
+        "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9",
+        "bytes": 13231
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
