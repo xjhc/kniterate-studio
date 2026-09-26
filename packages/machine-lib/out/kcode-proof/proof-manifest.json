@@ -30087,7 +30087,7 @@
     ]
   },
   "contract": {
-    "sha256": "d5f7e195e21d2c4985392071cb9294993982cbad5234fabe19fc22295104be87",
+    "sha256": "233fa1a97c079d83fa66947481864b6bdb6791a8c03b3b286e7ea93b47313eea",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30546,8 +30546,8 @@
       },
       {
         "path": "../../package.json",
-        "sha256": "0a3bc35da2f09a66c8cc0288d3ef74cd1a2efac6f685ce77d56ba8f8cf894c79",
-        "bytes": 1686
+        "sha256": "08d915476d75fb1b95a72cd126e6eaeb43e7866bc75746fb430b61cdc2066496",
+        "bytes": 1749
       },
       {
         "path": "../../playwright.config.ts",
@@ -30736,7 +30736,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "8d6be0bc29a1d079ce1189bdb29755957171d4158b14cfce38aa8a850dbdaf97",
+        "sha256": "d955c8925fd009df2cc611c6bdc9fcae025b35f5e86a1c420f5c66acb8803b12",
         "bytes": 179
       },
       {
@@ -31083,6 +31083,11 @@
         "path": "src/knitout/kcode/export-eligibility.ts",
         "sha256": "3ccac1fc0fc20bab1f082fc6ee93904088b437d536cf40b16c9da19df68a468d",
         "bytes": 574
+      },
+      {
+        "path": "src/knitout/kcode/knitted-faces.ts",
+        "sha256": "f4534862ca5976787a13dc7511d770516812a4398481c526b37d2319488d191e",
+        "bytes": 6578
       },
       {
         "path": "src/knitout/kcode/machine-advisories.ts",
@@ -31668,6 +31673,11 @@
         "path": "test/knitout/kcode-independent-oracle.test.ts",
         "sha256": "1fbc6a1b8015dcce5d612da3415ce9e9e962a2fa422bf2078011d841da61be58",
         "bytes": 33811
+      },
+      {
+        "path": "test/knitout/kcode-knitted-faces.test.ts",
+        "sha256": "3ba27d01a61d730218726b4db1c37e3da58437cdc0be2102f1020506734fffea",
+        "bytes": 3492
       },
       {
         "path": "test/knitout/kcode-legality-spec.ts",

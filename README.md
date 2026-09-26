@@ -37,6 +37,13 @@ pnpm --silent studio -- export project.json -o command.kc
 pnpm --silent studio -- schema   # JSON Schema for edits
 ```
 
+Score which captured Customist reference pieces Studio can author natively
+(front/rear knitted-face comparison through the same pipeline):
+
+```bash
+pnpm --silent parity
+```
+
 Check one foreign machine file with the same conservative verdict policy as
 Studio:
 

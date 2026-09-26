@@ -38,6 +38,19 @@ ship," trust this file and the working tree instead.
   conversion, registry match, and `resolveAuthoredVerdict` seams as the UI, and
   `export` writes a `.kc` only when the UI Export gate would allow it. All
   output is JSON; exit `0` ok/export-ready, `1` blocked, `2` usage/read error.
+- **Customist parity scoreboard.** `pnpm parity [--json]` scores the 13
+  captured reference `.kc` pieces. `knitted-faces.ts` projects per-bed knit
+  grids from a strict trace (body window after the draw thread, skipping an
+  alternate-needle cast-on) and recovers a carrier colorwork chart from the
+  front face. For each reference with a recipe, the scoreboard recovers its
+  chart, authors it as a Studio project with the recipe's backing, runs the UI
+  pipeline, and compares front/rear faces under a carrier bijection. Current
+  result: all 5 colorwork references reproduce their front face exactly and
+  export Surface-proven; rear faces differ only by Customist's full-needle
+  cast-on row, except `dbj` (full-needle jacquard, border closing). The 8 rib,
+  sweater, and shaped-garment references need capabilities Studio does not
+  author yet. Face equality is programmed loop formation, not fabric
+  appearance or physical evidence.
 - **Active overrides fail closed.** Stitch/pass overrides are schema-valid
   project intent, but the compiler does not consume them yet; any active
   override blocks compilation (`project-override-unsupported`) rather than
