@@ -37,6 +37,10 @@ export function rowPassEvidenceLabel(
     : `Row ${displayRow} / ${emittedPassCount} emitted KCode passes`;
 }
 
+function compilerWarningLabel(count: number): string {
+  return `${count} compiler warning${count === 1 ? '' : 's'}`;
+}
+
 export function ChartWorkspace({ project, onProject, onNewProject, onProjectSettings, autosaveState, isDarkMode, compile, kcode, outputStatus, outputError, authoredVerdict, focusedRowId, onFocusedRowId }: {
   project: ColorworkProjectV1;
   onProject: (project: ColorworkProjectV1) => void;
@@ -57,6 +61,7 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
   const [selection, setSelection] = useState<Rect | null>(null);
   const [clipboard, setClipboard] = useState<PixelClipboard | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [fitRequest, setFitRequest] = useState(0);
   const [issue, setIssue] = useState<string | null>(null);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(() => searchChoice('panel', ['chart', 'strategy', 'machine'], 'chart'));
   const [programRegion, setProgramRegion] = useState<ProgramRegion>(() => searchChoice('region', ['waste', 'draw', 'body', 'finish'], 'body'));
@@ -68,6 +73,8 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
   const materialized = useMemo(() => materializeColorworkProject(project), [project]);
   const { chart, rowIds } = materialized.state;
   const activePaletteIndex = Math.min(paletteIndex, chart.palette.length - 1);
+  const compilerWarningCount = compile.artifact?.messages.filter((message) => message.severity === 'warning').length ?? 0;
+  const paletteCarriers = useMemo(() => new Map(materialized.state.machine.yarnAssignments.map((item) => [item.paletteId, item.carrier])), [materialized.state.machine.yarnAssignments]);
   const focusedRow = focusedRowId === null ? null : rowIds.indexOf(focusedRowId);
   const focusedProvenance = compile.artifact?.rowProvenance.find((row) => row.rowId === focusedRowId) ?? null;
   const emittedPassesByRow = useMemo(() => new Map((kcode?.rowPasses ?? []).map((row) => [row.rowId, row.passIndices])), [kcode]);
@@ -142,12 +149,12 @@ export function ChartWorkspace({ project, onProject, onNewProject, onProjectSett
         </header>
         <input ref={projectInput} className="file-input" type="file" accept=".json,application/json" onChange={(event) => void openProject(event)} />
         {issue && <div className="chart-issue" role="alert">{issue}<button type="button" onClick={() => setIssue(null)} aria-label="Dismiss chart issue">x</button></div>}
-        <ChartToolbar active={tool} onTool={setTool} onUndo={() => onProject(undoProjectEdit(project))} onRedo={() => onProject(redoProjectEdit(project))} onCopy={() => selection && setClipboard(copy(chart, selection))} onCut={() => { if (!selection) return; const result = cut(chart, selection); setClipboard(result.clipboard); commitMutation(result.mutation); }} onPaste={() => clipboard && commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 }))} onDelete={() => selection && commitMutation(clear(chart, selection))} onZoomIn={() => setZoom(Math.min(3, zoom * 1.2))} onZoomOut={() => setZoom(Math.max(.35, zoom / 1.2))} onZoomSelection={() => setZoom(selection ? Math.min(2.5, Math.max(.6, 400 / Math.max(selection.right - selection.left + 1, selection.bottom - selection.top + 1) / 16)) : 1)} canUndo={project.history.cursor > 0} canRedo={project.history.cursor < project.history.entries.length} />
+        <ChartToolbar active={tool} onTool={setTool} onUndo={() => onProject(undoProjectEdit(project))} onRedo={() => onProject(redoProjectEdit(project))} onCopy={() => selection && setClipboard(copy(chart, selection))} onCut={() => { if (!selection) return; const result = cut(chart, selection); setClipboard(result.clipboard); commitMutation(result.mutation); }} onPaste={() => clipboard && commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 }))} onDelete={() => selection && commitMutation(clear(chart, selection))} onZoomIn={() => setZoom(Math.min(3, zoom * 1.2))} onZoomOut={() => setZoom(Math.max(.35, zoom / 1.2))} onZoomSelection={() => selection ? setZoom(Math.min(2.5, Math.max(.6, 400 / Math.max(selection.right - selection.left + 1, selection.bottom - selection.top + 1) / 16))) : setFitRequest((request) => request + 1)} canUndo={project.history.cursor > 0} canRedo={project.history.cursor < project.history.entries.length} hasSelection={selection !== null} canPaste={clipboard !== null} />
         <div className="target-chart-stage">
-          <PaletteRail chart={chart} active={activePaletteIndex} onSelect={setPaletteIndex} />
+          <PaletteRail chart={chart} carriers={paletteCarriers} active={activePaletteIndex} onSelect={setPaletteIndex} />
           <div className="canvas-stack">
-            <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={passCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => onFocusedRowId(rowIds[row]!)} />
-            <div className="chart-caption"><span>{focusedProvenance ? rowPassEvidenceLabel(focusedProvenance.displayRow, focusedProvenance.passIndices.length, kcode === null ? null : focusedMachinePasses.length) : 'Select a design row to inspect its passes'}</span><span>{compile.artifact?.messages.filter((message) => message.severity === 'warning').length ?? 0} compiler warnings</span></div>
+            <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} fitRequest={fitRequest} fitScope={project.id} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={passCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => onFocusedRowId(rowIds[row]!)} />
+            <div className="chart-caption"><span>{focusedProvenance ? rowPassEvidenceLabel(focusedProvenance.displayRow, focusedProvenance.passIndices.length, kcode === null ? null : focusedMachinePasses.length) : 'Select a design row to inspect its passes'}</span><span className={compilerWarningCount > 0 ? 'has-warnings' : undefined}>{compilerWarningLabel(compilerWarningCount)}</span></div>
           </div>
         </div>
       </section>

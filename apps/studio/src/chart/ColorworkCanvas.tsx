@@ -17,12 +17,20 @@ import type { ChartTool } from './ChartToolbar';
 import { CHART_GUTTER as GUTTER, rowGutterActionAt, selectionMoveDestination } from './canvasCoordinates';
 
 const BASE_CELL = 16;
+const MIN_ZOOM = .35;
+const MAX_ZOOM = 3;
+
+/** Zoom that fits the whole chart in the viewport. `floor` keeps small charts from being shrunk on load. */
+export function fitChartZoom(viewport: { width: number; height: number }, chart: { width: number; height: number }, floor = MIN_ZOOM): number {
+  const fit = Math.min((viewport.width - GUTTER - 8) / (chart.width * BASE_CELL), (viewport.height - 8) / (chart.height * BASE_CELL));
+  return Math.max(floor, Math.min(MAX_ZOOM, Math.floor(fit * 20) / 20));
+}
 
 function rectContains(rect: Rect, point: Point): boolean {
   return point.column >= rect.left && point.column <= rect.right && point.row >= rect.top && point.row <= rect.bottom;
 }
 
-export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow }: {
+export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow }: {
   chart: ColorworkChartV1;
   tool: ChartTool;
   paletteIndex: number;
@@ -31,6 +39,10 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   onCommit: (mutation: ReturnType<typeof pen>) => boolean;
   zoom: number;
   onZoomChange: (zoom: number) => void;
+  /** Incrementing this fits the whole chart. */
+  fitRequest: number;
+  /** A new scope (an opened project) fits small charts up to fill the viewport on first layout. */
+  fitScope: string;
   onInsertRow: (afterRow: number | null) => void;
   onDeleteRow: (row: number) => void;
   isDarkMode: boolean;
@@ -58,6 +70,18 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
+
+  const appliedFit = useRef<{ scope: string; request: number } | null>(null);
+  useEffect(() => {
+    const element = viewport.current;
+    const applied = appliedFit.current;
+    if (!element || viewportSize.width === 0 || viewportSize.height === 0 || (applied?.scope === fitScope && applied.request === fitRequest)) return;
+    const opened = applied?.scope !== fitScope;
+    appliedFit.current = { scope: fitScope, request: fitRequest };
+    onZoomChange(fitChartZoom(viewportSize, chart, opened ? 1 : MIN_ZOOM));
+    element.scrollLeft = 0;
+    element.scrollTop = 0;
+  }, [fitRequest, fitScope, viewportSize, chart, onZoomChange]);
 
   const pointAt = (event: PointerEvent<HTMLCanvasElement>): Point | null => {
     const element = viewport.current;
@@ -105,29 +129,44 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       }
     }
 
+    if (focusedRow !== null && focusedRow >= top && focusedRow <= bottom) {
+      const y = focusedRow * cell - scroll.top;
+      context.fillStyle = isDarkMode ? 'rgba(239, 138, 110, .2)' : 'rgba(212, 85, 61, .12)';
+      context.fillRect(0, y, GUTTER, cell);
+    }
+
     context.strokeStyle = isDarkMode ? 'rgba(225, 232, 227, .17)' : 'rgba(44, 48, 45, .15)';
     context.lineWidth = 1;
+    const gridBottom = (bottom + 1) * cell - scroll.top;
+    const gridRight = GUTTER + (right + 1) * cell - scroll.left;
     for (let column = left; column <= right + 1; column += 1) {
       const x = GUTTER + column * cell - scroll.left;
-      context.beginPath(); context.moveTo(x, 0); context.lineTo(x, height); context.stroke();
+      context.beginPath(); context.moveTo(x, 0); context.lineTo(x, gridBottom); context.stroke();
     }
     for (let row = top; row <= bottom + 1; row += 1) {
       const y = row * cell - scroll.top;
-      context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke();
+      context.beginPath(); context.moveTo(0, y); context.lineTo(gridRight, y); context.stroke();
+      if (row > bottom) continue;
+      const labelY = y + Math.min(cell - 3, cell / 2 + 4);
       const displayRow = chart.rowNumbering === 'bottom-up' ? chart.height - row : row + 1;
       context.fillStyle = isDarkMode ? '#b2bbb5' : '#667069';
       context.font = '10px system-ui';
-      context.fillText(String(displayRow), 4, y + Math.min(cell - 3, 12));
+      context.fillText(String(displayRow), 4, labelY);
       const passCount = passCounts.get(row);
       if (passCount !== undefined) {
         context.fillStyle = row === focusedRow ? '#d86645' : isDarkMode ? '#d1d8d3' : '#48504b';
-        context.fillText(`×${passCount}`, 24, y + Math.min(cell - 3, 12));
+        context.fillText(`×${passCount}`, 24, labelY);
       }
       if (cell >= 12) {
         context.fillStyle = isDarkMode ? '#89938d' : '#8b938e';
-        context.fillText('+', 50, y + Math.min(cell - 3, 12));
-        context.fillText('−', 61, y + Math.min(cell - 3, 12));
+        context.fillText('+', 50, labelY);
+        context.fillText('−', 61, labelY);
       }
+    }
+    if (focusedRow !== null && focusedRow >= top && focusedRow <= bottom) {
+      context.strokeStyle = '#d86645';
+      context.lineWidth = 2;
+      context.strokeRect(1, focusedRow * cell - scroll.top + 1, gridRight - 2, cell - 2);
     }
   };
 
@@ -176,7 +215,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       const bounds = element.getBoundingClientRect();
       const chartX = (event.clientX - bounds.left + element.scrollLeft - GUTTER) / cell;
       const chartY = (event.clientY - bounds.top + element.scrollTop) / cell;
-      const nextZoom = Math.max(.35, Math.min(3, zoom * (event.deltaY < 0 ? 1.12 : .89)));
+      const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * (event.deltaY < 0 ? 1.12 : .89)));
       onZoomChange(nextZoom);
       requestAnimationFrame(() => {
         const nextCell = BASE_CELL * nextZoom;
@@ -214,6 +253,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       ref={paintLayer}
       style={{ transform: `translate(${scroll.left}px, ${scroll.top}px)` }}
       className="chart-canvas"
+      data-cell-size={cell}
       tabIndex={0}
       role="grid"
       aria-label={`Colorwork chart, ${chart.height} rows by ${chart.width} needles`}

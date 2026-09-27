@@ -8,10 +8,12 @@ async function importProject(page: Page, path = fixture) {
   await expect(page.locator('.brand-copy small')).not.toContainText('Untitled colorwork');
 }
 
-async function canvasGeometry(page: Page, cell = 16) {
+async function canvasGeometry(page: Page, expectedCell?: number) {
   const canvas = page.locator('canvas.chart-canvas').first();
   const box = await canvas.boundingBox();
   if (!box) throw new Error('Chart canvas has no browser geometry');
+  const cell = Number(await canvas.getAttribute('data-cell-size'));
+  if (expectedCell !== undefined) expect(cell).toBeCloseTo(expectedCell, 5);
   return {
     canvas,
     point(column: number, row: number) {

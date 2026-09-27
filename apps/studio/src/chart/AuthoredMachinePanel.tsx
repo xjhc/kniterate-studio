@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, CircleAlert } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, CircleAlert, Info } from 'lucide-react';
 import { useMemo, type CSSProperties } from 'react';
 import type { BlanketCompileArtifact } from '../blanket/compileProject';
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
@@ -126,7 +126,7 @@ export function AuthoredMachinePanel({ artifact, kcode, outputStatus, outputErro
       {outputFailed ? <div className="diagnostic-line blocked"><CircleAlert size={15} /><span><b>KCode generation failed</b><small>{outputError ?? 'The converter did not return an emitted KCode artifact.'}</small></span></div>
         : outputMissingAfterCompletion ? <div className="diagnostic-line blocked"><CircleAlert size={15} /><span><b>No KCode artifact returned</b><small>Generation completed without an inspectable exact-output artifact.</small></span></div>
           : !kcode ? <div className="diagnostic-line"><span className="spin-dot" /><span><b>Validating emitted KCode</b><small>The pass view is populated only from the strict emitted machine trace.</small></span></div>
-            : diagnostic ? <div className={`diagnostic-line ${diagnostic.severity === 'error' ? 'blocked' : diagnostic.severity === 'warning' ? 'warning' : 'clean'}`}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <CheckCircle2 size={15} />}<span><b>{diagnostic.rule}</b><small>{diagnostic.message}</small></span></div>
+            : diagnostic ? <div className={`diagnostic-line ${diagnostic.severity === 'error' ? 'blocked' : diagnostic.severity === 'warning' ? 'warning' : 'info'}`}>{diagnostic.severity === 'error' ? <CircleAlert size={15} /> : diagnostic.severity === 'warning' ? <AlertTriangle size={15} /> : <Info size={15} />}<span><b>{diagnostic.rule}</b><small>{diagnostic.message}</small></span></div>
               : outputBlocked ? <div className="diagnostic-line blocked"><CircleAlert size={15} /><span><b>Exact output blocked</b><small>Strict parsing, replay validation, or scheduled-pass differential validation did not complete cleanly.</small></span></div>
                 : <div className="diagnostic-line clean"><CheckCircle2 size={15} /><span><b>No findings for this selection</b><small>{region === 'body' && row ? `Design row ${row.displayRow} is joined to ${visiblePasses.length} emitted machine passes.` : `${labelForRegion(region)} passes are present in the strict machine trace.`}</small></span></div>}
     </div>
