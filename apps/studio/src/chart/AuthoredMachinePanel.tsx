@@ -106,7 +106,7 @@ export function AuthoredMachinePanel({ artifact, kcode, outputStatus, outputErro
           </button>;
         })}
       </div>
-      <div className="authored-pass-head" aria-hidden="true"><span>Pass</span><span>Dir</span><span>Carrier</span><span>Action</span><span title="Knitout needles selected by the pass (authored compiler coordinates; physical labels unverified)">Needles</span><span>Speed</span><span>Design</span></div>
+      <div className="authored-pass-head" aria-hidden="true"><span>Pass</span><span>Dir</span><span>Carrier</span><span>Action</span><span title="Knitout needles selected by the pass (authored compiler coordinates; physical labels unverified)">Needles</span><span>Design</span></div>
       <div className="authored-pass-list">
         {visiblePasses.length === 0 ? <p className="empty-passes">{kcode ? kcode.scene === null ? 'Emitted KCode is blocked; no exact machine scene is available.' : region === 'draw' ? 'Draw thread is not enabled.' : 'No emitted passes for this region.' : outputFailed || outputMissingAfterCompletion ? 'KCode generation did not produce an exact machine scene.' : 'Waiting for strict KCode validation.'}</p> : visiblePasses.map(({ pass, index }) => {
           const provenance = kcode?.passProvenance[index];
@@ -118,7 +118,7 @@ export function AuthoredMachinePanel({ artifact, kcode, outputStatus, outputErro
           return <button type="button" className={`authored-pass-row${selectedPass === index ? ' active' : ''}`} key={index} onClick={() => onPass(index)} aria-pressed={selectedPass === index}>
             <span className="pass-number">{index + 1}</span><span className="pass-direction">{pass.direction}</span>
             <span>{pass.carrier !== '0' ? <i className="carrier-chip" style={{ '--carrier': CARRIER_COLORS[pass.carrier] } as CSSProperties}>C{pass.carrier}</i> : <em>-</em>}</span>
-            <code>{pass.operation}{provenance?.isAutoMove ? ' · auto' : ''}</code><span className="pass-needles">{needles === null ? <em>-</em> : needles.start === needles.end ? needles.start : `${needles.start}-${needles.end}`}</span><span>{pass.speed.value}</span><span className="row-ref">{design}</span>
+            <code>{pass.operation}{provenance?.isAutoMove ? ' · auto' : ''}</code><span className="pass-needles">{needles === null ? <em>-</em> : needles.start === needles.end ? needles.start : `${needles.start}-${needles.end}`}</span><span className="row-ref">{design}</span>
           </button>;
         })}
       </div>

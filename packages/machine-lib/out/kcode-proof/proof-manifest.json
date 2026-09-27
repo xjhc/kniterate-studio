@@ -30095,7 +30095,7 @@
     ]
   },
   "contract": {
-    "sha256": "16f60261fb1f1e4b5f47741f0d52df7470c2f81b572b2e14d5c422d0e38febdb",
+    "sha256": "93a9626a4c0ab8b11d4ae921da224788ac75ac50dc41779f02ffc17178fc87dd",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30129,8 +30129,8 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "adbd31d5cf78f4321c72cdf771d47ecbec0a99c6a23625e2c39213cb4a0682ed",
-        "bytes": 59447
+        "sha256": "f326e127a6d83108199f9d24dbc9bb5ff835f2611eb5e95983051df120e9b4c9",
+        "bytes": 58333
       },
       {
         "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
@@ -30169,13 +30169,13 @@
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.test.tsx",
-        "sha256": "c832e5f9ad363bb6a1cd479142ac5b8498d955ba6d17c916c3ba6de5ee27682b",
-        "bytes": 2100
+        "sha256": "e61c769f16a6d90af545d31de929501967a3adc55167458ac77f942329e624da",
+        "bytes": 2843
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.tsx",
-        "sha256": "0295302b988d0c165ef4b5d58f87b02f02feca15fe740fa40f3476c61f7433ba",
-        "bytes": 8389
+        "sha256": "0d4615ec135f2f22b56bd2beb19c62464332620b814d786f8746926411be7d09",
+        "bytes": 7404
       },
       {
         "path": "../../apps/studio/src/blanket/birdseyeBody.test.ts",
@@ -30219,13 +30219,13 @@
       },
       {
         "path": "../../apps/studio/src/chart/AuthoredMachinePanel.tsx",
-        "sha256": "8504fd2a6df1206c786fcf51609a85fc987d2f01fa207c5d3c81ca303a9d36a9",
-        "bytes": 9759
+        "sha256": "93714f61267789852c1373ad01902c610122f70d44912df17071410791ad497a",
+        "bytes": 9710
       },
       {
         "path": "../../apps/studio/src/chart/ChartToolbar.tsx",
-        "sha256": "b9ee583b42f82ba6ef5b4056e9c1e6c0debdecfa7ac517bb285fab21820d237d",
-        "bytes": 3135
+        "sha256": "00fc5ba9bd926061a102983c0d21730b16343ec76774260d868844323486d007",
+        "bytes": 3286
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.test.ts",
@@ -30234,13 +30234,13 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "eec8b6d16af3e10fbcd7f717c764b3a7dbef18525dbdbd5896014d6602b090a8",
-        "bytes": 17103
+        "sha256": "c0380b1402f7606cd07f1140d1fc4aabe8667af80399a1faaff868dac272f284",
+        "bytes": 16878
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
-        "sha256": "51e76c076e8a683722d20f4b44f279ff797ae79a0b7aa7cf99cd0c59f990adf1",
-        "bytes": 19702
+        "sha256": "328432a1da79a7e54fbe34f95b85a948083d6cfe5802758393fcc55846f5a956",
+        "bytes": 20763
       },
       {
         "path": "../../apps/studio/src/chart/GeneratedSourceDock.test.tsx",
@@ -30264,8 +30264,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/canvasCoordinates.test.ts",
-        "sha256": "ab1a413175fa2deae508fdc7cadad7634a3c20b5172525d21f73e4035ef86e5c",
-        "bytes": 748
+        "sha256": "777032b05e42b3085986b7c709666a90a13bcc9fff5ae8ef0d6ab2c6c5d0da4d",
+        "bytes": 1527
       },
       {
         "path": "../../apps/studio/src/chart/canvasCoordinates.ts",
@@ -30514,8 +30514,8 @@
       },
       {
         "path": "../../apps/studio/src/styles.css",
-        "sha256": "a1f01954ecb774ac24373b4c0e68256e976214d1b2c233a3b84b8d53d9e37e27",
-        "bytes": 51753
+        "sha256": "e70af138feae887b6a6ed9985acb385c4f7c0c4f3e8c79901833c38205849d59",
+        "bytes": 49831
       },
       {
         "path": "../../apps/studio/tsconfig.json",
@@ -30549,13 +30549,13 @@
       },
       {
         "path": "../../e2e/m3c.spec.ts",
-        "sha256": "f47c2bf3989f1e1c98ccdc2b32c805089e773f6802123bf487b0b3808624c416",
-        "bytes": 3236
+        "sha256": "0dd771a14bcfb15c2d792f1fbb726158557063eaded3f81b2ca290cb16e05aca",
+        "bytes": 3234
       },
       {
         "path": "../../e2e/m3d.spec.ts",
-        "sha256": "3ed33a8a971b007417606a56d8613beb6787fb3a9c3f0e435991f27847d423f8",
-        "bytes": 7582
+        "sha256": "1e6184783264cb548f90096b925cb299e692545e31c4f9ee79025cc33e6a0e1e",
+        "bytes": 7603
       },
       {
         "path": "../../e2e/reference-patterns.spec.ts",

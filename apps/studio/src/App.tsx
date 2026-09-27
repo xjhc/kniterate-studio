@@ -15,6 +15,7 @@ import {
   FileUp,
   Grid3X3,
   ListChecks,
+  LoaderCircle,
   Moon,
   Network,
   PanelRight,
@@ -101,24 +102,6 @@ function projectId(title: string): string {
   return `${slug}-${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
 }
 
-function CompilePipeline({ project, compile, kcode }: {
-  project: ColorworkProjectV1;
-  compile: ReturnType<typeof useBlanketCompiler>;
-  kcode: ReturnType<typeof useKCodeArtifact>;
-}) {
-  const state = materializeColorworkProject(project).state;
-  const stages = [
-    { label: 'Chart', detail: `${state.chart.width}x${state.chart.height} · ${state.chart.palette.length} colors`, state: 'ready' },
-    { label: 'Plan', detail: state.strategy.technique, state: compile.status === 'failed' || compile.artifact?.ok === false ? 'blocked' : compile.status === 'compiling' ? 'working' : 'ready' },
-    { label: 'KCode', detail: kcode.artifact ? `${kcode.artifact.passCount.toLocaleString()} emitted passes` : kcode.status === 'converting' ? 'lowering' : 'waiting', state: kcode.status === 'failed' ? 'blocked' : kcode.artifact ? 'ready' : 'working' },
-    { label: 'Proof', detail: kcode.status === 'ready' ? kcode.artifact?.ok ? 'trace + replay clear' : 'blocked' : kcode.status === 'failed' ? 'failed' : kcode.status === 'converting' ? 'checking exact output' : 'waiting', state: kcode.status === 'ready' ? kcode.artifact?.ok ? 'ready' : 'blocked' : kcode.status === 'failed' ? 'blocked' : 'working' },
-  ];
-  return <ol className="compile-pipeline" aria-label="Compile pipeline">{stages.map((stage, index) => <li key={stage.label} className={stage.state}>
-    {index > 0 && <i aria-hidden="true" />}
-    <span><b>{stage.label}</b><small>{stage.detail}</small></span>
-  </li>)}</ol>;
-}
-
 function Verdict({ document, onClick }: { document: MachineDocument; onClick: () => void }) {
   return (
     <button className={`verdict verdict-${document.verdict.state}`} type="button" onClick={onClick}>
@@ -129,8 +112,10 @@ function Verdict({ document, onClick }: { document: MachineDocument; onClick: ()
   );
 }
 
-function AuthoredVerdictBadge({ verdict, onClick }: { verdict: AuthoredVerdict; onClick: () => void }) {
-  return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={verdict.annotation} aria-label={`Verdict: ${verdict.label}`} onClick={onClick}><span className="verdict-dot" />{verdict.label}</button>;
+export function AuthoredVerdictBadge({ verdict, pending, onClick }: { verdict: AuthoredVerdict | null; pending: 'compiling' | 'checking'; onClick: () => void }) {
+  // A null verdict means lowering is still in progress; the badge is the top bar's single progress and verdict signal.
+  if (!verdict) return <span className="verdict authored-verdict verdict-pending" role="status" aria-label={pending === 'compiling' ? 'Compiling project' : 'Checking emitted KCode'}><LoaderCircle size={12} className="spin" />{pending === 'compiling' ? 'Compiling' : 'Checking KCode'}</span>;
+  return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={verdict.annotation} aria-label={`Verdict: ${verdict.label}${verdict.evidenceId ? ' / Exact physical match' : ''}`} onClick={onClick}><span className="verdict-dot" />{verdict.label}</button>;
 }
 
 function EmptyState({ active, onOpen, onDrop }: { active: boolean; onOpen: () => void; onDrop: (file: File) => void }) {
@@ -665,14 +650,13 @@ export function App() {
   return (
     <div className="app-shell" data-theme={theme}>
       <header className="topbar">
-        <div className="brand-lockup"><span className="brand-mark" aria-hidden="true"><i /><i /><i /></span><span className="brand-copy"><strong>Kniterate Studio</strong><small>{document ? document.filename : `${project.title} / ${authoredState.chart.width} needles / ${authoredState.chart.height} rows`}</small></span></div>
-        {!document && <CompilePipeline project={project} compile={blanketCompile} kcode={kcodeState} />}
+        <div className="brand-lockup"><span className="brand-mark" aria-hidden="true"><i /><i /><i /></span><span className="brand-copy"><strong>Kniterate Studio</strong><small>{document ? document.filename : project.title}</small></span></div>
         <div className="topbar-actions">
           {document && <button className={`icon-button${view === 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => { setDocument(null); setView('chart'); }} title="Return to authored project" aria-label="Return to authored project"><Grid3X3 size={17} /></button>}
           {!document && blanketCompile.artifact?.ok && <button className={`icon-button${view === 'machine' ? ' active-tool' : ''}`} type="button" onClick={() => setView(view === 'machine' ? 'chart' : 'machine')} title={view === 'machine' ? 'Return to chart' : 'Inspect exact emitted movement'} aria-label={view === 'machine' ? 'Return to chart' : 'Inspect exact emitted movement'}>{view === 'machine' ? <Grid3X3 size={17} /> : <PanelRight size={17} />}</button>}
           <button className="icon-button" type="button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} title="Toggle theme" aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
           {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
-          {!document && authoredVerdict && <AuthoredVerdictBadge verdict={authoredVerdict} onClick={() => setShowVerdict((value) => !value)} />}
+          {!document && <AuthoredVerdictBadge verdict={authoredVerdict} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} onClick={() => setShowVerdict((value) => !value)} />}
           {(document || authoredExportReady) && <button className="icon-button" type="button" onClick={() => setShowRunSheet(true)} title="Run sheet" aria-label="Open run sheet"><Printer size={17} /></button>}
           {!document && <button className="primary-button top-export" type="button" onClick={downloadKCode} disabled={!authoredExportReady} title={authoredExportReady ? 'Export validated K-code' : kcodeState.status === 'converting' ? 'Validating K-code' : 'Resolve blocking findings before export'} aria-label="Export k-code"><Download size={16} /><span>Export .kc</span></button>}
           <button className="icon-button top-open" type="button" onClick={() => fileInput.current?.click()} title="Open machine file" aria-label="Open machine file"><FileUp size={16} /></button>
@@ -682,7 +666,7 @@ export function App() {
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} authoredVerdict={authoredVerdict} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
+      {view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>

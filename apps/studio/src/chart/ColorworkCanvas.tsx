@@ -17,13 +17,16 @@ import type { ChartTool } from './ChartToolbar';
 import { CHART_GUTTER as GUTTER, rowGutterActionAt, selectionMoveDestination } from './canvasCoordinates';
 
 const BASE_CELL = 16;
-const MIN_ZOOM = .35;
+/** 1px cells: the smallest scale at which every supported chart can still be fitted and seen. */
+export const MIN_CHART_ZOOM = 1 / 16;
+/** Row controls and per-row labels need this much height to be legible and safely clickable. */
+const ROW_CONTROL_MIN_CELL = 12;
 const RULER_HEIGHT = 18;
 const NEEDLE_LABEL_STEPS = [1, 2, 5, 10, 20, 50, 100];
 const MAX_ZOOM = 3;
 
 /** Zoom that fits the whole chart in the viewport. `floor` keeps small charts from being shrunk on load. */
-export function fitChartZoom(viewport: { width: number; height: number }, chart: { width: number; height: number }, floor = MIN_ZOOM): number {
+export function fitChartZoom(viewport: { width: number; height: number }, chart: { width: number; height: number }, floor = MIN_CHART_ZOOM): number {
   const fit = Math.min((viewport.width - GUTTER - 8) / (chart.width * BASE_CELL), (viewport.height - 8) / (chart.height * BASE_CELL));
   return Math.max(floor, Math.min(MAX_ZOOM, Math.floor(fit * 20) / 20));
 }
@@ -85,7 +88,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     if (!element || viewportSize.width === 0 || viewportSize.height === 0 || (applied?.scope === fitScope && applied.request === fitRequest)) return;
     const opened = applied?.scope !== fitScope;
     appliedFit.current = { scope: fitScope, request: fitRequest };
-    onZoomChange(fitChartZoom(viewportSize, chart, opened ? 1 : MIN_ZOOM));
+    onZoomChange(fitChartZoom(viewportSize, chart, opened ? 1 : MIN_CHART_ZOOM));
     element.scrollLeft = 0;
     element.scrollTop = 0;
   }, [fitRequest, fitScope, viewportSize, chart, onZoomChange]);
@@ -146,25 +149,30 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     context.lineWidth = 1;
     const gridBottom = (bottom + 1) * cell - scroll.top;
     const gridRight = GUTTER + (right + 1) * cell - scroll.left;
-    for (let column = left; column <= right + 1; column += 1) {
+    const drawGrid = cell >= 4;
+    const rowControls = cell >= ROW_CONTROL_MIN_CELL;
+    // Below control height, label every Nth row so numbers never overlap.
+    const rowLabelStep = rowControls ? 1 : Math.ceil(ROW_CONTROL_MIN_CELL / cell);
+    for (let column = left; drawGrid && column <= right + 1; column += 1) {
       const x = GUTTER + column * cell - scroll.left;
       context.beginPath(); context.moveTo(x, 0); context.lineTo(x, gridBottom); context.stroke();
     }
     for (let row = top; row <= bottom + 1; row += 1) {
       const y = row * cell - scroll.top;
-      context.beginPath(); context.moveTo(0, y); context.lineTo(gridRight, y); context.stroke();
+      if (drawGrid) { context.beginPath(); context.moveTo(0, y); context.lineTo(gridRight, y); context.stroke(); }
       if (row > bottom) continue;
       const labelY = y + Math.min(cell - 3, cell / 2 + 4);
       const displayRow = chart.rowNumbering === 'bottom-up' ? chart.height - row : row + 1;
+      if (displayRow % rowLabelStep !== 0) continue;
       context.fillStyle = isDarkMode ? '#b2bbb5' : '#667069';
       context.font = '10px system-ui';
-      context.fillText(String(displayRow), 4, labelY);
+      context.fillText(String(displayRow), 4, rowControls ? labelY : y + cell / 2 + 4);
       const passCount = passCounts.get(row);
-      if (passCount !== undefined) {
+      if (rowControls && passCount !== undefined) {
         context.fillStyle = row === focusedRow ? '#d86645' : isDarkMode ? '#d1d8d3' : '#48504b';
         context.fillText(`×${passCount}`, 24, labelY);
       }
-      if (cell >= 12) {
+      if (rowControls) {
         context.fillStyle = isDarkMode ? '#89938d' : '#8b938e';
         context.fillText('+', 50, labelY);
         context.fillText('−', 61, labelY);
@@ -173,7 +181,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     if (focusedRow !== null && focusedRow >= top && focusedRow <= bottom) {
       context.strokeStyle = '#d86645';
       context.lineWidth = 2;
-      context.strokeRect(1, focusedRow * cell - scroll.top + 1, gridRight - 2, cell - 2);
+      context.strokeRect(1, focusedRow * cell - scroll.top + 1, gridRight - 2, Math.max(1, cell - 2));
     }
   };
 
@@ -236,13 +244,16 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     for (let column = left; column <= right; column += 1) {
       const needle = firstNeedle + column;
       const x = GUTTER + column * cell - scroll.left;
-      const labelled = needle % step === 0 || column === 0;
+      // The first needle is always labelled; a step label too close to it is skipped.
+      const labelled = column === 0 || (needle % step === 0 && (step === 1 || column * cell >= 30));
       if (cell >= 6 || labelled) {
         context.beginPath(); context.moveTo(x + .5, RULER_HEIGHT - (labelled ? 6 : 3)); context.lineTo(x + .5, RULER_HEIGHT); context.stroke();
       }
       if (labelled && x >= GUTTER - 2) {
         context.fillStyle = isDarkMode ? '#b2bbb5' : '#667069';
-        context.fillText(String(needle), x + cell / 2, 10);
+        const leftAligned = column === 0 && step > 1;
+        context.textAlign = leftAligned ? 'left' : 'center';
+        context.fillText(String(needle), leftAligned ? x + 2 : x + cell / 2, 10);
       }
     }
     context.fillStyle = isDarkMode ? '#292e2b' : '#f7f6f1';
@@ -266,7 +277,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       const bounds = element.getBoundingClientRect();
       const chartX = (event.clientX - bounds.left + element.scrollLeft - GUTTER) / cell;
       const chartY = (event.clientY - bounds.top + element.scrollTop) / cell;
-      const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom * (event.deltaY < 0 ? 1.12 : .89)));
+      const nextZoom = Math.max(MIN_CHART_ZOOM, Math.min(MAX_ZOOM, zoom * (event.deltaY < 0 ? 1.12 : .89)));
       onZoomChange(nextZoom);
       requestAnimationFrame(() => {
         const nextCell = BASE_CELL * nextZoom;
@@ -345,6 +356,8 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         const visibleX = event.clientX - bounds.left;
         const gutterAction = rowGutterActionAt(visibleX, event.clientY - bounds.top, element.scrollTop, cell, chart.height);
         if (visibleX < GUTTER) {
+          // The +/- glyphs are only drawn at control height; never act on invisible targets.
+          if (cell < ROW_CONTROL_MIN_CELL) return;
           if (gutterAction?.kind === 'insert') onInsertRow(gutterAction.row);
           else if (gutterAction?.kind === 'delete') onDeleteRow(gutterAction.row);
           return;

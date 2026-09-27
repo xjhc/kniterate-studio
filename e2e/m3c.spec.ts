@@ -7,7 +7,7 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await page.locator('input[accept=".json,application/json"]').setInputFiles('fixtures/colorwork-chart-v1/four-color-checker.json');
-  await expect(page.locator('.compile-verdict')).toContainText('Surface-proven', { timeout: 15_000 });
+  await expect(page.getByLabel('Verdict: Surface-proven')).toBeVisible({ timeout: 15_000 });
   await expect(page.getByRole('button', { name: /Fairisle/ })).not.toContainText('Calculating', { timeout: 15_000 });
   // Only backings with a Customist-matched reference program are offered.
   await expect(page.locator('.strategy-segments button')).toHaveCount(2);
@@ -26,8 +26,8 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   await page.getByLabel('Needles', { exact: true }).press('Tab');
   await page.getByLabel('Rows', { exact: true }).fill('5');
   await page.getByLabel('Rows', { exact: true }).press('Tab');
-  await expect(page.locator('.compile-verdict')).toContainText('Surface-proven', { timeout: 15_000 });
-  await expect(page.locator('.compile-stats')).toContainText('Passes');
+  await expect(page.getByLabel('Verdict: Surface-proven')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('.strategy-segments button.active')).toContainText('passes');
 
   const downloadEvent = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save project', exact: true }).click();

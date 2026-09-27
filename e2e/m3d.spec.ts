@@ -19,7 +19,7 @@ test('exports validated k-code and reproduces it byte-identically after project 
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await page.locator('input[accept=".json,application/json"]').setInputFiles('fixtures/colorwork-chart-v1/four-color-checker.json');
-  await expect(page.locator('.compile-verdict')).toContainText('Surface-proven', { timeout: 15_000 });
+  await expect(page.getByLabel('Verdict: Surface-proven')).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole('button', { name: /Fairisle/ }).click();
   await page.getByRole('button', { name: /Birdseye/ }).click();
@@ -92,7 +92,7 @@ test('exports and reopens the canonical 200x300 four-color authored blanket', as
   expect(firstBytes.toString('utf8')).toContain('FRNT:');
   // The corrected generic body emits all front and rear passes. This is
   // the plan estimate; the exact emitted trace contains 3,148 passes.
-  await expect(page.locator('.compile-stats')).toContainText('3,150');
+  await expect(page.locator('.strategy-segments button.active')).toContainText('3,150 passes');
 
   const projectDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save project', exact: true }).click();
@@ -136,7 +136,7 @@ test('refuses an oversized authored Birdseye project before compiler allocation'
   const blockedAfterMs = Date.now() - started;
   expect(blockedAfterMs).toBeLessThan(15_000);
   testInfo.annotations.push({ type: 'benchmark', description: `Oversized authored refusal reported after ${blockedAfterMs} ms` });
-  await expect(page.locator('.compile-verdict')).toContainText('Blocked');
+  await expect(page.getByLabel('Verdict: Blocked')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Export k-code', exact: true })).toBeDisabled();
-  await expect(page.locator('.compile-stats')).toContainText('Operations0');
+  await expect(page.locator('.strategy-segments button.active')).toContainText('Blocked');
 });

@@ -1,7 +1,5 @@
-import { AlertTriangle, CheckCircle2, LoaderCircle } from 'lucide-react';
 import { AUTHORED_CAPACITY_LIMITS_V1, type ProjectState } from '@kniterate-studio/project-contract';
 import type { BackFaceProjection } from '@kniterate-studio/machine-lib/browser';
-import type { AuthoredVerdict } from '../engine';
 import type { BlanketCompileState } from './useBlanketCompiler';
 
 // Only backings with a Customist-matched reference program are authored.
@@ -24,12 +22,10 @@ function BackFaceMini({ projection, palette }: { projection: BackFaceProjection 
   return <span className="back-mini" style={{ gridTemplateColumns: `repeat(${Math.min(8, Math.ceil(projection.width / columnStep))}, 1fr)` }}>{sampled.map((cell, index) => <i className={cell.kind} style={{ background: cell.paletteIndexes.length ? palette[cell.paletteIndexes[0]!]?.hex : 'transparent' }} key={index} />)}</span>;
 }
 
-export function BlanketSetupRail({ state, compile, outputStatus, outputError, authoredVerdict, mobileActive = false, onWidth, onHeight, onNeedleOffset, onStrategy, onFloatLimit, onAssignment }: {
+export function BlanketSetupRail({ state, compile, outputError, mobileActive = false, onWidth, onHeight, onNeedleOffset, onStrategy, onFloatLimit, onAssignment }: {
   state: ProjectState;
   compile: BlanketCompileState;
-  outputStatus: 'idle' | 'converting' | 'ready' | 'failed';
   outputError: string | null;
-  authoredVerdict: AuthoredVerdict | null;
   mobileActive?: boolean;
   onWidth: (width: number) => void;
   onHeight: (height: number) => void;
@@ -39,22 +35,21 @@ export function BlanketSetupRail({ state, compile, outputStatus, outputError, au
   onAssignment: (paletteId: string, carrier: '2' | '3' | '4' | '5', yarnName: string) => void;
 }) {
   const assignmentFor = (paletteId: string) => state.machine.yarnAssignments.find((item) => item.paletteId === paletteId);
-  const verdict = authoredVerdict?.label ?? (compile.status === 'failed' || compile.artifact?.compileVerdict === 'blocked' ? 'Blocked'
-    : compile.status !== 'ready' ? 'Compiling'
-    : outputStatus === 'failed' ? 'Output failed'
-    : 'Validating output');
-  const verdictClass = verdict.toLowerCase().replace(/[^a-z]/g, '');
   const selectedPassCount = compile.comparisons.find((item) => item.technique === state.strategy.technique)?.passCount ?? compile.artifact?.stats.passCount ?? null;
   return <aside className={`target-column blanket-setup${mobileActive ? ' mobile-active' : ''}`} aria-label="Blanket setup">
     <header className="target-column-head">
       <div className="target-column-title"><span className="eyebrow">Compiler intent</span><strong>Strategy</strong></div>
-      <span className={`strategy-status compile-verdict ${verdictClass}`} title={authoredVerdict?.annotation} aria-label={`${verdict}${authoredVerdict?.evidenceId ? ' / Exact physical match' : ''}`}>{verdict === 'Compiling' || verdict === 'Validating output' ? <LoaderCircle size={12} className="spin" /> : verdict === 'Blocked' || verdict === 'Output failed' ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />}{verdict}</span>
     </header>
     <div className="strategy-body">
     <section><h2>Backing</h2><div className="strategy-segments">{techniques.map(([id, label]) => {
       const comparison = compile.comparisons.find((item) => item.technique === id);
+      const selected = state.strategy.technique === id;
       const delta = comparison && selectedPassCount !== null ? comparison.passCount - selectedPassCount : null;
-      return <button type="button" className={state.strategy.technique === id ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{label}</b><small>{comparison?.compileVerdict === 'blocked' ? 'Blocked' : delta === null ? 'Calculating' : `${delta >= 0 ? '+' : ''}${delta.toLocaleString()} passes · ${Math.ceil((comparison?.estimatedKnitTimeSeconds ?? 0) / 60)} min`}</small></span></button>;
+      // The selected backing states the plan totals; alternatives state their difference from it.
+      const passes = selected ? selectedPassCount?.toLocaleString() ?? null : delta === null ? null : `${delta >= 0 ? '+' : ''}${delta.toLocaleString()}`;
+      const minutes = selected ? compile.artifact?.stats.estimatedKnitTimeSeconds ?? comparison?.estimatedKnitTimeSeconds : comparison?.estimatedKnitTimeSeconds;
+      const blocked = selected ? compile.status === 'failed' || compile.artifact?.compileVerdict === 'blocked' : comparison?.compileVerdict === 'blocked';
+      return <button type="button" className={selected ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{label}</b><small>{blocked ? 'Blocked' : passes === null ? 'Calculating' : `${passes} passes${minutes == null ? '' : ` · ${Math.ceil(minutes / 60)} min`}`}</small></span></button>;
     })}</div>{state.strategy.technique === 'fairisle' && <label className="strategy-field"><span>Float budget</span><input type="number" min="1" max="30" defaultValue={state.strategy.floatLimit} key={`float-${state.strategy.floatLimit}`} onBlur={(event) => onFloatLimit(Number(event.currentTarget.value))} /></label>}</section>
     <section><h2>Rectangle</h2>
       <label className="strategy-field"><span>Needles</span><input type="number" min="1" max={AUTHORED_CAPACITY_LIMITS_V1.chartWidth} defaultValue={state.chart.width} key={`w${state.chart.width}`} onBlur={(event) => onWidth(Number(event.currentTarget.value))} /></label>
@@ -66,13 +61,9 @@ export function BlanketSetupRail({ state, compile, outputStatus, outputError, au
       if (!assignment) return <div className="assignment-row missing" key={color.id}><i style={{ background: color.hex }} /><span>{color.name}</span><b>Unassigned</b></div>;
       return <div className="assignment-row" key={color.id}><i style={{ background: color.hex }} /><input aria-label={`${color.name} yarn name`} defaultValue={assignment.yarnName} key={`${color.id}-${assignment.yarnName}`} onBlur={(event) => onAssignment(color.id, assignment.carrier, event.currentTarget.value.trim() || color.name)} /><select aria-label={`${color.name} carrier`} value={assignment.carrier} onChange={(event) => onAssignment(color.id, event.currentTarget.value as '2' | '3' | '4' | '5', assignment.yarnName)}>{(['2', '3', '4', '5'] as const).map((carrier) => <option key={carrier} value={carrier} disabled={state.machine.yarnAssignments.some((item) => item.paletteId !== color.id && item.carrier === carrier)}>C{carrier}</option>)}</select></div>;
     })}</div></section>
-    <section className="frame-summary"><h2>Frame</h2>{compile.artifact?.frame ? <dl>
-      <dt>Matched to</dt><dd title={compile.artifact.frame.preset}>Customist {compile.artifact.frame.reference.replace('reference/', '')}</dd>
-      <dt>Waste</dt><dd>{compile.artifact.frame.wastePasses ?? '-'} passes{compile.artifact.frame.wasteCarrier ? ` / C${compile.artifact.frame.wasteCarrier}` : ''}</dd>
-      <dt>Frame yarns</dt><dd>{compile.artifact.frame.frameCarriers.length ? compile.artifact.frame.frameCarriers.map((carrier) => `C${carrier}`).join(', ') : 'None'}</dd>
-      <dt>Finish</dt><dd>{compile.artifact.frame.bindOff ? BIND_OFF_LABELS[compile.artifact.frame.bindOff] ?? compile.artifact.frame.bindOff : '-'}</dd>
-    </dl> : <p className="frame-pending">Set by the matched Customist program once the project compiles.</p>}</section>
-    {compile.artifact && <section className="compile-stats"><h2>Machine estimate</h2><dl><dt>Passes</dt><dd>{compile.artifact.stats.passCount.toLocaleString()}</dd><dt>Operations</dt><dd>{compile.artifact.stats.opCount.toLocaleString()}</dd><dt>Time</dt><dd>{compile.artifact.stats.estimatedKnitTimeSeconds === null ? '-' : `${Math.ceil(compile.artifact.stats.estimatedKnitTimeSeconds / 60)} min`}</dd></dl></section>}
+    <section className="frame-summary"><h2>Frame</h2>{compile.artifact?.frame ? <p title={compile.artifact.frame.preset}>
+      Matched to Customist {compile.artifact.frame.reference.replace('reference/', '')}. {compile.artifact.frame.wastePasses ?? '-'} waste passes{compile.artifact.frame.wasteCarrier ? ` on C${compile.artifact.frame.wasteCarrier}` : ''}; frame yarn {compile.artifact.frame.frameCarriers.length ? compile.artifact.frame.frameCarriers.map((carrier) => `C${carrier}`).join(', ') : 'none'}; {compile.artifact.frame.bindOff ? (BIND_OFF_LABELS[compile.artifact.frame.bindOff] ?? compile.artifact.frame.bindOff).toLowerCase() : 'no finish'}.
+    </p> : <p className="frame-pending">Set by the matched Customist program once the project compiles.</p>}</section>
     {(outputError || compile.error || compile.artifact?.messages.find((message) => message.severity === 'error')) && <p className="setup-error" role="alert">{outputError ?? compile.error ?? compile.artifact?.messages.find((message) => message.severity === 'error')?.message}</p>}
     </div>
   </aside>;
