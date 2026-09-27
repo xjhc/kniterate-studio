@@ -10,8 +10,16 @@ export interface KCodeState {
   capacity: AuthoredCapacityBlockedV1 | null;
 }
 
-export function useKCodeArtifact(compiled: BlanketCompileArtifact | null): KCodeState {
+/**
+ * `compilerNeedleRange` is the current project's authored needle span. It is
+ * read when a compiled artifact arrives; if it no longer matches that
+ * artifact's lowering, the coordinate bridge refuses and needle labels are
+ * withheld until the next compile.
+ */
+export function useKCodeArtifact(compiled: BlanketCompileArtifact | null, compilerNeedleRange: KCodeConversionRequest['compilerNeedleRange']): KCodeState {
   const workerRef = useRef<Worker | null>(null);
+  const needleRange = useRef(compilerNeedleRange);
+  needleRange.current = compilerNeedleRange;
   const activeRequest = useRef(0);
   const [state, setState] = useState<KCodeState>({ status: 'idle', artifact: null, error: null, capacity: null });
   useEffect(() => {
@@ -31,7 +39,7 @@ export function useKCodeArtifact(compiled: BlanketCompileArtifact | null): KCode
     activeRequest.current = requestId;
     if (!compiled?.ok || !compiled.inputHash || !compiled.knitoutText || compiled.capacity.status !== 'supported') { setState({ status: 'idle', artifact: null, error: null, capacity: null }); return; }
     setState((current) => ({ status: 'converting', artifact: current.artifact?.inputHash === compiled.inputHash ? current.artifact : null, error: null, capacity: null }));
-    const request: KCodeConversionRequest = { kind: 'convert-kcode', requestId, inputHash: compiled.inputHash, capacity: compiled.capacity, knitoutText: compiled.knitoutText, programOpSourceRows: compiled.programOpSourceRows, rowProvenance: compiled.rowProvenance };
+    const request: KCodeConversionRequest = { kind: 'convert-kcode', requestId, inputHash: compiled.inputHash, capacity: compiled.capacity, knitoutText: compiled.knitoutText, compilerNeedleRange: needleRange.current, programOpSourceRows: compiled.programOpSourceRows, rowProvenance: compiled.rowProvenance };
     workerRef.current?.postMessage(request);
   }, [compiled]);
   return state;

@@ -29,6 +29,7 @@ import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProjec
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import type { BlanketCompileArtifact } from './blanket/compileProject';
 import { ChartWorkspace } from './chart/ChartWorkspace';
+import { authoredKnitoutNeedleRange } from './kcode/kcodeProtocol';
 import { useKCodeArtifact } from './kcode/useKCodeArtifact';
 import type { KCodeArtifact } from './kcode/kcodeProtocol';
 import { MachineMovementView, type MachineMovementViewProps } from './kcode/MachineMovementView';
@@ -549,7 +550,9 @@ export function App() {
   const [showProjectSettings, setShowProjectSettings] = useState(false);
   const [autosaveState, setAutosaveState] = useState<'saving' | 'saved' | 'failed'>(initial.recoveredAt ? 'saved' : 'saving');
   const blanketCompile = useBlanketCompiler(project);
-  const kcodeState = useKCodeArtifact(blanketCompile.artifact);
+  const authoredState = useMemo(() => materializeColorworkProject(project).state, [project]);
+  const authoredNeedleRange = useMemo(() => authoredKnitoutNeedleRange(authoredState), [authoredState]);
+  const kcodeState = useKCodeArtifact(blanketCompile.artifact, authoredNeedleRange);
   const outputCurrent = blanketCompile.artifact?.inputHash != null
     && kcodeState.artifact?.inputHash === blanketCompile.artifact.inputHash;
   const displayedOutputStatus = outputCurrent || kcodeState.status === 'failed' || kcodeState.status === 'idle'
@@ -571,7 +574,6 @@ export function App() {
     knitProvenEntryId: knitProvenMatch?.id ?? null,
   });
   const authoredExportReady = outputReady && authoredVerdict !== null && authoredVerdict.state !== 'blocked';
-  const authoredState = useMemo(() => materializeColorworkProject(project).state, [project]);
   useEffect(() => {
     setAutosaveState('saving');
     const timeout = window.setTimeout(() => {

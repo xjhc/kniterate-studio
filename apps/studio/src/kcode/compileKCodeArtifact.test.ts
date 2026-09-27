@@ -33,6 +33,24 @@ function testCapacity() {
 }
 
 describe('compileKCodeArtifact', () => {
+  it('withholds Knitout needle labels when the authored range does not match the emitted trace', async () => {
+    const parsed = parseKnitoutProgram(SOURCE);
+    const artifact = await compileKCodeArtifact({
+      kind: 'convert-kcode',
+      requestId: 1,
+      inputHash: 'test-input',
+      capacity: testCapacity(),
+      knitoutText: SOURCE,
+      compilerNeedleRange: { start: 41, end: 44 },
+      programOpSourceRows: parsed.opLines.map(() => null),
+      rowProvenance: [],
+    });
+
+    expect(artifact.coordinateBridge).toBeNull();
+    expect(artifact.passKnitoutNeedles).toHaveLength(artifact.passCount);
+    expect(artifact.passKnitoutNeedles.every((range) => range === null)).toBe(true);
+  });
+
   it('proves emitted KCode and joins scheduled passes to authored rows by source line', async () => {
     const parsed = parseKnitoutProgram(SOURCE);
     const programOpSourceRows = parsed.opLines.map((line) => line >= 8 && line <= 10 ? [0] : null);
@@ -42,11 +60,19 @@ describe('compileKCodeArtifact', () => {
       inputHash: 'test-input',
       capacity: testCapacity(),
       knitoutText: SOURCE,
+      compilerNeedleRange: { start: 40, end: 40 },
       programOpSourceRows,
       rowProvenance: [{ rowId: 'row-0', chartRow: 0, machineRow: 0 }],
     });
 
     expect(artifact.ok).toBe(true);
+    expect(artifact.coordinateBridge).toMatchObject({
+      compilerProject: { start: 40, end: 40 },
+      physicalNeedleLabels: { status: 'unverified' },
+    });
+    expect(artifact.passKnitoutNeedles).toHaveLength(artifact.passCount);
+    expect(artifact.passKnitoutNeedles.filter((range) => range !== null)).not.toHaveLength(0);
+    expect(artifact.passKnitoutNeedles.every((range) => range === null || (range.start === 40 && range.end === 40))).toBe(true);
     expect(artifact.parserDiagnostics).toEqual([]);
     expect(artifact.validation).toMatchObject({
       ok: true,

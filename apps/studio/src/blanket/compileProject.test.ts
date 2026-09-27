@@ -5,9 +5,11 @@ import {
   AUTHORED_CAPACITY_LIMITS_V1,
   appendProjectEdit,
   createColorworkProjectV1,
+  materializeColorworkProject,
 } from '@kniterate-studio/project-contract';
 import { compileColorworkProject } from './compileProject';
 import { compileKCodeArtifact } from '../kcode/compileKCodeArtifact';
+import { authoredKnitoutNeedleRange } from '../kcode/kcodeProtocol';
 import { openMachineDocument } from '../engine';
 
 const chart = {
@@ -203,12 +205,22 @@ describe('blanket project compiler', () => {
       inputHash: compiled.inputHash!,
       capacity: compiled.capacity,
       knitoutText: compiled.knitoutText!,
+      compilerNeedleRange: authoredKnitoutNeedleRange(materializeColorworkProject(project).state),
       programOpSourceRows: compiled.programOpSourceRows,
       rowProvenance: compiled.rowProvenance.map(({ rowId, chartRow, machineRow }) => ({ rowId, chartRow, machineRow })),
     });
 
     expect(emitted.ok).toBe(true);
     expect(emitted.passCount).toBe(158);
+    const needleRange = authoredKnitoutNeedleRange(materializeColorworkProject(project).state);
+    expect(emitted.coordinateBridge?.compilerProject).toMatchObject(needleRange);
+    expect(emitted.rowPasses[0]!.passIndices.some((passIndex) => emitted.passKnitoutNeedles[passIndex] !== null)).toBe(true);
+    for (const passIndex of emitted.rowPasses[0]!.passIndices) {
+      const needles = emitted.passKnitoutNeedles[passIndex];
+      if (needles === null) continue;
+      expect(needles!.start).toBeGreaterThanOrEqual(needleRange.start);
+      expect(needles!.end).toBeLessThanOrEqual(needleRange.end);
+    }
     expect(compiled.rowProvenance[0]).toMatchObject({ rowId: 'row_0001', passIndices: [132, 133] });
     expect(emitted.rowPasses[0]).toEqual({ rowId: 'row_0001', passIndices: [130, 131] });
     expect(compiled.diagnostics.find((item) => item.rowId === 'row_0001')).toMatchObject({
@@ -356,6 +368,7 @@ describe('blanket project compiler', () => {
       inputHash: compiled.inputHash!,
       capacity: compiled.capacity,
       knitoutText: compiled.knitoutText!,
+      compilerNeedleRange: authoredKnitoutNeedleRange(materializeColorworkProject(project).state),
       programOpSourceRows: compiled.programOpSourceRows,
       rowProvenance: compiled.rowProvenance,
     });

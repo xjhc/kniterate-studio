@@ -18,6 +18,8 @@ import { CHART_GUTTER as GUTTER, rowGutterActionAt, selectionMoveDestination } f
 
 const BASE_CELL = 16;
 const MIN_ZOOM = .35;
+const RULER_HEIGHT = 18;
+const NEEDLE_LABEL_STEPS = [1, 2, 5, 10, 20, 50, 100];
 const MAX_ZOOM = 3;
 
 /** Zoom that fits the whole chart in the viewport. `floor` keeps small charts from being shrunk on load. */
@@ -30,7 +32,7 @@ function rectContains(rect: Rect, point: Point): boolean {
   return point.column >= rect.left && point.column <= rect.right && point.row >= rect.top && point.row <= rect.bottom;
 }
 
-export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow }: {
+export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow, firstNeedle, highlightedNeedles }: {
   chart: ColorworkChartV1;
   tool: ChartTool;
   paletteIndex: number;
@@ -49,9 +51,14 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   passCounts: ReadonlyMap<number, number>;
   focusedRow: number | null;
   onFocusRow: (row: number) => void;
+  /** Authored one-based Knitout needle of chart column 0. */
+  firstNeedle: number;
+  /** Knitout needles selected by the chosen emitted pass, from the KCode artifact. */
+  highlightedNeedles: { start: number; end: number } | null;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
   const paintLayer = useRef<HTMLCanvasElement>(null);
+  const rulerLayer = useRef<HTMLCanvasElement>(null);
   const uiLayer = useRef<HTMLCanvasElement>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [scroll, setScroll] = useState({ left: 0, top: 0 });
@@ -204,6 +211,50 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   };
 
   useLayoutEffect(drawBase, [chart, scroll, zoom, viewportSize, isDarkMode, passCounts, focusedRow]);
+  const drawRuler = () => {
+    const canvas = rulerLayer.current;
+    if (!canvas || viewportSize.width === 0) return;
+    const width = viewportSize.width;
+    const context = configureCanvas(canvas, width, RULER_HEIGHT);
+    context.fillStyle = isDarkMode ? '#292e2b' : '#f7f6f1';
+    context.fillRect(0, 0, width, RULER_HEIGHT);
+    const left = Math.max(0, Math.floor((scroll.left - GUTTER) / cell));
+    const right = Math.min(chart.width - 1, Math.ceil((scroll.left + width - GUTTER) / cell));
+    if (highlightedNeedles) {
+      const start = Math.max(0, highlightedNeedles.start - firstNeedle);
+      const end = Math.min(chart.width - 1, highlightedNeedles.end - firstNeedle);
+      if (start <= end) {
+        context.fillStyle = isDarkMode ? 'rgba(239, 138, 110, .35)' : 'rgba(212, 85, 61, .22)';
+        context.fillRect(GUTTER + start * cell - scroll.left, 0, (end - start + 1) * cell, RULER_HEIGHT);
+      }
+    }
+    const step = NEEDLE_LABEL_STEPS.find((candidate) => candidate * cell >= 30) ?? NEEDLE_LABEL_STEPS.at(-1)!;
+    context.font = '9px system-ui';
+    context.textAlign = 'center';
+    context.strokeStyle = isDarkMode ? 'rgba(225, 232, 227, .3)' : 'rgba(44, 48, 45, .3)';
+    context.lineWidth = 1;
+    for (let column = left; column <= right; column += 1) {
+      const needle = firstNeedle + column;
+      const x = GUTTER + column * cell - scroll.left;
+      const labelled = needle % step === 0 || column === 0;
+      if (cell >= 6 || labelled) {
+        context.beginPath(); context.moveTo(x + .5, RULER_HEIGHT - (labelled ? 6 : 3)); context.lineTo(x + .5, RULER_HEIGHT); context.stroke();
+      }
+      if (labelled && x >= GUTTER - 2) {
+        context.fillStyle = isDarkMode ? '#b2bbb5' : '#667069';
+        context.fillText(String(needle), x + cell / 2, 10);
+      }
+    }
+    context.fillStyle = isDarkMode ? '#292e2b' : '#f7f6f1';
+    context.fillRect(0, 0, GUTTER, RULER_HEIGHT);
+    context.textAlign = 'left';
+    context.fillStyle = isDarkMode ? '#89938d' : '#8b938e';
+    context.fillText('Knitout N', 4, 11);
+    context.strokeStyle = isDarkMode ? 'rgba(225, 232, 227, .17)' : 'rgba(44, 48, 45, .15)';
+    context.beginPath(); context.moveTo(0, RULER_HEIGHT - .5); context.lineTo(width, RULER_HEIGHT - .5); context.stroke();
+  };
+
+  useLayoutEffect(drawRuler, [chart.width, scroll.left, zoom, viewportSize, isDarkMode, firstNeedle, highlightedNeedles]);
   useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex, keyboardPoint, keyboardActive]);
 
   useEffect(() => {
@@ -248,7 +299,9 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     setGesture(null);
   };
 
-  return <div className="chart-canvas-shell" ref={viewport} onScroll={(event) => setScroll({ left: event.currentTarget.scrollLeft, top: event.currentTarget.scrollTop })}>
+  return <div className="chart-canvas-frame">
+    <canvas ref={rulerLayer} className="chart-needle-ruler" aria-hidden="true" title="Knitout needle numbers (authored compiler coordinates). Physical needle labels are unverified." />
+    <div className="chart-canvas-shell" ref={viewport} onScroll={(event) => setScroll({ left: event.currentTarget.scrollLeft, top: event.currentTarget.scrollTop })}>
     <canvas
       ref={paintLayer}
       style={{ transform: `translate(${scroll.left}px, ${scroll.top}px)` }}
@@ -256,7 +309,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       data-cell-size={cell}
       tabIndex={0}
       role="grid"
-      aria-label={`Colorwork chart, ${chart.height} rows by ${chart.width} needles`}
+      aria-label={`Colorwork chart, ${chart.height} rows by ${chart.width} needles, Knitout needles ${firstNeedle} to ${firstNeedle + chart.width - 1}`}
       aria-rowcount={chart.height}
       aria-colcount={chart.width}
       onFocus={() => { setKeyboardActive(true); onFocusRow(keyboardPoint.row); }}
@@ -324,5 +377,6 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     />
     <canvas ref={uiLayer} style={{ transform: `translate(${scroll.left}px, ${scroll.top}px)` }} className="chart-canvas ui-layer" aria-hidden="true" />
     <div className="chart-canvas-spacer" style={{ width: GUTTER + chart.width * cell, height: chart.height * cell }} />
+    </div>
   </div>;
 }

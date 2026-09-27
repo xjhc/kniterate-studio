@@ -2,13 +2,17 @@ import { browserAuthoredKnitoutToKCode } from '@kniterate-studio/machine-lib/bro
 import {
   KNITERATE_7GG_KCODE_PROFILE_V2,
   compareScheduledPassesToMachineTrace,
+  createAuthoredKCodeCoordinateBridgeV1,
   isKCodeCommandLegalityExportEligible,
   parseKCodeDocument,
   parseKnitoutProgram,
   projectKCodeMachineTrace,
   projectMachineScene,
   validateKCodeMachineTrace,
+  type AuthoredKCodeCoordinateBridgeV1,
+  type MachineTraceV1,
   type ParsedKnitoutDocument,
+  type ScheduledTraceComparisonV1,
   type ValidationMessage,
 } from '@kniterate-studio/machine-lib/browser';
 import {
@@ -227,6 +231,41 @@ function messagesForArtifact(input: {
   ];
 }
 
+function authoredCoordinateBridge(input: {
+  kcHash: string;
+  compilerNeedleRange: KCodeConversionRequest['compilerNeedleRange'];
+  lowering: Parameters<typeof createAuthoredKCodeCoordinateBridgeV1>[0]['lowering'] | undefined;
+  trace: MachineTraceV1 | null;
+  differential: ScheduledTraceComparisonV1 | null;
+}): AuthoredKCodeCoordinateBridgeV1 | null {
+  if (!input.lowering || !input.trace || input.differential?.ok !== true) return null;
+  try {
+    return createAuthoredKCodeCoordinateBridgeV1({
+      artifactKcodeSha256: input.kcHash,
+      compilerCoordinateStart: input.compilerNeedleRange.start,
+      compilerCoordinateEnd: input.compilerNeedleRange.end,
+      lowering: input.lowering,
+      trace: input.trace,
+      scheduledTraceComparison: input.differential,
+      profile: KNITERATE_7GG_KCODE_PROFILE_V2,
+    });
+  } catch {
+    // The bridge refuses whenever the trace extent does not equal the mapped
+    // authored range; needle labels are then withheld rather than guessed.
+    return null;
+  }
+}
+
+function passKnitoutNeedles(trace: MachineTraceV1 | null, bridge: AuthoredKCodeCoordinateBridgeV1 | null): KCodeArtifact['passKnitoutNeedles'] {
+  if (!trace) return [];
+  return trace.passes.map((pass) => {
+    const coordinates = [...pass.selections.front, ...pass.selections.rear].map((selection) => selection.traceCoordinate);
+    if (!bridge || coordinates.length === 0) return null;
+    const offset = bridge.offsets.compilerProjectToTraceCoordinate;
+    return { start: Math.min(...coordinates) - offset, end: Math.max(...coordinates) - offset };
+  });
+}
+
 export async function compileKCodeArtifact(
   request: KCodeConversionRequest,
 ): Promise<KCodeArtifact> {
@@ -293,10 +332,19 @@ export async function compileKCodeArtifact(
     differential,
   }), ...provenance.messages];
 
+  const kcHash = await sha256Text(converted.kcode);
+  const coordinateBridge = authoredCoordinateBridge({
+    kcHash,
+    compilerNeedleRange: request.compilerNeedleRange,
+    lowering: converted.coordinateMapping,
+    trace,
+    differential,
+  });
+
   return {
     inputHash: request.inputHash,
     capacity: exactCapacity,
-    kcHash: await sha256Text(converted.kcode),
+    kcHash,
     kcText: converted.kcode,
     passCount: trace?.passes.length ?? 0,
     messages,
@@ -309,6 +357,8 @@ export async function compileKCodeArtifact(
     passLines,
     rowLines,
     rowPasses,
+    coordinateBridge,
+    passKnitoutNeedles: passKnitoutNeedles(trace, coordinateBridge),
     ok: isKCodeCommandLegalityExportEligible({ parseOk: parsed.ok, validation })
       && parsedKnitout.issues.length === 0
       && differential?.ok === true

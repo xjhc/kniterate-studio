@@ -1,8 +1,8 @@
 import { matchKnitProvenArtifact } from '@kniterate-studio/machine-lib/browser';
-import type { ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { compileColorworkProject, type BlanketCompileArtifact } from './blanket/compileProject';
 import { compileKCodeArtifact } from './kcode/compileKCodeArtifact';
-import type { KCodeArtifact } from './kcode/kcodeProtocol';
+import { authoredKnitoutNeedleRange, type KCodeArtifact } from './kcode/kcodeProtocol';
 import { resolveAuthoredVerdict, type AuthoredVerdict } from './engine';
 
 export interface AuthoredPipelineResult {
@@ -39,6 +39,7 @@ export async function runAuthoredPipeline(project: ColorworkProjectV1): Promise<
         inputHash: compiled.inputHash,
         capacity: compiled.capacity,
         knitoutText: compiled.knitoutText,
+        compilerNeedleRange: authoredKnitoutNeedleRange(materializeColorworkProject(project).state),
         programOpSourceRows: compiled.programOpSourceRows,
         rowProvenance: compiled.rowProvenance,
       });

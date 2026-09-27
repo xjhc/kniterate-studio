@@ -39,6 +39,7 @@ describe('authored machine program regions', () => {
       validation: null,
       passProvenance: [],
       rowPasses: [],
+      passKnitoutNeedles: [],
     } as unknown as KCodeArtifact;
     const markup = renderToStaticMarkup(createElement(AuthoredMachinePanel, {
       artifact: null,
@@ -99,6 +100,7 @@ describe('authored machine program regions', () => {
         { rowId: 'row_0001', passIndices: [30, 31] },
         { rowId: 'row_0002', passIndices: [28, 29] },
       ],
+      passKnitoutNeedles: passes.map(({ passIndex }) => passIndex === 28 ? { start: 125, end: 128 } : passIndex === 29 ? { start: 126, end: 126 } : null),
       validation: null,
       messages: [],
       ok: true,
@@ -132,5 +134,7 @@ describe('authored machine program regions', () => {
     expect(markup).toContain('Warning owned by row two.');
     expect(markup).not.toContain('row-one-warning');
     expect(markup).not.toContain('Warning owned by row one.');
+    expect(markup).toContain('<span class="pass-needles">125-128</span>');
+    expect(markup).toContain('<span class="pass-needles">126</span>');
   });
 });
