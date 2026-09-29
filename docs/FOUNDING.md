@@ -1,7 +1,8 @@
 # Kniterate Studio — founding doc
 
 **Status: active founding contract, moved to the Studio repository
-2026-07-09.** This is the current product boundary and extraction manifest.
+2026-07-09; V1 scope widened 2026-09-28 (§1 ruling, §2, §6).** This is the
+current product boundary and extraction manifest.
 [`ROADMAP.md`](./ROADMAP.md) tracks execution from the completed contract-intake
 slice through machine-library extraction and the three product stories.
 
@@ -38,7 +39,32 @@ patterns are not useful; Kniterate's own web UI is bad but WYSIWYG.
 3. **Trust the verdict** → "Knit-proven" only ever means someone physically
    knit that recipe on a real machine.
 
-**V1 release ruling (accepted 2026-07-12):** four simultaneous pattern colors
+**V1 scope ruling (user, 2026-09-28; supersedes the 2026-07-12 ruling
+below):** V1 is **Customist Studio parity plus AI-driven rectangles, beanies
+and sweaters.** A person, or Claude acting for them, describes the object,
+dimensions, yarn, gauge and pattern. Studio then produces an editable project,
+validated `.kc` files, previews, and knitting and finishing instructions.
+
+- **Parity.** Parity is the capability inventory in
+  [`CUSTOMIST-PARITY.md`](./CUSTOMIST-PARITY.md). A row closes only with
+  demonstrated equivalent behaviour; documenting a gap does not close it.
+- **Authoring.** Authoring uses the typed Design → Plan → Program vocabulary
+  in [`DESIGN-LANGUAGE.md`](./DESIGN-LANGUAGE.md), driven through the headless
+  CLI. A Claude Code skill is the first assistant host.
+- **Beanie construction.** The first beanie is **flat and seamed**, because the
+  captured `2x2-rib-beanie.kc` is flat 2×2 rib. A seamless tube is a separate
+  later construction with its own proof.
+- **Release gate.** The physical gate is exact-artifact qualification of a
+  rectangle, a flat seamed beanie and a complete sweater at the frozen final
+  compiler fingerprint, with pass/fail tolerances declared before knitting
+  ([`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md)).
+- **Open rulings:**
+  - carrier roles for six-colour rows (CP-B1 conflicts with C1 draw / C6
+    waste);
+  - the platform features CP-J1…J4 versus local-first;
+  - whether "piece" becomes a product noun.
+
+*(Superseded)* **V1 release ruling (accepted 2026-07-12):** four simultaneous pattern colors
 using C2–C5, with C1 reserved for draw thread and C6 for waste. Additional
 pattern colors require an explicit carrier-swap workflow after v1. Release
 requires a representative multi-color rectangular blanket to be physically
@@ -49,11 +75,17 @@ verdict.** A surface that needs a fifth explained noun is over budget.
 
 ## 2. Not in the product (v1)
 
-Garment design. Tubes/hats (the code exists; fast-follow, not v1). Hand-knit
-anything (patterns, prose, publication documents, grading, stitch-maps —
-retired, not ported). Editing machine code. Machine profile management (one
-hardcoded calibration: 7gg worsted). Customizing the machine output of
-generated files. MCP, the calculator.
+*(Revised 2026-09-28.)* Seamless tube/hat construction (flat, seamed beanies
+are in V1). Hand-knit anything: patterns, prose, publication documents,
+grading and stitch-maps are retired, not ported. Editing raw machine code;
+Customist cannot import `.kc` either, and its stitch-level Free Edit maps to
+anchored stitch and row-setting overrides, which *are* in V1. Machine profile
+management: one hardcoded 7gg worsted profile, subject to the CP-B1
+carrier-role ruling. MCP and an in-app assistant, which come after the CLI +
+Claude Code skill host. The calculator.
+
+*(Superseded 2026-09-28: garment design, tubes/hats, and customizing the
+machine output of generated files were listed here.)*
 
 *(Revised 2026-07-12: dark mode was originally on this list; it is now **in
 scope** — the design system is token-based and ships light+dark from day one,
@@ -93,6 +125,10 @@ so the cost is near zero and the canonical mockup already carries both.)*
 
 Then stop and put it in front of users before scoping anything else.
 
+*(Revised 2026-09-28: the widened V1 adds milestones M5–M9 — design language
+on rectangles, flat seamed beanie, sweater, remaining parity, and final
+physical qualification. See [`ROADMAP.md`](./ROADMAP.md).)*
+
 ## 5. How it's built (the short version)
 
 - **Move, don't rewrite.** The machine path (~40k LOC, ~180 test files —
@@ -120,6 +156,14 @@ Then stop and put it in front of users before scoping anything else.
   workspace, blanket flow.
 
 ## 6. Later — recorded so we don't re-litigate, deliberately unscoped
+
+*(Revised 2026-09-28: flat seamed beanies and shaped-panel garments moved into
+V1 — §1. The seamless tube remains here. knitlab2's beanie documentation calls
+both reference hats tubes, but their pass structure shows they are flat pieces.
+`2x2-rib-beanie.kc` knits the same front and rear needle sets in both
+directions, and `fox-baby-beanie.kc` alternates carriers on complementary
+needle sets. The knitlab2 tube generator is therefore a different construction,
+not a reproduction of either.)*
 
 - **Tubes/hats:** re-host the existing flows. First candidate after M4.
 - **Garments — as shaped panels, NOT as knitlab2's garment engine.** The
@@ -154,6 +198,12 @@ Object spec (sizes/presets) → chart (`ColorworkChartV1`) → fabric structure
 every lower layer is derived and reproducible (recompile-from-request →
 byte-identical). Shaping primitives are FabricIR row events, not chart cells —
 this is why garments can arrive later without changing v1.
+
+*(Revised 2026-09-28: the concrete contract is
+[`DESIGN-LANGUAGE.md`](./DESIGN-LANGUAGE.md) — Design, which is authored, →
+Plan, derived sizing with provenance, → Program, the existing `RunArtifact`
+and KCode. There is exactly one authored representation, and FabricIR is not
+revived as a parallel intermediate representation.)*
 
 ## Appendix B — extraction manifest (measured 2026-07-07)
 

@@ -178,3 +178,103 @@ source-tree/output hash checks, browser registry manifest, exact-artifact
 matcher, Knit-proven setup/run-sheet state, and fail-closed promotion command
 are wired. Physical state remains 0/4 registry entries; actual machine runs are
 the remaining gate.
+
+---
+
+## Widened V1 (ruling 2026-09-28) — proposed, not started
+
+V1 is Customist Studio parity plus AI-driven rectangles, beanies and sweaters.
+See [`FOUNDING.md`](./FOUNDING.md) §1,
+[`CUSTOMIST-PARITY.md`](./CUSTOMIST-PARITY.md) (capability rows CP-*) and
+[`DESIGN-LANGUAGE.md`](./DESIGN-LANGUAGE.md). Each milestone has two
+checkpoints: **software completion**, then a separate **machine trial**. That
+way development keeps moving while machine time is arranged. Machine runs made
+before M9 are development evidence only
+([`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md)).
+
+## M5 - Design language on rectangles
+
+- The v2 project contract: `materializeDesign`, the Plan with value provenance,
+  findings with owners and design paths, and a pure `resolveReadiness`.
+- A lossless v1 → v2 migration (DESIGN-LANGUAGE §9).
+- CLI `show`/`plan`/`describe`/`readiness`/`render`/`explain`, with edit diffs.
+  The Claude Code skill.
+- The benchmark harness with rectangle cases.
+- Capacity raised for long rectangles; a 180 cm scarf currently exceeds the
+  300-row cap.
+- The bind-off configuration warning fixed at its source.
+- Rectangle parity rows: CP-A1/A2/A11, B1–B3, B6, B8, C3, E1–E4, F1–F5, G1–G4,
+  H2–H4.
+- The Customist reference-capture batch for M5.
+
+Gate:
+
+- migrated fixtures are byte-identical at every cursor position;
+- the rectangle benchmark passes, with 0 false readiness claims;
+- the M5 parity rows reach level R or E;
+- `pnpm verify` is green.
+
+## M6 - Flat, seamed beanie end to end
+
+Goal: *given a natural-language request with dimensions, yarn, measured gauge
+and a motif, Studio produces an editable beanie project, one validated `.kc`
+file, previews, and complete knitting and finishing instructions. Changing the
+size or the motif regenerates everything reproducibly.*
+
+Done means:
+
+- Claude creates and edits typed project intent through the CLI.
+- Sizing accounts for measured gauge, intended fit, cuff and crown. The Plan
+  exposes every derivation, including crown cadence, height and closure.
+- The canonical compiler produces the complete program with no manual
+  machine-code edits.
+- Previews show motif placement, orientation and construction.
+- Readiness exposes unresolved warnings and missing measurements.
+- Tests cover the reference design (`2x2-rib-beanie.kc`, a flat 2×2 rib) and
+  meaningful size and pattern variations. Parity rows CP-A5 (rib), C5, D1, D2
+  (crown), D5 (piece end) and E1 (rib cast-on) reach level R or E.
+- The startup lowering is repaired. The knitlab2 beanie output fails the strict
+  parse because its first waste pass puts a carrier-6 marker outside the
+  carriage markers. The Studio beanie uses a Customist-matched start instead.
+- **Machine checkpoint:** a development run of the beanie. The final frozen
+  candidate is knitted in M9, finished and measured against the declared
+  tolerances. Only that exact artifact receives physical proof.
+
+## M7 - Sweater
+
+- The Customist 2.5 sweater template (CP-A3…A7): front, back, sleeves and
+  collar.
+- Shaped-panel compilation: increases, decreases, armhole bind-offs, neckline
+  split, interleave (CP-C7, D1–D5).
+- Multiple pieces in one project (CP-H1).
+- Seam and pickup compatibility checks.
+- An export bundle with assembly instructions.
+
+Gate: parity against captured Customist panels, including the collar.
+`front.kc`, `back.kc` and `sleeves.kc` are shaping references. The
+benchmark's sweater cases pass.
+
+## M8 - Remaining parity
+
+The rest of the inventory:
+
+- vector import (CP-A8), txt import (A9), stitch image and block (A10);
+- invert and full-needle (B4, B5), borders (B7);
+- stitch palette and free edit (C1, C2, C4, C6, C8);
+- views and markers (G1 stitch view, G5);
+- the platform rows CP-J1…J4, as ruled.
+
+Gate: every CP row at level R, E or F.
+
+## M9 - V1 physical qualification
+
+- Extend `release:trial`, `release:register` and `release:physical-check` to a
+  multi-artifact manifest: every sweater panel, declared tolerances,
+  measurements, and assembly evidence.
+- Freeze the release candidate.
+- Knit, finish and measure the rectangle, the flat seamed beanie and the
+  complete sweater.
+- Register them all at the frozen fingerprint.
+
+Gate: the extended `pnpm release:physical-check` passes. Only then bump to
+`1.0.0`.

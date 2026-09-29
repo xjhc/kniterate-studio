@@ -265,6 +265,12 @@ schema.
 - **Forward design (still proposed, unbuilt):** the assistant / AI-as-diff (S3),
   swatch-registry UI (S4), and the L3–L5 upper editability ladder (stitch ops,
   pass overrides, machine-code editing stays read-only per FOUNDING §2).
+- **Widened V1 (ruled 2026-09-28; proposed, nothing built yet):** Customist
+  parity ([`CUSTOMIST-PARITY.md`](./CUSTOMIST-PARITY.md)) plus AI-driven
+  rectangles, flat seamed beanies and sweaters through the v2 design language
+  ([`DESIGN-LANGUAGE.md`](./DESIGN-LANGUAGE.md)); milestones M5–M9 in
+  `ROADMAP.md`. None of it is implemented. Today's project format, CLI and
+  compiler remain rectangle-only as described above.
 
 ## The one real promotion gate
 
@@ -273,7 +279,15 @@ The trial candidate partially reproduces the captured Customist
 match at stitch level. Its manifest records the strict full-trace differences.
 The modified candidate has no controller or physical-run evidence.
 
-`1.0.0-rc.1` → `1.0.0` is gated **only** by a successful real-Kniterate run
+**Revised 2026-09-28:** the V1 gate now requires exact-artifact qualification
+of a rectangle, a flat seamed beanie and a complete sweater at the frozen final
+compiler fingerprint, with tolerances declared before knitting
+(`V1-PHYSICAL-TRIAL.md`). A run of the current rectangle candidate is
+development evidence. The executable check below has **not** been extended yet
+and still covers only the fixed rectangle, so passing it no longer licenses the
+`1.0.0` tag.
+
+*(Superseded:)* `1.0.0-rc.1` → `1.0.0` is gated **only** by a successful real-Kniterate run
 (`V1-PHYSICAL-TRIAL.md`). Registration, hash checks, exact-artifact Knit-proven,
 and `release:physical-check` are implemented. `release:trial` requires a clean
 tree and records its full generating commit; registration requires that same
@@ -286,7 +300,9 @@ metadata; controller observation stays pending until an accepted registry run.
 - `FOUNDING.md` — product boundary (three verdict rungs; dark mode in scope).
 - `UX-PROPOSAL.md` — UX rationale; part shipped, part forward design (see its banner).
 - `SYSTEM-DESIGN.md` — architecture (A.*) + risk register (R*); R6 = 3-rung ruling.
-- `ROADMAP.md` — milestone ledger (M0–M3D complete).
+- `ROADMAP.md` — milestone ledger (M0–M3D complete; widened-V1 M5–M9 proposed).
+- `CUSTOMIST-PARITY.md` — V1 Customist capability inventory and acceptance rules (proposed).
+- `DESIGN-LANGUAGE.md` — v2 Design → Plan → Program contract for people and agents (proposed).
 - `HANDOFF.md` — reduced to present truth; points here.
 - `docs/archive/BUILD-S1.md` — **historical** M2 implementation contract (S1 shipped).
 - `docs/mockups/workspace-target.html` + `workspace-target.md` — canonical V1

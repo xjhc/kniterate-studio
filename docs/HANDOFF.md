@@ -19,8 +19,12 @@
   scheduled backend differential checks, and synchronized movement rendering
   replace the former reconstruction/preview authority. `predictedPasses`
   remains planning telemetry only.
-- The only `1.0.0` promotion gate is the physical Kniterate run
-  (`V1-PHYSICAL-TRIAL.md`). Do not tag `1.0.0` before it succeeds.
+- **V1 scope widened 2026-09-28** to Customist parity plus AI-driven
+  rectangles, flat seamed beanies and sweaters (FOUNDING §1; proposed, not
+  built). `1.0.0` now needs exact-artifact physical qualification of a
+  rectangle, a beanie and a complete sweater at the frozen final fingerprint
+  (`V1-PHYSICAL-TRIAL.md`). Do not tag `1.0.0` before that; a rectangle-only run
+  is development evidence.
 
 ## Next work
 
@@ -32,6 +36,9 @@ trial.
 
 Beyond these: the assistant (S3), swatch-registry UI (S4), and the L3–L5 upper
 editability ladder remain forward design (STATUS "Not yet built").
+
+The widened V1 starts with ROADMAP M5, the design language on rectangles
+(`DESIGN-LANGUAGE.md`), and `CUSTOMIST-PARITY.md`.
 
 ## Durable guardrails — do not re-litigate
 
