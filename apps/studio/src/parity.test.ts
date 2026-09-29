@@ -40,6 +40,14 @@ describe('Customist parity verdict', () => {
   });
 
   it('keeps an unavailable recipe distinct from a compiled partial match', async () => {
-    expect(await scoreReference(REFERENCES.find((item) => item.id === '2x2-rib-beanie')!)).toMatchObject({ status: 'unsupported' });
+    expect(await scoreReference(REFERENCES.find((item) => item.id === 'fox-baby-beanie')!)).toMatchObject({ status: 'unsupported' });
+  });
+
+  it('reproduces the 2x2 rib beanie exactly through its construction generator', { timeout: 60_000 }, async () => {
+    expect(await scoreReference(REFERENCES.find((item) => item.id === '2x2-rib-beanie')!)).toMatchObject({
+      status: 'reproduced', verdict: 'Surface-proven (imported)',
+      machine: { identical: true, deltaCount: 0 },
+      stitches: { expectedPasses: 530, actualPasses: 530, identicalPasses: 530 },
+    });
   });
 });

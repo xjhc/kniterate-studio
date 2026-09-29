@@ -110,6 +110,20 @@ describe('authored CLI command receipts', () => {
     expect(cli(['render', projectPath, '--view', 'nope', '-o', 'x.png']).status).toBe(2);
   });
 
+  it('generates the flat 2x2 rib beanie from a body length and gauge', { timeout: 60_000 }, () => {
+    const prefix = resolve(mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-')), 'hat');
+    const result = cli(['beanie', '--body-cm', '18', '--gauge', '30,32', '-o', prefix]);
+    expect(result.status).toBe(0);
+    expect(result.receipt).toMatchObject({
+      verdict: { state: 'surface' },
+      construction: { recipe: 'customist-2x2-rib-beanie@1', needles: 194, ribRows: 58, crownRows: 40, passes: 486 },
+      ribRows: { value: 58, how: '18 cm × 32 rows/10 cm' },
+      predicted: { flatWidthCm: 64.7, bodyCm: 18.1 },
+    });
+    expect(readFileSync(`${prefix}-instructions.md`, 'utf8')).toContain('mattress stitch');
+    expect(cli(['beanie', '--body-cm', '18', '-o', prefix]).status).toBe(2);
+  });
+
   it('keeps usage and read failures machine-readable', () => {
     const missingCommand = cli([]);
     expect(missingCommand.status).toBe(2);

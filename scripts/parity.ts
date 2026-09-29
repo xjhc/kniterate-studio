@@ -14,6 +14,10 @@ import { diffKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kc-di
 import { compareKnittedFaceRowsV1, projectKnittedFacesV1, recoverColorworkFromFrontFaceV1 } from '../packages/machine-lib/src/knitout/kcode/knitted-faces.js';
 import { diffTraceStitchesV1 } from '../packages/machine-lib/src/knitout/kcode/trace-stitch-diff.js';
 import { runAuthoredPipeline } from '../apps/studio/src/authoredPipeline.js';
+import { openMachineDocument } from '../apps/studio/src/engine.js';
+import { buildCustomistRibBeanieProgram } from '../packages/machine-lib/src/knitout/passes/customist-rib-beanie.js';
+import { writeKnitoutProgram } from '../packages/machine-lib/src/knitout/emitter.js';
+import { authoredKnitoutToKCodeWithTrace } from '../packages/machine-lib/src/knitout/kniterate/to-kcode.js';
 
 type Carrier = '1' | '2' | '3' | '4' | '5' | '6';
 interface Reference {
@@ -21,6 +25,8 @@ interface Reference {
   readonly group: 'colorwork' | 'rib + beanie' | 'sweater panel' | 'shaped garment';
   readonly waste: Carrier;
   readonly strategy?: ProjectState['strategy'];
+  /** A dedicated construction generator instead of an authored colorwork project. */
+  readonly generator?: 'customist-rib-beanie';
   readonly gaps: readonly string[];
 }
 
@@ -31,7 +37,7 @@ export const REFERENCES: readonly Reference[] = [
   { id: 'color-swatch-bindoff', group: 'colorwork', waste: '5', strategy: { technique: 'fairisle', floatLimit: 30 }, gaps: ['reference-specific cast-on and finish'] },
   { id: 'dbj', group: 'colorwork', waste: '6', strategy: { technique: 'birdseye', floatLimit: 30, birdseyeMode: 'full' }, gaps: ['full-needle jacquard backing (rack 0.5)', 'jacquard border closing'] },
   { id: 'fox-baby-beanie', group: 'rib + beanie', waste: '6', gaps: ['rib', 'rib-to-jersey transfers', 'decrease transfers', 'colorwork within a shaped piece'] },
-  { id: '2x2-rib-beanie', group: 'rib + beanie', waste: '6', gaps: ['2x2 rib', 'racked transfers up to ±4', 'crown decreases'] },
+  { id: '2x2-rib-beanie', group: 'rib + beanie', waste: '6', generator: 'customist-rib-beanie', gaps: ['crown generalised beyond 194 needles'] },
   { id: 'front', group: 'sweater panel', waste: '6', gaps: ['rib hem', 'increase/decrease transfers', 'neckline split', 'partial bind-off'] },
   { id: 'back', group: 'sweater panel', waste: '6', gaps: ['rib hem', 'increase/decrease transfers', 'partial bind-off'] },
   { id: 'sleeves', group: 'sweater panel', waste: '6', gaps: ['rib cuff', 'increase transfers (racks ±2)', 'sleeve-cap decreases'] },
@@ -63,6 +69,22 @@ export function compareParityPrograms(reference: string, candidate: string, expo
 
 export async function scoreReference(reference: Reference) {
   const base = { id: reference.id, group: reference.group, gaps: reference.gaps };
+  if (reference.generator === 'customist-rib-beanie') {
+    // The reference's own parameters: knitout 30-223 (its KCode columns 29-222), 102 rib rows.
+    const referenceText = await readFile(resolve(ROOT, `packages/machine-lib/reference/${reference.id}.kc`), 'utf8');
+    const converted = authoredKnitoutToKCodeWithTrace(writeKnitoutProgram(buildCustomistRibBeanieProgram({
+      needleStart: 30, needleEnd: 223, bodyCarrier: '3', wasteCarrier: '6', drawCarrier: '1', ribRows: 102, crown: 'customist-194',
+    })));
+    if (!converted.ok) return { ...base, status: 'blocked' as const, reason: converted.error };
+    const document = openMachineDocument(`${reference.id}.kc`, converted.kcode, { dialect: 'knitout-vendor' });
+    return {
+      ...base,
+      input: { kind: 'construction-generator', generator: 'customist-2x2-rib-beanie@1', ribRows: 102 },
+      ...compareParityPrograms(referenceText, converted.kcode, document.verdict.state === 'surface'),
+      verdict: document.verdict.label,
+      stitches: diffTraceStitchesV1(trace(referenceText), trace(converted.kcode)),
+    };
+  }
   if (!reference.strategy) return { ...base, status: 'unsupported' as const, reason: 'No authored recipe for this piece.' };
   const referenceText = await readFile(resolve(ROOT, `packages/machine-lib/reference/${reference.id}.kc`), 'utf8');
   const referenceTrace = trace(referenceText);

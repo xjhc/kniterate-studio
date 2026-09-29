@@ -236,6 +236,26 @@ Gate:
 
 ## M6 - Flat, seamed beanie end to end
 
+**Status 2026-09-29: thin slice built.**
+
+Built:
+
+- `customist-rib-beanie.ts` reproduces `reference/2x2-rib-beanie.kc` exactly
+  (strict trace identical, 530/530 passes), with adjustable height;
+- `pnpm studio -- beanie`, which writes `.k`, `.kc` and finishing
+  instructions and checks the output as an imported machine file.
+
+Remaining:
+
+- a crown for any width (the replayed crown is fixed at 194 needles),
+  checked step by step against the replay's needle occupancy;
+- circumference sized from gauge;
+- a beanie project in the authored pipeline (verdict via
+  `resolveAuthoredVerdict`);
+- motif placement with bundled images, and the fold-up cuff;
+- the benchmark's beanie cases;
+- a development knit in acrylic.
+
 Goal: *given a natural-language request with dimensions, yarn, measured gauge
 and a motif, Studio produces an editable beanie project, one validated `.kc`
 file, previews, and complete knitting and finishing instructions. Changing the

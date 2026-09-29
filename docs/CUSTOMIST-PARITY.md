@@ -45,8 +45,8 @@ software evidence; Knit-proven stays exact-artifact only.
 Rectangle colour charts up to 252 × 1,200 (75,600 cells) with pen, erase, line, rectangle,
 fill, selection and copy/cut/paste. Up to four pattern yarns on C2–C5.
 Fairisle and Birdseye backings compile through Customist-matched frames. The
-`pnpm parity` scoreboard reads **0 exact, 4 partial, 1 blocked, 8
-unsupported**. Over-limit floats are non-blocking warnings. Stitch and pass
+`pnpm parity` scoreboard reads **1 exact, 4 partial, 1 blocked, 7
+unsupported** (the exact one is the 2×2 rib beanie, reproduced in M6's thin slice). Over-limit floats are non-blocking warnings. Stitch and pass
 overrides exist in the schema, but any active one blocks compilation. M5
 added gauge and centimetre-target sizing checks, an image-to-chart converter,
 rendered views and computed readiness through the CLI. There is no rib, no

@@ -30095,7 +30095,7 @@
     ]
   },
   "contract": {
-    "sha256": "6457ed008aa1c40ec8f5c7df555d7622d52b20c2f9979c426d7ef1d3dad6403e",
+    "sha256": "24137da07f18f5ae8bc05b6e4889a03c903930f3cd21efc683ea141904ae94c2",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30504,8 +30504,8 @@
       },
       {
         "path": "../../apps/studio/src/parity.test.ts",
-        "sha256": "2e53adec73a8a2bd2e57545ee5b8786b0075ac686b9b2a196693db1c7e7afb49",
-        "bytes": 2887
+        "sha256": "ea0410d71f9262527a1a079fc24fa12cc1d21b6003969c16f276cb7df8b7733d",
+        "bytes": 3325
       },
       {
         "path": "../../apps/studio/src/plan.test.ts",
@@ -30534,8 +30534,8 @@
       },
       {
         "path": "../../apps/studio/src/studioCli.test.ts",
-        "sha256": "0de9153c0972511df68470a0b215cd8b72a0a848cab78244c3c1ceb97b1e76d8",
-        "bytes": 7392
+        "sha256": "88750619b6870b4829f5d41933ffaf80507b0e1b718d7138c0dc2ad02551208a",
+        "bytes": 8204
       },
       {
         "path": "../../apps/studio/src/styles.css",
@@ -30659,8 +30659,8 @@
       },
       {
         "path": "../../scripts/parity.ts",
-        "sha256": "500b606ca0af93049815e22b40a57eaebde7e1e7bdb06928f3404481688c64f6",
-        "bytes": 10352
+        "sha256": "4508c36241e55bdb208e46716d483511e47b3fc5f923fe7d0e518b4367a1209b",
+        "bytes": 11974
       },
       {
         "path": "../../scripts/register-v1-knit-trial.ts",
@@ -30669,8 +30669,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "8ace50baf31230f734c84940a8e6f48fe0a41a9f0261cd2cbb7bf75e58021b8b",
-        "bytes": 20350
+        "sha256": "8da1415a11170af5af91b80fbd14927fb9925346a7a43c72dbbff995123fb944",
+        "bytes": 25382
       },
       {
         "path": "../../tsconfig.base.json",
@@ -30824,7 +30824,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "7a4a1d35d984409a09391aaa959b576f3e197489eb1b5281a89aae67a270a6b6",
+        "sha256": "44f2e88ca30f1874f390b7458e4764d190a7ec5169997fe348c95b88c4a40c2d",
         "bytes": 179
       },
       {
@@ -30886,6 +30886,11 @@
         "path": "scripts/check-third-party-notices.mjs",
         "sha256": "f5de8eb970ad0233bcd6abfed819337161c924134f9a2031e5abfb99094b65d7",
         "bytes": 1085
+      },
+      {
+        "path": "scripts/extract-rib-beanie-crown.ts",
+        "sha256": "336a1b38ca7eb4bce34783240c4aad94f60af41894c82af2473e4c24488b7da3",
+        "bytes": 4712
       },
       {
         "path": "scripts/generate-browser-converter.ts",
@@ -31323,6 +31328,16 @@
         "bytes": 8670
       },
       {
+        "path": "src/knitout/passes/customist-rib-beanie-crown.ts",
+        "sha256": "f1ccc27b4d7fa85bb5055a53c84ce3d68a7e1e97c74e2a2448b57323d38e8101",
+        "bytes": 28528
+      },
+      {
+        "path": "src/knitout/passes/customist-rib-beanie.ts",
+        "sha256": "6e1e406d34729fb9bd4bd2386d9ad5bc1f120774f527edec9b9ccbc30791d36b",
+        "bytes": 11853
+      },
+      {
         "path": "src/knitout/passes/first-row-speed.ts",
         "sha256": "d9eae9a5b824176e16a1c2c141e781b59a619a59b8fc3c41bca8fdb5cb32153d",
         "bytes": 937
@@ -31696,6 +31711,11 @@
         "path": "test/knitout/browser-converter-source.test.ts",
         "sha256": "fd771035a776fd2f6a11e7281aeaad69359dbf9e2acde9ec6756623018a2ed93",
         "bytes": 1386
+      },
+      {
+        "path": "test/knitout/customist-rib-beanie.test.ts",
+        "sha256": "db4a25c3cd90ca85f4afaef764bf3cfcca88c415951ce098878f2ffb20cc853e",
+        "bytes": 3323
       },
       {
         "path": "test/knitout/dbj-parity.test.ts",

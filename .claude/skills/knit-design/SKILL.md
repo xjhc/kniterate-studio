@@ -15,8 +15,17 @@ not ready, 2 = usage error. `pnpm --silent studio -- help` lists commands and
 One flat rectangular panel per project (scarf, blanket, swatch, colorwork
 panel): up to 252 stitches wide and 1,200 rows tall (75,600 cells), up to four
 pattern colors on carriers C2–C5, Fairisle or Birdseye (exactly four colors)
-backing. Beanies, sweaters, shaping, rib, and seamless tubes are **not
-supported yet**: say so and offer the nearest supported thing instead of
+backing.
+
+Beanies: one construction only, `pnpm --silent studio -- beanie`. It is
+Customist's flat 2×2 rib beanie, seamed afterwards, 194 needles wide (the
+width is fixed for now), with the body length from `--rib-rows` or
+`--body-cm` plus a rib gauge. It writes the program and finishing
+instructions.
+
+Not supported yet: other beanie widths or sizes by circumference, motifs on
+beanies, fold-up cuffs as a design choice, sweaters, other shaping, and
+seamless tubes. Say so and offer the nearest supported thing instead of
 approximating.
 
 ## Rules

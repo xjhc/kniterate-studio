@@ -21,6 +21,11 @@ import { imageToChart, type ImageChartSize } from '../apps/studio/src/imageChart
 import { planProject, type ProjectPlan } from '../apps/studio/src/plan.ts';
 import { collectFindings, resolveReadiness, type Finding, type Readiness } from '../apps/studio/src/readiness.ts';
 import { decodePng, encodePng } from './lib/png.ts';
+import { openMachineDocument } from '../apps/studio/src/engine.ts';
+import { buildCustomistRibBeanieProgram } from '../packages/machine-lib/src/knitout/passes/customist-rib-beanie.ts';
+import { CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH } from '../packages/machine-lib/src/knitout/passes/customist-rib-beanie-crown.ts';
+import { writeKnitoutProgram } from '../packages/machine-lib/src/knitout/emitter.ts';
+import { authoredKnitoutToKCodeWithTrace } from '../packages/machine-lib/src/knitout/kniterate/to-kcode.ts';
 import { RENDER_VIEWS, renderView, type RenderView } from './lib/render.ts';
 
 const USAGE = `Usage: pnpm --silent studio -- <command> [args]
@@ -54,6 +59,11 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
       Write the validated .kc only when the verdict allows export (the Studio Export gate).
   render <project.json> --view ${RENDER_VIEWS.join('|')} -o <file.png>
       Draw the chart (gauge-true proportions), the projected back face, or a per-pass heat map.
+  beanie -o <prefix> [--rib-rows N | --body-cm X --gauge <st>,<rows>]
+      Flat 2x2 rib beanie in Customist's construction (reproduces reference/2x2-rib-beanie.kc at
+      102 rib rows). Width is fixed at 194 needles in this slice; height comes from rib rows or from
+      --body-cm with the rib gauge. Writes <prefix>.k, <prefix>.kc and <prefix>-instructions.md and
+      checks the .kc with the same intake as machine:check.
   explain <term|rule>
       Plain-language meaning of a design term, plan rule, or validator rule.
   schema
@@ -63,7 +73,7 @@ const MAX_FINDINGS = 200;
 
 class UsageError extends Error {}
 
-const VALUE_OPTIONS = ['--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
+const VALUE_OPTIONS = ['--rib-rows', '--body-cm', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
 
 interface Parsed {
   command: string | null;
@@ -275,6 +285,58 @@ async function main(): Promise<number> {
     case 'schema':
       print(ProjectEditSchema.toJSONSchema());
       return 0;
+    case 'beanie': {
+      if (parsed.out === null) throw new UsageError('beanie requires -o <prefix>.');
+      const gauge = gaugeOption(parsed);
+      const bodyCm = numberOption(parsed, '--body-cm');
+      if (bodyCm !== null && gauge === null) throw new UsageError('--body-cm needs --gauge <st>,<rows> measured on 2x2 rib.');
+      if (bodyCm !== null && parsed.options.has('--rib-rows')) throw new UsageError('use --rib-rows or --body-cm, not both.');
+      const ribRows = bodyCm !== null ? Math.max(1, Math.round((bodyCm * gauge!.rowsPer10cm) / 10)) : integerOption(parsed, '--rib-rows') ?? 102;
+      const crownRows = CUSTOMIST_RIB_CROWN_194_V1.filter((step) => step[0] === 'k').length;
+      const program = buildCustomistRibBeanieProgram({ needleStart: 30, needleEnd: 29 + CUSTOMIST_RIB_CROWN_WIDTH, bodyCarrier: '3', wasteCarrier: '6', drawCarrier: '1', ribRows, crown: 'customist-194' });
+      const knitout = writeKnitoutProgram(program);
+      const converted = authoredKnitoutToKCodeWithTrace(knitout);
+      if (!converted.ok) throw new Error(`conversion failed: ${converted.error}`);
+      const document = openMachineDocument(`${parsed.out}.kc`, converted.kcode, { dialect: 'knitout-vendor' });
+      const cm = (count: number, per10: number) => Math.round((count / per10) * 100) / 10;
+      const predicted = gauge === null ? null : {
+        flatWidthCm: cm(CUSTOMIST_RIB_CROWN_WIDTH, gauge.stitchesPer10cm),
+        bodyCm: cm(ribRows, gauge.rowsPer10cm),
+        crownCm: cm(crownRows, gauge.rowsPer10cm),
+        note: 'Predicted under the supplied rib gauge (relaxed). Crown rows are 2x2 rib and top jersey; the crown is gathered, so its length is approximate.',
+      };
+      const instructions = [
+        '# Flat 2x2 rib beanie',
+        '',
+        `Construction: Customist 2x2 rib beanie, ${CUSTOMIST_RIB_CROWN_WIDTH} needles (knitout 30-${29 + CUSTOMIST_RIB_CROWN_WIDTH}), ${ribRows} rib rows, then the crown (${crownRows} knit rows).`,
+        '',
+        '## Load',
+        '- C3: main yarn',
+        '- C1: draw thread (smooth contrasting yarn, removed afterwards)',
+        '- C6: waste yarn',
+        '',
+        '## After knitting',
+        '1. The top comes off the machine as live stitches: 25 loops on the front bed are dropped at the end. Thread the main-yarn tail through those top stitches straight away, before they ladder, and pull them closed.',
+        '2. Pull the draw thread to separate the waste yarn from the cast-on edge.',
+        '3. Fold the piece right side out and sew the two long edges together with mattress stitch from the crown down to the brim. If you will fold the brim up, sew the part that folds from the other side so the seam is hidden.',
+        '4. Weave in the ends. Wash or steam as the yarn label says, then measure.',
+        '',
+        `Verdict: ${document.verdict.label}. This is software evidence; the construction is Kniterate's own reference program, not yet knitted from this generator.`,
+      ].join('\n');
+      await writeFile(`${parsed.out}.k`, knitout);
+      await writeFile(`${parsed.out}.kc`, converted.kcode);
+      await writeFile(`${parsed.out}-instructions.md`, `${instructions}\n`);
+      print({
+        files: { knitout: `${parsed.out}.k`, kcode: `${parsed.out}.kc`, instructions: `${parsed.out}-instructions.md` },
+        verdict: document.verdict,
+        construction: { recipe: 'customist-2x2-rib-beanie@1', needles: CUSTOMIST_RIB_CROWN_WIDTH, ribRows, crownRows, passes: converted.scheduledPasses.length },
+        ribRows: bodyCm !== null ? { value: ribRows, how: `${bodyCm} cm × ${gauge!.rowsPer10cm} rows/10 cm` } : { value: ribRows, how: parsed.options.has('--rib-rows') ? 'authored' : 'reference default' },
+        predicted,
+        carriers: { '1': 'draw thread', '3': 'main', '6': 'waste' },
+        diagnostics: document.diagnostics.slice(0, 20).map((diagnostic) => ({ severity: diagnostic.severity, rule: diagnostic.rule, message: diagnostic.rawMessage })),
+      });
+      return document.verdict.state === 'surface' ? 0 : 1;
+    }
     case 'explain':
       print(explain(positional(parsed, 0, 'term or rule')));
       return 0;
