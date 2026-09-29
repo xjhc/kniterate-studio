@@ -1,0 +1,41 @@
+import { resolveValidatorMessage } from '@kniterate-studio/machine-lib/browser';
+
+/**
+ * Plain-language answers for `studio explain <term>`: design vocabulary,
+ * Plan rules, then the validator message catalog. An unknown term says so
+ * instead of guessing.
+ */
+
+const GLOSSARY: Record<string, string> = {
+  chart: 'The colorwork design: width in stitches (needles) × height in rows, one palette color per cell. Its counts are the only source of truth for the knitted program.',
+  palette: 'The chart colors. Each color used in the chart must be bound to a yarn on a carrier (C2–C5 in V1).',
+  yarn: 'A palette color bound to a carrier with a yarn name (set-yarn-assignment). Keep carrier numbers out of yarn names.',
+  carrier: 'A yarn feeder. V1 profile: C1 draw thread, C2–C5 pattern yarns, C6 waste.',
+  gauge: 'Measured stitches and rows per 10 cm for this yarn, stitch size and fabric (set-gauge). Source is "measured" (from a swatch) or "assumed". Sizing in cm needs it.',
+  target: 'The requested finished size in cm (set-target). It is checked against the chart at the recorded gauge, never applied automatically; size-off-target findings carry the resize edits.',
+  plan: 'Derived sizing facts: stitch and row counts with provenance, needle range, yarns and carriers, predicted cm under the gauge, and size checks against the target.',
+  provenance: 'Where a value came from: authored (you set it), calculated (derived by a named formula), measured (from a swatch), or assumed (a default that sizing cannot trust).',
+  finding: 'A diagnostic with an owner. design: you can fix it by changing the project. compiler: needs an engine repair. operator: a check done at the machine.',
+  readiness: 'Computed from the verdict and every finding. Ready only when the verdict is not Blocked and no error or warning finding remains. Info-level operator checks are listed, never counted as done.',
+  verdict: 'Blocked, Surface-proven, or Knit-proven. Surface-proven means the emitted K-code passed every software check; it is not a physical claim. Knit-proven requires an exact physical registry match.',
+  fairisle: 'Stranded backing: unused colors float behind the work. Float length is limited by strategy.floatLimit (warnings above it).',
+  birdseye: 'Double-bed backing: unused colors are knitted on the rear bed in a speckled pattern, so there are no long floats. The V1 Customist-matched birdseye program needs exactly four colors.',
+  'stitch-aspect': 'Knitted stitches are wider than they are tall. Charts made from images use the gauge to pick the row count; one pixel per stitch squashes a motif vertically.',
+};
+
+const PLAN_RULES: Record<string, string> = {
+  'size-off-target': 'The chart does not have the stitch or row count the target size needs at the recorded gauge. Apply the finding\'s fix edits (set-width or set-height) or change the target.',
+  'size-needs-gauge': 'A target size is set but no gauge is recorded. Knit and measure a swatch, then record it with set-gauge.',
+  'gauge-assumed': 'Sizing uses an assumed gauge. The project is not ready until a measured gauge is recorded, because the finished size is unverified.',
+  'size-exceeds-capacity': 'The target needs more needles, rows, or cells than the V1 bed and capacity allow. Reduce the target or the gauge.',
+  'name-encodes-carrier': 'A yarn name mentions a carrier number that is not the carrier it is loaded on. Carrier numbers belong in the carrier field only.',
+};
+
+export function explain(term: string): { term: string; kind: 'term' | 'plan-rule' | 'validator-rule' | 'unknown'; title: string; explanation: string } {
+  const key = term.trim().toLowerCase();
+  if (GLOSSARY[key]) return { term, kind: 'term', title: key, explanation: GLOSSARY[key]! };
+  if (PLAN_RULES[key]) return { term, kind: 'plan-rule', title: key, explanation: PLAN_RULES[key]! };
+  const resolved = resolveValidatorMessage({ rule: term.trim(), severity: 'warning', message: '' });
+  if (resolved.catalogHit) return { term, kind: 'validator-rule', title: resolved.title, explanation: resolved.explanation };
+  return { term, kind: 'unknown', title: term, explanation: `No entry for "${term}". Terms: ${Object.keys(GLOSSARY).join(', ')}. Plan rules: ${Object.keys(PLAN_RULES).join(', ')}.` };
+}

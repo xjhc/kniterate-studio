@@ -6,7 +6,10 @@ import {
 import { z } from 'zod';
 
 export const COLORWORK_PROJECT_KIND = 'kniterate-studio-project' as const;
-export const COLORWORK_PROJECT_VERSION = 1 as const;
+/** Files are written as version 2. Version 1 files are read and upgraded
+ * losslessly: v2 only adds the optional `gauge`/`target` state and their edits. */
+export const COLORWORK_PROJECT_VERSION = 2 as const;
+const READABLE_PROJECT_VERSIONS = [1, 2] as const;
 export const COLORWORK_PROJECT_PROFILE = 'kniterate-7gg-worsted-v1' as const;
 export const PROJECT_CHECKPOINT_INTERVAL = 50;
 
@@ -18,12 +21,12 @@ export const PROJECT_CHECKPOINT_INTERVAL = 50;
 export const AUTHORED_CAPACITY_LIMITS_V1 = {
   projectSourceCodeUnits: 16 * 1024 * 1024,
   chartWidth: 252,
-  chartHeight: 300,
+  chartHeight: 1_200,
   chartCellsPerState: 75_600,
   stateCellsTotal: 750_000,
   stateElementsTotal: 1_000_000,
-  rowIdsPerState: 300,
-  rowIdsTotal: 2_700,
+  rowIdsPerState: 1_200,
+  rowIdsTotal: 10_800,
   palettePerState: 256,
   paletteTotal: 2_304,
   yarnAssignmentsPerState: 4,
@@ -69,6 +72,23 @@ const StitchOverrideSchema = z.object({
   anchor: z.object({ rowId: RowId, needleIndex: z.number().int().min(0) }),
   operation: z.enum(['knit', 'tuck', 'miss', 'rear-knit', 'transfer']),
 });
+
+/** Measured or assumed fabric gauge. Sizing reads it; the compiler never does. */
+const GaugeSchema = z.object({
+  stitchesPer10cm: z.number().positive().max(100),
+  rowsPer10cm: z.number().positive().max(100),
+  source: z.enum(['measured', 'assumed']),
+  note: z.string().max(200).optional(),
+});
+export type ProjectGauge = z.infer<typeof GaugeSchema>;
+
+/** Requested finished size. The chart's stitch and row counts remain the only
+ * source of truth for the knitted program; the target is checked, not applied. */
+const TargetSchema = z.object({
+  widthCm: z.number().positive().max(1_000).optional(),
+  heightCm: z.number().positive().max(10_000).optional(),
+}).refine((target) => target.widthCm !== undefined || target.heightCm !== undefined, 'target needs widthCm or heightCm');
+export type ProjectTarget = z.infer<typeof TargetSchema>;
 
 const PassOverrideSchema = z.object({
   id: Id,
@@ -126,6 +146,8 @@ const SetPaletteEntryEditSchema = z.object({
 });
 const AddOverrideEditSchema = z.object({ kind: z.literal('add-override'), override: ProjectOverrideSchema });
 const RemoveOverrideEditSchema = z.object({ kind: z.literal('remove-override'), overrideId: Id });
+const SetGaugeEditSchema = z.object({ kind: z.literal('set-gauge'), gauge: GaugeSchema.nullable() });
+const SetTargetEditSchema = z.object({ kind: z.literal('set-target'), target: TargetSchema.nullable() });
 
 export const ProjectEditSchema = z.discriminatedUnion('kind', [
   PaintCellsEditSchema,
@@ -141,6 +163,8 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   SetPaletteEntryEditSchema,
   AddOverrideEditSchema,
   RemoveOverrideEditSchema,
+  SetGaugeEditSchema,
+  SetTargetEditSchema,
 ]);
 export type ProjectEdit = z.infer<typeof ProjectEditSchema>;
 
@@ -155,6 +179,8 @@ export interface ProjectState {
   strategy: z.infer<typeof StrategySchema>;
   frame: z.infer<typeof FrameSchema>;
   overrides: ProjectOverride[];
+  gauge?: ProjectGauge;
+  target?: ProjectTarget;
 }
 
 export interface ProjectEditEntry {
@@ -603,11 +629,14 @@ function capacityEstimateV1(project: AuthoredCapacityProjectV1): AuthoredCapacit
   // output can become Surface-proven.
   const colors = Math.max(1, Math.min(4, project.activeColors));
   const recordMultiplier = colors * 2;
-  // At most 16 body/positioning passes per design row, four bind-off
-  // movements per needle, and the fixed frame bound. The width-aware
-  // bind-off term is material at short, full-bed charts where a height-only
-  // estimate under-counts lowering.
-  const loweredPasses = project.height * 16
+  // Body/positioning passes per design row: Fairisle knits each active color
+  // once per row (measured 1.25-2 per color including kickbacks), bounded here
+  // at 2 per color plus 2; Birdseye keeps 16 (measured 10-12.5 at four
+  // colors). Plus four bind-off movements per needle and the fixed frame
+  // bound. The width-aware bind-off term is material at short, full-bed
+  // charts where a height-only estimate under-counts lowering.
+  const passesPerRow = project.technique === 'fairisle' ? 2 * colors + 2 : 16;
+  const loweredPasses = project.height * passesPerRow
     + project.width * 4
     + CUSTOMIST_FRAME_PASS_BOUND_V1 * 2;
   return {
@@ -806,11 +835,14 @@ const ProjectStateSchema: z.ZodType<ProjectState> = z.object({
   strategy: StrategySchema,
   frame: FrameSchema,
   overrides: z.array(ProjectOverrideSchema),
+  gauge: GaugeSchema.optional(),
+  target: TargetSchema.optional(),
 }).superRefine(validateStateRelationships);
 
 const ProjectSchema: z.ZodType<ColorworkProjectV1> = z.object({
   kind: z.literal(COLORWORK_PROJECT_KIND),
-  version: z.literal(COLORWORK_PROJECT_VERSION),
+  version: z.union(READABLE_PROJECT_VERSIONS.map((version) => z.literal(version)) as [z.ZodLiteral<1>, z.ZodLiteral<2>])
+    .transform(() => COLORWORK_PROJECT_VERSION),
   id: Id,
   title: z.string().min(1).max(200),
   base: ProjectStateSchema,
@@ -1110,6 +1142,14 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       state.overrides = state.overrides.filter((item) => item.id !== edit.overrideId);
       break;
     }
+    case 'set-gauge':
+      if (edit.gauge === null) delete state.gauge;
+      else state.gauge = edit.gauge;
+      break;
+    case 'set-target':
+      if (edit.target === null) delete state.target;
+      else state.target = edit.target;
+      break;
   }
   return state;
 }

@@ -69,6 +69,47 @@ describe('authored CLI command receipts', () => {
     expect(readFileSync(outputPath, 'utf8')).toBe('existing output');
   });
 
+  it('sizes a blank project from gauge and target, applies plan fixes, and reports readiness', { timeout: 120_000 }, () => {
+    const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-'));
+    const projectPath = resolve(directory, 'scarf.json');
+    expect(cli(['new', '--width', '20', '--height', '30', '--palette', 'Oat=#E8DFCF,Rust=#B5532E', '-o', projectPath]).status).toBe(0);
+    const edited = cli(['edit', projectPath, JSON.stringify([
+      { kind: 'set-gauge', gauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' } },
+      { kind: 'set-target', target: { widthCm: 15, heightCm: 12 } },
+    ])]);
+    expect(edited.receipt.plan.before.sizeChecks).toEqual([]);
+    expect(edited.receipt.plan.after.sizeChecks).toEqual([
+      { dimension: 'width', targetCm: 15, required: 39, actual: 20, ok: false },
+      { dimension: 'height', targetCm: 12, required: 41, actual: 30, ok: false },
+    ]);
+    const notReady = cli(['readiness', projectPath]);
+    expect(notReady.status).toBe(1);
+    expect(notReady.receipt.readiness.blockers).toContainEqual(expect.objectContaining({ kind: 'finding', rule: 'size-off-target', owner: 'design' }));
+    const plan = cli(['plan', projectPath]).receipt;
+    const fixes = plan.findings.flatMap((finding: { fixes: { edits: unknown[] }[] }) => finding.fixes.flatMap((fix) => fix.edits));
+    writeFileSync(resolve(directory, 'fixes.json'), JSON.stringify(fixes));
+    expect(cli(['edit', projectPath, resolve(directory, 'fixes.json')]).receipt.plan.after.findings).toEqual([]);
+    const described = cli(['describe', projectPath]);
+    expect(described.status).toBe(0);
+    expect(described.receipt.readiness).toMatchObject({ ready: true, blockers: [] });
+    expect(described.receipt.readiness.operatorChecks.join('\n')).toContain('X-carrier-spacing');
+    expect(described.receipt.summary).toContain('Readiness: READY');
+    expect(described.receipt.summary.join('\n')).toContain('Panel: 39 st × 41 rows');
+    for (const view of ['chart', 'back', 'speed']) {
+      const pngPath = resolve(directory, `${view}.png`);
+      expect(cli(['render', projectPath, '--view', view, '-o', pngPath]).status).toBe(0);
+      expect(readFileSync(pngPath).subarray(1, 4).toString('ascii')).toBe('PNG');
+    }
+    const chartPath = resolve(directory, 'motif.json');
+    const image = cli(['image', resolve(directory, 'chart.png'), '--width-st', '13', '--gauge', '26,34', '--colors', '2', '-o', chartPath]);
+    expect(image.status).toBe(0);
+    expect(image.receipt.receipt).toMatchObject({ stitches: 13, aspect: 'gauge-corrected' });
+    expect(cli(['new', chartPath, '-o', resolve(directory, 'motif-project.json')]).status).toBe(0);
+    expect(cli(['explain', 'size-off-target']).receipt.kind).toBe('plan-rule');
+    expect(cli(['explain', 'long-float']).receipt.kind).toBe('validator-rule');
+    expect(cli(['render', projectPath, '--view', 'nope', '-o', 'x.png']).status).toBe(2);
+  });
+
   it('keeps usage and read failures machine-readable', () => {
     const missingCommand = cli([]);
     expect(missingCommand.status).toBe(2);

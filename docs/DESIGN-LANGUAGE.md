@@ -1,10 +1,66 @@
 # DESIGN-LANGUAGE — typed design intent for knitters and agents
 
-**Status: proposed contract, 2026-09-28. Not implemented.** It extends
-`ColorworkProjectV1` (`packages/project-contract`) and does not replace it.
-Implementation starts in roadmap M5: one rectangle must be proven through the
-real pipeline before the garment parts of this schema are settled.
+**Status: proposed contract, 2026-09-28; the rectangle subset shipped in M5
+(2026-09-29, see "M5 status").** It extends `ColorworkProjectV1`
+(`packages/project-contract`) and does not replace it. The garment parts of
+this schema (objects, pieces, zones, placements, joins, bundled assets) remain
+proposals until M6 and M7.
 [`STATUS.md`](./STATUS.md) still has the final say on what has shipped.
+
+## M5 status (implemented 2026-09-29, rectangles only)
+
+M5 built the smallest version of this contract that rectangles need. The
+garment vocabulary below (objects, pieces, zones, placements, joins, bundled
+assets) is still a proposal for M6 and M7. Deliberate simplifications, in the
+spirit of KnitLab (one source of truth, derived data, no second
+representation):
+
+- **Project format version 2** is version 1 plus two optional state fields,
+  `gauge` and `target`, and their edits `set-gauge` and `set-target`.
+  - Version 1 files are read and upgraded without changing anything else.
+  - There is no object/pieces envelope yet.
+  - The type names keep their `V1` suffix.
+- **The chart stays the only source of truth for stitches and rows.** A target
+  is checked against the chart at the recorded gauge, never applied
+  automatically. A mismatch raises a `size-off-target` finding whose fixes are
+  the resize edits.
+- **Provenance kinds are `authored`, `calculated`, `measured` and `assumed`.**
+  An author-set value is "authored" rather than "pinned".
+- **Plan** is `apps/studio/src/plan.ts`. **Findings and readiness** are in
+  `apps/studio/src/readiness.ts`:
+  - Every compile and KCode diagnostic gets an owner.
+  - Dropped Knitout extension headers (carrier spacing, stopping distance)
+    become operator checks, with their values.
+  - `resolveReadiness` blocks on a Blocked verdict and on any warning or error.
+- **The noisy warning is fixed at its source.** The Customist fairisle recipe
+  no longer supplies chain bind-off settings it never uses, so clean compiles
+  have no `machine-setting-ignored` warning. Emitted KCode is byte-identical.
+- **Capacity:**
+  - Charts may have up to 1,200 rows. The per-state cell cap is unchanged at
+    75,600.
+  - The Fairisle pre-compile pass bound is colour-aware (2 × colours + 2 per
+    row, at least 2× the measured worst case). A 25 × 180 cm three-colour
+    scarf (65 × 612) compiles to 780 passes and is ready.
+- **CLI** (`pnpm studio`) adds these commands:
+  - `new --width --height --palette` for a blank chart;
+  - `image`, which converts a PNG to a chart with stitch-aspect correction,
+    using KnitLab's cell pooling and deterministic k-means;
+  - `plan`, `describe`, `readiness` and `explain`;
+  - `render --view chart|back|speed|roller|stitch|direction`, which writes a
+    PNG;
+  - `edit` now prints the plan before and after.
+- **`export` keeps the Studio Export gate (the verdict)** and adds readiness to
+  its receipt, so the CLI and UI export identically. The skill tells agents to
+  claim "ready" only on `readiness.ready`.
+- **Fixes are checked by re-planning, not by a speculative compile.** Sizing
+  and naming fixes are Plan-level. Compile-level fixes (e.g. floats) are not
+  offered yet.
+- **Images are not bundled into projects yet.** `image` writes a chart and
+  prints a receipt with the source SHA-256, settings and converter version.
+  Bundling arrives with placements in M6.
+- **Skill and benchmark:** `.claude/skills/knit-design/SKILL.md`,
+  `evals/design-language/cases.json` (12 rectangle-scope cases) and
+  `pnpm eval:design`.
 
 Related:
 

@@ -1,0 +1,72 @@
+{
+  "kind": "kniterate-design-language-eval",
+  "schemaVersion": 1,
+  "milestone": "M5",
+  "note": "Rectangle-scope agent-legibility cases. Outcomes: ready | not-ready | needs-input | unsupported. A reported 'ready' is re-checked by the harness; a false ready claim fails the whole run.",
+  "cases": [
+    {
+      "id": "scarf-stripes",
+      "request": "Make a scarf 25 cm wide and 180 cm long in 5 cm stripes of oat, rust and moss, repeating. My swatch measured 26 stitches and 34 rows per 10 cm.",
+      "expect": { "outcomes": ["ready"], "stitches": 65, "rows": 612, "colors": 3, "gauge": [26, 34] }
+    },
+    {
+      "id": "birdseye-panel",
+      "request": "A 30 × 30 cm birdseye jacquard panel in four colours (cream, red, gold, navy) as horizontal bands. Gauge 28 stitches and 30 rows per 10 cm, measured.",
+      "expect": { "outcomes": ["ready"], "stitches": 84, "rows": 90, "colors": 4, "technique": "birdseye", "gauge": [28, 30] }
+    },
+    {
+      "id": "motif-panel",
+      "request": "Put the motif in motif.png on a 40 cm wide, 40 cm tall panel, 20 cm tall and centred, dark motif on a light background. Gauge 26 stitches and 34 rows per 10 cm, measured.",
+      "setup": { "kind": "motif-png" },
+      "expect": { "outcomes": ["ready", "not-ready"], "stitches": 104, "rows": 136, "gauge": [26, 34] }
+    },
+    {
+      "id": "no-gauge",
+      "request": "Make me a plain 20 by 20 cm swatch-sized panel in navy.",
+      "expect": { "outcomes": ["needs-input", "not-ready"] }
+    },
+    {
+      "id": "narrow-tie",
+      "request": "A skinny 10 cm wide, 140 cm long tie in solid black. Gauge 26 stitches and 34 rows per 10 cm.",
+      "expect": { "outcomes": ["not-ready", "needs-input"] }
+    },
+    {
+      "id": "blanket-too-big",
+      "request": "An 80 × 100 cm baby blanket in a two-colour checkerboard of 10 cm squares. Gauge 28 stitches and 40 rows per 10 cm.",
+      "expect": { "outcomes": ["unsupported", "needs-input"] }
+    },
+    {
+      "id": "seven-colours",
+      "request": "A 30 × 30 cm fair isle panel using seven colours in every row. Gauge 26 and 34 per 10 cm.",
+      "expect": { "outcomes": ["unsupported", "needs-input"] }
+    },
+    {
+      "id": "beanie",
+      "request": "Make me a beanie for a 56 cm head with a folded rib cuff. Gauge 26 and 34 per 10 cm.",
+      "expect": { "outcomes": ["unsupported"] }
+    },
+    {
+      "id": "sweater",
+      "request": "A size M crew-neck drop-shoulder sweater with 2x2 rib hems.",
+      "expect": { "outcomes": ["unsupported"] }
+    },
+    {
+      "id": "make-longer",
+      "request": "The scarf in project.json should be 2 cm longer. Keep everything else the same.",
+      "setup": { "kind": "scarf-project" },
+      "expect": { "outcomes": ["ready"], "stitches": 65, "rows": 619, "gauge": [26, 34] }
+    },
+    {
+      "id": "carrier-name",
+      "request": "Get project.json ready to knit.",
+      "setup": { "kind": "misnamed-yarn-project" },
+      "expect": { "outcomes": ["ready"], "noCarrierInNames": true }
+    },
+    {
+      "id": "is-it-ready",
+      "request": "Is project.json ready to knit? Do not change it.",
+      "setup": { "kind": "long-float-project" },
+      "expect": { "outcomes": ["not-ready"], "unchanged": true }
+    }
+  ]
+}

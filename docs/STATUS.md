@@ -31,7 +31,7 @@ ship," trust this file and the working tree instead.
   Blocked, and `2` means usage/read/internal failure. Both the Studio verdict
   panel/run sheet and the CLI disclose that direct KCode cannot prove source
   carrier lifecycle.
-- **Headless authoring CLI.** `pnpm --silent studio -- new|show|edit|undo|redo|compile|export|schema`
+- **Headless authoring CLI.** `pnpm --silent studio -- new|image|show|plan|describe|readiness|edit|undo|redo|compile|export|render|explain|schema`
   drives authored projects without a browser for scripts and agents. Edits are
   the typed `ProjectEdit` log (recorded as `assistant` by default);
   `apps/studio/src/authoredPipeline.ts` composes the same compile, strict KCode
@@ -40,6 +40,29 @@ ship," trust this file and the working tree instead.
   output is JSON; exit `0` ok/export-ready, `1` blocked, `2` usage/read error.
   Compile/export receipts include the canonical compiled frame and every emitted
   carrier requirement, including C1 frame yarn and C6 waste, not just palette yarns.
+- **M5 design language on rectangles (2026-09-29).** Project files are
+  written as version 2. That is version 1 plus optional `gauge`/`target` state
+  and their `set-gauge`/`set-target` edits. Version 1 files upgrade on read.
+  - Migration evidence: a v1 project with 18 edits, a redo branch and a
+    quarantined override compiled byte-identically (Knitout, KCode, verdict,
+    override status) against the pre-M5 code at all 19 cursor positions.
+  - `apps/studio/src/plan.ts` derives sizing with provenance: authored counts,
+    predicted cm under the gauge, and size checks whose fixes are verified
+    resize edits. It also flags yarn names that contradict their carrier.
+  - `apps/studio/src/readiness.ts` gives every diagnostic an owner (design,
+    compiler or operator). `resolveReadiness` is ready only with a non-Blocked
+    verdict and no warning or error. Dropped Knitout extension headers become
+    operator checks. The verdict policy is unchanged.
+  - Capacity: charts may have up to 1,200 rows (per-state cells unchanged at
+    75,600). The Fairisle pass estimate is colour-aware. A 65 × 612
+    three-colour scarf compiles to 780 passes.
+  - The fairisle recipe no longer supplies unused chain bind-off settings, so
+    clean compiles carry no `machine-setting-ignored` warning. KCode is
+    byte-identical.
+  - `.claude/skills/knit-design` and `pnpm eval:design`
+    (`evals/design-language`) are the agent host and benchmark. See
+    DESIGN-LANGUAGE "M5 status" for what is deliberately not built yet: no
+    garment schema, and no image bundling in projects.
 - **Customist parity scoreboard.** `pnpm parity [--json]` compares the 13
   captured references. Schema v2 reserves `reproduced` for an export-ready,
   strict whole-program machine-trace match, including rack, settings, stops,
@@ -265,12 +288,13 @@ schema.
 - **Forward design (still proposed, unbuilt):** the assistant / AI-as-diff (S3),
   swatch-registry UI (S4), and the L3–L5 upper editability ladder (stitch ops,
   pass overrides, machine-code editing stays read-only per FOUNDING §2).
-- **Widened V1 (ruled 2026-09-28; proposed, nothing built yet):** Customist
-  parity ([`CUSTOMIST-PARITY.md`](./CUSTOMIST-PARITY.md)) plus AI-driven
-  rectangles, flat seamed beanies and sweaters through the v2 design language
+- **Widened V1 (ruled 2026-09-28):** Customist parity
+  ([`CUSTOMIST-PARITY.md`](./CUSTOMIST-PARITY.md)) plus AI-driven rectangles,
+  flat seamed beanies and sweaters through the design language
   ([`DESIGN-LANGUAGE.md`](./DESIGN-LANGUAGE.md)); milestones M5–M9 in
-  `ROADMAP.md`. None of it is implemented. Today's project format, CLI and
-  compiler remain rectangle-only as described above.
+  `ROADMAP.md`. Only the M5 rectangle subset above is built. Beanies,
+  sweaters, shaping, rib, and the M5 parity rows that need Customist reference
+  captures are not.
 
 ## The one real promotion gate
 

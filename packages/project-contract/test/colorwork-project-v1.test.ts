@@ -13,6 +13,7 @@ import {
   redoProjectEdit,
   refuseAuthoredCapacityFromLowerBoundV1,
   renameColorworkProject,
+  serializeColorworkProjectV1,
   undoProjectEdit,
 } from '../src/index';
 
@@ -152,7 +153,7 @@ describe('ColorworkProjectV1', () => {
       cells: Array.from({ length: 50_000 }, () => [0]),
     };
     expect(() => createColorworkProjectV1(oversizedChart, { id: 'oversized-chart' }))
-      .toThrow(/50,000 rows.*capacity is 300/);
+      .toThrow(/50,000 rows.*capacity is 1,200/);
 
     const project = createColorworkProjectV1(chart, { id: 'oversized-edit' });
     const hostile = structuredClone(project) as unknown as Record<string, unknown>;
@@ -168,7 +169,7 @@ describe('ColorworkProjectV1', () => {
       required: 50_000,
       limit: AUTHORED_CAPACITY_LIMITS_V1.chartHeight,
     });
-    expect(() => parseColorworkProjectV1(hostile)).toThrow(/50,000 rows.*capacity is 300/);
+    expect(() => parseColorworkProjectV1(hostile)).toThrow(/50,000 rows.*capacity is 1,200/);
   });
 
   it('rebases old checkpointed history so ordinary editing stays bounded past 256 gestures', () => {
@@ -208,5 +209,60 @@ describe('ColorworkProjectV1', () => {
       observed: capacity.observed,
     });
     expect(refused.message).toContain(`requires at least ${(capacity.limits.loweredPasses + 1).toLocaleString('en-US')}`);
+  });
+
+  it('reads version 1 files losslessly and writes version 2', () => {
+    const fixture = JSON.parse(readFileSync(resolve('../../fixtures/colorwork-project-v1/four-color-checker-project.json'), 'utf8')) as Record<string, unknown>;
+    expect(fixture.version).toBe(1);
+    const project = parseColorworkProjectV1(fixture);
+    expect(project.version).toBe(2);
+    const { version: _from, ...fixtureRest } = fixture;
+    const { version: _to, ...projectRest } = JSON.parse(JSON.stringify(project)) as Record<string, unknown>;
+    expect(projectRest).toEqual(fixtureRest);
+    expect(JSON.parse(serializeColorworkProjectV1(project)).version).toBe(2);
+    expect(() => parseColorworkProjectV1({ ...fixture, version: 3 })).toThrow(/version/);
+  });
+
+  it('records gauge and target as undoable intent without touching the chart', () => {
+    let project = createColorworkProjectV1(chart, { id: 'sized' });
+    const before = materializeColorworkProject(project).state;
+    project = appendProjectEdit(project, { id: 'g', source: 'assistant', edit: { kind: 'set-gauge', gauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' } } });
+    project = appendProjectEdit(project, { id: 't', source: 'assistant', edit: { kind: 'set-target', target: { widthCm: 25, heightCm: 180 } } });
+    const after = materializeColorworkProject(project).state;
+    expect(after.gauge).toEqual({ stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' });
+    expect(after.target).toEqual({ widthCm: 25, heightCm: 180 });
+    expect(after.chart).toEqual(before.chart);
+    expect(parseColorworkProjectV1Json(serializeColorworkProjectV1(project))).toEqual(project);
+    project = appendProjectEdit(project, { id: 'clear', source: 'human', edit: { kind: 'set-gauge', gauge: null } });
+    expect(materializeColorworkProject(project).state.gauge).toBeUndefined();
+    expect(materializeColorworkProject(undoProjectEdit(project)).state.gauge?.rowsPer10cm).toBe(34);
+    expect(() => appendProjectEdit(project, { id: 'bad', source: 'human', edit: { kind: 'set-target', target: {} } as never })).toThrow();
+  });
+
+  it('admits long narrow charts up to the raised row capacity', () => {
+    const long = { ...chart, width: 2, height: 1_000, cells: Array.from({ length: 1_000 }, () => [0, 1]) };
+    const project = createColorworkProjectV1(long, { id: 'long-scarf' });
+    expect(project.base.rowIds).toHaveLength(1_000);
+    expect(AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState).toBe(75_600);
+  });
+
+  it('upgrades a v1 project with a real edit history without changing any cursor position', () => {
+    // Written by the v1 (pre-M5) contract: 18 edits, cursor 16 (a redo branch), an active and a quarantined override.
+    const source = readFileSync(resolve('../../fixtures/colorwork-project-v1/edited-history-project.json'), 'utf8');
+    const raw = JSON.parse(source) as { version: number; history: { cursor: number; entries: unknown[] } };
+    expect(raw.version).toBe(1);
+    const upgraded = parseColorworkProjectV1Json(source);
+    const reopened = parseColorworkProjectV1Json(serializeColorworkProjectV1(upgraded));
+    expect(reopened.version).toBe(2);
+    expect(reopened.history.cursor).toBe(raw.history.cursor);
+    expect(reopened.history.entries).toEqual(raw.history.entries);
+    const statuses: string[] = [];
+    for (let cursor = 0; cursor <= raw.history.entries.length; cursor += 1) {
+      const at = (project: typeof upgraded) => materializeColorworkProject({ ...project, history: { ...project.history, cursor, checkpoints: project.history.checkpoints.filter((checkpoint) => checkpoint.cursor <= cursor) } });
+      expect(at(reopened)).toEqual(at(upgraded));
+      statuses.push(at(reopened).overrides.map((item) => item.status).join(','));
+    }
+    expect(statuses).toContain('quarantined');
+    expect(materializeColorworkProject(redoProjectEdit(reopened)).state.machine.yarnAssignments).toHaveLength(1);
   });
 });

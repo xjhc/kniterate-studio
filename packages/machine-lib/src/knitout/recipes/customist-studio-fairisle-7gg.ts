@@ -17,10 +17,7 @@
 
 import { FAIRISLE_BODY_DEFAULTS } from '../kniterate/constants.js'
 import { FAIRISLE_PARK_WASTE_DEFAULTS } from '../passes/waste-section.js'
-import {
-  CHAIN_BINDOFF_DEFAULTS,
-  FAIRISLE_PARK_BINDOFF_DEFAULTS,
-} from '../passes/bind-off.js'
+import { FAIRISLE_PARK_BINDOFF_DEFAULTS } from '../passes/bind-off.js'
 import { FAIRISLE_CARRIER_INTRO_DEFAULTS } from '../passes/carrier-intro.js'
 
 import type { CarrierId } from '../types.js'
@@ -72,7 +69,8 @@ export const CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE: MachineRecipe = ({
     },
     finish: {
       bindOff: 'fairisle-park-bindoff',
-      chainBindoff: { ...CHAIN_BINDOFF_DEFAULTS },
+      // No chainBindoff: the park bind-off never consumes it, and supplying
+      // it made every compile warn `machine-setting-ignored`.
       fairisleParkBindoff: { ...FAIRISLE_PARK_BINDOFF_DEFAULTS },
     },
   },

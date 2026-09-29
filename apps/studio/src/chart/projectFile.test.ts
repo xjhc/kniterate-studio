@@ -47,7 +47,7 @@ describe('Studio chart/project intake', () => {
       palette: [{ id: 'ink', name: 'Ink', hex: '#000000' }],
       cells: Array.from({ length: 50_000 }, () => [0]),
     });
-    expect(() => openStudioProjectJson(oversizedChart)).toThrow(/50,000 rows.*capacity is 300/);
+    expect(() => openStudioProjectJson(oversizedChart)).toThrow(/50,000 rows.*capacity is 1,200/);
   });
 
   it('rejects an oversized browser project before reading its text', async () => {

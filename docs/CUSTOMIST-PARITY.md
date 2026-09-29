@@ -42,14 +42,15 @@ software evidence; Knit-proven stays exact-artifact only.
 
 ## Studio today (baseline, 2026-09-28)
 
-Rectangle colour charts up to 252 × 300 with pen, erase, line, rectangle,
+Rectangle colour charts up to 252 × 1,200 (75,600 cells) with pen, erase, line, rectangle,
 fill, selection and copy/cut/paste. Up to four pattern yarns on C2–C5.
 Fairisle and Birdseye backings compile through Customist-matched frames. The
 `pnpm parity` scoreboard reads **0 exact, 4 partial, 1 blocked, 8
 unsupported**. Over-limit floats are non-blocking warnings. Stitch and pass
-overrides exist in the schema, but any active one blocks compilation. There
-is no gauge or centimetre sizing, no rib, no shaping, and no multi-piece
-garment.
+overrides exist in the schema, but any active one blocks compilation. M5
+added gauge and centimetre-target sizing checks, an image-to-chart converter,
+rendered views and computed readiness through the CLI. There is no rib, no
+shaping, and no multi-piece garment.
 
 ---
 
@@ -57,7 +58,7 @@ garment.
 
 | ID | Customist capability | Studio today | Design-language construct | Evidence | Milestone |
 |---|---|---|---|---|---|
-| CP-A1 | Rectangle template: width in needles × height in rows, or in cm from tension, with units in cm or stitches. | Needles × rows only; height capped at 300 rows. | `object: rectangle` with `Length` in cm or stitches and gauge-derived counts. | R | M5 |
+| CP-A1 | Rectangle template: width in needles × height in rows, or in cm from tension, with units in cm or stitches. | Partial (M5, CLI): needles × rows up to 1,200 rows. Recorded gauge + cm target derive the counts and offer resize fixes. | `object: rectangle` with `Length` in cm or stitches and gauge-derived counts. | R | M5 |
 | CP-A2 | Rectangle base stitch type (front knit, rear knit, miss) and main yarn carrier 1–6. | Front jersey only; pattern carriers C2–C5. | `fabric: jersey{face}`; yarn → carrier binding. | R | M5 |
 | CP-A3 | Sweater template wizard: crew or V neckline; straight, classic or raglan shoulders; standard, raglan or straight drop-shoulder sleeves; sizes S–XL or custom body measurements. Generates front, back, sleeve and collar panels. | Missing. | `object: sweater` template producing `pieces` and `joins`. | R per panel + assembly gate | M7 |
 | CP-A4 | Sweater measurements split into design measurements and garment measurements (body + fit), all editable, with ease per measurement. | Missing. | `object.sweater.measurements` with per-measurement ease and value provenance. | R | M7 |
@@ -67,7 +68,7 @@ garment.
 | CP-A8 | Import Vector Shape (SVG/DXF): pick a piece from a multi-piece file, size in cm (linked or free), gauge conversion, stitch type and carrier, Fill or Outline mode. | Missing. | `piece.outline: vector(asset, sizing, gauge, mode)`, bundled asset. | R | M8 |
 | CP-A9 | Load Txt File Pattern (old Kniterate Template Editor, DesignaKnit 9 export): multiple yarns and stitch symbols with stitch mapping, auto rib transfers, reversible 2-colour tubular option (solid edges, roll every pass, single-stitch edge), per-row-set speed/roller/stitch. | Missing. | Importer to Design (pieces, zones, stitch charts). | R | M8 |
 | CP-A10 | Stitch Image / Stitch Block: PNG colours mapped to stitch types (e.g. for plating), max 252 px wide. | Missing. | `fabric: stitch-chart` from an image asset with a colour → stitch map. | R | M8 |
-| CP-A11 | Generate Base from an empty stack; Resize Workspace (add/delete rows or columns after, before or within, fill stitch and yarn). | Chart set-width/set-height only. | Design length/width edits; Plan regenerates. | F + R | M5 |
+| CP-A11 | Generate Base from an empty stack; Resize Workspace (add/delete rows or columns after, before or within, fill stitch and yarn). | Chart set-width/set-height, and blank charts from the CLI (`new --width --height`). | Design length/width edits; Plan regenerates. | F + R | M5 |
 
 ## B. Colourwork
 
@@ -136,8 +137,8 @@ carrier-swap workflow. Recorded as an open decision in `FOUNDING.md` §1.
 
 | ID | Customist capability | Studio today | Design-language construct | Evidence | Milestone |
 |---|---|---|---|---|---|
-| CP-G1 | Pattern view (carrier colours) and Stitch view (stitch-symbol colours). | Colour chart; pass grid; no stitch-symbol view. | `render --view pattern` and `render --view stitch` | F | M5 (pattern), M8 (stitch) |
-| CP-G2 | Heat-map views: roller, speed, stitch size, occupancy (stitches per needle); direction view. | Movement view and loop-state counts; no heat maps. | `render --view` with roller, speed, stitch-size, occupancy or direction, from the RunArtifact. | F | M5 |
+| CP-G1 | Pattern view (carrier colours) and Stitch view (stitch-symbol colours). | Partial (M5, CLI): `render --view chart` at gauge-true proportions; pass grid; no stitch-symbol view. | `render --view pattern` and `render --view stitch` | F | M5 (pattern), M8 (stitch) |
+| CP-G2 | Heat-map views: roller, speed, stitch size, occupancy (stitches per needle); direction view. | Partial (M5, CLI): `render --view speed/roller/stitch/direction` per emitted pass; no occupancy map. | `render --view` with roller, speed, stitch-size, occupancy or direction, from the RunArtifact. | F | M5 |
 | CP-G3 | Checks window: Issues (critical / warning), Kicks, Moves, split view, locations shown on the canvas. | KCode-native findings (43-rule validator), pass roles (kickback, carrier move), anchored diagnostics. | Findings with `owner` and design `path`; pass roles per piece. | F | M5 |
 | CP-G4 | Named checks: pick-up stitch not stable; two-sided needle action needs half racking; knitting without carrier; transfer row with carrier; float distance too large; transfer from an empty needle; carrier must first move left-to-right (warning); loop has > 2 parents; needle action in unsafe bed range; invalid needle specification (transfer at half rack). | Most have validator equivalents (legality contract, float and bed-range advisories, loop-stack depth, empty-drop). A one-to-one mapping has not been written. | A rule-to-rule table in the findings catalog; each Customist check shown to fire on its triggering design. | F + R | M5 |
 | CP-G5 | Markers and Query on a selection; Zoom to canvas; Zoom to selection. | Zoom to selection shipped; no markers or query. | UI + `describe --at <path>` | F | M8 |
@@ -148,7 +149,7 @@ carrier-swap workflow. Recorded as an open decision in `FOUNDING.md` §1.
 |---|---|---|---|---|---|
 | CP-H1 | Multi-canvas workspace: several panels at once, each with its own edit history; add, duplicate, rename, delete canvas; Insert design from the library. | One chart per project. | Multiple `pieces` in one project; history entries scoped by piece. | F | M7 |
 | CP-H2 | Save and reload a design with its full editable command stack (Cstack `.json`); flattened canvas (`.buck`). | Project file with full edit history (shipped). | Project v2 file (lossless, bundled assets). | F | M5 |
-| CP-H3 | Download image (`.png` of the canvas). | Printable run sheet; no chart PNG export. | `render -o file.png` | F | M5 |
+| CP-H3 | Download image (`.png` of the canvas). | Partial (M5, CLI): `render -o file.png`; printable run sheet. | `render -o file.png` | F | M5 |
 | CP-H4 | Knit! / Export Kcode: compile to `.kc` for the SD card as `command.kc` (one-way). | Shipped, gated by the verdict. | Per-piece `.kc` in the export bundle. | F | M5 |
 | CP-H5 | Undo/redo shortcuts; tool shortcuts (M, S, P, L, R, F). | Undo/redo and tool shortcuts shipped for colour tools. | Unchanged. | F | M8 (stitch tools) |
 

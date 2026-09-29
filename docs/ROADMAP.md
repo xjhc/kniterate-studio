@@ -207,6 +207,26 @@ before M9 are development evidence only
   H2–H4.
 - The Customist reference-capture batch for M5.
 
+**Status 2026-09-29: software core built; parity rows open.**
+
+Built:
+
+- the v2 format (gauge and target) and the lossless v1 upgrade;
+- the Plan, findings with owners, and readiness;
+- the 1,200-row capacity and the colour-aware Fairisle estimate;
+- the bind-off warning fix;
+- CLI `new` (blank), `image`, `plan`, `describe`, `readiness`, `render` and
+  `explain`;
+- the skill, and the benchmark (12/12, 0 false readiness claims).
+
+Open:
+
+- **Rows that need Customist reference captures for R/E evidence:** CP-B1–B3,
+  B6, B8, C3, E1–E2, F1–F5, G3–G4. B1 also needs the carrier-role ruling.
+  F1/F2 also need the compiler to consume row-setting overrides.
+- **Rows at CLI level only:** CP-A1, A11, G1, G2 (no occupancy), H3. Level F
+  requires a browser test.
+
 Gate:
 
 - migrated fixtures are byte-identical at every cursor position;

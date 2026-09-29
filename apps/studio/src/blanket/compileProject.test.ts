@@ -303,7 +303,7 @@ describe('blanket project compiler', () => {
     expect(compiled).toMatchObject({
       ok: false,
       compileVerdict: 'blocked',
-      capacity: { status: 'blocked', evidence: 'exact-observation', metric: 'chart-height', required: 50_000, limit: 300 },
+      capacity: { status: 'blocked', evidence: 'exact-observation', metric: 'chart-height', required: 50_000, limit: 1_200 },
       stats: { passCount: 0, opCount: 0 },
     });
   });
@@ -336,6 +336,23 @@ describe('blanket project compiler', () => {
       expect(compiled.ok, item.technique).toBe(true);
       expect(compiled.capacity.estimate.knitoutRecords, item.technique)
         .toBeGreaterThanOrEqual(compiled.capacity.observed.knitoutRecords ?? Infinity);
+    }
+  });
+
+  it('keeps the color-aware Fairisle pass estimate above exact lowering', { timeout: 30_000 }, () => {
+    for (const colors of [2, 3, 4]) {
+      const source = fourColorChart(80, 60, `Fairisle ${colors}`);
+      const chartWithColors = { ...source, palette: source.palette.slice(0, colors), cells: source.cells.map((row) => row.map((cell) => cell % colors)) };
+      let project = createColorworkProjectV1(chartWithColors, { id: `fairisle-estimate-${colors}` });
+      project = appendProjectEdit(project, { id: 'strategy', source: 'system', edit: { kind: 'set-strategy', strategy: { technique: 'fairisle', floatLimit: 5 } } });
+      const compiled = compileColorworkProject(project);
+      expect(compiled.ok).toBe(true);
+      const converted = browserAuthoredKnitoutToKCode(compiled.knitoutText!, 'fairisle-estimate.k');
+      expect(converted.ok).toBe(true);
+      const exact = converted.scheduledPasses?.length ?? Number.POSITIVE_INFINITY;
+      expect(compiled.capacity.estimate.loweredPasses).toBeGreaterThanOrEqual(exact);
+      // Keep roughly a 2x margin over the measured body so the bound stays conservative.
+      expect(compiled.capacity.estimate.loweredPasses).toBeGreaterThanOrEqual(2 * exact - 200);
     }
   });
 
