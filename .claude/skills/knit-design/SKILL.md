@@ -17,15 +17,21 @@ panel): up to 252 stitches wide and 1,200 rows tall (75,600 cells), up to four
 pattern colors on carriers C2–C5, Fairisle or Birdseye (exactly four colors)
 backing.
 
-Beanies: one construction only, `pnpm --silent studio -- beanie`. It is
-Customist's flat 2×2 rib beanie, seamed afterwards, 194 needles wide (the
-width is fixed for now), with the body length from `--rib-rows` or
-`--body-cm` plus a rib gauge. It writes the program and finishing
-instructions.
+Beanies: one construction, `pnpm --silent studio -- beanie`. It is a flat
+2×2 rib beanie seamed afterwards, in Customist's construction:
+- Size it with `--head-cm`, optional `--ease` (default −0.10) and `--gauge`
+  measured on 2×2 rib, which sets the width. Set the body length with
+  `--body-cm` or `--rib-rows`.
+- It writes the program and finishing instructions. Read the `needles.how`
+  derivation and `predicted` back to the person.
+- At 194 needles it is Kniterate's own reference hat. Other widths use our
+  eight-line crown, which nobody has knitted yet; say so.
+- Beanies are generated outside the project pipeline, so readiness is not
+  computed for them. Never call a beanie "ready": report its verdict and
+  predicted size, and treat a missing rib gauge as a reason to ask.
 
-Not supported yet: other beanie widths or sizes by circumference, motifs on
-beanies, fold-up cuffs as a design choice, sweaters, other shaping, and
-seamless tubes. Say so and offer the nearest supported thing instead of
+Not supported yet: motifs on beanies, a knitted-in fold-up cuff (folding the
+rib brim is fine), sweaters, other shaping, and seamless tubes. Say so and offer the nearest supported thing instead of
 approximating.
 
 ## Rules

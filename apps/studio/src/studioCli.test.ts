@@ -116,10 +116,18 @@ describe('authored CLI command receipts', () => {
     expect(result.status).toBe(0);
     expect(result.receipt).toMatchObject({
       verdict: { state: 'surface' },
-      construction: { recipe: 'customist-2x2-rib-beanie@1', needles: 194, ribRows: 58, crownRows: 40, passes: 486 },
+      construction: { recipe: 'customist-2x2-rib-beanie@1', needles: 194, needleRange: [30, 223], crown: 'customist-194', ribRows: 58, crownRows: 40, passes: 486 },
       ribRows: { value: 58, how: '18 cm × 32 rows/10 cm' },
-      predicted: { flatWidthCm: 64.7, bodyCm: 18.1 },
+      predicted: { finishedCircumferenceCm: 64, bodyCm: 18.1 },
     });
+    const sized = cli(['beanie', '--head-cm', '56', '--body-cm', '18', '--gauge', '30,32', '-o', `${prefix}-56`]);
+    expect(sized.status).toBe(0);
+    expect(sized.receipt).toMatchObject({
+      construction: { needles: 154, needleRange: [50, 203], crown: 'eight-line' },
+      needles: { value: 154, ease: { value: -0.1, source: 'default' } },
+      predicted: { finishedCircumferenceCm: 50.7 },
+    });
+    expect(cli(['beanie', '--head-cm', '56', '--needles', '150', '--gauge', '30,32', '-o', prefix]).status).toBe(2);
     expect(readFileSync(`${prefix}-instructions.md`, 'utf8')).toContain('mattress stitch');
     expect(cli(['beanie', '--body-cm', '18', '-o', prefix]).status).toBe(2);
   });

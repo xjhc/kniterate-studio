@@ -247,9 +247,9 @@ Built:
 
 Remaining:
 
-- a crown for any width (the replayed crown is fixed at 194 needles),
-  checked step by step against the replay's needle occupancy;
-- circumference sized from gauge;
+- ~~a crown for any width; circumference sized from gauge~~ — done: the
+  eight-line crown covers 60–244 needles, and `beanie --head-cm` sizes the
+  width;
 - a beanie project in the authored pipeline (verdict via
   `resolveAuthoredVerdict`);
 - motif placement with bundled images, and the fold-up cuff;

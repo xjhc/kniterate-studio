@@ -30095,7 +30095,7 @@
     ]
   },
   "contract": {
-    "sha256": "24137da07f18f5ae8bc05b6e4889a03c903930f3cd21efc683ea141904ae94c2",
+    "sha256": "ff657de23fd5803831233ab62f3689258d1a654d465820feb5a0a754158ab845",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30534,8 +30534,8 @@
       },
       {
         "path": "../../apps/studio/src/studioCli.test.ts",
-        "sha256": "88750619b6870b4829f5d41933ffaf80507b0e1b718d7138c0dc2ad02551208a",
-        "bytes": 8204
+        "sha256": "b9dafa5f225b73c52d1d8100e994e8571ab4d8aefe89fc49455cb4088ddcb72e",
+        "bytes": 8786
       },
       {
         "path": "../../apps/studio/src/styles.css",
@@ -30669,8 +30669,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "8da1415a11170af5af91b80fbd14927fb9925346a7a43c72dbbff995123fb944",
-        "bytes": 25382
+        "sha256": "c2f844e136ab8db45a4627cec07ff90fb85d7f074f4abcca6c89045b681758f1",
+        "bytes": 27977
       },
       {
         "path": "../../tsconfig.base.json",
@@ -30824,7 +30824,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "44f2e88ca30f1874f390b7458e4764d190a7ec5169997fe348c95b88c4a40c2d",
+        "sha256": "f4da745c188a231f6b0570f0056d1fd9844b8d45abebdf6b3cd6f3c25970a4c7",
         "bytes": 179
       },
       {
@@ -31334,8 +31334,8 @@
       },
       {
         "path": "src/knitout/passes/customist-rib-beanie.ts",
-        "sha256": "6e1e406d34729fb9bd4bd2386d9ad5bc1f120774f527edec9b9ccbc30791d36b",
-        "bytes": 11853
+        "sha256": "eb4c0597e0cead46107090889b0370fd4cf244c472da28d40176fd9319df5710",
+        "bytes": 12034
       },
       {
         "path": "src/knitout/passes/first-row-speed.ts",
@@ -31386,6 +31386,11 @@
         "path": "src/knitout/passes/resolve-chart.ts",
         "sha256": "eef95c0dcb9045fa7fee3a00ac1e58fa06d967cd6127d9b281a2d7da6038b452",
         "bytes": 5075
+      },
+      {
+        "path": "src/knitout/passes/rib-crown-plan.ts",
+        "sha256": "9e5c05ef95822e7d84a7a8253aec94be8bc7093d92606815c148780520dd4670",
+        "bytes": 8448
       },
       {
         "path": "src/knitout/passes/shaped-tube.ts",
@@ -31714,8 +31719,8 @@
       },
       {
         "path": "test/knitout/customist-rib-beanie.test.ts",
-        "sha256": "db4a25c3cd90ca85f4afaef764bf3cfcca88c415951ce098878f2ffb20cc853e",
-        "bytes": 3323
+        "sha256": "bf2c8e8271db20f7de0ca98aa41cb2b7473cb559179728dea123d1601bd6c923",
+        "bytes": 6891
       },
       {
         "path": "test/knitout/dbj-parity.test.ts",

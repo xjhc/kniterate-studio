@@ -22,7 +22,8 @@
 import { b as backBed, comment, f, type CarrierId, type Direction, type KnitoutOp, type KnitoutProgram } from '../types.js'
 import { CarriageSimulator } from '../sim/carriage-simulator.js'
 import type { PredictedPass } from '../sim/types.js'
-import { CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH } from './customist-rib-beanie-crown.js'
+import { CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH, type CustomistRibCrownStep } from './customist-rib-beanie-crown.js'
+import { planEightLineCrown, ribBed } from './rib-crown-plan.js'
 
 /** Machine settings of the reference frame, per section. */
 export const CUSTOMIST_RIB_BEANIE_SETTINGS_V1 = Object.freeze({
@@ -75,9 +76,10 @@ export interface CustomistRibBeanieInput {
   ribRows: number
   /**
    * `customist-194`: Customist's crown and top jersey, replayed exactly
-   * (reference width only). `none`: stop after the rib.
+   * (reference width only). `eight-line`: the same crown topology planned for
+   * any width (rib-crown-plan.ts). `none`: stop after the rib.
    */
-  crown: 'customist-194' | 'none'
+  crown: 'customist-194' | 'eight-line' | 'none'
 }
 
 export interface CustomistRibBeanieResult {
@@ -86,11 +88,7 @@ export interface CustomistRibBeanieResult {
   finalNextDirection: Direction
 }
 
-/** 2×2 rib layout: which bed holds the stitch at each offset from `lo`. */
-export function ribBed(offset: number): 'f' | 'b' {
-  const residue = offset % 4
-  return residue === 1 || residue === 2 ? 'f' : 'b'
-}
+export { ribBed }
 
 export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): CustomistRibBeanieResult {
   const { needleStart: lo, needleEnd: hi, bodyCarrier: body, wasteCarrier: waste, drawCarrier: draw } = input
@@ -220,10 +218,16 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
   }
   drain()
 
-  if (input.crown === 'customist-194') {
-    if (width !== CUSTOMIST_RIB_CROWN_WIDTH) throw new Error(`the customist-194 crown is defined for ${CUSTOMIST_RIB_CROWN_WIDTH} needles; this piece has ${width}`)
-    ops.push(comment('--- CUSTOMIST 2x2 RIB CROWN ---'))
-    for (const step of CUSTOMIST_RIB_CROWN_194_V1) {
+  if (input.crown !== 'none') {
+    let crown: readonly CustomistRibCrownStep[]
+    if (input.crown === 'customist-194') {
+      if (width !== CUSTOMIST_RIB_CROWN_WIDTH) throw new Error(`the customist-194 crown is defined for ${CUSTOMIST_RIB_CROWN_WIDTH} needles; this piece has ${width}`)
+      crown = CUSTOMIST_RIB_CROWN_194_V1
+    } else {
+      crown = planEightLineCrown(width, sim.finalNextDirection()).steps
+    }
+    ops.push(comment(`--- 2x2 RIB CROWN (${input.crown}) ---`))
+    for (const step of crown) {
       if (step[0] === 'x') {
         const [, rack, from, speed, roller, xferStitch, sources] = step
         settings(speed, roller)
@@ -254,7 +258,7 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
     // Knit off: drop the top's live loops (they are gathered by hand).
     sim.setRoller(0)
     sim.setStitch(0)
-    const last = CUSTOMIST_RIB_CROWN_194_V1.at(-1)
+    const last = crown.at(-1)
     if (last?.[0] === 'k') for (const o of last[6]) sim.drop(f(lo + o))
     drain()
   }

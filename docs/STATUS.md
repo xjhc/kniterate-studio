@@ -79,9 +79,21 @@ ship," trust this file and the working tree instead.
     and writes `.k`, `.kc` and finishing instructions. It checks the `.kc`
     through the same intake as `machine:check`, so the verdict is
     Surface-proven (imported).
-  - Not yet built: a crown for other widths, sizing the circumference from
-    gauge, beanie projects in the authored pipeline, motifs and fold-up
-    cuffs. There is no physical evidence.
+  - Any width from 60 to 244 needles, centred on the bed. Other widths use
+    the eight-line crown (`rib-crown-plan.ts`): the reference crown's
+    topology (8 and 4 decrease lines, rib columns stacked onto the inner
+    column, everything outside sliding inward) with its own evenly placed
+    lines and transfers through the empty rear bed in hops of at most 4.
+    Tests replay the emitted trace:
+    - the stitch counts per crown row match the plan;
+    - no needle holds more than 2 loops;
+    - racking stays within ±4;
+    - widths 98, 150, 194 and 242 have zero validator diagnostics.
+  - `beanie --head-cm --ease --gauge` derives the width, with the
+    derivation reported.
+  - Not yet built: beanie projects in the authored pipeline (so no computed
+    readiness), motifs and the knitted-in fold-up cuff. The eight-line crown
+    has no reference parity and nothing has been knitted.
 - **Customist parity scoreboard.** `pnpm parity [--json]` compares the 13
   captured references. Schema v2 reserves `reproduced` for an export-ready,
   strict whole-program machine-trace match, including rack, settings, stops,
