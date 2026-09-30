@@ -17,21 +17,32 @@ panel): up to 252 stitches wide and 1,200 rows tall (75,600 cells), up to four
 pattern colors on carriers C2–C5, Fairisle or Birdseye (exactly four colors)
 backing.
 
-Beanies: a flat 2×2 rib beanie, seamed afterwards (Customist's construction).
-It is a normal project:
-`new --object beanie --head-cm 56 [--ease -0.1] --body-cm 18 --gauge <st>,<rows> --color "Name=#RRGGBB" -o hat.json`.
-- The chart is the rib body: width = needles, height = rib rows.
-- The target width is the finished circumference; the plan adds the seam
-  stitches and keeps the rib symmetric.
-- `plan`, `describe`, `readiness`, `render` and `export` work as for any
-  project. `export` also writes finishing instructions.
-- Use a gauge measured on 2×2 rib.
-- At 194 needles the crown is Kniterate's own. It ends with one 3-loop
-  stack, so readiness reports a warning; say so. Other widths (60–244) use
-  our eight-line crown, which has never been knitted; say so too.
+Beanies: flat, seamed afterwards, in Customist's construction. Two kinds:
+- **All 2×2 rib:**
+  `new --object beanie --head-cm 56 [--ease -0.1] --body-cm 18 --gauge <rib st>,<rib rows> --color "Name=#hex" -o hat.json`.
+  The chart is the rib body.
+- **Rib cuff + colorwork body (e.g. an Arc'teryx-style toque):** add
+  `--cuff-cm 7 --rib-gauge <rib st>,<rib rows> [--fold] --accent "Name=#hex"`.
+  Here `--gauge` is the body's colorwork gauge and `--body-cm` the body
+  above the cuff; `--fold` knits the cuff at twice its visible height. Put
+  the motif in with `place hat.json motif.json [--x center] [--above-cuff rows]`,
+  after `image logo.png --height-cm 8 --gauge <body gauge> --colors 2 -o motif.json`.
+  Motif color 0 is left as the ground.
 
-Not supported yet: motifs on beanies, a knitted-in fold-up cuff (folding the
-rib brim is fine), sweaters, other shaping, and seamless tubes. Say so and offer the nearest supported thing instead of
+For both kinds:
+- The target width is the finished circumference; the plan adds the seam
+  stitches and keeps the rib symmetric. `plan`, `describe`, `readiness`,
+  `render` and `export` work as for any project, and `export` also writes
+  finishing instructions.
+- Long floats behind a motif (over 7 stitches) are design warnings, so the
+  hat is not ready. Say so, and suggest a bolder or more compact motif.
+  Never claim ready around them.
+- At 194 needles, the all-rib crown is Kniterate's own; it ends with one
+  3-loop stack, so readiness reports a warning. Other widths use our
+  eight-line crown, which has never been knitted; say so.
+
+Not supported yet: sweaters, other shaping, seamless tubes, and float
+catching or birdseye backing on beanie bodies. Say so and offer the nearest supported thing instead of
 approximating.
 
 ## Rules

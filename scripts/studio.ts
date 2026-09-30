@@ -30,12 +30,18 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
   new <chart.json|project.json> -o <project.json> [--id <id>]
   new --width <st> --height <rows> [--palette "Name=#RRGGBB,..."] [--title <t>] -o <project.json>
       Start a project from a ColorworkChartV1 file, an existing project, or a blank chart.
-  new --object beanie [--head-cm X [--ease E]] [--body-cm X] [--gauge <st>,<rows>] [--color "Name=#RRGGBB"] -o <project.json>
-      Flat 2x2 rib beanie, seamed afterwards (Customist's construction). The chart is the rib body:
-      width = needles, height = rib rows. With --gauge measured on 2x2 rib, --head-cm sets the finished
-      circumference target (head x (1 + ease), ease default -0.10) and --body-cm the body length; the
-      plan's own fixes then size the chart. Without them it is Kniterate's reference hat (194 x 102).
-      At 194 needles the crown is Customist's own; other widths (60-244) use the eight-line crown.
+  new --object beanie [--head-cm X [--ease E]] [--body-cm X] [--gauge <st>,<rows>] [--color "Name=#RRGGBB"]
+      [--cuff-cm X --rib-gauge <st>,<rows> [--fold] [--accent "Name=#RRGGBB"]] -o <project.json>
+      Flat beanie, seamed afterwards (Customist's construction). Without --cuff-cm it is all 2x2 rib:
+      the chart is the rib body (width = needles, height = rib rows) and --gauge is the rib gauge; with
+      no sizing it is Kniterate's reference hat (194 x 102, Customist's own crown). With --cuff-cm it is a
+      rib cuff (rows from --rib-gauge, doubled with --fold) under a jersey colorwork body: --gauge is the
+      body's colorwork gauge, the chart's bottom rows are the cuff, and --accent adds a second yarn on C4.
+      --head-cm sets the finished circumference target (head x (1 + ease), ease default -0.10) and
+      --body-cm the body length; the plan's own fixes then size the chart. Widths 60-244 needles.
+  place <project.json> <motif.json> [--x center|<stitches from left>] [--above-cuff <rows>] [--map "1=accent,..."]
+      Paint a ColorworkChartV1 motif into a cuff-and-body beanie's body as one undoable edit. Motif color
+      0 is transparent; motif color k paints project palette entry k unless --map names another.
   image <file.png> -o <chart.json> (--width-st N | --height-rows N | --width-cm X | --height-cm X)
         [--gauge <st>,<rows>] [--colors K] [--pooling mean|mode] [--title <t>]
       Convert an image to a ColorworkChartV1 chart. --gauge is stitches,rows per 10 cm; with it the
@@ -70,7 +76,7 @@ const MAX_FINDINGS = 200;
 
 class UsageError extends Error {}
 
-const VALUE_OPTIONS = ['--object', '--color', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
+const VALUE_OPTIONS = ['--object', '--color', '--accent', '--cuff-cm', '--rib-gauge', '--x', '--above-cuff', '--map', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
 
 interface Parsed {
   command: string | null;
@@ -100,6 +106,7 @@ function parseArguments(args: readonly string[]): Parsed {
       if (source !== 'human' && source !== 'assistant') throw new UsageError('--source must be human or assistant.');
       parsed.source = source;
     } else if (argument === '--cells') parsed.cells = true;
+    else if (argument === '--fold') parsed.options.set('--fold', 'true');
     else if ((VALUE_OPTIONS as readonly string[]).includes(argument)) parsed.options.set(argument, value());
     else if (argument === '--help' || argument === '-h') parsed.command = 'help';
     else if (argument.startsWith('-') && argument !== '-') throw new UsageError(`Unsupported option: ${argument}`);
@@ -129,11 +136,11 @@ function integerOption(parsed: Parsed, name: string): number | null {
   return value;
 }
 
-function gaugeOption(parsed: Parsed): { stitchesPer10cm: number; rowsPer10cm: number } | null {
-  const raw = parsed.options.get('--gauge');
+function gaugeOption(parsed: Parsed, name = '--gauge'): { stitchesPer10cm: number; rowsPer10cm: number } | null {
+  const raw = parsed.options.get(name);
   if (raw === undefined) return null;
   const [stitches, rows] = raw.split(',').map(Number);
-  if (!(stitches! > 0) || !(rows! > 0)) throw new UsageError('--gauge must be <stitches>,<rows> per 10 cm, e.g. 26,34.');
+  if (!(stitches! > 0) || !(rows! > 0)) throw new UsageError(`${name} must be <stitches>,<rows> per 10 cm, e.g. 26,34.`);
   return { stitchesPer10cm: stitches!, rowsPer10cm: rows! };
 }
 
@@ -243,7 +250,13 @@ function summary(project: ColorworkProjectV1, evaluated: Evaluated): string[] {
   const lines = [
     `Project "${project.title}" (${project.id}), edit ${project.history.cursor} of ${project.history.entries.length}`,
     plan.piece === 'beanie'
-      ? `Beanie (flat 2x2 rib, seamed): ${plan.stitches.value} needles ${plan.needles.first}–${plan.needles.last} × ${plan.rows.value} rib rows, then the crown; frame ${result.compiled?.frame?.preset ?? 'not compiled'}`
+      ? (() => {
+          const object = materializeColorworkProject(project).state.object;
+          const cuff = object?.construction === 'rib-cuff-jersey-body' ? object.cuffRows ?? 0 : null;
+          return cuff === null
+            ? `Beanie (flat 2x2 rib, seamed): ${plan.stitches.value} needles ${plan.needles.first}–${plan.needles.last} × ${plan.rows.value} rib rows, then the crown; frame ${result.compiled?.frame?.preset ?? 'not compiled'}`
+            : `Beanie (rib cuff + colorwork body, seamed): ${plan.stitches.value} needles ${plan.needles.first}–${plan.needles.last}; ${cuff}-row 2x2 rib cuff${object?.cuffFold ? ' (folds up)' : ''}, ${plan.rows.value - cuff}-row fairisle body, then the crown; frame ${result.compiled?.frame?.preset ?? 'not compiled'}`;
+        })()
       : `Panel: ${plan.stitches.value} st × ${plan.rows.value} rows on needles ${plan.needles.first}–${plan.needles.last}; backing ${plan.backing.technique} (float limit ${plan.backing.floatLimit})`,
     plan.gauge === null ? 'Gauge: none recorded (sizes in cm are unknown)'
       : `Gauge: ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}) → predicted ${plan.piece === 'beanie' ? 'finished circumference ' : ''}${plan.predicted!.widthCm.value} × ${plan.piece === 'beanie' ? 'body ' : ''}${plan.predicted!.heightCm.value} cm`,
@@ -273,26 +286,48 @@ function blankChart(parsed: Parsed) {
   };
 }
 
+function colorOption(raw: string, flag: string): { name: string; hex: string } {
+  const [name, hex] = raw.split('=').map((part) => part.trim());
+  if (!name || !hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) throw new UsageError(`${flag} must be Name=#RRGGBB.`);
+  return { name, hex: hex.toUpperCase() };
+}
+
 /** A beanie project: reference size, then the plan's own resize fixes for any requested size. */
 function newBeanie(parsed: Parsed): ColorworkProjectV1 {
   const gauge = gaugeOption(parsed);
+  const ribGauge = gaugeOption(parsed, '--rib-gauge');
   const headCm = numberOption(parsed, '--head-cm');
   const bodyCm = numberOption(parsed, '--body-cm');
-  if ((headCm !== null || bodyCm !== null) && gauge === null) throw new UsageError('--head-cm and --body-cm need --gauge <st>,<rows> measured on 2x2 rib.');
+  const cuffCm = numberOption(parsed, '--cuff-cm');
+  const fold = parsed.options.has('--fold');
+  if ((headCm !== null || bodyCm !== null) && gauge === null) throw new UsageError('--head-cm and --body-cm need --gauge <st>,<rows>.');
+  if (cuffCm !== null && ribGauge === null) throw new UsageError('--cuff-cm needs --rib-gauge <st>,<rows> measured on 2x2 rib.');
+  if (fold && cuffCm === null) throw new UsageError('--fold needs --cuff-cm.');
   const easeRaw = parsed.options.get('--ease');
   const ease = easeRaw === undefined ? -0.1 : Number(easeRaw);
   if (!Number.isFinite(ease) || ease <= -0.5 || ease >= 0.5) throw new UsageError('--ease must be a fraction between -0.5 and 0.5, e.g. -0.1.');
-  const [name, hex] = (parsed.options.get('--color') ?? 'Main=#2B2B2B').split('=').map((part) => part.trim());
-  if (!name || !hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) throw new UsageError('--color must be Name=#RRGGBB.');
+  const main = colorOption(parsed.options.get('--color') ?? 'Main=#2B2B2B', '--color');
+  const accent = parsed.options.has('--accent') ? colorOption(parsed.options.get('--accent')!, '--accent') : null;
+  if (accent !== null && cuffCm === null) throw new UsageError('--accent needs a colorwork body: add --cuff-cm (the all-rib beanie knits one yarn).');
+  // Cuff rows: visible height at the rib's row gauge, knitted twice as long when it folds up.
+  const cuffRows = cuffCm === null ? null : Math.max(2, Math.round((cuffCm * (fold ? 2 : 1) * ribGauge!.rowsPer10cm) / 10));
+  const height = cuffRows === null ? 102 : cuffRows + 20;
   const chart = {
-    kind: 'knitlab-colorwork-chart', version: 1, title: parsed.options.get('--title') ?? 'Beanie', width: 194, height: 102,
-    rowNumbering: 'bottom-up', palette: [{ id: 'main', name, hex: hex.toUpperCase() }], cells: Array.from({ length: 102 }, () => Array<number>(194).fill(0)),
+    kind: 'knitlab-colorwork-chart', version: 1, title: parsed.options.get('--title') ?? 'Beanie', width: 194, height,
+    rowNumbering: 'bottom-up',
+    palette: [{ id: 'main', ...main }, ...(accent ? [{ id: 'accent', ...accent }] : [])],
+    cells: Array.from({ length: height }, () => Array<number>(194).fill(0)),
   };
   let project = createColorworkProjectV1(chart, { id: newId() });
   const edits: ProjectEdit[] = [
-    { kind: 'set-object', object: { kind: 'beanie', construction: 'flat-rib-2x2' } },
-    { kind: 'set-yarn-assignment', assignment: { paletteId: 'main', carrier: '3', yarnName: name } },
+    { kind: 'set-object', object: cuffRows === null
+      ? { kind: 'beanie', construction: 'flat-rib-2x2' }
+      : { kind: 'beanie', construction: 'rib-cuff-jersey-body', cuffRows, ...(fold ? { cuffFold: true } : {}) } },
+    { kind: 'set-yarn-assignment', assignment: { paletteId: 'main', carrier: '3', yarnName: main.name } },
   ];
+  if (accent) edits.push({ kind: 'set-yarn-assignment', assignment: { paletteId: 'accent', carrier: '4', yarnName: accent.name } });
+  // A colorwork body uses Customist's default float warning distance (7).
+  if (cuffRows !== null) edits.push({ kind: 'set-strategy', strategy: { technique: 'fairisle', birdseyeMode: 'minimal', floatLimit: 7 } });
   if (gauge !== null) edits.push({ kind: 'set-gauge', gauge: { ...gauge, source: 'measured' } });
   if (headCm !== null || bodyCm !== null) {
     edits.push({ kind: 'set-target', target: {
@@ -307,6 +342,39 @@ function newBeanie(parsed: Parsed): ColorworkProjectV1 {
     .flatMap((finding) => finding.fixes.flatMap((fix) => fix.edits));
   for (const edit of fixes) project = appendProjectEdit(project, { id: `size-${randomUUID()}`, source: 'system', edit });
   return project;
+}
+
+/** One paint-cells edit placing a motif chart in a cuff-and-body beanie's body. */
+async function placeMotif(parsed: Parsed, project: ColorworkProjectV1): Promise<{ edit: ProjectEdit; placed: Record<string, unknown> }> {
+  const { state } = materializeColorworkProject(project);
+  if (state.object?.construction !== 'rib-cuff-jersey-body') throw new UsageError('place needs a cuff-and-body beanie (new --object beanie --cuff-cm ...).');
+  const motif = JSON.parse(await readFile(positional(parsed, 1, 'motif chart'), 'utf8')) as { width: number; height: number; cells: number[][] };
+  const cuffRows = state.object.cuffRows ?? 0;
+  const bodyRows = state.chart.height - cuffRows;
+  const xRaw = parsed.options.get('--x') ?? 'center';
+  const x = xRaw === 'center' ? Math.floor((state.chart.width - motif.width) / 2) : Number(xRaw);
+  const above = parsed.options.has('--above-cuff') ? Number(parsed.options.get('--above-cuff')) : 2;
+  if (!Number.isInteger(above) || above < 0) throw new UsageError('--above-cuff must be a whole number of rows.');
+  if (!Number.isInteger(x) || x < 0 || x + motif.width > state.chart.width) throw new UsageError(`the motif (${motif.width} st wide) does not fit at x=${xRaw} in ${state.chart.width} needles.`);
+  if (above + motif.height > bodyRows) throw new UsageError(`the motif needs ${above + motif.height} body rows above the cuff; the body has ${bodyRows}. Make the body longer or the motif smaller.`);
+  const map = new Map<number, number>();
+  for (const pair of (parsed.options.get('--map') ?? '').split(',').filter(Boolean)) {
+    const [from, to] = pair.split('=');
+    const index = state.chart.palette.findIndex((entry) => entry.id === to);
+    if (index < 0) throw new UsageError(`--map target "${to}" is not a palette id (${state.chart.palette.map((entry) => entry.id).join(', ')}).`);
+    map.set(Number(from), index);
+  }
+  const cells: { rowId: string; column: number; paletteIndex: number }[] = [];
+  motif.cells.forEach((row, top) => row.forEach((value, column) => {
+    if (value === 0) return;
+    const paletteIndex = map.get(value) ?? value;
+    if (paletteIndex >= state.chart.palette.length) throw new UsageError(`motif color ${value} has no project palette entry; add one or use --map.`);
+    // Motif rows are stored top first; knit rows count up from the cast-on.
+    const knitRow = cuffRows + above + (motif.height - 1 - top);
+    cells.push({ rowId: state.rowIds[state.chart.height - 1 - knitRow]!, column: x + column, paletteIndex });
+  }));
+  if (cells.length === 0) throw new UsageError('the motif has no cells other than color 0.');
+  return { edit: { kind: 'paint-cells', cells }, placed: { x, rowsAboveCuff: above, width: motif.width, height: motif.height, cellsPainted: cells.length } };
 }
 
 async function main(): Promise<number> {
@@ -388,6 +456,15 @@ async function main(): Promise<number> {
       await writeProject(parsed.out ?? path, project);
       const after = planSnapshot(planProject(materializeColorworkProject(project).state));
       print({ ...describeProject(project, false), plan: { before, after } });
+      return 0;
+    }
+    case 'place': {
+      const path = positional(parsed, 0, 'project file');
+      let project = await readProject(path);
+      const { edit, placed } = await placeMotif(parsed, project);
+      project = appendProjectEdit(project, { id: `cli-${randomUUID()}`, source: parsed.source, edit });
+      await writeProject(parsed.out ?? path, project);
+      print({ placed, plan: planSnapshot(planProject(materializeColorworkProject(project).state)) });
       return 0;
     }
     case 'undo':

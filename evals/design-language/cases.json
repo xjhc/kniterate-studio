@@ -51,6 +51,12 @@
       "expect": { "outcomes": ["unsupported"] }
     },
     {
+      "id": "arc-style-toque",
+      "request": "An Arc'teryx-style toque for a 56 cm head: black, a 7 cm folded-up 2x2 rib cuff, a 13 cm body with the motif in motif.png in white, 8 cm tall, centred just above the cuff. My body gauge is 26 stitches and 34 rows per 10 cm; my 2x2 rib gauge is 30 stitches and 32 rows per 10 cm. Both measured.",
+      "setup": { "kind": "motif-png" },
+      "expect": { "outcomes": ["ready", "not-ready"], "stitches": 134, "colors": 2, "gauge": [26, 34] }
+    },
+    {
       "id": "make-longer",
       "request": "The scarf in project.json should be 2 cm longer. Keep everything else the same.",
       "setup": { "kind": "scarf-project" },

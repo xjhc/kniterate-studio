@@ -43,6 +43,8 @@ export const EIGHT_LINE_CROWN_V1 = Object.freeze({
   crownRoller: 450,
   crownStitchFront: 9,
   crownStitchRear: 7,
+  /** Plain crown on a jersey body (Customist's settings table: single jersey stitch 6). */
+  jerseyStitch: 6,
   topFirstSpeed: 100,
   topSpeed: 250,
   topRoller: 300,
@@ -64,13 +66,15 @@ export interface EightLineCrownPlan {
 }
 
 /**
- * Plans the crown for a rib of `width` needles laid out by `ribBed`, starting
- * with the carriage about to move in `firstDirection`.
+ * Plans the crown for `width` needles, starting with the carriage about to
+ * move in `firstDirection`. `rib`: the body is 2×2 rib laid out by `ribBed`.
+ * `jersey`: every stitch is already on the front bed (a plain or colorwork
+ * body), so there is no rib to collapse or re-form and no final stacking.
  */
-export function planEightLineCrown(width: number, firstDirection: '+' | '-'): EightLineCrownPlan {
+export function planEightLineCrown(width: number, firstDirection: '+' | '-', layout: 'rib' | 'jersey' = 'rib'): EightLineCrownPlan {
   const c = EIGHT_LINE_CROWN_V1
   if (width < 32 || width % 2 !== 0) throw new Error(`eight-line crown needs an even width of at least 32; got ${width}`)
-  let needles: Needle[] = Array.from({ length: width }, (_, offset) => ({ offset, role: ribBed(offset), loops: 1 }))
+  let needles: Needle[] = Array.from({ length: width }, (_, offset) => ({ offset, role: layout === 'rib' ? ribBed(offset) : 'f', loops: 1 }))
   const steps: CustomistRibCrownStep[] = []
   const counts = [width]
   let direction = firstDirection
@@ -136,7 +140,8 @@ export function planEightLineCrown(width: number, firstDirection: '+' | '-'): Ei
     maxLoops = Math.max(maxLoops, ...needles.map((x) => x.loops))
     // 4. Re-form the rib and knit one crown row.
     xfer(0, 'f', needles.filter((x) => x.role === 'b').map((x) => x.offset), c.xferRollerRack0)
-    knitRow(c.crownSpeed, c.crownRoller, c.crownStitchFront, c.crownStitchRear)
+    if (layout === 'rib') knitRow(c.crownSpeed, c.crownRoller, c.crownStitchFront, c.crownStitchRear)
+    else knitRow(c.crownSpeed, c.crownRoller, c.jerseyStitch, 0, true)
     counts.push(needles.length)
   }
 
@@ -148,7 +153,10 @@ export function planEightLineCrown(width: number, firstDirection: '+' | '-'): Ei
       if (needles.length - 2 * lines.length < c.minCrownStitches) break crown
       step(lines)
     }
-    for (let r = 1; r < c.rowsAfterGroup; r++) knitRow(c.crownSpeed, c.crownRoller, c.crownStitchFront, c.crownStitchRear)
+    for (let r = 1; r < c.rowsAfterGroup; r++) {
+      if (layout === 'rib') knitRow(c.crownSpeed, c.crownRoller, c.crownStitchFront, c.crownStitchRear)
+      else knitRow(c.crownSpeed, c.crownRoller, c.jerseyStitch, 0, true)
+    }
   }
 
   // Top: stack every rear stitch onto the nearest front needle, then jersey.

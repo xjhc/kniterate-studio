@@ -137,6 +137,35 @@ describe('authored CLI command receipts', () => {
     expect(cli(['new', '--object', 'beanie', '--head-cm', '56', '-o', projectPath]).status).toBe(2);
   });
 
+  it('builds a folded-cuff toque with a placed motif and reports floats honestly', { timeout: 120_000 }, () => {
+    const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-'));
+    const projectPath = resolve(directory, 'toque.json');
+    expect(cli(['new', '--object', 'beanie', '--head-cm', '56', '--body-cm', '13', '--gauge', '26,34', '--cuff-cm', '7', '--fold', '--rib-gauge', '30,32',
+      '--color', 'Black=#111111', '--accent', 'White=#F2F2F2', '-o', projectPath]).status).toBe(0);
+    expect(cli(['plan', projectPath]).receipt).toMatchObject({
+      piece: 'beanie', stitches: { value: 134 }, rows: { value: 89 },
+      predicted: { heightCm: { value: 12.9, how: 'body: (89 − 45 cuff rows) ÷ 34 rows/10 cm' } }, findings: [],
+    });
+    // A 6-stitch block: the black behind it floats 6 stitches, within the limit of 7.
+    const block = { kind: 'knitlab-colorwork-chart', version: 1, width: 6, height: 6, rowNumbering: 'bottom-up',
+      palette: [{ id: 'bg', name: 'bg', hex: '#000000' }, { id: 'ink', name: 'ink', hex: '#FFFFFF' }], cells: Array.from({ length: 6 }, () => Array<number>(6).fill(1)) };
+    writeFileSync(resolve(directory, 'block.json'), JSON.stringify(block));
+    expect(cli(['place', projectPath, resolve(directory, 'block.json')]).receipt.placed).toMatchObject({ x: 64, rowsAboveCuff: 2, cellsPainted: 36 });
+    const ready = cli(['describe', projectPath]);
+    expect(ready.receipt.readiness.ready).toBe(true);
+    expect(ready.receipt.summary.join('\n')).toContain('45-row 2x2 rib cuff (folds up), 44-row fairisle body');
+    expect(cli(['export', projectPath, '-o', resolve(directory, 'toque.kc')]).status).toBe(0);
+    expect(readFileSync(resolve(directory, 'toque-instructions.md'), 'utf8')).toContain('Fold the rib cuff up');
+    // Two dots 12 stitches apart leave an 11-stitch float: over the limit of 7.
+    const dots = { ...block, width: 13, height: 1, cells: [[1, ...Array<number>(11).fill(0), 1]] };
+    writeFileSync(resolve(directory, 'dots.json'), JSON.stringify(dots));
+    expect(cli(['place', projectPath, resolve(directory, 'dots.json'), '--above-cuff', '20']).status).toBe(0);
+    const floats = cli(['readiness', projectPath]);
+    expect(floats.status).toBe(1);
+    expect(floats.receipt.readiness.blockers).toContainEqual(expect.objectContaining({ kind: 'finding', rule: 'long-float', owner: 'design' }));
+    expect(cli(['place', projectPath, resolve(directory, 'block.json'), '--above-cuff', '60']).status).toBe(2);
+  });
+
   it('keeps usage and read failures machine-readable', () => {
     const missingCommand = cli([]);
     expect(missingCommand.status).toBe(2);

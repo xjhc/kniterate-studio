@@ -105,8 +105,25 @@ ship," trust this file and the working tree instead.
       3-loop stack, so readiness blocks on that conservative warning. The
       eight-line crown stays at 2 loops or fewer, so sized beanies can be
       ready.
-  - Not yet built: motifs and the knitted-in fold-up cuff. The eight-line
-    crown has no reference parity and nothing has been knitted.
+  - **Rib cuff + colorwork body (the Arc-style toque).**
+    - Construction `rib-cuff-jersey-body`: the bottom `cuffRows` chart rows
+      are the rib cuff, and the rows above are a fairisle body.
+    - In the machine program, the extra yarns are brought in during the
+      waste section and the rib transfers to the front bed. Each body row
+      knits one pass per color from the side its carrier is parked on, and
+      the eight-line crown is planned for jersey.
+    - Body floats longer than `floatLimit` (7 for these projects) are
+      design-owned `long-float` warnings, so readiness blocks honestly.
+    - `--fold` knits the cuff twice as tall and adds the fold to the
+      finishing steps.
+    - `place` paints a motif chart into the body as one edit. Motifs are
+      painted into the chart; there are no placement objects or bundled
+      images yet.
+    - Widths 98 and 150 have zero validator diagnostics, and the accent
+      yarn knits only the motif.
+  - Not yet built: float catching or birdseye backing for beanie bodies.
+    The eight-line crown and the jersey body have no reference parity, and
+    nothing has been knitted.
 - **Customist parity scoreboard.** `pnpm parity [--json]` compares the 13
   captured references. Schema v2 reserves `reproduced` for an export-ready,
   strict whole-program machine-trace match, including rack, settings, stops,

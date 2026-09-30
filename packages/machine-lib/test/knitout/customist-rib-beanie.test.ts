@@ -113,4 +113,38 @@ describe('eight-line crown for any width', () => {
       expect(deepest).toBeLessThanOrEqual(2)
     }
   })
+
+  it('knits a rib cuff under a jersey colorwork body with a jersey crown', { timeout: 120_000 }, () => {
+    for (const width of [98, 150]) {
+      const needleStart = Math.floor((252 - width) / 2) + 1
+      // 20 body rows: a 10 × 8 block of carrier 4 in the middle of carrier 3.
+      const rows = Array.from({ length: 20 }, (_, r) => Array.from({ length: width }, (_, c) =>
+        r >= 4 && r < 12 && c >= width / 2 - 5 && c < width / 2 + 5 ? '4' as const : '3' as const))
+      const converted = authoredKnitoutToKCodeWithTrace(writeKnitoutProgram(buildCustomistRibBeanieProgram({
+        ...PIECE, needleStart, needleEnd: needleStart + width - 1, ribRows: 24, crown: 'eight-line', jerseyBody: { rows },
+      })))
+      if (!converted.ok) throw new Error(converted.error)
+      const parsed = parseKCodeDocument(converted.kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true })
+      if (!parsed.ok) throw new Error('not strict KCode')
+      const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2)
+      expect(validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2).diagnostics, `width ${width}`).toEqual([])
+      // Carrier 4 knits exactly the block: 8 rows × 10 stitches, all on the front bed.
+      const accent = trace.passes.filter((pass) => pass.carrier === '4').flatMap((pass) => pass.actions.filter((action) => action.kind === 'knit' && action.at.bed === 'front'))
+      const frame = trace.passes.filter((pass) => pass.carrier === '4').flatMap((pass) => pass.actions.filter((action) => action.kind === 'knit' && action.at.bed === 'rear')).length
+      expect(accent.length - frame).toBeGreaterThanOrEqual(80)
+      const { deepest } = replay(converted.kcode)
+      expect(deepest).toBeLessThanOrEqual(2)
+    }
+  })
+
+  it('plans the jersey crown without rib steps', () => {
+    const plan = planEightLineCrown(150, '+', 'jersey')
+    expect(plan.steps.every((step) => step[0] === 'k' ? step[7].length === 0 : step[2] === 'f' || step[1] === 0)).toBe(true)
+    expect(plan.maxLoopsPerNeedle).toBeLessThanOrEqual(2)
+    expect(plan.counts[0]).toBe(150)
+  })
+
+  it('refuses a jersey body with the replayed all-rib crown', () => {
+    expect(() => buildCustomistRibBeanieProgram({ ...PIECE, ribRows: 20, crown: 'customist-194', jerseyBody: { rows: [Array<'3'>(194).fill('3')] } })).toThrow(/all-rib/)
+  })
 })

@@ -21,6 +21,7 @@
 
 import { b as backBed, comment, f, type CarrierId, type Direction, type KnitoutOp, type KnitoutProgram } from '../types.js'
 import { CarriageSimulator } from '../sim/carriage-simulator.js'
+import { FAIRISLE_BODY_DEFAULTS } from '../kniterate/constants.js'
 import type { PredictedPass } from '../sim/types.js'
 import { CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH, type CustomistRibCrownStep } from './customist-rib-beanie-crown.js'
 import { planEightLineCrown, ribBed } from './rib-crown-plan.js'
@@ -80,6 +81,15 @@ export interface CustomistRibBeanieInput {
    * any width (rib-crown-plan.ts). `none`: stop after the rib.
    */
   crown: 'customist-194' | 'eight-line' | 'none'
+  /**
+   * A colorwork body above the rib cuff: rows in knitting order (bottom
+   * first), one carrier per needle offset. The rib then transfers to the
+   * front bed, each row knits one pass per color (fairisle: the unused colors
+   * float behind), and the eight-line crown is planned for jersey. The body
+   * carrier is the ground; other carriers are brought in after it in the
+   * waste section.
+   */
+  jerseyBody?: { readonly rows: readonly (readonly CarrierId[])[] }
 }
 
 export interface CustomistRibBeanieResult {
@@ -94,6 +104,11 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
   const { needleStart: lo, needleEnd: hi, bodyCarrier: body, wasteCarrier: waste, drawCarrier: draw } = input
   const width = hi - lo + 1
   if (width < 8 || width % 2 !== 0) throw new Error(`rib beanie width must be even and at least 8; got ${width}`)
+  const bodyRows = input.jerseyBody?.rows ?? []
+  if (bodyRows.some((cells) => cells.length !== width)) throw new Error(`every jersey body row must have ${width} cells`)
+  if (input.jerseyBody && input.crown === 'customist-194') throw new Error('the customist-194 crown is for an all-rib body; use the eight-line crown with a jersey body')
+  const extraCarriers = [...new Set(bodyRows.flat())].filter((c) => c !== body).sort()
+  if (extraCarriers.some((c) => c === waste || c === draw)) throw new Error('jersey body colors must not use the waste or draw carrier')
   const s = CUSTOMIST_RIB_BEANIE_SETTINGS_V1
   const sim = new CarriageSimulator({ carriers: ['1', '2', '3', '4', '5', '6'] })
   const ops: KnitoutOp[] = [comment('--- CUSTOMIST 2x2 RIB BEANIE: WASTE & CAST-ON ---')]
@@ -160,6 +175,13 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
   settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
   row(body, '+', (o) => !even(o), even)
   tube(7, '-')
+  // Each further body yarn: one 1×1 insert row (alternating parity), then two waste tube rows.
+  extraCarriers.forEach((carrier, index) => {
+    sim.bringIn(carrier, { side: 'left' })
+    settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
+    row(carrier, '+', (o) => even(o) === (index % 2 === 0), (o) => even(o) !== (index % 2 === 0))
+    tube(2, '-')
+  })
   // Draw yarn insert (front even, rear odd), then a six-row waste tube.
   sim.bringIn(draw, { side: 'left' })
   settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
@@ -218,13 +240,30 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
   }
   drain()
 
+  if (input.jerseyBody) {
+    // Rib → jersey: every rear stitch moves to the empty front needle across.
+    xfers([{ from: 'b', offsets: offsets('+', (o) => ribBed(o) === 'b') }])
+    drain()
+    ops.push(comment('--- JERSEY COLORWORK BODY ---'))
+    settings(FAIRISLE_BODY_DEFAULTS.speedNumber, FAIRISLE_BODY_DEFAULTS.rollerAdvance, FAIRISLE_BODY_DEFAULTS.stitchNumber)
+    for (const cells of bodyRows) {
+      // Ground first, then the other colors; each starts from the side its carrier is parked on.
+      for (const carrier of [body, ...extraCarriers]) {
+        if (!cells.includes(carrier)) continue
+        const dir: Direction = sim.positionOf(carrier)?.side === 'right' ? '-' : '+'
+        for (const o of offsets(dir, (x) => cells[x] === carrier)) sim.knit(carrier, dir, f(lo + o))
+      }
+    }
+    drain()
+  }
+
   if (input.crown !== 'none') {
     let crown: readonly CustomistRibCrownStep[]
     if (input.crown === 'customist-194') {
       if (width !== CUSTOMIST_RIB_CROWN_WIDTH) throw new Error(`the customist-194 crown is defined for ${CUSTOMIST_RIB_CROWN_WIDTH} needles; this piece has ${width}`)
       crown = CUSTOMIST_RIB_CROWN_194_V1
     } else {
-      crown = planEightLineCrown(width, sim.finalNextDirection()).steps
+      crown = planEightLineCrown(width, sim.finalNextDirection(), input.jerseyBody ? 'jersey' : 'rib').steps
     }
     ops.push(comment(`--- 2x2 RIB CROWN (${input.crown}) ---`))
     for (const step of crown) {
@@ -264,7 +303,7 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
   }
 
   // Carriers out in the reference order: draw, body, waste.
-  for (const carrier of [draw, body, waste]) sim.out(carrier)
+  for (const carrier of [draw, body, ...extraCarriers, waste]) sim.out(carrier)
   drain()
 
   return { ops, predictedPasses: sim.predictedPasses(), finalNextDirection: sim.finalNextDirection() }
@@ -288,7 +327,10 @@ function beanieProgram(input: CustomistRibBeanieInput, ops: KnitoutOp[]): Knitou
     machine: 'kniterate',
     gauge: 7,
     position: 'Keep',
-    yarns: { [input.bodyCarrier]: 'main', [input.wasteCarrier]: 'waste', [input.drawCarrier]: 'draw thread' },
+    yarns: {
+      ...Object.fromEntries([...new Set((input.jerseyBody?.rows ?? []).flat())].map((carrier) => [carrier, `colour ${carrier}`])),
+      [input.bodyCarrier]: 'main', [input.wasteCarrier]: 'waste', [input.drawCarrier]: 'draw thread',
+    },
     kniterate: { xferStyle: 'four-pass' },
     ops,
   }

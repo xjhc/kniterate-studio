@@ -252,7 +252,10 @@ Remaining:
   width;
 - ~~a beanie project in the authored pipeline~~: done (`object: beanie`,
   verdict via `resolveAuthoredVerdict`, readiness, finishing instructions);
-- motif placement with bundled images, and the fold-up cuff;
+- ~~motif placement and the fold-up cuff~~: done as a rib cuff +
+  fairisle body with `place`. The motif is painted into the chart; bundled
+  images and placement objects are deferred. Long floats keep bold motifs
+  honest, and float catching or birdseye backing is next;
 - the benchmark's beanie cases;
 - a development knit in acrylic.
 

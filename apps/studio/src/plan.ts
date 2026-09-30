@@ -89,14 +89,14 @@ function resizeEdits(state: ProjectState, dimension: 'width' | 'height', count: 
     if (count > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) return null;
     if (beanie && (count < BEANIE.minNeedles || count > BEANIE.maxNeedles)) return null;
     if (count * state.chart.height > AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState) return null;
-    const edits: ProjectEdit[] = [];
     // A beanie stays centred on the bed; a rectangle only moves when it would run off.
     const centred = Math.floor((252 - count) / 2) + 1;
-    if (beanie ? state.machine.needleOffset !== centred : state.machine.needleOffset + count - 1 > 252) {
-      edits.push({ kind: 'set-needle-offset', needleOffset: centred });
-    }
-    edits.push({ kind: 'set-width', width: count, fillPaletteIndex: 0 });
-    return edits;
+    const move = beanie ? state.machine.needleOffset !== centred : state.machine.needleOffset + count - 1 > 252;
+    const resize: ProjectEdit = { kind: 'set-width', width: count, fillPaletteIndex: 0 };
+    if (!move) return [resize];
+    const recentre: ProjectEdit = { kind: 'set-needle-offset', needleOffset: centred };
+    // Every intermediate state must fit the bed: shrink before moving, move before growing.
+    return count < state.chart.width ? [resize, recentre] : [recentre, resize];
   }
   if (count > AUTHORED_CAPACITY_LIMITS_V1.chartHeight) return null;
   if (count * state.chart.width > AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState) return null;
@@ -111,6 +111,8 @@ export function planProject(state: ProjectState): ProjectPlan {
   const target = state.target ?? null;
   const findings: PlanFinding[] = [];
   const beanie = state.object?.kind === 'beanie';
+  // A cuff-and-body beanie: the height target is the body above the rib cuff.
+  const cuffRows = state.object?.construction === 'rib-cuff-jersey-body' ? Math.min(state.object.cuffRows ?? 0, state.chart.height) : 0;
 
   const predicted = gauge === null ? null : {
     widthCm: beanie
@@ -125,9 +127,11 @@ export function planProject(state: ProjectState): ProjectPlan {
           how: `${state.chart.width} st ÷ ${gauge.stitchesPer10cm} st/10 cm`,
         },
     heightCm: {
-      value: round1(state.chart.height / perCm(gauge, 'height')),
+      value: round1((state.chart.height - cuffRows) / perCm(gauge, 'height')),
       provenance: 'calculated' as const,
-      how: `${state.chart.height} rows ÷ ${gauge.rowsPer10cm} rows/10 cm`,
+      how: cuffRows > 0
+        ? `body: (${state.chart.height} − ${cuffRows} cuff rows) ÷ ${gauge.rowsPer10cm} rows/10 cm`
+        : `${state.chart.height} rows ÷ ${gauge.rowsPer10cm} rows/10 cm`,
     },
   };
 
@@ -158,7 +162,7 @@ export function planProject(state: ProjectState): ProjectPlan {
       const beanieWidth = beanie && dimension === 'width';
       const count = beanieWidth ? beanieNeedles(exact) : Math.max(1, Math.round(exact));
       const unit = dimension === 'width' ? 'st' : 'rows';
-      const actual = dimension === 'width' ? state.chart.width : state.chart.height;
+      const actual = dimension === 'width' ? state.chart.width : state.chart.height - cuffRows;
       const required: Valued<number> = {
         value: count,
         provenance: 'calculated',
@@ -169,7 +173,7 @@ export function planProject(state: ProjectState): ProjectPlan {
       const ok = actual === count;
       sizeChecks.push({ dimension, targetCm, required, actual, ok });
       if (ok) continue;
-      const edits = resizeEdits(state, dimension, count);
+      const edits = resizeEdits(state, dimension, dimension === 'height' ? count + cuffRows : count);
       if (edits === null) {
         findings.push({
           rule: 'size-exceeds-capacity',
@@ -213,6 +217,7 @@ export function planProject(state: ProjectState): ProjectPlan {
         'The top comes off the machine as live stitches (the last front loops are dropped). Thread the main-yarn tail through the top stitches straight away, before they ladder, and pull them closed.',
         'Pull the draw thread (C1) to separate the waste yarn from the cast-on edge.',
         'Sew the two long edges together with mattress stitch, one stitch in from each edge, from the crown down to the brim. Where the brim will fold up, sew from the other side so the seam is hidden.',
+        ...(state.object?.cuffFold ? [`Fold the rib cuff up along its middle (the cuff is ${cuffRows} rows, so fold at row ${Math.floor(cuffRows / 2)}); the folded half shows the rib's reverse, which looks the same for 2x2 rib.`] : []),
         'Weave in the ends. Wash or steam as the yarn label says, then measure.',
       ]
     : ['Pull the draw thread (C1) to separate the waste yarn from the cast-on edge.', 'Weave in the ends. Wash or steam as the yarn label says, then measure.'];

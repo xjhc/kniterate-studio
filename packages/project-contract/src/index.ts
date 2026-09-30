@@ -97,8 +97,16 @@ export type ProjectTarget = z.infer<typeof TargetSchema>;
  */
 const ObjectSchema = z.object({
   kind: z.literal('beanie'),
-  construction: z.literal('flat-rib-2x2'),
-});
+  /**
+   * `flat-rib-2x2`: the whole body is 2×2 rib. `rib-cuff-jersey-body`: the
+   * bottom `cuffRows` chart rows are the rib cuff (one yarn); the rows above
+   * are a jersey colorwork body (fairisle).
+   */
+  construction: z.enum(['flat-rib-2x2', 'rib-cuff-jersey-body']),
+  cuffRows: z.number().int().min(1).max(1_200).optional(),
+  /** The cuff is folded up when worn: it is knitted at twice its visible height and the fold shows the reverse. */
+  cuffFold: z.boolean().optional(),
+}).refine((object) => object.construction === 'flat-rib-2x2' || object.cuffRows !== undefined, 'rib-cuff-jersey-body needs cuffRows');
 export type ProjectObject = z.infer<typeof ObjectSchema>;
 
 const PassOverrideSchema = z.object({

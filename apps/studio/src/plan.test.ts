@@ -80,7 +80,8 @@ describe('beanie plan', () => {
     expect(before.piece).toBe('beanie');
     expect(before.sizeChecks[0]).toMatchObject({ required: { value: 154, how: '50.4 cm finished circumference × 30 st/10 cm = 151.2 st, + 2 seam stitches, rounded to 2 (mod 4) → 154' } });
     const fixes = before.findings.flatMap((finding) => finding.fixes.flatMap((fix) => fix.edits));
-    expect(fixes.map((item) => item.kind)).toEqual(['set-needle-offset', 'set-width', 'set-height']);
+    // Shrinking 194 → 154: the width changes before the piece re-centres, so every step fits the bed.
+    expect(fixes.map((item) => item.kind)).toEqual(['set-width', 'set-needle-offset', 'set-height']);
     const after = plan(edit(project, ...fixes));
     expect(after.findings).toEqual([]);
     expect(after.needles).toEqual({ first: 50, last: 203 });
