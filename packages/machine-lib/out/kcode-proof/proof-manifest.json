@@ -30095,7 +30095,7 @@
     ]
   },
   "contract": {
-    "sha256": "ff657de23fd5803831233ab62f3689258d1a654d465820feb5a0a754158ab845",
+    "sha256": "2a75c3279df81dcb91d185255240b239e70ef95772698c2feee51165341303b0",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30194,8 +30194,8 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.ts",
-        "sha256": "992128975b24392a014ea52ea3d8cad663fe80a67938403e5ec98bca8c7a0cf7",
-        "bytes": 13085
+        "sha256": "53440c68a1a8a54c99d1b7af139af6e3a10cf27baaf5814d49a2eb5e9eea2fef",
+        "bytes": 17712
       },
       {
         "path": "../../apps/studio/src/blanket/useBlanketCompiler.ts",
@@ -30504,18 +30504,18 @@
       },
       {
         "path": "../../apps/studio/src/parity.test.ts",
-        "sha256": "ea0410d71f9262527a1a079fc24fa12cc1d21b6003969c16f276cb7df8b7733d",
-        "bytes": 3325
+        "sha256": "262970bee5bde46cccfc1c7d2ed6af2f8c422379d77e319ec735b09f3ac06872",
+        "bytes": 3314
       },
       {
         "path": "../../apps/studio/src/plan.test.ts",
-        "sha256": "c9710e452efd3020d73b2b2edeb6faab5a66b8d506a8b3beb211e5530cccf733",
-        "bytes": 8900
+        "sha256": "715fae972b0f5cde5ace3b54ced7e525a855af7c34ff12cb7cbd62492c4a5bd0",
+        "bytes": 10780
       },
       {
         "path": "../../apps/studio/src/plan.ts",
-        "sha256": "c00041c8cd382dc3ba172890e48bb22fd43c04b54015eb41c44cfe3c4e6d104f",
-        "bytes": 8362
+        "sha256": "dec1b490f6093aebd3146ff3f2fb60f3ad6a23afd03d614c046eaea1ac36a7d1",
+        "bytes": 10842
       },
       {
         "path": "../../apps/studio/src/readiness.ts",
@@ -30534,8 +30534,8 @@
       },
       {
         "path": "../../apps/studio/src/studioCli.test.ts",
-        "sha256": "b9dafa5f225b73c52d1d8100e994e8571ab4d8aefe89fc49455cb4088ddcb72e",
-        "bytes": 8786
+        "sha256": "e72ea5496708c87b6837ed95846e14f06a344a40e582be33ed06c287d1bd3bfe",
+        "bytes": 8998
       },
       {
         "path": "../../apps/studio/src/styles.css",
@@ -30659,8 +30659,8 @@
       },
       {
         "path": "../../scripts/parity.ts",
-        "sha256": "4508c36241e55bdb208e46716d483511e47b3fc5f923fe7d0e518b4367a1209b",
-        "bytes": 11974
+        "sha256": "bd5576f9ef819ef5e3a6e0b8ed925ef42efb5f912d706a690687b9b67c721592",
+        "bytes": 12090
       },
       {
         "path": "../../scripts/register-v1-knit-trial.ts",
@@ -30669,8 +30669,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "c2f844e136ab8db45a4627cec07ff90fb85d7f074f4abcca6c89045b681758f1",
-        "bytes": 27977
+        "sha256": "ad73bcfd1aa557c53bfcf76b8d8365c369350f1e8556564bdfa10072ed002074",
+        "bytes": 25459
       },
       {
         "path": "../../tsconfig.base.json",
@@ -30734,8 +30734,8 @@
       },
       {
         "path": "../project-contract/src/index.ts",
-        "sha256": "7ace5197290b88b497d9d51d636ca645889ade686d72a5e589b81c2e105c581e",
-        "bytes": 54932
+        "sha256": "023bc9d40753f300524f428f07c2b9cac072840209d0039ab160fe60f46d032f",
+        "bytes": 55632
       },
       {
         "path": "../project-contract/tsconfig.json",
@@ -30824,7 +30824,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "f4da745c188a231f6b0570f0056d1fd9844b8d45abebdf6b3cd6f3c25970a4c7",
+        "sha256": "8e8764430cf587fa9bc837d03d2ad8f549d461292fd671312b39facf547cb1b9",
         "bytes": 179
       },
       {
@@ -30969,8 +30969,8 @@
       },
       {
         "path": "src/browser.ts",
-        "sha256": "cfd037f83bb549e6c55469112d00fa9ff904ab41ac8c5a09e3df7c951810a3a8",
-        "bytes": 7138
+        "sha256": "174e95c45d4003995c7068c19633635a0a42c51460e15c599646450a7a912e7f",
+        "bytes": 7560
       },
       {
         "path": "src/chart-core/__row_space_canary__.ts",
@@ -31334,8 +31334,8 @@
       },
       {
         "path": "src/knitout/passes/customist-rib-beanie.ts",
-        "sha256": "eb4c0597e0cead46107090889b0370fd4cf244c472da28d40176fd9319df5710",
-        "bytes": 12034
+        "sha256": "3f9835a56e6062eabb10f033c9919e07cd214b93610c64e1b46da94a26214b19",
+        "bytes": 12498
       },
       {
         "path": "src/knitout/passes/first-row-speed.ts",
@@ -31954,8 +31954,8 @@
       },
       {
         "path": "test/public-api.test.ts",
-        "sha256": "626e44b3b4e23d8d019214e1d580eadb0c7a05a99ec3fb1f1afc56a61128c05d",
-        "bytes": 3142
+        "sha256": "b82a0ddde073b015a8a6603535bc4c5b88b85cfb5bc2e613de34c4eb91bbedbc",
+        "bytes": 3286
       },
       {
         "path": "tsconfig.json",

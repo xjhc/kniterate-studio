@@ -14,10 +14,6 @@ import { diffKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kc-di
 import { compareKnittedFaceRowsV1, projectKnittedFacesV1, recoverColorworkFromFrontFaceV1 } from '../packages/machine-lib/src/knitout/kcode/knitted-faces.js';
 import { diffTraceStitchesV1 } from '../packages/machine-lib/src/knitout/kcode/trace-stitch-diff.js';
 import { runAuthoredPipeline } from '../apps/studio/src/authoredPipeline.js';
-import { openMachineDocument } from '../apps/studio/src/engine.js';
-import { buildCustomistRibBeanieProgram } from '../packages/machine-lib/src/knitout/passes/customist-rib-beanie.js';
-import { writeKnitoutProgram } from '../packages/machine-lib/src/knitout/emitter.js';
-import { authoredKnitoutToKCodeWithTrace } from '../packages/machine-lib/src/knitout/kniterate/to-kcode.js';
 
 type Carrier = '1' | '2' | '3' | '4' | '5' | '6';
 interface Reference {
@@ -70,19 +66,22 @@ export function compareParityPrograms(reference: string, candidate: string, expo
 export async function scoreReference(reference: Reference) {
   const base = { id: reference.id, group: reference.group, gaps: reference.gaps };
   if (reference.generator === 'customist-rib-beanie') {
-    // The reference's own parameters: knitout 30-223 (its KCode columns 29-222), 102 rib rows.
+    // An authored beanie project at the reference's size: 194 needles (centred at 30-223) × 102 rib rows, main yarn on C3.
     const referenceText = await readFile(resolve(ROOT, `packages/machine-lib/reference/${reference.id}.kc`), 'utf8');
-    const converted = authoredKnitoutToKCodeWithTrace(writeKnitoutProgram(buildCustomistRibBeanieProgram({
-      needleStart: 30, needleEnd: 223, bodyCarrier: '3', wasteCarrier: '6', drawCarrier: '1', ribRows: 102, crown: 'customist-194',
-    })));
-    if (!converted.ok) return { ...base, status: 'blocked' as const, reason: converted.error };
-    const document = openMachineDocument(`${reference.id}.kc`, converted.kcode, { dialect: 'knitout-vendor' });
+    let beanie = createColorworkProjectV1({
+      kind: 'knitlab-colorwork-chart', version: 1, title: reference.id, width: 194, height: 102, rowNumbering: 'bottom-up',
+      palette: [{ id: 'main', name: 'Main', hex: PALETTE[1]! }], cells: Array.from({ length: 102 }, () => Array<number>(194).fill(0)),
+    }, { id: `parity-${reference.id}` });
+    beanie = appendProjectEdit(beanie, { id: 'object', source: 'system', edit: { kind: 'set-object', object: { kind: 'beanie', construction: 'flat-rib-2x2' } } });
+    beanie = appendProjectEdit(beanie, { id: 'yarn', source: 'system', edit: { kind: 'set-yarn-assignment', assignment: { paletteId: 'main', carrier: '3', yarnName: 'Main' } } });
+    const result = await runAuthoredPipeline(beanie);
+    if (!result.kcode) return { ...base, status: 'blocked' as const, verdict: result.verdict.label, reason: result.compileError ?? result.outputError ?? result.verdict.annotation };
     return {
       ...base,
-      input: { kind: 'construction-generator', generator: 'customist-2x2-rib-beanie@1', ribRows: 102 },
-      ...compareParityPrograms(referenceText, converted.kcode, document.verdict.state === 'surface'),
-      verdict: document.verdict.label,
-      stitches: diffTraceStitchesV1(trace(referenceText), trace(converted.kcode)),
+      input: { kind: 'authored-beanie-project', construction: 'customist-2x2-rib-beanie@1', needles: 194, ribRows: 102 },
+      ...compareParityPrograms(referenceText, result.kcode.kcText, result.exportReady),
+      verdict: result.verdict.label,
+      stitches: diffTraceStitchesV1(trace(referenceText), result.kcode.trace!),
     };
   }
   if (!reference.strategy) return { ...base, status: 'unsupported' as const, reason: 'No authored recipe for this piece.' };

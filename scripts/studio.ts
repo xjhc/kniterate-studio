@@ -21,12 +21,6 @@ import { imageToChart, type ImageChartSize } from '../apps/studio/src/imageChart
 import { planProject, type ProjectPlan } from '../apps/studio/src/plan.ts';
 import { collectFindings, resolveReadiness, type Finding, type Readiness } from '../apps/studio/src/readiness.ts';
 import { decodePng, encodePng } from './lib/png.ts';
-import { openMachineDocument } from '../apps/studio/src/engine.ts';
-import { buildCustomistRibBeanieProgram } from '../packages/machine-lib/src/knitout/passes/customist-rib-beanie.ts';
-import { CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH } from '../packages/machine-lib/src/knitout/passes/customist-rib-beanie-crown.ts';
-import { planEightLineCrown } from '../packages/machine-lib/src/knitout/passes/rib-crown-plan.ts';
-import { writeKnitoutProgram } from '../packages/machine-lib/src/knitout/emitter.ts';
-import { authoredKnitoutToKCodeWithTrace } from '../packages/machine-lib/src/knitout/kniterate/to-kcode.ts';
 import { RENDER_VIEWS, renderView, type RenderView } from './lib/render.ts';
 
 const USAGE = `Usage: pnpm --silent studio -- <command> [args]
@@ -36,6 +30,12 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
   new <chart.json|project.json> -o <project.json> [--id <id>]
   new --width <st> --height <rows> [--palette "Name=#RRGGBB,..."] [--title <t>] -o <project.json>
       Start a project from a ColorworkChartV1 file, an existing project, or a blank chart.
+  new --object beanie [--head-cm X [--ease E]] [--body-cm X] [--gauge <st>,<rows>] [--color "Name=#RRGGBB"] -o <project.json>
+      Flat 2x2 rib beanie, seamed afterwards (Customist's construction). The chart is the rib body:
+      width = needles, height = rib rows. With --gauge measured on 2x2 rib, --head-cm sets the finished
+      circumference target (head x (1 + ease), ease default -0.10) and --body-cm the body length; the
+      plan's own fixes then size the chart. Without them it is Kniterate's reference hat (194 x 102).
+      At 194 needles the crown is Customist's own; other widths (60-244) use the eight-line crown.
   image <file.png> -o <chart.json> (--width-st N | --height-rows N | --width-cm X | --height-cm X)
         [--gauge <st>,<rows>] [--colors K] [--pooling mean|mode] [--title <t>]
       Convert an image to a ColorworkChartV1 chart. --gauge is stitches,rows per 10 cm; with it the
@@ -57,16 +57,10 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
       Compile, convert, and validate exactly as Studio does; prints verdict, readiness, findings,
       compiled frame, and every carrier required by the emitted program.
   export <project.json> -o <file.kc>
-      Write the validated .kc only when the verdict allows export (the Studio Export gate).
+      Write the validated .kc only when the verdict allows export (the Studio Export gate), plus
+      <file>-instructions.md with the finishing steps.
   render <project.json> --view ${RENDER_VIEWS.join('|')} -o <file.png>
       Draw the chart (gauge-true proportions), the projected back face, or a per-pass heat map.
-  beanie -o <prefix> [--head-cm X [--ease E] | --needles N] [--rib-rows N | --body-cm X] [--gauge <st>,<rows>]
-      Flat 2x2 rib beanie in Customist's construction, seamed afterwards. Width: --head-cm with the rib
-      gauge (finished circumference = head x (1 + ease), ease default -0.10, plus 2 seam stitches,
-      rounded to keep the rib symmetric), or --needles, or 194 (Kniterate's reference hat). At 194 the
-      crown is Customist's own (reproduces reference/2x2-rib-beanie.kc at 102 rib rows); other widths
-      use the eight-line crown. Writes <prefix>.k, <prefix>.kc and <prefix>-instructions.md and checks
-      the .kc with the same intake as machine:check.
   explain <term|rule>
       Plain-language meaning of a design term, plan rule, or validator rule.
   schema
@@ -76,7 +70,7 @@ const MAX_FINDINGS = 200;
 
 class UsageError extends Error {}
 
-const VALUE_OPTIONS = ['--rib-rows', '--body-cm', '--head-cm', '--ease', '--needles', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
+const VALUE_OPTIONS = ['--object', '--color', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
 
 interface Parsed {
   command: string | null;
@@ -248,9 +242,11 @@ function summary(project: ColorworkProjectV1, evaluated: Evaluated): string[] {
   const { plan, result, readiness } = evaluated;
   const lines = [
     `Project "${project.title}" (${project.id}), edit ${project.history.cursor} of ${project.history.entries.length}`,
-    `Panel: ${plan.stitches.value} st × ${plan.rows.value} rows on needles ${plan.needles.first}–${plan.needles.last}; backing ${plan.backing.technique} (float limit ${plan.backing.floatLimit})`,
+    plan.piece === 'beanie'
+      ? `Beanie (flat 2x2 rib, seamed): ${plan.stitches.value} needles ${plan.needles.first}–${plan.needles.last} × ${plan.rows.value} rib rows, then the crown; frame ${result.compiled?.frame?.preset ?? 'not compiled'}`
+      : `Panel: ${plan.stitches.value} st × ${plan.rows.value} rows on needles ${plan.needles.first}–${plan.needles.last}; backing ${plan.backing.technique} (float limit ${plan.backing.floatLimit})`,
     plan.gauge === null ? 'Gauge: none recorded (sizes in cm are unknown)'
-      : `Gauge: ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}) → predicted ${plan.predicted!.widthCm.value} × ${plan.predicted!.heightCm.value} cm`,
+      : `Gauge: ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}) → predicted ${plan.piece === 'beanie' ? 'finished circumference ' : ''}${plan.predicted!.widthCm.value} × ${plan.piece === 'beanie' ? 'body ' : ''}${plan.predicted!.heightCm.value} cm`,
   ];
   if (plan.target !== null) {
     lines.push(`Target: ${plan.sizeChecks.length === 0 ? 'set, but not checkable without a gauge' : plan.sizeChecks.map((check) => `${check.dimension} ${check.targetCm} cm needs ${check.required.value}, has ${check.actual} ${check.ok ? '✓' : '✗'}`).join('; ')}`);
@@ -277,6 +273,42 @@ function blankChart(parsed: Parsed) {
   };
 }
 
+/** A beanie project: reference size, then the plan's own resize fixes for any requested size. */
+function newBeanie(parsed: Parsed): ColorworkProjectV1 {
+  const gauge = gaugeOption(parsed);
+  const headCm = numberOption(parsed, '--head-cm');
+  const bodyCm = numberOption(parsed, '--body-cm');
+  if ((headCm !== null || bodyCm !== null) && gauge === null) throw new UsageError('--head-cm and --body-cm need --gauge <st>,<rows> measured on 2x2 rib.');
+  const easeRaw = parsed.options.get('--ease');
+  const ease = easeRaw === undefined ? -0.1 : Number(easeRaw);
+  if (!Number.isFinite(ease) || ease <= -0.5 || ease >= 0.5) throw new UsageError('--ease must be a fraction between -0.5 and 0.5, e.g. -0.1.');
+  const [name, hex] = (parsed.options.get('--color') ?? 'Main=#2B2B2B').split('=').map((part) => part.trim());
+  if (!name || !hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) throw new UsageError('--color must be Name=#RRGGBB.');
+  const chart = {
+    kind: 'knitlab-colorwork-chart', version: 1, title: parsed.options.get('--title') ?? 'Beanie', width: 194, height: 102,
+    rowNumbering: 'bottom-up', palette: [{ id: 'main', name, hex: hex.toUpperCase() }], cells: Array.from({ length: 102 }, () => Array<number>(194).fill(0)),
+  };
+  let project = createColorworkProjectV1(chart, { id: newId() });
+  const edits: ProjectEdit[] = [
+    { kind: 'set-object', object: { kind: 'beanie', construction: 'flat-rib-2x2' } },
+    { kind: 'set-yarn-assignment', assignment: { paletteId: 'main', carrier: '3', yarnName: name } },
+  ];
+  if (gauge !== null) edits.push({ kind: 'set-gauge', gauge: { ...gauge, source: 'measured' } });
+  if (headCm !== null || bodyCm !== null) {
+    edits.push({ kind: 'set-target', target: {
+      ...(headCm !== null ? { widthCm: Math.round(headCm * (1 + ease) * 10) / 10 } : {}),
+      ...(bodyCm !== null ? { heightCm: bodyCm } : {}),
+    } });
+  }
+  for (const edit of edits) project = appendProjectEdit(project, { id: `new-${randomUUID()}`, source: parsed.source, edit });
+  // Size with the plan's own fixes, so sizing arithmetic lives in one place.
+  const fixes = planProject(materializeColorworkProject(project).state).findings
+    .filter((finding) => finding.rule === 'size-off-target')
+    .flatMap((finding) => finding.fixes.flatMap((fix) => fix.edits));
+  for (const edit of fixes) project = appendProjectEdit(project, { id: `size-${randomUUID()}`, source: 'system', edit });
+  return project;
+}
+
 async function main(): Promise<number> {
   const parsed = parseArguments(process.argv.slice(2));
   switch (parsed.command) {
@@ -288,81 +320,15 @@ async function main(): Promise<number> {
     case 'schema':
       print(ProjectEditSchema.toJSONSchema());
       return 0;
-    case 'beanie': {
-      if (parsed.out === null) throw new UsageError('beanie requires -o <prefix>.');
-      const gauge = gaugeOption(parsed);
-      const bodyCm = numberOption(parsed, '--body-cm');
-      const headCm = numberOption(parsed, '--head-cm');
-      if ((bodyCm !== null || headCm !== null) && gauge === null) throw new UsageError('--body-cm and --head-cm need --gauge <st>,<rows> measured on 2x2 rib.');
-      if (bodyCm !== null && parsed.options.has('--rib-rows')) throw new UsageError('use --rib-rows or --body-cm, not both.');
-      if (headCm !== null && parsed.options.has('--needles')) throw new UsageError('use --head-cm or --needles, not both.');
-      const easeRaw = parsed.options.get('--ease');
-      const ease = easeRaw === undefined ? -0.1 : Number(easeRaw);
-      if (!Number.isFinite(ease) || ease <= -0.5 || ease >= 0.5) throw new UsageError('--ease must be a fraction between -0.5 and 0.5, e.g. -0.1.');
-      const ribRows = bodyCm !== null ? Math.max(1, Math.round((bodyCm * gauge!.rowsPer10cm) / 10)) : integerOption(parsed, '--rib-rows') ?? 102;
-      // Width: finished circumference at the rib gauge, plus one seam stitch per edge, kept at 2 (mod 4) like the reference so the rib is symmetric.
-      const finishedCm = headCm === null ? null : headCm * (1 + ease);
-      const exactStitches = finishedCm === null ? null : (finishedCm * gauge!.stitchesPer10cm) / 10;
-      const needles = exactStitches !== null ? 4 * Math.round(exactStitches / 4) + 2 : integerOption(parsed, '--needles') ?? CUSTOMIST_RIB_CROWN_WIDTH;
-      if (needles < 60 || needles > 244 || needles % 2 !== 0) throw new UsageError(`the beanie needs an even width from 60 to 244 needles; this request gives ${needles}.`);
-      const crown = needles === CUSTOMIST_RIB_CROWN_WIDTH ? 'customist-194' as const : 'eight-line' as const;
-      const needleStart = Math.floor((252 - needles) / 2) + 1;
-      const program = buildCustomistRibBeanieProgram({ needleStart, needleEnd: needleStart + needles - 1, bodyCarrier: '3', wasteCarrier: '6', drawCarrier: '1', ribRows, crown });
-      const crownRows = crown === 'customist-194'
-        ? CUSTOMIST_RIB_CROWN_194_V1.filter((step) => step[0] === 'k').length
-        : planEightLineCrown(needles, '+').steps.filter((step) => step[0] === 'k').length;
-      const knitout = writeKnitoutProgram(program);
-      const converted = authoredKnitoutToKCodeWithTrace(knitout);
-      if (!converted.ok) throw new Error(`conversion failed: ${converted.error}`);
-      const document = openMachineDocument(`${parsed.out}.kc`, converted.kcode, { dialect: 'knitout-vendor' });
-      const cm = (count: number, per10: number) => Math.round((count / per10) * 100) / 10;
-      const predicted = gauge === null ? null : {
-        finishedCircumferenceCm: cm(needles - 2, gauge.stitchesPer10cm),
-        bodyCm: cm(ribRows, gauge.rowsPer10cm),
-        crownCm: cm(crownRows, gauge.rowsPer10cm),
-        note: 'Predicted under the supplied rib gauge (relaxed). Crown rows are 2x2 rib and top jersey; the crown is gathered, so its length is approximate.',
-      };
-      const instructions = [
-        '# Flat 2x2 rib beanie',
-        '',
-        `Construction: Customist-style flat 2x2 rib beanie, ${needles} needles (knitout ${needleStart}-${needleStart + needles - 1}), ${ribRows} rib rows, then the ${crown === 'customist-194' ? "reference (Customist's own)" : 'eight-line'} crown (${crownRows} knit rows).`,
-        '',
-        '## Load',
-        '- C3: main yarn',
-        '- C1: draw thread (smooth contrasting yarn, removed afterwards)',
-        '- C6: waste yarn',
-        '',
-        '## After knitting',
-        '1. The top comes off the machine as live stitches: the last loops on the front bed are dropped at the end. Thread the main-yarn tail through those top stitches straight away, before they ladder, and pull them closed.',
-        '2. Pull the draw thread to separate the waste yarn from the cast-on edge.',
-        '3. Fold the piece right side out and sew the two long edges together with mattress stitch from the crown down to the brim. If you will fold the brim up, sew the part that folds from the other side so the seam is hidden.',
-        '4. Weave in the ends. Wash or steam as the yarn label says, then measure.',
-        '',
-        `Verdict: ${document.verdict.label}. This is software evidence only; nothing from this generator has been knitted yet.${crown === 'customist-194' ? " At 194 needles the program follows Kniterate's own reference hat." : ' The eight-line crown is our own choreography of the reference crown and has not been knitted.'}`,
-      ].join('\n');
-      await writeFile(`${parsed.out}.k`, knitout);
-      await writeFile(`${parsed.out}.kc`, converted.kcode);
-      await writeFile(`${parsed.out}-instructions.md`, `${instructions}\n`);
-      print({
-        files: { knitout: `${parsed.out}.k`, kcode: `${parsed.out}.kc`, instructions: `${parsed.out}-instructions.md` },
-        verdict: document.verdict,
-        construction: { recipe: 'customist-2x2-rib-beanie@1', needles, needleRange: [needleStart, needleStart + needles - 1], crown, ribRows, crownRows, passes: converted.scheduledPasses.length },
-        needles: exactStitches !== null
-          ? { value: needles, how: `${headCm} cm × (1 ${ease < 0 ? '-' : '+'} ${Math.abs(ease)}) = ${Math.round(finishedCm! * 10) / 10} cm × ${gauge!.stitchesPer10cm} st/10 cm = ${Math.round(exactStitches * 10) / 10} st, + 2 seam stitches, rounded to 2 (mod 4) → ${needles}`, ease: { value: ease, source: easeRaw === undefined ? 'default' : 'authored' } }
-          : { value: needles, how: parsed.options.has('--needles') ? 'authored' : "reference default (Kniterate's 2x2 rib beanie)" },
-        ribRows: bodyCm !== null ? { value: ribRows, how: `${bodyCm} cm × ${gauge!.rowsPer10cm} rows/10 cm` } : { value: ribRows, how: parsed.options.has('--rib-rows') ? 'authored' : 'reference default' },
-        predicted,
-        carriers: { '1': 'draw thread', '3': 'main', '6': 'waste' },
-        diagnostics: document.diagnostics.slice(0, 20).map((diagnostic) => ({ severity: diagnostic.severity, rule: diagnostic.rule, message: diagnostic.rawMessage })),
-      });
-      return document.verdict.state === 'surface' ? 0 : 1;
-    }
     case 'explain':
       print(explain(positional(parsed, 0, 'term or rule')));
       return 0;
     case 'new': {
       if (parsed.out === null) throw new UsageError('new requires -o <project.json>.');
-      let project = parsed.positionals.length > 0
+      let project = parsed.options.get('--object') === 'beanie'
+        ? newBeanie(parsed)
+        : parsed.options.has('--object') ? (() => { throw new UsageError('--object supports only beanie.'); })()
+        : parsed.positionals.length > 0
         ? await readProject(positional(parsed, 0, 'chart or project file'))
         : createColorworkProjectV1(blankChart(parsed), { id: newId() });
       if (parsed.id !== null) project = { ...project, id: parsed.id };
@@ -450,7 +416,24 @@ async function main(): Promise<number> {
       if (parsed.command === 'export' && parsed.out === null) throw new UsageError('export requires -o <file.kc>.');
       const { result, findings, readiness } = await evaluate(project);
       const exported = parsed.command === 'export' && result.exportReady && result.kcode !== null;
-      if (exported) await writeFile(parsed.out!, result.kcode!.kcText);
+      if (exported) {
+        await writeFile(parsed.out!, result.kcode!.kcText);
+        const plan = planProject(materializeColorworkProject(project).state);
+        await writeFile(parsed.out!.replace(/\.kc$/, '') + '-instructions.md', `${[
+          `# ${project.title}`,
+          '',
+          `${plan.piece === 'beanie' ? 'Flat 2x2 rib beanie' : 'Panel'}: ${plan.stitches.value} needles (${plan.needles.first}-${plan.needles.last}) × ${plan.rows.value} ${plan.piece === 'beanie' ? 'rib rows, then the crown' : 'rows'}. Frame: ${result.compiled?.frame?.preset ?? 'unknown'}.`,
+          plan.predicted ? `Predicted under gauge ${plan.gauge!.stitchesPer10cm} st / ${plan.gauge!.rowsPer10cm} rows per 10 cm (${plan.gauge!.source}): ${plan.predicted.widthCm.value} cm (${plan.predicted.widthCm.how}) × ${plan.predicted.heightCm.value} cm.` : 'No gauge recorded: sizes in cm are unknown.',
+          '',
+          '## Load',
+          ...(carrierRequirements(project, result) ?? []).map((item) => `- C${item.carrier}: ${item.role === 'pattern' ? item.yarnName : item.role === 'waste' ? 'waste yarn' : 'draw thread (smooth contrasting yarn, removed afterwards)'}`),
+          '',
+          '## After knitting',
+          ...plan.finishing.map((step, index) => `${index + 1}. ${step}`),
+          '',
+          `Verdict: ${result.verdict.label}. Software evidence only; not yet knitted from this program.`,
+        ].join('\n')}\n`);
+      }
       print({
         project: { id: project.id, title: project.title, revision: result.compiled?.revision ?? null },
         verdict: result.verdict,

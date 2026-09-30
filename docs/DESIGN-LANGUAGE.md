@@ -58,6 +58,12 @@ representation):
 - **Images are not bundled into projects yet.** `image` writes a chart and
   prints a receipt with the source SHA-256, settings and converter version.
   Bundling arrives with placements in M6.
+- **Beanie (M6):** the proposal's object/pieces model is still deferred.
+  The simplest step that works is an optional
+  `object: { kind: 'beanie', construction: 'flat-rib-2x2' }` on the project
+  state, with the chart as the rib body. Gauge, target (finished
+  circumference), plan fixes, readiness and the edit log are reused
+  unchanged.
 - **Skill and benchmark:** `.claude/skills/knit-design/SKILL.md`,
   `evals/design-language/cases.json` (12 rectangle-scope cases) and
   `pnpm eval:design`.

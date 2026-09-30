@@ -89,11 +89,24 @@ ship," trust this file and the working tree instead.
     - no needle holds more than 2 loops;
     - racking stays within ±4;
     - widths 98, 150, 194 and 242 have zero validator diagnostics.
-  - `beanie --head-cm --ease --gauge` derives the width, with the
-    derivation reported.
-  - Not yet built: beanie projects in the authored pipeline (so no computed
-    readiness), motifs and the knitted-in fold-up cuff. The eight-line crown
-    has no reference parity and nothing has been knitted.
+  - **Beanies are authored projects.** Project state gains
+    `object: { kind: 'beanie', construction: 'flat-rib-2x2' }`. The chart is
+    the rib body (width = needles, height = rib rows, one yarn).
+    - `compileProject.ts` compiles it through the beanie construction into
+      the ordinary strict KCode artifact, with the verdict from
+      `resolveAuthoredVerdict`.
+    - The plan sizes the finished circumference with seam stitches and rib
+      rounding, keeps the piece centred, and lists finishing steps.
+    - `pnpm studio -- new --object beanie --head-cm --body-cm --gauge`
+      creates it, sized by the plan's own fixes. `export` writes finishing
+      instructions.
+    - The default 194 × 102 project on C3 still reproduces the reference
+      exactly through the authored pipeline. Its replayed crown carries one
+      3-loop stack, so readiness blocks on that conservative warning. The
+      eight-line crown stays at 2 loops or fewer, so sized beanies can be
+      ready.
+  - Not yet built: motifs and the knitted-in fold-up cuff. The eight-line
+    crown has no reference parity and nothing has been knitted.
 - **Customist parity scoreboard.** `pnpm parity [--json]` compares the 13
   captured references. Schema v2 reserves `reproduced` for an export-ready,
   strict whole-program machine-trace match, including rack, settings, stops,

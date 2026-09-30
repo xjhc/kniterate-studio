@@ -250,8 +250,8 @@ Remaining:
 - ~~a crown for any width; circumference sized from gauge~~ — done: the
   eight-line crown covers 60–244 needles, and `beanie --head-cm` sizes the
   width;
-- a beanie project in the authored pipeline (verdict via
-  `resolveAuthoredVerdict`);
+- ~~a beanie project in the authored pipeline~~: done (`object: beanie`,
+  verdict via `resolveAuthoredVerdict`, readiness, finishing instructions);
 - motif placement with bundled images, and the fold-up cuff;
 - the benchmark's beanie cases;
 - a development knit in acrylic.

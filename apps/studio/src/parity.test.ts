@@ -45,7 +45,7 @@ describe('Customist parity verdict', () => {
 
   it('reproduces the 2x2 rib beanie exactly through its construction generator', { timeout: 60_000 }, async () => {
     expect(await scoreReference(REFERENCES.find((item) => item.id === '2x2-rib-beanie')!)).toMatchObject({
-      status: 'reproduced', verdict: 'Surface-proven (imported)',
+      status: 'reproduced', verdict: 'Surface-proven',
       machine: { identical: true, deltaCount: 0 },
       stitches: { expectedPasses: 530, actualPasses: 530, identicalPasses: 530 },
     });

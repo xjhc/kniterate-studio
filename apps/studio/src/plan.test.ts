@@ -70,6 +70,30 @@ describe('project plan', () => {
   });
 });
 
+describe('beanie plan', () => {
+  const body = { ...chart, width: 194, height: 102, cells: Array.from({ length: 102 }, () => Array<number>(194).fill(0)) };
+  const beanie = (...edits: ProjectEdit[]) => edit(createColorworkProjectV1(body, { id: `beanie-${editCount}` }), { kind: 'set-object', object: { kind: 'beanie', construction: 'flat-rib-2x2' } }, ...edits);
+
+  it('sizes the finished circumference with seam stitches and symmetric rib, centred on the bed', () => {
+    const project = beanie({ kind: 'set-gauge', gauge: { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'measured' } }, { kind: 'set-target', target: { widthCm: 50.4, heightCm: 18 } });
+    const before = plan(project);
+    expect(before.piece).toBe('beanie');
+    expect(before.sizeChecks[0]).toMatchObject({ required: { value: 154, how: '50.4 cm finished circumference × 30 st/10 cm = 151.2 st, + 2 seam stitches, rounded to 2 (mod 4) → 154' } });
+    const fixes = before.findings.flatMap((finding) => finding.fixes.flatMap((fix) => fix.edits));
+    expect(fixes.map((item) => item.kind)).toEqual(['set-needle-offset', 'set-width', 'set-height']);
+    const after = plan(edit(project, ...fixes));
+    expect(after.findings).toEqual([]);
+    expect(after.needles).toEqual({ first: 50, last: 203 });
+    expect(after.predicted?.widthCm).toMatchObject({ value: 50.7, how: 'finished circumference: (154 − 2 seam st) ÷ 30 st/10 cm' });
+    expect(after.finishing.join(' ')).toContain('mattress stitch');
+  });
+
+  it('refuses circumferences outside the beanie widths', () => {
+    const tooBig = plan(beanie({ kind: 'set-gauge', gauge: { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'measured' } }, { kind: 'set-target', target: { widthCm: 90 } }));
+    expect(tooBig.findings).toEqual([expect.objectContaining({ rule: 'size-exceeds-capacity', message: expect.stringContaining('60 to 244') })]);
+  });
+});
+
 describe('readiness', () => {
   const surface = { state: 'surface', label: 'Surface-proven', annotation: '', evidenceId: null } as const;
   const finding = (overrides: Partial<Finding>): Finding => ({ stage: 'compile', rule: 'long-float', severity: 'warning', owner: 'design', path: null, title: '', message: 'm', fixes: [], ...overrides });

@@ -17,18 +17,18 @@ panel): up to 252 stitches wide and 1,200 rows tall (75,600 cells), up to four
 pattern colors on carriers C2–C5, Fairisle or Birdseye (exactly four colors)
 backing.
 
-Beanies: one construction, `pnpm --silent studio -- beanie`. It is a flat
-2×2 rib beanie seamed afterwards, in Customist's construction:
-- Size it with `--head-cm`, optional `--ease` (default −0.10) and `--gauge`
-  measured on 2×2 rib, which sets the width. Set the body length with
-  `--body-cm` or `--rib-rows`.
-- It writes the program and finishing instructions. Read the `needles.how`
-  derivation and `predicted` back to the person.
-- At 194 needles it is Kniterate's own reference hat. Other widths use our
-  eight-line crown, which nobody has knitted yet; say so.
-- Beanies are generated outside the project pipeline, so readiness is not
-  computed for them. Never call a beanie "ready": report its verdict and
-  predicted size, and treat a missing rib gauge as a reason to ask.
+Beanies: a flat 2×2 rib beanie, seamed afterwards (Customist's construction).
+It is a normal project:
+`new --object beanie --head-cm 56 [--ease -0.1] --body-cm 18 --gauge <st>,<rows> --color "Name=#RRGGBB" -o hat.json`.
+- The chart is the rib body: width = needles, height = rib rows.
+- The target width is the finished circumference; the plan adds the seam
+  stitches and keeps the rib symmetric.
+- `plan`, `describe`, `readiness`, `render` and `export` work as for any
+  project. `export` also writes finishing instructions.
+- Use a gauge measured on 2×2 rib.
+- At 194 needles the crown is Kniterate's own. It ends with one 3-loop
+  stack, so readiness reports a warning; say so. Other widths (60–244) use
+  our eight-line crown, which has never been knitted; say so too.
 
 Not supported yet: motifs on beanies, a knitted-in fold-up cuff (folding the
 rib brim is fine), sweaters, other shaping, and seamless tubes. Say so and offer the nearest supported thing instead of

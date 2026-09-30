@@ -3,13 +3,20 @@ import {
   assessAuthoredCapacityV1,
   materializeColorworkProject,
   observeAuthoredCapacityV1,
+  type AuthoredCapacitySupportedV1,
   type AuthoredCapacityV1,
   type ColorworkProjectV1,
+  type ResolvedProjectOverride,
   type ProjectState,
 } from '@kniterate-studio/project-contract';
 import {
   CUSTOMIST_MATCHED_PRESETS_V1,
+  CUSTOMIST_RIB_CROWN_WIDTH,
   buildCustomistMatchedCompileInputV1,
+  buildCustomistRibBeanie,
+  computeInputHash,
+  parseKnitoutProgram,
+  writeKnitoutProgram,
   compileToRunArtifact,
   projectColorworkChartV1,
   projectBackFaceFromArtifact,
@@ -139,6 +146,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     };
   }
   const { state, overrides } = materializeColorworkProject(project);
+  if (state.object?.kind === 'beanie') return compileBeanieProject(project, state, overrides, capacity as AuthoredCapacitySupportedV1);
   const usedPaletteIndexes = new Set(state.chart.cells.flat());
   const usedPalette = state.chart.palette.filter((_entry, index) => usedPaletteIndexes.has(index));
   const assignments = new Map(state.machine.yarnAssignments.map((assignment) => [assignment.paletteId, assignment]));
@@ -289,4 +297,73 @@ export function projectWithPreviewStrategy(project: ColorworkProjectV1, techniqu
   let id = `preview_strategy_${technique.replace(/-/g, '_')}`;
   while (project.history.entries.some((entry) => entry.id === id)) id += '_';
   return appendProjectEdit(project, { id, source: 'system', edit: { kind: 'set-strategy', strategy: { ...current, technique } } });
+}
+
+/** Width limits of the flat 2×2 rib beanie: the eight-line crown needs 60, the bed and carrier parking allow 244. */
+export const BEANIE_WIDTH_LIMITS = { min: 60, max: 244 } as const;
+
+/**
+ * A beanie project: the chart is the rib body (width = needles, height = rib
+ * rows, one color); the construction supplies Customist's frame, the crown,
+ * and the knit-off. At the reference width the crown is Customist's own.
+ */
+function compileBeanieProject(
+  project: ColorworkProjectV1,
+  state: ProjectState,
+  overrides: readonly ResolvedProjectOverride[],
+  capacity: AuthoredCapacitySupportedV1,
+): BlanketCompileArtifact {
+  const width = state.chart.width;
+  const rows = state.chart.height;
+  const usedPaletteIndexes = [...new Set(state.chart.cells.flat())];
+  const yarn = state.chart.palette[usedPaletteIndexes[0] ?? 0]!;
+  const assignment = state.machine.yarnAssignments.find((item) => item.paletteId === yarn.id);
+  const setupMessages: ValidationMessage[] = [];
+  if (usedPaletteIndexes.length > 1) setupMessages.push(setupError('project-beanie-colorwork-unsupported', `This beanie's rib body uses ${usedPaletteIndexes.length} colors; the flat 2x2 rib beanie knits one yarn (motifs are not supported yet).`));
+  if (assignment === undefined) setupMessages.push(setupError('project-yarn-assignment-required', `${yarn.name} is the beanie's yarn but has no carrier assignment.`));
+  if (width % 2 !== 0 || width < BEANIE_WIDTH_LIMITS.min || width > BEANIE_WIDTH_LIMITS.max) setupMessages.push(setupError('project-beanie-width', `The flat 2x2 rib beanie needs an even width from ${BEANIE_WIDTH_LIMITS.min} to ${BEANIE_WIDTH_LIMITS.max} needles; this one has ${width}.`));
+  for (const resolved of overrides) setupMessages.push(setupError(resolved.status === 'quarantined' ? 'project-override-quarantined' : 'project-override-unsupported', resolved.reason ?? `Override ${resolved.override.id} cannot be compiled for a beanie; remove it to export.`));
+  const crown = width === CUSTOMIST_RIB_CROWN_WIDTH ? 'customist-194' as const : 'eight-line' as const;
+  const frame: CompiledFrame = {
+    preset: `customist-2x2-rib-beanie@1 (${crown} crown)`,
+    reference: 'reference/2x2-rib-beanie.kc',
+    wastePasses: 81,
+    wasteCarrier: '6',
+    drawCarrier: '1',
+    bindOff: 'knit-off (top gathered by hand)',
+    frameCarriers: ['1'],
+  };
+  const base = {
+    revision: projectRevision(project),
+    technique: state.strategy.technique,
+    capacity,
+    rowProvenance: [],
+    backFace: null,
+    frame,
+    stats: { designRows: rows, needles: width, patternColors: 1, passCount: 0, opCount: 0, estimatedKnitTimeSeconds: null },
+  };
+  if (setupMessages.length > 0) {
+    return { ...base, ok: false, compileVerdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], programOpSourceRows: [], diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
+  }
+  const input = { needleStart: state.machine.needleOffset, needleEnd: state.machine.needleOffset + width - 1, bodyCarrier: assignment!.carrier, wasteCarrier: '6', drawCarrier: '1', ribRows: rows, crown } as const;
+  const built = buildCustomistRibBeanie(input);
+  const knitoutText = writeKnitoutProgram(built.program);
+  const parsed = parseKnitoutProgram(knitoutText);
+  const exactCapacity = observeAuthoredCapacityV1(capacity, { knitoutRecords: sourceRecordCount(knitoutText) });
+  const capacityMessages = exactCapacity.status === 'blocked' ? [setupError(exactCapacity.rule, exactCapacity.message)] : [];
+  const ok = capacityMessages.length === 0;
+  return {
+    ...base,
+    capacity: exactCapacity,
+    ok,
+    compileVerdict: ok ? 'surface' : 'blocked',
+    inputHash: ok ? computeInputHash({ construction: 'customist-2x2-rib-beanie@1', ...input }) : null,
+    messages: capacityMessages,
+    knitoutText: ok ? knitoutText : null,
+    passes: built.predictedPasses,
+    // The beanie has no chart-row provenance: every operation belongs to the construction.
+    programOpSourceRows: parsed.opLines.map(() => null),
+    diagnostics: capacityMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })),
+    stats: { ...base.stats, passCount: built.predictedPasses.length, opCount: built.program.ops.length },
+  };
 }

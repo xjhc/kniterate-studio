@@ -270,9 +270,18 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
   return { ops, predictedPasses: sim.predictedPasses(), finalNextDirection: sim.finalNextDirection() }
 }
 
+/** The complete Knitout program for the beanie, with the simulator's predicted passes. */
+export function buildCustomistRibBeanie(input: CustomistRibBeanieInput): { program: KnitoutProgram; predictedPasses: readonly PredictedPass[] } {
+  const { ops, predictedPasses } = emitCustomistRibBeanie(input)
+  return { program: beanieProgram(input, ops), predictedPasses }
+}
+
 /** The complete Knitout program for the beanie, ready for the Kniterate converter. */
 export function buildCustomistRibBeanieProgram(input: CustomistRibBeanieInput): KnitoutProgram {
-  const { ops } = emitCustomistRibBeanie(input)
+  return buildCustomistRibBeanie(input).program
+}
+
+function beanieProgram(input: CustomistRibBeanieInput, ops: KnitoutOp[]): KnitoutProgram {
   return {
     version: 2,
     carriers: ['1', '2', '3', '4', '5', '6'],

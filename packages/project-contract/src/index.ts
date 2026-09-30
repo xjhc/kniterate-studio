@@ -90,6 +90,17 @@ const TargetSchema = z.object({
 }).refine((target) => target.widthCm !== undefined || target.heightCm !== undefined, 'target needs widthCm or heightCm');
 export type ProjectTarget = z.infer<typeof TargetSchema>;
 
+/**
+ * The knitted object when it is not a plain rectangle. For a beanie the chart
+ * is the rib body (width = needles, height = rib rows, one color) and the
+ * construction adds the frame, crown, and knit-off.
+ */
+const ObjectSchema = z.object({
+  kind: z.literal('beanie'),
+  construction: z.literal('flat-rib-2x2'),
+});
+export type ProjectObject = z.infer<typeof ObjectSchema>;
+
 const PassOverrideSchema = z.object({
   id: Id,
   kind: z.literal('pass'),
@@ -148,6 +159,7 @@ const AddOverrideEditSchema = z.object({ kind: z.literal('add-override'), overri
 const RemoveOverrideEditSchema = z.object({ kind: z.literal('remove-override'), overrideId: Id });
 const SetGaugeEditSchema = z.object({ kind: z.literal('set-gauge'), gauge: GaugeSchema.nullable() });
 const SetTargetEditSchema = z.object({ kind: z.literal('set-target'), target: TargetSchema.nullable() });
+const SetObjectEditSchema = z.object({ kind: z.literal('set-object'), object: ObjectSchema.nullable() });
 
 export const ProjectEditSchema = z.discriminatedUnion('kind', [
   PaintCellsEditSchema,
@@ -165,6 +177,7 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   RemoveOverrideEditSchema,
   SetGaugeEditSchema,
   SetTargetEditSchema,
+  SetObjectEditSchema,
 ]);
 export type ProjectEdit = z.infer<typeof ProjectEditSchema>;
 
@@ -181,6 +194,7 @@ export interface ProjectState {
   overrides: ProjectOverride[];
   gauge?: ProjectGauge;
   target?: ProjectTarget;
+  object?: ProjectObject;
 }
 
 export interface ProjectEditEntry {
@@ -837,6 +851,7 @@ const ProjectStateSchema: z.ZodType<ProjectState> = z.object({
   overrides: z.array(ProjectOverrideSchema),
   gauge: GaugeSchema.optional(),
   target: TargetSchema.optional(),
+  object: ObjectSchema.optional(),
 }).superRefine(validateStateRelationships);
 
 const ProjectSchema: z.ZodType<ColorworkProjectV1> = z.object({
@@ -1149,6 +1164,10 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
     case 'set-target':
       if (edit.target === null) delete state.target;
       else state.target = edit.target;
+      break;
+    case 'set-object':
+      if (edit.object === null) delete state.object;
+      else state.object = edit.object;
       break;
   }
   return state;

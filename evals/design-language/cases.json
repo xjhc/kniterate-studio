@@ -43,7 +43,7 @@
     {
       "id": "beanie",
       "request": "Make me a beanie for a 56 cm head with a folded rib cuff. Gauge 26 and 34 per 10 cm.",
-      "expect": { "outcomes": ["not-ready", "needs-input", "unsupported"] }
+      "expect": { "outcomes": ["ready", "not-ready", "needs-input", "unsupported"] }
     },
     {
       "id": "sweater",

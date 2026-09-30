@@ -265,4 +265,13 @@ describe('ColorworkProjectV1', () => {
     expect(statuses).toContain('quarantined');
     expect(materializeColorworkProject(redoProjectEdit(reopened)).state.machine.yarnAssignments).toHaveLength(1);
   });
+
+  it('records the beanie object as undoable intent', () => {
+    let project = createColorworkProjectV1(chart, { id: 'beanie-object' });
+    project = appendProjectEdit(project, { id: 'o', source: 'assistant', edit: { kind: 'set-object', object: { kind: 'beanie', construction: 'flat-rib-2x2' } } });
+    expect(materializeColorworkProject(project).state.object).toEqual({ kind: 'beanie', construction: 'flat-rib-2x2' });
+    expect(parseColorworkProjectV1Json(serializeColorworkProjectV1(project))).toEqual(project);
+    expect(materializeColorworkProject(undoProjectEdit(project)).state.object).toBeUndefined();
+    expect(() => appendProjectEdit(project, { id: 'bad', source: 'human', edit: { kind: 'set-object', object: { kind: 'sweater' } } as never })).toThrow();
+  });
 });

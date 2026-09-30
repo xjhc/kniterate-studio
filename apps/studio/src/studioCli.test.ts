@@ -110,26 +110,31 @@ describe('authored CLI command receipts', () => {
     expect(cli(['render', projectPath, '--view', 'nope', '-o', 'x.png']).status).toBe(2);
   });
 
-  it('generates the flat 2x2 rib beanie from a body length and gauge', { timeout: 60_000 }, () => {
-    const prefix = resolve(mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-')), 'hat');
-    const result = cli(['beanie', '--body-cm', '18', '--gauge', '30,32', '-o', prefix]);
-    expect(result.status).toBe(0);
-    expect(result.receipt).toMatchObject({
-      verdict: { state: 'surface' },
-      construction: { recipe: 'customist-2x2-rib-beanie@1', needles: 194, needleRange: [30, 223], crown: 'customist-194', ribRows: 58, crownRows: 40, passes: 486 },
-      ribRows: { value: 58, how: '18 cm × 32 rows/10 cm' },
-      predicted: { finishedCircumferenceCm: 64, bodyCm: 18.1 },
+  it('creates a beanie project sized from head, ease and gauge, and exports it with instructions', { timeout: 120_000 }, () => {
+    const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-'));
+    const projectPath = resolve(directory, 'hat.json');
+    expect(cli(['new', '--object', 'beanie', '--head-cm', '56', '--body-cm', '18', '--gauge', '30,32', '--color', 'Black=#111111', '-o', projectPath]).status).toBe(0);
+    const plan = cli(['plan', projectPath]).receipt;
+    expect(plan).toMatchObject({
+      piece: 'beanie',
+      stitches: { value: 154 },
+      rows: { value: 58 },
+      needles: { first: 50, last: 203 },
+      predicted: { widthCm: { value: 50.7 }, heightCm: { value: 18.1 } },
+      sizeChecks: [
+        expect.objectContaining({ dimension: 'width', targetCm: 50.4, required: expect.objectContaining({ value: 154 }), ok: true }),
+        expect.objectContaining({ dimension: 'height', targetCm: 18, required: expect.objectContaining({ value: 58 }), ok: true }),
+      ],
+      findings: [],
     });
-    const sized = cli(['beanie', '--head-cm', '56', '--body-cm', '18', '--gauge', '30,32', '-o', `${prefix}-56`]);
-    expect(sized.status).toBe(0);
-    expect(sized.receipt).toMatchObject({
-      construction: { needles: 154, needleRange: [50, 203], crown: 'eight-line' },
-      needles: { value: 154, ease: { value: -0.1, source: 'default' } },
-      predicted: { finishedCircumferenceCm: 50.7 },
-    });
-    expect(cli(['beanie', '--head-cm', '56', '--needles', '150', '--gauge', '30,32', '-o', prefix]).status).toBe(2);
-    expect(readFileSync(`${prefix}-instructions.md`, 'utf8')).toContain('mattress stitch');
-    expect(cli(['beanie', '--body-cm', '18', '-o', prefix]).status).toBe(2);
+    const described = cli(['describe', projectPath]);
+    expect(described.status).toBe(0);
+    expect(described.receipt.readiness.ready).toBe(true);
+    expect(described.receipt.summary.join('\n')).toContain('eight-line crown');
+    const exported = cli(['export', projectPath, '-o', resolve(directory, 'hat.kc')]);
+    expect(exported.status).toBe(0);
+    expect(readFileSync(resolve(directory, 'hat-instructions.md'), 'utf8')).toContain('mattress stitch');
+    expect(cli(['new', '--object', 'beanie', '--head-cm', '56', '-o', projectPath]).status).toBe(2);
   });
 
   it('keeps usage and read failures machine-readable', () => {
