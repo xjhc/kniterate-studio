@@ -2,6 +2,7 @@ import { appendProjectEdit, materializeColorworkProject, type ColorworkProjectV1
 import { beanieFitEdits, withSizingFixes } from './beanie';
 import type { MeasurementRecord } from './handoff';
 import { planProject, type ProjectPlan } from './plan';
+import { refreshedPlacement, type PlacementImage } from './placements';
 
 /**
  * Returned measurements → a recorded trial and a revised candidate. The
@@ -46,7 +47,13 @@ function planOf(project: ColorworkProjectV1): ProjectPlan {
   return planProject(state, placements);
 }
 
-export function trialRevision(project: ColorworkProjectV1, record: MeasurementRecord, options: { id: string; recordedAt: string }): TrialRevision {
+/**
+ * `pixels` holds each placement's decoded source image (by placement id):
+ * with them, motifs are re-converted at the measured gauge in the same
+ * operation, so the revised candidate is coherent. Without them, they are
+ * flagged for refresh (placement-size-off).
+ */
+export function trialRevision(project: ColorworkProjectV1, record: MeasurementRecord, options: { id: string; recordedAt: string; pixels?: ReadonlyMap<string, PlacementImage['pixels']> }): TrialRevision {
   const { state } = materializeColorworkProject(project);
   const before = planOf(project);
   const bodyGauge = complete(record.bodyGauge);
@@ -75,6 +82,16 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
   } else {
     edits = withSizingFixes(project, [recordEdit, ...(bodyGauge ? [{ kind: 'set-gauge', gauge: { ...bodyGauge, source: 'measured', note } } as ProjectEdit] : [])]);
   }
+  // Re-convert motifs at the measured body gauge.
+  const refreshed: string[] = [];
+  if (bodyGauge && options.pixels) {
+    for (const placement of state.placements ?? []) {
+      const pixels = options.pixels.get(placement.id);
+      if (!placement.source || !pixels) continue;
+      edits.push({ kind: 'set-placement', placement: refreshedPlacement(placement, pixels, bodyGauge) });
+      refreshed.push(placement.id);
+    }
+  }
   const sections = before.sections;
   const predicted: Record<keyof NonNullable<ProjectTrial['finishedCm']>, number | null> = {
     circumference: before.predicted?.widthCm.value ?? null,
@@ -97,6 +114,7 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
   if (after.stitches.value !== before.stitches.value) changes.push(`Needles ${before.stitches.value} → ${after.stitches.value}`);
   if (after.sections?.cuff && before.sections?.cuff && after.sections.cuff.rows !== before.sections.cuff.rows) changes.push(`Cuff rows ${before.sections.cuff.rows} → ${after.sections.cuff.rows}`);
   if (after.sections && before.sections && after.sections.body.rows !== before.sections.body.rows) changes.push(`Body rows ${before.sections.body.rows} → ${after.sections.body.rows}`);
+  if (refreshed.length) changes.push(`Motifs re-converted at the measured gauge: ${refreshed.join(', ')}`);
   if (changes.length === 0) changes.push('No size change: the measured gauges agree with the plan.');
   return { trial, edits, comparisons, changes };
 }

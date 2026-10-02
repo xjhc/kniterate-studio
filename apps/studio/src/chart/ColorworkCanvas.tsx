@@ -14,6 +14,13 @@ import {
 } from '@knitlab/colorwork-core';
 import type { ColorworkChartV1 } from '@kniterate-studio/chart-contract';
 import type { ChartTool } from './ChartToolbar';
+import { placementAt, type PlacementBox } from '../placements';
+
+/** A motif placement as the canvas shows it: its box, and for a conflict the stitches it would knit (drawn as a ghost). */
+export interface CanvasPlacement {
+  box: PlacementBox;
+  ghost: readonly { row: number; column: number; hex: string }[];
+}
 import { CHART_GUTTER as GUTTER, rowGutterActionAt, selectionMoveDestination } from './canvasCoordinates';
 
 const BASE_CELL = 16;
@@ -35,7 +42,7 @@ function rectContains(rect: Rect, point: Point): boolean {
   return point.column >= rect.left && point.column <= rect.right && point.row >= rect.top && point.row <= rect.bottom;
 }
 
-export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow, firstNeedle, highlightedNeedles }: {
+export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow, firstNeedle, highlightedNeedles, placements = [], selectedPlacement = null, onPlacementPick, onPlacementMove }: {
   chart: ColorworkChartV1;
   tool: ChartTool;
   paletteIndex: number;
@@ -58,6 +65,11 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   firstNeedle: number;
   /** Knitout needles selected by the chosen emitted pass, from the KCode artifact. */
   highlightedNeedles: { start: number; end: number } | null;
+  /** Motif placements: selected by clicking with Select or Move, dragged with Move. */
+  placements?: readonly CanvasPlacement[];
+  selectedPlacement?: string | null;
+  onPlacementPick?: (id: string | null) => void;
+  onPlacementMove?: (id: string, deltaColumns: number, deltaRows: number) => void;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
   const paintLayer = useRef<HTMLCanvasElement>(null);
@@ -65,7 +77,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   const uiLayer = useRef<HTMLCanvasElement>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [scroll, setScroll] = useState({ left: 0, top: 0 });
-  const [gesture, setGesture] = useState<{ start: Point; points: Point[]; pan?: { x: number; y: number } } | null>(null);
+  const [gesture, setGesture] = useState<{ start: Point; points: Point[]; pan?: { x: number; y: number }; placement?: string } | null>(null);
   const [keyboardPoint, setKeyboardPoint] = useState<Point>({ column: 0, row: 0 });
   const [keyboardActive, setKeyboardActive] = useState(false);
   const cell = BASE_CELL * zoom;
@@ -201,12 +213,35 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       overlay.strokeRect(GUTTER + currentSelection.left * cell - scroll.left + 1, currentSelection.top * cell - scroll.top + 1, (currentSelection.right - currentSelection.left + 1) * cell - 2, (currentSelection.bottom - currentSelection.top + 1) * cell - 2);
       overlay.setLineDash([]);
     }
+    for (const { box, ghost } of placements) {
+      const dragging = gesture?.placement === box.id && end ? { columns: end.column - gesture.start.column, rows: end.row - gesture.start.row } : { columns: 0, rows: 0 };
+      if (box.status === 'conflict') {
+        overlay.globalAlpha = .45;
+        for (const stitch of ghost) {
+          if (stitch.row < 0 || stitch.row >= chart.height || stitch.column < 0 || stitch.column >= chart.width) continue;
+          overlay.fillStyle = stitch.hex;
+          overlay.fillRect(GUTTER + stitch.column * cell - scroll.left, stitch.row * cell - scroll.top, cell, cell);
+        }
+        overlay.globalAlpha = 1;
+      }
+      const selected = box.id === selectedPlacement;
+      overlay.strokeStyle = box.status === 'conflict' ? '#dc2626' : '#2563eb';
+      overlay.lineWidth = selected ? 2.5 : 1.5;
+      overlay.setLineDash(selected ? [] : [5, 3]);
+      overlay.strokeRect(GUTTER + (box.left + dragging.columns) * cell - scroll.left + 1, (box.top + dragging.rows) * cell - scroll.top + 1, (box.right - box.left + 1) * cell - 2, (box.bottom - box.top + 1) * cell - 2);
+      overlay.setLineDash([]);
+      if (selected || box.status === 'conflict') {
+        overlay.font = '10px system-ui';
+        overlay.fillStyle = box.status === 'conflict' ? '#dc2626' : '#2563eb';
+        overlay.fillText(box.status === 'conflict' ? `${box.id} · does not fit` : box.id, GUTTER + (box.left + dragging.columns) * cell - scroll.left + 2, Math.max(10, (box.top + dragging.rows) * cell - scroll.top - 3));
+      }
+    }
     if (keyboardActive) {
       overlay.strokeStyle = '#d86645';
       overlay.lineWidth = 3;
       overlay.strokeRect(GUTTER + keyboardPoint.column * cell - scroll.left + 1.5, keyboardPoint.row * cell - scroll.top + 1.5, cell - 3, cell - 3);
     }
-    if (!gesture || !end || gesture.pan || tool === 'select' || tool === 'move' || tool === 'fill') return;
+    if (!gesture || !end || gesture.pan || gesture.placement || tool === 'select' || tool === 'move' || tool === 'fill') return;
     const mutation = tool === 'pen' ? pen(pixelChart, gesture.points, paletteIndex)
       : tool === 'erase' ? erase(pixelChart, gesture.points, 0)
       : tool === 'line' ? line(pixelChart, gesture.start, end, paletteIndex)
@@ -266,7 +301,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   };
 
   useLayoutEffect(drawRuler, [chart.width, scroll.left, zoom, viewportSize, isDarkMode, firstNeedle, highlightedNeedles]);
-  useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex, keyboardPoint, keyboardActive]);
+  useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex, keyboardPoint, keyboardActive, placements, selectedPlacement]);
 
   useEffect(() => {
     const element = viewport.current;
@@ -292,6 +327,12 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   const finish = () => {
     if (!gesture || gesture.pan) { setGesture(null); return; }
     const end = gesture.points.at(-1) ?? gesture.start;
+    if (gesture.placement) {
+      const columns = end.column - gesture.start.column; const rows = end.row - gesture.start.row;
+      if (columns !== 0 || rows !== 0) onPlacementMove?.(gesture.placement, columns, rows);
+      setGesture(null);
+      return;
+    }
     if (tool === 'pen') onCommit(pen(pixelChart, gesture.points, paletteIndex));
     else if (tool === 'erase') onCommit(erase(pixelChart, gesture.points, 0));
     else if (tool === 'line') onCommit(line(pixelChart, gesture.start, end, paletteIndex));
@@ -366,6 +407,15 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         if (!point) return;
         setKeyboardPoint(point);
         onFocusRow(point.row);
+        // Clicking a motif selects the motif (its saved placement), not the stitches under it.
+        const hit = tool === 'select' || tool === 'move' ? placementAt(placements.map((item) => item.box), point.row, point.column) : null;
+        if (hit) {
+          onPlacementPick?.(hit.id);
+          onSelection(null);
+          if (tool === 'move' && hit.status === 'placed') { event.currentTarget.setPointerCapture(event.pointerId); setGesture({ start: point, points: [point], placement: hit.id }); }
+          return;
+        }
+        if (tool === 'select') onPlacementPick?.(null);
         if (tool === 'move' && (!selection || !rectContains(selection, point))) return;
         event.currentTarget.setPointerCapture(event.pointerId);
         if (event.button === 1 || event.altKey) setGesture({ start: point, points: [point], pan: { x: event.clientX, y: event.clientY } });

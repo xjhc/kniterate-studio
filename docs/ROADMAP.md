@@ -258,6 +258,9 @@ Remaining:
 - ~~birdseye backing for beanie bodies~~: done, so the real bird is ready;
 - ~~the benchmark's beanie cases~~: done (`arc-style-toque`, `toque-resize`
   with the real bird; not-ready answers are checked against the project);
+- ~~the garment in the browser~~: done (2026-10-02): fit and gauge editing,
+  motif objects, readiness story, schematic, package export, measurement
+  revisions and change review, sharing modules with the CLI;
 - a development knit in acrylic: prepared in
   [`M6-ACRYLIC-DEV-TRIAL.md`](./M6-ACRYLIC-DEV-TRIAL.md), waiting for the
   operator run. M7 stays queued until it is accepted.

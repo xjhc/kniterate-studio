@@ -163,7 +163,7 @@
         "gauge": { "type": "number", "exclusiveMinimum": 0 },
         "position": { "enum": ["Left", "Center", "Right", "Keep"] },
         "wastePasses": { "type": "integer", "minimum": 0 },
-        "bindOff": { "enum": ["machine-bindoff", "waste-and-drop", "fairisle-park-bindoff"] },
+        "bindOff": { "enum": ["machine-bindoff", "waste-and-drop", "fairisle-park-bindoff", "knit-off"] },
         "initialSettings": { "$ref": "#/$defs/initialSettings" }
       },
       "additionalProperties": false

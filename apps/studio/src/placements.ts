@@ -1,5 +1,5 @@
 import type { ColorworkChartV1 } from '@kniterate-studio/chart-contract';
-import type { ProjectGauge, ProjectPlacement, ProjectState } from '@kniterate-studio/project-contract';
+import type { ProjectEdit, ProjectGauge, ProjectPlacement, ProjectState, ResolvedProjectPlacement } from '@kniterate-studio/project-contract';
 import { IMAGE_CHART_CONVERTER, imageToChart } from './imageChart';
 
 /**
@@ -120,4 +120,85 @@ export function refreshedPlacement(placement: ProjectPlacement, pixels: Placemen
     pooling: conversion.pooling ?? source.pooling,
   }, gauge);
   return { ...placement, motif: converted.motif, source: converted.source };
+}
+
+/** A placement's box in chart coordinates (rows top first), drawn or not. */
+export interface PlacementBox {
+  id: string;
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  status: ResolvedProjectPlacement['status'];
+}
+
+function cuffRowsOf(state: ProjectState): number {
+  return state.object?.construction === 'rib-cuff-jersey-body' ? state.object.cuffRows ?? 0 : 0;
+}
+
+/** Where each placement sits (or would sit, for a conflict), with the anchor rules materialization uses. */
+export function placementBoxes(state: ProjectState, resolved: readonly ResolvedProjectPlacement[]): PlacementBox[] {
+  const cuffRows = cuffRowsOf(state);
+  return resolved.map(({ placement, status }) => {
+    const left = placement.x === 'center' ? Math.floor((state.chart.width - placement.motif.width) / 2) : placement.x;
+    const bottom = state.chart.height - 1 - (cuffRows + placement.rowsAboveCuff);
+    return { id: placement.id, left, right: left + placement.motif.width - 1, top: bottom - placement.motif.height + 1, bottom, status };
+  });
+}
+
+/** The topmost placement whose box contains a chart cell. */
+export function placementAt(boxes: readonly PlacementBox[], row: number, column: number): PlacementBox | null {
+  for (let index = boxes.length - 1; index >= 0; index -= 1) {
+    const box = boxes[index]!;
+    if (row >= box.top && row <= box.bottom && column >= box.left && column <= box.right) return box;
+  }
+  return null;
+}
+
+/** Chart cells (`row:column`) a drawn placement paints: editing them in the chart would be painted over. */
+export function placedCells(state: ProjectState, resolved: readonly ResolvedProjectPlacement[]): Map<string, string> {
+  const cells = new Map<string, string>();
+  const boxes = placementBoxes(state, resolved);
+  resolved.forEach((item, index) => {
+    if (item.status !== 'placed') return;
+    const box = boxes[index]!;
+    item.placement.motif.cells.forEach((row, top) => row.forEach((color, offset) => {
+      if (item.placement.colors[String(color)] !== undefined) cells.set(`${box.top + top}:${box.left + offset}`, item.placement.id);
+    }));
+  });
+  return cells;
+}
+
+/** The placement moved by whole stitches and rows (rows count down the chart); it keeps its other intent. */
+export function movedPlacement(state: ProjectState, placement: ProjectPlacement, deltaColumns: number, deltaRows: number): ProjectPlacement {
+  const box = placementBoxes(state, [{ placement, status: 'placed', at: null }])[0]!;
+  const column = Math.max(0, Math.min(state.chart.width - placement.motif.width, box.left + deltaColumns));
+  const centred = Math.floor((state.chart.width - placement.motif.width) / 2);
+  return {
+    ...placement,
+    // Dropping it back on the centre keeps it centred through later resizes.
+    x: deltaColumns === 0 && placement.x === 'center' ? 'center' : column === centred ? 'center' : column,
+    rowsAboveCuff: Math.max(0, placement.rowsAboveCuff - deltaRows),
+  };
+}
+
+/**
+ * Turns a drawn placement into ordinary chart stitches: paints its cells into
+ * the chart and removes the placement, as one operation. Afterwards it no
+ * longer follows resizes or refreshes from its image.
+ */
+export function placementToStitchesEdits(state: ProjectState, resolved: ResolvedProjectPlacement): ProjectEdit[] {
+  if (resolved.status !== 'placed') throw new Error(`Placement "${resolved.placement.id}" does not fit, so it has no stitches to keep.`);
+  const box = placementBoxes(state, [resolved])[0]!;
+  const paletteIndex = new Map(state.chart.palette.map((entry, index) => [entry.id, index]));
+  const cells: { rowId: string; column: number; paletteIndex: number }[] = [];
+  resolved.placement.motif.cells.forEach((row, top) => row.forEach((color, offset) => {
+    const paletteId = resolved.placement.colors[String(color)];
+    if (paletteId === undefined) return;
+    cells.push({ rowId: state.rowIds[box.top + top]!, column: box.left + offset, paletteIndex: paletteIndex.get(paletteId)! });
+  }));
+  return [
+    ...(cells.length ? [{ kind: 'paint-cells' as const, cells }] : []),
+    { kind: 'remove-placement', placementId: resolved.placement.id },
+  ];
 }

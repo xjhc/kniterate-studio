@@ -26,7 +26,7 @@ import { convertPlacementImage, defaultPlacementColors, nextPlacementId, refresh
 import { planProject, type ProjectPlan } from '../apps/studio/src/plan.ts';
 import { carrierRequirements, constructionLine, handoffFiles, instructionsMarkdown, readinessStory, type MeasurementRecord } from '../apps/studio/src/handoff.ts';
 import { parseMeasurementRecord, trialRevision } from '../apps/studio/src/trials.ts';
-import { beanieFitEdits, createBeanieProject, type BeanieFitChange } from '../apps/studio/src/beanie.ts';
+import { beanieFitEdits, createBeanieProject, fitChangeLabel, type BeanieFitChange } from '../apps/studio/src/beanie.ts';
 import { collectFindings, resolveReadiness, type Finding, type Readiness } from '../apps/studio/src/readiness.ts';
 import { decodePng, encodePng } from './lib/png.ts';
 import { RENDER_VIEWS, renderView, type RenderView } from './lib/render.ts';
@@ -487,7 +487,7 @@ async function main(): Promise<number> {
       let edits: ProjectEdit[];
       try { edits = beanieFitEdits(project, change); } catch (error) { throw new UsageError(error instanceof Error ? error.message : String(error)); }
       const before = planSnapshot(planOf(project));
-      if (edits.length > 0) project = appendProjectOperation(project, { group: `fit-${randomUUID()}`, source: parsed.source, label: `Change fit: ${Object.keys(change).join(', ')}`, edits });
+      if (edits.length > 0) project = appendProjectOperation(project, { group: `fit-${randomUUID()}`, source: parsed.source, label: fitChangeLabel(change), edits });
       await writeProject(parsed.out ?? path, project);
       print({ changed: Object.keys(change), edits: edits.length, before, after: planSnapshot(planOf(project)) });
       return 0;
@@ -549,7 +549,8 @@ async function main(): Promise<number> {
       let project = await readProject(path);
       let record: MeasurementRecord;
       try { record = parseMeasurementRecord(JSON.parse(await readFile(positional(parsed, 1, 'measurements.json'), 'utf8'))); } catch (error) { throw new UsageError(error instanceof Error ? error.message : String(error)); }
-      const revision = trialRevision(project, record, { id: `trial-${randomUUID().slice(0, 8)}`, recordedAt: new Date().toISOString() });
+      const pixels = new Map((materializeColorworkProject(project).state.placements ?? []).flatMap((placement) => placement.source ? [[placement.id, decodePng(Buffer.from(placement.source.bytesBase64, 'base64'))] as const] : []));
+      const revision = trialRevision(project, record, { id: `trial-${randomUUID().slice(0, 8)}`, recordedAt: new Date().toISOString(), pixels });
       const before = planSnapshot(planOf(project));
       project = appendProjectOperation(project, { group: `measure-${randomUUID()}`, source: parsed.source, label: `Record ${record.synthetic ? 'SYNTHETIC ' : ''}measurements of candidate ${record.candidate.kcodeSha256.slice(0, 12)} and revise`, edits: revision.edits });
       await writeProject(parsed.out ?? path, project);

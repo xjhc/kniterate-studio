@@ -140,6 +140,21 @@ export function beanieFitEdits(project: ColorworkProjectV1, change: BeanieFitCha
   return withSizingFixes(project, edits);
 }
 
+/** A change of fit in words, for the history: "Head 58 cm, body gauge 24/30 (measured)". */
+export function fitChangeLabel(change: BeanieFitChange): string {
+  const parts = [
+    change.headCircumferenceCm !== undefined ? `head ${change.headCircumferenceCm} cm` : null,
+    change.ease !== undefined ? `ease ${Math.round(change.ease * 1000) / 10}%` : null,
+    change.bodyCm !== undefined ? `body ${change.bodyCm} cm` : null,
+    change.cuffCm !== undefined ? `cuff ${change.cuffCm} cm` : null,
+    change.fold !== undefined ? (change.fold ? 'cuff folds up' : 'cuff unfolded') : null,
+    change.bodyGauge ? `body gauge ${change.bodyGauge.stitchesPer10cm}/${change.bodyGauge.rowsPer10cm} (${change.bodyGauge.source})` : null,
+    change.ribGauge ? `rib gauge ${change.ribGauge.stitchesPer10cm}/${change.ribGauge.rowsPer10cm} (${change.ribGauge.source})` : null,
+    change.backing ? `${change.backing} backing` : null,
+  ].filter(Boolean).join(', ');
+  return parts ? `${parts[0]!.toUpperCase()}${parts.slice(1)}` : 'No change';
+}
+
 /** The designer-facing fit of a beanie, read back from its state. */
 export function beanieIntentOf(state: ProjectState): BeanieFitChange & { construction: 'flat-rib-2x2' | 'rib-cuff-jersey-body' } | null {
   const object = state.object;

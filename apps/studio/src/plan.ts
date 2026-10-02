@@ -176,21 +176,23 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
   // Ground rows the construction knits in the body beyond the chart's (a birdseye body starts and joins its back layer).
   const bodyExtraRows = cuffRows > 0 && state.strategy.technique === 'birdseye' ? BIRDSEYE_BODY_EXTRA_FRONT_ROWS : 0;
 
+  // Sizes predicted from an assumed gauge are assumptions, not calculations from measurements.
+  const gaugeProvenance: Provenance = gauge?.source === 'assumed' ? 'assumed' : 'calculated';
   const predicted = gauge === null ? null : {
     widthCm: beanie
       ? {
           value: round1((state.chart.width - BEANIE.seamStitches) / perCm(gauge, 'width')),
-          provenance: 'calculated' as const,
+          provenance: gaugeProvenance,
           how: `finished circumference: (${state.chart.width} − ${BEANIE.seamStitches} seam st) ÷ ${gauge.stitchesPer10cm} st/10 cm`,
         }
       : {
           value: round1(state.chart.width / perCm(gauge, 'width')),
-          provenance: 'calculated' as const,
+          provenance: gaugeProvenance,
           how: `${state.chart.width} st ÷ ${gauge.stitchesPer10cm} st/10 cm`,
         },
     heightCm: {
       value: round1((state.chart.height - cuffRows + bodyExtraRows) / perCm(gauge, 'height')),
-      provenance: 'calculated' as const,
+      provenance: gaugeProvenance,
       how: cuffRows > 0
         ? `body: (${state.chart.height} − ${cuffRows} cuff rows${bodyExtraRows ? ` + ${bodyExtraRows} birdseye start/join rows` : ''}) ÷ ${gauge.rowsPer10cm} rows/10 cm`
         : `${state.chart.height} rows ÷ ${gauge.rowsPer10cm} rows/10 cm`,
@@ -259,7 +261,9 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
   }
 
   if (beanie && !beanieWidthOk(state.chart.width)) {
-    const nearest = Math.min(BEANIE.maxNeedles, Math.max(BEANIE.minNeedles, beanieNeedles(state.chart.width - 2)));
+    // Prefer the width the fit target asks for; otherwise the nearest valid one.
+    const targeted = sizeChecks.find((check) => check.dimension === 'width')?.required.value;
+    const nearest = targeted !== undefined && beanieWidthOk(targeted) ? targeted : Math.min(BEANIE.maxNeedles, Math.max(BEANIE.minNeedles, beanieNeedles(state.chart.width - 2)));
     const edits = resizeEdits(state, 'width', nearest);
     findings.push({
       rule: 'beanie-width-invalid',

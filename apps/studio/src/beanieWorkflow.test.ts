@@ -206,4 +206,18 @@ describe('handoff', () => {
     expect(revision.changes).toContain('Needles 134 → 122');
     expect(undoProjectEdit(revised).history.cursor).toBe(project.history.cursor);
   });
+
+  it('re-converts motifs at the measured gauge in the same revision, so the candidate is coherent', async () => {
+    const project = place(toque({ backing: 'birdseye', bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'assumed' } }), 'bird');
+    const record: MeasurementRecord = {
+      kind: 'kniterate-studio-measurements', schemaVersion: 1, candidate: { kcodeSha256: 'c'.repeat(64), label: 'x' }, synthetic: true, outcome: 'clean',
+      bodyGauge: { stitchesPer10cm: 22, rowsPer10cm: 30 }, ribGauge: { stitchesPer10cm: null, rowsPer10cm: null },
+      finishedCm: { circumference: null, cuffVisible: null, body: null, crown: null, total: null }, notes: '',
+    };
+    const stale = operate(project, trialRevision(project, record, { id: 't1', recordedAt: '2026-10-02T10:00:00Z' }).edits);
+    expect(planOf(stale).findings.map((finding) => finding.rule)).toContain('placement-size-off');
+    const revision = trialRevision(project, record, { id: 't2', recordedAt: '2026-10-02T10:00:00Z', pixels: new Map([['bird', ringImage().pixels]]) });
+    expect(revision.changes).toContain('Motifs re-converted at the measured gauge: bird');
+    expect(planOf(operate(project, revision.edits)).findings).toEqual([]);
+  });
 });

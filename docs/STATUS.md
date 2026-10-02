@@ -149,6 +149,52 @@ ship," trust this file and the working tree instead.
     reference parity, and nothing has been knitted. The acrylic development
     trial is prepared in `docs/M6-ACRYLIC-DEV-TRIAL.md` and waits for an
     operator run.
+  - **Second review fixed (2026-10-02):**
+    - vertical carries (`project-long-carry`) and authored waste-to-body
+      carries (`carried-yarn`);
+    - placement conflicts block panels too;
+    - collision-free placement ids;
+    - stale motifs detected on either gauge axis;
+    - cuff changes at the cuff/body boundary;
+    - invalid widths as planned findings, with the target width as the fix;
+    - the benchmark binds motifs to the supplied image;
+    - development-run registration from a handoff package
+      (`release:register -- <name> --package <dir>`; the coordinate bridge
+      accepts carrier parking beyond the piece).
+  - **Garment product (browser).** A beanie is created from fit intent and
+    edited as a garment:
+    - head circumference and ease, cuff height and fold, body height, and
+      body and rib gauges (measured or assumed), each one undoable operation
+      that applies the plan's own fixes, with derived counts and cm beside
+      the inputs;
+    - motifs are placement objects: click to select, drag with Move, and an
+      inspector for size from the stored image, position, colors, refresh,
+      replace, remove and convert-to-stitches;
+    - painting over a motif's stitches is refused with an explanation;
+    - conflicts show as a red ghost and block export;
+    - the readiness card tells the shared story (`handoff.ts::readinessStory`)
+      with part, consequence, next step, show and fix;
+    - a dimensioned schematic (flat piece with fold line, seams and crown;
+      finished front with the folded cuff and motif);
+    - a zip package (`handoff.ts::handoffFiles`) and a print sheet from the
+      same instructions;
+    - recorded trials and a measurement dialog that previews the revision
+      (gauges measured, sizes refit, motifs re-converted) before applying it
+      as one operation, with synthetic values labelled;
+    - a Changes panel that reviews each operation (before/after measurements,
+      findings, schematics) and undoes it. A reopened file that continues
+      the project (an agent's CLI edits) opens it with the new operations
+      highlighted.
+  - The CLI has the same story and modules: `fit`, `package`, `measure`.
+    `e2e/beanie-workflow.spec.ts` covers the browser journey (Chromium and
+    Firefox). A real-bird walkthrough (not committed: the image is a
+    trademark) checked:
+    - readiness identical in browser and CLI;
+    - a packaged `program.kc` byte-identical to a CLI recompile and the
+      manifest;
+    - an agent `fit` reviewed in the Changes panel;
+    - recovery from an invalid width and an oversized motif;
+    - a synthetic measurement revision.
 - **Customist parity scoreboard.** `pnpm parity [--json]` compares the 13
   captured references. Schema v2 reserves `reproduced` for an export-ready,
   strict whole-program machine-trace match, including rack, settings, stops,

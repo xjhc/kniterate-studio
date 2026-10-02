@@ -381,7 +381,7 @@ function compileBeanieProject(
     wastePasses: 81,
     wasteCarrier: '6',
     drawCarrier: '1',
-    bindOff: 'knit-off (top gathered by hand)',
+    bindOff: 'knit-off',
     frameCarriers: ['1'],
   };
   const base = {

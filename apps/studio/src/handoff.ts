@@ -74,6 +74,12 @@ const RULE_STORIES: Record<string, RuleStory> = {
     action: 'Apply the offered width.',
     target: () => 'fit.head',
   },
+  'project-beanie-width': {
+    part: 'Size',
+    consequence: 'The crown cannot be knitted at this width, so no program is produced.',
+    action: 'Apply the offered width under Size.',
+    target: () => 'fit.head',
+  },
   'cuff-off-target': {
     part: 'Cuff',
     consequence: 'The cuff would knit to a different height than the one asked for.',
@@ -130,7 +136,7 @@ export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], 
   const items: StoryItem[] = findings.filter((finding) => finding.severity !== 'info').map((finding) => {
     const story = RULE_STORIES[finding.rule];
     return {
-      part: story?.part ?? (finding.owner === 'compiler' ? 'Machine program' : 'Design'),
+      part: finding.path === 'object.ribGauge' ? 'Cuff fit' : story?.part ?? (finding.owner === 'compiler' ? 'Machine program' : 'Design'),
       severity: finding.severity,
       owner: finding.owner,
       rule: finding.rule,

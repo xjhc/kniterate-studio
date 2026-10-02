@@ -400,3 +400,108 @@ button:not(:disabled):active { transform: translateY(1px); }
   .run-sheet-actions { display: none; }
   @page { margin: 14mm; }
 }
+
+/* Garment workflow: readiness story, fit fields, motifs, changes, intake, sheet. */
+.readiness-card { margin: 0 0 4px; padding: 10px; border: 1px solid var(--line-strong); border-radius: 4px; background: var(--paper); color: var(--ink-2); font-size: 11px; }
+.readiness-card.pending { color: var(--ink-3); }
+.readiness-card header { display: flex; gap: 8px; align-items: flex-start; }
+.readiness-card header strong { display: block; color: var(--ink); font-size: 13px; }
+.readiness-card header p { margin: 3px 0 0; line-height: 1.4; }
+.readiness-card.readiness-ready { border-color: var(--proven); }
+.readiness-card.readiness-ready header svg { color: var(--proven); }
+.readiness-card.readiness-needs-measurements { border-color: var(--warning); background: var(--warning-soft); }
+.readiness-card.readiness-design-issues { border-color: var(--warning); }
+.readiness-card.readiness-blocked { border-color: var(--blocked); background: var(--blocked-soft); }
+.readiness-evidence { margin: 8px 0 0; color: var(--ink-3); font-size: 10px; }
+.readiness-items { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.readiness-items li { padding: 7px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); }
+.readiness-items li.severity-error { border-color: var(--blocked); }
+.readiness-items p { margin: 4px 0 0; line-height: 1.4; }
+.readiness-item-head { display: flex; justify-content: space-between; color: var(--ink); }
+.readiness-item-head small { color: var(--ink-3); }
+.readiness-action { color: var(--ink); }
+.readiness-items details { margin-top: 4px; color: var(--ink-3); font-size: 10px; }
+.readiness-buttons { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.readiness-buttons button { min-height: 26px; padding: 2px 8px; font-size: 10px; }
+.readiness-checks { margin-top: 8px; font-size: 10px; }
+.readiness-checks ul { margin: 4px 0 0; padding-left: 16px; }
+.garment-section h2 { display: flex; align-items: center; gap: 5px; }
+.garment-field .garment-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 5px; width: 104px; }
+.blanket-setup .garment-field .garment-input input { width: 100%; min-width: 0; }
+.top-package { height: 34px; padding: 0 10px; font-size: 12px; }
+.top-package:disabled { opacity: .42; cursor: default; }
+.motif-add, .readiness-buttons .secondary-button, .readiness-buttons .primary-button { font-size: 11px; }
+.motif-add { min-height: 30px; }
+.garment-field .garment-input i { color: var(--ink-3); font-style: normal; }
+.garment-derived { margin: 6px 0 0; color: var(--ink); font-size: 10px; cursor: help; }
+.garment-help, .garment-note { margin: 5px 0 0; color: var(--ink-3); font-size: 10px; line-height: 1.4; }
+.garment-note { color: var(--warning); }
+.gauge-fields { margin: 8px 0 0; padding: 7px; border: 1px solid var(--line); border-radius: 3px; }
+.gauge-fields:focus { outline: 2px solid var(--accent); }
+.gauge-fields legend { padding: 0 3px; color: var(--ink); font-size: 10px; }
+.gauge-fields legend small { color: var(--ink-3); }
+.gauge-row { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 5px; }
+.gauge-row label { margin-top: 0; }
+.motif-list { display: grid; gap: 4px; }
+.motif-row { display: flex; justify-content: space-between; align-items: center; min-height: 30px; padding: 4px 7px; border: 1px solid var(--line-strong); border-radius: 3px; background: var(--paper); color: var(--ink); font-size: 10px; text-align: left; cursor: pointer; }
+.motif-row.active { border-color: #2563eb; background: color-mix(in srgb, #2563eb 10%, var(--paper)); }
+.motif-row.conflict { border-color: var(--blocked); }
+.motif-row small { color: var(--ink-3); }
+.motif-add { margin-top: 6px; width: 100%; }
+.motif-inspector { margin-top: 8px; padding: 8px; border: 1px solid #2563eb; border-radius: 3px; }
+.motif-colors { margin: 8px 0 0; padding: 6px; border: 1px solid var(--line); }
+.motif-colors legend { font-size: 10px; color: var(--ink); }
+.secondary-button.danger { color: var(--blocked); }
+.chart-view-toggle { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 3px; overflow: hidden; }
+.chart-view-toggle button { height: 24px; padding: 0 8px; border: 0; background: var(--paper); color: var(--ink-2); font-size: 10px; cursor: pointer; }
+.chart-view-toggle button.active { background: var(--accent-soft); color: var(--ink); }
+.schematic-stage { display: grid; place-items: center; height: 100%; overflow: auto; padding: 12px; background: #fff; }
+.schematic-stage img { max-width: 100%; height: auto; }
+.changes-panel { position: fixed; top: 56px; right: 12px; z-index: 30; width: min(420px, calc(100vw - 24px)); max-height: calc(100vh - 72px); overflow: auto; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--panel); color: var(--ink); box-shadow: 0 18px 50px #0005; }
+.changes-panel > header { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 12px; font-weight: 700; }
+.changes-panel > header span { display: flex; align-items: center; gap: 6px; }
+.change-list { margin: 0; padding: 6px; list-style: none; }
+.change-list li { border-bottom: 1px solid var(--line); }
+.change-list li > button { display: flex; align-items: center; gap: 7px; width: 100%; min-height: 32px; padding: 4px; border: 0; background: none; color: var(--ink); font-size: 11px; text-align: left; cursor: pointer; }
+.change-list li > button span { flex: 1; }
+.change-list li > button small { padding: 1px 5px; border-radius: 8px; background: var(--paper-2); color: var(--ink-3); font-size: 9px; }
+.change-list li.fresh > button small { background: var(--accent-soft); color: var(--ink); }
+.change-list li.undone { opacity: .55; }
+.change-detail { padding: 4px 6px 10px; font-size: 10px; }
+.change-detail table, .measure-preview table { width: 100%; border-collapse: collapse; }
+.change-detail th, .change-detail td, .measure-preview th, .measure-preview td { padding: 3px 4px; border-bottom: 1px solid var(--line); text-align: left; }
+.change-previews { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0; }
+.change-previews figure { margin: 0; }
+.change-previews img { width: 100%; height: auto; border: 1px solid var(--line); background: #fff; }
+.change-previews figcaption { color: var(--ink-3); }
+.image-intake { width: min(720px, 100%); }
+.image-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.image-compare figure { display: grid; gap: 4px; margin: 0; }
+.image-compare figcaption { color: var(--ink-3); font-size: 10px; }
+.image-compare img, .motif-preview { max-width: 100%; max-height: 240px; border: 1px solid var(--line); background: #fff; image-rendering: pixelated; object-fit: contain; }
+.project-dialog { max-height: calc(100vh - 32px); overflow: auto; }
+.project-dialog-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+.project-dialog textarea { width: 100%; padding: 5px 8px; border: 1px solid var(--line-strong); border-radius: 3px; color: var(--ink); background: var(--paper); font: inherit; }
+.project-kind { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 12px 16px 0; }
+.project-kind button { height: 32px; border: 1px solid var(--line-strong); border-radius: 3px; background: var(--paper); color: var(--ink-2); cursor: pointer; }
+.project-kind button.active { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+.yarn-pick { display: grid; gap: 6px; }
+.yarn-pick label { grid-template-columns: 56px minmax(0, 1fr) 44px auto; align-items: center; }
+.yarn-pick input[type="color"] { padding: 2px; }
+.measure-dialog { width: min(560px, 100%); }
+.measure-preview { padding: 8px; border: 1px solid var(--line); border-radius: 3px; font-size: 11px; }
+.measure-preview ul { margin: 6px 0 0; padding-left: 16px; }
+.trial-list { margin: 6px 0 0; padding: 0; list-style: none; font-size: 10px; }
+.trial-list li { padding: 3px 0; border-bottom: 1px solid var(--line); }
+.trial-list b.synthetic { color: var(--warning); }
+.export-menu { position: relative; display: inline-flex; }
+.export-menu .export-more { position: absolute; top: calc(100% + 4px); right: 0; z-index: 40; display: grid; min-width: 220px; padding: 4px; border: 1px solid var(--line-strong); border-radius: 4px; background: var(--panel); box-shadow: 0 12px 30px #0004; }
+.export-menu .export-more button { min-height: 32px; padding: 4px 8px; border: 0; background: none; color: var(--ink); font-size: 11px; text-align: left; cursor: pointer; }
+.export-menu .export-more button:hover { background: var(--paper-2); }
+.garment-sheet .sheet-schematic { width: 100%; height: auto; margin-bottom: 12px; border: 1px solid #ddd; }
+.instructions-view h1 { margin: 0 0 8px; font-size: 22px; }
+.instructions-view h2 { margin: 18px 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: .03em; }
+.instructions-view p, .instructions-view li { font-size: 12px; line-height: 1.5; }
+.instructions-view code { font-family: var(--font-mono); font-size: 10px; word-break: break-all; }
+.project-dialog .check-label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.project-dialog .check-label input { width: 16px; height: 16px; margin: 0; flex: none; }
