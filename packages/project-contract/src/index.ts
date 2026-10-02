@@ -106,8 +106,45 @@ const ObjectSchema = z.object({
   cuffRows: z.number().int().min(1).max(1_200).optional(),
   /** The cuff is folded up when worn: it is knitted at twice its visible height and the fold shows the reverse. */
   cuffFold: z.boolean().optional(),
+  /** Requested visible cuff height; the plan checks `cuffRows` against it at `ribGauge`. */
+  cuffTargetCm: z.number().positive().max(100).optional(),
+  /** Gauge of the 2×2 rib (the cuff); the body uses the project gauge. */
+  ribGauge: z.lazy(() => GaugeSchema).optional(),
 }).refine((object) => object.construction === 'flat-rib-2x2' || object.cuffRows !== undefined, 'rib-cuff-jersey-body needs cuffRows');
 export type ProjectObject = z.infer<typeof ObjectSchema>;
+
+/**
+ * A motif placed as intent rather than painted cells. Materialization draws
+ * it over the chart from its anchor, so it stays centred and above the cuff
+ * when the piece is resized; a placement that no longer fits is reported,
+ * never silently clipped.
+ */
+const PlacementSchema = z.object({
+  id: Id,
+  motif: z.unknown().transform((value, context): ColorworkChartV1 => {
+    try { return parseColorworkChartV1(value); } catch (error) {
+      for (const issue of error instanceof InvalidColorworkChartError ? error.issues : [String(error)]) context.addIssue({ code: 'custom', message: issue });
+      return z.NEVER;
+    }
+  }),
+  /** Stitches from the left edge, or centred on the current width. */
+  x: z.union([z.literal('center'), z.number().int().min(0)]),
+  /** Rows between the cuff top (or the cast-on, without a cuff) and the motif's bottom row. */
+  rowsAboveCuff: z.number().int().min(0),
+  /** Motif palette index (as a string) → project palette id. Unmapped colors other than 0 are an error; 0 is transparent. */
+  colors: z.record(z.string(), Id),
+  /** The image the motif came from, kept so it can be re-converted when the gauge or size changes. */
+  source: z.object({
+    mediaType: z.literal('image/png'),
+    sha256: z.string().regex(/^[0-9a-f]{64}$/),
+    bytesBase64: z.string().max(4 * 1024 * 1024),
+    heightCm: z.number().positive().max(200),
+    colors: z.number().int().min(1).max(8),
+    pooling: z.enum(['mean', 'mode']),
+    converter: z.object({ id: z.string(), version: z.string() }),
+  }).optional(),
+}).refine((placement) => placement.motif.width <= 252 && placement.motif.height <= 1_200 && placement.motif.width * placement.motif.height <= 75_600, 'placement motif exceeds the chart capacity (252 × 1,200, 75,600 cells)');
+export type ProjectPlacement = z.infer<typeof PlacementSchema>;
 
 const PassOverrideSchema = z.object({
   id: Id,
@@ -168,6 +205,8 @@ const RemoveOverrideEditSchema = z.object({ kind: z.literal('remove-override'), 
 const SetGaugeEditSchema = z.object({ kind: z.literal('set-gauge'), gauge: GaugeSchema.nullable() });
 const SetTargetEditSchema = z.object({ kind: z.literal('set-target'), target: TargetSchema.nullable() });
 const SetObjectEditSchema = z.object({ kind: z.literal('set-object'), object: ObjectSchema.nullable() });
+const SetPlacementEditSchema = z.object({ kind: z.literal('set-placement'), placement: PlacementSchema });
+const RemovePlacementEditSchema = z.object({ kind: z.literal('remove-placement'), placementId: Id });
 
 export const ProjectEditSchema = z.discriminatedUnion('kind', [
   PaintCellsEditSchema,
@@ -186,6 +225,8 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   SetGaugeEditSchema,
   SetTargetEditSchema,
   SetObjectEditSchema,
+  SetPlacementEditSchema,
+  RemovePlacementEditSchema,
 ]);
 export type ProjectEdit = z.infer<typeof ProjectEditSchema>;
 
@@ -203,6 +244,7 @@ export interface ProjectState {
   gauge?: ProjectGauge;
   target?: ProjectTarget;
   object?: ProjectObject;
+  placements?: ProjectPlacement[];
 }
 
 export interface ProjectEditEntry {
@@ -235,9 +277,19 @@ export interface ResolvedProjectOverride {
   reason?: string;
 }
 
+export interface ResolvedProjectPlacement {
+  placement: ProjectPlacement;
+  status: 'placed' | 'conflict';
+  /** Left column and bottom knit row (0 = cast-on) of the motif, when it was drawn. */
+  at: { column: number; knitRow: number } | null;
+  reason?: string;
+}
+
 export interface MaterializedColorworkProject {
+  /** The authored state with placements drawn into the chart. */
   state: ProjectState;
   overrides: ResolvedProjectOverride[];
+  placements: ResolvedProjectPlacement[];
 }
 
 export class InvalidColorworkProjectError extends Error {
@@ -860,6 +912,7 @@ const ProjectStateSchema: z.ZodType<ProjectState> = z.object({
   gauge: GaugeSchema.optional(),
   target: TargetSchema.optional(),
   object: ObjectSchema.optional(),
+  placements: z.array(PlacementSchema).max(16).optional(),
 }).superRefine(validateStateRelationships);
 
 const ProjectSchema: z.ZodType<ColorworkProjectV1> = z.object({
@@ -1177,22 +1230,74 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       if (edit.object === null) delete state.object;
       else state.object = edit.object;
       break;
+    case 'set-placement': {
+      const placements = (state.placements ?? []).filter((item) => item.id !== edit.placement.id);
+      if (placements.length >= 16) throw new Error('a project supports at most 16 placements');
+      state.placements = [...placements, edit.placement];
+      break;
+    }
+    case 'remove-placement':
+      if (!(state.placements ?? []).some((item) => item.id === edit.placementId)) throw new Error(`placement "${edit.placementId}" does not exist`);
+      state.placements = state.placements!.filter((item) => item.id !== edit.placementId);
+      if (state.placements.length === 0) delete state.placements;
+      break;
   }
   return state;
 }
 
-export function materializeColorworkProject(project: ColorworkProjectV1): MaterializedColorworkProject {
+/** The authored state at the cursor, before placements are drawn: what checkpoints store. */
+function replayState(project: ColorworkProjectV1): ProjectState {
   const checkpoint = [...project.history.checkpoints].reverse().find((item) => item.cursor <= project.history.cursor);
   let state = clone(checkpoint?.state ?? project.base);
   const start = checkpoint?.cursor ?? 0;
   for (let index = start; index < project.history.cursor; index += 1) state = applyEditToState(state, project.history.entries[index]!.edit);
+  return state;
+}
+
+/** Draws each placement over the chart from its anchor; a placement that does not fit is not drawn at all. */
+function drawPlacements(state: ProjectState): ResolvedProjectPlacement[] {
+  const cuffRows = state.object?.construction === 'rib-cuff-jersey-body' ? state.object.cuffRows ?? 0 : 0;
+  const paletteIndex = new Map(state.chart.palette.map((entry, index) => [entry.id, index]));
+  return (state.placements ?? []).map((placement): ResolvedProjectPlacement => {
+    const { motif } = placement;
+    const column = placement.x === 'center' ? Math.floor((state.chart.width - motif.width) / 2) : placement.x;
+    const knitRow = cuffRows + placement.rowsAboveCuff;
+    const conflict = (reason: string): ResolvedProjectPlacement => ({ placement, status: 'conflict', at: null, reason });
+    if (motif.width > state.chart.width || column < 0 || column + motif.width > state.chart.width) {
+      return conflict(`Placement "${placement.id}" is ${motif.width} stitches wide at column ${column}; the piece has ${state.chart.width}.`);
+    }
+    if (knitRow + motif.height > state.chart.height) {
+      return conflict(`Placement "${placement.id}" needs ${placement.rowsAboveCuff + motif.height} rows above ${cuffRows > 0 ? 'the cuff' : 'the cast-on'}; there are ${state.chart.height - cuffRows}.`);
+    }
+    const mapped = new Map<number, number>();
+    for (const color of new Set(motif.cells.flat())) {
+      if (color === 0 && placement.colors['0'] === undefined) continue;
+      const target = placement.colors[String(color)];
+      const index = target === undefined ? undefined : paletteIndex.get(target);
+      if (index === undefined) return conflict(`Placement "${placement.id}" color ${color} has no project palette entry${target === undefined ? '' : ` ("${target}")`}.`);
+      mapped.set(color, index);
+    }
+    motif.cells.forEach((cells, top) => cells.forEach((color, offset) => {
+      const index = mapped.get(color);
+      if (index === undefined) return;
+      // Motif rows are stored top first; knit rows count up from the cast-on; chart rows are stored top first.
+      const chartRow = state.chart.height - 1 - (knitRow + motif.height - 1 - top);
+      state.chart.cells[chartRow]![column + offset] = index;
+    }));
+    return { placement, status: 'placed', at: { column, knitRow } };
+  });
+}
+
+export function materializeColorworkProject(project: ColorworkProjectV1): MaterializedColorworkProject {
+  const state = replayState(project);
+  const placements = drawPlacements(state);
   const rows = new Set(state.rowIds);
   const overrides = state.overrides.map((override): ResolvedProjectOverride => {
     if (!rows.has(override.anchor.rowId)) return { override, status: 'quarantined', reason: `Row "${override.anchor.rowId}" no longer exists.` };
     if (override.kind === 'stitch' && override.anchor.needleIndex >= state.chart.width) return { override, status: 'quarantined', reason: `Needle index ${override.anchor.needleIndex} is outside width ${state.chart.width}.` };
     return { override, status: 'active' };
   });
-  return { state, overrides };
+  return { state, overrides, placements };
 }
 
 export function appendProjectEdit(projectValue: ColorworkProjectV1, entryValue: ProjectEditEntry): ColorworkProjectV1 {
@@ -1224,8 +1329,9 @@ export function appendProjectEdit(projectValue: ColorworkProjectV1, entryValue: 
   const capacityIssue = inspectColorworkProjectStructureCapacityV1(project);
   if (capacityIssue !== null) throw new InvalidColorworkProjectError([capacityIssue.message]);
   // Materialize now so invalid edits fail at the boundary, not during render.
-  const materialized = materializeColorworkProject(project);
-  if (project.history.cursor % PROJECT_CHECKPOINT_INTERVAL === 0) project.history.checkpoints.push({ cursor: project.history.cursor, state: materialized.state });
+  materializeColorworkProject(project);
+  // Checkpoints hold the authored state; placements are drawn only when materializing.
+  if (project.history.cursor % PROJECT_CHECKPOINT_INTERVAL === 0) project.history.checkpoints.push({ cursor: project.history.cursor, state: replayState(project) });
   // The incoming project was already authoritative and the new edit was
   // materialized above. Structural validation is sufficient on the hot edit
   // path; full base+history replay remains mandatory when opening a file.

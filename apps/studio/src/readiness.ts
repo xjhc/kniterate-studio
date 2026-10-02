@@ -1,4 +1,4 @@
-import { resolveValidatorMessage } from '@kniterate-studio/machine-lib/browser';
+import { KNITERATE_7GG_KCODE_PROFILE_V2, deriveMachineTraceAdvisoriesV1, resolveValidatorMessage, type MachineTraceV1 } from '@kniterate-studio/machine-lib/browser';
 import type { AuthoredPipelineResult } from './authoredPipeline';
 import type { ProjectPlan } from './plan';
 import type { ProjectEdit } from '@kniterate-studio/project-contract';
@@ -67,6 +67,32 @@ function operatorHeader(rule: string, message: string, knitoutLines: readonly st
   return `${match[2]}${value ? ` = ${value}` : ''} is not encoded in the .kc; confirm the controller setting before knitting.`;
 }
 
+/**
+ * Floats along the actual yarn paths of a beanie: each carrier's previous loop
+ * to its next stitch, across rows, sections and transfers, from the emitted
+ * trace. A span that starts before the draw yarn's last row is a yarn carried
+ * in from the waste section to its first use (an operator check); one inside
+ * the piece is a float behind the fabric (a design warning).
+ */
+function beanieFloatFindings(trace: MachineTraceV1, floatLimit: number): Finding[] {
+  const report = deriveMachineTraceAdvisoriesV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2, { maxFloatDistance: floatLimit });
+  let frameEnd = -1;
+  for (const pass of trace.passes) if (pass.carrier === '1' && pass.actions.some((action) => action.kind === 'knit')) frameEnd = pass.index;
+  const findings: Finding[] = [];
+  for (const advisory of report.advisories) {
+    if (advisory.rule !== 'machine-advisory.float-distance' || advisory.carrier === '1' || advisory.carrier === '6') continue;
+    const fromFrame = (advisory.fromPassIndex ?? 0) <= frameEnd;
+    findings.push(fromFrame
+      ? { stage: 'kcode', rule: 'carried-yarn', severity: 'info', owner: 'operator', path: null, title: 'carried-yarn', message: `C${advisory.carrier} is carried ${advisory.distance} needles from the waste section to its first stitch in pass ${advisory.passIndex + 1}; leave the strand slack and trim it after finishing.`, passIndices: [advisory.passIndex], fixes: [] }
+      : { stage: 'kcode', rule: 'long-float', severity: 'warning', owner: 'design', path: null, title: 'long-float', message: `C${advisory.carrier} floats ${advisory.distance} needles behind the work from pass ${(advisory.fromPassIndex ?? 0) + 1} to pass ${advisory.passIndex + 1} (limit ${floatLimit}).`, passIndices: [advisory.passIndex], fixes: [] });
+  }
+  const listed = report.advisories.filter((advisory) => advisory.rule === 'machine-advisory.float-distance').length;
+  if (report.counts['machine-advisory.float-distance'] > listed) {
+    findings.push({ stage: 'kcode', rule: 'long-float', severity: 'warning', owner: 'design', path: null, title: 'long-float', message: `${report.counts['machine-advisory.float-distance'] - listed} further float advisories were not listed individually.`, fixes: [] });
+  }
+  return findings;
+}
+
 export function collectFindings(plan: ProjectPlan, result: AuthoredPipelineResult): Finding[] {
   const findings: Finding[] = plan.findings.map((finding) => ({
     stage: 'plan',
@@ -105,6 +131,7 @@ export function collectFindings(plan: ProjectPlan, result: AuthoredPipelineResul
       fixes: [],
     });
   }
+  if (plan.piece === 'beanie' && result.kcode?.trace) findings.push(...beanieFloatFindings(result.kcode.trace, plan.backing.floatLimit));
   for (const [rule, error] of [['compile-failed', result.compileError], ['output-failed', result.outputError]] as const) {
     if (error !== null) findings.push({ stage: 'pipeline', rule, severity: 'error', owner: 'compiler', path: null, title: rule, message: error, fixes: [] });
   }

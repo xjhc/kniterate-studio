@@ -24,26 +24,46 @@ Beanies: flat, seamed afterwards, in Customist's construction. Two kinds:
 - **Rib cuff + colorwork body (e.g. an Arc'teryx-style toque):** add
   `--cuff-cm 7 --rib-gauge <rib st>,<rib rows> [--fold] --accent "Name=#hex"`.
   Here `--gauge` is the body's colorwork gauge and `--body-cm` the body
-  above the cuff; `--fold` knits the cuff at twice its visible height. Put
-  the motif in with `place hat.json motif.json [--x center] [--above-cuff rows]`,
-  after `image logo.png --height-cm 8 --gauge <body gauge> --colors 2 -o motif.json`.
-  Motif color 0 is left as the ground.
+  above the cuff; `--fold` knits the cuff at twice its visible height. The
+  cuff height, fold and rib gauge are stored, and `plan` checks the cuff
+  against them (`cuff-off-target` carries the fix).
+  Put the motif in as a **placement**:
+  `place hat.json --image logo.png --height-cm 8 --id logo [--x center] [--above-cuff rows] [--colors 2]`.
+  It is converted at the body gauge and stored with its anchor, so it stays
+  centred above the cuff when you resize; one that no longer fits is a
+  `project-placement-conflict`, never clipped. After a gauge change, run
+  `place hat.json --refresh logo`. Remove one with the `remove-placement`
+  edit. Motif color 0 is left as the ground.
 
 For both kinds:
 - The target width is the finished circumference; the plan adds the seam
   stitches and keeps the rib symmetric. `plan`, `describe`, `readiness`,
   `render` and `export` work as for any project, and `export` also writes
   finishing instructions.
-- Long floats behind a motif (over 7 stitches) are design warnings, so the
-  hat is not ready. Say so, and suggest a bolder or more compact motif.
-  Never claim ready around them.
+- `plan` and `describe` give the cuff, body and crown rows and cm and the
+  finished height, with the gauge each one assumes. Quote them; don't
+  compute your own.
+- Floats are measured along each yarn's real path through the program,
+  across rows and sections. Floats over 7 stitches are design warnings, so
+  the hat is not ready. Say so, and suggest a bolder or more compact motif.
+  Never claim ready around them. A `carried-yarn` operator check (yarn carried
+  in from the waste section) is not a blocker.
+- **Birdseye back** for logos and thin motifs (like the Arc'teryx bird):
+  `edit hat.json '{"kind":"set-strategy","strategy":{"technique":"birdseye","floatLimit":7}}'`.
+  Every color knits its share of the back on every row, so no float is over
+  a few needles, and the fabric is thicker and warmer. The body knits 3 extra
+  ground rows (back start and join); `plan` counts them and its height fix
+  allows for them. The body gauge must be measured on birdseye fabric. Prefer
+  this over shrinking or simplifying the motif, and say that birdseye is
+  heavier.
 - At 194 needles, the all-rib crown is Kniterate's own; it ends with one
   3-loop stack, so readiness reports a warning. Other widths use our
   eight-line crown, which has never been knitted; say so.
 
 Not supported yet: sweaters, other shaping, seamless tubes, and float
-catching or birdseye backing on beanie bodies. Say so and offer the nearest supported thing instead of
-approximating.
+catching or any beanie body backing other than fairisle and full birdseye (another backing is
+refused with `project-beanie-backing-unsupported`). Say so and offer the
+nearest supported thing instead of approximating.
 
 ## Rules
 

@@ -19,7 +19,9 @@ const GLOSSARY: Record<string, string> = {
   readiness: 'Computed from the verdict and every finding. Ready only when the verdict is not Blocked and no error or warning finding remains. Info-level operator checks are listed, never counted as done.',
   verdict: 'Blocked, Surface-proven, or Knit-proven. Surface-proven means the emitted K-code passed every software check; it is not a physical claim. Knit-proven requires an exact physical registry match.',
   fairisle: 'Stranded backing: unused colors float behind the work. Float length is limited by strategy.floatLimit (warnings above it).',
-  birdseye: 'Double-bed backing: unused colors are knitted on the rear bed in a speckled pattern, so there are no long floats. The V1 Customist-matched birdseye program needs exactly four colors.',
+  birdseye: 'Double-bed backing: unused colors are knitted on the rear bed in a speckled pattern, so there are no long floats. The V1 Customist-matched birdseye panel program needs exactly four colors; a beanie birdseye body takes two to four, ties each into the back every N needles, and knits 3 extra ground rows to start and join the back layer.',
+  placement: 'A motif placed as intent (studio place): its anchor (centred or a column, and rows above the cuff), color mapping and source image are stored, and it is drawn over the chart whenever the project is materialized, so it follows resizes. A placement that does not fit is a conflict that blocks export; it is never clipped.',
+  'carried-yarn': 'An info check: a pattern yarn is carried from the waste section to its first stitch. Leave the strand slack while knitting and trim it after finishing.',
   'stitch-aspect': 'Knitted stitches are wider than they are tall. Charts made from images use the gauge to pick the row count; one pixel per stitch squashes a motif vertically.',
 };
 
@@ -29,6 +31,10 @@ const PLAN_RULES: Record<string, string> = {
   'gauge-assumed': 'Sizing uses an assumed gauge. The project is not ready until a measured gauge is recorded, because the finished size is unverified.',
   'size-exceeds-capacity': 'The target needs more needles, rows, or cells than the V1 bed and capacity allow. Reduce the target or the gauge.',
   'name-encodes-carrier': 'A yarn name mentions a carrier number that is not the carrier it is loaded on. Carrier numbers belong in the carrier field only.',
+  'cuff-off-target': 'The beanie cuff does not have the rows its recorded height needs at the recorded 2x2 rib gauge (twice the height when it folds up). The fix sets the cuff rows and keeps the body rows.',
+  'placement-size-off': 'A motif placed from an image no longer spans the height it was asked for at the current gauge. Re-convert it from the stored image with studio place --refresh <id>.',
+  'project-placement-conflict': 'A placed motif does not fit the piece at its anchor (too wide, or too tall above the cuff). Nothing is drawn and export is blocked; move it, make it smaller, or resize the piece.',
+  'project-beanie-backing-unsupported': 'The beanie body is built only with the backings it implements (fairisle, and birdseye with every color in the back on every row). Any other strategy is refused instead of being silently knitted with a different backing.',
 };
 
 export function explain(term: string): { term: string; kind: 'term' | 'plan-rule' | 'validator-rule' | 'unknown'; title: string; explanation: string } {

@@ -59,6 +59,22 @@ describe('project plan', () => {
     expect(tooWide.findings).toEqual([expect.objectContaining({ rule: 'size-exceeds-capacity', severity: 'error', fixes: [] })]);
   });
 
+  it('never reuses a row ID that an override still anchors, so a quarantined override stays quarantined', () => {
+    let project = createColorworkProjectV1(chart, { id: 'row-ids' });
+    const { state } = materializeColorworkProject(project);
+    // Delete the ten highest-numbered rows, each anchoring an override: a counter starting after the remaining 90 rows would hand those IDs out again.
+    const removed = state.rowIds.filter((rowId) => Number(rowId.slice(4)) > 90);
+    project = edit(project, ...removed.map((rowId, index): ProjectEdit => ({ kind: 'add-override', override: { id: `o${index}`, kind: 'stitch', anchor: { rowId, needleIndex: 0 }, operation: 'tuck' } })),
+      ...removed.map((rowId): ProjectEdit => ({ kind: 'delete-row', rowId })));
+    expect(materializeColorworkProject(project).overrides.every((resolved) => resolved.status === 'quarantined')).toBe(true);
+    const grow = plan(edit(project, { kind: 'set-gauge', gauge: measured }, { kind: 'set-target', target: { heightCm: 32 } })).findings[0]!.fixes[0]!.edits;
+    const added = grow.flatMap((item) => item.kind === 'set-height' ? item.newRowIds : []);
+    expect(added).toHaveLength(19);
+    expect(added.filter((rowId) => removed.includes(rowId) || state.rowIds.includes(rowId))).toEqual([]);
+    const grown = materializeColorworkProject(edit(project, { kind: 'set-gauge', gauge: measured }, { kind: 'set-target', target: { heightCm: 32 } }, ...grow));
+    expect(grown.overrides.every((resolved) => resolved.status === 'quarantined')).toBe(true);
+  });
+
   it('flags a yarn name that contradicts its carrier and offers a rename', () => {
     const project = edit(createColorworkProjectV1(chart, { id: 'names' }), { kind: 'set-yarn-assignment', assignment: { paletteId: 'oat', carrier: '2', yarnName: 'Ground (C4)' } });
     const finding = plan(project).findings.find((item) => item.rule === 'name-encodes-carrier')!;
@@ -87,6 +103,29 @@ describe('beanie plan', () => {
     expect(after.needles).toEqual({ first: 50, last: 203 });
     expect(after.predicted?.widthCm).toMatchObject({ value: 50.7, how: 'finished circumference: (154 − 2 seam st) ÷ 30 st/10 cm' });
     expect(after.finishing.join(' ')).toContain('mattress stitch');
+  });
+
+  it('reports cuff, body, crown and finished height, and checks the cuff against its recorded intent', () => {
+    const rib = { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'measured' as const };
+    const allRib = plan(beanie({ kind: 'set-gauge', gauge: rib }));
+    expect(allRib.sections).toMatchObject({ cuff: null, body: { rows: 102, fabric: 'rib', cm: { value: 31.9 } }, crown: { recipe: expect.stringContaining('Customist'), finalStitches: 25 } });
+    const toque = { kind: 'beanie' as const, construction: 'rib-cuff-jersey-body' as const, cuffRows: 40, cuffFold: true, cuffTargetCm: 7, ribGauge: rib };
+    const project = beanie({ kind: 'set-gauge', gauge: measured }, { kind: 'set-object', object: toque });
+    const before = plan(project);
+    expect(before.findings).toEqual([expect.objectContaining({ rule: 'cuff-off-target', message: expect.stringContaining('should be 45 rows') })]);
+    const after = plan(edit(project, ...before.findings[0]!.fixes[0]!.edits));
+    expect(after.findings).toEqual([]);
+    expect(after.sections).toMatchObject({
+      cuff: { rows: 45, knittedCm: { value: 14.1 }, visibleCm: { value: 7 }, folds: true },
+      body: { rows: 62, chartRows: 62, fabric: 'fairisle colorwork', cm: { value: 18.2 } },
+      crown: { recipe: 'eight-line (jersey)' },
+    });
+    const { cuff, body, crown, finishedHeightCm } = after.sections!;
+    expect(finishedHeightCm!.value).toBeCloseTo(cuff!.visibleCm!.value + body.cm!.value + crown.cm!.value, 1);
+    // Without a rib gauge the cuff cannot be checked, and the plan says so.
+    const unknown = plan(beanie({ kind: 'set-gauge', gauge: measured }, { kind: 'set-object', object: { ...toque, ribGauge: undefined } }));
+    expect(unknown.findings).toEqual([expect.objectContaining({ rule: 'size-needs-gauge', path: 'object.ribGauge' })]);
+    expect(unknown.sections!.finishedHeightCm).toBeNull();
   });
 
   it('refuses circumferences outside the beanie widths', () => {

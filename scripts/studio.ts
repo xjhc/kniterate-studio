@@ -13,11 +13,13 @@ import {
   undoProjectEdit,
   type ColorworkProjectV1,
   type ProjectEdit,
+  type ProjectPlacement,
 } from '../packages/project-contract/src/index.ts';
+import type { ColorworkChartV1 } from '../packages/chart-contract/src/index.ts';
 import { runAuthoredPipeline, type AuthoredPipelineResult } from '../apps/studio/src/authoredPipeline.ts';
 import { openStudioProjectJson } from '../apps/studio/src/chart/projectFile.ts';
 import { explain } from '../apps/studio/src/explain.ts';
-import { imageToChart, type ImageChartSize } from '../apps/studio/src/imageChart.ts';
+import { IMAGE_CHART_CONVERTER, imageToChart, type ImageChartSize } from '../apps/studio/src/imageChart.ts';
 import { planProject, type ProjectPlan } from '../apps/studio/src/plan.ts';
 import { collectFindings, resolveReadiness, type Finding, type Readiness } from '../apps/studio/src/readiness.ts';
 import { decodePng, encodePng } from './lib/png.ts';
@@ -39,9 +41,14 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
       body's colorwork gauge, the chart's bottom rows are the cuff, and --accent adds a second yarn on C4.
       --head-cm sets the finished circumference target (head x (1 + ease), ease default -0.10) and
       --body-cm the body length; the plan's own fixes then size the chart. Widths 60-244 needles.
-  place <project.json> <motif.json> [--x center|<stitches from left>] [--above-cuff <rows>] [--map "1=accent,..."]
-      Paint a ColorworkChartV1 motif into a cuff-and-body beanie's body as one undoable edit. Motif color
-      0 is transparent; motif color k paints project palette entry k unless --map names another.
+  place <project.json> (<motif.json> | --image <png> --height-cm X [--colors K]) [--id <id>]
+        [--x center|<stitches from left>] [--above-cuff <rows>] [--map "1=accent,..."]
+  place <project.json> --refresh <id>
+      Place a motif as intent: it stays centred (or at its column) and its rows above the cuff when the
+      piece is resized, and a motif that no longer fits is a conflict, not a clipped motif. With
+      --image the PNG is converted at the project's body gauge and stored in the project; --refresh
+      re-converts it after the gauge changes. Motif color 0 is transparent; color k paints palette
+      entry k unless --map names another.
   image <file.png> -o <chart.json> (--width-st N | --height-rows N | --width-cm X | --height-cm X)
         [--gauge <st>,<rows>] [--colors K] [--pooling mean|mode] [--title <t>]
       Convert an image to a ColorworkChartV1 chart. --gauge is stitches,rows per 10 cm; with it the
@@ -76,7 +83,7 @@ const MAX_FINDINGS = 200;
 
 class UsageError extends Error {}
 
-const VALUE_OPTIONS = ['--object', '--color', '--accent', '--cuff-cm', '--rib-gauge', '--x', '--above-cuff', '--map', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
+const VALUE_OPTIONS = ['--image', '--refresh', '--object', '--color', '--accent', '--cuff-cm', '--rib-gauge', '--x', '--above-cuff', '--map', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
 
 interface Parsed {
   command: string | null;
@@ -213,6 +220,12 @@ function carrierRequirements(project: ColorworkProjectV1, result: AuthoredPipeli
     });
 }
 
+/** The plan for a project at its cursor, including how its placements resolved. */
+function planOf(project: ColorworkProjectV1): ProjectPlan {
+  const { state, placements } = materializeColorworkProject(project);
+  return planProject(state, placements);
+}
+
 interface Evaluated {
   plan: ProjectPlan;
   result: AuthoredPipelineResult;
@@ -221,7 +234,7 @@ interface Evaluated {
 }
 
 async function evaluate(project: ColorworkProjectV1): Promise<Evaluated> {
-  const plan = planProject(materializeColorworkProject(project).state);
+  const plan = planOf(project);
   const result = await runAuthoredPipeline(project);
   const findings = collectFindings(plan, result);
   return { plan, result, findings, readiness: resolveReadiness({ verdict: result.verdict, findings }) };
@@ -245,18 +258,25 @@ function formatMinutes(seconds: number | null | undefined): string {
   return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
 }
 
+/** One line describing what the beanie construction knits, from the plan's sections. */
+function constructionLine(plan: ProjectPlan): string {
+  const sections = plan.sections!;
+  const cm = (value: { value: number } | null) => value === null ? '' : ` (${value.value} cm)`;
+  return [
+    `${plan.stitches.value} needles ${plan.needles.first}–${plan.needles.last}`,
+    sections.cuff ? `${sections.cuff.rows}-row 2x2 rib cuff${sections.cuff.folds ? ` folding up to ${sections.cuff.visibleCm?.value ?? '?'} cm` : cm(sections.cuff.knittedCm)}` : null,
+    `${sections.body.rows}-row ${sections.body.fabric} body${cm(sections.body.cm)}`,
+    `${sections.crown.rows}-row ${sections.crown.recipe} crown to ${sections.crown.finalStitches} stitches${cm(sections.crown.cm)}`,
+    sections.finishedHeightCm ? `finished height about ${sections.finishedHeightCm.value} cm flat` : null,
+  ].filter(Boolean).join('; ');
+}
+
 function summary(project: ColorworkProjectV1, evaluated: Evaluated): string[] {
   const { plan, result, readiness } = evaluated;
   const lines = [
     `Project "${project.title}" (${project.id}), edit ${project.history.cursor} of ${project.history.entries.length}`,
     plan.piece === 'beanie'
-      ? (() => {
-          const object = materializeColorworkProject(project).state.object;
-          const cuff = object?.construction === 'rib-cuff-jersey-body' ? object.cuffRows ?? 0 : null;
-          return cuff === null
-            ? `Beanie (flat 2x2 rib, seamed): ${plan.stitches.value} needles ${plan.needles.first}–${plan.needles.last} × ${plan.rows.value} rib rows, then the crown; frame ${result.compiled?.frame?.preset ?? 'not compiled'}`
-            : `Beanie (rib cuff + colorwork body, seamed): ${plan.stitches.value} needles ${plan.needles.first}–${plan.needles.last}; ${cuff}-row 2x2 rib cuff${object?.cuffFold ? ' (folds up)' : ''}, ${plan.rows.value - cuff}-row fairisle body, then the crown; frame ${result.compiled?.frame?.preset ?? 'not compiled'}`;
-        })()
+      ? `Beanie: ${constructionLine(plan)}; frame ${result.compiled?.frame?.preset ?? 'not compiled'}`
       : `Panel: ${plan.stitches.value} st × ${plan.rows.value} rows on needles ${plan.needles.first}–${plan.needles.last}; backing ${plan.backing.technique} (float limit ${plan.backing.floatLimit})`,
     plan.gauge === null ? 'Gauge: none recorded (sizes in cm are unknown)'
       : `Gauge: ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}) → predicted ${plan.piece === 'beanie' ? 'finished circumference ' : ''}${plan.predicted!.widthCm.value} × ${plan.piece === 'beanie' ? 'body ' : ''}${plan.predicted!.heightCm.value} cm`,
@@ -322,7 +342,7 @@ function newBeanie(parsed: Parsed): ColorworkProjectV1 {
   const edits: ProjectEdit[] = [
     { kind: 'set-object', object: cuffRows === null
       ? { kind: 'beanie', construction: 'flat-rib-2x2' }
-      : { kind: 'beanie', construction: 'rib-cuff-jersey-body', cuffRows, ...(fold ? { cuffFold: true } : {}) } },
+      : { kind: 'beanie', construction: 'rib-cuff-jersey-body', cuffRows, cuffTargetCm: cuffCm!, ribGauge: { ...ribGauge!, source: 'measured' }, ...(fold ? { cuffFold: true } : {}) } },
     { kind: 'set-yarn-assignment', assignment: { paletteId: 'main', carrier: '3', yarnName: main.name } },
   ];
   if (accent) edits.push({ kind: 'set-yarn-assignment', assignment: { paletteId: 'accent', carrier: '4', yarnName: accent.name } });
@@ -337,44 +357,94 @@ function newBeanie(parsed: Parsed): ColorworkProjectV1 {
   }
   for (const edit of edits) project = appendProjectEdit(project, { id: `new-${randomUUID()}`, source: parsed.source, edit });
   // Size with the plan's own fixes, so sizing arithmetic lives in one place.
-  const fixes = planProject(materializeColorworkProject(project).state).findings
+  const fixes = planOf(project).findings
     .filter((finding) => finding.rule === 'size-off-target')
     .flatMap((finding) => finding.fixes.flatMap((fix) => fix.edits));
   for (const edit of fixes) project = appendProjectEdit(project, { id: `size-${randomUUID()}`, source: 'system', edit });
   return project;
 }
 
-/** One paint-cells edit placing a motif chart in a cuff-and-body beanie's body. */
-async function placeMotif(parsed: Parsed, project: ColorworkProjectV1): Promise<{ edit: ProjectEdit; placed: Record<string, unknown> }> {
+/** Reads the motif for `place`: a ColorworkChartV1 file, or a PNG converted at the project's body gauge (kept as the placement's source). */
+async function placementMotif(parsed: Parsed, gauge: { stitchesPer10cm: number; rowsPer10cm: number } | null): Promise<{ motif: ColorworkChartV1; source?: ProjectPlacement['source'] }> {
+  const image = parsed.options.get('--image');
+  if (image === undefined) return { motif: JSON.parse(await readFile(positional(parsed, 1, 'motif chart or --image <png>'), 'utf8')) as ColorworkChartV1 };
+  if (gauge === null) throw new UsageError('--image needs the project to have a gauge (set-gauge) to size the motif in cm.');
+  const heightCm = numberOption(parsed, '--height-cm');
+  if (heightCm === null) throw new UsageError('--image needs --height-cm.');
+  const bytes = await readFile(image);
+  const pooling = parsed.options.get('--pooling') ?? 'mean';
+  if (pooling !== 'mean' && pooling !== 'mode') throw new UsageError('--pooling must be mean or mode.');
+  const colors = integerOption(parsed, '--colors') ?? 2;
+  const converted = imageToChart(decodePng(bytes), { size: { heightCm }, colors, gauge, pooling });
+  return {
+    motif: converted.chart,
+    source: { mediaType: 'image/png', sha256: createHash('sha256').update(bytes).digest('hex'), bytesBase64: bytes.toString('base64'), heightCm, colors, pooling, converter: { ...IMAGE_CHART_CONVERTER } },
+  };
+}
+
+/** A placement edit: a motif anchored centred (or at a column) a number of rows above the cuff. */
+async function placementEdit(parsed: Parsed, project: ColorworkProjectV1): Promise<ProjectEdit> {
   const { state } = materializeColorworkProject(project);
-  if (state.object?.construction !== 'rib-cuff-jersey-body') throw new UsageError('place needs a cuff-and-body beanie (new --object beanie --cuff-cm ...).');
-  const motif = JSON.parse(await readFile(positional(parsed, 1, 'motif chart'), 'utf8')) as { width: number; height: number; cells: number[][] };
-  const cuffRows = state.object.cuffRows ?? 0;
-  const bodyRows = state.chart.height - cuffRows;
+  const refresh = parsed.options.get('--refresh');
+  if (refresh !== undefined) {
+    // Re-convert a placement from its stored image at the current gauge; its anchor and colors stay.
+    const existing = (state.placements ?? []).find((item) => item.id === refresh);
+    if (existing === undefined) throw new UsageError(`no placement "${refresh}".`);
+    if (existing.source === undefined) throw new UsageError(`placement "${refresh}" has no stored image to re-convert.`);
+    if (!state.gauge) throw new UsageError('--refresh needs the project gauge.');
+    const source = existing.source;
+    const motif = imageToChart(decodePng(Buffer.from(source.bytesBase64, 'base64')), { size: { heightCm: source.heightCm }, colors: source.colors, gauge: state.gauge, pooling: source.pooling }).chart;
+    return { kind: 'set-placement', placement: { ...existing, motif } };
+  }
+  const { motif, source } = await placementMotif(parsed, state.gauge ?? null);
   const xRaw = parsed.options.get('--x') ?? 'center';
-  const x = xRaw === 'center' ? Math.floor((state.chart.width - motif.width) / 2) : Number(xRaw);
+  const x = xRaw === 'center' ? 'center' as const : Number(xRaw);
+  if (x !== 'center' && (!Number.isInteger(x) || x < 0)) throw new UsageError('--x must be center or a whole number of stitches from the left.');
   const above = parsed.options.has('--above-cuff') ? Number(parsed.options.get('--above-cuff')) : 2;
   if (!Number.isInteger(above) || above < 0) throw new UsageError('--above-cuff must be a whole number of rows.');
-  if (!Number.isInteger(x) || x < 0 || x + motif.width > state.chart.width) throw new UsageError(`the motif (${motif.width} st wide) does not fit at x=${xRaw} in ${state.chart.width} needles.`);
-  if (above + motif.height > bodyRows) throw new UsageError(`the motif needs ${above + motif.height} body rows above the cuff; the body has ${bodyRows}. Make the body longer or the motif smaller.`);
-  const map = new Map<number, number>();
+  // Default color map: motif color k paints project palette entry k; color 0 is transparent.
+  const colors: Record<string, string> = {};
+  for (const color of new Set(motif.cells.flat())) if (color !== 0 && state.chart.palette[color]) colors[String(color)] = state.chart.palette[color]!.id;
   for (const pair of (parsed.options.get('--map') ?? '').split(',').filter(Boolean)) {
     const [from, to] = pair.split('=');
-    const index = state.chart.palette.findIndex((entry) => entry.id === to);
-    if (index < 0) throw new UsageError(`--map target "${to}" is not a palette id (${state.chart.palette.map((entry) => entry.id).join(', ')}).`);
-    map.set(Number(from), index);
+    if (!state.chart.palette.some((entry) => entry.id === to)) throw new UsageError(`--map target "${to}" is not a palette id (${state.chart.palette.map((entry) => entry.id).join(', ')}).`);
+    colors[String(Number(from))] = to!;
   }
-  const cells: { rowId: string; column: number; paletteIndex: number }[] = [];
-  motif.cells.forEach((row, top) => row.forEach((value, column) => {
-    if (value === 0) return;
-    const paletteIndex = map.get(value) ?? value;
-    if (paletteIndex >= state.chart.palette.length) throw new UsageError(`motif color ${value} has no project palette entry; add one or use --map.`);
-    // Motif rows are stored top first; knit rows count up from the cast-on.
-    const knitRow = cuffRows + above + (motif.height - 1 - top);
-    cells.push({ rowId: state.rowIds[state.chart.height - 1 - knitRow]!, column: x + column, paletteIndex });
-  }));
-  if (cells.length === 0) throw new UsageError('the motif has no cells other than color 0.');
-  return { edit: { kind: 'paint-cells', cells }, placed: { x, rowsAboveCuff: above, width: motif.width, height: motif.height, cellsPainted: cells.length } };
+  const id = parsed.id ?? `motif-${(state.placements?.length ?? 0) + 1}`;
+  return { kind: 'set-placement', placement: { id, motif, x, rowsAboveCuff: above, colors, ...(source ? { source } : {}) } };
+}
+
+/** The operator's sheet: what the .kc knits, its sizes and assumptions, readiness, unresolved warnings, checks, loading and finishing. */
+function instructions(project: ColorworkProjectV1, plan: ProjectPlan, result: AuthoredPipelineResult, findings: readonly Finding[], readiness: Readiness): string {
+  const sections = plan.sections;
+  const warnings = findings.filter((finding) => finding.severity !== 'info');
+  const lines = [
+    `# ${project.title}`,
+    '',
+    `Program: ${result.kcode?.passCount ?? '?'} passes, KCode SHA-256 ${result.kcode?.kcHash ?? 'none'}. Verdict: ${result.verdict.label}.`,
+    `Readiness: ${readiness.ready ? 'READY' : `NOT READY (${readiness.blockers.length} blocker${readiness.blockers.length === 1 ? '' : 's'})`}. Software evidence only: this program has not been accepted by a controller or knitted.`,
+    '',
+    '## What it knits',
+    plan.piece === 'beanie' ? `Flat beanie, seamed afterwards: ${constructionLine(plan)}.` : `Panel: ${plan.stitches.value} needles (${plan.needles.first}-${plan.needles.last}) × ${plan.rows.value} rows.`,
+    `Frame: ${result.compiled?.frame?.preset ?? 'unknown'}.`,
+    ...(plan.gauge ? [`Body gauge: ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}).`] : ['No gauge recorded: sizes in cm are unknown.']),
+    ...(plan.predicted ? [`Predicted width: ${plan.predicted.widthCm.value} cm (${plan.predicted.widthCm.how}).`] : []),
+    ...(sections ? [
+      ...(sections.cuff ? [`Cuff: ${sections.cuff.rows} rows${sections.cuff.knittedCm ? `, ${sections.cuff.knittedCm.value} cm knitted (${sections.cuff.knittedCm.how})` : ''}${sections.cuff.folds ? `, folds up to ${sections.cuff.visibleCm?.value ?? '?'} cm` : ''}.`] : []),
+      `Body: ${sections.body.rows} rows of ${sections.body.fabric}${sections.body.cm ? `, ${sections.body.cm.value} cm (${sections.body.cm.how})` : ''}.`,
+      `Crown: ${sections.crown.rows} rows, ${sections.crown.recipe}, closing to ${sections.crown.finalStitches} stitches${sections.crown.cm ? `, ${sections.crown.cm.value} cm (${sections.crown.cm.how})` : ''}.`,
+      ...(sections.finishedHeightCm ? [`Finished height: about ${sections.finishedHeightCm.value} cm (${sections.finishedHeightCm.how}).`] : []),
+    ] : []),
+    ...(warnings.length ? ['', '## Unresolved warnings', ...warnings.map((finding) => `- ${finding.severity.toUpperCase()} ${finding.rule} (${finding.owner}): ${finding.message}`)] : []),
+    '',
+    '## Load',
+    ...(carrierRequirements(project, result) ?? []).map((item) => `- C${item.carrier}: ${item.role === 'pattern' ? item.yarnName : item.role === 'waste' ? 'waste yarn' : 'draw thread (smooth contrasting yarn, removed afterwards)'}`),
+    ...(readiness.operatorChecks.length ? ['', '## Operator checks', ...readiness.operatorChecks.map((check) => `- ${check}`)] : []),
+    '',
+    '## After knitting',
+    ...plan.finishing.map((step, index) => `${index + 1}. ${step}`),
+  ];
+  return `${lines.join('\n')}\n`;
 }
 
 async function main(): Promise<number> {
@@ -434,7 +504,7 @@ async function main(): Promise<number> {
       print(describeProject(await readProject(positional(parsed, 0, 'project file')), parsed.cells));
       return 0;
     case 'plan':
-      print(planProject(materializeColorworkProject(await readProject(positional(parsed, 0, 'project file'))).state));
+      print(planOf(await readProject(positional(parsed, 0, 'project file'))));
       return 0;
     case 'describe':
     case 'readiness': {
@@ -449,23 +519,27 @@ async function main(): Promise<number> {
     case 'edit': {
       const path = positional(parsed, 0, 'project file');
       let project = await readProject(path);
-      const before = planSnapshot(planProject(materializeColorworkProject(project).state));
+      const before = planSnapshot(planOf(project));
       for (const edit of await readEdits(positional(parsed, 1, 'edit'))) {
         project = appendProjectEdit(project, { id: `cli-${randomUUID()}`, source: parsed.source, edit });
       }
       await writeProject(parsed.out ?? path, project);
-      const after = planSnapshot(planProject(materializeColorworkProject(project).state));
+      const after = planSnapshot(planOf(project));
       print({ ...describeProject(project, false), plan: { before, after } });
       return 0;
     }
     case 'place': {
       const path = positional(parsed, 0, 'project file');
       let project = await readProject(path);
-      const { edit, placed } = await placeMotif(parsed, project);
+      const edit = await placementEdit(parsed, project);
       project = appendProjectEdit(project, { id: `cli-${randomUUID()}`, source: parsed.source, edit });
       await writeProject(parsed.out ?? path, project);
-      print({ placed, plan: planSnapshot(planProject(materializeColorworkProject(project).state)) });
-      return 0;
+      const resolved = materializeColorworkProject(project).placements.find((item) => edit.kind === 'set-placement' && item.placement.id === edit.placement.id)!;
+      print({
+        placement: { id: resolved.placement.id, status: resolved.status, at: resolved.at, reason: resolved.reason ?? null, width: resolved.placement.motif.width, height: resolved.placement.motif.height, x: resolved.placement.x, rowsAboveCuff: resolved.placement.rowsAboveCuff, colors: resolved.placement.colors },
+        plan: planSnapshot(planOf(project)),
+      });
+      return resolved.status === 'placed' ? 0 : 1;
     }
     case 'undo':
     case 'redo': {
@@ -495,21 +569,7 @@ async function main(): Promise<number> {
       const exported = parsed.command === 'export' && result.exportReady && result.kcode !== null;
       if (exported) {
         await writeFile(parsed.out!, result.kcode!.kcText);
-        const plan = planProject(materializeColorworkProject(project).state);
-        await writeFile(parsed.out!.replace(/\.kc$/, '') + '-instructions.md', `${[
-          `# ${project.title}`,
-          '',
-          `${plan.piece === 'beanie' ? 'Flat 2x2 rib beanie' : 'Panel'}: ${plan.stitches.value} needles (${plan.needles.first}-${plan.needles.last}) × ${plan.rows.value} ${plan.piece === 'beanie' ? 'rib rows, then the crown' : 'rows'}. Frame: ${result.compiled?.frame?.preset ?? 'unknown'}.`,
-          plan.predicted ? `Predicted under gauge ${plan.gauge!.stitchesPer10cm} st / ${plan.gauge!.rowsPer10cm} rows per 10 cm (${plan.gauge!.source}): ${plan.predicted.widthCm.value} cm (${plan.predicted.widthCm.how}) × ${plan.predicted.heightCm.value} cm.` : 'No gauge recorded: sizes in cm are unknown.',
-          '',
-          '## Load',
-          ...(carrierRequirements(project, result) ?? []).map((item) => `- C${item.carrier}: ${item.role === 'pattern' ? item.yarnName : item.role === 'waste' ? 'waste yarn' : 'draw thread (smooth contrasting yarn, removed afterwards)'}`),
-          '',
-          '## After knitting',
-          ...plan.finishing.map((step, index) => `${index + 1}. ${step}`),
-          '',
-          `Verdict: ${result.verdict.label}. Software evidence only; not yet knitted from this program.`,
-        ].join('\n')}\n`);
+        await writeFile(parsed.out!.replace(/\.kc$/, '') + '-instructions.md', instructions(project, planOf(project), result, findings, readiness));
       }
       print({
         project: { id: project.id, title: project.title, revision: result.compiled?.revision ?? null },

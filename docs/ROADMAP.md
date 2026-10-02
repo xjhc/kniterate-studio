@@ -253,11 +253,14 @@ Remaining:
 - ~~a beanie project in the authored pipeline~~: done (`object: beanie`,
   verdict via `resolveAuthoredVerdict`, readiness, finishing instructions);
 - ~~motif placement and the fold-up cuff~~: done as a rib cuff +
-  fairisle body with `place`. The motif is painted into the chart; bundled
-  images and placement objects are deferred. Long floats keep bold motifs
-  honest, and float catching or birdseye backing is next;
-- the benchmark's beanie cases;
-- a development knit in acrylic.
+  colorwork body. Placements are stored intent (anchor, color map, source
+  image) that survives resizing or reports a conflict;
+- ~~birdseye backing for beanie bodies~~: done, so the real bird is ready;
+- ~~the benchmark's beanie cases~~: done (`arc-style-toque`, `toque-resize`
+  with the real bird; not-ready answers are checked against the project);
+- a development knit in acrylic: prepared in
+  [`M6-ACRYLIC-DEV-TRIAL.md`](./M6-ACRYLIC-DEV-TRIAL.md), waiting for the
+  operator run. M7 stays queued until it is accepted.
 
 Goal: *given a natural-language request with dimensions, yarn, measured gauge
 and a motif, Studio produces an editable beanie project, one validated `.kc`

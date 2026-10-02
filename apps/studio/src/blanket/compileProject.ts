@@ -7,6 +7,7 @@ import {
   type AuthoredCapacityV1,
   type ColorworkProjectV1,
   type ResolvedProjectOverride,
+  type ResolvedProjectPlacement,
   type ProjectState,
 } from '@kniterate-studio/project-contract';
 import {
@@ -145,8 +146,8 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
       diagnostics: [{ ...message, opIndex: null, rowId: null, passIndices: [] }],
     };
   }
-  const { state, overrides } = materializeColorworkProject(project);
-  if (state.object?.kind === 'beanie') return compileBeanieProject(project, state, overrides, capacity as AuthoredCapacitySupportedV1);
+  const { state, overrides, placements } = materializeColorworkProject(project);
+  if (state.object?.kind === 'beanie') return compileBeanieProject(project, state, overrides, placements, capacity as AuthoredCapacitySupportedV1);
   const usedPaletteIndexes = new Set(state.chart.cells.flat());
   const usedPalette = state.chart.palette.filter((_entry, index) => usedPaletteIndexes.has(index));
   const assignments = new Map(state.machine.yarnAssignments.map((assignment) => [assignment.paletteId, assignment]));
@@ -311,6 +312,7 @@ function compileBeanieProject(
   project: ColorworkProjectV1,
   state: ProjectState,
   overrides: readonly ResolvedProjectOverride[],
+  placements: readonly ResolvedProjectPlacement[],
   capacity: AuthoredCapacitySupportedV1,
 ): BlanketCompileArtifact {
   const object = state.object!;
@@ -326,7 +328,6 @@ function compileBeanieProject(
   const yarn = state.chart.palette[cuffColors[0] ?? 0]!;
   const assignment = assignments.get(yarn.id);
   const setupMessages: ValidationMessage[] = [];
-  const warnings: ValidationMessage[] = [];
   if (cuffColors.length > 1) setupMessages.push(setupError('project-beanie-colorwork-unsupported', withBody
     ? `The rib cuff (the bottom ${cuffRows} rows) uses ${cuffColors.length} colors; the rib knits one yarn. Put colorwork in the body rows above it.`
     : `This beanie's rib body uses ${cuffColors.length} colors; use the rib-cuff-jersey-body construction to add a colorwork body.`));
@@ -339,19 +340,12 @@ function compileBeanieProject(
   }
   if (width % 2 !== 0 || width < BEANIE_WIDTH_LIMITS.min || width > BEANIE_WIDTH_LIMITS.max) setupMessages.push(setupError('project-beanie-width', `The flat 2x2 rib beanie needs an even width from ${BEANIE_WIDTH_LIMITS.min} to ${BEANIE_WIDTH_LIMITS.max} needles; this one has ${width}.`));
   for (const resolved of overrides) setupMessages.push(setupError(resolved.status === 'quarantined' ? 'project-override-quarantined' : 'project-override-unsupported', resolved.reason ?? `Override ${resolved.override.id} cannot be compiled for a beanie; remove it to export.`));
-  // Fairisle floats: the gap a color crosses between two of its own stitches in one row.
-  const floatLimit = state.strategy.floatLimit;
-  bodyCells.forEach((cells, index) => {
-    let longest = 0;
-    for (const color of new Set(cells)) {
-      let last = -1;
-      cells.forEach((cell, column) => { if (cell === color) { if (last >= 0) longest = Math.max(longest, column - last - 1); last = column; } });
-    }
-    if (longest > floatLimit) {
-      const chartRow = state.chart.height - 1 - (cuffRows + index);
-      warnings.push({ severity: 'warning', rule: 'long-float', message: `Body row ${cuffRows + index + 1} (row id ${state.rowIds[chartRow]}) has a ${longest}-stitch float behind the work; the limit is ${floatLimit}.` });
-    }
-  });
+  // A placement that does not fit is not drawn; refuse to export a program that silently omits it.
+  for (const resolved of placements) if (resolved.status === 'conflict') setupMessages.push(setupError('project-placement-conflict', resolved.reason ?? `Placement ${resolved.placement.id} does not fit.`));
+  // The construction knits only what it implements; never compile a different backing than the one chosen.
+  const backing = state.strategy.technique;
+  if (withBody && backing !== 'fairisle' && backing !== 'birdseye') setupMessages.push(setupError('project-beanie-backing-unsupported', `The beanie body supports fairisle and birdseye backings; ${backing} is not built for beanies yet.`));
+  if (withBody && backing === 'birdseye' && state.strategy.birdseyeMode === 'minimal') setupMessages.push(setupError('project-beanie-backing-unsupported', 'The beanie birdseye body ties every color into the backing on every row (full); minimal birdseye is not built for beanies.'));
   const crown = width === CUSTOMIST_RIB_CROWN_WIDTH && !withBody ? 'customist-194' as const : 'eight-line' as const;
   const frame: CompiledFrame = {
     preset: `customist-2x2-rib-beanie@1 (${crown} crown)`,
@@ -383,7 +377,7 @@ function compileBeanieProject(
     drawCarrier: '1',
     ribRows: cuffRows,
     crown,
-    ...(withBody ? { jerseyBody: { rows: bodyCells.map((cells) => cells.map(carrierOf)) } } : {}),
+    ...(withBody ? { jerseyBody: { rows: bodyCells.map((cells) => cells.map(carrierOf)), backing: backing === 'birdseye' ? 'birdseye' as const : 'fairisle' as const } } : {}),
   } as const;
   const built = buildCustomistRibBeanie(input);
   const knitoutText = writeKnitoutProgram(built.program);
@@ -397,12 +391,12 @@ function compileBeanieProject(
     ok,
     compileVerdict: ok ? 'surface' : 'blocked',
     inputHash: ok ? computeInputHash({ construction: 'customist-2x2-rib-beanie@1', ...input }) : null,
-    messages: [...warnings, ...capacityMessages],
+    messages: capacityMessages,
     knitoutText: ok ? knitoutText : null,
     passes: built.predictedPasses,
     // The beanie has no chart-row provenance: every operation belongs to the construction.
     programOpSourceRows: parsed.opLines.map(() => null),
-    diagnostics: [...warnings, ...capacityMessages].map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })),
+    diagnostics: capacityMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })),
     stats: { ...base.stats, passCount: built.predictedPasses.length, opCount: built.program.ops.length },
   };
 }

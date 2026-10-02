@@ -1,8 +1,8 @@
 {
   "kind": "kniterate-design-language-eval",
   "schemaVersion": 1,
-  "milestone": "M5",
-  "note": "Rectangle-scope agent-legibility cases. Outcomes: ready | not-ready | needs-input | unsupported. A reported 'ready' is re-checked by the harness; a false ready claim fails the whole run.",
+  "milestone": "M6",
+  "note": "Agent-legibility cases. Outcomes: ready | not-ready | needs-input | unsupported. A ready or not-ready answer is checked against the project itself: a false ready claim fails the whole run, a not-ready claim must be true and name the expected blockers, and the requested garment, construction and motif placement are checked either way. The bird cases read ~/pro/knitlab2/reference/arc.png, which is not committed here.",
   "cases": [
     {
       "id": "scarf-stripes",
@@ -52,9 +52,15 @@
     },
     {
       "id": "arc-style-toque",
-      "request": "An Arc'teryx-style toque for a 56 cm head: black, a 7 cm folded-up 2x2 rib cuff, a 13 cm body with the motif in motif.png in white, 8 cm tall, centred just above the cuff. My body gauge is 26 stitches and 34 rows per 10 cm; my 2x2 rib gauge is 30 stitches and 32 rows per 10 cm. Both measured.",
-      "setup": { "kind": "motif-png" },
-      "expect": { "outcomes": ["ready", "not-ready"], "stitches": 134, "colors": 2, "gauge": [26, 34] }
+      "request": "An Arc'teryx-style toque for a 56 cm head: black, a 7 cm folded-up 2x2 rib cuff, a 13 cm body with the bird in motif.png in white, 8 cm tall, centred just above the cuff. My body gauge is 26 stitches and 34 rows per 10 cm; my 2x2 rib gauge is 30 stitches and 32 rows per 10 cm. Both measured.",
+      "setup": { "kind": "image-file", "path": "~/pro/knitlab2/reference/arc.png" },
+      "expect": { "outcomes": ["ready", "not-ready"], "blockersIfNotReady": ["long-float"], "stitches": 134, "colors": 2, "gauge": [26, 34], "object": { "construction": "rib-cuff-jersey-body", "cuffFold": true, "cuffTargetCm": 7, "ribGauge": [30, 32] }, "placements": { "count": 1, "centred": true, "heightCm": 8, "maxRowsAboveCuff": 4 } }
+    },
+    {
+      "id": "toque-resize",
+      "request": "Make the toque in project.json for a 52 cm head with the same negative ease. Keep the bird centred above the cuff and everything else the same.",
+      "setup": { "kind": "toque-project", "path": "~/pro/knitlab2/reference/arc.png" },
+      "expect": { "outcomes": ["ready", "not-ready"], "blockersIfNotReady": ["long-float"], "stitches": 122, "rows": 89, "gauge": [26, 34], "object": { "construction": "rib-cuff-jersey-body", "cuffFold": true, "cuffTargetCm": 7, "ribGauge": [30, 32] }, "placements": { "count": 1, "centred": true, "heightCm": 8, "maxRowsAboveCuff": 3 } }
     },
     {
       "id": "make-longer",

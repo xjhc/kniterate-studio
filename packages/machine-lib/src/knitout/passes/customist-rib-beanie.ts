@@ -22,6 +22,7 @@
 import { b as backBed, comment, f, type CarrierId, type Direction, type KnitoutOp, type KnitoutProgram } from '../types.js'
 import { CarriageSimulator } from '../sim/carriage-simulator.js'
 import { FAIRISLE_BODY_DEFAULTS } from '../kniterate/constants.js'
+import { CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES } from '../recipes/customist-studio-birdseye-7gg.js'
 import type { PredictedPass } from '../sim/types.js'
 import { CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH, type CustomistRibCrownStep } from './customist-rib-beanie-crown.js'
 import { planEightLineCrown, ribBed } from './rib-crown-plan.js'
@@ -84,13 +85,31 @@ export interface CustomistRibBeanieInput {
   /**
    * A colorwork body above the rib cuff: rows in knitting order (bottom
    * first), one carrier per needle offset. The rib then transfers to the
-   * front bed, each row knits one pass per color (fairisle: the unused colors
-   * float behind), and the eight-line crown is planned for jersey. The body
-   * carrier is the ground; other carriers are brought in after it in the
-   * waste section.
+   * front bed and each row knits one pass per color; the eight-line crown is
+   * planned for jersey. The body carrier is the ground; other carriers are
+   * brought in after it in the waste section.
+   *
+   * `fairisle` (default): each color knits its front stitches and floats
+   * behind the rest. `birdseye`: in the structure of `reference/dbj.kc`, at
+   * half rack each color's pass also knits its share of the rear bed (rear
+   * offset o in row r belongs to color (o + r) mod N, ground first), so every
+   * color is tied to the backing every N needles and no float is longer than
+   * N. The back layer starts as dbj.kc's does (the ground knits both beds,
+   * then one front and one rear row) and ends as it does (every rear loop
+   * onto the front needle across, then one ground row joins the layers).
    */
-  jerseyBody?: { readonly rows: readonly (readonly CarrierId[])[] }
+  jerseyBody?: { readonly rows: readonly (readonly CarrierId[])[]; readonly backing?: 'fairisle' | 'birdseye' }
 }
+
+/** Birdseye body settings: Customist's DBJ body (customist-studio-birdseye-7gg.ts, from reference/dbj.kc). */
+const BIRDSEYE_BODY = {
+  speed: CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES.body!.speedNumber!,
+  roller: CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES.body!.rollerAdvance!,
+  stitch: CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES.body!.stitchNumber!,
+}
+
+/** Ground rows a birdseye body adds to the chart's rows: two to start the back layer, one to join the layers. */
+export const BIRDSEYE_BODY_EXTRA_FRONT_ROWS = 3
 
 export interface CustomistRibBeanieResult {
   ops: KnitoutOp[]
@@ -244,17 +263,56 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
     // Rib → jersey: every rear stitch moves to the empty front needle across.
     xfers([{ from: 'b', offsets: offsets('+', (o) => ribBed(o) === 'b') }])
     drain()
-    ops.push(comment('--- JERSEY COLORWORK BODY ---'))
-    settings(FAIRISLE_BODY_DEFAULTS.speedNumber, FAIRISLE_BODY_DEFAULTS.rollerAdvance, FAIRISLE_BODY_DEFAULTS.stitchNumber)
-    for (const cells of bodyRows) {
-      // Ground first, then the other colors; each starts from the side its carrier is parked on.
-      for (const carrier of [body, ...extraCarriers]) {
-        if (!cells.includes(carrier)) continue
-        const dir: Direction = sim.positionOf(carrier)?.side === 'right' ? '-' : '+'
-        for (const o of offsets(dir, (x) => cells[x] === carrier)) sim.knit(carrier, dir, f(lo + o))
+    if (input.jerseyBody.backing === 'birdseye') {
+      ops.push(comment('--- BIRDSEYE COLORWORK BODY ---'))
+      settings(BIRDSEYE_BODY.speed, BIRDSEYE_BODY.roller, BIRDSEYE_BODY.stitch)
+      const colors = [body, ...extraCarriers]
+      const sideOf = (carrier: CarrierId): Direction => sim.positionOf(carrier)?.side === 'right' ? '-' : '+'
+      /** One pass at half rack: front and rear in carriage order (rear n sits between front n and n + 1). */
+      const halfRackPass = (carrier: CarrierId, front: (o: number) => boolean, rear: (o: number) => boolean) => {
+        const dir = sideOf(carrier)
+        for (const o of offsets(dir, (x) => front(x) || rear(x))) {
+          const beds = dir === '+' ? ['f', 'b'] as const : ['b', 'f'] as const
+          for (const bed of beds) {
+            if (bed === 'f' && front(o)) sim.knit(carrier, dir, f(lo + o))
+            if (bed === 'b' && rear(o)) sim.knit(carrier, dir, backBed(lo + o))
+          }
+        }
       }
+      // Start the back layer (dbj.kc): the ground knits both beds, then one front and one rear row.
+      sim.setRacking(0.5)
+      halfRackPass(body, all, all)
+      sim.setRacking(0)
+      for (const bed of ['f', 'b'] as const) {
+        const dir = sideOf(body)
+        for (const o of offsets(dir, all)) sim.knit(body, dir, bed === 'f' ? f(lo + o) : backBed(lo + o))
+      }
+      sim.setRacking(0.5)
+      bodyRows.forEach((cells, r) => {
+        colors.forEach((carrier, index) => halfRackPass(carrier, (o) => cells[o] === carrier, (o) => (o + r) % colors.length === index))
+      })
+      sim.setRacking(0)
+      drain()
+      // Join the layers (dbj.kc): every rear loop onto the front needle across, then one ground row.
+      xfers([{ from: 'b', offsets: offsets('+', all) }])
+      drain()
+      settings(FAIRISLE_BODY_DEFAULTS.speedNumber, FAIRISLE_BODY_DEFAULTS.rollerAdvance, FAIRISLE_BODY_DEFAULTS.stitchNumber)
+      const dir = sideOf(body)
+      for (const o of offsets(dir, all)) sim.knit(body, dir, f(lo + o))
+      drain()
+    } else {
+      ops.push(comment('--- JERSEY COLORWORK BODY ---'))
+      settings(FAIRISLE_BODY_DEFAULTS.speedNumber, FAIRISLE_BODY_DEFAULTS.rollerAdvance, FAIRISLE_BODY_DEFAULTS.stitchNumber)
+      for (const cells of bodyRows) {
+        // Ground first, then the other colors; each starts from the side its carrier is parked on.
+        for (const carrier of [body, ...extraCarriers]) {
+          if (!cells.includes(carrier)) continue
+          const dir: Direction = sim.positionOf(carrier)?.side === 'right' ? '-' : '+'
+          for (const o of offsets(dir, (x) => cells[x] === carrier)) sim.knit(carrier, dir, f(lo + o))
+        }
+      }
+      drain()
     }
-    drain()
   }
 
   if (input.crown !== 'none') {

@@ -31,6 +31,11 @@ const MAX_ADVISORY_DETAILS_PER_RULE_V1 = 256
 export interface MachineTraceAdvisoryV1 {
   readonly rule: MachineTraceAdvisoryRuleV1
   readonly passIndex: number
+  /** Float distance only: the pass that formed the carrier's previous loop, where the float starts. */
+  readonly fromPassIndex?: number
+  /** Float distance only: the floating carrier and the distance in needles. */
+  readonly carrier?: string
+  readonly distance?: number
   readonly actionIndex: number
   readonly sourceSpan: KCodeSourceSpan
   readonly message: string
@@ -134,6 +139,9 @@ export function deriveMachineTraceAdvisoriesV1(
       record({
         rule: 'machine-advisory.float-distance',
         passIndex: pass.index,
+        fromPassIndex: previous.passIndex,
+        carrier: pass.carrier,
+        distance,
         actionIndex,
         sourceSpan: formed.sourceSpan,
         message: gap === 0

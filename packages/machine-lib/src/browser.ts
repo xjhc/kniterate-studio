@@ -222,7 +222,8 @@ export {
   type KnitProvenRegistryEntry,
 } from './physical-registry.js';
 export { buildCustomistRibBeanie, type CustomistRibBeanieInput } from './knitout/passes/customist-rib-beanie.js';
-export { CUSTOMIST_RIB_CROWN_WIDTH } from './knitout/passes/customist-rib-beanie-crown.js';
+export { CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH } from './knitout/passes/customist-rib-beanie-crown.js';
+export { BIRDSEYE_BODY_EXTRA_FRONT_ROWS } from './knitout/passes/customist-rib-beanie.js';
 export { EIGHT_LINE_CROWN_V1, planEightLineCrown } from './knitout/passes/rib-crown-plan.js';
 export { writeKnitoutProgram } from './knitout/emitter.js';
 export { computeInputHash } from './knitout/run-artifact.js';

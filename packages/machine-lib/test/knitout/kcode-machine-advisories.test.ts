@@ -110,6 +110,7 @@ describe('strict KCode advisories', () => {
     const [float] = report.advisories
     expect(float!.rule).toBe('machine-advisory.float-distance')
     expect(float!.message).toBe('Carrier 2 floats 10 needles between consecutive stitches in pass 1 (maximum 7).')
+    expect(float).toMatchObject({ carrier: '2', distance: 10, fromPassIndex: float!.passIndex })
     expect(trace.passes[float!.passIndex]!.actions[float!.actionIndex]!.kind).toBe('knit')
 
     const between = deriveMachineTraceAdvisoriesV1(

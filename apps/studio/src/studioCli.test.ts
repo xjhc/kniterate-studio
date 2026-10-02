@@ -150,20 +150,58 @@ describe('authored CLI command receipts', () => {
     const block = { kind: 'knitlab-colorwork-chart', version: 1, width: 6, height: 6, rowNumbering: 'bottom-up',
       palette: [{ id: 'bg', name: 'bg', hex: '#000000' }, { id: 'ink', name: 'ink', hex: '#FFFFFF' }], cells: Array.from({ length: 6 }, () => Array<number>(6).fill(1)) };
     writeFileSync(resolve(directory, 'block.json'), JSON.stringify(block));
-    expect(cli(['place', projectPath, resolve(directory, 'block.json')]).receipt.placed).toMatchObject({ x: 64, rowsAboveCuff: 2, cellsPainted: 36 });
+    const placed = cli(['place', projectPath, resolve(directory, 'block.json'), '--id', 'block']);
+    expect(placed.receipt.placement).toMatchObject({ id: 'block', status: 'placed', at: { column: 64, knitRow: 47 }, x: 'center', rowsAboveCuff: 2 });
+    // The cuff intent is stored with the project, not only used to size it.
+    const saved = JSON.parse(readFileSync(projectPath, 'utf8'));
+    expect(JSON.stringify(saved)).toContain('"cuffTargetCm":7');
+    expect(JSON.stringify(saved)).toContain('"ribGauge":{"stitchesPer10cm":30,"rowsPer10cm":32,"source":"measured"}');
     const ready = cli(['describe', projectPath]);
     expect(ready.receipt.readiness.ready).toBe(true);
-    expect(ready.receipt.summary.join('\n')).toContain('45-row 2x2 rib cuff (folds up), 44-row fairisle body');
+    expect(ready.receipt.summary.join('\n')).toContain('45-row 2x2 rib cuff folding up to 7 cm; 44-row fairisle colorwork body (12.9 cm); 30-row eight-line (jersey) crown');
     expect(cli(['export', projectPath, '-o', resolve(directory, 'toque.kc')]).status).toBe(0);
-    expect(readFileSync(resolve(directory, 'toque-instructions.md'), 'utf8')).toContain('Fold the rib cuff up');
-    // Two dots 12 stitches apart leave an 11-stitch float: over the limit of 7.
-    const dots = { ...block, width: 13, height: 1, cells: [[1, ...Array<number>(11).fill(0), 1]] };
-    writeFileSync(resolve(directory, 'dots.json'), JSON.stringify(dots));
-    expect(cli(['place', projectPath, resolve(directory, 'dots.json'), '--above-cuff', '20']).status).toBe(0);
+    const sheet = readFileSync(resolve(directory, 'toque-instructions.md'), 'utf8');
+    expect(sheet).toContain('Readiness: READY');
+    expect(sheet).toContain('Flat beanie, seamed afterwards: 134 needles');
+    expect(sheet).toContain('Fold the rib cuff up');
+    expect(sheet).not.toContain('rib rows, then the crown');
+
+    // Resizing keeps the motif centred above the cuff.
+    expect(cli(['edit', projectPath, JSON.stringify({ kind: 'set-target', target: { widthCm: 46 } })]).status).toBe(0);
+    const fixes = cli(['plan', projectPath]).receipt.findings.flatMap((finding: { fixes: { edits: unknown[] }[] }) => finding.fixes[0]?.edits ?? []);
+    expect(cli(['edit', projectPath, JSON.stringify(fixes)]).status).toBe(0);
+    const narrower = cli(['describe', projectPath]).receipt;
+    expect(narrower.summary.join('\n')).toContain('122 needles');
+    expect(narrower.readiness.ready).toBe(true);
+    expect(cli(['place', projectPath, '--refresh', 'block']).status).toBe(2);
+
+    // A motif that no longer fits is a conflict that blocks export, never a clipped motif.
+    const wide = { ...block, width: 130, height: 2, cells: [Array<number>(130).fill(1), Array<number>(130).fill(1)] };
+    writeFileSync(resolve(directory, 'wide.json'), JSON.stringify(wide));
+    const conflict = cli(['place', projectPath, resolve(directory, 'wide.json'), '--id', 'wide']);
+    expect(conflict.status).toBe(1);
+    expect(conflict.receipt.placement).toMatchObject({ status: 'conflict', at: null });
+    expect(cli(['readiness', projectPath]).receipt.findings).toContainEqual(expect.objectContaining({ rule: 'project-placement-conflict' }));
+    expect(cli(['edit', projectPath, JSON.stringify({ kind: 'remove-placement', placementId: 'wide' })]).status).toBe(0);
+
+    // One stitch per row, 12 stitches apart in consecutive rows: no float within a row, but the yarn carries 12.
+    const stair = { ...block, width: 13, height: 2, cells: [[...Array<number>(12).fill(0), 1], [1, ...Array<number>(12).fill(0)]] };
+    writeFileSync(resolve(directory, 'stair.json'), JSON.stringify(stair));
+    expect(cli(['place', projectPath, resolve(directory, 'stair.json'), '--id', 'stair', '--above-cuff', '20']).status).toBe(0);
     const floats = cli(['readiness', projectPath]);
     expect(floats.status).toBe(1);
     expect(floats.receipt.readiness.blockers).toContainEqual(expect.objectContaining({ kind: 'finding', rule: 'long-float', owner: 'design' }));
-    expect(cli(['place', projectPath, resolve(directory, 'block.json'), '--above-cuff', '60']).status).toBe(2);
+    // A birdseye back ties the accent into the backing every other needle: the same motif is ready, and the body gains its 3 start/join rows.
+    expect(cli(['edit', projectPath, JSON.stringify({ kind: 'set-strategy', strategy: { technique: 'birdseye', floatLimit: 7 } })]).status).toBe(0);
+    const birdseye = cli(['describe', projectPath]).receipt;
+    expect(birdseye.findings.filter((finding: { rule: string }) => finding.rule === 'long-float')).toEqual([]);
+    expect(birdseye.summary.join('\n')).toContain('47-row birdseye colorwork body');
+    expect(cli(['edit', projectPath, JSON.stringify({ kind: 'set-strategy', strategy: { technique: 'fairisle', floatLimit: 7 } })]).status).toBe(0);
+    expect(cli(['edit', projectPath, JSON.stringify({ kind: 'remove-placement', placementId: 'stair' })]).status).toBe(0);
+
+    // A backing the beanie does not build is refused, not silently knitted as fairisle.
+    expect(cli(['edit', projectPath, JSON.stringify({ kind: 'set-strategy', strategy: { technique: 'ladder-back', floatLimit: 7 } })]).status).toBe(0);
+    expect(cli(['readiness', projectPath]).receipt.findings).toContainEqual(expect.objectContaining({ rule: 'project-beanie-backing-unsupported' }));
   });
 
   it('keeps usage and read failures machine-readable', () => {

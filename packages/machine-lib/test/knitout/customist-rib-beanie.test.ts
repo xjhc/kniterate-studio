@@ -9,6 +9,7 @@ import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../../src/knitout/kcode/machine-
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
 import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js'
 import { validateKCodeMachineTrace } from '../../src/knitout/kcode/machine-validator.js'
+import { deriveMachineTraceAdvisoriesV1 } from '../../src/knitout/kcode/machine-advisories.js'
 import { renderRibBeanieCrownModule } from '../../scripts/extract-rib-beanie-crown.js'
 import { EIGHT_LINE_CROWN_V1, planEightLineCrown } from '../../src/knitout/passes/rib-crown-plan.js'
 
@@ -134,6 +135,38 @@ describe('eight-line crown for any width', () => {
       expect(accent.length - frame).toBeGreaterThanOrEqual(80)
       const { deepest } = replay(converted.kcode)
       expect(deepest).toBeLessThanOrEqual(2)
+    }
+  })
+
+  it('knits a birdseye body that ties every color into the backing and joins the layers before the crown', { timeout: 120_000 }, () => {
+    for (const [width, colors] of [[98, ['3', '4']], [150, ['3', '4', '5']]] as const) {
+      const needleStart = Math.floor((252 - width) / 2) + 1
+      // 20 body rows: sparse accent dots 13 needles apart, the worst case for fairisle floats.
+      const rows = Array.from({ length: 20 }, (_, r) => Array.from({ length: width }, (_, c) =>
+        c % 13 === r % 13 ? colors[1 + (r % (colors.length - 1))]! : colors[0]))
+      const converted = authoredKnitoutToKCodeWithTrace(writeKnitoutProgram(buildCustomistRibBeanieProgram({
+        ...PIECE, needleStart, needleEnd: needleStart + width - 1, ribRows: 24, crown: 'eight-line', jerseyBody: { rows, backing: 'birdseye' },
+      })))
+      if (!converted.ok) throw new Error(converted.error)
+      const parsed = parseKCodeDocument(converted.kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true })
+      if (!parsed.ok) throw new Error('not strict KCode')
+      const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2)
+      expect(validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2).diagnostics, `width ${width}`).toEqual([])
+      // Along each yarn's real path, no float in the body exceeds N + 1 needles (rear loops sit half a needle off at half rack); fairisle here floats 12.
+      const floats = deriveMachineTraceAdvisoriesV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2, { maxFloatDistance: colors.length + 1 })
+      const firstBody = trace.passes.findIndex((pass) => pass.rack !== 0)
+      expect(floats.advisories.filter((advisory) => advisory.rule === 'machine-advisory.float-distance' && (advisory.fromPassIndex ?? 0) >= firstBody && advisory.carrier !== '1' && advisory.carrier !== '6')).toEqual([])
+      // Every rear loop is moved to the front before the crown, and stacks stay at two loops.
+      const { deepest } = replay(converted.kcode)
+      expect(deepest).toBeLessThanOrEqual(2)
+      const lastRack = trace.passes.findLastIndex((pass) => pass.rack !== 0 && pass.actions.some((action) => action.kind === 'knit'))
+      const rearAfter = trace.passes.slice(lastRack + 1).filter((pass) => pass.rack === 0).flatMap((pass) => pass.actions.filter((action) => action.kind === 'knit' && action.at.bed === 'rear'))
+      expect(rearAfter).toEqual([])
+      // In the body, each accent knits exactly its chart stitches on the front (its waste-section insert row comes before).
+      for (const accent of colors.slice(1)) {
+        const front = trace.passes.slice(firstBody).filter((pass) => pass.carrier === accent).flatMap((pass) => pass.actions.filter((action) => action.kind === 'knit' && action.at.bed === 'front')).length
+        expect(front).toBe(rows.flat().filter((carrier) => carrier === accent).length)
+      }
     }
   })
 

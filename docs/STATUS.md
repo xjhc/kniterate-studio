@@ -112,18 +112,43 @@ ship," trust this file and the working tree instead.
       waste section and the rib transfers to the front bed. Each body row
       knits one pass per color from the side its carrier is parked on, and
       the eight-line crown is planned for jersey.
-    - Body floats longer than `floatLimit` (7 for these projects) are
-      design-owned `long-float` warnings, so readiness blocks honestly.
-    - `--fold` knits the cuff twice as tall and adds the fold to the
-      finishing steps.
-    - `place` paints a motif chart into the body as one edit. Motifs are
-      painted into the chart; there are no placement objects or bundled
-      images yet.
-    - Widths 98 and 150 have zero validator diagnostics, and the accent
-      yarn knits only the motif.
-  - Not yet built: float catching or birdseye backing for beanie bodies.
-    The eight-line crown and the jersey body have no reference parity, and
-    nothing has been knitted.
+    - Floats are measured along each carrier's real path in the emitted
+      trace, across rows, sections and transfers
+      (`readiness.ts::beanieFloatFindings`). Floats longer than `floatLimit`
+      (7 for these projects) are design-owned `long-float` warnings. A yarn
+      carried from the waste section to its first stitch is an operator
+      `carried-yarn` check.
+    - **Birdseye body** (`strategy.technique: 'birdseye'`): built in
+      `reference/dbj.kc`'s structure. At half rack, each color's pass knits
+      its front stitches plus every N-th rear needle. The back layer starts
+      and joins as in dbj.kc, adding 3 ground rows that the plan counts. With
+      fairisle, the real Arc'teryx bird has floats of 8–16 needles. With
+      birdseye it is ready at heads of 52/56/60 cm and bird heights of
+      6/8/10 cm. Any other backing (or minimal birdseye) is refused with
+      `project-beanie-backing-unsupported`.
+    - The object stores `cuffTargetCm`, `ribGauge` and `cuffFold`. The plan
+      checks the cuff (`cuff-off-target`, rib `gauge-assumed`) and reports
+      `sections`: cuff, body, crown (rows, recipe, final stitches) and
+      finished height, each in cm with its derivation.
+    - **Placements** (`set-placement`, `remove-placement`): a motif is
+      stored as intent. That covers its anchor (`x: 'center'` or a column,
+      `rowsAboveCuff`), color map, and source PNG with converter settings.
+      Materialization draws it, so resizing keeps it centred above the cuff.
+      A placement that no longer fits is a `project-placement-conflict` that
+      blocks export, never a clipped motif. Checkpoints keep the authored
+      chart. `place --image` converts at the body gauge, and
+      `place --refresh` re-converts after a gauge change
+      (`placement-size-off`).
+    - Row IDs added by resizing never reuse an ID still anchored by an
+      override, so quarantined overrides stay quarantined.
+    - `export` instructions state the construction from the plan's
+      sections, readiness, unresolved warnings and operator checks.
+    - Widths 98 and 150 have zero validator diagnostics (fairisle and
+      birdseye), and the accent yarn knits only the motif.
+  - The eight-line crown and the jersey and birdseye bodies have no
+    reference parity, and nothing has been knitted. The acrylic development
+    trial is prepared in `docs/M6-ACRYLIC-DEV-TRIAL.md` and waits for an
+    operator run.
 - **Customist parity scoreboard.** `pnpm parity [--json]` compares the 13
   captured references. Schema v2 reserves `reproduced` for an export-ready,
   strict whole-program machine-trace match, including rack, settings, stops,

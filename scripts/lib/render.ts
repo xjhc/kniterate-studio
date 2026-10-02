@@ -70,7 +70,7 @@ function renderChart(state: ProjectState): RenderResult {
 
 function renderBack(state: ProjectState, result: AuthoredPipelineResult): RenderResult {
   const back = result.compiled?.backFace;
-  if (!back) throw new Error('no back face: the project did not compile');
+  if (!back) throw new Error(result.compiled?.ok ? 'no back face: this construction does not derive one (beanies); use --view stitch for the pass-by-pass program' : 'no back face: the project did not compile');
   const cell = cellSize(state, back.width, back.height);
   const image = blank(back.width * cell.width, back.height * cell.height);
   const colors = state.chart.palette.map((entry) => parseHex(entry.hex));

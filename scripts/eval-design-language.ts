@@ -15,8 +15,8 @@
 
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 
 import {
@@ -40,9 +40,16 @@ type Outcome = typeof OUTCOMES[number];
 interface EvalCase {
   id: string;
   request: string;
-  setup?: { kind: 'motif-png' | 'scarf-project' | 'misnamed-yarn-project' | 'long-float-project' };
+  /** `image-file` copies a local image (outside the repository) to motif.png; `toque-project` builds the bird toque from it. */
+  setup?: { kind: 'motif-png' | 'scarf-project' | 'misnamed-yarn-project' | 'long-float-project' } | { kind: 'image-file' | 'toque-project'; path: string };
   expect: {
     outcomes: Outcome[];
+    /** For a not-ready outcome: the real readiness must be not ready and include these blocker rules. */
+    blockersIfNotReady?: string[];
+    /** The beanie object the project must record. */
+    object?: { construction?: string; cuffFold?: boolean; cuffTargetCm?: number; ribGauge?: [number, number] };
+    /** Motif placements: how many, all placed, centred, how tall in cm (from the stored image), how far above the cuff. */
+    placements?: { count: number; centred?: boolean; heightCm?: number; maxRowsAboveCuff?: number };
     stitches?: number;
     rows?: number;
     colors?: number;
@@ -64,9 +71,26 @@ function stripes(width: number, height: number, colors: { id: string; name: stri
   };
 }
 
+const expandHome = (path: string) => path.replace(/^~(?=\/)/, homedir());
+
 /** Writes the case's starting files into `directory`; returns the bytes of project.json when one is prepared. */
 function prepare(directory: string, setup: EvalCase['setup']): string | null {
   if (setup === undefined) return null;
+  if (setup.kind === 'image-file' || setup.kind === 'toque-project') {
+    // The real motif is someone else's mark, so it is read from where it lives and never committed here.
+    if (!existsSync(expandHome(setup.path))) throw new Error(`eval fixture ${setup.path} is missing; this case needs the real image.`);
+    copyFileSync(expandHome(setup.path), resolve(directory, 'motif.png'));
+    if (setup.kind === 'image-file') return null;
+    const studio = (...args: string[]) => {
+      const run = spawnSync('pnpm', ['--silent', 'studio', '--', ...args], { cwd: root, encoding: 'utf8' });
+      if (run.status !== 0 && run.status !== 1) throw new Error(`toque setup failed: studio ${args[0]}: ${run.stdout}${run.stderr}`);
+    };
+    const project = resolve(directory, 'project.json');
+    studio('new', '--object', 'beanie', '--head-cm', '56', '--body-cm', '13', '--gauge', '26,34', '--cuff-cm', '7', '--fold', '--rib-gauge', '30,32',
+      '--color', 'Black=#111111', '--accent', 'White=#F2F2F2', '--title', 'Bird toque', '-o', project);
+    studio('place', project, '--image', resolve(directory, 'motif.png'), '--height-cm', '8', '--id', 'bird', '--above-cuff', '3');
+    return readFileSync(project, 'utf8');
+  }
   if (setup.kind === 'motif-png') {
     // 60 × 40 light image with a dark diamond.
     const width = 60; const height = 40;
@@ -104,8 +128,8 @@ function prompt(item: EvalCase, directory: string): string {
   return [
     `Work in the Kniterate Studio repository at ${root}. Use the knit-design skill (.claude/skills/knit-design/SKILL.md) and the Studio CLI.`,
     `Your working directory for any files you create or read is ${directory}; do not modify files in the repository.`,
-    item.setup?.kind === 'motif-png' ? `The motif image is ${directory}/motif.png.` : '',
-    item.setup !== undefined && item.setup.kind !== 'motif-png' ? `The existing project is ${directory}/project.json.` : '',
+    item.setup?.kind === 'motif-png' || item.setup?.kind === 'image-file' ? `The motif image is ${directory}/motif.png.` : '',
+    item.setup !== undefined && item.setup.kind !== 'motif-png' && item.setup.kind !== 'image-file' ? `The existing project is ${directory}/project.json.` : '',
     `Request: ${item.request}`,
     'If you create or change a project, save it as project.json in the working directory.',
     `Finish with one line of JSON and nothing after it: {"outcome": "ready" | "not-ready" | "needs-input" | "unsupported", "project": "<absolute path or null>"}.`,
@@ -162,20 +186,52 @@ async function check(item: EvalCase, directory: string, reported: ReturnType<typ
   let project: ColorworkProjectV1 | null = null;
   try { project = parseColorworkProjectV1Json(readFileSync(projectPath, 'utf8')); } catch { /* no project */ }
   if (item.expect.unchanged && before !== null && readFileSync(resolve(directory, 'project.json'), 'utf8') !== before) failures.push('project changed although asked not to');
-  if (outcome === 'ready') {
-    if (project === null) { falseReady = true; failures.push('claimed ready without a readable project'); }
-    else {
-      const plan = planProject(materializeColorworkProject(project).state);
+  // A ready or not-ready answer is about an artifact: check the project itself, whatever was claimed.
+  if (outcome === 'ready' || outcome === 'not-ready') {
+    if (project === null) {
+      if (outcome === 'ready') falseReady = true;
+      failures.push(`claimed ${outcome} without a readable project`);
+    } else {
+      const materialized = materializeColorworkProject(project);
+      const plan = planProject(materialized.state, materialized.placements);
       const result = await runAuthoredPipeline(project);
       const readiness = resolveReadiness({ verdict: result.verdict, findings: collectFindings(plan, result) });
-      if (!readiness.ready) { falseReady = true; failures.push(`FALSE READY CLAIM: ${readiness.blockers.map((blocker) => blocker.kind === 'finding' ? blocker.rule : blocker.kind).join(', ')}`); }
-      const state = materializeColorworkProject(project).state;
+      const blockerRules = readiness.blockers.map((blocker) => blocker.kind === 'finding' ? blocker.rule : blocker.kind);
+      if (outcome === 'ready' && !readiness.ready) { falseReady = true; failures.push(`FALSE READY CLAIM: ${blockerRules.join(', ')}`); }
+      if (outcome === 'not-ready') {
+        if (readiness.ready) failures.push('claimed not-ready but the project is ready');
+        for (const rule of item.expect.blockersIfNotReady ?? []) if (!blockerRules.includes(rule)) failures.push(`not-ready without the expected ${rule} blocker (has ${blockerRules.join(', ') || 'none'})`);
+      }
+      const { state } = materialized;
       if (item.expect.stitches !== undefined && state.chart.width !== item.expect.stitches) failures.push(`stitches ${state.chart.width}, expected ${item.expect.stitches}`);
       if (item.expect.rows !== undefined && state.chart.height !== item.expect.rows) failures.push(`rows ${state.chart.height}, expected ${item.expect.rows}`);
       if (item.expect.colors !== undefined && new Set(state.chart.cells.flat()).size !== item.expect.colors) failures.push(`used colors ${new Set(state.chart.cells.flat()).size}, expected ${item.expect.colors}`);
       if (item.expect.technique !== undefined && state.strategy.technique !== item.expect.technique) failures.push(`technique ${state.strategy.technique}, expected ${item.expect.technique}`);
       if (item.expect.gauge !== undefined && (state.gauge?.stitchesPer10cm !== item.expect.gauge[0] || state.gauge?.rowsPer10cm !== item.expect.gauge[1] || state.gauge?.source !== 'measured')) failures.push('gauge not recorded as measured with the requested values');
       if (item.expect.noCarrierInNames && state.machine.yarnAssignments.some((assignment) => /\bC[1-6]\b/.test(assignment.yarnName))) failures.push('a yarn name still contains a carrier number');
+      const object = item.expect.object;
+      if (object !== undefined) {
+        const actual = state.object;
+        if (actual === undefined) failures.push('no beanie object recorded');
+        else {
+          if (object.construction !== undefined && actual.construction !== object.construction) failures.push(`construction ${actual.construction}, expected ${object.construction}`);
+          if (object.cuffFold !== undefined && (actual.cuffFold ?? false) !== object.cuffFold) failures.push(`cuff fold ${actual.cuffFold ?? false}, expected ${object.cuffFold}`);
+          if (object.cuffTargetCm !== undefined && actual.cuffTargetCm !== object.cuffTargetCm) failures.push(`cuff target ${actual.cuffTargetCm ?? 'not recorded'}, expected ${object.cuffTargetCm} cm`);
+          if (object.ribGauge !== undefined && (actual.ribGauge?.stitchesPer10cm !== object.ribGauge[0] || actual.ribGauge?.rowsPer10cm !== object.ribGauge[1] || actual.ribGauge?.source !== 'measured')) failures.push('rib gauge not recorded as measured with the requested values');
+        }
+      }
+      const placements = item.expect.placements;
+      if (placements !== undefined) {
+        const resolved = materialized.placements;
+        if (resolved.length !== placements.count) failures.push(`${resolved.length} placements, expected ${placements.count}`);
+        for (const item of resolved) {
+          const { placement } = item;
+          if (item.status !== 'placed') failures.push(`placement ${placement.id} is a conflict: ${item.reason}`);
+          if (placements.centred && Math.abs(2 * (item.at?.column ?? -1) + placement.motif.width - state.chart.width) > 1) failures.push(`placement ${placement.id} is not centred`);
+          if (placements.heightCm !== undefined && placement.source?.heightCm !== placements.heightCm) failures.push(`placement ${placement.id} is ${placement.source?.heightCm ?? 'not recorded as'} cm tall, expected ${placements.heightCm}`);
+          if (placements.maxRowsAboveCuff !== undefined && placement.rowsAboveCuff > placements.maxRowsAboveCuff) failures.push(`placement ${placement.id} starts ${placement.rowsAboveCuff} rows above the cuff, expected at most ${placements.maxRowsAboveCuff}`);
+        }
+      }
     }
   }
   return { outcome: outcome ?? null, pass: failures.length === 0, falseReady, failures };

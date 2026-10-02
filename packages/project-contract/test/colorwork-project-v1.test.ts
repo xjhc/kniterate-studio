@@ -274,4 +274,32 @@ describe('ColorworkProjectV1', () => {
     expect(materializeColorworkProject(undoProjectEdit(project)).state.object).toBeUndefined();
     expect(() => appendProjectEdit(project, { id: 'bad', source: 'human', edit: { kind: 'set-object', object: { kind: 'sweater' } } as never })).toThrow();
   });
+
+  it('draws placements from their anchor, keeps checkpoints authored, and reports what does not fit', () => {
+    const ground = { ...chart, width: 20, height: 12, cells: Array.from({ length: 12 }, () => Array<number>(20).fill(0)) };
+    const motif = { ...chart, width: 4, height: 2, cells: [[1, 1, 0, 0], [0, 1, 1, 0]] };
+    let project = appendProjectEdit(createColorworkProjectV1(ground, { id: 'placed' }), { id: 'cuff', source: 'assistant', edit: { kind: 'set-object', object: { kind: 'beanie', construction: 'rib-cuff-jersey-body', cuffRows: 4 } } });
+    project = appendProjectEdit(project, { id: 'p1', source: 'assistant', edit: { kind: 'set-placement', placement: { id: 'logo', motif: motif as never, x: 'center', rowsAboveCuff: 1, colors: { 1: 'red' } } } });
+    const placed = materializeColorworkProject(project);
+    expect(placed.placements).toEqual([expect.objectContaining({ status: 'placed', at: { column: 8, knitRow: 5 } })]);
+    // Knit rows 5 (motif bottom) and 6 (motif top) are chart rows 6 and 5 counted from the top; color 0 is transparent.
+    expect(placed.state.chart.cells[6]!.slice(8, 12)).toEqual([0, 1, 1, 0]);
+    expect(placed.state.chart.cells[5]!.slice(8, 12)).toEqual([1, 1, 0, 0]);
+    expect(placed.state.chart.cells.flat().filter(Boolean)).toHaveLength(4);
+    // Narrowing keeps the motif centred.
+    const narrow = appendProjectEdit(project, { id: 'w', source: 'assistant', edit: { kind: 'set-width', width: 10, fillPaletteIndex: 0 } });
+    expect(materializeColorworkProject(narrow).placements[0]).toMatchObject({ status: 'placed', at: { column: 3, knitRow: 5 } });
+    // Too narrow: a conflict, and nothing is drawn.
+    const tiny = appendProjectEdit(project, { id: 'w', source: 'assistant', edit: { kind: 'set-width', width: 3, fillPaletteIndex: 0 } });
+    const conflict = materializeColorworkProject(tiny);
+    expect(conflict.placements[0]).toMatchObject({ status: 'conflict', at: null, reason: expect.stringContaining('4 stitches wide') });
+    expect(conflict.state.chart.cells.flat().filter(Boolean)).toHaveLength(0);
+    // History stores the authored chart; placements are never baked into checkpoints.
+    for (let index = 0; index < 30; index += 1) project = appendProjectEdit(project, { id: `g${index}`, source: 'assistant', edit: { kind: 'set-gauge', gauge: { stitchesPer10cm: 20 + index, rowsPer10cm: 30, source: 'measured' } } });
+    for (const checkpoint of project.history.checkpoints) expect(checkpoint.state.chart.cells.flat().filter(Boolean)).toHaveLength(0);
+    expect(parseColorworkProjectV1Json(serializeColorworkProjectV1(project))).toEqual(project);
+    const removed = appendProjectEdit(project, { id: 'rm', source: 'assistant', edit: { kind: 'remove-placement', placementId: 'logo' } });
+    expect(materializeColorworkProject(removed).state.chart.cells.flat().filter(Boolean)).toHaveLength(0);
+    expect(() => appendProjectEdit(removed, { id: 'rm2', source: 'assistant', edit: { kind: 'remove-placement', placementId: 'logo' } })).toThrow(/does not exist/);
+  });
 });
