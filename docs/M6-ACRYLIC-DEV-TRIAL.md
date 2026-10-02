@@ -13,36 +13,53 @@ load them, what to watch, what to measure, and how the result is judged.
 | Piece | File | Purpose |
 |---|---|---|
 | A. Control | `control-kniterate-2x2-rib-beanie.kc` (Kniterate's own file, `packages/machine-lib/reference/2x2-rib-beanie.kc`) | Calibrates the machine, yarn and loading. Studio reproduces it trace-for-trace. If A fails, the cause is setup, not the M6 engine. |
-| B. Candidate | `bird-toque.kc` | The M6 construction end to end: 2×2 rib cuff (fold-up), rib → front transfer, birdseye colourwork body with the bird, back-layer join, eight-line jersey crown, knit-off. |
+| B. Candidate | `package/program.kc` | The M6 construction end to end: 2×2 rib cuff (fold-up), rib → front transfer, birdseye colourwork body with the bird, back-layer join, eight-line jersey crown, knit-off. |
 
 Knit A first. Knit B only if A runs clean.
 
 ## Regenerating the exact package
 
-From a clean checkout of the commit that adds this file:
+From a checkout of commit `f2a5439` (or any later commit that re-emits the
+same bytes):
 
 ```bash
 T=output/m6-acrylic-trial; mkdir -p $T; P=$T/bird-toque.json
 pnpm --silent studio -- new --object beanie --head-cm 56 --body-cm 13 --gauge 26,34 \
-  --cuff-cm 7 --fold --rib-gauge 30,32 --color "Black acrylic=#111111" \
-  --accent "White acrylic=#F2F2F2" --title "M6 acrylic dev trial: bird toque" -o $P
-pnpm --silent studio -- edit $P '{"kind":"set-strategy","strategy":{"technique":"birdseye","floatLimit":7}}'
+  --cuff-cm 7 --fold --rib-gauge 30,32 --backing birdseye \
+  --color "Black acrylic=#111111" --accent "White acrylic=#F2F2F2" \
+  --title "M6 acrylic dev trial: bird toque" -o $P
 pnpm --silent studio -- place $P --image ~/pro/knitlab2/reference/arc.png --height-cm 8 --id bird --above-cuff 3
-pnpm --silent studio -- edit $P '[{"kind":"set-gauge","gauge":{"stitchesPer10cm":26,"rowsPer10cm":34,"source":"assumed","note":"Placeholder for acrylic birdseye; measure on the trial hat body"}},{"kind":"set-object","object":{"kind":"beanie","construction":"rib-cuff-jersey-body","cuffRows":45,"cuffFold":true,"cuffTargetCm":7,"ribGauge":{"stitchesPer10cm":30,"rowsPer10cm":32,"source":"assumed","note":"Placeholder for acrylic 2x2 rib; measure on the trial hat cuff"}}}]'
-pnpm --silent studio -- plan $P     # apply the offered size-off-target fix (birdseye adds 3 body rows), then:
-pnpm --silent studio -- export $P -o $T/bird-toque.kc
+pnpm --silent studio -- fit $P --gauge 26,34 --rib-gauge 30,32 --gauge-source assumed
+pnpm --silent studio -- package $P -o $T/package
 cp packages/machine-lib/reference/2x2-rib-beanie.kc $T/control-kniterate-2x2-rib-beanie.kc
 ```
 
+The package holds:
+
+- `program.kc`, the file to knit;
+- `program.k`;
+- the editable project;
+- `instructions.md`, which carries readiness, operator checks and finishing;
+- `schematic.svg` and `chart.png`;
+- `measurement-form.md` and `measurements.json`;
+- `manifest.json`, with every file's hash.
+
+The same package can be exported from the browser (**Package**).
+
 Expected hashes (SHA-256):
 
-- `bird-toque.kc`: `c26b1b90204ae0b35fef44e0683139704521f55ac4b8dfc82e7ae8e83b96ce9a`
-  (950 passes, 134 needles, KCode columns 59–192)
+- `package/program.kc`: `79670c31402cb4ff7f7113a4c9e3e1935dab33169ba3fe597ccbbbf8ee62817d`
+  (950 passes, 134 needles, KCode columns 59–192; bird 31 × 27 stitches,
+  cropped to its artwork so its visible height is 8 cm)
 - `control-kniterate-2x2-rib-beanie.kc`: `de0002e2ac7f36ea95f87940ac83c39439c97eea8ab9ed98427c5bf29f5c2b4a`
 
 Knit the file whose hash matches. Do not edit either file. If the hash
 differs, stop and regenerate. The bird image is Arc'teryx's mark; it is read
 from its own location and not committed here.
+
+An earlier candidate (`c26b1b90…`, prepared at `1cf6a6f`, never knitted) is
+superseded. Its bird was converted with the image's margin, so the visible
+bird was shorter than 8 cm.
 
 **Readiness of B is NOT READY, deliberately:** both gauges are assumed
 placeholders (`gauge-assumed` on the body and the rib). No acrylic swatch has
@@ -95,7 +112,7 @@ the run continued.
 
 ## Measurements to collect
 
-After the finishing steps in `bird-toque-instructions.md` (draw thread out,
+After the finishing steps in `package/instructions.md` (draw thread out,
 seam, fold, wash or steam as the label says, dry flat, rest 24 h), lay the
 piece flat without tension and use a rigid rule.
 
@@ -133,7 +150,7 @@ B **passes the construction trial** if all of these hold:
 2. The cuff is 2×2 rib throughout and folds cleanly. The rib → body
    transition has no holes.
 3. The bird is legible, upright, and centred within ±1 stitch of the front
-   centre (Plan: 30 stitches wide, starting 3 body rows above the cuff, which
+   centre (Plan: 31 stitches wide and 27 rows tall, starting 3 body rows above the cuff, which
    is 5 knitted rows counting the 2 birdseye start rows).
 4. The back is a closed birdseye layer: no free float longer than about
    1 cm, and no open pocket at the top of the body (the join holds).
@@ -147,12 +164,24 @@ The proposed ±3% / ±1 cm tolerance applies from that candidate on.
 
 ## After the run
 
-- Send back the measurements (M1–M8), photographs, the stop log, the
-  yarn details, and pass or fail against each criterion above.
-- I will record the gauges as `measured` on the project and regenerate.
-  Any construction defect gets its own engine fix, a new hash-bound
-  candidate, and a re-run. A failed candidate is not rehabilitated by
-  editing its file.
-- If both pass, B's next candidate (with the measured gauges) can be
-  registered through `pnpm release:register` as development evidence.
-  That registers only the exact file knitted.
+1. **Return the measurements.** Fill `package/measurements.json`:
+   - outcome, gauges, finished cm and notes;
+   - `"synthetic": false` for a real knit.
+
+   Send it back with the photographs and the stop log. Record it with
+   `pnpm studio -- measure $P package/measurements.json`, or with **Record
+   measurements** in the browser. This records the trial against this
+   candidate's hash and makes the gauges measured. It then re-sizes the
+   project and re-converts the bird at the measured gauge, as one undoable
+   operation. The knitted candidate's files stay untouched; `package` then
+   makes the next candidate.
+2. **Register the run as development evidence.** From a clean checkout that
+   re-emits the same bytes, run
+   `pnpm release:register -- <short-name> --package output/m6-acrylic-trial/package`.
+   This recompiles the project and refuses unless `program.kc` and
+   `program.k` are re-emitted byte for byte. It scaffolds `machine.json`,
+   `yarn.json`, `run.json` and `outcome.md` for the operator's facts. It
+   registers only the exact file knitted, and qualifies nothing for `1.0.0`.
+3. **If something failed,** each construction defect gets its own engine
+   fix, a new hash-bound candidate and a re-run. A failed candidate is never
+   rehabilitated by editing its file.
