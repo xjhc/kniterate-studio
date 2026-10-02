@@ -29,11 +29,28 @@ Beanies: flat, seamed afterwards, in Customist's construction. Two kinds:
   against them (`cuff-off-target` carries the fix).
   Put the motif in as a **placement**:
   `place hat.json --image logo.png --height-cm 8 --id logo [--x center] [--above-cuff rows] [--colors 2]`.
+  The image is cropped to its artwork, so `--height-cm` is the visible
+  motif's height and `--above-cuff` counts rows to its lowest visible stitch.
   It is converted at the body gauge and stored with its anchor, so it stays
   centred above the cuff when you resize; one that no longer fits is a
   `project-placement-conflict`, never clipped. After a gauge change, run
   `place hat.json --refresh logo`. Remove one with the `remove-placement`
   edit. Motif color 0 is left as the ground.
+
+**Change fit, cuff, height, gauge or backing with `fit`**, never by editing
+needle or row counts: `fit hat.json --head-cm 52`, `--cuff-cm 8`,
+`--no-fold`, `--body-cm 15`, `--gauge 24,30 --gauge-source measured`,
+`--rib-gauge …`, `--backing birdseye`. It is one undoable operation that
+applies the plan's own sizing fixes; motifs keep their anchors. `new` takes
+`--backing birdseye` too.
+
+**Hand-off:** `package hat.json -o hat-package/` writes the editable project,
+`program.k`/`program.kc`, `instructions.md`, `schematic.svg`, `chart.png`,
+`measurement-form.md`, `measurements.json` and `manifest.json`. When the
+knitter returns the filled `measurements.json`, `measure hat.json
+measurements.json` records the trial, makes the gauges measured and re-sizes
+in one undoable operation; the knitted candidate's files stay as they were.
+Mark made-up values `"synthetic": true`; never present them as a real knit.
 
 For both kinds:
 - The target width is the finished circumference; the plan adds the seam

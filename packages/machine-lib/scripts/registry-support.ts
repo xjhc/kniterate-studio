@@ -367,15 +367,24 @@ function registryProjectBudgetMessage(value: unknown): string | null {
   return null;
 }
 
-function requiredNumericSetting(knitout: string, pattern: RegExp, label: string): number {
+/**
+ * Settings the pinned converter (src/knitout/vendor/knitout-to-kcode.cjs)
+ * starts with when a program never sets them: transfer style 'four-pass',
+ * carrier spacing 2, stopping distance 2.5. The beanie construction relies on
+ * them; every other initial setting must be explicit.
+ */
+const PINNED_CONVERTER_DEFAULTS = { xferStyle: 'four-pass', carrierSpacing: 2, carrierStoppingDistance: 2.5 } as const;
+
+function requiredNumericSetting(knitout: string, pattern: RegExp, label: string, fallback?: number): number {
   const raw = pattern.exec(knitout)?.[1];
+  if (raw === undefined && fallback !== undefined) return fallback;
   const value = raw === undefined ? Number.NaN : Number(raw);
   if (!Number.isFinite(value)) throw new Error(`current compile is missing numeric ${label}`);
   return value;
 }
 
-function requiredTextSetting(knitout: string, pattern: RegExp, label: string): string {
-  const value = pattern.exec(knitout)?.[1]?.trim();
+function requiredTextSetting(knitout: string, pattern: RegExp, label: string, fallback?: string): string {
+  const value = pattern.exec(knitout)?.[1]?.trim() ?? fallback;
   if (!value) throw new Error(`current compile is missing ${label}`);
   return value;
 }
@@ -418,9 +427,9 @@ function expectedMachineEvidence(
         xferStitchNumber: requiredNumericSetting(knitout, /^x-xfer-stitch-number\s+([0-9]+(?:\.[0-9]+)?)\s*$/m, 'transfer stitch number'),
         speedNumber: requiredNumericSetting(knitout, /^x-speed-number\s+([0-9]+(?:\.[0-9]+)?)\s*$/m, 'speed number'),
         rollerAdvance: requiredNumericSetting(knitout, /^x-roller-advance\s+([0-9]+(?:\.[0-9]+)?)\s*$/m, 'roller advance'),
-        xferStyle: requiredTextSetting(knitout, /^x-xfer-style\s+(\S+)\s*$/m, 'transfer style'),
-        carrierSpacing: requiredNumericSetting(knitout, /^x-carrier-spacing\s+([0-9]+(?:\.[0-9]+)?)\s*$/m, 'carrier spacing'),
-        carrierStoppingDistance: requiredNumericSetting(knitout, /^x-carrier-stopping-distance\s+([0-9]+(?:\.[0-9]+)?)\s*$/m, 'carrier stopping distance'),
+        xferStyle: requiredTextSetting(knitout, /^x-xfer-style\s+(\S+)\s*$/m, 'transfer style', PINNED_CONVERTER_DEFAULTS.xferStyle),
+        carrierSpacing: requiredNumericSetting(knitout, /^x-carrier-spacing\s+([0-9]+(?:\.[0-9]+)?)\s*$/m, 'carrier spacing', PINNED_CONVERTER_DEFAULTS.carrierSpacing),
+        carrierStoppingDistance: requiredNumericSetting(knitout, /^x-carrier-stopping-distance\s+([0-9]+(?:\.[0-9]+)?)\s*$/m, 'carrier stopping distance', PINNED_CONVERTER_DEFAULTS.carrierStoppingDistance),
       },
     },
     emittedPassCount,

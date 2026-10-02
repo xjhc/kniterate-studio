@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AUTHORED_CAPACITY_LIMITS_V1,
   appendProjectEdit,
+  appendProjectOperation,
   assessAuthoredCapacityV1,
   createColorworkProjectV1,
   inspectColorworkProjectStructureCapacityV1,
@@ -301,5 +302,26 @@ describe('ColorworkProjectV1', () => {
     const removed = appendProjectEdit(project, { id: 'rm', source: 'assistant', edit: { kind: 'remove-placement', placementId: 'logo' } });
     expect(materializeColorworkProject(removed).state.chart.cells.flat().filter(Boolean)).toHaveLength(0);
     expect(() => appendProjectEdit(removed, { id: 'rm2', source: 'assistant', edit: { kind: 'remove-placement', placementId: 'logo' } })).toThrow(/does not exist/);
+  });
+
+  it('undoes and redoes an operation as one step, and records trials as intent', () => {
+    let project = createColorworkProjectV1(chart, { id: 'grouped' });
+    project = appendProjectEdit(project, { id: 'single', source: 'human', edit: { kind: 'set-target', target: { widthCm: 10 } } });
+    project = appendProjectOperation(project, { group: 'fit-1', source: 'assistant', label: 'Change fit', edits: [
+      { kind: 'set-gauge', gauge: { stitchesPer10cm: 20, rowsPer10cm: 30, source: 'measured' } },
+      { kind: 'set-width', width: 6, fillPaletteIndex: 0 },
+    ] });
+    expect(project.history.entries.slice(1).map((entry) => [entry.group, entry.label])).toEqual([['fit-1', 'Change fit'], ['fit-1', undefined]]);
+    const undone = undoProjectEdit(project);
+    expect(undone.history.cursor).toBe(1);
+    expect(redoProjectEdit(undone).history.cursor).toBe(3);
+    expect(undoProjectEdit(undone).history.cursor).toBe(0);
+    // A failing operation leaves the project unchanged.
+    expect(() => appendProjectOperation(project, { group: 'bad', source: 'human', label: 'Bad', edits: [{ kind: 'set-width', width: 5, fillPaletteIndex: 0 }, { kind: 'delete-row', rowId: 'row_9999' }] })).toThrow();
+    const trial = { id: 'trial-1', candidate: { kcodeSha256: 'b'.repeat(64) }, recordedAt: '2026-10-02T10:00:00Z', synthetic: true, outcome: 'clean' as const, bodyGauge: { stitchesPer10cm: 24, rowsPer10cm: 30 } };
+    project = appendProjectEdit(project, { id: 'trial', source: 'human', edit: { kind: 'record-trial', trial } });
+    expect(materializeColorworkProject(project).state.trials).toEqual([trial]);
+    expect(parseColorworkProjectV1Json(serializeColorworkProjectV1(project))).toEqual(project);
+    expect(() => appendProjectEdit(project, { id: 'trial-again', source: 'human', edit: { kind: 'record-trial', trial } })).toThrow(/already exists/);
   });
 });

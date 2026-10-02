@@ -161,15 +161,16 @@ describe('authored CLI command receipts', () => {
     expect(ready.receipt.summary.join('\n')).toContain('45-row 2x2 rib cuff folding up to 7 cm; 44-row fairisle colorwork body (12.9 cm); 30-row eight-line (jersey) crown');
     expect(cli(['export', projectPath, '-o', resolve(directory, 'toque.kc')]).status).toBe(0);
     const sheet = readFileSync(resolve(directory, 'toque-instructions.md'), 'utf8');
-    expect(sheet).toContain('Readiness: READY');
+    expect(sheet).toContain('**Ready to knit.**');
+    expect(sheet).toContain('Software checks passed · Surface-proven · physical knit pending');
     expect(sheet).toContain('Flat beanie, seamed afterwards: 134 needles');
     expect(sheet).toContain('Fold the rib cuff up');
     expect(sheet).not.toContain('rib rows, then the crown');
 
-    // Resizing keeps the motif centred above the cuff.
-    expect(cli(['edit', projectPath, JSON.stringify({ kind: 'set-target', target: { widthCm: 46 } })]).status).toBe(0);
-    const fixes = cli(['plan', projectPath]).receipt.findings.flatMap((finding: { fixes: { edits: unknown[] }[] }) => finding.fixes[0]?.edits ?? []);
-    expect(cli(['edit', projectPath, JSON.stringify(fixes)]).status).toBe(0);
+    // Resizing for a smaller head is one operation, and keeps the motif centred above the cuff.
+    const fit = cli(['fit', projectPath, '--head-cm', '52']);
+    expect(fit.status).toBe(0);
+    expect(fit.receipt.after.findings).toEqual([]);
     const narrower = cli(['describe', projectPath]).receipt;
     expect(narrower.summary.join('\n')).toContain('122 needles');
     expect(narrower.readiness.ready).toBe(true);

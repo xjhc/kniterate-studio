@@ -54,13 +54,13 @@
       "id": "arc-style-toque",
       "request": "An Arc'teryx-style toque for a 56 cm head: black, a 7 cm folded-up 2x2 rib cuff, a 13 cm body with the bird in motif.png in white, 8 cm tall, centred just above the cuff. My body gauge is 26 stitches and 34 rows per 10 cm; my 2x2 rib gauge is 30 stitches and 32 rows per 10 cm. Both measured.",
       "setup": { "kind": "image-file", "path": "~/pro/knitlab2/reference/arc.png" },
-      "expect": { "outcomes": ["ready", "not-ready"], "blockersIfNotReady": ["long-float"], "stitches": 134, "colors": 2, "gauge": [26, 34], "object": { "construction": "rib-cuff-jersey-body", "cuffFold": true, "cuffTargetCm": 7, "ribGauge": [30, 32] }, "placements": { "count": 1, "centred": true, "heightCm": 8, "maxRowsAboveCuff": 4 } }
+      "expect": { "outcomes": ["ready", "not-ready"], "blockersIfNotReady": ["long-float"], "stitches": 134, "colors": 2, "gauge": [26, 34], "object": { "construction": "rib-cuff-jersey-body", "cuffFold": true, "cuffTargetCm": 7, "ribGauge": [30, 32] }, "placements": { "count": 1, "centred": true, "heightCm": 8, "maxRowsAboveCuff": 4, "fromSuppliedImage": true } }
     },
     {
       "id": "toque-resize",
       "request": "Make the toque in project.json for a 52 cm head with the same negative ease. Keep the bird centred above the cuff and everything else the same.",
       "setup": { "kind": "toque-project", "path": "~/pro/knitlab2/reference/arc.png" },
-      "expect": { "outcomes": ["ready", "not-ready"], "blockersIfNotReady": ["long-float"], "stitches": 122, "rows": 89, "gauge": [26, 34], "object": { "construction": "rib-cuff-jersey-body", "cuffFold": true, "cuffTargetCm": 7, "ribGauge": [30, 32] }, "placements": { "count": 1, "centred": true, "heightCm": 8, "maxRowsAboveCuff": 3 } }
+      "expect": { "outcomes": ["ready", "not-ready"], "blockersIfNotReady": ["long-float"], "stitches": 122, "rows": 89, "gauge": [26, 34], "object": { "construction": "rib-cuff-jersey-body", "cuffFold": true, "cuffTargetCm": 7, "ribGauge": [30, 32] }, "placements": { "count": 1, "centred": true, "heightCm": 8, "maxRowsAboveCuff": 3, "fromSuppliedImage": true } }
     },
     {
       "id": "make-longer",

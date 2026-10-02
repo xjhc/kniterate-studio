@@ -576,7 +576,7 @@ function validateCoordinateBridge(
     if (trace.start !== kcode.start + kcodeToTrace || trace.end !== kcode.end + kcodeToTrace) messages.push(`${path}.traceCoordinate endpoints do not match the KCode-to-trace offset`);
   }
   if (compiler !== null && compiler.start < 1) messages.push(`${path}.compilerProject must use the one-based authored project domain`);
-  if (compiler !== null && sourceMin !== null && sourceMax !== null && (compiler.start !== sourceMin || compiler.end !== sourceMax)) messages.push(`${path}.compilerProject endpoints must equal the lowered source-slot endpoints`);
+  if (compiler !== null && sourceMin !== null && sourceMax !== null && (compiler.start < sourceMin || compiler.end > sourceMax)) messages.push(`${path}.compilerProject endpoints must lie within the lowered source-slot endpoints`);
 
   if (
     typeof bridge.artifactKcodeSha256 !== 'string'

@@ -106,6 +106,32 @@ function setupError(rule: string, message: string): ValidationMessage {
   return { severity: 'error', rule, message };
 }
 
+/**
+ * Each body yarn's path between rows, from the authored rows. A yarn that sits
+ * unused for more than `floatLimit` rows runs as a loose strand up the inside
+ * of the hat (a design warning; birdseye never has one, because every color
+ * knits the back on every row). Each extra yarn is carried in from the waste
+ * section to its first stitch (an operator check).
+ */
+function beanieYarnPaths(rows: readonly (readonly string[])[], ground: string, birdseye: boolean, floatLimit: number, cuffRows: number, rowIdOf: (bodyRow: number) => string): { messages: ValidationMessage[]; rowIds: (string | null)[] } {
+  const messages: ValidationMessage[] = [];
+  const rowIds: (string | null)[] = [];
+  for (const carrier of [...new Set(rows.flat())].sort()) {
+    const used = rows.flatMap((cells, row) => (birdseye || cells.includes(carrier) ? [row] : []));
+    if (carrier !== ground && used.length > 0) {
+      messages.push({ severity: 'info', rule: 'carried-yarn', message: `C${carrier} is carried from the waste section, past the cast-on and the ${cuffRows}-row cuff${used[0]! > 0 ? ` and ${used[0]} body row${used[0] === 1 ? '' : 's'}` : ''}, to its first stitch in body row ${used[0]! + 1}. Leave the strand slack while knitting and trim it after finishing.` });
+      rowIds.push(rowIdOf(used[0]!));
+    }
+    for (let index = 1; index < used.length; index += 1) {
+      const idle = used[index]! - used[index - 1]! - 1;
+      if (idle <= floatLimit) continue;
+      messages.push({ severity: 'warning', rule: 'project-long-carry', message: `C${carrier} is unused for ${idle} body rows (between rows ${used[index - 1]! + 1} and ${used[index]! + 1}), so its yarn runs up the inside of the hat for that height (limit ${floatLimit} rows). Use a birdseye back, or bring the color into the rows between.` });
+      rowIds.push(rowIdOf(used[index]!));
+    }
+  }
+  return { messages, rowIds };
+}
+
 function sourceRecordCount(source: string): number {
   let records = 1;
   for (let index = 0; index < source.length; index++) {
@@ -164,6 +190,8 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     // output that silently omits recorded intent.
     else setupMessages.push(setupError('project-override-unsupported', `Override ${resolved.override.id} (${resolved.override.kind}) cannot be compiled yet; remove it to export.`));
   }
+  // A placement that does not fit is not drawn; refuse to export a program that silently omits it.
+  for (const resolved of placements) if (resolved.status === 'conflict') setupMessages.push(setupError('project-placement-conflict', resolved.reason ?? `Placement ${resolved.placement.id} does not fit.`));
 
   const base = {
     revision: projectRevision(project),
@@ -385,18 +413,25 @@ function compileBeanieProject(
   const exactCapacity = observeAuthoredCapacityV1(capacity, { knitoutRecords: sourceRecordCount(knitoutText) });
   const capacityMessages = exactCapacity.status === 'blocked' ? [setupError(exactCapacity.rule, exactCapacity.message)] : [];
   const ok = capacityMessages.length === 0;
+  const height = state.chart.height;
+  const paths = withBody
+    ? beanieYarnPaths(input.jerseyBody!.rows, input.bodyCarrier, backing === 'birdseye', state.strategy.floatLimit, cuffRows, (bodyRow) => state.rowIds[height - 1 - (cuffRows + bodyRow)]!)
+    : { messages: [], rowIds: [] };
   return {
     ...base,
     capacity: exactCapacity,
     ok,
     compileVerdict: ok ? 'surface' : 'blocked',
     inputHash: ok ? computeInputHash({ construction: 'customist-2x2-rib-beanie@1', ...input }) : null,
-    messages: capacityMessages,
+    messages: [...paths.messages, ...capacityMessages],
     knitoutText: ok ? knitoutText : null,
     passes: built.predictedPasses,
     // The beanie has no chart-row provenance: every operation belongs to the construction.
     programOpSourceRows: parsed.opLines.map(() => null),
-    diagnostics: capacityMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })),
+    diagnostics: [
+      ...paths.messages.map((message, index) => ({ ...message, opIndex: null, rowId: paths.rowIds[index] ?? null, passIndices: [] })),
+      ...capacityMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })),
+    ],
     stats: { ...base.stats, passCount: built.predictedPasses.length, opCount: built.program.ops.length },
   };
 }

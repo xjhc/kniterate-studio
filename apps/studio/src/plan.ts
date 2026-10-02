@@ -34,7 +34,7 @@ export interface SizeCheck {
 }
 
 export interface PlanFinding {
-  rule: 'size-off-target' | 'size-needs-gauge' | 'gauge-assumed' | 'size-exceeds-capacity' | 'name-encodes-carrier' | 'cuff-off-target' | 'placement-size-off';
+  rule: 'size-off-target' | 'size-needs-gauge' | 'gauge-assumed' | 'size-exceeds-capacity' | 'name-encodes-carrier' | 'cuff-off-target' | 'placement-size-off' | 'beanie-width-invalid';
   severity: 'error' | 'warning';
   path: string;
   message: string;
@@ -65,10 +65,14 @@ export interface BeanieSections {
   cuff: { rows: number; knittedCm: Valued<number> | null; visibleCm: Valued<number> | null; folds: boolean } | null;
   /** Knitted body rows: the chart's body rows plus any rows the backing adds (birdseye starts and joins its back layer). */
   body: { rows: number; chartRows: number; fabric: 'rib' | 'fairisle colorwork' | 'birdseye colorwork'; cm: Valued<number> | null };
-  crown: { rows: number; recipe: string; finalStitches: number; cm: Valued<number> | null };
+  /** Null when the width cannot take a crown (see beanie-width-invalid). */
+  crown: { rows: number; recipe: string; finalStitches: number; cm: Valued<number> | null } | null;
   /** Visible cuff + body + crown, flat and unstretched; the crown's gathered top shortens it in wear. */
   finishedHeightCm: Valued<number> | null;
 }
+
+/** Default fit: 10% negative ease, so the hat stays on. */
+export const DEFAULT_BEANIE_EASE = -0.1;
 
 /** Flat 2×2 rib beanie: seam allowance, rib rounding, and width limits (see compileProject). */
 const BEANIE = { seamStitches: 2, minNeedles: 60, maxNeedles: 244 } as const;
@@ -117,10 +121,36 @@ function resizeEdits(state: ProjectState, dimension: 'width' | 'height', count: 
   return [{ kind: 'set-height', height: count, fillPaletteIndex: 0, newRowIds: newRowIds(state, Math.max(0, count - state.chart.height)) }];
 }
 
+/**
+ * Rows added or removed at the cuff/body boundary (the cuff's top), so the
+ * body rows and everything painted or placed on them keep their place
+ * relative to the cuff. Added rows repeat the cuff's top row.
+ */
+function cuffBoundaryEdits(state: ProjectState, cuffRows: number, required: number): ProjectEdit[] | null {
+  const height = state.chart.height;
+  const bodyRows = height - cuffRows;
+  if (bodyRows < 1 || cuffRows < 1) return null;
+  const newHeight = height + required - cuffRows;
+  if (newHeight > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || newHeight * state.chart.width > AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState) return null;
+  // Rows are stored top first: the cuff is the last `cuffRows` rows, its top row at index `bodyRows`.
+  const cuffTop = state.chart.cells[bodyRows]!;
+  if (required > cuffRows) {
+    const lowestBodyRow = state.rowIds[bodyRows - 1]!;
+    return newRowIds(state, required - cuffRows).map((rowId): ProjectEdit => ({ kind: 'insert-row', rowId, afterRowId: lowestBodyRow, cells: [...cuffTop] }));
+  }
+  return state.rowIds.slice(bodyRows, bodyRows + cuffRows - required).map((rowId): ProjectEdit => ({ kind: 'delete-row', rowId }));
+}
+
 const CARRIER_IN_NAME = /\bC([1-6])\b/;
 
-/** Crown rows and final stitches the beanie construction will knit at this width. */
-function crownFor(width: number, jersey: boolean): { rows: number; recipe: string; finalStitches: number } {
+/** Whether the beanie construction can knit this width (compileProject enforces the same limits). */
+function beanieWidthOk(width: number): boolean {
+  return width % 2 === 0 && width >= BEANIE.minNeedles && width <= BEANIE.maxNeedles;
+}
+
+/** Crown rows and final stitches the beanie construction will knit at this width, or null when it cannot. */
+function crownFor(width: number, jersey: boolean): { rows: number; recipe: string; finalStitches: number } | null {
+  if (!beanieWidthOk(width)) return null;
   if (!jersey && width === CUSTOMIST_RIB_CROWN_WIDTH) {
     const knits = CUSTOMIST_RIB_CROWN_194_V1.filter((step) => step[0] === 'k');
     const last = knits.at(-1);
@@ -133,7 +163,12 @@ function crownFor(width: number, jersey: boolean): { rows: number; recipe: strin
 export function planProject(state: ProjectState, placements: readonly ResolvedProjectPlacement[] = []): ProjectPlan {
   const assignments = new Map(state.machine.yarnAssignments.map((item) => [item.paletteId, item]));
   const gauge = state.gauge ?? null;
-  const target = state.target ?? null;
+  // A beanie's fit intent (head circumference and ease) is its finished-circumference target.
+  const head = state.object?.kind === 'beanie' ? state.object.headCircumferenceCm : undefined;
+  const ease = state.object?.ease ?? DEFAULT_BEANIE_EASE;
+  const target: ProjectTarget | null = head === undefined
+    ? state.target ?? null
+    : { ...state.target, widthCm: round1(head * (1 + ease)) };
   const findings: PlanFinding[] = [];
   const beanie = state.object?.kind === 'beanie';
   // A cuff-and-body beanie: the height target is the body above the rib cuff.
@@ -194,7 +229,7 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
         value: count,
         provenance: 'calculated',
         how: beanieWidth
-          ? `${targetCm} cm finished circumference × ${gauge.stitchesPer10cm} st/10 cm = ${round1(exact)} st, + ${BEANIE.seamStitches} seam stitches, rounded to 2 (mod 4) → ${count}`
+          ? `${head !== undefined ? `${head} cm head × (1 ${ease < 0 ? '−' : '+'} ${round1(Math.abs(ease) * 100)}% ease) = ` : ''}${targetCm} cm finished circumference × ${gauge.stitchesPer10cm} st/10 cm = ${round1(exact)} st, + ${BEANIE.seamStitches} seam stitches, rounded to 2 (mod 4) → ${count}`
           : `${targetCm} cm × ${dimension === 'width' ? gauge.stitchesPer10cm : gauge.rowsPer10cm} ${unit}/10 cm = ${round1(exact)} → ${count}`,
       };
       const ok = actual === count;
@@ -223,6 +258,18 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
     }
   }
 
+  if (beanie && !beanieWidthOk(state.chart.width)) {
+    const nearest = Math.min(BEANIE.maxNeedles, Math.max(BEANIE.minNeedles, beanieNeedles(state.chart.width - 2)));
+    const edits = resizeEdits(state, 'width', nearest);
+    findings.push({
+      rule: 'beanie-width-invalid',
+      severity: 'error',
+      path: 'chart.width',
+      message: `A beanie needs an even width from ${BEANIE.minNeedles} to ${BEANIE.maxNeedles} needles; this one has ${state.chart.width}, so its crown cannot be planned.`,
+      fixes: edits === null ? [] : [{ label: `Make it ${nearest} needles`, edits }],
+    });
+  }
+
   const object = state.object;
   const ribGauge = object?.ribGauge ?? null;
   const fold = object?.cuffFold === true;
@@ -237,14 +284,13 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
       const exact = (object.cuffTargetCm * (fold ? 2 : 1) * ribGauge.rowsPer10cm) / 10;
       const required = Math.max(2, Math.round(exact));
       if (required !== cuffRows) {
-        const delta = required - cuffRows;
-        const height = resizeEdits(state, 'height', state.chart.height + delta);
+        const height = cuffBoundaryEdits(state, cuffRows, required);
         findings.push({
           rule: 'cuff-off-target',
           severity: 'warning',
           path: 'object.cuffRows',
           message: `The cuff should be ${required} rows (${object.cuffTargetCm} cm visible${fold ? ' × 2 folded' : ''} × ${ribGauge.rowsPer10cm} rows/10 cm = ${round1(exact)}); it has ${cuffRows}.`,
-          fixes: height === null ? [] : [{ label: `Make the cuff ${required} rows and keep the body's ${state.chart.height - cuffRows} rows`, edits: [{ kind: 'set-object', object: { ...object, cuffRows: required } }, ...height] }],
+          fixes: height === null ? [] : [{ label: `Make the cuff ${required} rows; the body and everything on it stay as they are`, edits: [...height, { kind: 'set-object', object: { ...object, cuffRows: required } }] }],
         });
       }
     }
@@ -254,13 +300,16 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
     for (const resolved of placements) {
       const source = resolved.placement.source;
       if (source === undefined) continue;
-      const rows = Math.max(1, Math.round((source.heightCm * gauge.rowsPer10cm) / 10));
-      if (Math.abs(rows - resolved.placement.motif.height) > 1) {
+      // Converted at another gauge (either axis), the motif is stretched or squashed at this one.
+      const stale = source.gauge !== undefined
+        ? source.gauge.stitchesPer10cm !== gauge.stitchesPer10cm || source.gauge.rowsPer10cm !== gauge.rowsPer10cm
+        : Math.abs(Math.max(1, Math.round((source.heightCm * gauge.rowsPer10cm) / 10)) - resolved.placement.motif.height) > 1;
+      if (stale) {
         findings.push({
           rule: 'placement-size-off',
           severity: 'warning',
           path: `placements/${resolved.placement.id}`,
-          message: `Placement "${resolved.placement.id}" was made ${source.heightCm} cm tall; at the current gauge that is ${rows} rows, but the motif has ${resolved.placement.motif.height}. Re-convert it from its stored image (studio place --refresh ${resolved.placement.id}).`,
+          message: `Placement "${resolved.placement.id}" was converted ${source.gauge ? `at ${source.gauge.stitchesPer10cm} st / ${source.gauge.rowsPer10cm} rows per 10 cm` : 'at another gauge'}; the project gauge is now ${gauge.stitchesPer10cm} / ${gauge.rowsPer10cm}, so the ${source.heightCm} cm motif would knit distorted. Re-convert it from its stored image (studio place --refresh ${resolved.placement.id}, or Refresh in the motif inspector).`,
           fixes: [],
         });
       }
@@ -302,27 +351,31 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
     const crown = crownFor(state.chart.width, jersey);
     const rowsCm = (rows: number, g: ProjectGauge | null, label: string): Valued<number> | null => g === null ? null : {
       value: round1(rows / perCm(g, 'height')),
-      provenance: 'calculated',
+      provenance: g.source === 'assumed' ? 'assumed' : 'calculated',
       how: `${rows} ${label} rows ÷ ${g.rowsPer10cm} rows/10 cm${g.source === 'assumed' ? ' (assumed gauge)' : ''}`,
     };
     const cuffKnitted = jersey ? rowsCm(cuffRows, ribGauge, 'cuff') : null;
     const cuffVisible = cuffKnitted === null ? null : fold
-      ? { value: round1(cuffRows / perCm(ribGauge!, 'height') / 2), provenance: 'calculated' as const, how: `half of the knitted cuff (it folds up): ${cuffRows} rows ÷ ${ribGauge!.rowsPer10cm} rows/10 cm ÷ 2` }
+      ? { value: round1(cuffRows / perCm(ribGauge!, 'height') / 2), provenance: ribGauge!.source === 'assumed' ? 'assumed' as const : 'calculated' as const, how: `half of the knitted cuff (it folds up): ${cuffRows} rows ÷ ${ribGauge!.rowsPer10cm} rows/10 cm ÷ 2` }
       : cuffKnitted;
     const bodyRowsCm = rowsCm(bodyRows, gauge, jersey ? 'body' : 'rib');
     const bodyCm = bodyRowsCm === null || !birdseye ? bodyRowsCm : {
       ...bodyRowsCm,
       how: `${bodyRowsCm.how}; ${chartBodyRows} chart rows + ${bodyExtraRows} ground rows that start and join the birdseye back; the gauge must be measured on birdseye fabric`,
     };
-    const crownCm = rowsCm(crown.rows, gauge, 'crown');
+    // The crown is plain jersey; no jersey gauge is recorded, so its length is estimated with the body gauge.
+    const crownRowsCm = crown === null ? null : rowsCm(crown.rows, gauge, 'crown');
+    const crownCm = crownRowsCm === null ? null : jersey
+      ? { ...crownRowsCm, provenance: 'assumed' as const, how: `${crownRowsCm.how}; estimated with the body gauge, since the plain jersey crown has no gauge of its own` }
+      : crownRowsCm;
     const parts = [cuffVisible, bodyCm, crownCm];
     sections = {
       cuff: jersey ? { rows: cuffRows, knittedCm: cuffKnitted, visibleCm: cuffVisible, folds: fold } : null,
       body: { rows: bodyRows, chartRows: chartBodyRows, fabric: birdseye ? 'birdseye colorwork' : jersey ? 'fairisle colorwork' : 'rib', cm: bodyCm },
-      crown: { rows: crown.rows, recipe: crown.recipe, finalStitches: crown.finalStitches, cm: crownCm },
+      crown: crown === null ? null : { rows: crown.rows, recipe: crown.recipe, finalStitches: crown.finalStitches, cm: crownCm },
       finishedHeightCm: parts.some((part, index) => part === null && (index > 0 || jersey)) ? null : {
         value: round1(parts.reduce((sum, part) => sum + (part?.value ?? 0), 0)),
-        provenance: 'calculated',
+        provenance: parts.some((part) => part?.provenance === 'assumed') ? 'assumed' : 'calculated',
         how: `${jersey ? `visible cuff ${cuffVisible!.value} + ` : ''}body ${bodyCm!.value} + crown ${crownCm!.value} cm, flat and unstretched; the crown is measured along its knitted length and the gathered top shortens it in wear`,
       },
     };

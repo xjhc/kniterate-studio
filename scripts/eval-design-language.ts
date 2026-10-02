@@ -31,7 +31,8 @@ import {
 import { runAuthoredPipeline } from '../apps/studio/src/authoredPipeline.ts';
 import { planProject } from '../apps/studio/src/plan.ts';
 import { collectFindings, resolveReadiness } from '../apps/studio/src/readiness.ts';
-import { encodePng } from './lib/png.ts';
+import { decodePng, encodePng } from './lib/png.ts';
+import { convertPlacementImage } from '../apps/studio/src/placements.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const OUTCOMES = ['ready', 'not-ready', 'needs-input', 'unsupported'] as const;
@@ -49,7 +50,7 @@ interface EvalCase {
     /** The beanie object the project must record. */
     object?: { construction?: string; cuffFold?: boolean; cuffTargetCm?: number; ribGauge?: [number, number] };
     /** Motif placements: how many, all placed, centred, how tall in cm (from the stored image), how far above the cuff. */
-    placements?: { count: number; centred?: boolean; heightCm?: number; maxRowsAboveCuff?: number };
+    placements?: { count: number; centred?: boolean; heightCm?: number; maxRowsAboveCuff?: number; fromSuppliedImage?: boolean };
     stitches?: number;
     rows?: number;
     colors?: number;
@@ -230,6 +231,18 @@ async function check(item: EvalCase, directory: string, reported: ReturnType<typ
           if (placements.centred && Math.abs(2 * (item.at?.column ?? -1) + placement.motif.width - state.chart.width) > 1) failures.push(`placement ${placement.id} is not centred`);
           if (placements.heightCm !== undefined && placement.source?.heightCm !== placements.heightCm) failures.push(`placement ${placement.id} is ${placement.source?.heightCm ?? 'not recorded as'} cm tall, expected ${placements.heightCm}`);
           if (placements.maxRowsAboveCuff !== undefined && placement.rowsAboveCuff > placements.maxRowsAboveCuff) failures.push(`placement ${placement.id} starts ${placement.rowsAboveCuff} rows above the cuff, expected at most ${placements.maxRowsAboveCuff}`);
+          if (placements.fromSuppliedImage) {
+            // The motif must come from the supplied image: the same bytes, and a conversion that reproduces it exactly.
+            const supplied = readFileSync(resolve(directory, 'motif.png'));
+            const source = placement.source;
+            if (source === undefined) failures.push(`placement ${placement.id} has no stored source image`);
+            else if (source.sha256 !== createHash('sha256').update(supplied).digest('hex') || Buffer.from(source.bytesBase64, 'base64').compare(supplied) !== 0) failures.push(`placement ${placement.id} was not made from the supplied motif.png`);
+            else if (source.gauge !== undefined) {
+              const bytes = Buffer.from(source.bytesBase64, 'base64');
+              const again = convertPlacementImage({ pixels: decodePng(bytes), bytesBase64: source.bytesBase64, sha256: source.sha256 }, { heightCm: source.heightCm, colors: source.colors, pooling: source.pooling }, source.gauge);
+              if (JSON.stringify(again.motif.cells) !== JSON.stringify(placement.motif.cells)) failures.push(`placement ${placement.id}'s stitches are not the conversion of its stored image`);
+            }
+          }
         }
       }
     }

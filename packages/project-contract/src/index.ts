@@ -108,6 +108,9 @@ const ObjectSchema = z.object({
   cuffFold: z.boolean().optional(),
   /** Requested visible cuff height; the plan checks `cuffRows` against it at `ribGauge`. */
   cuffTargetCm: z.number().positive().max(100).optional(),
+  /** Fit intent: the wearer's head circumference and the ease (a fraction, -0.1 = 10% negative ease); the plan derives the finished circumference from them. */
+  headCircumferenceCm: z.number().positive().max(100).optional(),
+  ease: z.number().gt(-0.5).lt(0.5).optional(),
   /** Gauge of the 2×2 rib (the cuff); the body uses the project gauge. */
   ribGauge: z.lazy(() => GaugeSchema).optional(),
 }).refine((object) => object.construction === 'flat-rib-2x2' || object.cuffRows !== undefined, 'rib-cuff-jersey-body needs cuffRows');
@@ -142,9 +145,38 @@ const PlacementSchema = z.object({
     colors: z.number().int().min(1).max(8),
     pooling: z.enum(['mean', 'mode']),
     converter: z.object({ id: z.string(), version: z.string() }),
+    /** The body gauge the motif was converted at; a different project gauge means it needs re-converting. */
+    gauge: z.object({ stitchesPer10cm: z.number().positive().max(100), rowsPer10cm: z.number().positive().max(100) }).optional(),
   }).optional(),
 }).refine((placement) => placement.motif.width <= 252 && placement.motif.height <= 1_200 && placement.motif.width * placement.motif.height <= 75_600, 'placement motif exceeds the chart capacity (252 × 1,200, 75,600 cells)');
 export type ProjectPlacement = z.infer<typeof PlacementSchema>;
+
+const CmSchema = z.number().positive().max(500);
+const MeasuredGaugeSchema = z.object({ stitchesPer10cm: z.number().positive().max(100), rowsPer10cm: z.number().positive().max(100) });
+
+/**
+ * Measurements returned from knitting one exact candidate. They are evidence
+ * about that candidate only; recording them never changes a verdict.
+ * `synthetic` marks values made up for software testing, never a real knit.
+ */
+const TrialSchema = z.object({
+  id: Id,
+  candidate: z.object({ kcodeSha256: z.string().regex(/^[0-9a-f]{64}$/), label: z.string().max(200).optional() }),
+  recordedAt: z.string().max(40),
+  synthetic: z.boolean(),
+  outcome: z.enum(['clean', 'issues', 'failed']),
+  bodyGauge: MeasuredGaugeSchema.optional(),
+  ribGauge: MeasuredGaugeSchema.optional(),
+  finishedCm: z.object({
+    circumference: CmSchema.optional(),
+    cuffVisible: CmSchema.optional(),
+    body: CmSchema.optional(),
+    crown: CmSchema.optional(),
+    total: CmSchema.optional(),
+  }).optional(),
+  notes: z.string().max(4_000).optional(),
+});
+export type ProjectTrial = z.infer<typeof TrialSchema>;
 
 const PassOverrideSchema = z.object({
   id: Id,
@@ -207,6 +239,7 @@ const SetTargetEditSchema = z.object({ kind: z.literal('set-target'), target: Ta
 const SetObjectEditSchema = z.object({ kind: z.literal('set-object'), object: ObjectSchema.nullable() });
 const SetPlacementEditSchema = z.object({ kind: z.literal('set-placement'), placement: PlacementSchema });
 const RemovePlacementEditSchema = z.object({ kind: z.literal('remove-placement'), placementId: Id });
+const RecordTrialEditSchema = z.object({ kind: z.literal('record-trial'), trial: TrialSchema });
 
 export const ProjectEditSchema = z.discriminatedUnion('kind', [
   PaintCellsEditSchema,
@@ -227,6 +260,7 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   SetObjectEditSchema,
   SetPlacementEditSchema,
   RemovePlacementEditSchema,
+  RecordTrialEditSchema,
 ]);
 export type ProjectEdit = z.infer<typeof ProjectEditSchema>;
 
@@ -245,13 +279,26 @@ export interface ProjectState {
   target?: ProjectTarget;
   object?: ProjectObject;
   placements?: ProjectPlacement[];
+  trials?: ProjectTrial[];
 }
 
 export interface ProjectEditEntry {
   id: string;
   source: 'human' | 'assistant' | 'system';
   edit: ProjectEdit;
+  /** Entries sharing a group are one operation: undo and redo move over all of them together. */
+  group?: string;
+  /** What the operation did, in words, on the first entry of a group. */
+  label?: string;
 }
+
+const ProjectEditEntrySchema = z.object({
+  id: Id,
+  source: z.enum(['human', 'assistant', 'system']),
+  edit: ProjectEditSchema,
+  group: Id.optional(),
+  label: z.string().min(1).max(200).optional(),
+});
 
 export interface ProjectCheckpoint {
   cursor: number;
@@ -913,6 +960,7 @@ const ProjectStateSchema: z.ZodType<ProjectState> = z.object({
   target: TargetSchema.optional(),
   object: ObjectSchema.optional(),
   placements: z.array(PlacementSchema).max(16).optional(),
+  trials: z.array(TrialSchema).max(64).optional(),
 }).superRefine(validateStateRelationships);
 
 const ProjectSchema: z.ZodType<ColorworkProjectV1> = z.object({
@@ -924,7 +972,7 @@ const ProjectSchema: z.ZodType<ColorworkProjectV1> = z.object({
   base: ProjectStateSchema,
   history: z.object({
     cursor: z.number().int().min(0),
-    entries: z.array(z.object({ id: Id, source: z.enum(['human', 'assistant', 'system']), edit: ProjectEditSchema })),
+    entries: z.array(ProjectEditEntrySchema),
     checkpoints: z.array(z.object({ cursor: z.number().int().min(0), state: ProjectStateSchema })),
   }),
 }).superRefine((project, context) => {
@@ -1236,6 +1284,11 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       state.placements = [...placements, edit.placement];
       break;
     }
+    case 'record-trial':
+      if ((state.trials ?? []).some((item) => item.id === edit.trial.id)) throw new Error(`trial "${edit.trial.id}" already exists`);
+      if ((state.trials ?? []).length >= 64) throw new Error('a project records at most 64 trials');
+      state.trials = [...(state.trials ?? []), edit.trial];
+      break;
     case 'remove-placement':
       if (!(state.placements ?? []).some((item) => item.id === edit.placementId)) throw new Error(`placement "${edit.placementId}" does not exist`);
       state.placements = state.placements!.filter((item) => item.id !== edit.placementId);
@@ -1306,7 +1359,7 @@ export function appendProjectEdit(projectValue: ColorworkProjectV1, entryValue: 
   const incomingCapacityIssue = inspectIncomingProjectEditCapacityV1(entryValue);
   if (incomingCapacityIssue !== null) throw new InvalidColorworkProjectError([incomingCapacityIssue.message]);
   const project = clone(projectValue);
-  const entry = z.object({ id: Id, source: z.enum(['human', 'assistant', 'system']), edit: ProjectEditSchema }).parse(entryValue);
+  const entry = ProjectEditEntrySchema.parse(entryValue);
   if (project.history.entries.some((item) => item.id === entry.id)) throw new InvalidColorworkProjectError([`duplicate edit id "${entry.id}"`]);
   project.history.entries = project.history.entries.slice(0, project.history.cursor);
   project.history.checkpoints = project.history.checkpoints.filter((item) => item.cursor <= project.history.cursor);
@@ -1338,14 +1391,34 @@ export function appendProjectEdit(projectValue: ColorworkProjectV1, entryValue: 
   return parseProjectStructure(project);
 }
 
+/**
+ * Appends several edits as one operation: they share a group, so one undo
+ * reverts all of them. Either every edit applies or the project is unchanged.
+ */
+export function appendProjectOperation(projectValue: ColorworkProjectV1, operation: { group: string; source: ProjectEditEntry['source']; label: string; edits: readonly ProjectEdit[] }): ColorworkProjectV1 {
+  return operation.edits.reduce((project, edit, index) => appendProjectEdit(project, {
+    id: `${operation.group}-${index}`,
+    source: operation.source,
+    edit,
+    group: operation.group,
+    ...(index === 0 ? { label: operation.label } : {}),
+  }), projectValue);
+}
+
 export function undoProjectEdit(projectValue: ColorworkProjectV1): ColorworkProjectV1 {
   const project = clone(projectValue);
+  const { entries } = project.history;
+  const group = entries[project.history.cursor - 1]?.group;
   project.history.cursor = Math.max(0, project.history.cursor - 1);
+  if (group !== undefined) while (project.history.cursor > 0 && entries[project.history.cursor - 1]!.group === group) project.history.cursor -= 1;
   return parseProjectStructure(project);
 }
 
 export function redoProjectEdit(projectValue: ColorworkProjectV1): ColorworkProjectV1 {
   const project = clone(projectValue);
-  project.history.cursor = Math.min(project.history.entries.length, project.history.cursor + 1);
+  const { entries } = project.history;
+  const group = entries[project.history.cursor]?.group;
+  project.history.cursor = Math.min(entries.length, project.history.cursor + 1);
+  if (group !== undefined) while (project.history.cursor < entries.length && entries[project.history.cursor]!.group === group) project.history.cursor += 1;
   return parseProjectStructure(project);
 }

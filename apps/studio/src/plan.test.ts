@@ -121,7 +121,7 @@ describe('beanie plan', () => {
       crown: { recipe: 'eight-line (jersey)' },
     });
     const { cuff, body, crown, finishedHeightCm } = after.sections!;
-    expect(finishedHeightCm!.value).toBeCloseTo(cuff!.visibleCm!.value + body.cm!.value + crown.cm!.value, 1);
+    expect(finishedHeightCm!.value).toBeCloseTo(cuff!.visibleCm!.value + body.cm!.value + crown!.cm!.value, 1);
     // Without a rib gauge the cuff cannot be checked, and the plan says so.
     const unknown = plan(beanie({ kind: 'set-gauge', gauge: measured }, { kind: 'set-object', object: { ...toque, ribGauge: undefined } }));
     expect(unknown.findings).toEqual([expect.objectContaining({ rule: 'size-needs-gauge', path: 'object.ribGauge' })]);

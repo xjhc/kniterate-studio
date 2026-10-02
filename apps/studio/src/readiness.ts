@@ -68,11 +68,12 @@ function operatorHeader(rule: string, message: string, knitoutLines: readonly st
 }
 
 /**
- * Floats along the actual yarn paths of a beanie: each carrier's previous loop
- * to its next stitch, across rows, sections and transfers, from the emitted
- * trace. A span that starts before the draw yarn's last row is a yarn carried
- * in from the waste section to its first use (an operator check); one inside
- * the piece is a float behind the fabric (a design warning).
+ * Sideways floats along the actual yarn paths of a beanie: each carrier's
+ * previous loop to its next stitch, across rows, sections and transfers, from
+ * the emitted trace. Spans starting before the draw yarn's last row are the
+ * yarn carried in from the waste section, which compileProject reports from
+ * the authored rows (`carried-yarn`), as it does vertical carries
+ * (`project-long-carry`) that a needle distance cannot see.
  */
 function beanieFloatFindings(trace: MachineTraceV1, floatLimit: number): Finding[] {
   const report = deriveMachineTraceAdvisoriesV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2, { maxFloatDistance: floatLimit });
@@ -81,10 +82,8 @@ function beanieFloatFindings(trace: MachineTraceV1, floatLimit: number): Finding
   const findings: Finding[] = [];
   for (const advisory of report.advisories) {
     if (advisory.rule !== 'machine-advisory.float-distance' || advisory.carrier === '1' || advisory.carrier === '6') continue;
-    const fromFrame = (advisory.fromPassIndex ?? 0) <= frameEnd;
-    findings.push(fromFrame
-      ? { stage: 'kcode', rule: 'carried-yarn', severity: 'info', owner: 'operator', path: null, title: 'carried-yarn', message: `C${advisory.carrier} is carried ${advisory.distance} needles from the waste section to its first stitch in pass ${advisory.passIndex + 1}; leave the strand slack and trim it after finishing.`, passIndices: [advisory.passIndex], fixes: [] }
-      : { stage: 'kcode', rule: 'long-float', severity: 'warning', owner: 'design', path: null, title: 'long-float', message: `C${advisory.carrier} floats ${advisory.distance} needles behind the work from pass ${(advisory.fromPassIndex ?? 0) + 1} to pass ${advisory.passIndex + 1} (limit ${floatLimit}).`, passIndices: [advisory.passIndex], fixes: [] });
+    if ((advisory.fromPassIndex ?? 0) <= frameEnd) continue;
+    findings.push({ stage: 'kcode', rule: 'long-float', severity: 'warning', owner: 'design', path: null, title: 'long-float', message: `C${advisory.carrier} floats ${advisory.distance} needles behind the work from pass ${(advisory.fromPassIndex ?? 0) + 1} to pass ${advisory.passIndex + 1} (limit ${floatLimit}).`, passIndices: [advisory.passIndex], fixes: [] });
   }
   const listed = report.advisories.filter((advisory) => advisory.rule === 'machine-advisory.float-distance').length;
   if (report.counts['machine-advisory.float-distance'] > listed) {
@@ -109,7 +108,7 @@ export function collectFindings(plan: ProjectPlan, result: AuthoredPipelineResul
       stage: 'compile',
       rule: diagnostic.rule,
       severity: diagnostic.severity,
-      owner: isDesignRule(diagnostic.rule) ? 'design' : 'compiler',
+      owner: diagnostic.rule === 'carried-yarn' ? 'operator' : isDesignRule(diagnostic.rule) ? 'design' : 'compiler',
       path: diagnostic.rowId === null ? null : `rows/${diagnostic.rowId}`,
       title: title(diagnostic.rule, diagnostic.severity, diagnostic.message),
       message: diagnostic.message,

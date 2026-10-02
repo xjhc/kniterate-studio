@@ -132,6 +132,16 @@ describe('authored compiler to KCode coordinate bridge', () => {
       trace,
       scheduledTraceComparison: comparison,
       profile: KNITERATE_7GG_KCODE_PROFILE_V2,
-    })).toThrow(/must equal the lowered source-slot endpoints/);
+    })).toThrow(/must lie within the lowered source-slot endpoints/);
+    // Inside the lowered range but narrower than the needles the trace selects: still refused.
+    expect(() => createAuthoredKCodeCoordinateBridgeV1({
+      artifactKcodeSha256: 'a'.repeat(64),
+      compilerCoordinateStart: 41,
+      compilerCoordinateEnd: 43,
+      lowering: converted.coordinateMapping,
+      trace,
+      scheduledTraceComparison: comparison,
+      profile: KNITERATE_7GG_KCODE_PROFILE_V2,
+    })).toThrow(/selection endpoints do not match/);
   });
 });

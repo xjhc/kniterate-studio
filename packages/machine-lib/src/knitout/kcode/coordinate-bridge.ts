@@ -145,11 +145,15 @@ export function createAuthoredKCodeCoordinateBridgeV1(
     throw new Error('lowering source-slot range is reversed');
   }
   integer(input.lowering.frontSourceSlotToKCodeColumnOffset, 'front source-slot offset');
+  // The lowered range also counts carrier parking misses beyond the piece
+  // (the beanie frame parks 1-3 needles out); they select no needle. The
+  // selection-extent check below pins the authored range to exactly the
+  // needles the trace selects.
   if (
-    input.compilerCoordinateStart !== sourceRange.min
-    || input.compilerCoordinateEnd !== sourceRange.max
+    input.compilerCoordinateStart < sourceRange.min
+    || input.compilerCoordinateEnd > sourceRange.max
   ) {
-    throw new Error('compiler coordinate endpoints must equal the lowered source-slot endpoints');
+    throw new Error('compiler coordinate endpoints must lie within the lowered source-slot endpoints');
   }
 
   const compilerToKcode = input.lowering.frontSourceSlotToKCodeColumnOffset;
