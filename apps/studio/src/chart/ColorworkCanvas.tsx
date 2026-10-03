@@ -233,7 +233,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       if (selected || box.status === 'conflict') {
         overlay.font = '10px system-ui';
         overlay.fillStyle = box.status === 'conflict' ? '#dc2626' : '#2563eb';
-        overlay.fillText(box.status === 'conflict' ? `${box.id} · does not fit` : box.id, GUTTER + (box.left + dragging.columns) * cell - scroll.left + 2, Math.max(10, (box.top + dragging.rows) * cell - scroll.top - 3));
+        overlay.fillText(box.status === 'conflict' ? `${box.id} · ${box.problem === 'color' ? 'a color has no yarn' : 'does not fit'}` : box.id, GUTTER + (box.left + dragging.columns) * cell - scroll.left + 2, Math.max(10, (box.top + dragging.rows) * cell - scroll.top - 3));
       }
     }
     if (keyboardActive) {

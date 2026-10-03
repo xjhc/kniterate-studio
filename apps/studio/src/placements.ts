@@ -130,6 +130,7 @@ export interface PlacementBox {
   top: number;
   bottom: number;
   status: ResolvedProjectPlacement['status'];
+  problem?: ResolvedProjectPlacement['problem'];
 }
 
 function cuffRowsOf(state: ProjectState): number {
@@ -139,10 +140,10 @@ function cuffRowsOf(state: ProjectState): number {
 /** Where each placement sits (or would sit, for a conflict), with the anchor rules materialization uses. */
 export function placementBoxes(state: ProjectState, resolved: readonly ResolvedProjectPlacement[]): PlacementBox[] {
   const cuffRows = cuffRowsOf(state);
-  return resolved.map(({ placement, status }) => {
+  return resolved.map(({ placement, status, problem }) => {
     const left = placement.x === 'center' ? Math.floor((state.chart.width - placement.motif.width) / 2) : placement.x;
     const bottom = state.chart.height - 1 - (cuffRows + placement.rowsAboveCuff);
-    return { id: placement.id, left, right: left + placement.motif.width - 1, top: bottom - placement.motif.height + 1, bottom, status };
+    return { id: placement.id, left, right: left + placement.motif.width - 1, top: bottom - placement.motif.height + 1, bottom, status, ...(problem ? { problem } : {}) };
   });
 }
 

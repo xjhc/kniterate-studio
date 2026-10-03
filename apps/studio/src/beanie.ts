@@ -94,7 +94,7 @@ export function createBeanieProject(intent: BeanieIntent, options: { id: string;
   ];
   if (intent.accent) edits.push({ kind: 'set-yarn-assignment', assignment: { paletteId: 'accent', carrier: '4', yarnName: intent.accent.name } });
   // A colorwork body uses Customist's default float warning distance (7).
-  if (cuff) edits.push({ kind: 'set-strategy', strategy: { technique: intent.backing ?? 'fairisle', ...(intent.backing === 'birdseye' ? {} : { birdseyeMode: 'minimal' as const }), floatLimit: 7 } });
+  if (cuff) edits.push({ kind: 'set-strategy', strategy: { technique: intent.backing ?? 'fairisle', floatLimit: 7 } });
   if (intent.bodyGauge !== undefined) edits.push({ kind: 'set-gauge', gauge: { ...intent.bodyGauge } });
   if (intent.bodyCm !== undefined) edits.push({ kind: 'set-target', target: { heightCm: intent.bodyCm } });
   const project = createColorworkProjectV1(chart, { id: options.id, title: intent.title });
@@ -136,7 +136,8 @@ export function beanieFitEdits(project: ColorworkProjectV1, change: BeanieFitCha
   if (JSON.stringify(nextObject) !== JSON.stringify(object)) edits.push({ kind: 'set-object', object: nextObject });
   if (change.bodyGauge !== undefined) edits.push({ kind: 'set-gauge', gauge: { ...change.bodyGauge } });
   if (change.bodyCm !== undefined) edits.push({ kind: 'set-target', target: { ...state.target, heightCm: change.bodyCm } });
-  if (change.backing !== undefined && change.backing !== state.strategy.technique) edits.push({ kind: 'set-strategy', strategy: { ...state.strategy, technique: change.backing } });
+  // The beanie body supports exactly fairisle and full birdseye: set only those fields, so no hidden mode survives a switch.
+  if (change.backing !== undefined && change.backing !== state.strategy.technique) edits.push({ kind: 'set-strategy', strategy: { technique: change.backing, floatLimit: state.strategy.floatLimit } });
   return withSizingFixes(project, edits);
 }
 

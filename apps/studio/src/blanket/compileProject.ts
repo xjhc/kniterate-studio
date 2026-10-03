@@ -116,8 +116,10 @@ function setupError(rule: string, message: string): ValidationMessage {
 function beanieYarnPaths(rows: readonly (readonly string[])[], ground: string, birdseye: boolean, floatLimit: number, cuffRows: number, rowIdOf: (bodyRow: number) => string): { messages: ValidationMessage[]; rowIds: (string | null)[] } {
   const messages: ValidationMessage[] = [];
   const rowIds: (string | null)[] = [];
-  for (const carrier of [...new Set(rows.flat())].sort()) {
-    const used = rows.flatMap((cells, row) => (birdseye || cells.includes(carrier) ? [row] : []));
+  for (const carrier of [...new Set([ground, ...rows.flat()])].sort()) {
+    // The ground also knits every cuff row (before body row 0) and every crown row (after the last body row).
+    const inBody = rows.flatMap((cells, row) => (birdseye || cells.includes(carrier) ? [row] : []));
+    const used = carrier === ground ? [-1, ...inBody, rows.length] : inBody;
     if (carrier !== ground && used.length > 0) {
       messages.push({ severity: 'info', rule: 'carried-yarn', message: `C${carrier} is carried from the waste section, past the cast-on and the ${cuffRows}-row cuff${used[0]! > 0 ? ` and ${used[0]} body row${used[0] === 1 ? '' : 's'}` : ''}, to its first stitch in body row ${used[0]! + 1}. Leave the strand slack while knitting and trim it after finishing.` });
       rowIds.push(rowIdOf(used[0]!));
@@ -125,8 +127,10 @@ function beanieYarnPaths(rows: readonly (readonly string[])[], ground: string, b
     for (let index = 1; index < used.length; index += 1) {
       const idle = used[index]! - used[index - 1]! - 1;
       if (idle <= floatLimit) continue;
-      messages.push({ severity: 'warning', rule: 'project-long-carry', message: `C${carrier} is unused for ${idle} body rows (between rows ${used[index - 1]! + 1} and ${used[index]! + 1}), so its yarn runs up the inside of the hat for that height (limit ${floatLimit} rows). Use a birdseye back, or bring the color into the rows between.` });
-      rowIds.push(rowIdOf(used[index]!));
+      const from = used[index - 1]! < 0 ? 'the cuff' : `body row ${used[index - 1]! + 1}`;
+      const to = used[index]! >= rows.length ? 'the crown' : `body row ${used[index]! + 1}`;
+      messages.push({ severity: 'warning', rule: 'project-long-carry', message: `C${carrier} is unused for ${idle} body rows (from ${from} to ${to}), so its yarn runs up the inside of the hat for that height (limit ${floatLimit} rows). Use a birdseye back, or bring the color into the rows between.` });
+      rowIds.push(rowIdOf(Math.min(rows.length - 1, Math.max(0, used[index]! - 1))));
     }
   }
   return { messages, rowIds };
@@ -414,6 +418,16 @@ function compileBeanieProject(
   const capacityMessages = exactCapacity.status === 'blocked' ? [setupError(exactCapacity.rule, exactCapacity.message)] : [];
   const ok = capacityMessages.length === 0;
   const height = state.chart.height;
+  const opRows = built.program.ops.map((op) => op.sourceRows ?? null);
+  const programOpSourceRows = opRows.length === parsed.opLines.length ? opRows : parsed.opLines.map(() => null);
+  const passIndicesByMachineRow = new Map<number, number[]>();
+  built.predictedPasses.forEach((pass, passIndex) => {
+    for (const machineRow of pass.sourceRows ?? []) passIndicesByMachineRow.set(machineRow, [...(passIndicesByMachineRow.get(machineRow) ?? []), passIndex]);
+  });
+  const rowProvenance = state.rowIds.map((rowId, chartRow) => {
+    const machineRow = height - chartRow - 1;
+    return { rowId, chartRow, machineRow, displayRow: state.chart.rowNumbering === 'bottom-up' ? height - chartRow : chartRow + 1, passIndices: passIndicesByMachineRow.get(machineRow) ?? [] };
+  });
   const paths = withBody
     ? beanieYarnPaths(input.jerseyBody!.rows, input.bodyCarrier, backing === 'birdseye', state.strategy.floatLimit, cuffRows, (bodyRow) => state.rowIds[height - 1 - (cuffRows + bodyRow)]!)
     : { messages: [], rowIds: [] };
@@ -426,8 +440,9 @@ function compileBeanieProject(
     messages: [...paths.messages, ...capacityMessages],
     knitoutText: ok ? knitoutText : null,
     passes: built.predictedPasses,
-    // The beanie has no chart-row provenance: every operation belongs to the construction.
-    programOpSourceRows: parsed.opLines.map(() => null),
+    // Rib and body operations carry their knit row (machine row); the frame and crown belong to the construction.
+    programOpSourceRows,
+    rowProvenance,
     diagnostics: [
       ...paths.messages.map((message, index) => ({ ...message, opIndex: null, rowId: paths.rowIds[index] ?? null, passIndices: [] })),
       ...capacityMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })),

@@ -15,13 +15,31 @@ function cm(value: Valued<number> | null | undefined): string {
   return `${value.provenance === 'assumed' ? '≈' : ''}${value.value} cm`;
 }
 
+/** A number the designer types; an out-of-range value is shown as not applied, with the reason, never silently dropped. */
 function NumberField({ id, label, value, step = 0.5, min, max, suffix, onCommit }: { id: string; label: string; value: number | undefined; step?: number; min: number; max: number; suffix: string; onCommit: (value: number) => void }) {
-  return <label className="strategy-field garment-field" htmlFor={id}>
-    <span>{label}</span>
-    <span className="garment-input"><input id={id} type="number" inputMode="decimal" step={step} min={min} max={max} defaultValue={value ?? ''} key={`${id}-${value ?? 'none'}`}
-      onBlur={(event) => { const next = Number(event.currentTarget.value); if (event.currentTarget.value !== '' && Number.isFinite(next) && next >= min && next <= max && next !== value) onCommit(next); }}
-      onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} /><i>{suffix}</i></span>
-  </label>;
+  const [draft, setDraft] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const shown = draft ?? (value === undefined ? '' : String(value));
+  const commit = () => {
+    if (draft === null) return;
+    const next = Number(draft);
+    if (draft.trim() === '' || !Number.isFinite(next) || next < min || next > max) {
+      setError(`Not applied: enter ${min}–${max} ${suffix}. The design still uses ${value ?? 'no value'}${value === undefined ? '' : ` ${suffix}`}.`);
+      return;
+    }
+    setError(null); setDraft(null);
+    if (next !== value) onCommit(next);
+  };
+  return <div className="garment-field-wrap">
+    <label className="strategy-field garment-field" htmlFor={id}>
+      <span>{label}</span>
+      <span className="garment-input"><input id={id} type="number" inputMode="decimal" step={step} min={min} max={max} value={shown} aria-invalid={error !== null} aria-describedby={error ? `${id}-error` : undefined}
+        onChange={(event) => { setDraft(event.currentTarget.value); setError(null); }}
+        onBlur={commit}
+        onKeyDown={(event) => { if (event.key === 'Enter') commit(); if (event.key === 'Escape') { setDraft(null); setError(null); } }} /><i>{suffix}</i></span>
+    </label>
+    {error && <p className="garment-error" id={`${id}-error`} role="alert">{error} <button type="button" className="link-button" onClick={() => { setDraft(null); setError(null); }}>Restore</button></p>}
+  </div>;
 }
 
 function GaugeFields({ id, label, gauge, onCommit }: { id: string; label: string; gauge: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'> | undefined; onCommit: (gauge: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'>) => void }) {

@@ -134,11 +134,11 @@ function cuffBoundaryEdits(state: ProjectState, cuffRows: number, required: numb
   if (newHeight > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || newHeight * state.chart.width > AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState) return null;
   // Rows are stored top first: the cuff is the last `cuffRows` rows, its top row at index `bodyRows`.
   const cuffTop = state.chart.cells[bodyRows]!;
+  // One bulk edit, so a large cuff change stays one small, undoable operation.
   if (required > cuffRows) {
-    const lowestBodyRow = state.rowIds[bodyRows - 1]!;
-    return newRowIds(state, required - cuffRows).map((rowId): ProjectEdit => ({ kind: 'insert-row', rowId, afterRowId: lowestBodyRow, cells: [...cuffTop] }));
+    return [{ kind: 'insert-rows', afterRowId: state.rowIds[bodyRows - 1]!, rows: newRowIds(state, required - cuffRows).map((rowId) => ({ rowId, cells: [...cuffTop] })) }];
   }
-  return state.rowIds.slice(bodyRows, bodyRows + cuffRows - required).map((rowId): ProjectEdit => ({ kind: 'delete-row', rowId }));
+  return [{ kind: 'delete-rows', rowIds: state.rowIds.slice(bodyRows, bodyRows + cuffRows - required) }];
 }
 
 const CARRIER_IN_NAME = /\bC([1-6])\b/;

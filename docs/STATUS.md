@@ -185,6 +185,24 @@ ship," trust this file and the working tree instead.
       findings, schematics) and undoes it. A reopened file that continues
       the project (an agent's CLI edits) opens it with the new operations
       highlighted.
+  - **Third review fixed (2026-10-03):**
+    - synthetic measurements count as assumed and are disclosed in
+      readiness, print and package;
+    - the ground yarn's path includes the cuff and the crown;
+    - returnable forms are not hashed into the candidate;
+    - trials are compared with the knitted candidate's own predictions;
+    - history compacts only at operation boundaries, and cuff changes are
+      bulk row edits;
+    - the schematic draws the materialized chart and only the front in the
+      front view;
+    - switching fairisle to birdseye sets a supported strategy;
+    - an unmapped motif color is the ground, and a color problem is reported
+      as one;
+    - out-of-range fit input shows as not applied;
+    - agent continuations are detected at the cursor;
+    - both registration modes parse;
+    - beanie passes carry design-row provenance, so machine inspection
+      shows the waste, cuff and body, and crown sections.
   - The CLI has the same story and modules: `fit`, `package`, `measure`.
     `e2e/beanie-workflow.spec.ts` covers the browser journey (Chromium and
     Firefox). A real-bird walkthrough (not committed: the image is a

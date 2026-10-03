@@ -26,6 +26,18 @@ const EDIT_LABELS: Record<string, string> = {
   'remove-placement': 'Remove a motif', 'record-trial': 'Record a trial',
 };
 
+/**
+ * Where an opened project continues this one: the index of its first new
+ * entry, or null when it does not. Only the active history (up to the cursor)
+ * counts, since an undone branch may have been replaced by the new edits.
+ */
+export function continuationFrom(current: ColorworkProjectV1, opened: ColorworkProjectV1): number | null {
+  const active = current.history.entries.slice(0, current.history.cursor);
+  const continues = opened.id === current.id && opened.history.cursor > active.length
+    && active.every((entry, index) => opened.history.entries[index]?.id === entry.id);
+  return continues ? active.length : null;
+}
+
 export function operationsOf(project: ColorworkProjectV1): Operation[] {
   const entries = project.history.entries;
   const operations: Operation[] = [];

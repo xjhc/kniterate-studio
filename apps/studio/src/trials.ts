@@ -23,6 +23,12 @@ export interface TrialRevision {
   trial: ProjectTrial;
   edits: ProjectEdit[];
   comparisons: MeasurementComparison[];
+  /**
+   * What the measurements were compared with: the predictions saved with the
+   * knitted candidate's form, the current design when it is that candidate,
+   * or nothing (the candidate's predictions are unknown here).
+   */
+  comparisonBasis: 'candidate-form' | 'current-design' | 'unknown';
   /** Plain-language summary of what the revision changes. */
   changes: string[];
 }
@@ -53,7 +59,7 @@ function planOf(project: ColorworkProjectV1): ProjectPlan {
  * operation, so the revised candidate is coherent. Without them, they are
  * flagged for refresh (placement-size-off).
  */
-export function trialRevision(project: ColorworkProjectV1, record: MeasurementRecord, options: { id: string; recordedAt: string; pixels?: ReadonlyMap<string, PlacementImage['pixels']> }): TrialRevision {
+export function trialRevision(project: ColorworkProjectV1, record: MeasurementRecord, options: { id: string; recordedAt: string; pixels?: ReadonlyMap<string, PlacementImage['pixels']>; currentCandidateSha256?: string | null }): TrialRevision {
   const { state } = materializeColorworkProject(project);
   const before = planOf(project);
   const bodyGauge = complete(record.bodyGauge);
@@ -72,15 +78,17 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
   };
   const note = `${record.synthetic ? 'SYNTHETIC (software test) ' : ''}measured on candidate ${record.candidate.kcodeSha256.slice(0, 12)}, ${options.recordedAt.slice(0, 10)}`;
   const recordEdit: ProjectEdit = { kind: 'record-trial', trial };
+  // Synthetic values exercise the revision but never count as measured.
+  const source = record.synthetic ? 'assumed' as const : 'measured' as const;
   let edits: ProjectEdit[];
   if (state.object?.kind === 'beanie') {
     const fitEdits = beanieFitEdits(project, {
-      ...(bodyGauge ? { bodyGauge: { ...bodyGauge, source: 'measured', note } } : {}),
-      ...(ribGauge && state.object.construction === 'rib-cuff-jersey-body' ? { ribGauge: { ...ribGauge, source: 'measured', note } } : {}),
+      ...(bodyGauge ? { bodyGauge: { ...bodyGauge, source, note } } : {}),
+      ...(ribGauge && state.object.construction === 'rib-cuff-jersey-body' ? { ribGauge: { ...ribGauge, source, note } } : {}),
     });
     edits = [recordEdit, ...fitEdits];
   } else {
-    edits = withSizingFixes(project, [recordEdit, ...(bodyGauge ? [{ kind: 'set-gauge', gauge: { ...bodyGauge, source: 'measured', note } } as ProjectEdit] : [])]);
+    edits = withSizingFixes(project, [recordEdit, ...(bodyGauge ? [{ kind: 'set-gauge', gauge: { ...bodyGauge, source, note } } as ProjectEdit] : [])]);
   }
   // Re-convert motifs at the measured body gauge.
   const refreshed: string[] = [];
@@ -92,14 +100,18 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
       refreshed.push(placement.id);
     }
   }
+  // Compare with what the knitted candidate predicted, never with a later draft.
   const sections = before.sections;
-  const predicted: Record<keyof NonNullable<ProjectTrial['finishedCm']>, number | null> = {
+  const fromForm = record.candidate.predictedCm;
+  const isCurrent = options.currentCandidateSha256 != null && options.currentCandidateSha256 === record.candidate.kcodeSha256;
+  const comparisonBasis: TrialRevision['comparisonBasis'] = fromForm ? 'candidate-form' : isCurrent ? 'current-design' : 'unknown';
+  const predicted: Record<keyof NonNullable<ProjectTrial['finishedCm']>, number | null> = fromForm ? { ...fromForm } : isCurrent ? {
     circumference: before.predicted?.widthCm.value ?? null,
     cuffVisible: sections?.cuff?.visibleCm?.value ?? null,
     body: sections?.body.cm?.value ?? null,
     crown: sections?.crown?.cm?.value ?? null,
     total: sections?.finishedHeightCm?.value ?? null,
-  };
+  } : { circumference: null, cuffVisible: null, body: null, crown: null, total: null };
   const comparisons = (Object.entries(finished) as [keyof typeof predicted, number][]).map(([measure, measuredCm]) => ({
     measure,
     predictedCm: predicted[measure],
@@ -109,12 +121,13 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
   // Describe the revision from the plans before and after.
   const after = planOf(edits.reduce((current, edit, index) => appendProjectEdit(current, { id: `trial-scratch-${index}`, source: 'system', edit }), project));
   const changes: string[] = [];
-  if (bodyGauge) changes.push(`Body gauge ${state.gauge ? `${state.gauge.stitchesPer10cm}/${state.gauge.rowsPer10cm} (${state.gauge.source})` : 'none'} → ${bodyGauge.stitchesPer10cm}/${bodyGauge.rowsPer10cm} (measured)`);
-  if (ribGauge && state.object?.ribGauge) changes.push(`Rib gauge ${state.object.ribGauge.stitchesPer10cm}/${state.object.ribGauge.rowsPer10cm} (${state.object.ribGauge.source}) → ${ribGauge.stitchesPer10cm}/${ribGauge.rowsPer10cm} (measured)`);
+  const label = record.synthetic ? 'synthetic, counted as assumed' : 'measured';
+  if (bodyGauge) changes.push(`Body gauge ${state.gauge ? `${state.gauge.stitchesPer10cm}/${state.gauge.rowsPer10cm} (${state.gauge.source})` : 'none'} → ${bodyGauge.stitchesPer10cm}/${bodyGauge.rowsPer10cm} (${label})`);
+  if (ribGauge && state.object?.ribGauge) changes.push(`Rib gauge ${state.object.ribGauge.stitchesPer10cm}/${state.object.ribGauge.rowsPer10cm} (${state.object.ribGauge.source}) → ${ribGauge.stitchesPer10cm}/${ribGauge.rowsPer10cm} (${label})`);
   if (after.stitches.value !== before.stitches.value) changes.push(`Needles ${before.stitches.value} → ${after.stitches.value}`);
   if (after.sections?.cuff && before.sections?.cuff && after.sections.cuff.rows !== before.sections.cuff.rows) changes.push(`Cuff rows ${before.sections.cuff.rows} → ${after.sections.cuff.rows}`);
   if (after.sections && before.sections && after.sections.body.rows !== before.sections.body.rows) changes.push(`Body rows ${before.sections.body.rows} → ${after.sections.body.rows}`);
   if (refreshed.length) changes.push(`Motifs re-converted at the measured gauge: ${refreshed.join(', ')}`);
   if (changes.length === 0) changes.push('No size change: the measured gauges agree with the plan.');
-  return { trial, edits, comparisons, changes };
+  return { trial, edits, comparisons, comparisonBasis, changes };
 }

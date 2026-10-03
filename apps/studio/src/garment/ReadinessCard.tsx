@@ -18,6 +18,7 @@ export function ReadinessCard({ story, pending, onTarget, onFix }: {
   return <section className={`readiness-card readiness-${story.status}`} aria-label="Readiness" aria-live="polite">
     <header><Icon size={16} /><div><strong data-testid="readiness-headline">{story.headline}</strong><p>{story.detail}</p></div></header>
     <p className="readiness-evidence" data-testid="readiness-evidence">{story.evidence}</p>
+    {story.notices.map((notice) => <p className="readiness-notice" role="note" key={notice}>{notice}</p>)}
     {story.items.length > 0 && <ul className="readiness-items">{story.items.map((item, index) => <li key={`${item.rule}-${index}`} className={`severity-${item.severity}`}>
       <div className="readiness-item-head"><b>{item.part}</b><small>{item.owner === 'operator' ? 'at the machine' : item.owner === 'compiler' ? 'engine' : 'design'}</small></div>
       <p>{item.consequence}</p>

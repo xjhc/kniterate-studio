@@ -1,4 +1,4 @@
-import { materializeColorworkProject, type ColorworkProjectV1, type ProjectState, type ResolvedProjectPlacement } from '@kniterate-studio/project-contract';
+import { materializeColorworkProject, type ColorworkProjectV1, type ProjectState, type ProjectTrial, type ResolvedProjectPlacement } from '@kniterate-studio/project-contract';
 import type { AuthoredPipelineResult } from './authoredPipeline';
 import type { ProjectPlan, Valued } from './plan';
 import type { Finding, Readiness } from './readiness';
@@ -39,6 +39,8 @@ export interface ReadinessStory {
   evidence: string;
   items: StoryItem[];
   operatorChecks: string[];
+  /** Things to know that do not block, e.g. that recorded measurements were synthetic. */
+  notices: string[];
 }
 
 interface RuleStory { part: string; consequence: string; action: string; target: (finding: Finding) => string | null }
@@ -94,8 +96,8 @@ const RULE_STORIES: Record<string, RuleStory> = {
   },
   'project-placement-conflict': {
     part: 'Motif',
-    consequence: 'The motif does not fit the piece, so it is left out and export is blocked.',
-    action: 'Move or shrink the motif, or make the piece larger.',
+    consequence: 'The motif cannot be drawn (it does not fit, or a color maps to no yarn), so it is left out and export is blocked.',
+    action: 'Move or shrink the motif, make the piece larger, or fix its color mapping.',
     target: () => 'placements',
   },
   'long-float': {
@@ -132,7 +134,7 @@ const RULE_STORIES: Record<string, RuleStory> = {
 
 const MEASUREMENT_RULES = new Set(['gauge-assumed', 'size-needs-gauge']);
 
-export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], readiness: Readiness, verdict: AuthoredPipelineResult['verdict']): ReadinessStory {
+export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], readiness: Readiness, verdict: AuthoredPipelineResult['verdict'], trials: readonly ProjectTrial[] = []): ReadinessStory {
   const items: StoryItem[] = findings.filter((finding) => finding.severity !== 'info').map((finding) => {
     const story = RULE_STORIES[finding.rule];
     return {
@@ -174,7 +176,11 @@ export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], 
     headline = `${design.length} design issue${design.length === 1 ? '' : 's'} to resolve`;
     detail = design[0]!.consequence;
   }
-  return { status, headline, detail, evidence, items, operatorChecks: readiness.operatorChecks };
+  const synthetic = trials.filter((trial) => trial.synthetic);
+  const notices = synthetic.length
+    ? [`${synthetic.length} recorded trial${synthetic.length === 1 ? ' is' : 's are'} SYNTHETIC (made up to test the software): ${synthetic.length === 1 ? 'its' : 'their'} gauges count as assumed, not measured, and nothing was knitted.`]
+    : [];
+  return { status, headline, detail, evidence, items, operatorChecks: readiness.operatorChecks, notices };
 }
 
 // ---------------------------------------------------------------------------
@@ -218,7 +224,7 @@ function valued(value: Valued<number> | null | undefined): string {
 
 export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectPlan, result: AuthoredPipelineResult, findings: readonly Finding[], readiness: Readiness): string {
   const { state, placements } = materializeColorworkProject(project);
-  const story = readinessStory(plan, findings, readiness, result.verdict);
+  const story = readinessStory(plan, findings, readiness, result.verdict, state.trials ?? []);
   const sections = plan.sections;
   const head = state.object?.headCircumferenceCm;
   const lines = [
@@ -226,6 +232,7 @@ export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectP
     '',
     `**${story.headline}.** ${story.detail}`,
     `${story.evidence}. Program: ${result.kcode?.passCount ?? '?'} passes, KCode SHA-256 \`${result.kcode?.kcHash ?? 'none'}\`.`,
+    ...story.notices.map((notice) => `**Notice:** ${notice}`),
     ...(story.items.length ? ['', '## Unresolved', ...story.items.map((item) => `- **${item.part}** (${item.severity}, ${item.owner}): ${item.message} *Consequence:* ${item.consequence} *Next:* ${item.action}`)] : []),
     '',
     '## What it knits',
@@ -246,6 +253,7 @@ export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectP
     '## Load',
     ...(carrierRequirements(state, result) ?? []).map((item) => `- C${item.carrier}: ${item.role === 'pattern' ? item.yarnName : item.role === 'waste' ? 'waste yarn' : 'draw thread (smooth contrasting yarn, removed afterwards)'}`),
     ...(story.operatorChecks.length ? ['', '## Operator checks', ...story.operatorChecks.map((check) => `- ${check}`)] : []),
+    ...((state.trials ?? []).length ? ['', '## Recorded trials', ...state.trials!.map((trial) => `- ${trial.synthetic ? 'SYNTHETIC (software test, not knitted) ' : ''}${trial.outcome} · candidate \`${trial.candidate.kcodeSha256}\` · ${trial.recordedAt.slice(0, 10)}${trial.bodyGauge ? ` · body gauge ${trial.bodyGauge.stitchesPer10cm}/${trial.bodyGauge.rowsPer10cm}` : ''}${trial.ribGauge ? ` · rib gauge ${trial.ribGauge.stitchesPer10cm}/${trial.ribGauge.rowsPer10cm}` : ''}`)] : []),
     '',
     '## After knitting',
     ...plan.finishing.map((step, index) => `${index + 1}. ${step}`),
@@ -281,7 +289,7 @@ function cmLabel(value: Valued<number> | null | undefined, rows: number): string
 export function schematicSvg(project: ColorworkProjectV1, plan: ProjectPlan): string | null {
   const sections = plan.sections;
   if (sections === null) return null;
-  const { state, placements } = materializeColorworkProject(project);
+  const { state } = materializeColorworkProject(project);
   const gauge = plan.gauge;
   const widthStitches = state.chart.width;
   const cuffRows = sections.cuff?.rows ?? 0;
@@ -339,30 +347,24 @@ export function schematicSvg(project: ColorworkProjectV1, plan: ProjectPlan): st
   parts.push(`<path d="M${x0} ${base + 14}H${x0 + W}M${x0} ${base + 10}v8M${x0 + W} ${base + 10}v8" stroke="currentColor"/>`);
   text(x0 + W / 2, base + 30, `${widthStitches} needles · ${widthLabel}`, 'middle', 11);
 
-  // Motifs on the flat piece (drawn from their real stitches).
-  const motifRects = (originX: number, originBottom: number, unitW: number, unitH: number, columnOf: (column: number) => number, knitRowOf: (knitRow: number) => number) => {
-    for (const resolved of placements) {
-      if (resolved.status !== 'placed' || resolved.at === null) continue;
-      const { motif } = resolved.placement;
-      const colors = resolved.placement.colors;
-      const tooMany = motif.width * motif.height > 6_000;
-      if (tooMany) {
-        parts.push(`<rect x="${originX + columnOf(resolved.at.column) * unitW}" y="${originBottom - knitRowOf(resolved.at.knitRow + motif.height) * unitH}" width="${motif.width * unitW}" height="${motif.height * unitH}" fill="none" stroke="#dc2626"/>`);
-        continue;
-      }
-      motif.cells.forEach((row, top) => row.forEach((color, offset) => {
-        const paletteId = colors[String(color)];
-        if (paletteId === undefined) return;
-        const hex = palette.find((entry) => entry.id === paletteId)?.hex ?? '#fff';
-        const knitRow = resolved.at!.knitRow + motif.height - 1 - top;
-        parts.push(`<rect x="${(originX + columnOf(resolved.at!.column + offset) * unitW).toFixed(2)}" y="${(originBottom - (knitRowOf(knitRow) + 1) * unitH).toFixed(2)}" width="${(unitW + 0.05).toFixed(2)}" height="${(unitH + 0.05).toFixed(2)}" fill="${hex}"/>`);
-      }));
-    }
-  };
+  // Body colorwork from the materialized chart (painted stitches and placed motifs alike), merged into runs.
   const bodyUnitH = body / bodyRows;
   const birdseyeStart = sections.body.rows - sections.body.chartRows > 0 ? 2 : 0;
-  motifRects(x0, base, W / widthStitches, cuffRows > 0 ? bodyUnitH : bodyUnitH, (column) => column,
-    (knitRow) => (knitRow < cuffRows ? knitRow * (cuff / Math.max(1, cuffRows)) / bodyUnitH : cuff / bodyUnitH + (knitRow - cuffRows + birdseyeStart)));
+  const ground = state.chart.cells[state.chart.height - 1]?.[0] ?? 0;
+  const drawBody = (originX: number, originBottom: number, unitW: number, fromColumn: number, toColumn: number) => {
+    for (let knitRow = cuffRows; knitRow < state.chart.height; knitRow += 1) {
+      const cells = state.chart.cells[state.chart.height - 1 - knitRow]!;
+      const y = originBottom - (knitRow - cuffRows + birdseyeStart + 1) * bodyUnitH;
+      for (let column = fromColumn; column < toColumn;) {
+        const color = cells[column]!;
+        let end = column + 1;
+        while (end < toColumn && cells[end] === color) end += 1;
+        if (color !== ground) parts.push(`<rect x="${(originX + (column - fromColumn) * unitW).toFixed(2)}" y="${y.toFixed(2)}" width="${((end - column) * unitW + 0.05).toFixed(2)}" height="${(bodyUnitH + 0.05).toFixed(2)}" fill="${palette[color]?.hex ?? '#fff'}"/>`);
+        column = end;
+      }
+    }
+  };
+  drawBody(x0, base - cuff, W / widthStitches, 0, widthStitches);
 
   // Finished front view: the seam at the back, the cuff folded up.
   const fx = 640; const fW = W / 2;
@@ -375,9 +377,10 @@ export function schematicSvg(project: ColorworkProjectV1, plan: ProjectPlan): st
     dimV(fx - 8, fCuffTop, fBase, `${sections.cuff?.folds ? 'folded cuff' : 'cuff'} ${cmLabel(sections.cuff?.visibleCm, cuffRows)}`);
   }
   dimV(fx - 8, fBodyTop, fCuffTop, `body ${cmLabel(sections.body.cm, bodyRows)}`);
-  // Front centre is the piece's centre column (the seam is at the back).
+  // The front is the middle half of the piece (the seam is at the back); only it is visible here.
   const frontStart = Math.floor(widthStitches / 4);
-  motifRects(fx, fCuffTop, fW / (widthStitches / 2), bodyUnitH, (column) => column - frontStart, (knitRow) => knitRow - cuffRows + birdseyeStart);
+  const frontEnd = frontStart + Math.round(widthStitches / 2);
+  drawBody(fx, fCuffTop, fW / (frontEnd - frontStart), frontStart, frontEnd);
   parts.push(`<path d="M${fx} ${fBase + 14}H${fx + fW}M${fx} ${fBase + 10}v8M${fx + fW} ${fBase + 10}v8" stroke="currentColor"/>`);
   text(fx + fW / 2, fBase + 30, plan.predicted ? `${cmLabel(plan.predicted.widthCm, 0)} around ÷ 2 = ${(plan.predicted.widthCm.value / 2).toFixed(1)} cm flat` : 'width unknown (no gauge)', 'middle', 11);
   if (sections.finishedHeightCm) text(fx + fW / 2, fBase + 46, `height ${cmLabel(sections.finishedHeightCm, 0)} flat, before gathering the crown`, 'middle', 11);
@@ -389,10 +392,13 @@ export function schematicSvg(project: ColorworkProjectV1, plan: ProjectPlan): st
 // ---------------------------------------------------------------------------
 // Measurement form and package
 
+export interface PredictedCm { circumference: number | null; cuffVisible: number | null; body: number | null; crown: number | null; total: number | null }
+
 export interface MeasurementRecord {
   kind: 'kniterate-studio-measurements';
   schemaVersion: 1;
-  candidate: { kcodeSha256: string; label: string };
+  /** The knitted candidate, with what its plan predicted (so later drafts never change the comparison). */
+  candidate: { kcodeSha256: string; label: string; predictedCm?: PredictedCm };
   /** True only for made-up values used to test software; never for a real knit. */
   synthetic: boolean;
   outcome: 'clean' | 'issues' | 'failed' | null;
@@ -402,11 +408,22 @@ export interface MeasurementRecord {
   notes: string;
 }
 
-export function measurementTemplate(project: ColorworkProjectV1, kcodeSha256: string): MeasurementRecord {
+/** What a plan predicts for the measurements a knitter returns. */
+export function predictedCm(plan: ProjectPlan): PredictedCm {
+  return {
+    circumference: plan.predicted?.widthCm.value ?? null,
+    cuffVisible: plan.sections?.cuff?.visibleCm?.value ?? null,
+    body: plan.sections?.body.cm?.value ?? null,
+    crown: plan.sections?.crown?.cm?.value ?? null,
+    total: plan.sections?.finishedHeightCm?.value ?? null,
+  };
+}
+
+export function measurementTemplate(project: ColorworkProjectV1, kcodeSha256: string, plan?: ProjectPlan): MeasurementRecord {
   return {
     kind: 'kniterate-studio-measurements',
     schemaVersion: 1,
-    candidate: { kcodeSha256, label: project.title },
+    candidate: { kcodeSha256, label: project.title, ...(plan ? { predictedCm: predictedCm(plan) } : {}) },
     synthetic: false,
     outcome: null,
     bodyGauge: { stitchesPer10cm: null, rowsPer10cm: null },
@@ -449,8 +466,12 @@ export interface HandoffManifest {
   historyCursor: number;
   identity: { kcodeSha256: string; compileHash: string | null; passCount: number };
   verdict: string;
-  readiness: { ready: boolean; headline: string; evidence: string; unresolved: { part: string; rule: string; severity: string }[] };
+  readiness: { ready: boolean; headline: string; evidence: string; unresolved: { part: string; rule: string; severity: string }[]; notices: string[] };
+  /** The candidate: these files are immutable, and registration checks each hash. */
   files: Record<string, string>;
+  /** Forms the knitter fills in and returns; not hashed, never part of the candidate. */
+  forms: string[];
+  trials: { candidate: string; synthetic: boolean; outcome: string; recordedAt: string }[];
 }
 
 /**
@@ -471,7 +492,8 @@ export async function handoffFiles(input: {
 }): Promise<Record<string, string | Uint8Array>> {
   const { project, plan, result, findings, readiness } = input;
   if (!result.exportReady || result.kcode === null || result.compiled?.knitoutText == null) throw new Error('Only a project with an exportable program can be packaged.');
-  const story = readinessStory(plan, findings, readiness, result.verdict);
+  const { state } = materializeColorworkProject(project);
+  const story = readinessStory(plan, findings, readiness, result.verdict, state.trials ?? []);
   const svg = schematicSvg(project, plan);
   const files: Record<string, string | Uint8Array> = {
     'project.kniterate-studio.json': input.serializedProject,
@@ -479,12 +501,13 @@ export async function handoffFiles(input: {
     'program.kc': result.kcode.kcText,
     'instructions.md': instructionsMarkdown(project, plan, result, findings, readiness),
     'measurement-form.md': measurementFormMarkdown(project, plan, result.kcode.kcHash),
-    'measurements.json': `${JSON.stringify(measurementTemplate(project, result.kcode.kcHash), null, 2)}\n`,
+    'measurements.json': `${JSON.stringify(measurementTemplate(project, result.kcode.kcHash, plan), null, 2)}\n`,
     ...(svg ? { 'schematic.svg': svg } : {}),
     ...input.extra,
   };
+  const forms = ['measurement-form.md', 'measurements.json'];
   const hashes: Record<string, string> = {};
-  for (const [name, bytes] of Object.entries(files)) hashes[name] = await input.sha256(bytes);
+  for (const [name, bytes] of Object.entries(files)) if (!forms.includes(name)) hashes[name] = await input.sha256(bytes);
   const manifest: HandoffManifest = {
     kind: 'kniterate-studio-handoff',
     schemaVersion: 1,
@@ -493,8 +516,10 @@ export async function handoffFiles(input: {
     historyCursor: project.history.cursor,
     identity: { kcodeSha256: result.kcode.kcHash, compileHash: result.compiled.inputHash, passCount: result.kcode.passCount },
     verdict: result.verdict.label,
-    readiness: { ready: readiness.ready, headline: story.headline, evidence: story.evidence, unresolved: story.items.map(({ part, rule, severity }) => ({ part, rule, severity })) },
+    readiness: { ready: readiness.ready, headline: story.headline, evidence: story.evidence, unresolved: story.items.map(({ part, rule, severity }) => ({ part, rule, severity })), notices: story.notices },
     files: hashes,
+    forms,
+    trials: (state.trials ?? []).map((trial) => ({ candidate: trial.candidate.kcodeSha256, synthetic: trial.synthetic, outcome: trial.outcome, recordedAt: trial.recordedAt })),
   };
   return { ...files, 'manifest.json': `${JSON.stringify(manifest, null, 2)}\n` };
 }

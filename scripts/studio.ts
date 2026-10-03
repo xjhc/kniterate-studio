@@ -275,9 +275,10 @@ function summary(project: ColorworkProjectV1, evaluated: Evaluated): string[] {
   }
   lines.push(`Yarns: ${plan.yarns.map((yarn) => `${yarn.paletteId} ${yarn.hex} "${yarn.yarnName ?? yarn.name}" → ${yarn.carrier === null ? 'UNASSIGNED' : `C${yarn.carrier}`}`).join('; ')}`);
   lines.push(`Verdict: ${result.verdict.label}${result.kcode ? `; ${result.kcode.passCount} passes` : ''}; estimated knit time ${formatMinutes(result.compiled?.stats.estimatedKnitTimeSeconds)}`);
-  const story = readinessStory(plan, evaluated.findings, readiness, result.verdict);
+  const story = readinessStory(plan, evaluated.findings, readiness, result.verdict, materializeColorworkProject(project).state.trials ?? []);
   lines.push(`Status: ${story.headline}. ${story.detail}`, `Evidence: ${story.evidence}`);
   for (const item of story.items) lines.push(`  ${item.part}: ${item.consequence} Next: ${item.action}`);
+  for (const notice of story.notices) lines.push(`Notice: ${notice}`);
   lines.push(readiness.ready ? 'Readiness: READY' : `Readiness: NOT READY — ${readiness.blockers.map((blocker) => blocker.kind === 'verdict-blocked' ? 'verdict Blocked' : blocker.kind === 'finding' ? `${blocker.rule} (${blocker.owner})` : `${blocker.kind}: ${blocker.rule}`).join('; ')}`);
   for (const check of readiness.operatorChecks) lines.push(`Operator check: ${check}`);
   return lines;
@@ -541,7 +542,7 @@ async function main(): Promise<number> {
       });
       await mkdir(parsed.out, { recursive: true });
       for (const [name, bytes] of Object.entries(files)) await writeFile(resolvePath(parsed.out, name), bytes);
-      print({ packaged: parsed.out, files: Object.keys(files), kcodeSha256: result.kcode!.kcHash, readiness: { ready: readiness.ready, headline: readinessStory(plan, findings, readiness, result.verdict).headline } });
+      print({ packaged: parsed.out, files: Object.keys(files), kcodeSha256: result.kcode!.kcHash, readiness: { ready: readiness.ready, headline: readinessStory(plan, findings, readiness, result.verdict, state.trials ?? []).headline } });
       return 0;
     }
     case 'measure': {
@@ -554,7 +555,7 @@ async function main(): Promise<number> {
       const before = planSnapshot(planOf(project));
       project = appendProjectOperation(project, { group: `measure-${randomUUID()}`, source: parsed.source, label: `Record ${record.synthetic ? 'SYNTHETIC ' : ''}measurements of candidate ${record.candidate.kcodeSha256.slice(0, 12)} and revise`, edits: revision.edits });
       await writeProject(parsed.out ?? path, project);
-      print({ trial: revision.trial.id, synthetic: record.synthetic, candidate: record.candidate.kcodeSha256, comparisons: revision.comparisons, changes: revision.changes, before, after: planSnapshot(planOf(project)) });
+      print({ trial: revision.trial.id, synthetic: record.synthetic, candidate: record.candidate.kcodeSha256, comparisonBasis: revision.comparisonBasis, comparisons: revision.comparisons, changes: revision.changes, before, after: planSnapshot(planOf(project)) });
       return 0;
     }
     case 'compile':

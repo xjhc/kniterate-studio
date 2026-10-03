@@ -45,6 +45,18 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   await placeImage(page, '6');
   await expect(page.getByRole('button', { name: /^motif-1/ })).toBeVisible();
 
+  // An out-of-range value is shown as not applied, and the design is unchanged.
+  const headField = page.locator('#fit\\.head');
+  await headField.fill('100'); await headField.press('Enter');
+  await expect(page.getByRole('alert').filter({ hasText: 'Not applied: enter 30–80 cm' })).toBeVisible();
+  await expect(derived(page, /^134 needles/)).toBeVisible();
+  await page.getByRole('button', { name: 'Restore' }).click();
+
+  // "Leave the ground" for the motif's color keeps it placed (nothing drawn), never "does not fit".
+  await page.getByLabel('Image color 1').selectOption({ label: 'Leave the ground' });
+  await expect(page.getByRole('button', { name: /^motif-1 \d+ × \d+ st/ })).toBeVisible({ timeout: 30_000 });
+  await page.getByLabel('Image color 1').selectOption({ label: 'White' });
+
   // A fit change is one operation; one undo restores it.
   const head = page.locator('#fit\\.head');
   await head.fill('52'); await head.press('Enter');
@@ -100,9 +112,12 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   await measure.getByLabel('Outcome').selectOption('clean');
   await measure.locator('fieldset', { hasText: 'Body gauge' }).getByLabel('Stitches').fill('24');
   await measure.locator('fieldset', { hasText: 'Body gauge' }).getByLabel('Rows').fill('30');
-  await expect(measure.getByText(/Body gauge 30\/34 \(measured\) → 24\/30 \(measured\)/)).toBeVisible();
+  await expect(measure.getByText(/Body gauge 30\/34 \(measured\) → 24\/30 \(synthetic, counted as assumed\)/)).toBeVisible();
   await measure.getByRole('button', { name: 'Record and revise' }).click();
   await expect(page.getByText(/SYNTHETIC · clean/)).toBeVisible();
+  // Synthetic values never satisfy the real-measurement requirement, and readiness says why.
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Fit needs measurements', { timeout: 30_000 });
+  await expect(page.getByRole('note').filter({ hasText: 'SYNTHETIC' })).toBeVisible();
 
   // The changes panel lists the operations, newest first.
   await page.getByRole('button', { name: 'Changes' }).click();

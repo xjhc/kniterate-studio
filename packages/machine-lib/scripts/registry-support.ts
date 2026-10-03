@@ -359,6 +359,16 @@ function registryProjectBudgetMessage(value: unknown): string | null {
       overrideCount += 1;
       if (overrideCount > REGISTRY_PROJECT_BUDGET.overridesPerState) return `${editPath} grows overrides beyond the ${REGISTRY_PROJECT_BUDGET.overridesPerState}-item state limit`;
     } else if (edit.kind === 'delete-row' && height !== null) height = Math.max(1, height - 1);
+    else if (edit.kind === 'insert-rows' && Array.isArray(edit.rows)) {
+      if (edit.rows.length > REGISTRY_PROJECT_BUDGET.chartHeight) return `${editPath}.rows exceeds the ${REGISTRY_PROJECT_BUDGET.chartHeight}-row limit`;
+      for (const row of edit.rows) {
+        const cells = asRecord(row)?.cells;
+        if (!Array.isArray(cells)) continue;
+        if (cells.length > REGISTRY_PROJECT_BUDGET.chartWidth) return `${editPath}.rows exceeds the ${REGISTRY_PROJECT_BUDGET.chartWidth}-cell row limit`;
+        editItems += cells.length;
+      }
+      if (height !== null) height += edit.rows.length;
+    } else if (edit.kind === 'delete-rows' && Array.isArray(edit.rowIds) && height !== null) height = Math.max(1, height - edit.rowIds.length);
     if (editItems > REGISTRY_PROJECT_BUDGET.editItemsTotal) return `project history edit arrays exceed the ${REGISTRY_PROJECT_BUDGET.editItemsTotal}-item aggregate limit`;
     if (width !== null && height !== null && width * height > REGISTRY_PROJECT_BUDGET.chartCellsPerState) {
       return `${editPath} grows the chart beyond the ${REGISTRY_PROJECT_BUDGET.chartCellsPerState}-cell state limit`;

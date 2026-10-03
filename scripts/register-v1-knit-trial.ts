@@ -1,6 +1,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { basename, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { readCleanV1KnitTrialReleaseSource } from './build-v1-knit-trial.js';
 import type { AuthoredKCodeCoordinateBridgeV1 } from '../packages/machine-lib/src/knitout/kcode/coordinate-bridge.js';
 import { compileRegistryRequestCurrent, computeCompilerFingerprint } from '../packages/machine-lib/scripts/registry-support.js';
@@ -8,13 +9,17 @@ import { materializeColorworkProject, parseColorworkProjectV1 } from '../package
 
 const GIT_COMMIT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 
-const args = process.argv.slice(2).filter((argument) => argument !== '--');
-const packageAt = args.indexOf('--package');
-const packageDirectory = packageAt >= 0 ? args[packageAt + 1] : undefined;
-if (packageAt >= 0 && packageDirectory === undefined) throw new Error('--package needs a handoff package directory (pnpm studio -- package)');
-const shortName = args.find((argument, index) => !argument.startsWith('--') && index !== packageAt + 1);
-if (!shortName || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(shortName)) {
-  throw new Error('usage: pnpm release:register -- <short-kebab-name> [--package <handoff-package-dir>]');
+/** `<short-name> [--package <dir>]`, in either order; without `--package` the fixed V1 rectangle trial is registered. */
+export function parseRegisterArguments(argv: readonly string[]): { shortName: string; packageDirectory: string | undefined } {
+  const args = argv.filter((argument) => argument !== '--');
+  const packageAt = args.indexOf('--package');
+  const packageDirectory = packageAt >= 0 ? args[packageAt + 1] : undefined;
+  if (packageAt >= 0 && (packageDirectory === undefined || packageDirectory.startsWith('--'))) throw new Error('--package needs a handoff package directory (pnpm studio -- package)');
+  const shortName = args.find((argument, index) => !argument.startsWith('--') && !(packageAt >= 0 && index === packageAt + 1));
+  if (!shortName || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(shortName)) {
+    throw new Error('usage: pnpm release:register -- <short-kebab-name> [--package <handoff-package-dir>]');
+  }
+  return { shortName, packageDirectory };
 }
 
 const COORDINATE_SYSTEM = 'compiler/project coordinates mapped to exact KCode/trace coordinates; physical needle labels unverified';
@@ -177,155 +182,161 @@ return {
 };
 }
 
-const source = packageDirectory === undefined ? rectangleSource() : packageSource(packageDirectory);
-const date = new Date().toISOString().slice(0, 10);
-const id = `${date}-${shortName}`;
-const registryRoot = resolve(process.env.KNITERATE_SWATCH_ROOT ?? 'packages/machine-lib/registry/swatches');
-const templateRoot = resolve('packages/machine-lib/registry/swatches/_template');
-const destination = resolve(registryRoot, id);
-if (existsSync(destination)) throw new Error(`registry entry already exists: ${destination}`);
-mkdirSync(destination, { recursive: true });
-copyFileSync(resolve(templateRoot, 'outcome.md'), resolve(destination, 'outcome.md'));
-for (const [from, target] of source.files) copyFileSync(resolve(source.sourceDirectory, from), resolve(destination, target));
+function main(): void {
+  const { shortName, packageDirectory } = parseRegisterArguments(process.argv.slice(2));
+  const source = packageDirectory === undefined ? rectangleSource() : packageSource(packageDirectory);
+  const date = new Date().toISOString().slice(0, 10);
+  const id = `${date}-${shortName}`;
+  const registryRoot = resolve(process.env.KNITERATE_SWATCH_ROOT ?? 'packages/machine-lib/registry/swatches');
+  const templateRoot = resolve('packages/machine-lib/registry/swatches/_template');
+  const destination = resolve(registryRoot, id);
+  if (existsSync(destination)) throw new Error(`registry entry already exists: ${destination}`);
+  mkdirSync(destination, { recursive: true });
+  copyFileSync(resolve(templateRoot, 'outcome.md'), resolve(destination, 'outcome.md'));
+  for (const [from, target] of source.files) copyFileSync(resolve(source.sourceDirectory, from), resolve(destination, target));
 
-const emitterCommit = source.emitterCommit;
-const version = (JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }).version;
-const spec = {
-  $schema: '../_schema.json',
-  kind: source.specKind,
-  sourceFingerprint: source.compileHash,
-  compilerFingerprint: source.compilerFingerprint,
-  knitoutSha256: source.knitoutSha256,
-  kcodeSha256: source.kcodeSha256,
-  emitterCommit,
-  compiledAt: new Date().toISOString(),
-  studioVersion: version,
-  compileResultOk: true,
-  request: { path: 'request.json', reemitCommand: source.reemitCommand },
-  reemitCheck: {
-    status: 'not-run', checkedAt: null, currentCommit: null,
-    notes: 'Historical operator note only. The registry checker independently recompiles and byte-compares current out.k/out.kc in-process.',
-  },
-  compileMessages: [],
-  planSummary: {
-    technique: source.technique,
-    coordinateSystem: source.machine.coordinateSystem,
-    compilerCoordinateStart: source.machine.compilerCoordinateStart,
-    compilerCoordinateEnd: source.machine.compilerCoordinateEnd,
-    rows: source.rows,
-    wastePasses: source.wastePasses,
-    bindOff: source.bindOff,
-    profile: source.profile,
-  },
-  notes: source.notes,
-};
-const request = {
-  $schema: '../_schema.json',
-  kind: 'kniterate-studio-project',
-  description: source.title,
-  reemitCommand: source.reemitCommand,
-  inputFiles: source.inputFiles,
-};
-const yarns = source.carriers.map((carrier) => {
-  const color = carrier.hex === undefined ? undefined : { hex: carrier.hex };
-  return {
-    carrier: carrier.carrier,
-    role: carrier.role,
-    name: carrier.yarnName ?? `TODO: ${carrier.role}`,
-    fiber: 'TODO: wool | cotton | alpaca | acrylic | blend',
-    brand: 'TODO: manufacturer',
-    line: 'TODO: yarn line',
-    lot: 'TODO: dye lot or batch id',
-    weight: 'TODO: e.g. 2/12 Nm',
-    ply: null,
-    color: color?.hex ?? 'TODO: color',
-    coneSource: 'TODO: vendor + lot or batch id',
+  const emitterCommit = source.emitterCommit;
+  const version = (JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }).version;
+  const spec = {
+    $schema: '../_schema.json',
+    kind: source.specKind,
+    sourceFingerprint: source.compileHash,
+    compilerFingerprint: source.compilerFingerprint,
+    knitoutSha256: source.knitoutSha256,
+    kcodeSha256: source.kcodeSha256,
+    emitterCommit,
+    compiledAt: new Date().toISOString(),
+    studioVersion: version,
+    compileResultOk: true,
+    request: { path: 'request.json', reemitCommand: source.reemitCommand },
+    reemitCheck: {
+      status: 'not-run', checkedAt: null, currentCommit: null,
+      notes: 'Historical operator note only. The registry checker independently recompiles and byte-compares current out.k/out.kc in-process.',
+    },
+    compileMessages: [],
+    planSummary: {
+      technique: source.technique,
+      coordinateSystem: source.machine.coordinateSystem,
+      compilerCoordinateStart: source.machine.compilerCoordinateStart,
+      compilerCoordinateEnd: source.machine.compilerCoordinateEnd,
+      rows: source.rows,
+      wastePasses: source.wastePasses,
+      bindOff: source.bindOff,
+      profile: source.profile,
+    },
+    notes: source.notes,
   };
-});
-const machine = {
-  $schema: '../_schema.json',
-  kind: 'kniterate-machine-run-v1',
-  schemaVersion: 1,
-  ranAt: '1970-01-01T00:00:00Z',
-  machineSerial: 'TODO: machine serial or descriptive id',
-  controlSoftwareVersion: 'TODO: Kniterate application/control software version',
-  profile: source.profile,
-  program: {
-    compilerCoordinateStart: source.machine.compilerCoordinateStart,
-    compilerCoordinateEnd: source.machine.compilerCoordinateEnd,
-    coordinateBridge: source.machine.coordinateBridge,
-    ...source.machine.program,
-  },
-  carriers: Object.fromEntries(source.carriers.map((carrier, index) => [carrier.carrier, { role: carrier.role, yarnEntry: `yarn.json#yarns[${index}]` }])),
-  deviationsFromCompile: [],
-};
-const yarn = {
-  $schema: '../_schema.json',
-  kind: 'kniterate-yarn-evidence-v1',
-  schemaVersion: 1,
-  yarns,
-  tensionSwatch: {
-    machineProfile: source.profile,
-    structure: 'TODO: tension-swatch structure',
-    settings: source.machine.program.initialSettings,
-    measuredBy: 'TODO: who measured',
-    measuredOn: '1970-01-01',
-    measurements: Object.fromEntries(['offMachine', 'rested24h', 'steamed', 'wetFinished'].map((stage) => [stage, {
-      status: 'not-performed',
-      reason: 'TODO: measure this stage or explain why it was not performed',
-    }])),
-    notes: 'TODO: drape, hand, and weight observations',
-  },
-};
-const run = {
-  $schema: '../_schema.json',
-  kind: 'kniterate-run-observation-v1',
-  schemaVersion: 1,
-  operator: 'TODO: operator name or stable id',
-  startedAt: '1970-01-01T00:00:00Z',
-  endedAt: '1970-01-01T00:00:00Z',
-  outcome: 'TODO: clean | dropped | jammed | aborted | partial',
-  physicalPlacement: {
-    verified: false,
-    compilerCoordinateStart: source.machine.compilerCoordinateStart,
-    compilerCoordinateEnd: source.machine.compilerCoordinateEnd,
-    physicalNeedleStart: null,
-    physicalNeedleEnd: null,
-    orientation: null,
-    method: 'TODO: documented machine/vendor datum procedure used',
-    verifiedBy: 'TODO: independent verifier',
-    verifiedAt: null,
-  },
-  artifact: {
-    loadedKcodeSha256: source.kcodeSha256,
-    displayedPassCount: null,
-    manualProgramEdits: false,
-  },
-  manualInterventions: [],
-  observations: {
-    sections: {
-      waste: 'not-reached',
-      castOn: 'not-reached',
-      drawThread: 'not-reached',
-      carrierBringIn: 'not-reached',
-      body: 'not-reached',
-      backing: 'not-reached',
-      leftEdge: 'not-reached',
-      rightEdge: 'not-reached',
-      bindOff: 'not-reached',
+  const request = {
+    $schema: '../_schema.json',
+    kind: 'kniterate-studio-project',
+    description: source.title,
+    reemitCommand: source.reemitCommand,
+    inputFiles: source.inputFiles,
+  };
+  const yarns = source.carriers.map((carrier) => {
+    const color = carrier.hex === undefined ? undefined : { hex: carrier.hex };
+    return {
+      carrier: carrier.carrier,
+      role: carrier.role,
+      name: carrier.yarnName ?? `TODO: ${carrier.role}`,
+      fiber: 'TODO: wool | cotton | alpaca | acrylic | blend',
+      brand: 'TODO: manufacturer',
+      line: 'TODO: yarn line',
+      lot: 'TODO: dye lot or batch id',
+      weight: 'TODO: e.g. 2/12 Nm',
+      ply: null,
+      color: color?.hex ?? 'TODO: color',
+      coneSource: 'TODO: vendor + lot or batch id',
+    };
+  });
+  const machine = {
+    $schema: '../_schema.json',
+    kind: 'kniterate-machine-run-v1',
+    schemaVersion: 1,
+    ranAt: '1970-01-01T00:00:00Z',
+    machineSerial: 'TODO: machine serial or descriptive id',
+    controlSoftwareVersion: 'TODO: Kniterate application/control software version',
+    profile: source.profile,
+    program: {
+      compilerCoordinateStart: source.machine.compilerCoordinateStart,
+      compilerCoordinateEnd: source.machine.compilerCoordinateEnd,
+      coordinateBridge: source.machine.coordinateBridge,
+      ...source.machine.program,
     },
-    stops: [],
-    dimensionsCm: {
-      offMachine: { status: 'not-measured', reason: 'TODO: measure or explain' },
-      rested24h: { status: 'not-measured', reason: 'TODO: measure or explain' },
+    carriers: Object.fromEntries(source.carriers.map((carrier, index) => [carrier.carrier, { role: carrier.role, yarnEntry: `yarn.json#yarns[${index}]` }])),
+    deviationsFromCompile: [],
+  };
+  const yarn = {
+    $schema: '../_schema.json',
+    kind: 'kniterate-yarn-evidence-v1',
+    schemaVersion: 1,
+    yarns,
+    tensionSwatch: {
+      machineProfile: source.profile,
+      structure: 'TODO: tension-swatch structure',
+      settings: source.machine.program.initialSettings,
+      measuredBy: 'TODO: who measured',
+      measuredOn: '1970-01-01',
+      measurements: Object.fromEntries(['offMachine', 'rested24h', 'steamed', 'wetFinished'].map((stage) => [stage, {
+        status: 'not-performed',
+        reason: 'TODO: measure this stage or explain why it was not performed',
+      }])),
+      notes: 'TODO: drape, hand, and weight observations',
     },
-    photos: [],
-    notes: '',
-  },
-};
-writeFileSync(resolve(destination, 'spec.json'), `${JSON.stringify(spec, null, 2)}\n`);
-writeFileSync(resolve(destination, 'request.json'), `${JSON.stringify(request, null, 2)}\n`);
-writeFileSync(resolve(destination, 'machine.json'), `${JSON.stringify(machine, null, 2)}\n`);
-writeFileSync(resolve(destination, 'yarn.json'), `${JSON.stringify(yarn, null, 2)}\n`);
-writeFileSync(resolve(destination, 'run.json'), `${JSON.stringify(run, null, 2)}\n`);
-process.stdout.write(`physical registry entry scaffolded: ${basename(destination)}\nComplete machine.json, yarn.json, run.json, and outcome.md after the run.\n`);
+  };
+  const run = {
+    $schema: '../_schema.json',
+    kind: 'kniterate-run-observation-v1',
+    schemaVersion: 1,
+    operator: 'TODO: operator name or stable id',
+    startedAt: '1970-01-01T00:00:00Z',
+    endedAt: '1970-01-01T00:00:00Z',
+    outcome: 'TODO: clean | dropped | jammed | aborted | partial',
+    physicalPlacement: {
+      verified: false,
+      compilerCoordinateStart: source.machine.compilerCoordinateStart,
+      compilerCoordinateEnd: source.machine.compilerCoordinateEnd,
+      physicalNeedleStart: null,
+      physicalNeedleEnd: null,
+      orientation: null,
+      method: 'TODO: documented machine/vendor datum procedure used',
+      verifiedBy: 'TODO: independent verifier',
+      verifiedAt: null,
+    },
+    artifact: {
+      loadedKcodeSha256: source.kcodeSha256,
+      displayedPassCount: null,
+      manualProgramEdits: false,
+    },
+    manualInterventions: [],
+    observations: {
+      sections: {
+        waste: 'not-reached',
+        castOn: 'not-reached',
+        drawThread: 'not-reached',
+        carrierBringIn: 'not-reached',
+        body: 'not-reached',
+        backing: 'not-reached',
+        leftEdge: 'not-reached',
+        rightEdge: 'not-reached',
+        bindOff: 'not-reached',
+      },
+      stops: [],
+      dimensionsCm: {
+        offMachine: { status: 'not-measured', reason: 'TODO: measure or explain' },
+        rested24h: { status: 'not-measured', reason: 'TODO: measure or explain' },
+      },
+      photos: [],
+      notes: '',
+    },
+  };
+  writeFileSync(resolve(destination, 'spec.json'), `${JSON.stringify(spec, null, 2)}\n`);
+  writeFileSync(resolve(destination, 'request.json'), `${JSON.stringify(request, null, 2)}\n`);
+  writeFileSync(resolve(destination, 'machine.json'), `${JSON.stringify(machine, null, 2)}\n`);
+  writeFileSync(resolve(destination, 'yarn.json'), `${JSON.stringify(yarn, null, 2)}\n`);
+  writeFileSync(resolve(destination, 'run.json'), `${JSON.stringify(run, null, 2)}\n`);
+  process.stdout.write(`physical registry entry scaffolded: ${basename(destination)}\nComplete machine.json, yarn.json, run.json, and outcome.md after the run.\n`);
+}
+
+const invokedPath = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : null;
+if (invokedPath === import.meta.url) main();

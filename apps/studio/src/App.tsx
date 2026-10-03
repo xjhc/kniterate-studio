@@ -35,7 +35,7 @@ import { handoffFiles, instructionsMarkdown, readinessStory, schematicSvg } from
 import { planProject } from './plan';
 import { collectFindings, resolveReadiness } from './readiness';
 import { zipStore } from './zip';
-import { ChangesPanel } from './garment/ChangesPanel';
+import { ChangesPanel, continuationFrom } from './garment/ChangesPanel';
 import { GarmentSheet } from './garment/GarmentSheet';
 import { sha256Hex } from './garment/MotifPanel';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
@@ -597,7 +597,7 @@ export function App() {
     const result: AuthoredPipelineResult = { compiled: blanketCompile.artifact, compileError: blanketCompile.error, kcode: outputCurrent ? kcodeState.artifact : null, outputError: kcodeState.error, verdict: authoredVerdict, exportReady: authoredExportReady };
     const findings = collectFindings(plan, result);
     const readiness = resolveReadiness({ verdict: authoredVerdict, findings });
-    return { result, findings, readiness, story: readinessStory(plan, findings, readiness, authoredVerdict) };
+    return { result, findings, readiness, story: readinessStory(plan, findings, readiness, authoredVerdict, materializedProject.state.trials ?? []) };
   }, [plan, blanketCompile.artifact, blanketCompile.error, kcodeState.artifact, kcodeState.error, outputCurrent, verdictKey, authoredExportReady]);
   useEffect(() => {
     setAutosaveState('saving');
@@ -630,11 +630,9 @@ export function App() {
   };
   /** An opened project that continues this one (same id, this history as its prefix) arrives as new changes to review. */
   const openProjectFile = (opened: ColorworkProjectV1) => {
-    const current = project.history.entries;
-    const continues = opened.id === project.id && opened.history.entries.length > current.length
-      && current.every((entry, index) => opened.history.entries[index]?.id === entry.id);
+    const from = continuationFrom(project, opened);
     setProject(opened);
-    if (continues) { setChangesFrom(current.length); setShowChanges(true); } else setChangesFrom(null);
+    if (from !== null) { setChangesFrom(from); setShowChanges(true); } else setChangesFrom(null);
   };
   const downloadPackage = async () => {
     if (!authoredExportReady || !authoredStory) return;

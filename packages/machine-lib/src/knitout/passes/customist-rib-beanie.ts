@@ -249,7 +249,9 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
 
   ops.push(comment('--- 2x2 RIB BODY ---'))
   settings(s.ribSpeed, s.ribRoller)
+  // Design-row provenance (machine row = knit row: the rib first, then the body); it changes no emitted op.
   for (let r = 0; r < input.ribRows; r++) {
+    sim.setSourceRows([r])
     const dir = sim.finalNextDirection()
     for (const o of offsets(dir, all)) {
       const bed = ribBed(o)
@@ -257,6 +259,7 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
       sim.knit(body, dir, bed === 'f' ? f(lo + o) : backBed(lo + o))
     }
   }
+  sim.setSourceRows(undefined)
   drain()
 
   if (input.jerseyBody) {
@@ -289,8 +292,10 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
       }
       sim.setRacking(0.5)
       bodyRows.forEach((cells, r) => {
+        sim.setSourceRows([input.ribRows + r])
         colors.forEach((carrier, index) => halfRackPass(carrier, (o) => cells[o] === carrier, (o) => (o + r) % colors.length === index))
       })
+      sim.setSourceRows(undefined)
       sim.setRacking(0)
       drain()
       // Join the layers (dbj.kc): every rear loop onto the front needle across, then one ground row.
@@ -303,7 +308,8 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
     } else {
       ops.push(comment('--- JERSEY COLORWORK BODY ---'))
       settings(FAIRISLE_BODY_DEFAULTS.speedNumber, FAIRISLE_BODY_DEFAULTS.rollerAdvance, FAIRISLE_BODY_DEFAULTS.stitchNumber)
-      for (const cells of bodyRows) {
+      for (const [r, cells] of bodyRows.entries()) {
+        sim.setSourceRows([input.ribRows + r])
         // Ground first, then the other colors; each starts from the side its carrier is parked on.
         for (const carrier of [body, ...extraCarriers]) {
           if (!cells.includes(carrier)) continue
@@ -311,6 +317,7 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
           for (const o of offsets(dir, (x) => cells[x] === carrier)) sim.knit(carrier, dir, f(lo + o))
         }
       }
+      sim.setSourceRows(undefined)
       drain()
     }
   }

@@ -21,6 +21,7 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
 }) {
   const [record, setRecord] = useState<MeasurementRecord>(() => measurementTemplate(project, candidateSha256 ?? ''));
   const [synthetic, setSynthetic] = useState<boolean | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   // Decoded motif images, so the revision re-converts motifs at the measured gauge.
   const [pixels, setPixels] = useState<ReadonlyMap<string, PlacementImage['pixels']> | null>(null);
   useEffect(() => {
@@ -34,12 +35,12 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
   const preview = useMemo(() => {
     if (synthetic === null || record.outcome === null || !/^[0-9a-f]{64}$/.test(record.candidate.kcodeSha256)) return null;
     if (pixels === null) return null;
-    try { return trialRevision(project, { ...record, synthetic }, { id: 'preview', recordedAt: new Date().toISOString(), pixels }); } catch (error) { return error instanceof Error ? error.message : String(error); }
-  }, [project, record, synthetic, pixels]);
+    try { return trialRevision(project, { ...record, synthetic }, { id: 'preview', recordedAt: new Date().toISOString(), pixels, currentCandidateSha256: candidateSha256 }); } catch (error) { return error instanceof Error ? error.message : String(error); }
+  }, [project, record, synthetic, pixels, candidateSha256]);
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (synthetic === null || typeof preview !== 'object' || preview === null) return;
-    const revision = trialRevision(project, { ...record, synthetic }, { id: `trial-${crypto.randomUUID().slice(0, 8)}`, recordedAt: new Date().toISOString(), pixels: pixels ?? undefined });
+    const revision = trialRevision(project, { ...record, synthetic }, { id: `trial-${crypto.randomUUID().slice(0, 8)}`, recordedAt: new Date().toISOString(), pixels: pixels ?? undefined, currentCandidateSha256: candidateSha256 });
     onRecord(`Record ${synthetic ? 'SYNTHETIC ' : ''}measurements of candidate ${record.candidate.kcodeSha256.slice(0, 12)} and revise`, revision.edits);
   };
   const gaugeInputs = (key: 'bodyGauge' | 'ribGauge', label: string) => <fieldset><legend>{label} <small>per 10 cm</small></legend><div className="project-dialog-grid">
@@ -50,6 +51,8 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
     <section className="project-dialog measure-dialog" role="dialog" aria-modal="true" aria-labelledby="measure-title">
       <header><h2 id="measure-title">Record measurements</h2><button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
       <form onSubmit={submit}>
+        <label>Filled form from the package (optional)<input type="file" accept=".json,application/json" aria-label="Load measurements.json" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (!file) return; void file.text().then((text) => { try { const loaded = JSON.parse(text) as MeasurementRecord; if (loaded?.kind !== 'kniterate-studio-measurements' || loaded.schemaVersion !== 1) throw new Error('Not a measurements.json from a Studio package.'); setRecord({ ...measurementTemplate(project, ''), ...loaded }); setSynthetic(typeof loaded.synthetic === 'boolean' ? loaded.synthetic : null); setLoadError(null); } catch (error) { setLoadError(error instanceof Error ? error.message : String(error)); } }); }} /></label>
+        {loadError && <p className="setup-error" role="alert">{loadError}</p>}
         <label>Candidate (KCode SHA-256 of the file that was knitted)<input required pattern="[0-9a-f]{64}" value={record.candidate.kcodeSha256} onChange={(event) => { const value = event.currentTarget.value.trim(); set((draft) => { draft.candidate.kcodeSha256 = value; }); }} /></label>
         <fieldset><legend>Where do these values come from?</legend>
           <label className="check-label"><input type="radio" name="synthetic" checked={synthetic === false} onChange={() => setSynthetic(false)} /> A real knit of this exact file</label>
@@ -64,7 +67,9 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
         <label>Notes (stops, interventions, what you saw)<textarea rows={3} value={record.notes} onChange={(event) => { const value = event.currentTarget.value; set((draft) => { draft.notes = value; }); }} /></label>
         {typeof preview === 'string' && <p className="setup-error" role="alert">{preview}</p>}
         {preview !== null && typeof preview === 'object' && <div className="measure-preview" aria-label="What will change">
+          <p className="garment-help">{preview.comparisonBasis === 'candidate-form' ? 'Compared with what the knitted candidate predicted (from its form).' : preview.comparisonBasis === 'current-design' ? 'Compared with the current design, which is the knitted candidate.' : 'This candidate’s predictions are not known here: load its filled measurements.json from the package to compare. The revision below still applies.'}</p>
           {preview.comparisons.length > 0 && <table><thead><tr><th>Measure</th><th>Predicted</th><th>Measured</th><th>Off by</th></tr></thead><tbody>{preview.comparisons.map((row) => <tr key={row.measure}><td>{row.measure}</td><td>{row.predictedCm ?? '—'}</td><td>{row.measuredCm}</td><td>{row.deviation === null ? '—' : `${(row.deviation * 100).toFixed(1)}%`}</td></tr>)}</tbody></table>}
+          <p className="garment-help"><b>Revision of the current design:</b></p>
           <ul>{preview.changes.map((change) => <li key={change}>{change}</li>)}</ul>
           <p className="garment-help">The knitted candidate stays as it was; this records the trial in the project and revises it as one undoable change.</p>
         </div>}

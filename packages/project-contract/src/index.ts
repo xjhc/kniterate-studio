@@ -134,7 +134,7 @@ const PlacementSchema = z.object({
   x: z.union([z.literal('center'), z.number().int().min(0)]),
   /** Rows between the cuff top (or the cast-on, without a cuff) and the motif's bottom row. */
   rowsAboveCuff: z.number().int().min(0),
-  /** Motif palette index (as a string) → project palette id. Unmapped colors other than 0 are an error; 0 is transparent. */
+  /** Motif palette index (as a string) → project palette id. An unmapped color is left as the ground (transparent). */
   colors: z.record(z.string(), Id),
   /** The image the motif came from, kept so it can be re-converted when the gauge or size changes. */
   source: z.object({
@@ -207,6 +207,13 @@ const InsertRowEditSchema = z.object({
   cells: z.array(z.number().int().min(0)).min(1),
 });
 const DeleteRowEditSchema = z.object({ kind: z.literal('delete-row'), rowId: RowId });
+/** Several rows inserted together after `afterRowId` (null: at the top), in the order given. */
+const InsertRowsEditSchema = z.object({
+  kind: z.literal('insert-rows'),
+  afterRowId: RowId.nullable(),
+  rows: z.array(z.object({ rowId: RowId, cells: z.array(z.number().int().min(0)).min(1) })).min(1).max(AUTHORED_CAPACITY_LIMITS_V1.chartHeight),
+});
+const DeleteRowsEditSchema = z.object({ kind: z.literal('delete-rows'), rowIds: z.array(RowId).min(1).max(AUTHORED_CAPACITY_LIMITS_V1.chartHeight) });
 const SetWidthEditSchema = z.object({
   kind: z.literal('set-width'),
   width: z.number().int().min(1).max(252),
@@ -245,6 +252,8 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   PaintCellsEditSchema,
   InsertRowEditSchema,
   DeleteRowEditSchema,
+  InsertRowsEditSchema,
+  DeleteRowsEditSchema,
   SetWidthEditSchema,
   SetHeightEditSchema,
   SetNeedleOffsetEditSchema,
@@ -330,6 +339,8 @@ export interface ResolvedProjectPlacement {
   /** Left column and bottom knit row (0 = cast-on) of the motif, when it was drawn. */
   at: { column: number; knitRow: number } | null;
   reason?: string;
+  /** Why a conflict: it does not fit the piece, or a color maps to no yarn. */
+  problem?: 'fit' | 'color';
 }
 
 export interface MaterializedColorworkProject {
@@ -606,6 +617,20 @@ export function inspectColorworkProjectStructureCapacityV1(
       overrideCount = Math.max(0, overrideCount - 1);
     } else if (edit.kind === 'delete-row' && height !== null) {
       height = Math.max(1, height - 1);
+    } else if (edit.kind === 'insert-rows' && Array.isArray(edit.rows)) {
+      if (edit.rows.length > AUTHORED_CAPACITY_LIMITS_V1.chartHeight) {
+        return structureCapacityIssue('chart-height', `${editPath}.rows`, edit.rows.length, AUTHORED_CAPACITY_LIMITS_V1.chartHeight, 'rows');
+      }
+      for (const row of edit.rows) {
+        const cells = unknownRecord(row)?.cells;
+        if (Array.isArray(cells)) {
+          if (cells.length > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) return structureCapacityIssue('chart-width', `${editPath}.rows`, cells.length, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'cells');
+          editItems += cells.length;
+        }
+      }
+      if (height !== null) height += edit.rows.length;
+    } else if (edit.kind === 'delete-rows' && Array.isArray(edit.rowIds) && height !== null) {
+      height = Math.max(1, height - edit.rowIds.length);
     }
     if (editItems > AUTHORED_CAPACITY_LIMITS_V1.editItemsTotal) {
       return structureCapacityIssue('edit-items', 'project history edit arrays', editItems, AUTHORED_CAPACITY_LIMITS_V1.editItemsTotal, 'items');
@@ -627,6 +652,13 @@ function inspectIncomingProjectEditCapacityV1(value: unknown): ProjectStructureC
   if (edit.kind === 'insert-row' && Array.isArray(edit.cells)
     && edit.cells.length > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) {
     return structureCapacityIssue('chart-width', 'entry.edit.cells', edit.cells.length, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'cells');
+  }
+  if (edit.kind === 'insert-rows' && Array.isArray(edit.rows)) {
+    if (edit.rows.length > AUTHORED_CAPACITY_LIMITS_V1.chartHeight) return structureCapacityIssue('chart-height', 'entry.edit.rows', edit.rows.length, AUTHORED_CAPACITY_LIMITS_V1.chartHeight, 'rows');
+    for (const row of edit.rows) {
+      const cells = unknownRecord(row)?.cells;
+      if (Array.isArray(cells) && cells.length > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) return structureCapacityIssue('chart-width', 'entry.edit.rows', cells.length, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'cells');
+    }
   }
   if (edit.kind === 'set-height' && Array.isArray(edit.newRowIds)
     && edit.newRowIds.length > AUTHORED_CAPACITY_LIMITS_V1.rowIdsPerState) {
@@ -1203,6 +1235,29 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       state.chart.height += 1;
       break;
     }
+    case 'insert-rows': {
+      const ids = edit.rows.map((row) => row.rowId);
+      if (new Set(ids).size !== ids.length || ids.some((id) => state.rowIds.includes(id))) throw new Error('inserted row ids must be new and unique');
+      for (const row of edit.rows) {
+        if (row.cells.length !== state.chart.width) throw new Error(`inserted row has ${row.cells.length} cells; expected ${state.chart.width}`);
+        row.cells.forEach((index) => assertPaletteIndex(state, index));
+      }
+      const index = edit.afterRowId === null ? 0 : rowIndex(edit.afterRowId) + 1;
+      state.rowIds.splice(index, 0, ...ids);
+      state.chart.cells.splice(index, 0, ...edit.rows.map((row) => [...row.cells]));
+      state.chart.height += edit.rows.length;
+      break;
+    }
+    case 'delete-rows': {
+      if (new Set(edit.rowIds).size !== edit.rowIds.length) throw new Error('deleted row ids must be unique');
+      if (edit.rowIds.length >= state.chart.height) throw new Error('a project must retain at least one row');
+      const gone = new Set(edit.rowIds);
+      edit.rowIds.forEach((id) => rowIndex(id));
+      state.chart.cells = state.chart.cells.filter((_row, index) => !gone.has(state.rowIds[index]!));
+      state.rowIds = state.rowIds.filter((id) => !gone.has(id));
+      state.chart.height = state.rowIds.length;
+      break;
+    }
     case 'delete-row': {
       if (state.chart.height === 1) throw new Error('a project must retain at least one row');
       const index = rowIndex(edit.rowId);
@@ -1315,7 +1370,7 @@ function drawPlacements(state: ProjectState): ResolvedProjectPlacement[] {
     const { motif } = placement;
     const column = placement.x === 'center' ? Math.floor((state.chart.width - motif.width) / 2) : placement.x;
     const knitRow = cuffRows + placement.rowsAboveCuff;
-    const conflict = (reason: string): ResolvedProjectPlacement => ({ placement, status: 'conflict', at: null, reason });
+    const conflict = (reason: string): ResolvedProjectPlacement => ({ placement, status: 'conflict', at: null, problem: 'fit', reason });
     if (motif.width > state.chart.width || column < 0 || column + motif.width > state.chart.width) {
       return conflict(`Placement "${placement.id}" is ${motif.width} stitches wide at column ${column}; the piece has ${state.chart.width}.`);
     }
@@ -1324,10 +1379,11 @@ function drawPlacements(state: ProjectState): ResolvedProjectPlacement[] {
     }
     const mapped = new Map<number, number>();
     for (const color of new Set(motif.cells.flat())) {
-      if (color === 0 && placement.colors['0'] === undefined) continue;
+      // An unmapped image color is left as the ground (transparent).
       const target = placement.colors[String(color)];
-      const index = target === undefined ? undefined : paletteIndex.get(target);
-      if (index === undefined) return conflict(`Placement "${placement.id}" color ${color} has no project palette entry${target === undefined ? '' : ` ("${target}")`}.`);
+      if (target === undefined) continue;
+      const index = paletteIndex.get(target);
+      if (index === undefined) return { placement, status: 'conflict', at: null, problem: 'color', reason: `Placement "${placement.id}" maps image color ${color} to "${target}", which is not a project color.` };
       mapped.set(color, index);
     }
     motif.cells.forEach((cells, top) => cells.forEach((color, offset) => {
@@ -1354,24 +1410,45 @@ export function materializeColorworkProject(project: ColorworkProjectV1): Materi
 }
 
 export function appendProjectEdit(projectValue: ColorworkProjectV1, entryValue: ProjectEditEntry): ColorworkProjectV1 {
+  return appendProjectEntries(projectValue, [entryValue]);
+}
+
+/** Whether history may be cut before entry `index`: never inside an operation (a group). */
+function isOperationBoundary(entries: readonly ProjectEditEntry[], index: number): boolean {
+  if (index <= 0 || index >= entries.length) return true;
+  const group = entries[index]!.group;
+  return group === undefined || entries[index - 1]!.group !== group;
+}
+
+/**
+ * Appends entries, then compacts history at an operation boundary so undo
+ * always restores a whole operation. Either every entry applies or the
+ * project is unchanged.
+ */
+function appendProjectEntries(projectValue: ColorworkProjectV1, entryValues: readonly ProjectEditEntry[]): ColorworkProjectV1 {
   const existingCapacityIssue = inspectColorworkProjectStructureCapacityV1(projectValue);
   if (existingCapacityIssue !== null) throw new InvalidColorworkProjectError([existingCapacityIssue.message]);
-  const incomingCapacityIssue = inspectIncomingProjectEditCapacityV1(entryValue);
-  if (incomingCapacityIssue !== null) throw new InvalidColorworkProjectError([incomingCapacityIssue.message]);
+  if (entryValues.length > AUTHORED_CAPACITY_LIMITS_V1.historyEntries) {
+    throw new InvalidColorworkProjectError([`an operation of ${entryValues.length} edits exceeds the ${AUTHORED_CAPACITY_LIMITS_V1.historyEntries}-entry history; use bulk edits (insert-rows, delete-rows, paint-cells)`]);
+  }
   const project = clone(projectValue);
-  const entry = ProjectEditEntrySchema.parse(entryValue);
-  if (project.history.entries.some((item) => item.id === entry.id)) throw new InvalidColorworkProjectError([`duplicate edit id "${entry.id}"`]);
   project.history.entries = project.history.entries.slice(0, project.history.cursor);
   project.history.checkpoints = project.history.checkpoints.filter((item) => item.cursor <= project.history.cursor);
-  project.history.entries.push(entry);
-  project.history.cursor += 1;
-  while (project.history.entries.length > AUTHORED_CAPACITY_LIMITS_V1.historyEntries) {
-    const oldestCheckpoint = project.history.checkpoints.find((checkpoint) => checkpoint.cursor > 0);
-    const rebaseCursor = oldestCheckpoint?.cursor ?? Math.min(PROJECT_CHECKPOINT_INTERVAL, project.history.cursor);
+  for (const entryValue of entryValues) {
+    const incomingCapacityIssue = inspectIncomingProjectEditCapacityV1(entryValue);
+    if (incomingCapacityIssue !== null) throw new InvalidColorworkProjectError([incomingCapacityIssue.message]);
+    const entry = ProjectEditEntrySchema.parse(entryValue);
+    if (project.history.entries.some((item) => item.id === entry.id)) throw new InvalidColorworkProjectError([`duplicate edit id "${entry.id}"`]);
+    project.history.entries.push(entry);
+    project.history.cursor += 1;
+  }
+  if (project.history.entries.length > AUTHORED_CAPACITY_LIMITS_V1.historyEntries) {
+    const excess = project.history.entries.length - AUTHORED_CAPACITY_LIMITS_V1.historyEntries;
+    // Cut at least `excess` entries, at a checkpoint when possible, always at an operation boundary.
+    let rebaseCursor = project.history.checkpoints.find((checkpoint) => checkpoint.cursor >= excess)?.cursor ?? Math.max(excess, Math.min(PROJECT_CHECKPOINT_INTERVAL, project.history.cursor));
+    while (!isOperationBoundary(project.history.entries, rebaseCursor)) rebaseCursor += 1;
     let rebasedState = clone(project.base);
-    for (let index = 0; index < rebaseCursor; index += 1) {
-      rebasedState = applyEditToState(rebasedState, project.history.entries[index]!.edit);
-    }
+    for (let index = 0; index < rebaseCursor; index += 1) rebasedState = applyEditToState(rebasedState, project.history.entries[index]!.edit);
     project.base = rebasedState;
     project.history.entries = project.history.entries.slice(rebaseCursor);
     project.history.cursor -= rebaseCursor;
@@ -1384,7 +1461,8 @@ export function appendProjectEdit(projectValue: ColorworkProjectV1, entryValue: 
   // Materialize now so invalid edits fail at the boundary, not during render.
   materializeColorworkProject(project);
   // Checkpoints hold the authored state; placements are drawn only when materializing.
-  if (project.history.cursor % PROJECT_CHECKPOINT_INTERVAL === 0) project.history.checkpoints.push({ cursor: project.history.cursor, state: replayState(project) });
+  const lastCheckpoint = project.history.checkpoints.at(-1)?.cursor ?? 0;
+  if (project.history.cursor > lastCheckpoint && project.history.cursor - lastCheckpoint >= PROJECT_CHECKPOINT_INTERVAL) project.history.checkpoints.push({ cursor: project.history.cursor, state: replayState(project) });
   // The incoming project was already authoritative and the new edit was
   // materialized above. Structural validation is sufficient on the hot edit
   // path; full base+history replay remains mandatory when opening a file.
@@ -1396,13 +1474,13 @@ export function appendProjectEdit(projectValue: ColorworkProjectV1, entryValue: 
  * reverts all of them. Either every edit applies or the project is unchanged.
  */
 export function appendProjectOperation(projectValue: ColorworkProjectV1, operation: { group: string; source: ProjectEditEntry['source']; label: string; edits: readonly ProjectEdit[] }): ColorworkProjectV1 {
-  return operation.edits.reduce((project, edit, index) => appendProjectEdit(project, {
+  return appendProjectEntries(projectValue, operation.edits.map((edit, index) => ({
     id: `${operation.group}-${index}`,
     source: operation.source,
     edit,
     group: operation.group,
     ...(index === 0 ? { label: operation.label } : {}),
-  }), projectValue);
+  })));
 }
 
 export function undoProjectEdit(projectValue: ColorworkProjectV1): ColorworkProjectV1 {

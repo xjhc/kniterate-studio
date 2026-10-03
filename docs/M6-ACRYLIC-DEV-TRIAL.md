@@ -164,7 +164,10 @@ The proposed ±3% / ±1 cm tolerance applies from that candidate on.
 
 ## After the run
 
-1. **Return the measurements.** Fill `package/measurements.json`:
+1. **Return the measurements.** Fill `package/measurements.json`. It is a
+   form, not part of the hashed candidate, so filling it never invalidates
+   the package. It also carries what this candidate predicted, so results are
+   compared with the file that was knitted, not a later draft. Fill in:
    - outcome, gauges, finished cm and notes;
    - `"synthetic": false` for a real knit.
 

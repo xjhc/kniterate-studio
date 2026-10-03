@@ -157,7 +157,7 @@ export function MotifSection({ state, placements, selected, staleIds, onSelect, 
   const motifColors = current ? [...new Set(current.placement.motif.cells.flat())].sort((a, b) => a - b) : [];
   return <section className="garment-section motif-section" id="placements" tabIndex={-1}><h2><Layers size={12} /> Motifs</h2>
     <div className="motif-list">{placements.length === 0 ? <p className="garment-help">No motifs yet.</p> : placements.map((item) => <button type="button" key={item.placement.id} className={`motif-row${item.placement.id === selected ? ' active' : ''}${item.status === 'conflict' ? ' conflict' : ''}`} id={`placement:${item.placement.id}`} onClick={() => onSelect(item.placement.id)}>
-      <b>{item.placement.id}</b><small>{item.status === 'conflict' ? 'Does not fit' : `${item.placement.motif.width} × ${item.placement.motif.height} st${staleIds.has(item.placement.id) ? ' · needs refresh' : ''}`}</small>
+      <b>{item.placement.id}</b><small>{item.status === 'conflict' ? item.problem === 'color' ? 'Color has no yarn' : 'Does not fit' : `${item.placement.motif.width} × ${item.placement.motif.height} st${staleIds.has(item.placement.id) ? ' · needs refresh' : ''}`}</small>
     </button>)}</div>
     <button type="button" className="secondary-button motif-add" onClick={onAddImage}><ImagePlus size={14} /> Add image</button>
     {current && <div className="motif-inspector" aria-label={`Motif ${current.placement.id}`}>
