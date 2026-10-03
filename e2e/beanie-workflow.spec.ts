@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { materializeColorworkProject, type ColorworkProjectV1 } from '../packages/project-contract/src/index';
 import { encodePng } from '../scripts/lib/png';
 
 /** A dark ring on a light ground with a margin: an image with a thin motif. */
@@ -138,6 +139,88 @@ function twoShapesPng(): Buffer {
   return Buffer.from(encodePng({ width, height, data }));
 }
 
+/** A small red detail appears only when mode sampling has enough stitches. */
+function refreshColorsPng(): Buffer {
+  const width = 40; const height = 40;
+  const data = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) {
+    const color = x >= 10 && x < 30 && y >= 10 && y < 30
+      ? x >= 18 && x < 22 && y >= 18 && y < 22 ? [255, 0, 0, 255] : [0, 0, 0, 255]
+      : [255, 255, 255, 255];
+    data.set(color, (y * width + x) * 4);
+  }
+  return Buffer.from(encodePng({ width, height, data }));
+}
+
+test('refreshing a motif reviews newly visible colors before changing its source or history', async ({ page }) => {
+  test.setTimeout(120_000);
+  const savedProject = async (): Promise<ColorworkProjectV1> => {
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Save project', exact: true }).click();
+    return JSON.parse(readFileSync((await (await download).path())!, 'utf8'));
+  };
+  const placementOf = (project: ColorworkProjectV1) => materializeColorworkProject(project).state.placements![0];
+  const setBodyGauge = async (value: string) => {
+    await page.getByLabel(/^Body .* stitches per 10 cm$/).fill(value);
+    const rows = page.getByLabel(/^Body .* rows per 10 cm$/);
+    await rows.focus(); await rows.fill(value); await rows.blur();
+  };
+  await createBeanie(page);
+  await setBodyGauge('30');
+  await expect(derived(page, /^154 needles/)).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Add image' }).click();
+  const intake = page.getByRole('dialog', { name: 'Place an image' });
+  await intake.getByLabel('Image file').setInputFiles({ name: 'refresh-colors.png', mimeType: 'image/png', buffer: refreshColorsPng() });
+  await intake.getByLabel('Visible height (cm)').fill('4');
+  await intake.getByLabel('Colors').selectOption('3');
+  await intake.getByLabel('Sampling').selectOption('mode');
+  await expect(intake.getByRole('button', { name: 'Place', exact: true })).toBeEnabled();
+  await intake.getByRole('button', { name: 'Place', exact: true }).click();
+  await expect(intake).toBeHidden();
+  const original = placementOf(await savedProject());
+  expect(new Set(original.motif.cells.flat())).toEqual(new Set([1]));
+  expect(original.source?.gauge).toEqual({ stitchesPer10cm: 30, rowsPer10cm: 30 });
+
+  await setBodyGauge('40');
+  await expect(derived(page, /^202 needles/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText('needs refresh')).toBeVisible();
+  await page.getByRole('button', { name: /^motif-1/ }).click();
+  const beforeRefresh = await savedProject();
+  const review = page.getByRole('dialog', { name: 'Review colors for motif-1' });
+  const openReview = async () => {
+    await page.getByRole('button', { name: 'Refresh', exact: true }).click();
+    // The saved PNG is loaded automatically; no replacement file is supplied.
+    await expect(review.getByRole('img', { name: 'The supplied image' })).toBeVisible();
+    await expect(review.getByRole('alert').filter({ hasText: 'Image color 2 (9 stitches) has no matching yarn' })).toBeVisible();
+    await expect(review.getByRole('button', { name: 'Apply refresh' })).toBeDisabled();
+  };
+  await openReview();
+  await review.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(review).toBeHidden();
+  expect(await savedProject()).toEqual(beforeRefresh);
+  await expect(page.getByText('needs refresh')).toBeVisible();
+
+  await openReview();
+  await review.getByLabel('Image color 2').selectOption({ label: 'White' });
+  await expect(review.getByRole('button', { name: 'Apply refresh' })).toBeEnabled();
+  await review.getByRole('button', { name: 'Apply refresh' }).click();
+  await expect(review).toBeHidden();
+  await expect(page.getByText('needs refresh')).toHaveCount(0, { timeout: 30_000 });
+  const refreshed = await savedProject();
+  const placement = placementOf(refreshed);
+  expect(placement.motif.cells.flat().filter((color) => color === 2)).toHaveLength(9);
+  expect(placement.colors).toEqual({ ...original.colors, '2': 'accent' });
+  expect(placement.source).toEqual({ ...original.source, gauge: { stitchesPer10cm: 40, rowsPer10cm: 40 } });
+  expect(refreshed.history.cursor).toBe(beforeRefresh.history.cursor + 1);
+
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByText('needs refresh')).toBeVisible();
+  const undone = await savedProject();
+  expect(placementOf(undone)).toEqual(original);
+  expect(materializeColorworkProject(undone).state.gauge).toMatchObject({ stitchesPer10cm: 40, rowsPer10cm: 40 });
+  expect(undone.history.cursor).toBe(beforeRefresh.history.cursor);
+});
+
 test('edits made while a motif refresh is decoding are never lost, and colors are never dropped silently', async ({ page }) => {
   test.setTimeout(120_000);
   // Let the test hold image decoding, as a slow device would.
@@ -175,6 +258,63 @@ test('edits made while a motif refresh is decoding are never lost, and colors ar
   await intake.getByRole('button', { name: 'Place' }).click();
   await expect(page.getByRole('button', { name: /^motif-\d+ \d+ × \d+ st/ })).toBeVisible();
 });
+
+for (const sameId of [false, true]) {
+  test(`a pending motif resize is cancelled when opening ${sameId ? 'the same project again' : 'another project with an identical motif'}`, async ({ page }) => {
+    test.setTimeout(120_000);
+    // Hold one real bitmap decode until after another file is open.
+    await page.addInitScript(() => {
+      const control = window as unknown as { __holdDecode?: boolean; __releaseDecode?: () => Promise<void> };
+      const original = window.createImageBitmap.bind(window);
+      (window as unknown as { createImageBitmap: unknown }).createImageBitmap = (...args: Parameters<typeof createImageBitmap>) => control.__holdDecode
+        ? new Promise<ImageBitmap>((resolve, reject) => {
+            control.__releaseDecode = async () => {
+              control.__holdDecode = false;
+              try { resolve(await original(...args)); } catch (error) { reject(error); }
+            };
+          })
+        : original(...args);
+    });
+    const savedProject = async () => {
+      const download = page.waitForEvent('download');
+      await page.getByRole('button', { name: 'Save project', exact: true }).click();
+      return JSON.parse(readFileSync((await (await download).path())!, 'utf8'));
+    };
+
+    await createBeanie(page);
+    await placeImage(page, '4');
+    const saved = await savedProject();
+    const reopened = { ...saved, id: sameId ? saved.id : `${saved.id}-other`, title: sameId ? 'Reopened ring toque' : 'Other ring toque' };
+
+    await page.evaluate(() => { (window as unknown as { __holdDecode: boolean }).__holdDecode = true; });
+    const height = page.getByRole('spinbutton', { name: 'Visible height cm', exact: true });
+    await height.fill('6'); await height.press('Enter');
+    await expect(height).toBeDisabled();
+    await page.waitForFunction(() => typeof (window as unknown as { __releaseDecode?: unknown }).__releaseDecode === 'function');
+
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: 'Open project', exact: true }).click();
+    await (await chooser).setFiles({ name: 'reopened.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(reopened)) });
+    await expect(page.locator('.brand-copy small')).toHaveText(reopened.title);
+    await page.evaluate(async () => {
+      await (window as unknown as { __releaseDecode: () => Promise<void> }).__releaseDecode();
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    });
+
+    // No operation from the closed document may enter the reopened document's history.
+    expect(await savedProject()).toEqual(reopened);
+    await page.getByRole('button', { name: /^motif-1/ }).click();
+    const reopenedHeight = page.getByRole('spinbutton', { name: 'Visible height cm', exact: true });
+    await expect(reopenedHeight).toHaveValue('4');
+    await expect(reopenedHeight).toBeEnabled();
+    await reopenedHeight.fill('5'); await reopenedHeight.press('Enter');
+    await expect(page.getByRole('spinbutton', { name: 'Visible height cm', exact: true })).toHaveValue('5');
+    await expect(page.getByRole('button', { name: 'Refresh', exact: true })).toBeEnabled();
+    const resized = await savedProject();
+    expect(resized.history.entries).toHaveLength(reopened.history.entries.length + 1);
+    expect(resized.history.entries.at(-1).label).toBe('Resize motif-1 to 5 cm');
+  });
+}
 
 test('a loaded form keeps its predictions only for its own candidate, and fit drafts do not leak between projects', async ({ page }) => {
   test.setTimeout(120_000);

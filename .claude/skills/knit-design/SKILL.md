@@ -36,7 +36,10 @@ Beanies: flat, seamed afterwards, in Customist's construction. Two kinds:
   It is converted at the body gauge and stored with its anchor, so it stays
   centred above the cuff when you resize; one that no longer fits is a
   `project-placement-conflict`, never clipped. After a gauge change, run
-  `place hat.json --refresh logo`. Remove one with the `remove-placement`
+  `place hat.json --refresh logo`. If it reveals a new unmapped color,
+  the refresh refuses without saving; repeat with `--map "2=main"` or
+  `--leave 2` to make that choice. `--leave` also removes a default mapping;
+  do not both map and leave the same color. Remove one with the `remove-placement`
   edit. Motif color 0 is left as the ground.
 
 **Change fit, cuff, height, gauge or backing with `fit`**, never by editing

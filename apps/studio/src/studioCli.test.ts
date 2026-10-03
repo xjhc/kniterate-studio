@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { appendProjectEdit, createColorworkProjectV1, serializeColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, parseColorworkProjectV1, serializeColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { encodePng } from '../../../scripts/lib/png';
 
 const root = resolve(__dirname, '../../..');
@@ -220,6 +220,83 @@ describe('authored CLI command receipts', () => {
     expect(refused.receipt.error.message).toMatch(/image color 2 \(\d+ stitches\) has no matching yarn/);
     expect(cli(['place', projectPath, '--image', resolve(directory, 'two-shapes.png'), '--height-cm', '4', '--colors', '3', '--map', '2=main']).status).toBe(0);
     expect(cli(['place', projectPath, '--image', resolve(directory, 'two-shapes.png'), '--height-cm', '4', '--colors', '3', '--leave', '2', '--above-cuff', '20']).status).toBe(0);
+  });
+
+  it('leaves a default-mapped motif color unpainted when explicitly requested', { timeout: 60_000 }, () => {
+    const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-'));
+    const projectPath = resolve(directory, 'project.json');
+    const motifPath = resolve(directory, 'motif.json');
+    writeFileSync(projectPath, serializeColorworkProjectV1(createColorworkProjectV1({ ...chart, cells: chart.cells.map((row) => row.map(() => 0)) }, { id: 'leave-default' })));
+    writeFileSync(motifPath, JSON.stringify({ ...chart, width: 2, height: 2, cells: [[1, 1], [1, 1]] }));
+    const paintedStitches = () => materializeColorworkProject(parseColorworkProjectV1(JSON.parse(readFileSync(projectPath, 'utf8')))).state.chart.cells.flat().filter((color) => color === 1).length;
+    const placed = cli(['place', projectPath, motifPath, '--id', 'block', '--above-cuff', '0']);
+    expect(placed.status).toBe(0);
+    expect(placed.receipt.placement.colors).toEqual({ 1: 'red' });
+    expect(paintedStitches()).toBe(4);
+    const left = cli(['place', projectPath, motifPath, '--id', 'block', '--above-cuff', '0', '--leave', '1']);
+    expect(left.status).toBe(0);
+    expect(left.receipt.placement.colors).toEqual({});
+    expect(paintedStitches()).toBe(0);
+  });
+
+  it('rejects invalid or contradictory motif color decisions without changing the project', { timeout: 120_000 }, () => {
+    const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-'));
+    const projectPath = resolve(directory, 'project.json');
+    const motifPath = resolve(directory, 'motif.json');
+    const original = serializeColorworkProjectV1(createColorworkProjectV1(chart, { id: 'invalid-colors' }));
+    writeFileSync(projectPath, original);
+    writeFileSync(motifPath, JSON.stringify({ ...chart, width: 2, height: 2, cells: [[1, 1], [1, 1]] }));
+    for (const option of ['--leave', '--map']) {
+      for (const index of ['-1', '1.5', 'NaN', '2']) {
+        const refused = cli(['place', projectPath, motifPath, '--above-cuff', '0', option, option === '--map' ? `${index}=red` : index]);
+        expect(refused.status).toBe(2);
+        expect(refused.receipt.error.message).toContain('must be a whole-number palette index from 0 to 1');
+      }
+    }
+    const malformed = cli(['place', projectPath, motifPath, '--map', '1=red=natural']);
+    expect(malformed.status).toBe(2);
+    expect(malformed.receipt.error.message).toContain('--map must be a comma-separated list');
+    const overlap = cli(['place', projectPath, motifPath, '--map', '1=red', '--leave', '1']);
+    expect(overlap.status).toBe(2);
+    expect(overlap.receipt.error.message).toContain('image color 1 cannot be both mapped');
+    expect(readFileSync(projectPath, 'utf8')).toBe(original);
+  });
+
+  it('requires a decision when refresh reveals another image color, then accepts mapping or leaving it', { timeout: 120_000 }, () => {
+    const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-'));
+    const projectPath = resolve(directory, 'hat.json');
+    const imagePath = resolve(directory, 'small-center.png');
+    expect(cli(['new', '--object', 'beanie', '--head-cm', '56', '--body-cm', '13', '--gauge', '30,30', '--cuff-cm', '7', '--fold', '--rib-gauge', '30,32', '--backing', 'birdseye',
+      '--color', 'Black=#111111', '--accent', 'White=#F2F2F2', '-o', projectPath]).status).toBe(0);
+    // At 30/30, the red center disappears during mode pooling; at 40/40 it becomes 9 stitches.
+    const width = 40; const height = 40; const data = new Uint8Array(width * height * 4);
+    for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) data.set(x >= 18 && x < 22 && y >= 18 && y < 22 ? [255, 0, 0, 255] : x >= 10 && x < 30 && y >= 10 && y < 30 ? [0, 0, 0, 255] : [255, 255, 255, 255], (y * width + x) * 4);
+    writeFileSync(imagePath, encodePng({ width, height, data }));
+    expect(cli(['place', projectPath, '--image', imagePath, '--height-cm', '4', '--colors', '3', '--pooling', 'mode', '--id', 'mark']).status).toBe(0);
+    expect(cli(['fit', projectPath, '--gauge', '40,40']).status).toBe(0);
+    const before = readFileSync(projectPath, 'utf8');
+    const refused = cli(['place', projectPath, '--refresh', 'mark']);
+    expect(refused.status).toBe(2);
+    expect(refused.receipt.error.message).toMatch(/image color 2 \(9 stitches\)/i);
+    expect(refused.receipt.error.message).toContain('--map "2=<palette id>"');
+    expect(refused.receipt.error.message).toContain('--leave 2');
+    const invalid = cli(['place', projectPath, '--refresh', 'mark', '--map', '3=main']);
+    expect(invalid.status).toBe(2);
+    expect(invalid.receipt.error.message).toContain('must be a whole-number palette index from 0 to 2');
+    expect(readFileSync(projectPath, 'utf8')).toBe(before);
+
+    const mapped = cli(['place', projectPath, '--refresh', 'mark', '--map', '2=main']);
+    expect(mapped.status).toBe(0);
+    expect(mapped.receipt.placement.colors).toEqual({ 1: 'accent', 2: 'main' });
+    const leftPath = resolve(directory, 'left.json');
+    writeFileSync(leftPath, before);
+    const left = cli(['place', leftPath, '--refresh', 'mark', '--leave', '2']);
+    expect(left.status).toBe(0);
+    expect(left.receipt.placement.colors).toEqual({ 1: 'accent' });
+    const refreshed = materializeColorworkProject(parseColorworkProjectV1(JSON.parse(readFileSync(leftPath, 'utf8'))));
+    expect(refreshed.state.placements![0]!.source!.gauge).toEqual({ stitchesPer10cm: 40, rowsPer10cm: 40 });
+    expect(refreshed.state.placements![0]!.motif.cells.flat().filter((color) => color === 2)).toHaveLength(9);
+    expect(cli(['place', leftPath, '--refresh', 'mark']).status).toBe(0);
   });
 
   it('keeps usage and read failures machine-readable', () => {

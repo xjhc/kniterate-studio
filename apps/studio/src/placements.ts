@@ -122,8 +122,24 @@ export function unmappedColors(motif: ColorworkChartV1, colors: Record<string, s
   return [...counts].sort((a, b) => a[0] - b[0]).map(([color, stitches]) => ({ color, stitches }));
 }
 
-/** The same placement re-converted from its stored image at `gauge` (or new settings); anchor, colors and id stay. */
-export function refreshedPlacement(placement: ProjectPlacement, pixels: PlacementImage['pixels'], gauge: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm'>, conversion: Partial<PlacementConversion> = {}): ProjectPlacement {
+/** A refreshed image exposed colors that need an explicit yarn or ground decision before saving. */
+export class PlacementColorDecisionError extends Error {
+  readonly missing: readonly { color: number; stitches: number }[];
+  readonly motif: ColorworkChartV1;
+
+  constructor(missing: readonly { color: number; stitches: number }[], motif: ColorworkChartV1) {
+    super(`${missing.map(({ color, stitches }) => `Image color ${color} (${stitches} stitches)`).join(' and ')} ${missing.length === 1 ? 'needs' : 'need'} a color decision: choose a yarn or explicitly leave the ground before refreshing.`);
+    this.name = 'PlacementColorDecisionError';
+    this.missing = missing.map((item) => ({ ...item }));
+    this.motif = motif;
+  }
+}
+
+/**
+ * Re-convert atomically: old unmapped colors remain intentional ground, while
+ * newly used colors need a yarn or an explicit null (leave the ground).
+ */
+export function refreshedPlacement(placement: ProjectPlacement, pixels: PlacementImage['pixels'], gauge: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm'>, conversion: Partial<PlacementConversion> = {}, colorDecisions: Record<string, string | null> = {}): ProjectPlacement {
   const source = placement.source;
   if (source === undefined) throw new Error(`placement "${placement.id}" has no stored image to re-convert`);
   const converted = convertPlacementImage({ pixels, bytesBase64: source.bytesBase64, sha256: source.sha256 }, {
@@ -131,7 +147,15 @@ export function refreshedPlacement(placement: ProjectPlacement, pixels: Placemen
     colors: conversion.colors ?? source.colors,
     pooling: conversion.pooling ?? source.pooling,
   }, gauge);
-  return { ...placement, motif: converted.motif, source: converted.source };
+  const colors = { ...placement.colors };
+  for (const [color, decision] of Object.entries(colorDecisions)) {
+    if (decision === null) delete colors[color];
+    else colors[color] = decision;
+  }
+  const previouslyUsed = new Set(placement.motif.cells.flat());
+  const missing = unmappedColors(converted.motif, colors).filter(({ color }) => !previouslyUsed.has(color) && colorDecisions[String(color)] !== null);
+  if (missing.length > 0) throw new PlacementColorDecisionError(missing, converted.motif);
+  return { ...placement, motif: converted.motif, source: converted.source, colors };
 }
 
 /** A placement's box in chart coordinates (rows top first), drawn or not. */

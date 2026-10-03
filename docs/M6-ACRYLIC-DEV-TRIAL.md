@@ -178,6 +178,11 @@ The proposed ±3% / ±1 cm tolerance applies from that candidate on.
    project and re-converts the bird at the measured gauge, as one undoable
    operation. The knitted candidate's files stay untouched; `package` then
    makes the next candidate.
+   If conversion reveals a new image color without a yarn choice, the trial
+   and gauges are still recorded. The old motif stays unchanged and marked
+   for refresh. Use **Refresh** to choose its yarn or background in the preview,
+   or `studio place <project.json> --refresh <id> --map "2=<yarn id>"`
+   (`--leave 2` deliberately leaves that color as background).
 2. **Register the run as development evidence.** From a clean checkout that
    re-emits the same bytes, run
    `pnpm release:register -- <short-name> --package output/m6-acrylic-trial/package`.

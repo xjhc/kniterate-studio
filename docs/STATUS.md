@@ -213,6 +213,18 @@ ship," trust this file and the working tree instead.
     - compaction never cuts into the operation just appended;
     - continuation is matched by entry id across compaction;
     - fit drafts reset per project.
+  - **Refresh completion (2026-10-03):**
+    - pending motif conversions belong to the open document and are cancelled
+      when another file opens, including a file with the same project id;
+    - a refresh or resize that reveals a new unmapped image color keeps the
+      current motif and opens a preview with the saved image. Each new color
+      needs a yarn or an explicit background choice before applying;
+    - CLI refresh accepts `--map` and `--leave`; unresolved colors refuse the
+      change without saving. `--leave` removes default mappings, and conflicting
+      map/leave choices are rejected;
+    - returned measurements still record and revise the gauge when a motif
+      needs a color decision. That motif stays unchanged and stale until the
+      designer resolves it through Refresh.
   - The CLI has the same story and modules: `fit`, `package`, `measure`.
     `e2e/beanie-workflow.spec.ts` covers the browser journey (Chromium and
     Firefox). A real-bird walkthrough (not committed: the image is a

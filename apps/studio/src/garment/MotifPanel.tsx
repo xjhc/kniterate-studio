@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Check, ImagePlus, Layers, RefreshCw, Trash2, X } from 'lucide-react';
 import type { ColorworkChartV1 } from '@kniterate-studio/chart-contract';
 import type { ProjectEdit, ProjectPlacement, ProjectState, ResolvedProjectPlacement } from '@kniterate-studio/project-contract';
-import { convertPlacementImage, defaultPlacementColors, isSamePlacement, unmappedColors, nextPlacementId, placementToStitchesEdits, refreshedPlacement, type PlacementConversion, type PlacementImage } from '../placements';
+import { convertPlacementImage, defaultPlacementColors, isSamePlacement, unmappedColors, nextPlacementId, placementToStitchesEdits, refreshedPlacement, PlacementColorDecisionError, type PlacementConversion, type PlacementImage } from '../placements';
 
 /**
  * Motifs as objects: each placement is listed, selectable, and edited through
@@ -77,26 +77,44 @@ function MotifPreview({ motif, colors, palette, rowsPer10cm, stitchesPer10cm }: 
   return <canvas ref={canvas} className="motif-preview" aria-label={`Converted motif, ${motif.width} by ${motif.height} stitches`} />;
 }
 
-export function ImageIntakeDialog({ state, replacing, onPlace, onClose }: {
+export function ImageIntakeDialog({ state, replacing, refresh, onPlace, onClose }: {
   state: ProjectState;
   /** When set, the image replaces this placement's image; its anchor and id stay. */
   replacing: ProjectPlacement | null;
+  /** Review a refresh using its saved image before committing any changed stitches. */
+  refresh?: { conversion: Partial<PlacementConversion>; label: string };
   onPlace: (placement: ProjectPlacement, label: string) => void;
   onClose: () => void;
 }) {
   const [image, setImage] = useState<PlacementImage | null>(null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [conversion, setConversion] = useState<PlacementConversion>({ heightCm: replacing?.source?.heightCm ?? 8, colors: replacing?.source?.colors ?? 2, pooling: replacing?.source?.pooling ?? 'mean' });
+  const [conversion, setConversion] = useState<PlacementConversion>({ heightCm: replacing?.source?.heightCm ?? 8, colors: replacing?.source?.colors ?? 2, pooling: replacing?.source?.pooling ?? 'mean', ...refresh?.conversion });
+  const [loading, setLoading] = useState(refresh !== undefined);
   const [rowsAboveCuff, setRowsAboveCuff] = useState(replacing?.rowsAboveCuff ?? 3);
   const gauge = state.gauge;
   useEffect(() => () => { if (objectUrl) URL.revokeObjectURL(objectUrl); }, [objectUrl]);
+  useEffect(() => {
+    if (!refresh || !replacing?.source) return;
+    let active = true;
+    const source = replacing.source;
+    void placementPixels(replacing).then((pixels) => {
+      if (!active) return;
+      setImage({ pixels, bytesBase64: source.bytesBase64, sha256: source.sha256 });
+      const bytes = Uint8Array.from(atob(source.bytesBase64), (char) => char.charCodeAt(0));
+      setObjectUrl(URL.createObjectURL(new Blob([bytes], { type: 'image/png' })));
+      setLoading(false);
+    }, (problem) => { if (active) { setError(problem instanceof Error ? problem.message : String(problem)); setLoading(false); } });
+    return () => { active = false; };
+  }, [replacing, refresh]);
   const converted = useMemo(() => {
     if (!image || !gauge) return null;
     try { return convertPlacementImage(image, conversion, gauge); } catch (problem) { setError(problem instanceof Error ? problem.message : String(problem)); return null; }
   }, [image, conversion, gauge]);
   // Every image color needs a decision: a yarn, or explicitly left as the ground. Defaults cover only colors with a matching yarn.
-  const [decisions, setDecisions] = useState<Record<string, string>>({});
+  const [decisions, setDecisions] = useState<Record<string, string>>(() => refresh && replacing
+    ? Object.fromEntries([...new Set(replacing.motif.cells.flat())].filter((color) => color !== 0 && replacing.colors[String(color)] === undefined).map((color) => [String(color), GROUND]))
+    : {});
   const automatic = converted ? replacing?.colors ?? defaultPlacementColors(state, converted.motif) : {};
   const chosen = { ...automatic, ...decisions };
   const colors = Object.fromEntries(Object.entries(chosen).filter(([, id]) => id !== GROUND)) as Record<string, string>;
@@ -104,26 +122,34 @@ export function ImageIntakeDialog({ state, replacing, onPlace, onClose }: {
   const imageColors = converted ? [...new Set(converted.motif.cells.flat())].filter((color) => color !== 0).sort((a, b) => a - b) : [];
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (!converted) return;
+    if (!converted || loading || undecided.length > 0) return;
     const placement: ProjectPlacement = replacing
       ? { ...replacing, motif: converted.motif, source: converted.source, colors }
       : { id: nextPlacementId(state), motif: converted.motif, x: 'center', rowsAboveCuff, colors, source: converted.source };
-    onPlace(placement, replacing ? `Replace the image of ${replacing.id}` : `Place ${placement.id}`);
+    const label = refresh && replacing
+      ? converted.source.heightCm !== replacing.source?.heightCm
+        ? `Resize ${replacing.id} to ${converted.source.heightCm} cm`
+        : `Refresh ${replacing.id} at the current gauge`
+      : replacing ? `Replace the image of ${replacing.id}` : `Place ${placement.id}`;
+    onPlace(placement, label);
   };
   const pick = async (file: File | undefined) => {
     if (!file) return;
-    setError(null);
+    setError(null); setLoading(true);
     try {
       const next = await placementImageFromFile(file);
-      setImage(next); setObjectUrl(URL.createObjectURL(file));
+      setImage(next); setObjectUrl(URL.createObjectURL(file)); setDecisions({});
     } catch (problem) { setError(problem instanceof Error ? problem.message : String(problem)); }
+    finally { setLoading(false); }
   };
   return <div className="modal-backdrop project-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <section className="project-dialog image-intake" role="dialog" aria-modal="true" aria-labelledby="image-intake-title">
-      <header><h2 id="image-intake-title">{replacing ? `Replace the image of ${replacing.id}` : 'Place an image'}</h2><button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
+      <header><h2 id="image-intake-title">{refresh ? `Review colors for ${replacing!.id}` : replacing ? `Replace the image of ${replacing.id}` : 'Place an image'}</h2><button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
       <form onSubmit={submit}>
+        {refresh && <p className="garment-help">The new conversion reveals colors that need a choice. Your current motif stays unchanged until you apply this preview.</p>}
         {!gauge && <p className="setup-error" role="alert">Record the body gauge first: the image is converted to stitches at it.</p>}
-        <label>Image (PNG or JPEG)<input type="file" accept="image/png,image/jpeg" aria-label="Image file" onChange={(event) => void pick(event.currentTarget.files?.[0])} /></label>
+        <label>Image (PNG or JPEG)<input type="file" accept="image/png,image/jpeg" aria-label="Image file" disabled={loading} onChange={(event) => void pick(event.currentTarget.files?.[0])} /></label>
+        {loading && <p role="status">Loading image…</p>}
         <div className="project-dialog-grid">
           <label>Visible height (cm)<input type="number" min="0.5" max="60" step="0.5" value={conversion.heightCm} onChange={(event) => setConversion({ ...conversion, heightCm: Number(event.currentTarget.value) || conversion.heightCm })} /></label>
           <label>Colors<select value={conversion.colors} onChange={(event) => setConversion({ ...conversion, colors: Number(event.currentTarget.value) })}>{[2, 3, 4].map((count) => <option key={count} value={count}>{count}</option>)}</select></label>
@@ -143,7 +169,7 @@ export function ImageIntakeDialog({ state, replacing, onPlace, onClose }: {
         {undecided.length > 0 && <p className="setup-error" role="alert">{undecided.map((item) => `Image color ${item.color} (${item.stitches} stitches)`).join(' and ')} {undecided.length === 1 ? 'has' : 'have'} no matching yarn. Choose a yarn, or Leave the ground to drop {undecided.length === 1 ? 'it' : 'them'} on purpose.</p>}
         <p className="garment-help">The image is cropped to its artwork: the height is the visible motif's, measured to its lowest stitch. The background color is left as the ground.</p>
         {error && <p className="setup-error" role="alert">{error}</p>}
-        <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!converted || undecided.length > 0}><Check size={16} /> {replacing ? 'Replace' : 'Place'}</button></footer>
+        <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={loading || !converted || undecided.length > 0}><Check size={16} /> {refresh ? 'Apply refresh' : replacing ? 'Replace' : 'Place'}</button></footer>
       </form>
     </section>
   </div>;
@@ -151,18 +177,23 @@ export function ImageIntakeDialog({ state, replacing, onPlace, onClose }: {
 
 export function MotifSection({ latestState, state, placements, selected, staleIds, onSelect, onOperation, onAddImage, onReplaceImage }: {
   state: ProjectState;
-  /** The project as it is now (not at render): asynchronous results are checked against it. */
-  latestState: () => ProjectState;
+  /** The latest state of this open document, or null after another document is opened. */
+  latestState: () => ProjectState | null;
   placements: readonly ResolvedProjectPlacement[];
   selected: string | null;
   staleIds: ReadonlySet<string>;
   onSelect: (id: string | null) => void;
   onOperation: (label: string, edits: ProjectEdit[]) => void;
   onAddImage: () => void;
-  onReplaceImage: (placement: ProjectPlacement) => void;
+  onReplaceImage: (placement: ProjectPlacement, refresh?: { conversion: Partial<PlacementConversion>; label: string }) => void;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
   const current = placements.find((item) => item.placement.id === selected) ?? null;
   const update = (placement: ProjectPlacement, label: string) => onOperation(label, [{ kind: 'set-placement', placement }]);
   const reconvert = async (placement: ProjectPlacement, conversion: Partial<PlacementConversion>, label: string) => {
@@ -170,14 +201,21 @@ export function MotifSection({ latestState, state, placements, selected, staleId
     setBusy(placement.id); setProblem(null);
     try {
       const pixels = await placementPixels(placement);
+      if (!mounted.current) return;
       // Decoding takes time: apply only if the motif is still exactly what was refreshed.
       const now = latestState();
+      if (now === null) return;
       const current = now.placements?.find((item) => item.id === placement.id);
       if (!isSamePlacement(current, placement) || !now.gauge) { setProblem(`Refresh of ${placement.id} was discarded: the motif changed or was removed while it was converting.`); return; }
       update(refreshedPlacement(current!, pixels, now.gauge, conversion), label);
     }
-    catch (error) { setProblem(`Could not re-convert ${placement.id}: ${error instanceof Error ? error.message : String(error)}`); }
-    finally { setBusy(null); }
+    catch (error) {
+      if (mounted.current && latestState() !== null) {
+        if (error instanceof PlacementColorDecisionError) onReplaceImage(placement, { conversion, label });
+        else setProblem(`Could not re-convert ${placement.id}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+    finally { if (mounted.current) setBusy(null); }
   };
   const motifColors = current ? [...new Set(current.placement.motif.cells.flat())].sort((a, b) => a - b) : [];
   return <section className="garment-section motif-section" id="placements" tabIndex={-1}><h2><Layers size={12} /> Motifs</h2>
@@ -185,10 +223,10 @@ export function MotifSection({ latestState, state, placements, selected, staleId
       <b>{item.placement.id}</b><small>{item.status === 'conflict' ? item.problem === 'color' ? 'Color has no yarn' : 'Does not fit' : `${item.placement.motif.width} × ${item.placement.motif.height} st${staleIds.has(item.placement.id) ? ' · needs refresh' : ''}`}</small>
     </button>)}</div>
     <button type="button" className="secondary-button motif-add" onClick={onAddImage}><ImagePlus size={14} /> Add image</button>
+    {problem && <p className="setup-error" role="alert">{problem}</p>}
     {current && <div className="motif-inspector" aria-label={`Motif ${current.placement.id}`}>
       {current.status === 'conflict' && <p className="setup-error" role="alert">{current.reason} It is left out until it fits.</p>}
-      {problem && <p className="setup-error" role="alert">{problem}</p>}
-      {current.placement.source && <label className="strategy-field"><span>Visible height</span><span className="garment-input"><input type="number" min="0.5" max="60" step="0.5" defaultValue={current.placement.source.heightCm} key={`h-${current.placement.id}-${current.placement.source.heightCm}`} disabled={busy !== null} onBlur={(event) => { const heightCm = Number(event.currentTarget.value); if (heightCm > 0 && heightCm !== current.placement.source!.heightCm) void reconvert(current.placement, { heightCm }, `Resize ${current.placement.id} to ${heightCm} cm`); }} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} /><i>cm</i></span></label>}
+      {current.placement.source && <label className="strategy-field"><span>Visible height</span><span className="garment-input"><input type="number" min="0.5" max="60" step="0.5" defaultValue={current.placement.source.heightCm} key={`h-${current.placement.id}-${current.placement.source.heightCm}`} disabled={busy !== null} onBlur={(event) => { const heightCm = Number(event.currentTarget.value); if (heightCm > 0 && heightCm !== current.placement.source!.heightCm) { event.currentTarget.value = String(current.placement.source!.heightCm); void reconvert(current.placement, { heightCm }, `Resize ${current.placement.id} to ${heightCm} cm`); } }} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} /><i>cm</i></span></label>}
       <label className="check-label">Centred on the front<input type="checkbox" checked={current.placement.x === 'center'} onChange={(event) => update({ ...current.placement, x: event.currentTarget.checked ? 'center' : Math.max(0, Math.floor((state.chart.width - current.placement.motif.width) / 2)) }, event.currentTarget.checked ? `Centre ${current.placement.id}` : `Pin ${current.placement.id} to a column`)} /></label>
       {current.placement.x !== 'center' && <label className="strategy-field"><span>From stitch</span><input type="number" min="1" max={state.chart.width} defaultValue={current.placement.x + 1} key={`x-${current.placement.x}`} onBlur={(event) => { const column = Math.round(Number(event.currentTarget.value)) - 1; if (column >= 0 && column !== current.placement.x) update({ ...current.placement, x: column }, `Move ${current.placement.id}`); }} /></label>}
       <label className="strategy-field"><span>Rows above the {state.object?.construction === 'rib-cuff-jersey-body' ? 'cuff' : 'cast-on'}</span><input type="number" min="0" max="1200" defaultValue={current.placement.rowsAboveCuff} key={`r-${current.placement.rowsAboveCuff}`} onBlur={(event) => { const rows = Math.round(Number(event.currentTarget.value)); if (rows >= 0 && rows !== current.placement.rowsAboveCuff) update({ ...current.placement, rowsAboveCuff: rows }, `Move ${current.placement.id}`); }} /></label>

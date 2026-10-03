@@ -22,7 +22,7 @@ import { runAuthoredPipeline, type AuthoredPipelineResult } from '../apps/studio
 import { openStudioProjectJson } from '../apps/studio/src/chart/projectFile.ts';
 import { explain } from '../apps/studio/src/explain.ts';
 import { imageToChart, type ImageChartSize } from '../apps/studio/src/imageChart.ts';
-import { convertPlacementImage, defaultPlacementColors, nextPlacementId, refreshedPlacement, unmappedColors } from '../apps/studio/src/placements.ts';
+import { convertPlacementImage, defaultPlacementColors, nextPlacementId, PlacementColorDecisionError, refreshedPlacement, unmappedColors } from '../apps/studio/src/placements.ts';
 import { planProject, type ProjectPlan } from '../apps/studio/src/plan.ts';
 import { carrierRequirements, constructionLine, handoffFiles, instructionsMarkdown, readinessStory, type MeasurementRecord } from '../apps/studio/src/handoff.ts';
 import { parseMeasurementRecord, trialRevision } from '../apps/studio/src/trials.ts';
@@ -61,13 +61,15 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
       re-sizes the project in one undoable operation, and the measured candidate's files are untouched.
   place <project.json> (<motif.json> | --image <png> --height-cm X [--colors K]) [--id <id>]
         [--x center|<stitches from left>] [--above-cuff <rows>] [--map "1=accent,..."] [--leave 2,3]
-  place <project.json> --refresh <id>
+  place <project.json> --refresh <id> [--map "1=accent,..."] [--leave 2,3]
       Place a motif as intent: it stays centred (or at its column) and its rows above the cuff when the
       piece is resized, and a motif that no longer fits is a conflict, not a clipped motif. With
       --image the PNG is converted at the project's body gauge and stored in the project; --refresh
-      re-converts it after the gauge changes. Motif color 0 is transparent; color k paints palette
+      re-converts it after the gauge changes and requires a decision for any newly visible color.
+      Motif color 0 is transparent; color k paints palette
       entry k unless --map names another. A color with no matching yarn is refused unless --map gives
-      it one or --leave drops it as the ground on purpose.
+      it one or --leave drops it as the ground on purpose. --leave also removes a default mapping;
+      the same color cannot be named in both --map and --leave.
   image <file.png> -o <chart.json> (--width-st N | --height-rows N | --width-cm X | --height-cm X)
         [--gauge <st>,<rows>] [--colors K] [--pooling mean|mode] [--title <t>]
       Convert an image to a ColorworkChartV1 chart. --gauge is stitches,rows per 10 cm; with it the
@@ -355,17 +357,48 @@ async function placementMotif(parsed: Parsed, gauge: { stitchesPer10cm: number; 
   return convertPlacementImage({ pixels: decodePng(bytes), bytesBase64: bytes.toString('base64'), sha256: createHash('sha256').update(bytes).digest('hex') }, { heightCm, colors, pooling }, gauge);
 }
 
+/** Explicit color decisions, shared by intake and refresh; null means leave the ground visible. */
+function placementColorDecisions(parsed: Parsed, palette: ColorworkChartV1['palette'], motif?: ColorworkChartV1): Record<string, string | null> {
+  const colorIndex = (value: string, option: '--map' | '--leave'): number => {
+    const index = Number(value);
+    if (!/^\d+$/.test(value) || !Number.isSafeInteger(index) || (motif !== undefined && index >= motif.palette.length)) throw new UsageError(`${option} image color "${value}" must be a whole-number palette index${motif ? ` from 0 to ${motif.palette.length - 1}` : ' of 0 or greater'}.`);
+    return index;
+  };
+  const left = new Set((parsed.options.get('--leave')?.split(',') ?? []).map((value) => colorIndex(value.trim(), '--leave')));
+  const decisions: Record<string, string | null> = {};
+  for (const pair of parsed.options.get('--map')?.split(',') ?? []) {
+    const parts = pair.split('=').map((value) => value.trim());
+    if (parts.length !== 2) throw new UsageError('--map must be a comma-separated list of <image color>=<palette id>.');
+    const from = colorIndex(parts[0]!, '--map');
+    const to = parts[1]!;
+    if (left.has(from)) throw new UsageError(`image color ${from} cannot be both mapped with --map and left as the ground with --leave.`);
+    if (!palette.some((entry) => entry.id === to)) throw new UsageError(`--map target "${to}" is not a palette id (${palette.map((entry) => entry.id).join(', ')}).`);
+    decisions[String(from)] = to;
+  }
+  for (const color of left) decisions[String(color)] = null;
+  return decisions;
+}
+
 /** A placement edit: a motif anchored centred (or at a column) a number of rows above the cuff. */
 async function placementEdit(parsed: Parsed, project: ColorworkProjectV1): Promise<ProjectEdit> {
   const { state } = materializeColorworkProject(project);
   const refresh = parsed.options.get('--refresh');
   if (refresh !== undefined) {
-    // Re-convert a placement from its stored image at the current gauge; its anchor and colors stay.
+    // Re-convert from the stored image, retaining prior decisions and requiring any new ones.
     const existing = (state.placements ?? []).find((item) => item.id === refresh);
     if (existing === undefined) throw new UsageError(`no placement "${refresh}".`);
     if (existing.source === undefined) throw new UsageError(`placement "${refresh}" has no stored image to re-convert.`);
     if (!state.gauge) throw new UsageError('--refresh needs the project gauge.');
-    return { kind: 'set-placement', placement: refreshedPlacement(existing, decodePng(Buffer.from(existing.source.bytesBase64, 'base64')), state.gauge) };
+    const decisions = placementColorDecisions(parsed, state.chart.palette);
+    try {
+      const placement = refreshedPlacement(existing, decodePng(Buffer.from(existing.source.bytesBase64, 'base64')), state.gauge, {}, decisions);
+      placementColorDecisions(parsed, state.chart.palette, placement.motif);
+      return { kind: 'set-placement', placement };
+    } catch (error) {
+      if (!(error instanceof PlacementColorDecisionError)) throw error;
+      placementColorDecisions(parsed, state.chart.palette, error.motif);
+      throw new UsageError(`${error.message} Map each new color with --map "${error.missing[0]!.color}=<palette id>" or leave it as the ground with --leave ${error.missing.map((item) => item.color).join(',')}.`);
+    }
   }
   const { motif, source } = await placementMotif(parsed, state.gauge ?? null);
   const xRaw = parsed.options.get('--x') ?? 'center';
@@ -374,14 +407,13 @@ async function placementEdit(parsed: Parsed, project: ColorworkProjectV1): Promi
   const above = parsed.options.has('--above-cuff') ? Number(parsed.options.get('--above-cuff')) : 2;
   if (!Number.isInteger(above) || above < 0) throw new UsageError('--above-cuff must be a whole number of rows.');
   const colors = defaultPlacementColors(state, motif);
-  for (const pair of (parsed.options.get('--map') ?? '').split(',').filter(Boolean)) {
-    const [from, to] = pair.split('=');
-    if (!state.chart.palette.some((entry) => entry.id === to)) throw new UsageError(`--map target "${to}" is not a palette id (${state.chart.palette.map((entry) => entry.id).join(', ')}).`);
-    colors[String(Number(from))] = to!;
-  }
+  const decisions = placementColorDecisions(parsed, state.chart.palette, motif);
   // Every image color gets a decision: a yarn (default or --map), or --leave to drop it as the ground on purpose.
-  const left = new Set((parsed.options.get('--leave') ?? '').split(',').filter(Boolean).map(Number));
-  const undecided = unmappedColors(motif, colors).filter((item) => !left.has(item.color));
+  for (const [color, target] of Object.entries(decisions)) {
+    if (target === null) delete colors[color];
+    else colors[color] = target;
+  }
+  const undecided = unmappedColors(motif, colors).filter((item) => decisions[String(item.color)] !== null);
   if (undecided.length > 0) throw new UsageError(`${undecided.map((item) => `image color ${item.color} (${item.stitches} stitches)`).join(' and ')} ${undecided.length === 1 ? 'has' : 'have'} no matching yarn: map ${undecided.length === 1 ? 'it' : 'them'} with --map "${undecided[0]!.color}=<palette id>" or leave ${undecided.length === 1 ? 'it' : 'them'} as the ground with --leave ${undecided.map((item) => item.color).join(',')}.`);
   const id = parsed.id ?? nextPlacementId(state);
   return { kind: 'set-placement', placement: { id, motif, x, rowsAboveCuff: above, colors, ...(source ? { source } : {}) } };

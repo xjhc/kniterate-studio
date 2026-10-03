@@ -30095,7 +30095,7 @@
     ]
   },
   "contract": {
-    "sha256": "60ba8475fdc4cf70466c207e61a8a668544188c9a711ffa20b85e14abb62a771",
+    "sha256": "232b20128eff20b562d9d966267661bc8eb2421295b120bb5d56678c73bdc83c",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30244,8 +30244,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "6b9af055b4d621e8979bbb0de260e09ffa30aac0332885072c7d8b3d8fb4d6ba",
-        "bytes": 25334
+        "sha256": "c0f0a7c3a45bd346a6bf478dfcbf85e68e42e9d4266095e69b3b099b7e03517e",
+        "bytes": 25869
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
@@ -30404,8 +30404,8 @@
       },
       {
         "path": "../../apps/studio/src/garment/MotifPanel.tsx",
-        "sha256": "e2b4a3ee5a9de4daf9711796fdd467a61caf9cad92fd3477e084f6c44be0260a",
-        "bytes": 18813
+        "sha256": "83889c88009523f783f6bde8ab267c1439ef17423d55a08c770f7f368ebea3ae",
+        "bytes": 21268
       },
       {
         "path": "../../apps/studio/src/garment/ReadinessCard.tsx",
@@ -30553,9 +30553,14 @@
         "bytes": 3314
       },
       {
+        "path": "../../apps/studio/src/placementRefresh.test.ts",
+        "sha256": "40b441ff17a128d414855462b60b5d1e24d199d72a308f6919f0524d5cbba77b",
+        "bytes": 9834
+      },
+      {
         "path": "../../apps/studio/src/placements.ts",
-        "sha256": "41067a67e908ab648fc450bf618513fe5fb15925d1ada1f0a5d67ab170cdbf75",
-        "bytes": 12007
+        "sha256": "54146426aee9b91ef06f85df7339a789a1e0678b67e79b47af307d5dce75fcbd",
+        "bytes": 13348
       },
       {
         "path": "../../apps/studio/src/plan.test.ts",
@@ -30584,8 +30589,8 @@
       },
       {
         "path": "../../apps/studio/src/studioCli.test.ts",
-        "sha256": "fc02bff29370bb874679135a3f2fffb386b51014ea49d4ceffb438e3961d41ef",
-        "bytes": 16489
+        "sha256": "525400df3fa40f9bf23c21952dcff5866e0d6dc4ffd28cc10fdc4d8eb6bf2bce",
+        "bytes": 22215
       },
       {
         "path": "../../apps/studio/src/styles.css",
@@ -30594,8 +30599,8 @@
       },
       {
         "path": "../../apps/studio/src/trials.ts",
-        "sha256": "f1a04de2b9bb5ba58e407cd8c7ba08aac907bee7864a876f1cedd373648f5df5",
-        "bytes": 8322
+        "sha256": "d3a7912854b133119910a5963b160e29af0442e52ebb07a0a5a5ad0b34efe95c",
+        "bytes": 9462
       },
       {
         "path": "../../apps/studio/src/zip.ts",
@@ -30614,8 +30619,8 @@
       },
       {
         "path": "../../e2e/beanie-workflow.spec.ts",
-        "sha256": "4bc2e4ef525f4c1d835bfccb58395dd89d88c3dff7a8110096ac155dae1fb4c9",
-        "bytes": 13203
+        "sha256": "ddff38292370562bcb3da67bb664be988d2c703d6ab3d5868f98324a7e37da70",
+        "bytes": 21430
       },
       {
         "path": "../../e2e/execution-inspector.spec.ts",
@@ -30734,8 +30739,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "c283bf0feb6a0ed3d2b80675bcb9686f88e80fa63794cd2d93c4afbb13580002",
-        "bytes": 37170
+        "sha256": "11e13c2796ae55d64cb2c0bccb9d4c30d69ee7b4dbc8e62d32430b337b535346",
+        "bytes": 39369
       },
       {
         "path": "../../tsconfig.base.json",

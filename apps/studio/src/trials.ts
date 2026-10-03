@@ -2,7 +2,7 @@ import { appendProjectEdit, materializeColorworkProject, type ColorworkProjectV1
 import { beanieFitEdits, withSizingFixes } from './beanie';
 import type { MeasurementRecord } from './handoff';
 import { planProject, type ProjectPlan } from './plan';
-import { refreshedPlacement, type PlacementImage } from './placements';
+import { refreshedPlacement, PlacementColorDecisionError, type PlacementImage } from './placements';
 
 /**
  * Returned measurements → a recorded trial and a revised candidate. The
@@ -92,12 +92,28 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
   }
   // Re-convert motifs at the measured body gauge.
   const refreshed: string[] = [];
+  const needsColorChoices: string[] = [];
   if (bodyGauge && options.pixels) {
     for (const placement of state.placements ?? []) {
       const pixels = options.pixels.get(placement.id);
       if (!placement.source || !pixels) continue;
-      edits.push({ kind: 'set-placement', placement: refreshedPlacement(placement, pixels, bodyGauge) });
-      refreshed.push(placement.id);
+      try {
+        edits.push({ kind: 'set-placement', placement: refreshedPlacement(placement, pixels, bodyGauge) });
+        refreshed.push(placement.id);
+      } catch (error) {
+        if (!(error instanceof PlacementColorDecisionError)) throw error;
+        // Legacy placements have no conversion gauge. Preserve the prior
+        // project gauge so even a stitch-only change requires a refresh.
+        if (placement.source.gauge === undefined && state.gauge) {
+          edits.push({ kind: 'set-placement', placement: {
+            ...placement,
+            source: { ...placement.source, gauge: { stitchesPer10cm: state.gauge.stitchesPer10cm, rowsPer10cm: state.gauge.rowsPer10cm } },
+          } });
+        }
+        // Keep the previous motif. Its saved gauge now differs, so readiness
+        // requires a refresh, where the designer can resolve the new colors.
+        needsColorChoices.push(`${placement.id}: image color${error.missing.length === 1 ? '' : 's'} ${error.missing.map((item) => item.color).join(', ')}`);
+      }
     }
   }
   // Compare with what the knitted candidate predicted, never with a later draft.
@@ -128,6 +144,7 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
   if (after.sections?.cuff && before.sections?.cuff && after.sections.cuff.rows !== before.sections.cuff.rows) changes.push(`Cuff rows ${before.sections.cuff.rows} → ${after.sections.cuff.rows}`);
   if (after.sections && before.sections && after.sections.body.rows !== before.sections.body.rows) changes.push(`Body rows ${before.sections.body.rows} → ${after.sections.body.rows}`);
   if (refreshed.length) changes.push(`Motifs re-converted at the measured gauge: ${refreshed.join(', ')}`);
+  if (needsColorChoices.length) changes.push(`Motifs kept unchanged and need Refresh to choose a yarn or background for new colors: ${needsColorChoices.join('; ')}`);
   if (changes.length === 0) changes.push('No size change: the measured gauges agree with the plan.');
   return { trial, edits, comparisons, comparisonBasis, changes };
 }

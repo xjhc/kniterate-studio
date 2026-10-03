@@ -7,7 +7,7 @@ import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './Colorwo
 import { beanieFitEdits, type BeanieFitChange } from '../beanie';
 import { schematicSvg, type ReadinessStory } from '../handoff';
 import type { ProjectPlan } from '../plan';
-import { movedPlacement, placedCells, placementBoxes } from '../placements';
+import { movedPlacement, placedCells, placementBoxes, type PlacementConversion } from '../placements';
 import { GarmentFitSection } from '../garment/GarmentFitSection';
 import { ImageIntakeDialog, MotifSection } from '../garment/MotifPanel';
 import { MeasureDialog } from '../garment/MeasureDialog';
@@ -85,9 +85,15 @@ export function ChartWorkspace({ project, onProject, onOpenProject, onNewProject
   const projectInput = useRef<HTMLInputElement>(null);
   const projectRef = useRef(project);
   projectRef.current = project;
+  // Opening a file starts another document session, even when it has the same project id.
+  const documentGeneration = useRef(0);
+  const renderedGeneration = documentGeneration.current;
+  const latestMotifState = () => projectRef.current.id === project.id && documentGeneration.current === renderedGeneration
+    ? materializeColorworkProject(projectRef.current).state
+    : null;
   const [selectedPlacement, setSelectedPlacement] = useState<string | null>(null);
   const [chartView, setChartView] = useState<'chart' | 'schematic'>('chart');
-  const [intake, setIntake] = useState<{ replacing: ProjectPlacement | null } | null>(null);
+  const [intake, setIntake] = useState<{ replacing: ProjectPlacement | null; refresh?: { conversion: Partial<PlacementConversion>; label: string } } | null>(null);
   const [showMeasure, setShowMeasure] = useState(false);
   const appliedUrlTechnique = useRef(false);
   const materialized = useMemo(() => materializeColorworkProject(project), [project]);
@@ -189,7 +195,7 @@ export function ChartWorkspace({ project, onProject, onOpenProject, onNewProject
   }, [project, chart, selection, clipboard]);
 
   const saveProject = () => { try { const blob = new Blob([serializeColorworkProjectV1(project)], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${project.id}.kniterate-studio.json`; link.click(); URL.revokeObjectURL(link.href); setIssue(null); } catch (error) { setIssue(error instanceof Error ? error.message : String(error)); } };
-  const openProject = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; try { const opened = await openStudioProjectFile(file); onOpenProject(opened.project); setSelectedPlacement(null); setSelection(null); setClipboard(null); setPaletteIndex(Math.min(1, opened.project.base.chart.palette.length - 1)); setIssue(null); } catch (error) { setIssue(error instanceof Error ? error.message : String(error)); } };
+  const openProject = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; try { const opened = await openStudioProjectFile(file); documentGeneration.current += 1; onOpenProject(opened.project); setSelectedPlacement(null); setSelection(null); setClipboard(null); setPaletteIndex(Math.min(1, opened.project.base.chart.palette.length - 1)); setIssue(null); } catch (error) { setIssue(error instanceof Error ? error.message : String(error)); } };
   const selectProgramRegion = (region: ProgramRegion) => {
     setProgramRegion(region);
     if (!kcode) return;
@@ -231,7 +237,7 @@ export function ChartWorkspace({ project, onProject, onOpenProject, onNewProject
         readiness={<ReadinessCard story={story} pending={storyPending} onTarget={goTo} onFix={(label, edits) => operate(label, edits)} />}
         garment={materialized.state.object?.kind === 'beanie' ? <>
           <GarmentFitSection key={`fit-${project.id}`} state={materialized.state} plan={plan} onFit={fit} />
-          <MotifSection key={`motifs-${project.id}`} latestState={() => materializeColorworkProject(projectRef.current).state} state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={setSelectedPlacement} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement) => setIntake({ replacing: placement })} />
+          <MotifSection key={`motifs-${project.id}-${renderedGeneration}`} latestState={latestMotifState} state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={setSelectedPlacement} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement, refresh) => setIntake({ replacing: placement, refresh })} />
           <section className="garment-section" id="trials"><h2><Ruler size={12} /> Trials</h2>
             {(materialized.state.trials ?? []).length === 0 ? <p className="garment-help">No measurements recorded yet.</p> : <ul className="trial-list">{materialized.state.trials!.map((trial) => <li key={trial.id}><b className={trial.synthetic ? 'synthetic' : ''}>{trial.synthetic ? 'SYNTHETIC · ' : ''}{trial.outcome}</b> · candidate <code>{trial.candidate.kcodeSha256.slice(0, 12)}</code>{trial.bodyGauge ? ` · body ${trial.bodyGauge.stitchesPer10cm}/${trial.bodyGauge.rowsPer10cm}` : ''} · {trial.recordedAt.slice(0, 10)}</li>)}</ul>}
             <button type="button" className="secondary-button motif-add" onClick={() => setShowMeasure(true)}>Record measurements</button>
@@ -239,7 +245,7 @@ export function ChartWorkspace({ project, onProject, onOpenProject, onNewProject
         </> : null} onWidth={(width) => Number.isInteger(width) && width > 0 && width <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })} onHeight={(height) => { if (!Number.isInteger(height) || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }} onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} onStrategy={(technique) => { if (technique === materialized.state.strategy.technique) return; if (materialized.state.object?.kind === 'beanie' && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`); else commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } }); }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
       <AuthoredMachinePanel artifact={compile.artifact} kcode={kcode} outputStatus={outputStatus} outputError={outputError} focusedRowId={focusedRowId} selectedPass={selectedPass} region={programRegion} onRegion={selectProgramRegion} onPass={selectPass} mobileActive={mobilePanel === 'machine'} />
     </div>
-    {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); setChartView('chart'); setFitRequest((request) => request + 1); } }} />}
+    {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); setChartView('chart'); setFitRequest((request) => request + 1); } }} />}
     {showMeasure && <MeasureDialog project={project} hasCuff={materialized.state.object?.construction === 'rib-cuff-jersey-body'} candidateSha256={candidateSha256} onClose={() => setShowMeasure(false)} onRecord={(label, edits) => { if (operate(label, edits)) setShowMeasure(false); }} />}
     <GeneratedSourceDock artifact={compile.artifact} kcode={kcode} selectedPass={selectedPass} format={sourceFormat} collapsed={sourceCollapsed} onFormat={setSourceFormat} onCollapsed={setSourceCollapsed} />
   </main>;
