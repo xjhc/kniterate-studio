@@ -1434,6 +1434,7 @@ function appendProjectEntries(projectValue: ColorworkProjectV1, entryValues: rea
   const project = clone(projectValue);
   project.history.entries = project.history.entries.slice(0, project.history.cursor);
   project.history.checkpoints = project.history.checkpoints.filter((item) => item.cursor <= project.history.cursor);
+  const newOperationStart = project.history.entries.length;
   for (const entryValue of entryValues) {
     const incomingCapacityIssue = inspectIncomingProjectEditCapacityV1(entryValue);
     if (incomingCapacityIssue !== null) throw new InvalidColorworkProjectError([incomingCapacityIssue.message]);
@@ -1444,9 +1445,12 @@ function appendProjectEntries(projectValue: ColorworkProjectV1, entryValues: rea
   }
   if (project.history.entries.length > AUTHORED_CAPACITY_LIMITS_V1.historyEntries) {
     const excess = project.history.entries.length - AUTHORED_CAPACITY_LIMITS_V1.historyEntries;
-    // Cut at least `excess` entries, at a checkpoint when possible, always at an operation boundary.
-    let rebaseCursor = project.history.checkpoints.find((checkpoint) => checkpoint.cursor >= excess)?.cursor ?? Math.max(excess, Math.min(PROJECT_CHECKPOINT_INTERVAL, project.history.cursor));
+    // Cut at least `excess` entries, at an operation boundary, and never into the operation just appended
+    // (it fits: an operation is at most the history limit, so `excess` never exceeds its start).
+    const checkpoint = project.history.checkpoints.find((item) => item.cursor >= excess && item.cursor <= newOperationStart && isOperationBoundary(project.history.entries, item.cursor))?.cursor;
+    let rebaseCursor = checkpoint ?? Math.max(excess, Math.min(PROJECT_CHECKPOINT_INTERVAL, newOperationStart));
     while (!isOperationBoundary(project.history.entries, rebaseCursor)) rebaseCursor += 1;
+    if (rebaseCursor > newOperationStart) rebaseCursor = newOperationStart;
     let rebasedState = clone(project.base);
     for (let index = 0; index < rebaseCursor; index += 1) rebasedState = applyEditToState(rebasedState, project.history.entries[index]!.edit);
     project.base = rebasedState;

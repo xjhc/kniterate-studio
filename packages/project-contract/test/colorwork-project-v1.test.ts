@@ -324,4 +324,14 @@ describe('ColorworkProjectV1', () => {
     expect(parseColorworkProjectV1Json(serializeColorworkProjectV1(project))).toEqual(project);
     expect(() => appendProjectEdit(project, { id: 'trial-again', source: 'human', edit: { kind: 'record-trial', trial } })).toThrow(/already exists/);
   });
+
+  it('never compacts into the operation just appended, so it stays undoable', () => {
+    let project = createColorworkProjectV1({ ...chart, width: 4, height: 2 }, { id: 'compaction' });
+    for (let index = 0; index < 10; index += 1) project = appendProjectEdit(project, { id: `e${index}`, source: 'human', edit: { kind: 'set-target', target: { widthCm: 10 + index } } });
+    const before = materializeColorworkProject(project).state.chart.cells;
+    const big = appendProjectOperation(project, { group: 'big', source: 'assistant', label: 'Big', edits: Array.from({ length: 250 }, (_, index) => ({ kind: 'paint-cells' as const, cells: [{ rowId: 'row_0001', column: index % 4, paletteIndex: index % 2 }] })) });
+    expect(big.history.entries).toHaveLength(250);
+    expect(big.history.entries.every((entry) => entry.group === 'big')).toBe(true);
+    expect(materializeColorworkProject(undoProjectEdit(big)).state.chart.cells).toEqual(before);
+  });
 });

@@ -22,7 +22,7 @@ import { runAuthoredPipeline, type AuthoredPipelineResult } from '../apps/studio
 import { openStudioProjectJson } from '../apps/studio/src/chart/projectFile.ts';
 import { explain } from '../apps/studio/src/explain.ts';
 import { imageToChart, type ImageChartSize } from '../apps/studio/src/imageChart.ts';
-import { convertPlacementImage, defaultPlacementColors, nextPlacementId, refreshedPlacement } from '../apps/studio/src/placements.ts';
+import { convertPlacementImage, defaultPlacementColors, nextPlacementId, refreshedPlacement, unmappedColors } from '../apps/studio/src/placements.ts';
 import { planProject, type ProjectPlan } from '../apps/studio/src/plan.ts';
 import { carrierRequirements, constructionLine, handoffFiles, instructionsMarkdown, readinessStory, type MeasurementRecord } from '../apps/studio/src/handoff.ts';
 import { parseMeasurementRecord, trialRevision } from '../apps/studio/src/trials.ts';
@@ -60,13 +60,14 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
       filled in; set "synthetic": true for made-up test values). The gauges become measured, the plan
       re-sizes the project in one undoable operation, and the measured candidate's files are untouched.
   place <project.json> (<motif.json> | --image <png> --height-cm X [--colors K]) [--id <id>]
-        [--x center|<stitches from left>] [--above-cuff <rows>] [--map "1=accent,..."]
+        [--x center|<stitches from left>] [--above-cuff <rows>] [--map "1=accent,..."] [--leave 2,3]
   place <project.json> --refresh <id>
       Place a motif as intent: it stays centred (or at its column) and its rows above the cuff when the
       piece is resized, and a motif that no longer fits is a conflict, not a clipped motif. With
       --image the PNG is converted at the project's body gauge and stored in the project; --refresh
       re-converts it after the gauge changes. Motif color 0 is transparent; color k paints palette
-      entry k unless --map names another.
+      entry k unless --map names another. A color with no matching yarn is refused unless --map gives
+      it one or --leave drops it as the ground on purpose.
   image <file.png> -o <chart.json> (--width-st N | --height-rows N | --width-cm X | --height-cm X)
         [--gauge <st>,<rows>] [--colors K] [--pooling mean|mode] [--title <t>]
       Convert an image to a ColorworkChartV1 chart. --gauge is stitches,rows per 10 cm; with it the
@@ -101,7 +102,7 @@ const MAX_FINDINGS = 200;
 
 class UsageError extends Error {}
 
-const VALUE_OPTIONS = ['--gauge-source', '--backing', '--image', '--refresh', '--object', '--color', '--accent', '--cuff-cm', '--rib-gauge', '--x', '--above-cuff', '--map', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
+const VALUE_OPTIONS = ['--leave', '--gauge-source', '--backing', '--image', '--refresh', '--object', '--color', '--accent', '--cuff-cm', '--rib-gauge', '--x', '--above-cuff', '--map', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
 
 interface Parsed {
   command: string | null;
@@ -378,6 +379,10 @@ async function placementEdit(parsed: Parsed, project: ColorworkProjectV1): Promi
     if (!state.chart.palette.some((entry) => entry.id === to)) throw new UsageError(`--map target "${to}" is not a palette id (${state.chart.palette.map((entry) => entry.id).join(', ')}).`);
     colors[String(Number(from))] = to!;
   }
+  // Every image color gets a decision: a yarn (default or --map), or --leave to drop it as the ground on purpose.
+  const left = new Set((parsed.options.get('--leave') ?? '').split(',').filter(Boolean).map(Number));
+  const undecided = unmappedColors(motif, colors).filter((item) => !left.has(item.color));
+  if (undecided.length > 0) throw new UsageError(`${undecided.map((item) => `image color ${item.color} (${item.stitches} stitches)`).join(' and ')} ${undecided.length === 1 ? 'has' : 'have'} no matching yarn: map ${undecided.length === 1 ? 'it' : 'them'} with --map "${undecided[0]!.color}=<palette id>" or leave ${undecided.length === 1 ? 'it' : 'them'} as the ground with --leave ${undecided.map((item) => item.color).join(',')}.`);
   const id = parsed.id ?? nextPlacementId(state);
   return { kind: 'set-placement', placement: { id, motif, x, rowsAboveCuff: above, colors, ...(source ? { source } : {}) } };
 }

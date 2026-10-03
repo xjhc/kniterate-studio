@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { appendProjectEdit, createColorworkProjectV1, serializeColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { encodePng } from '../../../scripts/lib/png';
 
 const root = resolve(__dirname, '../../..');
 const chart = {
@@ -203,6 +204,22 @@ describe('authored CLI command receipts', () => {
     // A backing the beanie does not build is refused, not silently knitted as fairisle.
     expect(cli(['edit', projectPath, JSON.stringify({ kind: 'set-strategy', strategy: { technique: 'ladder-back', floatLimit: 7 } })]).status).toBe(0);
     expect(cli(['readiness', projectPath]).receipt.findings).toContainEqual(expect.objectContaining({ rule: 'project-beanie-backing-unsupported' }));
+  });
+
+  it('refuses an image color with no matching yarn unless it is mapped or left on purpose', { timeout: 120_000 }, () => {
+    const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-'));
+    const projectPath = resolve(directory, 'hat.json');
+    expect(cli(['new', '--object', 'beanie', '--head-cm', '56', '--body-cm', '13', '--gauge', '26,34', '--cuff-cm', '7', '--fold', '--rib-gauge', '30,32', '--backing', 'birdseye',
+      '--color', 'Black=#111111', '--accent', 'White=#F2F2F2', '-o', projectPath]).status).toBe(0);
+    // White ground, a black block and a red block: three image colors on a two-yarn hat.
+    const width = 40; const height = 20; const data = new Uint8Array(width * height * 4);
+    for (let y = 0; y < height; y += 1) for (let x = 0; x < width; x += 1) data.set(x >= 4 && x < 16 && y >= 4 && y < 16 ? [0, 0, 0, 255] : x >= 24 && x < 36 && y >= 4 && y < 16 ? [220, 0, 0, 255] : [255, 255, 255, 255], (y * width + x) * 4);
+    writeFileSync(resolve(directory, 'two-shapes.png'), encodePng({ width, height, data }));
+    const refused = cli(['place', projectPath, '--image', resolve(directory, 'two-shapes.png'), '--height-cm', '4', '--colors', '3']);
+    expect(refused.status).toBe(2);
+    expect(refused.receipt.error.message).toMatch(/image color 2 \(\d+ stitches\) has no matching yarn/);
+    expect(cli(['place', projectPath, '--image', resolve(directory, 'two-shapes.png'), '--height-cm', '4', '--colors', '3', '--map', '2=main']).status).toBe(0);
+    expect(cli(['place', projectPath, '--image', resolve(directory, 'two-shapes.png'), '--height-cm', '4', '--colors', '3', '--leave', '2', '--above-cuff', '20']).status).toBe(0);
   });
 
   it('keeps usage and read failures machine-readable', () => {

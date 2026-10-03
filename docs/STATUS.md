@@ -203,6 +203,16 @@ ship," trust this file and the working tree instead.
     - both registration modes parse;
     - beanie passes carry design-row provenance, so machine inspection
       shows the waste, cuff and body, and crown sections.
+  - **Fourth review fixed (2026-10-03):**
+    - workspace operations apply to the latest project, and a motif refresh
+      that finishes after the motif changed is discarded with a message
+      (no lost edits);
+    - image colors with no matching yarn need a decision (a yarn, or leave
+      the ground) in the browser and the CLI (`--map`, `--leave`);
+    - changing a loaded form's candidate drops its predictions;
+    - compaction never cuts into the operation just appended;
+    - continuation is matched by entry id across compaction;
+    - fit drafts reset per project.
   - The CLI has the same story and modules: `fit`, `package`, `measure`.
     `e2e/beanie-workflow.spec.ts` covers the browser journey (Chromium and
     Firefox). A real-bird walkthrough (not committed: the image is a

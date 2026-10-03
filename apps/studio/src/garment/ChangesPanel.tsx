@@ -27,15 +27,23 @@ const EDIT_LABELS: Record<string, string> = {
 };
 
 /**
- * Where an opened project continues this one: the index of its first new
- * entry, or null when it does not. Only the active history (up to the cursor)
- * counts, since an undone branch may have been replaced by the new edits.
+ * Where an opened project continues this one: the index (in the opened
+ * history) of its first new entry, or null when it does not. Only the active
+ * history (up to the cursor) counts, since an undone branch may have been
+ * replaced. Entries are matched by id across their overlap, so it still works
+ * when either side's oldest history has been compacted into its base.
  */
 export function continuationFrom(current: ColorworkProjectV1, opened: ColorworkProjectV1): number | null {
+  if (opened.id !== current.id) return null;
   const active = current.history.entries.slice(0, current.history.cursor);
-  const continues = opened.id === current.id && opened.history.cursor > active.length
-    && active.every((entry, index) => opened.history.entries[index]?.id === entry.id);
-  return continues ? active.length : null;
+  const incoming = opened.history.entries.slice(0, opened.history.cursor);
+  if (active.length === 0) return incoming.length > 0 ? 0 : null;
+  const last = incoming.findIndex((entry) => entry.id === active.at(-1)!.id);
+  if (last < 0 || last === incoming.length - 1) return null;
+  for (let back = 1; back <= Math.min(last, active.length - 1); back += 1) {
+    if (incoming[last - back]!.id !== active[active.length - 1 - back]!.id) return null;
+  }
+  return last + 1;
 }
 
 export function operationsOf(project: ColorworkProjectV1): Operation[] {

@@ -29,6 +29,8 @@ Beanies: flat, seamed afterwards, in Customist's construction. Two kinds:
   against them (`cuff-off-target` carries the fix).
   Put the motif in as a **placement**:
   `place hat.json --image logo.png --height-cm 8 --id logo [--x center] [--above-cuff rows] [--colors 2]`.
+  With `--colors 3` or more, an image color with no matching yarn is refused:
+  map it (`--map "2=main"`) or drop it on purpose (`--leave 2`).
   The image is cropped to its artwork, so `--height-cm` is the visible
   motif's height and `--above-cuff` counts rows to its lowest visible stitch.
   It is converted at the body gauge and stored with its anchor, so it stays

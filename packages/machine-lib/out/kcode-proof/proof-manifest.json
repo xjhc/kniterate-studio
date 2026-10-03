@@ -30095,7 +30095,7 @@
     ]
   },
   "contract": {
-    "sha256": "e0c30041b800ebb0c604cfb3e2ca1a76bf3755df802ff6f614d00a3ce9cf2ca8",
+    "sha256": "60ba8475fdc4cf70466c207e61a8a668544188c9a711ffa20b85e14abb62a771",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30174,8 +30174,8 @@
       },
       {
         "path": "../../apps/studio/src/beanieWorkflow.test.ts",
-        "sha256": "efb36808722a0149badf07221ccd1729a5394a7d5d96cdf1886940e0412a3035",
-        "bytes": 24953
+        "sha256": "6b163925addc03234e001f61c0cd0eabdba8a3e4519bce1ab337883d0ac54552",
+        "bytes": 26871
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.test.tsx",
@@ -30244,8 +30244,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "68006fdbea008848c2f555f0f7ffc3a4a6843ce90e7c1359930f27ba7a173729",
-        "bytes": 24999
+        "sha256": "6b9af055b4d621e8979bbb0de260e09ffa30aac0332885072c7d8b3d8fb4d6ba",
+        "bytes": 25334
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
@@ -30384,8 +30384,8 @@
       },
       {
         "path": "../../apps/studio/src/garment/ChangesPanel.tsx",
-        "sha256": "085f1f4afcda70cb58441ee9f2c00f451023c61c5818a27d685b078940b269b7",
-        "bytes": 9306
+        "sha256": "89f3ebc6840a5beaf83d1720300b4ea5d6a363ebc91264fd68a991161ba0b348",
+        "bytes": 9751
       },
       {
         "path": "../../apps/studio/src/garment/GarmentFitSection.tsx",
@@ -30399,13 +30399,13 @@
       },
       {
         "path": "../../apps/studio/src/garment/MeasureDialog.tsx",
-        "sha256": "5ee36708aa9a1a62e19c3f18b10769254477f3b23bd98977a4bb1dd8012843dd",
-        "bytes": 8956
+        "sha256": "af06f91c9365e6ca48cd481d6f902e58584f1ed39f627d3f66d77a75ca1ca3be",
+        "bytes": 9594
       },
       {
         "path": "../../apps/studio/src/garment/MotifPanel.tsx",
-        "sha256": "3ec7b7783ace2ac0d637b0d52c09c2d071d7fdfb2329650353b68bd65e716536",
-        "bytes": 16328
+        "sha256": "e2b4a3ee5a9de4daf9711796fdd467a61caf9cad92fd3477e084f6c44be0260a",
+        "bytes": 18813
       },
       {
         "path": "../../apps/studio/src/garment/ReadinessCard.tsx",
@@ -30554,8 +30554,8 @@
       },
       {
         "path": "../../apps/studio/src/placements.ts",
-        "sha256": "3a58f367bf4b5025c55f418d5a69a41df82faa88efd4e673315348a5b00e6149",
-        "bytes": 11168
+        "sha256": "41067a67e908ab648fc450bf618513fe5fb15925d1ada1f0a5d67ab170cdbf75",
+        "bytes": 12007
       },
       {
         "path": "../../apps/studio/src/plan.test.ts",
@@ -30584,8 +30584,8 @@
       },
       {
         "path": "../../apps/studio/src/studioCli.test.ts",
-        "sha256": "a2482122a716f070c80f9b5b9f78d7eef8281464a83682dd242c96e6e612e77a",
-        "bytes": 14757
+        "sha256": "fc02bff29370bb874679135a3f2fffb386b51014ea49d4ceffb438e3961d41ef",
+        "bytes": 16489
       },
       {
         "path": "../../apps/studio/src/styles.css",
@@ -30614,8 +30614,8 @@
       },
       {
         "path": "../../e2e/beanie-workflow.spec.ts",
-        "sha256": "59c52a73cf538d0a83375427e825c0a58fc61d413bd6d24c91922eda8dadcda0",
-        "bytes": 7920
+        "sha256": "4bc2e4ef525f4c1d835bfccb58395dd89d88c3dff7a8110096ac155dae1fb4c9",
+        "bytes": 13203
       },
       {
         "path": "../../e2e/execution-inspector.spec.ts",
@@ -30734,8 +30734,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "716cbd6ce87af30d21db9af40242e33e040603967bdbac26d1d64269b879f283",
-        "bytes": 36267
+        "sha256": "c283bf0feb6a0ed3d2b80675bcb9686f88e80fa63794cd2d93c4afbb13580002",
+        "bytes": 37170
       },
       {
         "path": "../../tsconfig.base.json",
@@ -30799,8 +30799,8 @@
       },
       {
         "path": "../project-contract/src/index.ts",
-        "sha256": "bc962aa60bee0b234d08baa80ce4d3b12cbc967a6938faaea31f1be7ae8b57cd",
-        "bytes": 70852
+        "sha256": "e2296b4f5ea42e686a3c195655acfe8ce36665af85ec911f52d3be601817617d",
+        "bytes": 71206
       },
       {
         "path": "../project-contract/tsconfig.json",
@@ -30889,7 +30889,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "59d931b49b05ed919c7b58c4716d908569f90411850fc606f33114c9df43282f",
+        "sha256": "cd884a96aab29c1ceb48d9f8903ec100d1a0129bf298c544db04793cbe6091ee",
         "bytes": 179
       },
       {

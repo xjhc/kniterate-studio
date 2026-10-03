@@ -83,6 +83,8 @@ export function ChartWorkspace({ project, onProject, onOpenProject, onNewProject
   const [sourceFormat, setSourceFormat] = useState<SourceFormat>(() => searchChoice('source', ['knitout', 'kcode'], 'knitout'));
   const [sourceCollapsed, setSourceCollapsed] = useState(() => searchChoice('dock', ['open', 'closed'], 'closed') === 'closed');
   const projectInput = useRef<HTMLInputElement>(null);
+  const projectRef = useRef(project);
+  projectRef.current = project;
   const [selectedPlacement, setSelectedPlacement] = useState<string | null>(null);
   const [chartView, setChartView] = useState<'chart' | 'schematic'>('chart');
   const [intake, setIntake] = useState<{ replacing: ProjectPlacement | null } | null>(null);
@@ -103,13 +105,14 @@ export function ChartWorkspace({ project, onProject, onOpenProject, onNewProject
   const passCounts = useMemo(() => new Map((compile.artifact?.rowProvenance ?? []).map((row) => [row.chartRow, emittedPassesByRow.get(row.rowId)?.length ?? 0])), [compile.artifact, emittedPassesByRow]);
   const commit = (edit: ProjectEdit | null): boolean => {
     if (!edit) return false;
-    try { onProject(appendProjectEdit(project, entry(edit))); setIssue(null); return true; }
+    try { onProject(appendProjectEdit(projectRef.current, entry(edit))); setIssue(null); return true; }
     catch (error) { setIssue(error instanceof Error ? error.message : String(error)); return false; }
   };
   /** Several edits as one undoable operation. */
   const operate = (label: string, edits: readonly ProjectEdit[]): boolean => {
     if (edits.length === 0) return false;
-    try { onProject(appendProjectOperation(project, { group: `op_${crypto.randomUUID().replace(/-/g, '')}`, source: 'human', label, edits })); setIssue(null); return true; }
+    // Always against the latest project: an asynchronous result must never replay an older one over later edits.
+    try { onProject(appendProjectOperation(projectRef.current, { group: `op_${crypto.randomUUID().replace(/-/g, '')}`, source: 'human', label, edits })); setIssue(null); return true; }
     catch (error) { setIssue(error instanceof Error ? error.message : String(error)); return false; }
   };
   const resolvedPlacements = materialized.placements;
@@ -227,8 +230,8 @@ export function ChartWorkspace({ project, onProject, onOpenProject, onNewProject
       <BlanketSetupRail state={materialized.state} compile={compile} outputError={outputError} mobileActive={mobilePanel === 'strategy'}
         readiness={<ReadinessCard story={story} pending={storyPending} onTarget={goTo} onFix={(label, edits) => operate(label, edits)} />}
         garment={materialized.state.object?.kind === 'beanie' ? <>
-          <GarmentFitSection state={materialized.state} plan={plan} onFit={fit} />
-          <MotifSection state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={setSelectedPlacement} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement) => setIntake({ replacing: placement })} />
+          <GarmentFitSection key={`fit-${project.id}`} state={materialized.state} plan={plan} onFit={fit} />
+          <MotifSection key={`motifs-${project.id}`} latestState={() => materializeColorworkProject(projectRef.current).state} state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={setSelectedPlacement} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement) => setIntake({ replacing: placement })} />
           <section className="garment-section" id="trials"><h2><Ruler size={12} /> Trials</h2>
             {(materialized.state.trials ?? []).length === 0 ? <p className="garment-help">No measurements recorded yet.</p> : <ul className="trial-list">{materialized.state.trials!.map((trial) => <li key={trial.id}><b className={trial.synthetic ? 'synthetic' : ''}>{trial.synthetic ? 'SYNTHETIC · ' : ''}{trial.outcome}</b> · candidate <code>{trial.candidate.kcodeSha256.slice(0, 12)}</code>{trial.bodyGauge ? ` · body ${trial.bodyGauge.stitchesPer10cm}/${trial.bodyGauge.rowsPer10cm}` : ''} · {trial.recordedAt.slice(0, 10)}</li>)}</ul>}
             <button type="button" className="secondary-button motif-add" onClick={() => setShowMeasure(true)}>Record measurements</button>

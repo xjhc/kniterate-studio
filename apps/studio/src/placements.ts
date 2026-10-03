@@ -19,6 +19,11 @@ export interface PlacementConversion {
   pooling: 'mean' | 'mode';
 }
 
+/** Whether a placement is still exactly the one an asynchronous step started from (it was not changed or removed). */
+export function isSamePlacement(current: ProjectPlacement | undefined, started: ProjectPlacement): boolean {
+  return current !== undefined && JSON.stringify(current) === JSON.stringify(started);
+}
+
 /** The first `motif-N` no current placement uses, so a new motif never replaces an existing one. */
 export function nextPlacementId(state: ProjectState): string {
   const taken = new Set((state.placements ?? []).map((placement) => placement.id));
@@ -108,6 +113,13 @@ export function defaultPlacementColors(state: ProjectState, motif: ColorworkChar
   const colors: Record<string, string> = {};
   for (const color of new Set(motif.cells.flat())) if (color !== 0 && state.chart.palette[color]) colors[String(color)] = state.chart.palette[color]!.id;
   return colors;
+}
+
+/** Image colors (other than the background, 0) with no yarn in `colors`, with their stitch counts. */
+export function unmappedColors(motif: ColorworkChartV1, colors: Record<string, string>): { color: number; stitches: number }[] {
+  const counts = new Map<number, number>();
+  for (const cell of motif.cells.flat()) if (cell !== 0 && colors[String(cell)] === undefined) counts.set(cell, (counts.get(cell) ?? 0) + 1);
+  return [...counts].sort((a, b) => a[0] - b[0]).map(([color, stitches]) => ({ color, stitches }));
 }
 
 /** The same placement re-converted from its stored image at `gauge` (or new settings); anchor, colors and id stay. */

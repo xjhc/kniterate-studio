@@ -12,7 +12,7 @@ import {
 import { beanieFitEdits, createBeanieProject, type BeanieIntent } from './beanie';
 import { compileColorworkProject } from './blanket/compileProject';
 import { handoffFiles, readinessStory, schematicSvg, type MeasurementRecord } from './handoff';
-import { placementToStitchesEdits } from './placements';
+import { isSamePlacement, placementToStitchesEdits, unmappedColors } from './placements';
 import { planProject } from './plan';
 import { convertPlacementImage, defaultPlacementColors, nextPlacementId, refreshedPlacement, type PlacementImage } from './placements';
 import { collectFindings, resolveReadiness } from './readiness';
@@ -348,5 +348,32 @@ describe('third review', () => {
     const compiled = compileColorworkProject(place(toque({ backing: 'birdseye' }), 'bird'));
     expect(compiled.programOpSourceRows.some((rows) => rows !== null)).toBe(true);
     expect(compiled.rowProvenance.filter((row) => row.passIndices.length > 0)).toHaveLength(compiled.rowProvenance.length);
+  });
+});
+
+describe('fourth review', () => {
+  it('5: continuation is found across history compaction', () => {
+    let project = createColorworkProjectV1({ ...materializeColorworkProject(toque()).state.chart, title: 'c' }, { id: 'long' });
+    for (let index = 0; index < 256; index += 1) project = appendProjectEdit(project, { id: `h${index}`, source: 'human', edit: { kind: 'set-target', target: { heightCm: 10 + (index % 5) } } });
+    const agent = appendProjectOperation(project, { group: 'agent', source: 'assistant', label: 'Agent', edits: [{ kind: 'set-target', target: { heightCm: 30 } }] });
+    expect(agent.history.entries[0]!.id).not.toBe(project.history.entries[0]!.id);
+    const from = continuationFrom(project, agent);
+    expect(from).not.toBeNull();
+    expect(agent.history.entries[from!]!.group).toBe('agent');
+  });
+
+  it('1: an asynchronous result applies only to the placement it started from', () => {
+    const project = place(toque(), 'bird');
+    const started = materializeColorworkProject(project).state.placements![0]!;
+    expect(isSamePlacement(started, structuredClone(started))).toBe(true);
+    expect(isSamePlacement(undefined, started)).toBe(false);
+    expect(isSamePlacement({ ...started, rowsAboveCuff: started.rowsAboveCuff + 1 }, started)).toBe(false);
+  });
+
+  it('2: image colors without a matching yarn are reported, so none is dropped silently', () => {
+    const { state } = materializeColorworkProject(toque());
+    const motif = { kind: 'knitlab-colorwork-chart', version: 1, title: 'm', width: 3, height: 1, rowNumbering: 'bottom-up', palette: [{ id: 'a', name: 'a', hex: '#FFFFFF' }, { id: 'b', name: 'b', hex: '#000000' }, { id: 'c', name: 'c', hex: '#FF0000' }], cells: [[1, 2, 2]] } as never;
+    const colors = defaultPlacementColors(state, motif);
+    expect(unmappedColors(motif, colors)).toEqual([{ color: 2, stitches: 2 }]);
   });
 });
