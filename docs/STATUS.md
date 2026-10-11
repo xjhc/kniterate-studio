@@ -238,10 +238,13 @@ ship," trust this file and the working tree instead.
 - **Flat-panel sweater, software slice (M7, 2026-10-10).** A sweater is one
   project (`object: { kind: 'sweater', … }`): finished measurements, a
   silhouette (`set-in`, `j-sleeve`, `drop-shoulder`), a neckline (`crew`,
-  `boat`), a body texture, rib trims, gauges and a top finish. The chart holds
+  `v`, `square`, `boat`), a body texture, rib trims, gauges and a top finish. The chart holds
   only the yarn.
   - `apps/studio/src/sweater/draft.ts` drafts each piece as a cm outline:
-    back, front, sleeve (knit twice) and, for a crew neck, a rib neckband.
+    back, front, sleeve (knit twice) and, for a crew, V or square neck, a
+    rib neckband. A V splits on two bound-off centre needles and decreases
+    each neck edge to the shoulder; a square binds off its width flat; the
+    standard front neck depth follows the neckline (a V dips 2.2× a crew).
     Size and fit chips give standard finished measurements. A set-in cap's
     slope is fitted to the armhole edge (at most 80% of the armhole depth). A
     J-sleeve's flat top matches the straight armhole.

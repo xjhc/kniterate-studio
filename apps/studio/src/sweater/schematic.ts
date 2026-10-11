@@ -1,4 +1,4 @@
-import type { Point } from './draft';
+import { hasNeckband, type Point } from './draft';
 import type { PanelPlan } from './rasterize';
 import type { SweaterPlan } from './sweater';
 
@@ -236,7 +236,7 @@ export function assembledLayout(plan: SweaterPlan): AssembledLayout | null {
     .map((p) => `${r2(p.x)},${r2(-p.y - plan.object.trims.neck.cm * 0.3)}`).join(' ');
   const frontNeck = plan.pieces.find((piece) => piece.id === 'front')?.draft.edges.neck;
   const backNeck = plan.pieces.find((piece) => piece.id === 'back')?.draft.edges.neck;
-  const band = plan.object.neckline === 'crew' && frontNeck ? { front: ring(frontNeck), back: ring(backNeck), width: plan.object.trims.neck.cm } : null;
+  const band = hasNeckband(plan.object.neckline) && frontNeck ? { front: ring(frontNeck), back: ring(backNeck), width: plan.object.trims.neck.cm } : null;
   // Bounds: the front and both sleeves.
   const xs: number[] = [];
   const ys: number[] = [];

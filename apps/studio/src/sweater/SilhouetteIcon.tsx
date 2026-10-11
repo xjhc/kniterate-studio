@@ -2,7 +2,7 @@ import type { SweaterObject } from '@kniterate-studio/project-contract';
 
 /** A sweater front, drawn for each style so the choice reads at a glance. */
 export function SilhouetteIcon({ silhouette, neckline }: { silhouette: SweaterObject['silhouette']; neckline: SweaterObject['neckline'] }) {
-  const neck = neckline === 'crew' ? 'M25 8 Q32 15 39 8' : 'M23 7 Q32 9 41 7';
+  const neck = { crew: 'M25 8 Q32 15 39 8', v: 'M25 8 L32 19 L39 8', square: 'M26 8 V14 H38 V8', boat: 'M23 7 Q32 9 41 7' }[neckline];
   const body = {
     // Shoulder seam out on the arm; sleeves hang straight from it.
     'drop-shoulder': 'M10 8 H54 L62 38 L55 40 L49 22 V58 H15 V22 L9 40 L2 38 Z',

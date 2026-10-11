@@ -30,7 +30,7 @@
   - M6 flat seamed beanies, whose acrylic dev trial (candidate `79670c31`) waits
     for an operator.
   - An M7 slice (2026-10-10): flat-panel sweaters (set-in, J-sleeve, drop
-    shoulder; crew or boat neck; any knit/purl/tuck/slip texture; rib trims).
+    shoulder; crew, V, square or boat neck; any knit/purl/tuck/slip texture; rib trims).
     They are designed in their own browser workspace or with
     `studio sweater …`; see STATUS.
 

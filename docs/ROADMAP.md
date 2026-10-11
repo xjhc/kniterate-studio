@@ -307,7 +307,7 @@ benchmark's sweater cases pass.
 request).**
 
 Built: one-yarn flat-panel sweaters in set-in, J-sleeve and drop-shoulder
-styles with crew or boat necks. They take any knit/purl/tuck/slip texture and
+styles with crew, V, square or boat necks. They take any knit/purl/tuck/slip texture and
 rib trims, in a multi-piece project with per-piece programs, seam checks, a
 package and a written pattern. Browser and CLI are covered (see STATUS).
 
@@ -315,7 +315,7 @@ Open:
 
 - Customist panel parity (no captured reference is reproduced) and the
   CP-A3–A7 rows;
-- raglan and V-neck;
+- raglan;
 - colorwork, stripes and picked-up collars on pieces;
 - benchmark sweater cases;
 - a development knit;

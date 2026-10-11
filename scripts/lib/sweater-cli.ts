@@ -11,7 +11,7 @@ import {
   type ProjectEdit,
   type SweaterObject,
 } from '../../packages/project-contract/src/index.ts';
-import { FITS, SIZES, defaultMeasurements, edgeProblem, type Fit, type Measurements, type ShapePoint, type Size } from '../../apps/studio/src/sweater/draft.ts';
+import { FITS, SIZES, defaultMeasurements, edgeProblem, withNeckline, type Fit, type Measurements, type ShapePoint, type Size } from '../../apps/studio/src/sweater/draft.ts';
 import { SWEATER_CHOICES, createSweaterProject, planSweater, type SweaterIntent, type SweaterPlan } from '../../apps/studio/src/sweater/sweater.ts';
 import { runSweaterPipeline } from '../../apps/studio/src/sweater/sweaterPipeline.ts';
 import { pieceSteps, sweaterInstructions, sweaterPackageFiles } from '../../apps/studio/src/sweater/sweaterHandoff.ts';
@@ -23,7 +23,7 @@ export const SWEATER_USAGE = `Sweaters (flat pieces, sewn): pnpm --silent studio
 
   sweater choices
       Silhouettes, necklines, sizes, fits, stitches (textures) and ribs, with what each is for.
-  sweater new -o <project.json> [--title T] [--silhouette set-in|j-sleeve|drop-shoulder] [--neck crew|boat]
+  sweater new -o <project.json> [--title T] [--silhouette set-in|j-sleeve|drop-shoulder] [--neck crew|v|square|boat]
         [--size XS|S|M|L|XL|XXL] [--fit fitted|classic|relaxed|oversized] [--stitch <id> | --texture "pk/kp"]
         [--yarn "Name=#RRGGBB"] [--gauge <st>,<rows>] [--rib-gauge <st>,<rows>] [--gauge-source measured|assumed]
         [--hem-rib kp|kkpp|kkkp|kkkpp] [--measure chest=112,length=66,...]
@@ -286,7 +286,7 @@ export async function sweaterCommand(args: readonly string[], io: SweaterCliIo):
       const intent: SweaterIntent = {
         title: parsed.options.get('--title') ?? 'Sweater',
         silhouette: choice(parsed, '--silhouette', ['set-in', 'j-sleeve', 'drop-shoulder'] as const) ?? 'set-in',
-        neckline: choice(parsed, '--neck', ['crew', 'boat'] as const) ?? 'crew',
+        neckline: choice(parsed, '--neck', ['crew', 'v', 'square', 'boat'] as const) ?? 'crew',
         size: choice(parsed, '--size', SIZES) ?? 'M',
         fit: choice(parsed, '--fit', FITS) ?? 'classic',
         textureId: 'stockinette',
@@ -319,8 +319,8 @@ export async function sweaterCommand(args: readonly string[], io: SweaterCliIo):
       const extra: ProjectEdit[] = [];
       const silhouette = choice(parsed, '--silhouette', ['set-in', 'j-sleeve', 'drop-shoulder'] as const);
       if (silhouette) { object.silhouette = silhouette; labels.push(silhouette); }
-      const neck = choice(parsed, '--neck', ['crew', 'boat'] as const);
-      if (neck) { object.neckline = neck; labels.push(`${neck} neck`); }
+      const neck = choice(parsed, '--neck', ['crew', 'v', 'square', 'boat'] as const);
+      if (neck) { Object.assign(object, withNeckline(object, neck)); labels.push(`${neck} neck`); }
       const size = choice(parsed, '--size', SIZES);
       const fit = choice(parsed, '--fit', FITS);
       if (size || fit) {
@@ -328,7 +328,7 @@ export async function sweaterCommand(args: readonly string[], io: SweaterCliIo):
         const nextSize = (size ?? ((SIZES as readonly string[]).includes(currentSize ?? '') ? currentSize : 'M')) as Size;
         const nextFit = (fit ?? ((FITS as readonly string[]).includes(currentFit ?? '') ? currentFit : 'classic')) as Fit;
         object.size = `${nextSize} ${nextFit}`;
-        object.measurements = defaultMeasurements(nextSize, nextFit, object.silhouette);
+        object.measurements = defaultMeasurements(nextSize, nextFit, object.silhouette, object.neckline);
         labels.push(`size ${nextSize} ${nextFit}`);
       }
       const measured = measurements(parsed);

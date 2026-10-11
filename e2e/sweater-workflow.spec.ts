@@ -44,6 +44,18 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   await expect(pieces).toHaveCount(3);
   await page.getByRole('radio', { name: 'Crew neck' }).click();
   await expect(pieces).toHaveCount(4);
+  // A V dips further than a crew: the standard depth moves with it, and every piece still knits.
+  const neckDepth = page.getByLabel('Front neck depth', { exact: true });
+  const crewDepth = await neckDepth.inputValue();
+  await page.getByRole('radio', { name: 'V-neck' }).click();
+  await expect(pieces).toHaveCount(4);
+  await expect(neckDepth).not.toHaveValue(crewDepth);
+  expect(Number(await neckDepth.inputValue())).toBeGreaterThan(2 * Number(crewDepth));
+  await expect(status(page)).toContainText(/Knittable/, { timeout: 90_000 });
+  await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(4);
+  await page.getByRole('radio', { name: 'Crew neck' }).click();
+  await expect(pieces).toHaveCount(4);
+  await expect(neckDepth).toHaveValue(crewDepth);
 
   // A piece opens stitch by stitch; hovering names the row and what the machine does there.
   await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Front' }).click();

@@ -120,6 +120,12 @@ export function rasterizePiece(input: RasterizeInput): PanelPlan {
   // Rounded away from the centre line symmetrically, so a symmetric outline gives symmetric rows.
   const toStitches = (x: number) => Math.sign(x) * Math.round(Math.abs(x) / stitchCm);
   const targets = ys.map(({ y }) => sliceOutline(piece.outline, y).map(([a, b]): PanelSegment => ({ lo: centre + toStitches(a), hi: centre + toStitches(b) - 1 })));
+  // Two shoulders are split by at least one bound-off needle each side of the centre (the point of a V).
+  for (const target of targets) {
+    if (target.length !== 2) continue;
+    target[0] = { ...target[0]!, hi: Math.min(target[0]!.hi, centre - 2) };
+    target[1] = { ...target[1]!, lo: Math.max(target[1]!.lo, centre + 1) };
+  }
 
   const first = targets[0]?.[0];
   if (first === undefined) throw new Error(`${piece.name} has no width at its cast-on`);

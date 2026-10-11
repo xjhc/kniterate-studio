@@ -156,8 +156,13 @@ const SweaterObjectSchema = z.object({
   kind: z.literal('sweater'),
   /** `drop-shoulder`: straight body, flat-topped sleeve. `j-sleeve`: a short underarm curve, then straight. `set-in`: a shaped armhole and a capped sleeve. */
   silhouette: z.enum(['drop-shoulder', 'j-sleeve', 'set-in']),
-  /** `crew`: a shaped neck finished with a rib neckband. `boat`: a straight top with a rib edge; the shoulder seams leave the neck open. */
-  neckline: z.enum(['crew', 'boat']),
+  /**
+   * `crew`: a round shaped neck; `v`: straight from the shoulders to a point;
+   * `square`: bound off flat with straight sides. Each is finished with a rib
+   * neckband. `boat`: a straight top with a rib edge; the shoulder seams leave
+   * the neck open.
+   */
+  neckline: z.enum(['crew', 'v', 'square', 'boat']),
   measurements: z.object({
     /** Finished chest circumference (front + back). */
     chest: SweaterCm,

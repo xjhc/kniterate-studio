@@ -67,6 +67,8 @@ export function assemblySteps(plan: SweaterPlan): string[] {
         : 'Pin the top of each sleeve cap to the shoulder seam and the cap\'s bound-off stitches to the underarm bind-offs. Ease the cap into the armhole and sew.',
     'Sew each side seam and sleeve seam in one line, from the hem to the cuff, one stitch in from the edges.',
     ...(neckline === 'crew' ? ['Sew the neckband\'s short ends together into a ring. Pin the seam to one shoulder seam and stretch the band evenly around the neck opening; sew it on with the right sides out.'] : []),
+    ...(neckline === 'v' ? ['Sew the neckband on from the point of the V, round the back and down to the point again, stretching it slightly; cross the right end over the left at the V and stitch both ends down.'] : []),
+    ...(neckline === 'square' ? ['Sew the neckband on round the opening, stretching it slightly along the sides; at each corner fold the band at 45° (a mitre) so it lies flat, and join the ends at a shoulder seam.'] : []),
     'Weave in the ends.',
   ];
   return steps;
@@ -86,7 +88,7 @@ export function sweaterInstructions(project: ColorworkProjectV1, plan: SweaterPl
   }
   lines.push(
     '## The sweater',
-    `A ${SILHOUETTE_NAMES[object.silhouette]} sweater with a ${object.neckline === 'crew' ? 'crew neck and rib neckband' : 'boat neck'}, knitted flat in pieces and sewn${object.size ? ` (${object.size})` : ''}.`,
+    `A ${SILHOUETTE_NAMES[object.silhouette]} sweater with a ${object.neckline === 'boat' ? 'boat neck' : `${object.neckline === 'v' ? 'V' : object.neckline} neck and rib neckband`}, knitted flat in pieces and sewn${object.size ? ` (${object.size})` : ''}.`,
     `Body: ${object.body.name}${texture ? '' : ` (custom: ${object.body.texture.join(' / ')})`}. Hem and cuffs: ${ribName(object.trims.hem.rib)} rib, ${object.trims.hem.cm} and ${object.trims.cuff.cm} cm. ${object.neckline === 'crew' ? 'Neckband' : 'Neck edge'}: ${ribName(object.trims.neck.rib)} rib, ${object.trims.neck.cm} cm.`,
     `Yarn: ${yarn.name} (${yarn.hex}). Body gauge ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}); rib gauge ${plan.ribGauge.stitchesPer10cm} / ${plan.ribGauge.rowsPer10cm} (${plan.ribGauge.source}).`,
     '',

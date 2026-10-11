@@ -50,7 +50,7 @@ export function sweaterObjectFor(intent: SweaterIntent): SweaterObject {
     silhouette: intent.silhouette,
     neckline: intent.neckline,
     size: `${intent.size} ${intent.fit}`,
-    measurements: { ...defaultMeasurements(intent.size, intent.fit, intent.silhouette), ...intent.measurements },
+    measurements: { ...defaultMeasurements(intent.size, intent.fit, intent.silhouette, intent.neckline), ...intent.measurements },
     body: { name: texture.name, texture: [...texture.rows] },
     trims: { hem: { rib, cm: 6 }, cuff: { rib, cm: 6 }, neck: { rib: 'kp', cm: 2.5 } },
     ribGauge: { ...(intent.ribGauge ?? { ...DEFAULT_RIB_GAUGE, source: 'assumed' as const }) },
@@ -220,7 +220,7 @@ export function planSweater(state: ProjectState): SweaterPlan {
       findings.push({ rule: 'sweater-seam-mismatch', severity: 'warning', piece: 'sleeve', path: 'seams/armhole', message: `One side of the sleeve top is ${sleeveTopCm} cm but the armhole edge it sews to is ${armholeCm} cm (${round1(sleeveTopCm - armholeCm)} cm difference; up to ${tolerance} cm eases in). ${object.silhouette === 'drop-shoulder' ? 'Make the upper arm twice the armhole depth.' : 'Adjust the upper arm or the armhole depth.'}` });
     }
   }
-  if (object.neckline === 'crew') realized.push({ label: 'Neck opening', target: null, cm: round1(draft.seams.neckline), how: 'front and back neck edges' });
+  if (object.neckline !== 'boat') realized.push({ label: 'Neck opening', target: null, cm: round1(draft.seams.neckline), how: 'front and back neck edges' });
   return { object, draft, gauge, ribGauge, pieces, carriers, findings, realized, knitted: knittedMeasurements(draft, front, back, sleeve), yarn: yarnEstimate(pieces), custom: { body: object.shapes?.body !== undefined, sleeve: object.shapes?.sleeve !== undefined } };
 }
 
@@ -292,7 +292,9 @@ export const SWEATER_CHOICES = {
     { id: 'set-in', name: 'Set-in sleeve', note: 'A shaped armhole and a capped sleeve: the most tailored fit.' },
   ] as const,
   necklines: [
-    { id: 'crew', name: 'Crew neck', note: 'A shaped neck finished with a rib neckband.' },
+    { id: 'crew', name: 'Crew neck', note: 'A round neck finished with a rib neckband.' },
+    { id: 'v', name: 'V-neck', note: 'Straight from the shoulders to a point, finished with a rib band crossed at the V.' },
+    { id: 'square', name: 'Square neck', note: 'Bound off flat with straight sides, finished with a rib band.' },
     { id: 'boat', name: 'Boat neck', note: 'A straight top with a rib edge; the shoulder seams leave the neck open.' },
   ] as const,
   ribs: RIBS,

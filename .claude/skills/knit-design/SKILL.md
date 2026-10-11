@@ -91,8 +91,9 @@ through the same strict checks.
 - Styles: `--silhouette set-in` (shaped armhole, capped sleeve), `j-sleeve`
   (a drop shoulder with a short curved underarm step and a flat-topped
   sleeve) or `drop-shoulder` (straight body, flat sleeve top). Necks:
-  `--neck crew` (shaped, separate rib neckband; the right shoulder knits on
-  a second cone of the same yarn) or `boat` (straight top with a rib edge).
+  `--neck crew`, `v` or `square` (shaped, separate rib neckband; the right
+  shoulder knits on a second cone of the same yarn; a V's standard depth is
+  about twice a crew's) or `boat` (straight top with a rib edge).
 - Size: `--size XS…XXL --fit fitted|classic|relaxed|oversized` gives finished
   measurements; override any with `--measure chest=112,length=66,…` (cm,
   the garment not the body).

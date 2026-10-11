@@ -77,8 +77,11 @@ export const J_SLEEVE_STEP_CM = 3;
 
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
+/** How much deeper than a crew neck each neckline dips at the front. */
+const FRONT_NECK_DEPTH: Record<SweaterObject['neckline'], number> = { crew: 1, v: 2.2, square: 1.25, boat: 1 };
+
 /** The garment's finished measurements for a standard size and fit. */
-export function defaultMeasurements(size: Size, fit: Fit, silhouette: Silhouette): Measurements {
+export function defaultMeasurements(size: Size, fit: Fit, silhouette: Silhouette, neckline: SweaterObject['neckline'] = 'crew'): Measurements {
   const body = BODY[size];
   const chest = body.chest + EASE[fit];
   const width = chest / 2;
@@ -92,7 +95,7 @@ export function defaultMeasurements(size: Size, fit: Fit, silhouette: Silhouette
     armholeDepth: body.armhole + EASE[fit] * 0.1,
     shoulderWidth: Math.min(width, body.shoulder + EASE[fit] * 0.15),
     neckWidth: body.neck,
-    frontNeckDepth: body.neckDepth,
+    frontNeckDepth: body.neckDepth * FRONT_NECK_DEPTH[neckline],
     backNeckDepth: 2,
     shoulderDrop: 2,
   };
@@ -111,6 +114,25 @@ export function defaultMeasurements(size: Size, fit: Fit, silhouette: Silhouette
     shoulderWidth,
     shoulderDrop: 1.5,
   });
+}
+
+/** The size and fit a size label names, when it names a standard one. */
+export function parseSize(label: string | undefined): { size: Size | null; fit: Fit | null } {
+  const [size, fit] = (label ?? '').split(' ');
+  return { size: (SIZES as readonly string[]).includes(size ?? '') ? size as Size : null, fit: (FITS as readonly string[]).includes(fit ?? '') ? fit as Fit : null };
+}
+
+/**
+ * Changes the neckline. A front neck depth still at the old neckline's
+ * standard value moves to the new one's (a V dips further than a crew); one
+ * the knitter typed is kept.
+ */
+export function withNeckline(object: SweaterObject, neckline: SweaterObject['neckline']): SweaterObject {
+  const { size, fit } = parseSize(object.size);
+  if (size === null || fit === null) return { ...object, neckline };
+  const standard = defaultMeasurements(size, fit, object.silhouette, object.neckline).frontNeckDepth;
+  if (Math.abs(object.measurements.frontNeckDepth - standard) > 0.05) return { ...object, neckline };
+  return { ...object, neckline, measurements: { ...object.measurements, frontNeckDepth: defaultMeasurements(size, fit, object.silhouette, neckline).frontNeckDepth } };
 }
 
 function roundMeasurements(m: Measurements): Measurements {
@@ -193,6 +215,16 @@ function neckCurve(halfWidth: number, top: number, depth: number, flatFraction: 
 function mirror(right: Point[]): Point[] {
   const left = right.slice(1, -1).reverse().map((p) => ({ x: -p.x, y: p.y }));
   return [...right, ...left];
+}
+
+/** A shaped neck finished with a separate rib neckband (all but the boat neck). */
+export const hasNeckband = (neckline: SweaterObject['neckline']) => neckline !== 'boat';
+
+/** The front neck edge, from the neck point down to the centre. */
+function frontNeckEdge(neckline: SweaterObject['neckline'], halfWidth: number, top: number, depth: number): Point[] {
+  if (neckline === 'v') return [{ x: halfWidth, y: top }, { x: 0, y: top - depth }];
+  if (neckline === 'square') return [{ x: halfWidth, y: top }, { x: halfWidth, y: top - depth }, { x: 0, y: top - depth }];
+  return neckCurve(halfWidth, top, depth, 0.4);
 }
 
 const shoulderDropOf = (object: SweaterObject) => (object.neckline === 'boat' ? 0 : Math.max(0, object.measurements.shoulderDrop ?? (object.silhouette === 'set-in' ? 2 : 1.5)));
@@ -300,12 +332,14 @@ export function draftSweater(object: SweaterObject): SweaterDraft {
   const neckHalf = Math.max(1, Math.min(m.neckWidth / 2, shoulder.x - 4));
   const armhole = sampleEdge(bodyEdge.slice(bodyEdge.indexOf(underarmPoint)));
   const shoulderLine = [{ x: shoulder.x, y: shoulderPoint }, { x: neckHalf, y: top }];
-  const bodyPiece = (id: 'back' | 'front', neckDepth: number, flat: number): DraftPiece => {
-    const neck = neckline === 'crew' ? neckCurve(neckHalf, top, neckDepth, flat) : [{ x: shoulder.x, y: top }, { x: 0, y: top }];
+  const banded = hasNeckband(neckline);
+  const bodyPiece = (id: 'back' | 'front', neckDepth: number): DraftPiece => {
+    // The back neck is a shallow curve whatever the front's shape.
+    const neck = !banded ? [{ x: shoulder.x, y: top }, { x: 0, y: top }] : id === 'back' ? neckCurve(neckHalf, top, neckDepth, 0.7) : frontNeckEdge(neckline, neckHalf, top, neckDepth);
     const right: Point[] = [
       { x: 0, y: 0 },
       ...bodyPoints,
-      ...(neckline === 'crew' ? [...shoulderLine.slice(1), ...neck.slice(1)] : neck),
+      ...(banded ? [...shoulderLine.slice(1), ...neck.slice(1)] : neck),
     ];
     return {
       id,
@@ -319,12 +353,12 @@ export function draftSweater(object: SweaterObject): SweaterDraft {
         hem: [{ x: -width / 2, y: 0 }, { x: width / 2, y: 0 }],
         side: sampleEdge(bodyEdge.slice(0, bodyEdge.indexOf(underarmPoint) + 1)),
         armhole,
-        ...(neckline === 'crew' ? { shoulder: shoulderLine, neck } : { top: [{ x: -shoulder.x, y: top }, { x: shoulder.x, y: top }] }),
+        ...(banded ? { shoulder: shoulderLine, neck } : { top: [{ x: -shoulder.x, y: top }, { x: shoulder.x, y: top }] }),
       },
     };
   };
-  const back = bodyPiece('back', Math.min(m.backNeckDepth, m.frontNeckDepth), 0.7);
-  const front = bodyPiece('front', m.frontNeckDepth, 0.4);
+  const back = bodyPiece('back', Math.min(m.backNeckDepth, m.frontNeckDepth));
+  const front = bodyPiece('front', m.frontNeckDepth);
 
   const sleevePoints = sampleEdge(sleeveEdge);
   const sleeveUnderarmPoint = sleeveEdge.find((point) => point.underarm) ?? sleeveEdge.at(-1)!;
@@ -350,10 +384,10 @@ export function draftSweater(object: SweaterObject): SweaterDraft {
   };
 
   const pieces: DraftPiece[] = [back, front, sleeve];
-  const frontNeck = neckline === 'crew' ? 2 * polylineLength(front.edges.neck!) : 0;
-  const backNeck = neckline === 'crew' ? 2 * polylineLength(back.edges.neck!) : 0;
+  const frontNeck = banded ? 2 * polylineLength(front.edges.neck!) : 0;
+  const backNeck = banded ? 2 * polylineLength(back.edges.neck!) : 0;
   const neckOpening = frontNeck + backNeck;
-  if (neckline === 'crew') {
+  if (banded) {
     // The band is a little shorter than the opening so it sits flat; it is knitted as a strip and sewn on.
     const bandLength = neckOpening * 0.9;
     const bandHeight = Math.max(1, object.trims.neck.cm);

@@ -184,7 +184,7 @@ describe('hand-shaped edges', () => {
 describe('sweater views', () => {
   it('lays out every style flat and as worn, with the sleeves hinged at the shoulders', () => {
     for (const silhouette of ['drop-shoulder', 'j-sleeve', 'set-in'] as Silhouette[]) {
-      for (const neckline of ['crew', 'boat'] as const) {
+      for (const neckline of ['crew', 'v', 'square', 'boat'] as const) {
         const plan = planOf(create({ silhouette, neckline }));
         const flat = schematicLayout(plan);
         expect(flat.pieces.map((piece) => piece.id)).toEqual(plan.pieces.map((piece) => piece.id));
@@ -202,8 +202,8 @@ describe('sweater views', () => {
 });
 
 describe('sweater pipeline', () => {
-  it('compiles every piece of every silhouette to strict, Surface-proven KCode', { timeout: 120_000 }, async () => {
-    for (const [silhouette, neckline, textureId] of [['set-in', 'crew', 'stockinette'], ['j-sleeve', 'crew', 'seed'], ['drop-shoulder', 'boat', 'full-cardigan']] as const) {
+  it('compiles every piece of every silhouette and neckline to strict, Surface-proven KCode', { timeout: 240_000 }, async () => {
+    for (const [silhouette, neckline, textureId] of [['set-in', 'crew', 'stockinette'], ['j-sleeve', 'crew', 'seed'], ['drop-shoulder', 'boat', 'full-cardigan'], ['set-in', 'v', 'stockinette'], ['j-sleeve', 'v', 'seed'], ['drop-shoulder', 'square', 'stockinette'], ['set-in', 'square', 'full-cardigan']] as const) {
       const result = await runSweaterPipeline(create({ silhouette, neckline, textureId }));
       for (const piece of result.pieces) {
         expect(piece.verdict.state, `${silhouette} ${piece.id}: ${piece.compileError ?? piece.outputError}`).toBe('surface');
