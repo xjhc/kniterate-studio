@@ -150,8 +150,29 @@ export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: n
     const row = rowOf(index);
     if (row !== null) section.rows = section.rows ? { from: Math.min(section.rows.from, row), to: Math.max(section.rows.to, row) } : { from: row, to: row };
   });
+  // A beanie's crown ends in straight rows that come off open and are gathered by hand: their own section.
+  const crown = kind === 'beanie' ? sections.findIndex((section) => section.kind === 'top') : -1;
+  if (crown !== -1) {
+    const section = sections[crown]!;
+    const knitted = (index: number) => trace.passes[index]!.actions.flatMap((action) => (action.kind === 'knit' ? [`${action.at.bed}${action.at.traceCoordinate}`] : [])).sort().join(' ');
+    const knitPasses: number[] = [];
+    for (let index = section.passes.from; index <= section.passes.to; index++) if (knitted(index) !== '') knitPasses.push(index);
+    const last = knitPasses.length > 0 ? knitted(knitPasses.at(-1)!) : '';
+    let start = knitPasses.length;
+    while (start > 0 && knitted(knitPasses[start - 1]!) === last) start--;
+    if (start > 0 && start < knitPasses.length) {
+      const from = knitPasses[start]!;
+      const carriersIn = new Set<string>();
+      for (let index = from; index <= section.passes.to; index++) if (trace.passes[index]!.actions.some((action) => action.kind !== 'move') && trace.passes[index]!.carrier !== '0') carriersIn.add(trace.passes[index]!.carrier);
+      sections.splice(crown + 1, 0, { kind: 'top', label: '', carriers: [...carriersIn], joins: [], passes: { from, to: section.passes.to }, rows: null });
+      section.passes.to = from - 1;
+      for (let index = from; index < passSection.length; index++) passSection[index] = passSection[index]! + 1;
+    }
+  }
   let ribRuns = 0;
-  for (const section of sections) section.label = sectionLabel(section, carriers, kind, () => ribRuns++);
+  let topRuns = 0;
+  const allRib = !sections.some((section) => section.kind === 'body' || section.kind === 'shoulders');
+  for (const section of sections) section.label = sectionLabel(section, carriers, kind, () => ribRuns++, () => topRuns++, allRib);
 
   let lo = Infinity;
   let hi = -Infinity;
@@ -270,7 +291,7 @@ function lineCount(text: string): number {
   return count;
 }
 
-function sectionLabel(section: KnitFileSection, carriers: KnitFileCarriers, kind: KnitFileKind, nextRib: () => number): string {
+function sectionLabel(section: KnitFileSection, carriers: KnitFileCarriers, kind: KnitFileKind, nextRib: () => number, nextTop: () => number, allRib: boolean): string {
   switch (section.kind) {
     case 'waste': return 'Waste yarn';
     case 'draw': return 'Draw thread';
@@ -278,11 +299,11 @@ function sectionLabel(section: KnitFileSection, carriers: KnitFileCarriers, kind
     case 'rib': {
       const first = nextRib() === 0;
       if (!first) return 'Top rib';
-      return kind === 'sleeve' || kind === 'beanie' ? 'Cuff rib' : kind === 'body' ? 'Hem rib' : 'Rib';
+      return allRib ? 'Rib' : kind === 'sleeve' || kind === 'beanie' ? 'Cuff rib' : kind === 'body' ? 'Hem rib' : 'Rib';
     }
     case 'body': return kind === 'panel' ? 'Pattern' : 'Body';
     case 'shoulders': return carriers.second ? `Neck split: left shoulder on C${carriers.main}, right on C${carriers.second}` : 'Shoulders';
-    case 'top': return kind === 'beanie' ? 'Crown' : section.carriers.includes(carriers.waste) ? 'Waste yarn on top' : 'Bind-off';
+    case 'top': return kind === 'beanie' ? (nextTop() === 0 ? 'Crown' : 'Gathered top') : section.carriers.includes(carriers.waste) ? 'Waste yarn on top' : 'Bind-off';
     case 'carriers-out': return 'Carriers out';
   }
 }

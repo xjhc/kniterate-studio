@@ -3,6 +3,10 @@ import { createSweaterProject, type SweaterIntent } from './sweater';
 import { runSweaterPipeline } from './sweaterPipeline';
 import { readKnitFile } from './knitFile';
 import { describePass } from './KnitFileView';
+import { materializeColorworkProject } from '@kniterate-studio/project-contract';
+import { createBeanieProject } from '../beanie';
+import { runAuthoredPipeline } from '../authoredPipeline';
+import { planProject } from '../plan';
 
 const intent = (overrides: Partial<SweaterIntent> = {}): SweaterIntent => ({
   title: 'File', silhouette: 'set-in', neckline: 'crew', size: 'M', fit: 'classic', textureId: 'seed', yarn: { name: 'Oatmeal', hex: '#D9CBB0' }, ...overrides,
@@ -78,5 +82,30 @@ describe('a piece machine file read back', () => {
     expect(describePass(file, transfer, result.plan.carriers)).toMatch(/^No yarn\. The carriage goes (left|right) and moves \d+ stitch(es)? from the (front|back) bed to the (back|front)/);
     const waste = file.passes.findIndex((pass) => pass.kind === 'knit' && pass.carrier === '6');
     expect(describePass(file, waste, result.plan.carriers)).toMatch(/with C6 \(waste yarn\)/);
+  });
+
+  it('reads a beanie as cuff, body, crown and the gathered top, the same rows the Design view draws', { timeout: 120_000 }, async () => {
+    const gauge = { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'assumed' as const };
+    const rib = { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'assumed' as const };
+    const hats = [
+      createBeanieProject({ title: 'Toque', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: gauge, cuffCm: 7, ribGauge: rib, fold: true, main: { name: 'Black', hex: '#111111' }, accent: { name: 'White', hex: '#F2F2F2' } }, { id: 'toque', source: 'human', group: 'create' }),
+      createBeanieProject({ title: 'Rib hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: rib, main: { name: 'Black', hex: '#111111' } }, { id: 'rib-hat', source: 'human', group: 'create' }),
+    ];
+    for (const [index, project] of hats.entries()) {
+      const { state, placements } = materializeColorworkProject(project);
+      const plan = planProject(state, placements);
+      const result = await runAuthoredPipeline(project);
+      const ribRows = plan.sections!.cuff?.rows ?? state.chart.height;
+      const file = readKnitFile(result.kcode!, { zoneOfRow: (row) => (row < ribRows ? 'rib' : 'body'), carriers: { main: '3', second: null, waste: '6', draw: '1' }, kind: 'beanie' })!;
+      const labels = file.sections.map((section) => section.label).filter((label) => !['Waste yarn', 'Draw thread', 'Cast-on', 'Carriers out'].includes(label));
+      expect(labels).toEqual(index === 0 ? ['Cuff rib', 'Body', 'Crown', 'Gathered top'] : ['Rib', 'Crown', 'Gathered top']);
+      // The gathered top is the crown's straight rows at the end, as the plan gives them to the Design view.
+      const needles = plan.sections!.crown!.needles;
+      const last = needles.at(-1)!.join(' ');
+      let straight = 0;
+      while (needles[needles.length - 1 - straight]!.join(' ') === last) straight++;
+      const top = file.sections.findIndex((section) => section.label === 'Gathered top');
+      expect(file.courses.filter((course) => course.section === top)).toHaveLength(straight);
+    }
   });
 });

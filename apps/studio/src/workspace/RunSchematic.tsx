@@ -78,7 +78,15 @@ export function RunSchematic({ file, hex, stitchCm, rowCm, label }: {
       }
       const top = y(tops[index]! + heights[index]!);
       const height = Math.max(0.6, y(tops[index]!) - top + 0.4);
-      return runs.map(([from, to]) => <rect key={`${index}-${from}`} className={`run-band band-${kind}`} x={x(from)} y={top} width={x(to + 1) - x(from)} height={height} fill={fill(kind)} />);
+      // Where one pass knits both sides of empty needles, its yarn runs across them: draw the strand, not a hole.
+      const strands = runs.slice(1).map(([next], k) => [runs[k]![1] + 1, next - 1] as const).filter(([from, to]) => course.passes.some((pass) => {
+        const needles = file.passes[pass]!.needles;
+        return needles !== null && needles.lo - file.needles.lo < from && needles.hi - file.needles.lo > to;
+      }));
+      return [
+        ...strands.map(([from, to]) => <rect key={`${index}-strand-${from}`} className="run-strand" x={x(from)} y={top + height * 0.4} width={x(to + 1) - x(from)} height={Math.max(0.5, height * 0.2)} fill={fill(kind)} />),
+        ...runs.map(([from, to]) => <rect key={`${index}-${from}`} className={`run-band band-${kind}`} x={x(from)} y={top} width={x(to + 1) - x(from)} height={height} fill={fill(kind)} />),
+      ];
     })}
     {labels.map(({ band, at, mid, text }, index) => <g key={index} className="run-label">
       <line x1={x(band.hi + 1) + 4} y1={mid} x2={pad.left + widest * k + 16} y2={at} />

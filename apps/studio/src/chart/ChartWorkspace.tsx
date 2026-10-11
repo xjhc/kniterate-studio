@@ -134,7 +134,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     ribRows,
     crown: plan.sections.crown?.needles ?? [],
     hex: chart.palette[0]?.hex ?? '#D9CBB0',
-    labels: { crown: 'Crown', body: 'Body', rib: plan.sections.cuff ? (plan.sections.cuff.folds ? 'Cuff, folds up' : 'Cuff') : 'Rib' },
+    labels: { top: 'Gathered top', crown: 'Crown', body: 'Body', rib: plan.sections.cuff ? (plan.sections.cuff.folds ? 'Cuff, folds up' : 'Cuff') : 'Rib' },
   } : null), [isGarment, plan.sections, ribRows, chart.palette]);
   const commitMutation = (mutation: Parameters<typeof pixelMutationToProjectEdit>[2]) => {
     // The rib knits one yarn: keep colour out of it (the main yarn, palette 0, is allowed, so a stray colour can be erased).
@@ -177,9 +177,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     const yarns = Object.fromEntries(assignments.map((item) => [item.carrier, { name: item.yarnName, hex: chart.palette.find((color) => color.id === item.paletteId)?.hex ?? '#888888' }]));
     return { main: assignments[0]!.carrier, second: null, waste: frame.wasteCarrier ?? '6', draw: frame.frameCarriers[0] ?? '1', yarns };
   }, [compile.artifact, materialized.state.machine.yarnAssignments, chart.palette]);
-  const cuffRows = plan.sections?.cuff?.rows ?? 0;
   // Read only when a view shows it: a large chart's file is a lot of work for the main thread.
-  const knitFile = useMemo(() => (view !== 'design' && kcode && carriers ? readKnitFile(kcode, { zoneOfRow: (row) => (row < cuffRows ? 'rib' : 'body'), carriers, kind: isGarment ? 'beanie' : 'panel' }) : null), [view === 'design', kcode, carriers, cuffRows, isGarment]);
+  const knitFile = useMemo(() => (view !== 'design' && kcode && carriers ? readKnitFile(kcode, { zoneOfRow: (row) => (row < ribRows ? 'rib' : 'body'), carriers, kind: isGarment ? 'beanie' : 'panel' }) : null), [view === 'design', kcode, carriers, ribRows, isGarment]);
   const gauge = materialized.state.gauge;
   const ribGauge = materialized.state.object?.ribGauge;
   const stitchCm = gauge ? 10 / gauge.stitchesPer10cm : null;

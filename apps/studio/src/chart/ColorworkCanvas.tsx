@@ -96,7 +96,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
    * `ribRows` rows are rib, and the crown the machine shapes (the needles each
    * crown row knits, bottom row first) sits above the top row.
    */
-  piece?: { ribRows: number; crown: readonly (readonly number[])[]; hex: string; labels: { crown: string; body: string; rib: string } } | null;
+  piece?: { ribRows: number; crown: readonly (readonly number[])[]; hex: string; labels: { top: string; crown: string; body: string; rib: string } } | null;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
   const paintLayer = useRef<HTMLCanvasElement>(null);
@@ -112,6 +112,13 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   // The crown sits above chart row 0; the chart starts below it.
   const crownRows = piece?.crown.length ?? 0;
   const top0 = crownRows * rowH;
+  // The crown's straight rows at the end (the same needles as its last row) are the top that is gathered by hand.
+  const topRows = (() => {
+    const last = piece?.crown.at(-1)?.join(' ');
+    let rows = 0;
+    while (rows < crownRows && piece!.crown[crownRows - 1 - rows]!.join(' ') === last) rows++;
+    return rows === crownRows ? 0 : rows;
+  })();
   const labelRoom = piece ? PIECE_LABEL_ROOM : 0;
   const pixelChart = { width: chart.width, height: chart.height, cells: chart.cells };
 
@@ -201,12 +208,16 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         const y = top0 - (index + 1) * rowH - scroll.top;
         if (y > height || y + rowH < 0) continue;
         context.fillStyle = piece.hex;
-        for (const column of piece.crown[index]!) {
-          if (column < left || column > right) continue;
+        const columns = piece.crown[index]!;
+        columns.forEach((column, k) => {
+          // One pass knits the whole row, so its yarn runs across any empty needles: a strand, not a hole.
+          const next = columns[k + 1];
+          if (next !== undefined && next > column + 1) context.fillRect(GUTTER + (column + 1) * cell - scroll.left, y + rowH * .4, (next - column - 1) * cell, Math.max(1, rowH * .2));
+          if (column < left || column > right) return;
           const x = GUTTER + column * cell - scroll.left;
           context.fillRect(x, y, cell + .5, rowH + .5);
           if (drawGrid) context.strokeRect(x, y, cell, rowH);
-        }
+        });
       }
     }
 
@@ -266,7 +277,8 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         context.beginPath(); context.moveTo(GUTTER, y); context.lineTo(chartRight, y); context.stroke();
       }
       const bands = [
-        { label: piece.labels.crown, from: 0, to: top0 },
+        { label: piece.labels.top, from: 0, to: topRows * rowH },
+        { label: piece.labels.crown, from: topRows * rowH, to: top0 },
         { label: piece.labels.body, from: top0, to: top0 + ribStart * rowH },
         { label: piece.labels.rib, from: top0 + ribStart * rowH, to: top0 + chart.height * rowH },
       ];
