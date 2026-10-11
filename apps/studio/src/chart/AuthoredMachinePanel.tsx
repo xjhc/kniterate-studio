@@ -5,7 +5,7 @@ import type { KCodeArtifact } from '../kcode/kcodeProtocol';
 
 export type ProgramRegion = 'waste' | 'draw' | 'body' | 'finish';
 
-const CARRIER_COLORS: Record<string, string> = {
+export const CARRIER_COLORS: Record<string, string> = {
   '1': '#d95d48', '2': '#33866a', '3': '#d49b32', '4': '#4e75b8', '5': '#9b60a8', '6': '#b65378',
 };
 

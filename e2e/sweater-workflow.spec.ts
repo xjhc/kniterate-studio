@@ -150,3 +150,40 @@ test('a piece is shaped by hand like a garment-shaping machine: drag, add a wais
   await page.getByRole('button', { name: 'Undo' }).click();
   await expect(page.getByRole('button', { name: /^Point 2: 48 cm wide/ })).toBeVisible();
 });
+
+test('each machine file shows exactly what it knits: the fabric, its sections, and every pass in words and as written', async ({ page }) => {
+  test.setTimeout(180_000);
+  await createSweater(page, 'Set-in sleeve', 'Seed stitch');
+  await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+
+  // The panel lists the files the machine runs; one opens straight into what it knits.
+  await page.locator('.status-pieces').getByRole('button', { name: /^front\.kc Front/ }).click();
+  await expect(page.getByRole('tab', { name: 'Machine file' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByRole('img', { name: /^front\.kc: \d+ courses of fabric from \d+ passes, needles \d+–\d+$/ })).toBeVisible();
+  const sections = page.locator('.knitfile-sections li');
+  await expect(sections.first()).toContainText('Waste yarn');
+  await expect(sections.filter({ hasText: 'Draw thread' }).first()).toContainText('C1');
+  await expect(sections.filter({ hasText: 'Hem rib' })).toContainText('rows 1–');
+  await expect(sections.filter({ hasText: 'Neck split: left shoulder on C3, right on C4' })).toHaveCount(1);
+  await expect(sections.last()).toContainText('Carriers out');
+
+  // It opens on the cast-on, and reads each pass in words and as written in the file.
+  const says = page.locator('.knitfile-says');
+  await expect(says).toContainText(/with C3 \(your yarn\) and knits/);
+  await expect(page.locator('.knitfile-source .highlighted').last()).toContainText(/^\d+(<<|>>) Kn-Kn 3 \d+ \d+$/);
+  await page.getByRole('button', { name: 'Next pass', exact: true }).click();
+  await expect(page.locator('.knitfile-nav b')).toContainText(/^Pass \d+/);
+
+  // Jumping to the neck split, the right shoulder's own cone appears.
+  await sections.filter({ hasText: 'Neck split' }).getByRole('button').click();
+  for (let step = 0; step < 60 && !/C4/.test(await says.innerText()); step++) await page.getByRole('button', { name: 'Next pass', exact: true }).click();
+  await expect(says).toContainText('C4 (your yarn, second cone)');
+
+  // Another piece's file, and back to its stitches.
+  await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Sleeve ×2' }).click();
+  await expect(page.locator('.knitfile-head')).toContainText('sleeve.kc');
+  await expect(page.locator('.knitfile-head')).toContainText('run it 2 times');
+  await expect(sections.filter({ hasText: 'Cuff rib' })).toHaveCount(1);
+  await page.getByRole('tab', { name: 'Stitches' }).click();
+  await expect(page.getByRole('img', { name: /^Sleeve: \d+ rows/ })).toBeVisible();
+});

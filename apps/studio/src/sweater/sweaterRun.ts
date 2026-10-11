@@ -3,6 +3,7 @@ import type { ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import type { AuthoredVerdict } from '../engine';
 import type { Finding, Readiness } from '../readiness';
 import type { PieceId } from './draft';
+import { readKnitFile, type KnitFile } from './knitFile';
 import type { SweaterPipelineResult } from './sweaterPipeline';
 
 /** What the browser keeps of a pipeline run: verdicts, findings and each piece's exact program. */
@@ -19,6 +20,8 @@ export interface SweaterRunSummary {
     passCount: number | null;
     kcHash: string | null;
     kcText: string | null;
+    /** The .kc read back pass by pass: what the machine will knit, for the browser to show. */
+    file: KnitFile | null;
     knitoutText: string | null;
     error: string | null;
   }[];
@@ -42,6 +45,11 @@ export function summarizeSweaterRun(result: SweaterPipelineResult): SweaterRunSu
       passCount: piece.kcode?.passCount ?? null,
       kcHash: piece.kcode?.ok ? piece.kcode.kcHash : null,
       kcText: piece.kcode?.ok ? piece.kcode.kcText : null,
+      file: (() => {
+        const raster = result.plan.pieces.find((item) => item.id === piece.id)?.raster ?? null;
+        if (!piece.kcode?.ok || raster === null) return null;
+        return readKnitFile(piece.kcode, raster, result.plan.carriers, piece.id === 'sleeve' ? 'sleeve' : piece.id === 'neckband' ? 'band' : 'body');
+      })(),
       knitoutText: piece.compiled?.knitoutText ?? null,
       error: piece.compileError ?? piece.outputError,
     })),

@@ -563,8 +563,10 @@ export function App() {
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const [showNewProject, setShowNewProject] = useState(false);
   const [newProjectKind, setNewProjectKind] = useState<'sweater' | 'beanie' | 'rectangle' | null>(null);
-  // A first visit (nothing saved yet) starts by choosing what to make, not on a blank machine chart.
-  const [showStart, setShowStart] = useState(initial.recoveredAt === null);
+  // A first visit starts by choosing what to make, not on a blank machine chart; so does a return
+  // visit that only ever saved the untouched blank chart.
+  const [showStart, setShowStart] = useState(() => initial.recoveredAt === null
+    || (initial.project.id === 'studio-default' && initial.project.history.entries.length === defaultProject().history.entries.length));
   // The project's controls show once there is a project to work on.
   const projectChrome = !document && !showStart;
   const [showProjectSettings, setShowProjectSettings] = useState(false);

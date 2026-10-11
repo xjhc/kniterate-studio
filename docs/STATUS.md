@@ -306,7 +306,22 @@ ship," trust this file and the working tree instead.
     - Shaping is shown and written as a knitter reads it: "Rows 21–129:
       increase 1 every 3–4 rows, 33 times → 120 stitches".
   - **First visit:** a start screen offers Sweater, Beanie or Scarf/blanket, a
-    project file or a machine file, or a blank chart.
+    project file or a machine file, or a blank chart. It returns for a visitor
+    whose only saved project is the untouched blank chart.
+  - **Machine file view (2026-10-11).** Each piece's mode "Machine file" shows
+    what its `.kc` makes the machine do, read back from the emitted file's
+    strict trace (`sweater/knitFile.ts`), never from the design.
+    - It draws every knit and tuck in the file once, stacked on its own
+      needle, coloured by carrier or as knitted.
+    - It lists the file's sections in machine order: waste yarn (with the
+      carriers brought in), draw thread, cast-on, rib, body, the neck split
+      (C3 and C4), the bind-off and carriers out.
+    - Every pass reads in words, with its settings and its exact lines in
+      the file.
+    - The status panel lists the pieces as their files (`front.kc`,
+      `sleeve.kc · run 2×`) and opens them here.
+    - Needle numbers are Studio's (the pattern's), through the verified
+      bridge; physical bed labels stay unverified.
   - Each piece is subject to the authored program limits. An oversized
     garter or seed piece can need more than the 200,000 checked needle
     selections; that is a design-owned `sweater-piece-too-large` error that

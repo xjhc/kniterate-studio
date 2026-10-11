@@ -4,10 +4,11 @@ import type { SweaterPlan } from './sweater';
 import type { SweaterRunState } from './sweaterRun';
 
 /** Plain-language state of the whole sweater: whether it can be knitted, what to fix, and the files. */
-export function SweaterStatusPanel({ plan, run, onOpenPiece, onDownloadPiece, onPackage, onPrint, packaging }: {
+export function SweaterStatusPanel({ plan, run, onOpenFile, onDownloadPiece, onPackage, onPrint, packaging }: {
   plan: SweaterPlan;
   run: SweaterRunState;
-  onOpenPiece: (piece: PieceId) => void;
+  /** Opens the piece's machine file: what the machine will knit for it. */
+  onOpenFile: (piece: PieceId) => void;
   onDownloadPiece: (piece: PieceId) => void;
   onPackage: () => void;
   onPrint: () => void;
@@ -38,16 +39,17 @@ export function SweaterStatusPanel({ plan, run, onOpenPiece, onDownloadPiece, on
       <ul>{notes.map((note, index) => <li key={index} className={`note-${note.severity}`}>{note.message}</li>)}</ul>
     </section>}
     <section className="status-pieces">
-      <h3>Pieces</h3>
+      <h3>Machine files</h3>
+      <p className="design-hint">One file per run on the machine. Open one to see exactly what it knits.</p>
       <ul>
         {plan.pieces.map((piece) => {
           const result = summary?.pieces.find((item) => item.id === piece.id);
           const state = checking || !result ? 'checking' : result.verdict.state === 'blocked' ? 'blocked' : 'ok';
           const raster = piece.raster;
           return <li key={piece.id} className={`piece-row piece-${state}`}>
-            <button type="button" className="piece-open" onClick={() => onOpenPiece(piece.id)}>
+            <button type="button" className="piece-open" onClick={() => onOpenFile(piece.id)} title={`Open ${piece.id}.kc: what the machine knits for the ${piece.name.toLowerCase()}`}>
               <span className="piece-dot" aria-hidden="true" />
-              <span className="piece-name">{piece.name}{piece.copies > 1 ? <em> ×{piece.copies}</em> : null}</span>
+              <span className="piece-name"><code>{piece.id}.kc</code> {piece.name}{piece.copies > 1 ? <em> · run {piece.copies}×</em> : null}</span>
               <span className="piece-facts">{raster ? `${raster.realized.castOnStitches} st · ${raster.rows.length} rows` : 'not planned'}{result?.passCount && !checking ? ` · ${result.passCount.toLocaleString()} passes` : ''}</span>
             </button>
             <button type="button" className="icon-button" disabled={state !== 'ok' || !result?.kcText} onClick={() => onDownloadPiece(piece.id)} title={`Download ${piece.id}.kc`} aria-label={`Download ${piece.name} program`}><Download size={15} /></button>

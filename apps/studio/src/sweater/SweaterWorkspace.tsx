@@ -16,7 +16,8 @@ import { sha256Hex } from '../garment/MotifPanel';
 import { zipStore } from '../zip';
 import type { PieceId } from './draft';
 import { AssembledView, GarmentView } from './GarmentView';
-import { PieceView } from './PieceView';
+import { KnitFileView } from './KnitFileView';
+import { PieceView, type PieceMode } from './PieceView';
 import { planSweater, sweaterEdit } from './sweater';
 import { SweaterDesignPanel } from './SweaterDesignPanel';
 import { sweaterInstructions, sweaterPackageFiles } from './sweaterHandoff';
@@ -46,6 +47,7 @@ export function SweaterWorkspace({ project, onProject, onOpenProject, onNewProje
   const { state } = useMemo(() => materializeColorworkProject(project), [project]);
   const plan = useMemo(() => planSweater(state), [state]);
   const [view, setView] = useState<'garment' | PieceId>('garment');
+  const [pieceMode, setPieceMode] = useState<PieceMode>('stitches');
   const [garmentView, setGarmentView] = useState<'worn' | 'flat'>('worn');
   const [error, setError] = useState<string | null>(null);
   const [packaging, setPackaging] = useState(false);
@@ -101,7 +103,8 @@ export function SweaterWorkspace({ project, onProject, onOpenProject, onNewProje
     try { onOpenProject((await openStudioProjectFile(file)).project); setError(null); } catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); }
   };
   const downloadPiece = (id: PieceId) => {
-    const piece = run.summary?.pieces.find((item) => item.id === id);
+    // Only a file compiled from the design as it is now.
+    const piece = run.current ? run.summary?.pieces.find((item) => item.id === id) : undefined;
     if (piece?.kcText) download(`${project.id}-${id}.kc`, new Blob([piece.kcText], { type: 'text/plain' }));
   };
 
@@ -137,7 +140,7 @@ export function SweaterWorkspace({ project, onProject, onOpenProject, onNewProje
           : selected.raster
             ? <div className="piece-wrap">
                 <div className="piece-summary"><h2>{selected.name}{selected.copies > 1 ? ` — knit ${selected.copies}` : ''}</h2><p>{selected.raster.realized.castOnStitches} stitches cast on · {selected.raster.rows.length} rows · {selected.raster.realized.widthCm} cm wide · {selected.raster.realized.heightCm} cm tall</p></div>
-                <PieceView raster={selected.raster} hex={yarn.hex} label={selected.name} editor={selected.id === 'neckband' ? undefined : (() => {
+                <PieceView raster={selected.raster} hex={yarn.hex} label={selected.name} mode={pieceMode} onMode={setPieceMode} editor={selected.id === 'neckband' ? undefined : (() => {
                   const kind = selected.id === 'sleeve' ? 'sleeve' as const : 'body' as const;
                   const object = plan.object;
                   return {
@@ -151,12 +154,17 @@ export function SweaterWorkspace({ project, onProject, onOpenProject, onNewProje
                       operate(`${kind === 'body' ? 'Body' : 'Sleeve'} shape from the measurements`, [sweaterEdit({ ...object, shapes: Object.keys(others).length > 0 ? others : undefined })]);
                     },
                   };
+                })()} machineFile={(() => {
+                  // Only the file for this exact design: while it is rewritten after a change, say so rather than show the old one.
+                  const piece = run.current ? run.summary?.pieces.find((item) => item.id === selected.id) : undefined;
+                  if (piece?.file && piece.kcText) return <KnitFileView key={selected.id} file={piece.file} kcText={piece.kcText} fileName={`${selected.id}.kc`} copies={selected.copies} hex={yarn.hex} carriers={plan.carriers} stitchCm={selected.raster!.stitchCm} rowCm={selected.raster!.rowCm} onDownload={() => downloadPiece(selected.id)} />;
+                  return <p className="knitfile-waiting" role="status">{!run.current || run.status === 'checking' ? `Writing ${selected.id}.kc for this design and reading it back…` : piece?.error ?? `${selected.name} has no machine file: it did not pass the machine checks.`}</p>;
                 })()} />
               </div>
             : <p className="stage-error">{selected.error}</p>}
       </div>
     </section>
-    <SweaterStatusPanel plan={plan} run={run} onOpenPiece={setView} onDownloadPiece={downloadPiece} onPackage={() => void downloadPackage()} onPrint={() => setShowPattern(true)} packaging={packaging} />
+    <SweaterStatusPanel plan={plan} run={run} onOpenFile={(id) => { setView(id); setPieceMode('file'); }} onDownloadPiece={downloadPiece} onPackage={() => void downloadPackage()} onPrint={() => setShowPattern(true)} packaging={packaging} />
     {showPattern && <GarmentSheet markdown={sweaterInstructions(project, plan, run.current ? run.summary : null)} schematic={sweaterSchematicSvg(plan, yarn.hex)} onClose={() => setShowPattern(false)} />}
   </main>;
 }
