@@ -19,6 +19,13 @@
 .silhouette-cards button.active { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); box-shadow: inset 0 0 0 1px var(--accent); }
 .silhouette-cards b { font-size: 12px; }
 .silhouette-cards small { display: none; }
+.choice-rows { display: grid; gap: 8px; }
+.choice-rows > div { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 8px; }
+.choice-rows > div > span { color: var(--ink-2); font-size: 11px; font-weight: 700; }
+.choice-rows .garment-help { margin: 2px 0 0; }
+.choice-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+.choice-pills button { min-height: 28px; padding: 3px 10px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--paper); color: var(--ink-2); font-size: 12px; cursor: pointer; }
+.choice-pills button.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
 .silhouette-icon { width: 56px; height: 52px; }
 
 .field-row { display: grid; grid-template-columns: 52px minmax(0, 1fr); align-items: center; gap: 8px; }

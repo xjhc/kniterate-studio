@@ -70,7 +70,7 @@ export function PieceView({ raster, hex, label, editor }: { raster: PanelPlan; h
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const overlay = useRef<SVGSVGElement>(null);
-  const [available, setAvailable] = useState(640);
+  const [room, setRoom] = useState({ width: 640, height: 640 });
   const [zoom, setZoom] = useState(1);
   const [mode, setMode] = useState<'stitches' | 'shape'>('stitches');
   const [hover, setHover] = useState<{ row: number; needle: number | null; x: number; y: number } | null>(null);
@@ -78,11 +78,18 @@ export function PieceView({ raster, hex, label, editor }: { raster: PanelPlan; h
   const [drag, setDrag] = useState<{ index: number; edge: ShapePoint[]; moved: boolean } | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   useEffect(() => {
-    // The space the piece may fill: its container, less the ruler and the shaping list.
+    // The space the piece may fill: its container's width less the ruler and the shaping list,
+    // and the scrolling stage's height below the piece's header.
     const element = host.current?.parentElement;
-    if (!element) return;
-    const observer = new ResizeObserver(() => setAvailable(Math.max(240, element.clientWidth - 36 - 34 - 260 - 24)));
+    const stage = element?.parentElement;
+    if (!element || !stage) return;
+    const measure = () => {
+      const below = host.current!.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop;
+      setRoom({ width: Math.max(240, element.clientWidth - 36 - 34 - 260 - 24), height: Math.max(320, stage.clientHeight - below - 24) });
+    };
+    const observer = new ResizeObserver(measure);
     observer.observe(element);
+    observer.observe(stage);
     return () => observer.disconnect();
   }, []);
   useEffect(() => { if (!editor) setMode('stitches'); }, [editor]);
@@ -90,8 +97,9 @@ export function PieceView({ raster, hex, label, editor }: { raster: PanelPlan; h
   const lo = Math.min(...raster.rows.map((row) => row.segments[0]!.lo));
   const hi = Math.max(...raster.rows.map((row) => row.segments.at(-1)!.hi));
   const columns = hi - lo + 1;
-  // Pixels per cm: at zoom 1 the widest row fills the space; zooming in shows the stitches.
-  const fit = Math.max(2, Math.min(18, available / (columns * raster.stitchCm)));
+  // Pixels per cm: at zoom 1 the whole piece (and, when shaping, the room above it) fits; zooming in shows the stitches.
+  const pieceCm = raster.rows.reduce((sum, row) => sum + (row.zone === 'rib' ? raster.rowCm.rib : raster.rowCm.body), 0) + (editor && mode === 'shape' ? 12 : 0);
+  const fit = Math.max(2, Math.min(18, room.width / (columns * raster.stitchCm), room.height / pieceCm));
   const scale = fit * zoom;
   const cellW = raster.stitchCm * scale;
   const heights = raster.rows.map((row) => (row.zone === 'rib' ? raster.rowCm.rib : raster.rowCm.body) * scale);
