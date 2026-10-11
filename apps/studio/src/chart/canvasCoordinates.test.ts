@@ -26,6 +26,13 @@ describe('fitChartZoom', () => {
     expect(zoom).toBeGreaterThanOrEqual(MIN_CHART_ZOOM);
   });
 
+  it('keeps room on the right when asked, for a garment piece\'s section labels', () => {
+    const viewport = { width: 560, height: 640 };
+    const zoom = fitChartZoom(viewport, { width: 200, height: 100 }, MIN_CHART_ZOOM, 96);
+    expect(CHART_GUTTER + 200 * 16 * zoom + 96).toBeLessThanOrEqual(viewport.width);
+    expect(zoom).toBeLessThan(fitChartZoom(viewport, { width: 200, height: 100 }));
+  });
+
   it('only enlarges small charts when a project opens', () => {
     expect(fitChartZoom({ width: 560, height: 640 }, { width: 200, height: 300 }, 1)).toBe(1);
     expect(fitChartZoom({ width: 560, height: 640 }, { width: 4, height: 3 }, 1)).toBe(3);

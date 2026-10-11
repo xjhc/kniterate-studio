@@ -479,6 +479,12 @@ ship," trust this file and the working tree instead.
   - Schematics come from the machine file read back (`workspace/RunSchematic`).
     They show the whole run: waste yarn, draw thread, the piece and its
     finish, scarves included.
+  - A chart's Design view is drawn to scale when the project has a gauge
+    (rows are shorter than stitches are wide, as motifs are converted). A
+    beanie's Design view shows the whole piece: the rib cuff (painting stays
+    out of it), the colour body, and above it the crown as the construction
+    knits it, row by row (`plan.sections.crown.needles`, from the same crown
+    steps the compiler emits).
   - The Machine file view (`sweater/knitFile.ts`, `KnitFileView`) reads any
     emitted `.kc`. Its "Step through" mode holds the exact movement, pass
     grid, checks and source that used to be the separate machine workspace.

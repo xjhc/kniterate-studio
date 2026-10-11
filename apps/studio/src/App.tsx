@@ -153,7 +153,7 @@ function Verdict({ document, onClick }: { document: MachineDocument; onClick: ()
 
 export function AuthoredVerdictBadge({ verdict, pending, onClick }: { verdict: AuthoredVerdict | null; pending: 'compiling' | 'checking'; onClick: () => void }) {
   // A null verdict means lowering is still in progress; the badge is the top bar's single progress and verdict signal.
-  if (!verdict) return <span className="verdict authored-verdict verdict-pending" role="status" aria-label={pending === 'compiling' ? 'Compiling project' : 'Checking emitted KCode'}><LoaderCircle size={12} className="spin" />{pending === 'compiling' ? 'Compiling' : 'Checking KCode'}</span>;
+  if (!verdict) return <span className="verdict authored-verdict verdict-pending" role="status" aria-label={pending === 'compiling' ? 'Writing the machine file' : 'Checking the machine file'}><LoaderCircle size={12} className="spin" />{pending === 'compiling' ? 'Writing' : 'Checking'}</span>;
   return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={verdict.annotation} aria-label={`Verdict: ${verdict.label}${verdict.evidenceId ? ' / Exact physical match' : ''}`} onClick={onClick}><span className="verdict-dot" />{verdict.label}</button>;
 }
 

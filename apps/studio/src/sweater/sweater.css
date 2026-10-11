@@ -88,7 +88,7 @@
 .stage-tools { display: flex; align-items: center; gap: 4px; }
 .tool-divider { width: 1px; height: 22px; margin: 0 4px; background: var(--line); }
 .stage-error { display: flex; justify-content: space-between; gap: 12px; margin: 8px 12px 0; padding: 9px 12px; border-left: 3px solid var(--blocked); color: var(--blocked); background: var(--blocked-soft); font-size: 12px; }
-.stage-body { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+.stage-body { grid-row: 3; min-height: 0; overflow: auto; scrollbar-gutter: stable; }
 .garment-wrap { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; height: 100%; padding: 12px 18px; }
 .garment-view { width: 100%; height: 100%; min-height: 320px; }
 .garment-piece { cursor: pointer; outline: none; }

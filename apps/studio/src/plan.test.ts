@@ -122,6 +122,16 @@ describe('beanie plan', () => {
     });
     const { cuff, body, crown, finishedHeightCm } = after.sections!;
     expect(finishedHeightCm!.value).toBeCloseTo(cuff!.visibleCm!.value + body.cm!.value + crown!.cm!.value, 1);
+    // The crown's shape, row by row, as the construction knits it: narrowing to the top, centred on the piece.
+    const width = after.stitches.value;
+    expect(crown!.needles).toHaveLength(crown!.rows);
+    expect(crown!.needles.at(-1)).toHaveLength(crown!.finalStitches);
+    for (const [index, row] of crown!.needles.entries()) {
+      expect(row.length).toBeLessThan(width);
+      expect(row.length).toBeLessThanOrEqual(crown!.needles[index - 1]?.length ?? width);
+      expect(row[0]! + row.at(-1)!).toBe(width - 1);
+    }
+    expect(allRib.sections!.crown!.needles).toHaveLength(allRib.sections!.crown!.rows);
     // Without a rib gauge the cuff cannot be checked, and the plan says so.
     const unknown = plan(beanie({ kind: 'set-gauge', gauge: measured }, { kind: 'set-object', object: { ...toque, ribGauge: undefined } }));
     expect(unknown.findings).toEqual([expect.objectContaining({ rule: 'size-needs-gauge', path: 'object.ribGauge' })]);

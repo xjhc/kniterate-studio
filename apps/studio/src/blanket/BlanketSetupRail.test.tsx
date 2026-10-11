@@ -17,9 +17,9 @@ describe('authored verdict badge', () => {
   });
 
   it('reports lowering progress while no verdict exists', () => {
-    expect(renderToStaticMarkup(<AuthoredVerdictBadge verdict={null} pending="compiling" onClick={() => {}} />)).toContain('Compiling');
+    expect(renderToStaticMarkup(<AuthoredVerdictBadge verdict={null} pending="compiling" onClick={() => {}} />)).toContain('Writing');
     const checking = renderToStaticMarkup(<AuthoredVerdictBadge verdict={null} pending="checking" onClick={() => {}} />);
-    expect(checking).toContain('Checking KCode');
+    expect(checking).toContain('Checking');
     expect(checking).not.toContain('proven');
   });
 });

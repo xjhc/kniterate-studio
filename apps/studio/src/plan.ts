@@ -65,8 +65,11 @@ export interface BeanieSections {
   cuff: { rows: number; knittedCm: Valued<number> | null; visibleCm: Valued<number> | null; folds: boolean } | null;
   /** Knitted body rows: the chart's body rows plus any rows the backing adds (birdseye starts and joins its back layer). */
   body: { rows: number; chartRows: number; fabric: 'rib' | 'fairisle colorwork' | 'birdseye colorwork'; cm: Valued<number> | null };
-  /** Null when the width cannot take a crown (see beanie-width-invalid). */
-  crown: { rows: number; recipe: string; finalStitches: number; cm: Valued<number> | null } | null;
+  /**
+   * Null when the width cannot take a crown (see beanie-width-invalid).
+   * `needles`: the needles each crown row knits (offsets from the first), bottom row first, from the construction's own crown steps.
+   */
+  crown: { rows: number; recipe: string; finalStitches: number; needles: readonly (readonly number[])[]; cm: Valued<number> | null } | null;
   /** Visible cuff + body + crown, flat and unstretched; the crown's gathered top shortens it in wear. */
   finishedHeightCm: Valued<number> | null;
 }
@@ -148,16 +151,21 @@ function beanieWidthOk(width: number): boolean {
   return width % 2 === 0 && width >= BEANIE.minNeedles && width <= BEANIE.maxNeedles;
 }
 
-/** Crown rows and final stitches the beanie construction will knit at this width, or null when it cannot. */
-function crownFor(width: number, jersey: boolean): { rows: number; recipe: string; finalStitches: number } | null {
+/** The needles (offsets from the first) each knitted crown row uses, bottom row first. */
+function crownNeedles(steps: typeof CUSTOMIST_RIB_CROWN_194_V1): number[][] {
+  return steps.flatMap((step) => (step[0] === 'k' ? [[...new Set([...step[6], ...step[7]])].sort((a, b) => a - b)] : []));
+}
+
+/** Crown rows, final stitches and needles the beanie construction will knit at this width, or null when it cannot. */
+function crownFor(width: number, jersey: boolean): { rows: number; recipe: string; finalStitches: number; needles: number[][] } | null {
   if (!beanieWidthOk(width)) return null;
   if (!jersey && width === CUSTOMIST_RIB_CROWN_WIDTH) {
     const knits = CUSTOMIST_RIB_CROWN_194_V1.filter((step) => step[0] === 'k');
     const last = knits.at(-1);
-    return { rows: knits.length, recipe: "Customist's own (reference/2x2-rib-beanie.kc)", finalStitches: last?.[0] === 'k' ? last[6].length : 0 };
+    return { rows: knits.length, recipe: "Customist's own (reference/2x2-rib-beanie.kc)", finalStitches: last?.[0] === 'k' ? last[6].length : 0, needles: crownNeedles(CUSTOMIST_RIB_CROWN_194_V1) };
   }
   const plan = planEightLineCrown(width, '+', jersey ? 'jersey' : 'rib');
-  return { rows: plan.steps.filter((step) => step[0] === 'k').length, recipe: `eight-line (${jersey ? 'jersey' : 'rib'})`, finalStitches: plan.counts.at(-1)! };
+  return { rows: plan.steps.filter((step) => step[0] === 'k').length, recipe: `eight-line (${jersey ? 'jersey' : 'rib'})`, finalStitches: plan.counts.at(-1)!, needles: crownNeedles(plan.steps) };
 }
 
 export function planProject(state: ProjectState, placements: readonly ResolvedProjectPlacement[] = []): ProjectPlan {
@@ -377,7 +385,7 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
     sections = {
       cuff: jersey ? { rows: cuffRows, knittedCm: cuffKnitted, visibleCm: cuffVisible, folds: fold } : null,
       body: { rows: bodyRows, chartRows: chartBodyRows, fabric: birdseye ? 'birdseye colorwork' : jersey ? 'fairisle colorwork' : 'rib', cm: bodyCm },
-      crown: crown === null ? null : { rows: crown.rows, recipe: crown.recipe, finalStitches: crown.finalStitches, cm: crownCm },
+      crown: crown === null ? null : { rows: crown.rows, recipe: crown.recipe, finalStitches: crown.finalStitches, needles: crown.needles, cm: crownCm },
       finishedHeightCm: parts.some((part, index) => part === null && (index > 0 || jersey)) ? null : {
         value: round1(parts.reduce((sum, part) => sum + (part?.value ?? 0), 0)),
         provenance: parts.some((part) => part?.provenance === 'assumed') ? 'assumed' : 'calculated',

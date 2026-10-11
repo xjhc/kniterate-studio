@@ -37,7 +37,7 @@
 .note-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .note-actions button { min-height: 26px; font-size: 12px; }
 /* A charted project's chart, and its left panel, in the shared workspace. */
-.stage-body.chart-stage-body { display: grid; overflow: hidden; }
+.stage-body.chart-stage-body { display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; }
 .chart-design-stage { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
 .chart-project .chart-toolbar { gap: 4px; padding: 6px 12px; border-bottom: 1px solid var(--line); background: var(--panel); }
 .chart-project .target-chart-stage { min-height: 0; }

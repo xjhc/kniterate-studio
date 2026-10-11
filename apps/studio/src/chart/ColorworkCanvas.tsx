@@ -31,18 +31,37 @@ const ROW_CONTROL_MIN_CELL = 12;
 const RULER_HEIGHT = 18;
 const NEEDLE_LABEL_STEPS = [1, 2, 5, 10, 20, 50, 100];
 const MAX_ZOOM = 3;
+/** Room to the right of a garment piece for its section labels. */
+const PIECE_LABEL_ROOM = 96;
 
-/** Zoom that fits the whole chart in the viewport. `floor` keeps small charts from being shrunk on load. */
-export function fitChartZoom(viewport: { width: number; height: number }, chart: { width: number; height: number }, floor = MIN_CHART_ZOOM): number {
-  const fit = Math.min((viewport.width - GUTTER - 8) / (chart.width * BASE_CELL), (viewport.height - 8) / (chart.height * BASE_CELL));
-  return Math.max(floor, Math.min(MAX_ZOOM, Math.floor(fit * 20) / 20));
+/**
+ * Zoom that fits the whole chart in the viewport. `chart.height` is in
+ * stitch widths (rows times the row aspect). `floor` keeps small charts from
+ * being shrunk on load; `reserve` is room kept free on the right.
+ */
+export function fitChartZoom(viewport: { width: number; height: number }, chart: { width: number; height: number }, floor = MIN_CHART_ZOOM, reserve = 0): number {
+  const fit = Math.min((viewport.width - GUTTER - 8 - reserve) / (chart.width * BASE_CELL), (viewport.height - 8) / (chart.height * BASE_CELL));
+  return Math.max(floor, Math.min(MAX_ZOOM, Math.floor(fit * 100) / 100));
+}
+
+/** Purl columns of the beanie's 2×2 rib: the stitches on the rear bed (offsets 0 and 3 of every 4). */
+function ribPurl(column: number): boolean {
+  const residue = column % 4;
+  return residue === 0 || residue === 3;
+}
+
+/** A light or dark tint that shows on `hex`. */
+function contrastTint(hex: string, alpha: number): string {
+  const value = Number.parseInt(hex.replace('#', '').slice(0, 6), 16);
+  const luminance = (0.299 * ((value >> 16) & 255) + 0.587 * ((value >> 8) & 255) + 0.114 * (value & 255)) / 255;
+  return luminance < 0.5 ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`;
 }
 
 function rectContains(rect: Rect, point: Point): boolean {
   return point.column >= rect.left && point.column <= rect.right && point.row >= rect.top && point.row <= rect.bottom;
 }
 
-export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow, firstNeedle, highlightedNeedles, placements = [], selectedPlacement = null, onPlacementPick, onPlacementMove }: {
+export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow, firstNeedle, highlightedNeedles, placements = [], selectedPlacement = null, onPlacementPick, onPlacementMove, rowAspect = 1, piece = null }: {
   chart: ColorworkChartV1;
   tool: ChartTool;
   paletteIndex: number;
@@ -70,6 +89,14 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   selectedPlacement?: string | null;
   onPlacementPick?: (id: string | null) => void;
   onPlacementMove?: (id: string, deltaColumns: number, deltaRows: number) => void;
+  /** Row height over stitch width (stitches per 10 cm ÷ rows per 10 cm), so the chart is drawn to scale. */
+  rowAspect?: number;
+  /**
+   * A garment piece around the chart, drawn but never painted: its bottom
+   * `ribRows` rows are rib, and the crown the machine shapes (the needles each
+   * crown row knits, bottom row first) sits above the top row.
+   */
+  piece?: { ribRows: number; crown: readonly (readonly number[])[]; hex: string; labels: { crown: string; body: string; rib: string } } | null;
 }) {
   const viewport = useRef<HTMLDivElement>(null);
   const paintLayer = useRef<HTMLCanvasElement>(null);
@@ -81,6 +108,11 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   const [keyboardPoint, setKeyboardPoint] = useState<Point>({ column: 0, row: 0 });
   const [keyboardActive, setKeyboardActive] = useState(false);
   const cell = BASE_CELL * zoom;
+  const rowH = cell * rowAspect;
+  // The crown sits above chart row 0; the chart starts below it.
+  const crownRows = piece?.crown.length ?? 0;
+  const top0 = crownRows * rowH;
+  const labelRoom = piece ? PIECE_LABEL_ROOM : 0;
   const pixelChart = { width: chart.width, height: chart.height, cells: chart.cells };
 
   useEffect(() => {
@@ -98,19 +130,20 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     const element = viewport.current;
     const applied = appliedFit.current;
     if (!element || viewportSize.width === 0 || viewportSize.height === 0 || (applied?.scope === fitScope && applied.request === fitRequest)) return;
-    const opened = applied?.scope !== fitScope;
+    // A garment piece always opens whole, so its shape can be seen.
+    const opened = applied?.scope !== fitScope && piece === null;
     appliedFit.current = { scope: fitScope, request: fitRequest };
-    onZoomChange(fitChartZoom(viewportSize, chart, opened ? 1 : MIN_CHART_ZOOM));
+    onZoomChange(fitChartZoom(viewportSize, { width: chart.width, height: (chart.height + crownRows) * rowAspect }, opened ? 1 : MIN_CHART_ZOOM, labelRoom));
     element.scrollLeft = 0;
     element.scrollTop = 0;
-  }, [fitRequest, fitScope, viewportSize, chart, onZoomChange]);
+  }, [fitRequest, fitScope, viewportSize, chart, onZoomChange, crownRows, rowAspect, labelRoom, piece === null]);
 
   const pointAt = (event: PointerEvent<HTMLCanvasElement>): Point | null => {
     const element = viewport.current;
     if (!element) return null;
     const bounds = event.currentTarget.getBoundingClientRect();
     const column = Math.floor((event.clientX - bounds.left + element.scrollLeft - GUTTER) / cell);
-    const row = Math.floor((event.clientY - bounds.top + element.scrollTop) / cell);
+    const row = Math.floor((event.clientY - bounds.top + element.scrollTop - top0) / rowH);
     return column >= 0 && column < chart.width && row >= 0 && row < chart.height ? { column, row } : null;
   };
 
@@ -139,46 +172,71 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     context.fillRect(0, 0, width, height);
     const left = Math.max(0, Math.floor((scroll.left - GUTTER) / cell));
     const right = Math.min(chart.width - 1, Math.ceil((scroll.left + width - GUTTER) / cell));
-    const top = Math.max(0, Math.floor(scroll.top / cell));
-    const bottom = Math.min(chart.height - 1, Math.ceil((scroll.top + height) / cell));
+    const top = Math.max(0, Math.floor((scroll.top - top0) / rowH));
+    const bottom = Math.min(chart.height - 1, Math.ceil((scroll.top + height - top0) / rowH));
+    const rowY = (row: number) => top0 + row * rowH - scroll.top;
+    const ribStart = piece ? chart.height - piece.ribRows : chart.height;
 
     context.fillStyle = isDarkMode ? '#292e2b' : '#f7f6f1';
     context.fillRect(0, 0, Math.min(GUTTER, width), height);
     for (let row = top; row <= bottom; row += 1) {
       for (let column = left; column <= right; column += 1) {
         context.fillStyle = chart.palette[chart.cells[row]![column]!]!.hex;
-        context.fillRect(GUTTER + column * cell - scroll.left, row * cell - scroll.top, cell + .5, cell + .5);
+        context.fillRect(GUTTER + column * cell - scroll.left, rowY(row), cell + .5, rowH + .5);
+      }
+    }
+    const gridLine = isDarkMode ? 'rgba(225, 232, 227, .17)' : 'rgba(44, 48, 45, .15)';
+    const drawGrid = cell >= 4 && rowH >= 3;
+    if (piece) {
+      // The rib: its purl columns are shaded, so the rows read as rib.
+      const ribTop = Math.max(top, ribStart);
+      if (ribTop <= bottom) {
+        context.fillStyle = contrastTint(piece.hex, .18);
+        for (let column = left; column <= right; column += 1) if (ribPurl(column)) context.fillRect(GUTTER + column * cell - scroll.left, rowY(ribTop), cell, (bottom - ribTop + 1) * rowH);
+      }
+      // The crown, as the machine shapes it: each row knits only its needles.
+      context.strokeStyle = gridLine;
+      context.lineWidth = 1;
+      for (let index = 0; index < crownRows; index += 1) {
+        const y = top0 - (index + 1) * rowH - scroll.top;
+        if (y > height || y + rowH < 0) continue;
+        context.fillStyle = piece.hex;
+        for (const column of piece.crown[index]!) {
+          if (column < left || column > right) continue;
+          const x = GUTTER + column * cell - scroll.left;
+          context.fillRect(x, y, cell + .5, rowH + .5);
+          if (drawGrid) context.strokeRect(x, y, cell, rowH);
+        }
       }
     }
 
     if (focusedRow !== null && focusedRow >= top && focusedRow <= bottom) {
-      const y = focusedRow * cell - scroll.top;
       context.fillStyle = isDarkMode ? 'rgba(239, 138, 110, .2)' : 'rgba(212, 85, 61, .12)';
-      context.fillRect(0, y, GUTTER, cell);
+      context.fillRect(0, rowY(focusedRow), GUTTER, rowH);
     }
 
-    context.strokeStyle = isDarkMode ? 'rgba(225, 232, 227, .17)' : 'rgba(44, 48, 45, .15)';
+    context.strokeStyle = gridLine;
     context.lineWidth = 1;
-    const gridBottom = (bottom + 1) * cell - scroll.top;
+    const gridTop = Math.max(0, top0 - scroll.top);
+    const gridBottom = rowY(bottom + 1);
     const gridRight = GUTTER + (right + 1) * cell - scroll.left;
-    const drawGrid = cell >= 4;
-    const rowControls = cell >= ROW_CONTROL_MIN_CELL;
+    const rowControls = rowH >= ROW_CONTROL_MIN_CELL;
     // Below control height, label every Nth row so numbers never overlap.
-    const rowLabelStep = rowControls ? 1 : Math.ceil(ROW_CONTROL_MIN_CELL / cell);
+    const rowLabelStep = rowControls ? 1 : Math.ceil(ROW_CONTROL_MIN_CELL / rowH);
     for (let column = left; drawGrid && column <= right + 1; column += 1) {
       const x = GUTTER + column * cell - scroll.left;
-      context.beginPath(); context.moveTo(x, 0); context.lineTo(x, gridBottom); context.stroke();
+      context.beginPath(); context.moveTo(x, gridTop); context.lineTo(x, gridBottom); context.stroke();
     }
     for (let row = top; row <= bottom + 1; row += 1) {
-      const y = row * cell - scroll.top;
+      const y = rowY(row);
       if (drawGrid) { context.beginPath(); context.moveTo(0, y); context.lineTo(gridRight, y); context.stroke(); }
       if (row > bottom) continue;
-      const labelY = y + Math.min(cell - 3, cell / 2 + 4);
+      const labelY = y + Math.min(rowH - 3, rowH / 2 + 4);
       const displayRow = chart.rowNumbering === 'bottom-up' ? chart.height - row : row + 1;
       if (displayRow % rowLabelStep !== 0) continue;
       context.fillStyle = isDarkMode ? '#b2bbb5' : '#667069';
       context.font = '10px system-ui';
-      context.fillText(String(displayRow), 4, rowControls ? labelY : y + cell / 2 + 4);
+      context.fillText(String(displayRow), 4, rowControls ? labelY : y + rowH / 2 + 4);
       const passCount = passCounts.get(row);
       if (rowControls && passCount !== undefined) {
         context.fillStyle = row === focusedRow ? '#d86645' : isDarkMode ? '#d1d8d3' : '#48504b';
@@ -193,7 +251,36 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     if (focusedRow !== null && focusedRow >= top && focusedRow <= bottom) {
       context.strokeStyle = '#d86645';
       context.lineWidth = 2;
-      context.strokeRect(1, focusedRow * cell - scroll.top + 1, gridRight - 2, Math.max(1, cell - 2));
+      context.strokeRect(1, rowY(focusedRow) + 1, gridRight - 2, Math.max(1, rowH - 2));
+    }
+    if (piece) {
+      // Where each section starts, and its name on the right, as in the schematic.
+      const ink = isDarkMode ? '#d1d8d3' : '#48504b';
+      const chartRight = GUTTER + chart.width * cell - scroll.left;
+      context.strokeStyle = ink;
+      context.lineWidth = 1.5;
+      for (const boundary of [crownRows > 0 ? 0 : null, ribStart > 0 && ribStart < chart.height ? ribStart : null]) {
+        if (boundary === null) continue;
+        const y = rowY(boundary);
+        if (y < 0 || y > height) continue;
+        context.beginPath(); context.moveTo(GUTTER, y); context.lineTo(chartRight, y); context.stroke();
+      }
+      const bands = [
+        { label: piece.labels.crown, from: 0, to: top0 },
+        { label: piece.labels.body, from: top0, to: top0 + ribStart * rowH },
+        { label: piece.labels.rib, from: top0 + ribStart * rowH, to: top0 + chart.height * rowH },
+      ];
+      context.font = '11px system-ui';
+      context.textAlign = 'left';
+      context.lineWidth = 1;
+      for (const band of bands) {
+        const from = band.from - scroll.top; const to = band.to - scroll.top;
+        if (to - from < 4 || to < 0 || from > height) continue;
+        const x = chartRight + 8;
+        context.beginPath(); context.moveTo(x, from + 2); context.lineTo(x, to - 2); context.stroke();
+        context.fillStyle = ink;
+        context.fillText(band.label, x + 6, Math.min(Math.max((from + to) / 2, Math.max(from, 0) + 12), Math.min(to, height) - 4) + 4);
+      }
     }
   };
 
@@ -210,7 +297,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     }
     if (currentSelection) {
       overlay.strokeStyle = '#d86645'; overlay.lineWidth = 2; overlay.setLineDash([4, 3]);
-      overlay.strokeRect(GUTTER + currentSelection.left * cell - scroll.left + 1, currentSelection.top * cell - scroll.top + 1, (currentSelection.right - currentSelection.left + 1) * cell - 2, (currentSelection.bottom - currentSelection.top + 1) * cell - 2);
+      overlay.strokeRect(GUTTER + currentSelection.left * cell - scroll.left + 1, top0 + currentSelection.top * rowH - scroll.top + 1, (currentSelection.right - currentSelection.left + 1) * cell - 2, (currentSelection.bottom - currentSelection.top + 1) * rowH - 2);
       overlay.setLineDash([]);
     }
     for (const { box, ghost } of placements) {
@@ -220,7 +307,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         for (const stitch of ghost) {
           if (stitch.row < 0 || stitch.row >= chart.height || stitch.column < 0 || stitch.column >= chart.width) continue;
           overlay.fillStyle = stitch.hex;
-          overlay.fillRect(GUTTER + stitch.column * cell - scroll.left, stitch.row * cell - scroll.top, cell, cell);
+          overlay.fillRect(GUTTER + stitch.column * cell - scroll.left, top0 + stitch.row * rowH - scroll.top, cell, rowH);
         }
         overlay.globalAlpha = 1;
       }
@@ -228,18 +315,18 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       overlay.strokeStyle = box.status === 'conflict' ? '#dc2626' : '#2563eb';
       overlay.lineWidth = selected ? 2.5 : 1.5;
       overlay.setLineDash(selected ? [] : [5, 3]);
-      overlay.strokeRect(GUTTER + (box.left + dragging.columns) * cell - scroll.left + 1, (box.top + dragging.rows) * cell - scroll.top + 1, (box.right - box.left + 1) * cell - 2, (box.bottom - box.top + 1) * cell - 2);
+      overlay.strokeRect(GUTTER + (box.left + dragging.columns) * cell - scroll.left + 1, top0 + (box.top + dragging.rows) * rowH - scroll.top + 1, (box.right - box.left + 1) * cell - 2, (box.bottom - box.top + 1) * rowH - 2);
       overlay.setLineDash([]);
       if (selected || box.status === 'conflict') {
         overlay.font = '10px system-ui';
         overlay.fillStyle = box.status === 'conflict' ? '#dc2626' : '#2563eb';
-        overlay.fillText(box.status === 'conflict' ? `${box.id} · ${box.problem === 'color' ? 'a color has no yarn' : 'does not fit'}` : box.id, GUTTER + (box.left + dragging.columns) * cell - scroll.left + 2, Math.max(10, (box.top + dragging.rows) * cell - scroll.top - 3));
+        overlay.fillText(box.status === 'conflict' ? `${box.id} · ${box.problem === 'color' ? 'a color has no yarn' : 'does not fit'}` : box.id, GUTTER + (box.left + dragging.columns) * cell - scroll.left + 2, Math.max(10, top0 + (box.top + dragging.rows) * rowH - scroll.top - 3));
       }
     }
     if (keyboardActive) {
       overlay.strokeStyle = '#d86645';
       overlay.lineWidth = 3;
-      overlay.strokeRect(GUTTER + keyboardPoint.column * cell - scroll.left + 1.5, keyboardPoint.row * cell - scroll.top + 1.5, cell - 3, cell - 3);
+      overlay.strokeRect(GUTTER + keyboardPoint.column * cell - scroll.left + 1.5, top0 + keyboardPoint.row * rowH - scroll.top + 1.5, cell - 3, rowH - 3);
     }
     if (!gesture || !end || gesture.pan || gesture.placement || tool === 'select' || tool === 'move' || tool === 'fill') return;
     const mutation = tool === 'pen' ? pen(pixelChart, gesture.points, paletteIndex)
@@ -249,11 +336,11 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     const previewPalette = tool === 'erase' ? 0 : paletteIndex;
     overlay.globalAlpha = .7;
     overlay.fillStyle = chart.palette[previewPalette]!.hex;
-    for (const point of mutation.cells) overlay.fillRect(GUTTER + point.column * cell - scroll.left, point.row * cell - scroll.top, cell, cell);
+    for (const point of mutation.cells) overlay.fillRect(GUTTER + point.column * cell - scroll.left, top0 + point.row * rowH - scroll.top, cell, rowH);
     overlay.globalAlpha = 1;
   };
 
-  useLayoutEffect(drawBase, [chart, scroll, zoom, viewportSize, isDarkMode, passCounts, focusedRow]);
+  useLayoutEffect(drawBase, [chart, scroll, zoom, viewportSize, isDarkMode, passCounts, focusedRow, rowAspect, piece]);
   const drawRuler = () => {
     const canvas = rulerLayer.current;
     if (!canvas || viewportSize.width === 0) return;
@@ -295,13 +382,13 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
     context.fillRect(0, 0, GUTTER, RULER_HEIGHT);
     context.textAlign = 'left';
     context.fillStyle = isDarkMode ? '#89938d' : '#8b938e';
-    context.fillText('Knitout N', 4, 11);
+    context.fillText('Needle', 4, 11);
     context.strokeStyle = isDarkMode ? 'rgba(225, 232, 227, .17)' : 'rgba(44, 48, 45, .15)';
     context.beginPath(); context.moveTo(0, RULER_HEIGHT - .5); context.lineTo(width, RULER_HEIGHT - .5); context.stroke();
   };
 
   useLayoutEffect(drawRuler, [chart.width, scroll.left, zoom, viewportSize, isDarkMode, firstNeedle, highlightedNeedles]);
-  useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex, keyboardPoint, keyboardActive, placements, selectedPlacement]);
+  useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex, keyboardPoint, keyboardActive, placements, selectedPlacement, rowAspect, top0]);
 
   useEffect(() => {
     const element = viewport.current;
@@ -311,18 +398,18 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       event.preventDefault();
       const bounds = element.getBoundingClientRect();
       const chartX = (event.clientX - bounds.left + element.scrollLeft - GUTTER) / cell;
-      const chartY = (event.clientY - bounds.top + element.scrollTop) / cell;
+      const chartY = (event.clientY - bounds.top + element.scrollTop) / rowH;
       const nextZoom = Math.max(MIN_CHART_ZOOM, Math.min(MAX_ZOOM, zoom * (event.deltaY < 0 ? 1.12 : .89)));
       onZoomChange(nextZoom);
       requestAnimationFrame(() => {
         const nextCell = BASE_CELL * nextZoom;
         element.scrollLeft = GUTTER + chartX * nextCell - (event.clientX - bounds.left);
-        element.scrollTop = chartY * nextCell - (event.clientY - bounds.top);
+        element.scrollTop = chartY * nextCell * rowAspect - (event.clientY - bounds.top);
       });
     };
     element.addEventListener('wheel', handler, { passive: false });
     return () => element.removeEventListener('wheel', handler);
-  }, [zoom, cell, onZoomChange]);
+  }, [zoom, cell, rowH, rowAspect, onZoomChange]);
 
   const finish = () => {
     if (!gesture || gesture.pan) { setGesture(null); return; }
@@ -359,9 +446,10 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       style={{ transform: `translate(${scroll.left}px, ${scroll.top}px)` }}
       className="chart-canvas"
       data-cell-size={cell}
+      data-row-size={rowH}
       tabIndex={0}
       role="grid"
-      aria-label={`Colorwork chart, ${chart.height} rows by ${chart.width} needles, Knitout needles ${firstNeedle} to ${firstNeedle + chart.width - 1}`}
+      aria-label={`Colorwork chart, ${chart.height} rows by ${chart.width} needles, needles ${firstNeedle} to ${firstNeedle + chart.width - 1}`}
       aria-rowcount={chart.height}
       aria-colcount={chart.width}
       onFocus={() => { setKeyboardActive(true); onFocusRow(keyboardPoint.row); }}
@@ -383,11 +471,11 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         const element = viewport.current;
         if (element) {
           const x = GUTTER + next.column * cell;
-          const y = next.row * cell;
+          const y = top0 + next.row * rowH;
           if (x < element.scrollLeft + GUTTER) element.scrollLeft = Math.max(0, x - GUTTER);
           else if (x + cell > element.scrollLeft + element.clientWidth) element.scrollLeft = x + cell - element.clientWidth;
           if (y < element.scrollTop) element.scrollTop = y;
-          else if (y + cell > element.scrollTop + element.clientHeight) element.scrollTop = y + cell - element.clientHeight;
+          else if (y + rowH > element.scrollTop + element.clientHeight) element.scrollTop = y + rowH - element.clientHeight;
         }
       }}
       onPointerDown={(event) => {
@@ -395,10 +483,10 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         if (!element) return;
         const bounds = event.currentTarget.getBoundingClientRect();
         const visibleX = event.clientX - bounds.left;
-        const gutterAction = rowGutterActionAt(visibleX, event.clientY - bounds.top, element.scrollTop, cell, chart.height);
+        const gutterAction = rowGutterActionAt(visibleX, event.clientY - bounds.top, element.scrollTop - top0, rowH, chart.height);
         if (visibleX < GUTTER) {
           // The +/- glyphs are only drawn at control height; never act on invisible targets.
-          if (cell < ROW_CONTROL_MIN_CELL) return;
+          if (rowH < ROW_CONTROL_MIN_CELL) return;
           if (gutterAction?.kind === 'insert') onInsertRow(gutterAction.row);
           else if (gutterAction?.kind === 'delete') onDeleteRow(gutterAction.row);
           return;
@@ -439,7 +527,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       onPointerCancel={() => setGesture(null)}
     />
     <canvas ref={uiLayer} style={{ transform: `translate(${scroll.left}px, ${scroll.top}px)` }} className="chart-canvas ui-layer" aria-hidden="true" />
-    <div className="chart-canvas-spacer" style={{ width: GUTTER + chart.width * cell, height: chart.height * cell }} />
+    <div className="chart-canvas-spacer" style={{ width: GUTTER + chart.width * cell + labelRoom, height: top0 + chart.height * rowH }} />
     </div>
   </div>;
 }

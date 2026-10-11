@@ -29,7 +29,9 @@ runs, and the workspace shows exactly what those files knit.
 - **Middle:** the pieces, when there are several, on the left of the stage
   bar. On its right, always in the same place, the three views:
   - **Design:** what you edit. That is the chart, or a piece's stitches and
-    shape, or the garment as worn.
+    shape, or the garment as worn. It is drawn to scale, like the schematic.
+    A beanie shows its whole piece: the rib cuff, the body you paint, and
+    the crown the machine shapes.
   - **Schematic:** the measured flat drawing. For a charted project it is
     drawn from the machine file read back. It shows the whole run, from the
     waste yarn and draw thread through the piece to its finish.

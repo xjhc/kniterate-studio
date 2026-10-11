@@ -128,7 +128,24 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     return { box, ghost };
   }), [resolvedPlacements, boxes, chart.palette]);
   const stalePlacements = useMemo(() => new Set(plan.findings.filter((finding) => finding.rule === 'placement-size-off').map((finding) => finding.path.replace('placements/', ''))), [plan]);
+  // A beanie's bottom rows are rib in its main yarn (all of them without a cuff), and the machine shapes the crown above the chart.
+  const ribRows = isGarment && plan.sections ? (plan.sections.cuff?.rows ?? (plan.sections.body.fabric === 'rib' ? chart.height : 0)) : 0;
+  const piece = useMemo(() => (isGarment && plan.sections ? {
+    ribRows,
+    crown: plan.sections.crown?.needles ?? [],
+    hex: chart.palette[0]?.hex ?? '#D9CBB0',
+    labels: { crown: 'Crown', body: 'Body', rib: plan.sections.cuff ? (plan.sections.cuff.folds ? 'Cuff, folds up' : 'Cuff') : 'Rib' },
+  } : null), [isGarment, plan.sections, ribRows, chart.palette]);
   const commitMutation = (mutation: Parameters<typeof pixelMutationToProjectEdit>[2]) => {
+    // The rib knits one yarn: keep colour out of it (the main yarn, palette 0, is allowed, so a stray colour can be erased).
+    if (ribRows > 0 && mutation.kind === 'paint') {
+      const ribStart = chart.height - ribRows;
+      const kept = mutation.cells.filter((cell) => cell.row < ribStart || cell.paletteIndex === 0);
+      if (kept.length < mutation.cells.length) {
+        if (kept.length === 0) { setIssue(ribRows === chart.height ? 'This beanie is all rib in one yarn. Add a cuff to paint a colour body.' : 'The cuff is rib in one yarn. Paint the body above it.'); return false; }
+        mutation = { ...mutation, cells: kept };
+      }
+    }
     // A motif's stitches belong to its placement: painting them would be drawn over, so refuse and point at the motif.
     const owner = mutation.kind === 'paint' ? mutation.cells.map((cell) => lockedCells.get(`${cell.row}:${cell.column}`)).find((id) => id !== undefined) : undefined;
     if (owner !== undefined) {
@@ -225,7 +242,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       <div className="target-chart-stage">
         <PaletteRail chart={chart} carriers={paletteCarriers} active={activePaletteIndex} onSelect={setPaletteIndex} />
         <div className="canvas-stack">
-          <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} fitRequest={fitRequest} fitScope={project.id} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={noPassCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => setFocusedRowId(rowIds[row]!)} firstNeedle={materialized.state.machine.needleOffset} highlightedNeedles={null} placements={canvasPlacements} selectedPlacement={selectedPlacement} onPlacementPick={setSelectedPlacement} onPlacementMove={(id, columns, rows) => { const placement = materialized.state.placements?.find((item) => item.id === id); if (placement) operate(`Move ${id}`, [{ kind: 'set-placement', placement: movedPlacement(materialized.state, placement, columns, rows) }]); }} />
+          <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} fitRequest={fitRequest} fitScope={project.id} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={noPassCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => setFocusedRowId(rowIds[row]!)} firstNeedle={materialized.state.machine.needleOffset} highlightedNeedles={null} rowAspect={gauge ? gauge.stitchesPer10cm / gauge.rowsPer10cm : 1} piece={piece} placements={canvasPlacements} selectedPlacement={selectedPlacement} onPlacementPick={setSelectedPlacement} onPlacementMove={(id, columns, rows) => { const placement = materialized.state.placements?.find((item) => item.id === id); if (placement) operate(`Move ${id}`, [{ kind: 'set-placement', placement: movedPlacement(materialized.state, placement, columns, rows) }]); }} />
         </div>
       </div>
     </div>;
