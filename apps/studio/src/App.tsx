@@ -21,7 +21,7 @@ import { KNITERATE_7GG_KCODE_PROFILE_V2, deriveMachineTraceProgrammedMotionV1, m
 import { MACHINE_PASS_ORIGIN_LABELS, VERDICT_WORDS, formatPassRoleCounts, machinePassRoleLabel, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDiff, type MachinePass } from './engine';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, redoProjectEdit, renameColorworkProject, serializeColorworkProjectV1, undoProjectEdit, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import type { AuthoredPipelineResult } from './authoredPipeline';
-import { createBeanieProject, type BeanieIntent } from './beanie';
+import { createBeanieProject, withSizingFixes, type BeanieIntent } from './beanie';
 import { createSweaterProject, planSweater, type SweaterIntent } from './sweater/sweater';
 import type { PieceId } from './sweater/draft';
 import { sweaterInstructions, sweaterPackageFiles } from './sweater/sweaterHandoff';
@@ -46,6 +46,7 @@ import { sha256Hex } from './garment/MotifPanel';
 import { useBlanketCompiler } from './blanket/useBlanketCompiler';
 import type { BlanketCompileArtifact } from './blanket/compileProject';
 import { ChartWorkspace } from './chart/ChartWorkspace';
+import { TYPICAL_COLOURWORK_GAUGE } from './chart/ChartSizeSection';
 import { authoredKnitoutNeedleRange } from './kcode/kcodeProtocol';
 import { useKCodeArtifact } from './kcode/useKCodeArtifact';
 import type { KCodeArtifact } from './kcode/kcodeProtocol';
@@ -632,12 +633,18 @@ export function App() {
     url.searchParams.set('theme', theme);
     window.history.replaceState(null, '', url);
   }, [theme]);
-  const createProject = ({ title, width, height, colorCount }: NewProjectValues) => {
+  // A colour chart is sized in cm at a typical gauge, until a swatch is measured.
+  const createProject = ({ title, widthCm, heightCm, colorCount }: NewProjectValues) => {
     const palette = DEFAULT_PROJECT_PALETTE.slice(0, colorCount).map((entry) => ({ ...entry }));
-    setProject(createColorworkProjectV1({
+    const width = Math.max(1, Math.round(widthCm * TYPICAL_COLOURWORK_GAUGE.stitchesPer10cm / 10));
+    const height = Math.max(1, Math.round(heightCm * TYPICAL_COLOURWORK_GAUGE.rowsPer10cm / 10));
+    const created = createColorworkProjectV1({
       kind: 'knitlab-colorwork-chart', version: 1, title, width, height, rowNumbering: 'bottom-up', palette,
       cells: Array.from({ length: height }, () => Array.from({ length: width }, () => 0)),
-    }, { id: projectId(title), title }));
+    }, { id: projectId(title), title });
+    const group = `create_${crypto.randomUUID().replace(/-/g, '')}`;
+    const edits = withSizingFixes(created, [{ kind: 'set-gauge', gauge: { ...TYPICAL_COLOURWORK_GAUGE } }, { kind: 'set-target', target: { widthCm, heightCm } }]);
+    setProject(edits.reduce((current, edit, index) => appendProjectEdit(current, { id: `${group}-${index}`, source: 'human', edit, group, ...(index === 0 ? { label: `Create ${title}` } : {}) }), created));
     setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setShowStart(false); setWorkspaceView('design');
   };
   const createBeanie = (intent: BeanieIntent) => {

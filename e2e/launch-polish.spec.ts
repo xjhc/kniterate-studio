@@ -13,11 +13,16 @@ test('creates, renames, recolors, autosaves, and recovers a customer project', a
   const newProject = page.getByRole('dialog', { name: 'New project' });
   await newProject.getByRole('radio', { name: 'Colour chart' }).click();
   await newProject.getByLabel('Project name').fill('Harbor blanket');
-  await newProject.getByLabel('Needles').fill('64');
-  await newProject.getByLabel('Rows').fill('72');
+  // Sized in cm, at a typical gauge until a swatch is measured.
+  await newProject.getByLabel('Width (cm)').fill('25');
+  await newProject.getByLabel('Length (cm)').fill('21');
+  await expect(newProject.getByText(/^65 needles × 71 rows at a typical gauge/)).toBeVisible();
   await newProject.getByRole('button', { name: '2', exact: true }).click();
   await newProject.getByRole('button', { name: 'Create' }).click();
   await expect(page.locator('.brand-copy small')).toContainText('Harbor blanket');
+  const size = page.getByRole('group', { name: 'Finished measurements' });
+  await expect(size.locator('.measure-row').filter({ hasText: /^Width/ }).locator('.count')).toHaveText('65 st');
+  await expect(size.locator('.measure-row').filter({ hasText: /^Length/ }).locator('.count')).toHaveText('71 rows');
 
   await menu(page, 'Edit', 'Name and colours…');
   const settings = page.getByRole('dialog', { name: 'Project settings' });

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import type { ProjectGauge, ProjectState } from '@kniterate-studio/project-contract';
 import type { BeanieFitChange } from '../beanie';
-import { beanieIntentOf } from '../beanie';
+import { BEANIE_FITS, beanieIntentOf } from '../beanie';
 import type { ProjectPlan, Valued } from '../plan';
 import { Chips, Section } from '../workspace/panel';
 
@@ -12,19 +12,14 @@ import { Chips, Section } from '../workspace/panel';
  * Ids match readiness targets (`fit.head`, `gauge.body`, ...).
  */
 
-/** How much smaller than the head the hat is knitted, so it stays on. */
-const FITS = [
-  { id: 'snug', name: 'Snug', ease: -0.15 },
-  { id: 'classic', name: 'Classic', ease: -0.1 },
-  { id: 'loose', name: 'Loose', ease: -0.05 },
-] as const;
+const FITS = BEANIE_FITS;
 
 function cm(value: Valued<number> | null | undefined): string {
   return value ? String(value.value) : '—';
 }
 
 /** A number the designer types; an out-of-range value is shown as not applied, with the reason, never silently dropped. */
-function NumberField({ id, label, value, step = 0.5, min, max, suffix, onCommit }: { id: string; label: string; value: number | undefined; step?: number; min: number; max: number; suffix: string; onCommit: (value: number) => void }) {
+export function NumberField({ id, label, value, step = 0.5, min, max, suffix, onCommit }: { id: string; label: string; value: number | undefined; step?: number; min: number; max: number; suffix: string; onCommit: (value: number) => void }) {
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const shown = draft ?? (value === undefined ? '' : String(value));
@@ -48,7 +43,7 @@ function NumberField({ id, label, value, step = 0.5, min, max, suffix, onCommit 
 }
 
 /** One row of the table: what you want (if you set it), what your gauge knits, and its stitches or rows. */
-function MeasureRow({ label, hint, wanted, knitted, count, off = false }: { label: string; hint: string; wanted: ReactNode; knitted: string; count: string; off?: boolean }) {
+export function MeasureRow({ label, hint, wanted, knitted, count, off = false }: { label: string; hint: string; wanted: ReactNode; knitted: string; count: string; off?: boolean }) {
   return <div className="measure-row garment-measure" title={hint}>
     <span>{label}</span>
     {wanted ?? <span />}
@@ -57,7 +52,7 @@ function MeasureRow({ label, hint, wanted, knitted, count, off = false }: { labe
   </div>;
 }
 
-function GaugeFields({ id, label, gauge, onCommit }: { id: string; label: string; gauge: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'> | undefined; onCommit: (gauge: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'>) => void }) {
+export function GaugeFields({ id, label, gauge, onCommit }: { id: string; label: string; gauge: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'> | undefined; onCommit: (gauge: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'>) => void }) {
   const [draft, setDraft] = useState<{ stitches: string; rows: string } | null>(null);
   const stitches = draft?.stitches ?? String(gauge?.stitchesPer10cm ?? '');
   const rows = draft?.rows ?? String(gauge?.rowsPer10cm ?? '');

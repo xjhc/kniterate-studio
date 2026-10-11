@@ -4,7 +4,7 @@ import { clear, copy, cut, paste, type PixelClipboard, type Rect } from '@knitla
 import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendProjectOperation, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
 import { ChartToolbar, type ChartTool } from './ChartToolbar';
 import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './ColorworkCanvas';
-import { beanieFitEdits, type BeanieFitChange } from '../beanie';
+import { beanieFitEdits, withSizingFixes, type BeanieFitChange } from '../beanie';
 import type { ReadinessStory } from '../handoff';
 import type { ProjectPlan } from '../plan';
 import { movedPlacement, placedCells, placementBoxes, type PlacementConversion, type PlacementImage } from '../placements';
@@ -19,6 +19,7 @@ import { StatusPanel, type StatusNote, type StatusTone, type SwatchStep } from '
 import { revealSection } from '../workspace/panel';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
 import type { AuthoredVerdict } from '../engine';import { PaletteRail } from './PaletteRail';
+import { ChartSizeSection } from './ChartSizeSection';
 import { makeRowId, pixelMutationToProjectEdit } from './projectCanvasAdapter';
 import { BlanketSetupRail } from '../blanket/BlanketSetupRail';
 import type { BlanketCompileState } from '../blanket/useBlanketCompiler';
@@ -239,7 +240,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       ...(cuffed ? [{ name: 'Cuff (2x2 rib)', measured: ribGauge?.source === 'measured' }] : []),
     ],
     onEnter: () => { onView('design'); revealSection('swatch'); },
-  } : undefined;
+  } : gauge ? { gauges: [{ name: `Colourwork (${materialized.state.strategy.technique})`, measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); } } : undefined;
   const notes: StatusNote[] = (story?.items ?? []).filter((item) => !(swatch && (item.rule === 'gauge-assumed' || item.rule === 'size-needs-gauge'))).map((item) => ({
     severity: item.severity === 'error' ? 'error' : item.severity === 'warning' ? 'warning' : 'info',
     text: `${item.part}: ${item.action}`,
@@ -278,10 +279,16 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
 
   return <main className="sweater-workspace chart-project">
     <BlanketSetupRail state={materialized.state} compile={compile} outputError={outputError}
-      garment={isGarment ? <>
+      size={isGarment ? <>
         <GarmentFitSection key={`fit-${project.id}`} state={materialized.state} plan={plan} onFit={fit} />
         <MotifSection key={`motifs-${project.id}-${renderedGeneration}`} latestState={latestMotifState} state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={setSelectedPlacement} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement, refresh) => setIntake({ replacing: placement, refresh })} />
-      </> : null} onWidth={(width) => Number.isInteger(width) && width > 0 && width <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })} onHeight={(height) => { if (!Number.isInteger(height) || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }} onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} onStrategy={(technique) => { if (technique === materialized.state.strategy.technique) return; if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`); else commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } }); }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
+      </> : <ChartSizeSection key={`size-${project.id}`} state={materialized.state}
+        onSize={(change, label) => operate(label, withSizingFixes(project, [{ kind: 'set-target', target: { ...materialized.state.target, ...change } }]))}
+        onGauge={(next, label) => operate(label, withSizingFixes(project, [{ kind: 'set-gauge', gauge: { ...next } }]))}
+        onNeedles={(width) => Number.isInteger(width) && width > 0 && width <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })}
+        onRows={(height) => { if (!Number.isInteger(height) || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }}
+        onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} />}
+      onStrategy={(technique) => { if (technique === materialized.state.strategy.technique) return; if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`); else commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } }); }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
     <section className="sweater-stage" aria-label={kindName}>
       <header className="stage-head">
         <span className="stage-title">{kindName}</span>

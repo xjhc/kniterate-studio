@@ -103,6 +103,22 @@ export function createBeanieProject(intent: BeanieIntent, options: { id: string;
   }), project);
 }
 
+/** How much smaller around than the head a beanie is knitted, so it stays on. */
+export const BEANIE_FITS = [
+  { id: 'snug', name: 'Snug', ease: -0.15 },
+  { id: 'classic', name: 'Classic', ease: -0.1 },
+  { id: 'loose', name: 'Loose', ease: -0.05 },
+] as const;
+
+/** Typical head circumferences, cm. */
+export const BEANIE_HEADS = [
+  { id: 'child', name: 'Child', cm: 50 },
+  { id: 'S', name: 'S', cm: 54 },
+  { id: 'M', name: 'M', cm: 56 },
+  { id: 'L', name: 'L', cm: 58 },
+  { id: 'XL', name: 'XL', cm: 60 },
+] as const;
+
 export interface BeanieFitChange {
   headCircumferenceCm?: number;
   ease?: number;

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AUTHORED_CAPACITY_LIMITS_V1, type ProjectState } from '@kniterate-studio/project-contract';
+import type { ProjectState } from '@kniterate-studio/project-contract';
 import type { BackFaceProjection } from '@kniterate-studio/machine-lib/browser';
 import type { BlanketCompileState } from './useBlanketCompiler';
 import { Section } from '../workspace/panel';
@@ -23,28 +23,20 @@ const BACKING_HELP: Record<string, string> = {
   birdseye: 'Thicker and warmer. No long floats, so thin lines and logos work.',
 };
 
-export function BlanketSetupRail({ state, compile, outputError, garment, onWidth, onHeight, onNeedleOffset, onStrategy, onFloatLimit, onAssignment }: {
+export function BlanketSetupRail({ state, compile, outputError, size, onStrategy, onFloatLimit, onAssignment }: {
   state: ProjectState;
   compile: BlanketCompileState;
   outputError: string | null;
-  onWidth: (width: number) => void;
-  onHeight: (height: number) => void;
-  onNeedleOffset: (offset: number) => void;
   onStrategy: (technique: ProjectState['strategy']['technique']) => void;
   onFloatLimit: (limit: number) => void;
   onAssignment: (paletteId: string, carrier: '2' | '3' | '4' | '5', yarnName: string) => void;
-  /** Garment intent (fit, motifs, gauge); replaces the rectangle's needle and row fields. */
-  garment?: ReactNode;
+  /** What you are making: its size and swatch, and a garment's fit and motifs. */
+  size: ReactNode;
 }) {
   const assignmentFor = (paletteId: string) => state.machine.yarnAssignments.find((item) => item.paletteId === paletteId);
   const error = outputError ?? compile.error ?? compile.artifact?.messages.find((message) => message.severity === 'error')?.message ?? null;
   return <aside className="sweater-design chart-design" aria-label="Design">
-    {garment}
-    {!garment && <Section id="size" title="Size" aside={<em className="section-aside">{state.chart.width} × {state.chart.height}</em>}>
-      <label className="strategy-field"><span>Needles</span><input type="number" min="1" max={AUTHORED_CAPACITY_LIMITS_V1.chartWidth} defaultValue={state.chart.width} key={`w${state.chart.width}`} onBlur={(event) => onWidth(Number(event.currentTarget.value))} /></label>
-      <label className="strategy-field"><span>Rows</span><input type="number" min="1" max={AUTHORED_CAPACITY_LIMITS_V1.chartHeight} defaultValue={state.chart.height} key={`h${state.chart.height}`} onBlur={(event) => onHeight(Number(event.currentTarget.value))} /></label>
-      <label className="strategy-field"><span>First needle</span><input type="number" min="1" max={253 - state.chart.width} defaultValue={state.machine.needleOffset} key={`n${state.machine.needleOffset}`} onBlur={(event) => onNeedleOffset(Number(event.currentTarget.value))} /></label>
-    </Section>}
+    {size}
     <Section id="yarns" title="Colours" aside={<em className="section-aside">{state.chart.palette.length}</em>}><div className="assignment-list">{state.chart.palette.map((color) => {
       const assignment = assignmentFor(color.id);
       if (!assignment) return <div className="assignment-row missing" key={color.id}><i style={{ background: color.hex }} /><span>{color.name}</span><b>No carrier</b></div>;

@@ -5,14 +5,15 @@ import {
   AUTHORED_CAPACITY_LIMITS_V1,
   materializeColorworkProject,
   type ColorworkProjectV1,
-  type ProjectGauge,
 } from '@kniterate-studio/project-contract';
-import type { BeanieIntent } from '../beanie';
+import { BEANIE_FITS, BEANIE_HEADS, type BeanieIntent } from '../beanie';
+import { BeanieIcon } from '../garment/BeanieIcon';
 import { FITS, SIZES, type Fit, type Size } from '../sweater/draft';
 import { SWEATER_CHOICES, type SweaterIntent } from '../sweater/sweater';
 import type { PanelIntent } from '../sweater/panel';
 import { TEXTURES } from '../sweater/textures';
 import { SilhouetteIcon } from '../sweater/SilhouetteIcon';
+import { TYPICAL_COLOURWORK_GAUGE } from './ChartSizeSection';
 
 export const DEFAULT_PROJECT_PALETTE: readonly ColorworkChartPaletteEntry[] = [
   { id: 'natural', name: 'Natural', hex: '#F4F0E6' },
@@ -32,8 +33,8 @@ function DialogShell({ title, children, onClose }: { title: string; children: Re
 
 export interface NewProjectValues {
   title: string;
-  width: number;
-  height: number;
+  widthCm: number;
+  heightCm: number;
   colorCount: number;
 }
 
@@ -115,18 +116,23 @@ function NewSweaterForm({ onCreate, onClose }: { onCreate: (intent: SweaterInten
 
 function NewRectangleForm({ onCreate, onClose }: { onCreate: (values: NewProjectValues) => void; onClose: () => void }) {
   const [title, setTitle] = useState('New colourwork blanket');
-  const [width, setWidth] = useState(120);
-  const [height, setHeight] = useState(160);
+  const [widthCm, setWidthCm] = useState(46);
+  const [heightCm, setHeightCm] = useState(47);
   const [colorCount, setColorCount] = useState(4);
+  const gauge = TYPICAL_COLOURWORK_GAUGE;
+  const needles = Math.round(widthCm * gauge.stitchesPer10cm / 10);
+  const rows = Math.round(heightCm * gauge.rowsPer10cm / 10);
+  const fits = needles >= 1 && needles <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && rows >= 1 && rows <= AUTHORED_CAPACITY_LIMITS_V1.chartHeight && needles * rows <= AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState;
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    onCreate({ title: title.trim(), width, height, colorCount });
+    onCreate({ title: title.trim(), widthCm, heightCm, colorCount });
   };
   return <form onSubmit={submit}>
     <label>Project name<input autoFocus required maxLength={200} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></label>
-    <div className="project-dialog-grid"><label>Needles<input required type="number" min="1" max={AUTHORED_CAPACITY_LIMITS_V1.chartWidth} value={width} onChange={(event) => setWidth(Number(event.currentTarget.value))} /></label><label>Rows<input required type="number" min="1" max={AUTHORED_CAPACITY_LIMITS_V1.chartHeight} value={height} onChange={(event) => setHeight(Number(event.currentTarget.value))} /></label></div>
+    <div className="project-dialog-grid"><label>Width (cm)<input required type="number" min="1" step="0.5" value={widthCm} onChange={(event) => setWidthCm(Number(event.currentTarget.value))} /></label><label>Length (cm)<input required type="number" min="1" step="0.5" value={heightCm} onChange={(event) => setHeightCm(Number(event.currentTarget.value))} /></label></div>
+    <p className={fits ? 'garment-help' : 'setup-error'} role={fits ? undefined : 'alert'}>{needles} needles × {rows} rows at a typical gauge{fits ? '. Your swatch sizes it after.' : `: too large for the machine (at most ${AUTHORED_CAPACITY_LIMITS_V1.chartWidth} needles and ${AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState.toLocaleString('en')} stitches).`}</p>
     <fieldset><legend>Pattern colours</legend><div className="color-count-control">{[2, 3, 4].map((count) => <button className={colorCount === count ? 'active' : ''} type="button" key={count} onClick={() => setColorCount(count)}>{count}</button>)}</div></fieldset>
-    <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || width < 1 || width > AUTHORED_CAPACITY_LIMITS_V1.chartWidth || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight}><Check size={16} /> Create</button></footer>
+    <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || !fits}><Check size={16} /> Create</button></footer>
   </form>;
 }
 
@@ -155,52 +161,46 @@ export function ProjectSettingsDialog({ project, onSave, onClose }: {
 export function NewBeanieForm({ onCreate, onClose }: { onCreate: (intent: BeanieIntent) => void; onClose: () => void }) {
   const [title, setTitle] = useState('Beanie');
   const [head, setHead] = useState(56);
-  const [easePercent, setEasePercent] = useState(-10);
+  const [fit, setFit] = useState<(typeof BEANIE_FITS)[number]['id']>('classic');
   const [cuff, setCuff] = useState(true);
-  const [cuffCm, setCuffCm] = useState(7);
   const [fold, setFold] = useState(true);
-  const [bodyCm, setBodyCm] = useState(13);
-  const [bodyGauge, setBodyGauge] = useState({ stitchesPer10cm: 26, rowsPer10cm: 34, source: 'assumed' as ProjectGauge['source'] });
-  const [ribGauge, setRibGauge] = useState({ stitchesPer10cm: 30, rowsPer10cm: 32, source: 'assumed' as ProjectGauge['source'] });
   const [main, setMain] = useState({ name: 'Black', hex: '#111111' });
   const [accent, setAccent] = useState<{ name: string; hex: string } | null>({ name: 'White', hex: '#F2F2F2' });
   const [backing, setBacking] = useState<'fairisle' | 'birdseye'>('birdseye');
+  // Typical gauges until a swatch is measured; every size can be changed after.
+  const bodyGauge = { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'assumed' as const };
+  const ribGauge = { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'assumed' as const };
   const submit = (event: FormEvent) => {
     event.preventDefault();
     onCreate({
-      title: title.trim(), headCircumferenceCm: head, ease: easePercent / 100, bodyCm, bodyGauge: cuff ? bodyGauge : ribGauge,
-      ...(cuff ? { cuffCm, ribGauge, fold, backing, ...(accent ? { accent } : {}) } : {}),
+      title: title.trim(), headCircumferenceCm: head, ease: BEANIE_FITS.find((choice) => choice.id === fit)!.ease, bodyCm: 13, bodyGauge: cuff ? bodyGauge : ribGauge,
+      ...(cuff ? { cuffCm: 7, ribGauge, fold, backing, ...(accent ? { accent } : {}) } : {}),
       main,
     });
   };
-  const gauge = (label: string, value: typeof bodyGauge, set: (next: typeof bodyGauge) => void) => <fieldset><legend>{label} <small>per 10 cm</small></legend><div className="project-dialog-grid three">
-    <label>Stitches<input required type="number" step="0.5" min="1" max="100" value={value.stitchesPer10cm} onChange={(event) => set({ ...value, stitchesPer10cm: Number(event.currentTarget.value) })} /></label>
-    <label>Rows<input required type="number" step="0.5" min="1" max="100" value={value.rowsPer10cm} onChange={(event) => set({ ...value, rowsPer10cm: Number(event.currentTarget.value) })} /></label>
-    <label>Source<select value={value.source} onChange={(event) => set({ ...value, source: event.currentTarget.value as ProjectGauge['source'] })}><option value="measured">Measured</option><option value="assumed">Assumed</option></select></label>
-  </div></fieldset>;
-  return <form onSubmit={submit}>
+  const styles = [
+    { id: 'cuffed', name: 'Cuffed', note: 'A rib cuff and a colourwork body you paint.' },
+    { id: 'rib', name: 'Rib', note: 'All 2x2 rib in one colour.' },
+  ] as const;
+  return <form onSubmit={submit} className="new-sweater">
     <label>Project name<input autoFocus required maxLength={200} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></label>
-    <div className="project-dialog-grid">
-      <label>Head circumference (cm)<input required type="number" step="0.5" min="30" max="80" value={head} onChange={(event) => setHead(Number(event.currentTarget.value))} /></label>
-      <label>Ease (%; negative = snug)<input required type="number" step="1" min="-40" max="40" value={easePercent} onChange={(event) => setEasePercent(Number(event.currentTarget.value))} /></label>
-      <label>{cuff ? 'Body above the cuff (cm)' : 'Rib body (cm)'}<input required type="number" step="0.5" min="2" max="60" value={bodyCm} onChange={(event) => setBodyCm(Number(event.currentTarget.value))} /></label>
-      <label>Cuff<select value={cuff ? 'cuff' : 'rib'} onChange={(event) => setCuff(event.currentTarget.value === 'cuff')}><option value="cuff">Rib cuff + colourwork body</option><option value="rib">All 2x2 rib, one colour</option></select></label>
-    </div>
-    {cuff && <div className="project-dialog-grid">
-      <label>Visible cuff height (cm)<input required type="number" step="0.5" min="1" max="30" value={cuffCm} onChange={(event) => setCuffCm(Number(event.currentTarget.value))} /></label>
-      <label className="check-label"><input type="checkbox" checked={fold} onChange={(event) => setFold(event.currentTarget.checked)} /> Folds up</label>
-    </div>}
-    {cuff ? gauge('Body gauge', bodyGauge, setBodyGauge) : gauge('Rib gauge', ribGauge, setRibGauge)}
-    {cuff && gauge('Cuff (2x2 rib) gauge', ribGauge, setRibGauge)}
+    <fieldset><legend>Style</legend><div className="silhouette-cards two">{styles.map((choice) => <button key={choice.id} type="button" className={(choice.id === 'cuffed') === cuff ? 'active' : ''} aria-pressed={(choice.id === 'cuffed') === cuff} onClick={() => setCuff(choice.id === 'cuffed')} title={choice.note}><BeanieIcon style={choice.id} /><b>{choice.name}</b></button>)}</div>
+      <p className="garment-help">{styles.find((choice) => (choice.id === 'cuffed') === cuff)!.note}</p></fieldset>
+    <fieldset className="choice-rows"><legend>Size and fit</legend>
+      <div><span>Head</span><div className="choice-pills">{BEANIE_HEADS.map((choice) => <button key={choice.id} type="button" className={head === choice.cm ? 'active' : ''} aria-pressed={head === choice.cm} onClick={() => setHead(choice.cm)} title={`${choice.cm} cm around the head`}>{choice.name}</button>)}
+        <label className="inline-number"><input required type="number" step="0.5" min="30" max="80" value={head} aria-label="Head circumference (cm)" onChange={(event) => setHead(Number(event.currentTarget.value))} />cm</label></div></div>
+      <div><span>Fit</span><div className="choice-pills">{BEANIE_FITS.map((choice) => <button key={choice.id} type="button" className={fit === choice.id ? 'active' : ''} aria-pressed={fit === choice.id} onClick={() => setFit(choice.id)} title={`Knitted ${Math.round(-choice.ease * 100)}% smaller than the head, so it stays on.`}>{choice.name}</button>)}</div></div>
+      {cuff && <div><span>Cuff</span><div className="choice-pills"><button type="button" className={fold ? 'active' : ''} aria-pressed={fold} onClick={() => setFold(true)}>Folds up</button><button type="button" className={!fold ? 'active' : ''} aria-pressed={!fold} onClick={() => setFold(false)}>Single</button></div></div>}
+      <p className="garment-help">Every size can be changed after, and your swatch sizes the whole hat.</p></fieldset>
     <fieldset><legend>Yarns</legend><div className="yarn-pick">
       <label>Main<input aria-label="Main yarn name" value={main.name} onChange={(event) => setMain({ ...main, name: event.currentTarget.value })} /><input type="color" aria-label="Main yarn colour" value={main.hex} onChange={(event) => setMain({ ...main, hex: event.currentTarget.value.toUpperCase() })} /></label>
       {cuff && (accent ? <label>Accent<input aria-label="Accent yarn name" value={accent.name} onChange={(event) => setAccent({ ...accent, name: event.currentTarget.value })} /><input type="color" aria-label="Accent yarn colour" value={accent.hex} onChange={(event) => setAccent({ ...accent, hex: event.currentTarget.value.toUpperCase() })} /><button type="button" className="secondary-button" onClick={() => setAccent(null)}>Remove</button></label>
         : <button type="button" className="secondary-button" onClick={() => setAccent({ name: 'White', hex: '#F2F2F2' })}>Add an accent yarn</button>)}
     </div></fieldset>
-    {cuff && <fieldset><legend>Body backing</legend><div className="color-count-control">
-      <button type="button" className={backing === 'birdseye' ? 'active' : ''} onClick={() => setBacking('birdseye')}>Birdseye</button>
-      <button type="button" className={backing === 'fairisle' ? 'active' : ''} onClick={() => setBacking('fairisle')}>Fairisle</button>
-    </div><p className="garment-help">{backing === 'birdseye' ? 'Thicker and warmer. No long floats, so thin lines and logos work.' : 'Light. Unused colours float behind the work.'}</p></fieldset>}
-    <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || !main.name.trim()}><Check size={16} /> Create beanie</button></footer>
+    {cuff && <fieldset className="choice-rows"><legend>Body backing</legend><div><span /><div className="choice-pills">
+      <button type="button" className={backing === 'birdseye' ? 'active' : ''} aria-pressed={backing === 'birdseye'} onClick={() => setBacking('birdseye')}>Birdseye</button>
+      <button type="button" className={backing === 'fairisle' ? 'active' : ''} aria-pressed={backing === 'fairisle'} onClick={() => setBacking('fairisle')}>Fairisle</button>
+    </div></div><p className="garment-help">{backing === 'birdseye' ? 'Thicker and warmer. No long floats, so thin lines and logos work.' : 'Light. Unused colours float behind the work.'}</p></fieldset>}
+    <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || !main.name.trim() || !(head >= 30 && head <= 80)}><Check size={16} /> Create beanie</button></footer>
   </form>;
 }

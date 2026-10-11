@@ -29,7 +29,14 @@ runs, and the workspace shows exactly what those files knit.
     schematic reads back from the machine file), your swatch (its gauge: a
     new gauge resizes the whole hat and its motifs in one change), motifs,
     colours and backing.
-  - Colorwork scarf or blanket: size, colours and backing.
+  - Colour chart scarf or blanket: size in cm (Wanted / Knitted / Count,
+    and the first needle on the bed), your swatch (a new gauge resizes the
+    chart to keep its size in cm), colours and backing. A chart with no
+    gauge is sized in needles and rows until a swatch is entered.
+- **New project** asks only what shapes the piece, with pictures where a
+  style is chosen: a sweater's style, neck, size and fit; a beanie's style
+  (cuffed or rib), head size, fit and cuff; a scarf or blanket in cm.
+  Gauges start as typical values and are entered under Your swatch.
 - **Middle:** the pieces, when there are several, on the left of the stage
   bar. On its right, always in the same place, the three views:
   - **Design:** what you edit. That is the chart, or a piece's stitches and

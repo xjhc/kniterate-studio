@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createColorworkProjectV1, materializeColorworkProject } from '@kniterate-studio/project-contract';
 import { AuthoredVerdictBadge } from '../App';
 import { BlanketSetupRail } from './BlanketSetupRail';
+import { ChartSizeSection } from '../chart/ChartSizeSection';
 import { compileColorworkProject } from './compileProject';
 
 describe('authored verdict badge', () => {
@@ -38,9 +39,7 @@ describe('BlanketSetupRail', () => {
       state={state}
       compile={{ status: 'ready', artifact, error: null, comparisons: [] }}
       outputError={null}
-      onWidth={() => {}}
-      onHeight={() => {}}
-      onNeedleOffset={() => {}}
+      size={<ChartSizeSection state={state} onSize={() => {}} onGauge={() => {}} onNeedles={() => {}} onRows={() => {}} onNeedleOffset={() => {}} />}
       onStrategy={() => {}}
       onFloatLimit={() => {}}
       onAssignment={() => {}}

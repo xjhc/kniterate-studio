@@ -168,7 +168,9 @@ export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], 
     status = 'needs-measurements';
     headline = 'Ready to knit, sizes not confirmed';
     const parts = [...new Set(items.map((item) => (item.target === 'gauge.rib' ? 'rib' : 'body')))];
-    detail = `The ${parts.join(' and ')} gauge${parts.length === 1 ? ' is a typical value' : 's are typical values'} until you measure a swatch.`;
+    detail = plan.piece === 'beanie'
+      ? `The ${parts.join(' and ')} gauge${parts.length === 1 ? ' is a typical value' : 's are typical values'} until you measure a swatch.`
+      : 'The gauge is a typical value until you measure a swatch.';
   } else {
     status = 'design-issues';
     const design = items.filter((item) => !MEASUREMENT_RULES.has(item.rule));
