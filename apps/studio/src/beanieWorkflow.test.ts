@@ -244,7 +244,7 @@ describe('third review', () => {
     expect(readiness.ready).toBe(false);
     const story = readinessStory(plan, findings, readiness, result.verdict, materializeColorworkProject(revised).state.trials);
     expect(story.headline).toBe('Fit needs measurements');
-    expect(story.notices[0]).toContain('SYNTHETIC');
+    expect(story.notices[0]).toContain('test data');
     const files = await handoffFiles({ project: revised, serializedProject: JSON.stringify(revised), plan, result, findings, readiness, sha256: async () => 'h' });
     expect(files['instructions.md']).toContain('SYNTHETIC (software test, not knitted)');
     expect(JSON.parse(files['manifest.json'] as string).trials[0]).toMatchObject({ synthetic: true });

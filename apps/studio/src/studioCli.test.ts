@@ -93,7 +93,7 @@ describe('authored CLI command receipts', () => {
     const described = cli(['describe', projectPath]);
     expect(described.status).toBe(0);
     expect(described.receipt.readiness).toMatchObject({ ready: true, blockers: [] });
-    expect(described.receipt.readiness.operatorChecks.join('\n')).toContain('X-carrier-spacing');
+    expect(described.receipt.readiness.operatorChecks.join('\n')).toContain('Set carrier spacing to 2 on the machine');
     expect(described.receipt.summary).toContain('Readiness: READY');
     expect(described.receipt.summary.join('\n')).toContain('Panel: 39 st × 41 rows');
     for (const view of ['chart', 'back', 'speed']) {

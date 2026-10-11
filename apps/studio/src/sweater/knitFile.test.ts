@@ -13,14 +13,28 @@ describe('a piece machine file read back', () => {
     const result = await runSweaterPipeline(createSweaterProject(intent(), { id: 'file', source: 'human', group: 'create' }));
     const piece = result.pieces.find((item) => item.id === 'front')!;
     const raster = result.plan.pieces.find((item) => item.id === 'front')!.raster!;
-    const file = readKnitFile(piece.kcode!, raster, result.plan.carriers, 'body')!;
+    const file = readKnitFile(piece.kcode!, { zoneOfRow: (row) => raster.rows[row]!.zone, carriers: result.plan.carriers, kind: 'body' })!;
     const trace = piece.kcode!.trace!;
 
-    // Every knit and tuck action in the file is one mark in the picture ('x' is both beds at one needle).
-    const actions = trace.passes.reduce((sum, pass) => sum + pass.actions.filter((action) => action.kind === 'knit' || action.kind === 'tuck').length, 0);
-    const marks = file.courses.reduce((sum, course) => sum + [...course.stitches].reduce((count, mark) => count + (mark === '.' ? 0 : mark === 'x' ? 2 : 1), 0), 0);
-    expect(marks).toBe(actions);
+    // Each design row is one course: every front-bed stitch of its passes shows there as knitted,
+    // and every mark on it comes from a stitch of those passes.
     expect(file.passCount).toBe(trace.passes.length);
+    const offset = piece.kcode!.coordinateBridge!.offsets.compilerProjectToTraceCoordinate;
+    for (const course of file.courses.filter((item) => item.row !== null)) {
+      const made = new Map<number, Set<string>>();
+      for (const index of file.passes.flatMap((pass, k) => (pass.course === file.courses.indexOf(course) ? [k] : []))) {
+        for (const action of trace.passes[index]!.actions) {
+          if (action.kind !== 'knit' && action.kind !== 'tuck') continue;
+          const at = action.at.traceCoordinate - offset - file.needles.lo;
+          const mark = action.kind === 'tuck' ? 't' : action.at.bed === 'front' ? 'k' : 'p';
+          made.set(at, (made.get(at) ?? new Set()).add(mark));
+          if (action.at.bed === 'front') expect(course.stitches[at]).toBe(mark);
+        }
+      }
+      [...course.stitches].forEach((mark, at) => { if (mark !== '.') expect(made.get(at)?.has(mark)).toBe(true); });
+    }
+    // Every course outside the design rows is made of the file's own stitches too.
+    expect(file.courses.filter((course) => course.row === null).every((course) => course.passes.length > 0 || /[^.]/.test(course.stitches))).toBe(true);
 
     // Sections run in file order, cover every pass, and read as the machine knits it.
     expect(file.sections[0]!.passes.from).toBe(0);
@@ -54,7 +68,8 @@ describe('a piece machine file read back', () => {
   it('says what each pass does in words', { timeout: 120_000 }, async () => {
     const result = await runSweaterPipeline(createSweaterProject(intent({ textureId: 'stockinette' }), { id: 'file', source: 'human', group: 'create' }));
     const piece = result.pieces.find((item) => item.id === 'sleeve')!;
-    const file = readKnitFile(piece.kcode!, result.plan.pieces.find((item) => item.id === 'sleeve')!.raster!, result.plan.carriers, 'sleeve')!;
+    const raster = result.plan.pieces.find((item) => item.id === 'sleeve')!.raster!;
+    const file = readKnitFile(piece.kcode!, { zoneOfRow: (row) => raster.rows[row]!.zone, carriers: result.plan.carriers, kind: 'sleeve' })!;
     expect(file.sections.find((section) => section.kind === 'rib')!.label).toBe('Cuff rib');
     expect(file.sections.some((section) => section.kind === 'shoulders')).toBe(false);
     const knit = file.passes.findIndex((pass) => pass.kind === 'knit' && pass.carrier === '3' && pass.row !== null);

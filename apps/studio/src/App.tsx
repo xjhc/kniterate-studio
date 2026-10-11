@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type CSSProperties, type DragEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type CSSProperties } from 'react';
 import {
   AlertTriangle,
   ArrowDown,
@@ -9,29 +9,27 @@ import {
   ChevronRight,
   CircleAlert,
   Code2,
-  Download,
-  FileCode2,
   FilePlus2,
-  FileUp,
-  Grid3X3,
-  History,
-  Package,
   ListChecks,
   LoaderCircle,
-  Moon,
   Network,
-  PanelRight,
   Printer,
   Rows3,
-  Sun,
   X,
 } from 'lucide-react';
 import { KNITERATE_7GG_KCODE_PROFILE_V2, deriveMachineTraceProgrammedMotionV1, matchKnitProvenArtifact, type MachineTraceProgrammedMotionV1 } from '@kniterate-studio/machine-lib/browser';
 import { MACHINE_PASS_ORIGIN_LABELS, formatPassRoleCounts, machinePassRoleLabel, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDiff, type MachinePass } from './engine';
-import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, renameColorworkProject, serializeColorworkProjectV1, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, redoProjectEdit, renameColorworkProject, serializeColorworkProjectV1, undoProjectEdit, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import type { AuthoredPipelineResult } from './authoredPipeline';
 import { createBeanieProject, type BeanieIntent } from './beanie';
-import { createSweaterProject, type SweaterIntent } from './sweater/sweater';
+import { createSweaterProject, planSweater, type SweaterIntent } from './sweater/sweater';
+import type { PieceId } from './sweater/draft';
+import { sweaterInstructions, sweaterPackageFiles } from './sweater/sweaterHandoff';
+import { sweaterSchematicSvg } from './sweater/schematic';
+import { MenuBar, type Menu } from './workspace/MenuBar';
+import type { WorkspaceView } from './workspace/ViewSwitch';
+import { openStudioProjectFile } from './chart/projectFile';
+import './workspace/workspace.css';
 import { useSweaterRun } from './sweater/sweaterRun';
 import { SweaterWorkspace } from './sweater/SweaterWorkspace';
 import { StartScreen } from './StartScreen';
@@ -127,6 +125,14 @@ async function chartPng(state: ReturnType<typeof materializeColorworkProject>['s
   return new Uint8Array(await blob.arrayBuffer());
 }
 
+function download(name: string, blob: Blob) {
+  const link = window.document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = name;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
 function projectId(title: string): string {
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'colorwork';
   return `${slug}-${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
@@ -146,30 +152,6 @@ export function AuthoredVerdictBadge({ verdict, pending, onClick }: { verdict: A
   // A null verdict means lowering is still in progress; the badge is the top bar's single progress and verdict signal.
   if (!verdict) return <span className="verdict authored-verdict verdict-pending" role="status" aria-label={pending === 'compiling' ? 'Compiling project' : 'Checking emitted KCode'}><LoaderCircle size={12} className="spin" />{pending === 'compiling' ? 'Compiling' : 'Checking KCode'}</span>;
   return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={verdict.annotation} aria-label={`Verdict: ${verdict.label}${verdict.evidenceId ? ' / Exact physical match' : ''}`} onClick={onClick}><span className="verdict-dot" />{verdict.label}</button>;
-}
-
-function EmptyState({ active, onOpen, onDrop }: { active: boolean; onOpen: () => void; onDrop: (file: File) => void }) {
-  const [dragging, setDragging] = useState(false);
-  return (
-    <main
-      className={`empty-state${dragging ? ' dragging' : ''}`}
-      onDragEnter={() => setDragging(true)}
-      onDragLeave={() => setDragging(false)}
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={(event: DragEvent<HTMLElement>) => {
-        event.preventDefault(); setDragging(false);
-        if (event.dataTransfer.files[0]) onDrop(event.dataTransfer.files[0]);
-      }}
-    >
-      <div className="empty-mark"><FileCode2 size={30} /></div>
-      <h1>Open a machine file</h1>
-      <p>.kc or Knitout .k</p>
-      <button className="primary-button" type="button" onClick={onOpen} disabled={!active}>
-        <FileUp size={17} /> Choose file
-      </button>
-      <span className="local-note">Stays on this device</span>
-    </main>
-  );
 }
 
 function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = false }: {
@@ -570,12 +552,18 @@ export function App() {
   // The project's controls show once there is a project to work on.
   const projectChrome = !document && !showStart;
   const [showProjectSettings, setShowProjectSettings] = useState(false);
+  const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('design');
+  const projectInput = useRef<HTMLInputElement>(null);
+  const [appError, setAppError] = useState<string | null>(null);
+  // Each opened file is a new document session, even with the same project id: pending work from the last one is dropped.
+  const [openGeneration, setOpenGeneration] = useState(0);
   const [autosaveState, setAutosaveState] = useState<'saving' | 'saved' | 'failed'>(initial.recoveredAt ? 'saved' : 'saving');
   const blanketCompile = useBlanketCompiler(project);
   const materializedProject = useMemo(() => materializeColorworkProject(project), [project]);
   const authoredState = materializedProject.state;
   const isSweater = authoredState.object?.kind === 'sweater';
   const sweaterRun = useSweaterRun(isSweater ? project : null);
+  const sweaterPlan = useMemo(() => (isSweater ? planSweater(authoredState) : null), [isSweater, authoredState]);
   const plan = useMemo(() => planProject(materializedProject.state, materializedProject.placements), [materializedProject]);
   const [showChanges, setShowChanges] = useState(false);
   const [changesFrom, setChangesFrom] = useState<number | null>(null);
@@ -649,6 +637,7 @@ export function App() {
   const openProjectFile = (opened: ColorworkProjectV1) => {
     const from = continuationFrom(project, opened);
     setProject(opened);
+    setOpenGeneration((value) => value + 1);
     setShowStart(false);
     if (from !== null) { setChangesFrom(from); setShowChanges(true); } else setChangesFrom(null);
   };
@@ -676,12 +665,44 @@ export function App() {
   };
   const downloadKCode = () => {
     if (!authoredExportReady || !kcodeState.artifact) return;
-    const link = window.document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([kcodeState.artifact.kcText], { type: 'text/plain' }));
-    link.download = `${project.id}.kc`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    download(`${project.id}.kc`, new Blob([kcodeState.artifact.kcText], { type: 'text/plain' }));
   };
+
+  // One place for every project action: the menu and the panels call these.
+  const canUndo = project.history.cursor > 0;
+  const canRedo = project.history.cursor < project.history.entries.length;
+  const undo = () => { if (canUndo) setProject(undoProjectEdit(project)); };
+  const redo = () => { if (canRedo) setProject(redoProjectEdit(project)); };
+  const saveProject = () => download(`${project.id}.kniterate-studio.json`, new Blob([serializeColorworkProjectV1(project)], { type: 'application/json' }));
+  const openProjectInput = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    try { openProjectFile((await openStudioProjectFile(file)).project); setDocument(null); setAppError(null); } catch (error) { setAppError(error instanceof Error ? error.message : String(error)); }
+  };
+  const sweaterReady = isSweater && sweaterRun.current && sweaterRun.summary !== null;
+  const downloadSweaterPackage = async () => {
+    if (!sweaterPlan || !sweaterRun.current || !sweaterRun.summary?.exportReady) return;
+    setPackaging(true);
+    try {
+      const files = await sweaterPackageFiles({ project, serializedProject: serializeColorworkProjectV1(project), plan: sweaterPlan, summary: sweaterRun.summary, sha256: sha256Hex });
+      download(`${project.id}-sweater.zip`, new Blob([zipStore(files)], { type: 'application/zip' }));
+    } catch (error) { setAppError(error instanceof Error ? error.message : String(error)); } finally { setPackaging(false); }
+  };
+  const downloadSweaterPiece = (id: PieceId) => {
+    // Only a file compiled from the design as it is now.
+    const piece = sweaterRun.current ? sweaterRun.summary?.pieces.find((item) => item.id === id) : undefined;
+    if (piece?.kcText) download(`${project.id}-${id}.kc`, new Blob([piece.kcText], { type: 'text/plain' }));
+  };
+  const downloadSweaterFiles = () => {
+    const pieces = sweaterRun.current && sweaterRun.summary?.exportReady ? sweaterRun.summary.pieces.filter((piece) => piece.kcText) : [];
+    if (pieces.length === 0) return;
+    download(`${project.id}-machine-files.zip`, new Blob([zipStore(Object.fromEntries(pieces.map((piece) => [`${piece.id}.kc`, piece.kcText!])))], { type: 'application/zip' }));
+  };
+  const canPackage = isSweater ? Boolean(sweaterReady && sweaterRun.summary?.exportReady) : authoredExportReady;
+  const canPrint = isSweater ? Boolean(sweaterReady) : authoredExportReady;
+  const packageProject = () => void (isSweater ? downloadSweaterPackage() : downloadPackage());
+  const printSheet = () => { if (document || canPrint) setShowRunSheet(true); };
 
   const showOpenedDocument = (opened: MachineDocument, comparison: boolean) => {
     if (comparison) { setCompare(opened); setView('diff'); }
@@ -727,29 +748,67 @@ export function App() {
     window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler);
   }, [document, selected, showRunSheet, view]);
 
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (!projectChrome || event.defaultPrevented || !(event.ctrlKey || event.metaKey) || (event.target as HTMLElement | null)?.closest('input, textarea, select')) return;
+      const key = event.key.toLowerCase();
+      if (key === 'z' && !event.shiftKey) { event.preventDefault(); undo(); }
+      else if (key === 'y' || (key === 'z' && event.shiftKey)) { event.preventDefault(); redo(); }
+    };
+    window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler);
+  });
+
+  const viewItems = document
+    ? (['machine', 'fabric', 'diff'] as const).map((item) => ({ label: item === 'machine' ? 'Passes' : item === 'fabric' ? 'Fabric' : 'Compare with another file', checked: view === item, onSelect: () => setView(item) }))
+    : (['design', 'schematic', 'file'] as const).map((item) => ({ label: item === 'design' ? 'Design' : item === 'schematic' ? 'Schematic' : 'Machine file', checked: workspaceView === item, disabled: !projectChrome, onSelect: () => setWorkspaceView(item) }));
+  const menus: Menu[] = [
+    { label: 'File', items: [
+      { label: 'New project…', onSelect: () => { setNewProjectKind(null); setShowNewProject(true); } },
+      { label: 'Open project…', onSelect: () => projectInput.current?.click() },
+      { label: 'Save project', onSelect: saveProject, disabled: !projectChrome },
+      ...(document ? [{ label: 'Back to your project', onSelect: () => { setDocument(null); setView('chart'); } }] : []),
+      'separator',
+      { label: 'Download knitting package', onSelect: packageProject, disabled: !projectChrome || !canPackage || packaging },
+      { label: isSweater ? 'Download machine files' : 'Download machine file', onSelect: isSweater ? downloadSweaterFiles : downloadKCode, disabled: !projectChrome || !canPackage },
+      { label: 'Print knitting sheet', onSelect: printSheet, disabled: document ? false : !projectChrome || !canPrint },
+      'separator',
+      { label: 'Check a machine file…', onSelect: () => fileInput.current?.click() },
+    ] },
+    { label: 'Edit', items: [
+      { label: 'Undo', onSelect: undo, disabled: !projectChrome || !canUndo, shortcut: 'Ctrl+Z' },
+      { label: 'Redo', onSelect: redo, disabled: !projectChrome || !canRedo, shortcut: 'Ctrl+Shift+Z' },
+      'separator',
+      { label: 'Name and colours…', onSelect: () => setShowProjectSettings(true), disabled: !projectChrome },
+    ] },
+    { label: 'View', items: [
+      ...viewItems,
+      'separator',
+      { label: 'History', onSelect: () => setShowChanges((value) => !value), checked: showChanges, disabled: !projectChrome || isSweater },
+      { label: 'Dark mode', onSelect: () => setTheme(theme === 'light' ? 'dark' : 'light'), checked: theme === 'dark' },
+    ] },
+  ];
+
   return (
-    <div className="app-shell" data-theme={theme}>
+    <div className="app-shell" data-theme={theme} data-autosave={autosaveState}>
       <header className="topbar">
-        <div className="brand-lockup"><span className="brand-mark" aria-hidden="true"><i /><i /><i /></span><span className="brand-copy"><strong>Kniterate Studio</strong><small>{document ? document.filename : project.title}</small></span></div>
-        <div className="topbar-actions">
-          {document && <button className={`icon-button${view === 'chart' ? ' active-tool' : ''}`} type="button" onClick={() => { setDocument(null); setView('chart'); }} title="Return to authored project" aria-label="Return to authored project"><Grid3X3 size={17} /></button>}
-          {projectChrome && blanketCompile.artifact?.ok && <button className={`icon-button${view === 'machine' ? ' active-tool' : ''}`} type="button" onClick={() => setView(view === 'machine' ? 'chart' : 'machine')} title={view === 'machine' ? 'Return to chart' : 'Inspect exact emitted movement'} aria-label={view === 'machine' ? 'Return to chart' : 'Inspect exact emitted movement'}>{view === 'machine' ? <Grid3X3 size={17} /> : <PanelRight size={17} />}</button>}
-          <button className="icon-button" type="button" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} title="Toggle theme" aria-label="Toggle theme">{theme === 'light' ? <Moon size={17} /> : <Sun size={17} />}</button>
-          {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
-          {projectChrome && isSweater && <AuthoredVerdictBadge verdict={sweaterRun.current ? sweaterRun.summary?.verdict ?? null : null} pending="checking" onClick={() => setShowVerdict((value) => !value)} />}
-          {projectChrome && !isSweater && <AuthoredVerdictBadge verdict={authoredVerdict} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} onClick={() => setShowVerdict((value) => !value)} />}
-          {projectChrome && !isSweater && <button className={`icon-button${showChanges ? ' active-tool' : ''}`} type="button" onClick={() => setShowChanges((value) => !value)} title="Changes" aria-label="Changes"><History size={17} /></button>}
-          {(document || (authoredExportReady && !showStart)) && <button className="icon-button" type="button" onClick={() => setShowRunSheet(true)} title="Run sheet" aria-label="Open run sheet"><Printer size={17} /></button>}
-          {projectChrome && !isSweater && <button className="secondary-button top-package" type="button" onClick={() => void downloadPackage()} disabled={!authoredExportReady || packaging} title={authoredExportReady ? `Project, program, instructions, schematic and measurement form · ${authoredStory?.story.headline ?? ''}` : 'Resolve blocking findings before export'} aria-label="Export package">{packaging ? <LoaderCircle size={15} className="spin" /> : <Package size={15} />}<span>Package</span></button>}
-          {projectChrome && !isSweater && <button className="primary-button top-export" type="button" onClick={downloadKCode} disabled={!authoredExportReady} title={authoredExportReady ? 'Export validated K-code' : kcodeState.status === 'converting' ? 'Validating K-code' : 'Resolve blocking findings before export'} aria-label="Export k-code"><Download size={16} /><span>Export .kc</span></button>}
-          <button className="icon-button top-open" type="button" onClick={() => fileInput.current?.click()} title="Open machine file" aria-label="Open machine file"><FileUp size={16} /></button>
-        </div>
+        <div className="brand-lockup"><span className="brand-mark" aria-hidden="true"><i /><i /><i /></span><span className="brand-copy"><strong>Kniterate Studio</strong><small>{document ? document.filename : project.title}{projectChrome && autosaveState === 'failed' ? ' · not saved on this device' : ''}</small></span></div>
+        <MenuBar menus={menus} />
+        <span className="topbar-spacer" />
+        {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
+        {projectChrome && isSweater && <AuthoredVerdictBadge verdict={sweaterRun.current ? sweaterRun.summary?.verdict ?? null : null} pending="checking" onClick={() => setShowVerdict((value) => !value)} />}
+        {projectChrome && !isSweater && <AuthoredVerdictBadge verdict={authoredVerdict} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} onClick={() => setShowVerdict((value) => !value)} />}
       </header>
+      {appError && <div className="machine-import-status" role="alert"><span>{appError}</span><button className="secondary-button" type="button" onClick={() => setAppError(null)}>Dismiss</button></div>}
+      <input ref={projectInput} className="file-input" type="file" accept=".json,application/json" aria-label="Project file to open" onChange={(event) => void openProjectInput(event)} />
       {importing && <div className="machine-import-status" role="status"><span>Checking {importing}…</span><button className="secondary-button" type="button" onClick={() => { importController.current?.abort(); setImporting(null); }}>Cancel import</button></div>}
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {view === 'chart' && isSweater ? <SweaterWorkspace project={project} onProject={setProject} onOpenProject={openProjectFile} onNewProject={() => setShowNewProject(true)} run={sweaterRun} /> : view === 'chart' ? <ChartWorkspace project={project} onProject={setProject} onOpenProject={openProjectFile} plan={plan} story={authoredStory?.story ?? null} storyPending={blanketCompile.status !== 'ready' || displayedOutputStatus === 'converting'} candidateSha256={authoredExportReady ? kcodeState.artifact?.kcHash ?? null : null} onNewProject={() => setShowNewProject(true)} onProjectSettings={() => setShowProjectSettings(true)} autosaveState={autosaveState} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document && blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : !document ? <EmptyState active onOpen={() => fileInput.current?.click()} onDrop={(file) => void openFile(file)} /> : (
+      {!document && isSweater && sweaterPlan ? <SweaterWorkspace project={project} onProject={setProject} plan={sweaterPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} />
+        : !document ? <ChartWorkspace project={project} onProject={setProject} generation={openGeneration} plan={plan} story={authoredStory?.story ?? null} storyPending={blanketCompile.status !== 'ready' || displayedOutputStatus === 'converting'} candidateSha256={authoredExportReady ? kcodeState.artifact?.kcHash ?? null : null} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputError={kcodeState.error} view={workspaceView} onView={setWorkspaceView}
+            status={{ verdict: authoredVerdict, exportReady: authoredExportReady, packaging, onPackage: packageProject, onPrint: printSheet, onDownloadKc: downloadKCode }}
+            stepThrough={blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : null} />
+        : (
         <div className="workspace">
           <nav className="side-rail" aria-label="Workspace views">
             <button className={view === 'machine' ? 'active' : ''} type="button" onClick={() => setView('machine')} title="Machine passes"><Rows3 size={19} /></button>
@@ -758,7 +817,7 @@ export function App() {
           </nav>
           <main className={`machine-workspace${view === 'machine' ? '' : ' compact-workspace'}`}>
             <div className="workspace-head">
-              <div><span className="eyebrow">Machine truth</span><h1>{view === 'machine' ? 'Pass grid' : view === 'fabric' ? 'Schematic topology' : 'Compare machine passes'}</h1></div>
+              <div><span className="eyebrow">Machine file</span><h1>{view === 'machine' ? 'Passes' : view === 'fabric' ? 'Fabric' : 'Compare with another file'}</h1></div>
               <div className="stat-strip"><span><b>{document.stats.passMetricProvenance === 'strict-kcode-trace' ? document.stats.passCount.toLocaleString() : '—'}</b> programmed passes</span><span><b>{document.stats.loopFormingPassCount === null ? '—' : document.stats.loopFormingPassCount.toLocaleString()}</b> loop-forming</span>{document.stats.passRoles !== null && <span><b>{(document.stats.passRoles['carrier-move'] + document.stats.passRoles['carriage-move']).toLocaleString()}</b> carrier/carriage moves</span>}<span><b>{document.stats.carriers.length}</b> carriers</span><span><b>{document.stats.needleSpan}</b></span><span><b>rack {document.stats.rackRange}</b></span></div>
             </div>
             {view === 'machine' && <div className="mobile-tabs">
@@ -782,8 +841,9 @@ export function App() {
       {!document && showVerdict && !isSweater && authoredVerdict && <AuthoredVerdictPanel verdict={authoredVerdict} onClose={() => setShowVerdict(false)} />}
       {!document && showVerdict && isSweater && sweaterRun.current && sweaterRun.summary && <AuthoredVerdictPanel verdict={sweaterRun.summary.verdict} onClose={() => setShowVerdict(false)} />}
       {document && showRunSheet && <RunSheet document={document} onClose={() => setShowRunSheet(false)} />}
+      {!document && showRunSheet && isSweater && sweaterPlan && <GarmentSheet markdown={sweaterInstructions(project, sweaterPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={sweaterSchematicSvg(sweaterPlan, authoredState.chart.palette[0]!.hex)} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && authoredExportReady && authoredStory && authoredState.object?.kind === 'beanie' && <GarmentSheet markdown={instructionsMarkdown(project, plan, authoredStory.result, authoredStory.findings, authoredStory.readiness)} schematic={schematicSvg(project, plan)} onClose={() => setShowRunSheet(false)} />}
-      {!document && showRunSheet && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && authoredState.object?.kind !== 'beanie' && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
+      {!document && showRunSheet && !isSweater && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && authoredState.object?.kind !== 'beanie' && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
       {showStart && !document && <StartScreen onNew={(kind) => { setNewProjectKind(kind); setShowNewProject(true); }} onOpenProject={openProjectFile} onOpenMachineFile={() => fileInput.current?.click()} onBlank={() => setShowStart(false)} />}
       {showNewProject && <NewProjectDialog onCreate={createProject} onCreateBeanie={createBeanie} onCreateSweater={createSweater} initialKind={newProjectKind ?? (isSweater ? 'sweater' : 'rectangle')} onClose={() => { setShowNewProject(false); setNewProjectKind(null); }} />}
       {!document && !isSweater && showChanges && <ChangesPanel project={project} highlightFrom={changesFrom} onProject={setProject} onClose={() => { setShowChanges(false); setChangesFrom(null); }} />}

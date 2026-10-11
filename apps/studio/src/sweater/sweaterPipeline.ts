@@ -13,7 +13,7 @@ import { assessAuthoredCapacityV1, materializeColorworkProject, observeAuthoredC
 import { compileKCodeArtifact } from '../kcode/compileKCodeArtifact';
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
 import { resolveAuthoredVerdict, type AuthoredVerdict } from '../engine';
-import { resolveReadiness, type Finding, type Readiness } from '../readiness';
+import { resolveReadiness, settingName, type Finding, type Readiness } from '../readiness';
 import type { PieceId } from './draft';
 import { planSweater, type SweaterPiecePlan, type SweaterPlan } from './sweater';
 import { textureTransfersPerRepeat } from './textures';
@@ -199,6 +199,8 @@ export function sweaterFindings(plan: SweaterPlan, pieces: readonly SweaterPiece
   for (const piece of pieces) {
     for (const message of piece.kcode?.messages ?? []) {
       const header = /WARNING: Unknown comment header '([^']+)'/.exec(message.message);
+      // A machine setting the files do not carry is one note for the whole sweater.
+      if (header && findings.some((finding) => finding.rule === message.rule && finding.owner === 'operator' && finding.message.includes(settingName(header[1]!)))) continue;
       findings.push({
         stage: 'kcode',
         rule: message.rule,
@@ -206,7 +208,7 @@ export function sweaterFindings(plan: SweaterPlan, pieces: readonly SweaterPiece
         owner: header ? 'operator' : 'compiler',
         path: `pieces/${piece.id}`,
         title: message.rule,
-        message: header ? `${piece.name}: the ${header[1]} setting is not encoded in the .kc; confirm the controller setting before knitting.` : `${piece.name}: ${message.message}`,
+        message: header ? `Set ${settingName(header[1]!)} on the machine; the files do not set it.` : `${piece.name}: ${message.message}`,
         fixes: [],
       });
     }
@@ -219,8 +221,7 @@ export function sweaterFindings(plan: SweaterPlan, pieces: readonly SweaterPiece
     }
   }
   // What the operator loads and watches; never marked complete by software.
-  const yarn = plan.object.body.name;
-  findings.push({ stage: 'plan', rule: 'operator-yarns', severity: 'info', owner: 'operator', path: 'yarns', title: 'operator-yarns', message: `Load the main yarn on C${plan.carriers.main}${plan.carriers.second ? ` and a second cone of the same yarn on C${plan.carriers.second} (it knits the right shoulder after the neck split)` : ''}, waste yarn on C${plan.carriers.waste} and the draw thread on C${plan.carriers.draw}. Body texture: ${yarn}.`, fixes: [] });
-  if (plan.carriers.second) findings.push({ stage: 'plan', rule: 'carried-yarn', severity: 'info', owner: 'operator', path: 'yarns', title: 'carried-yarn', message: `On the front${plan.pieces.find((piece) => piece.id === 'back')?.raster?.events.some((event) => event.kind === 'neck-split') ? ' and back' : ''}, C${plan.carriers.second} is brought in during the waste section and carried up the right edge to the neck. Leave its strand slack while knitting and trim it after.`, fixes: [] });
+  findings.push({ stage: 'plan', rule: 'operator-yarns', severity: 'info', owner: 'operator', path: 'yarns', title: 'operator-yarns', message: `Yarn on C${plan.carriers.main}${plan.carriers.second ? `, a second cone of the same yarn on C${plan.carriers.second} (right shoulder)` : ''}, waste yarn on C${plan.carriers.waste}, draw thread on C${plan.carriers.draw}.`, fixes: [] });
+  if (plan.carriers.second) findings.push({ stage: 'plan', rule: 'carried-yarn', severity: 'info', owner: 'operator', path: 'yarns', title: 'carried-yarn', message: `On the front${plan.pieces.find((piece) => piece.id === 'back')?.raster?.events.some((event) => event.kind === 'neck-split') ? ' and back' : ''}, C${plan.carriers.second} runs up the right edge to the neck: keep it slack, trim it after.`, fixes: [] });
   return findings;
 }

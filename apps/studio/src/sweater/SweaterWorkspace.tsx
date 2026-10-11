@@ -1,60 +1,45 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { FilePlus2, FolderOpen, Redo2, Save, Undo2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   InvalidColorworkProjectError,
   appendProjectOperation,
   materializeColorworkProject,
-  redoProjectEdit,
-  serializeColorworkProjectV1,
-  undoProjectEdit,
   type ColorworkProjectV1,
   type ProjectEdit,
 } from '@kniterate-studio/project-contract';
-import { openStudioProjectFile } from '../chart/projectFile';
-import { GarmentSheet } from '../garment/GarmentSheet';
-import { sha256Hex } from '../garment/MotifPanel';
-import { zipStore } from '../zip';
+import { FilesOverview } from '../workspace/FilesOverview';
+import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
 import type { PieceId } from './draft';
-import { AssembledView, GarmentView } from './GarmentView';
+import { AssembledView, GarmentView, type PieceRun } from './GarmentView';
+import { RunSchematic } from '../workspace/RunSchematic';
 import { KnitFileView } from './KnitFileView';
 import { PieceView, type PieceMode } from './PieceView';
-import { planSweater, sweaterEdit } from './sweater';
+import type { RhythmStep } from './rhythm';
+import { ShapingList } from './ShapingList';
+import { sweaterEdit, type SweaterPlan } from './sweater';
 import { SweaterDesignPanel } from './SweaterDesignPanel';
-import { sweaterInstructions, sweaterPackageFiles } from './sweaterHandoff';
 import type { SweaterRunState } from './sweaterRun';
 import { SweaterStatusPanel } from './SweaterStatusPanel';
-import { sweaterSchematicSvg } from './schematic';
 import './sweater.css';
 
-function download(name: string, blob: Blob) {
-  const link = window.document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = name;
-  link.click();
-  URL.revokeObjectURL(link.href);
-}
-
-/** The sweater workspace: design on the left, the garment in the middle, its status and files on the right. */
-export function SweaterWorkspace({ project, onProject, onOpenProject, onNewProject, run }: {
+/** The sweater workspace: what you are making on the left, the views in the middle, status and files on the right. */
+export function SweaterWorkspace({ project, onProject, plan, run, view, onView, onPackage, onPrint, onDownloadPiece, packaging }: {
   project: ColorworkProjectV1;
   onProject: (project: ColorworkProjectV1) => void;
-  /** A project file opened from disk (it may continue this one). */
-  onOpenProject: (project: ColorworkProjectV1) => void;
-  onNewProject: () => void;
+  plan: SweaterPlan;
   run: SweaterRunState;
+  view: WorkspaceView;
+  onView: (view: WorkspaceView) => void;
+  onPackage: () => void;
+  onPrint: () => void;
+  onDownloadPiece: (piece: PieceId) => void;
+  packaging: boolean;
 }) {
-  const projectInput = useRef<HTMLInputElement>(null);
   const { state } = useMemo(() => materializeColorworkProject(project), [project]);
-  const plan = useMemo(() => planSweater(state), [state]);
-  const [view, setView] = useState<'garment' | PieceId>('garment');
+  const [piece, setPiece] = useState<'garment' | PieceId>('garment');
   const [pieceMode, setPieceMode] = useState<PieceMode>('stitches');
-  const [garmentView, setGarmentView] = useState<'worn' | 'flat'>('worn');
   const [error, setError] = useState<string | null>(null);
-  const [packaging, setPackaging] = useState(false);
-  const [showPattern, setShowPattern] = useState(false);
+  const [highlight, setHighlight] = useState<RhythmStep | null>(null);
   const yarn = state.chart.palette[0]!;
-  const canUndo = project.history.cursor > 0;
-  const canRedo = project.history.cursor < project.history.entries.length;
 
   const operate = (label: string, edits: ProjectEdit[]): boolean => {
     try {
@@ -66,105 +51,92 @@ export function SweaterWorkspace({ project, onProject, onOpenProject, onNewProje
       return false;
     }
   };
-  useEffect(() => {
-    const handler = (event: KeyboardEvent) => {
-      if (!(event.ctrlKey || event.metaKey) || (event.target as HTMLElement | null)?.closest('input, textarea, select')) return;
-      if (event.key.toLowerCase() === 'z' && !event.shiftKey && canUndo) { event.preventDefault(); onProject(undoProjectEdit(project)); }
-      if ((event.key.toLowerCase() === 'y' || (event.key.toLowerCase() === 'z' && event.shiftKey)) && canRedo) { event.preventDefault(); onProject(redoProjectEdit(project)); }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [project, canUndo, canRedo, onProject]);
   // A piece that disappears (a boat neck has no neckband) falls back to the whole garment.
-  useEffect(() => { if (view !== 'garment' && !plan.pieces.some((piece) => piece.id === view)) setView('garment'); }, [plan, view]);
+  useEffect(() => { if (piece !== 'garment' && !plan.pieces.some((item) => item.id === piece)) setPiece('garment'); }, [plan, piece]);
 
-  const statuses = Object.fromEntries(plan.pieces.map((piece) => {
-    const result = run.current ? run.summary?.pieces.find((item) => item.id === piece.id) : undefined;
-    return [piece.id, result === undefined ? 'checking' : result.verdict.state === 'blocked' ? 'blocked' : 'ok'];
+  const statuses = Object.fromEntries(plan.pieces.map((item) => {
+    const result = run.current ? run.summary?.pieces.find((entry) => entry.id === item.id) : undefined;
+    return [item.id, result === undefined ? 'checking' : result.verdict.state === 'blocked' ? 'blocked' : 'ok'];
   })) as Partial<Record<PieceId, 'ok' | 'blocked' | 'checking'>>;
-  const selected = view === 'garment' ? null : plan.pieces.find((piece) => piece.id === view) ?? null;
-  const undoLabel = canUndo ? project.history.entries.slice(0, project.history.cursor).reverse().find((entry) => entry.label)?.label : undefined;
+  const selected = piece === 'garment' ? null : plan.pieces.find((item) => item.id === piece) ?? null;
+  const fileOf = (id: PieceId) => (run.current ? run.summary?.pieces.find((item) => item.id === id) : undefined);
+  const waiting = (id: PieceId, name: string) => {
+    const result = fileOf(id);
+    return !run.current || run.status === 'checking' ? `Writing ${id}.kc for this design…` : result?.error ?? `${name} has no machine file: it did not pass the machine checks.`;
+  };
+  const openFile = (id: PieceId) => { setPiece(id); onView('file'); };
+  // What each piece's file knits before the piece (waste yarn, draw thread, cast-on), to draw under it.
+  const runs: Partial<Record<PieceId, PieceRun>> = {};
+  for (const item of plan.pieces) {
+    const file = fileOf(item.id)?.file;
+    if (!file || !item.raster) continue;
+    const first = file.courses.findIndex((course) => course.row !== null);
+    if (first <= 0) continue;
+    const rowCm = item.raster.rowCm.body;
+    runs[item.id] = {
+      belowCm: first * rowCm,
+      drawsCm: file.courses.slice(0, first).flatMap((course, index) => (file.sections[course.section]!.kind === 'draw' ? [(first - index - 0.5) * rowCm] : [])),
+      // As wide as the waste yarn itself: the needles it knits before the piece starts.
+      widthCm: (Math.max(...file.courses.slice(0, first).map((course) => course.stitches.length - 1 - [...course.stitches].reverse().join('').search(/[^.]/))) - Math.min(...file.courses.slice(0, first).map((course) => course.stitches.search(/[^.]/))) + 1) * item.raster.stitchCm,
+      finish: file.sections.find((section) => section.kind === 'top')?.label ?? 'Bind-off',
+    };
+  }
 
-  const downloadPackage = async () => {
-    if (!run.summary?.exportReady || !run.current) return;
-    setPackaging(true);
-    try {
-      const files = await sweaterPackageFiles({ project, serializedProject: serializeColorworkProjectV1(project), plan, summary: run.summary, sha256: sha256Hex });
-      download(`${project.id}-sweater.zip`, new Blob([zipStore(files)], { type: 'application/zip' }));
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
-    } finally { setPackaging(false); }
-  };
-  const saveProject = () => download(`${project.id}.kniterate-studio.json`, new Blob([serializeColorworkProjectV1(project)], { type: 'application/json' }));
-  const openProject = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    try { onOpenProject((await openStudioProjectFile(file)).project); setError(null); } catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); }
-  };
-  const downloadPiece = (id: PieceId) => {
-    // Only a file compiled from the design as it is now.
-    const piece = run.current ? run.summary?.pieces.find((item) => item.id === id) : undefined;
-    if (piece?.kcText) download(`${project.id}-${id}.kc`, new Blob([piece.kcText], { type: 'text/plain' }));
-  };
+  const body = (() => {
+    if (selected === null) {
+      if (view === 'design') return <div className="garment-wrap"><AssembledView plan={plan} hex={yarn.hex} onOpen={setPiece} /><p className="stage-caption">As worn. Click a piece to open it.</p></div>;
+      if (view === 'schematic') return <div className="garment-wrap"><GarmentView plan={plan} hex={yarn.hex} statuses={statuses} onOpen={setPiece} runs={runs} /><p className="stage-caption">Each piece flat, as knitted, with its sizes, on the waste yarn (grey) and draw thread (red) it starts from. Click a piece to open it.</p></div>;
+      return <FilesOverview files={plan.pieces.map((item) => {
+        const result = fileOf(item.id);
+        return { id: item.id, name: item.name, fileName: `${item.id}.kc`, copies: item.copies, file: result?.file ?? null, waiting: result?.file ? null : waiting(item.id, item.name) };
+      })} onOpen={(id) => openFile(id as PieceId)} />;
+    }
+    if (!selected.raster) return <p className="stage-error">{selected.error}</p>;
+    if (view === 'file') {
+      // Only the file for this exact design: while it is rewritten after a change, say so rather than show the old one.
+      const result = fileOf(selected.id);
+      if (result?.file && result.kcText) return <div className="piece-wrap"><KnitFileView key={selected.id} file={result.file} kcText={result.kcText} fileName={`${selected.id}.kc`} copies={selected.copies} hex={yarn.hex} carriers={plan.carriers} stitchCm={selected.raster.stitchCm} rowCm={selected.raster.rowCm} onDownload={() => onDownloadPiece(selected.id)} /></div>;
+      return <p className="knitfile-waiting" role="status">{waiting(selected.id, selected.name)}</p>;
+    }
+    if (view === 'schematic') {
+      const result = fileOf(selected.id);
+      if (!result?.file) return <p className="knitfile-waiting" role="status">{waiting(selected.id, selected.name)}</p>;
+      return <div className="schematic-stage"><RunSchematic file={result.file} hex={yarn.hex} stitchCm={selected.raster.stitchCm} rowCm={selected.raster.rowCm} label={selected.name} /></div>;
+    }
+    return <div className="piece-wrap">
+      <div className="piece-summary"><h2>{selected.name}{selected.copies > 1 ? ` — knit ${selected.copies}` : ''}</h2><p>{selected.raster.realized.castOnStitches} stitches cast on · {selected.raster.rows.length} rows · {selected.raster.realized.widthCm} cm wide · {selected.raster.realized.heightCm} cm tall</p></div>
+      <PieceView raster={selected.raster} hex={yarn.hex} label={selected.name} mode={pieceMode} onMode={setPieceMode} highlight={highlight} editor={selected.id === 'neckband' ? undefined : (() => {
+        const kind = selected.id === 'sleeve' ? 'sleeve' as const : 'body' as const;
+        const object = plan.object;
+        return {
+          kind,
+          edge: plan.draft.edges[kind],
+          custom: plan.custom[kind],
+          outline: selected.draft.outline,
+          onChange: (edge, label) => { operate(label[0]!.toUpperCase() + label.slice(1), [sweaterEdit({ ...object, shapes: { ...object.shapes, [kind]: edge } })]); },
+          onReset: () => {
+            const { [kind]: _dropped, ...others } = object.shapes ?? {};
+            operate(`${kind === 'body' ? 'Body' : 'Sleeve'} shape from the measurements`, [sweaterEdit({ ...object, shapes: Object.keys(others).length > 0 ? others : undefined })]);
+          },
+        };
+      })()} />
+    </div>;
+  })();
 
   return <main className="sweater-workspace">
     <SweaterDesignPanel state={state} plan={plan} operate={operate} />
     <section className="sweater-stage" aria-label="Sweater">
       <header className="stage-head">
         <nav className="stage-tabs" aria-label="Pieces">
-          <button type="button" className={view === 'garment' ? 'active' : ''} onClick={() => setView('garment')}>Whole sweater</button>
-          {plan.pieces.map((piece) => <button key={piece.id} type="button" className={`${view === piece.id ? 'active' : ''} tab-${statuses[piece.id]}`} onClick={() => setView(piece.id)}>{piece.name}{piece.copies > 1 ? ` ×${piece.copies}` : ''}</button>)}
+          <button type="button" className={piece === 'garment' ? 'active' : ''} onClick={() => setPiece('garment')}>Whole sweater</button>
+          {plan.pieces.map((item) => <button key={item.id} type="button" className={`${piece === item.id ? 'active' : ''} tab-${statuses[item.id]}`} onClick={() => setPiece(item.id)}>{item.name}{item.copies > 1 ? ` ×${item.copies}` : ''}</button>)}
         </nav>
-        <div className="stage-tools">
-          <button type="button" className="icon-button" onClick={onNewProject} title="New project" aria-label="New project"><FilePlus2 size={16} /></button>
-          <button type="button" className="icon-button" onClick={() => projectInput.current?.click()} title="Open a project file" aria-label="Open project file"><FolderOpen size={16} /></button>
-          <button type="button" className="icon-button" onClick={saveProject} title="Save the project file" aria-label="Save project file"><Save size={16} /></button>
-          <input ref={projectInput} className="file-input" type="file" accept=".json,application/json" onChange={(event) => void openProject(event)} />
-          <span className="tool-divider" aria-hidden="true" />
-          <button type="button" className="icon-button" disabled={!canUndo} onClick={() => onProject(undoProjectEdit(project))} title={undoLabel ? `Undo: ${undoLabel}` : 'Undo'} aria-label="Undo"><Undo2 size={16} /></button>
-          <button type="button" className="icon-button" disabled={!canRedo} onClick={() => onProject(redoProjectEdit(project))} title="Redo" aria-label="Redo"><Redo2 size={16} /></button>
-        </div>
+        <ViewSwitch view={view} onView={onView} />
       </header>
       {error && <p className="stage-error" role="alert">{error}<button type="button" className="link-button" onClick={() => setError(null)}>Dismiss</button></p>}
-      <div className="stage-body">
-        {selected === null
-          ? <div className="garment-wrap">
-              <div className="garment-view-toggle" role="tablist" aria-label="Garment view">
-                <button type="button" role="tab" aria-selected={garmentView === 'worn'} className={garmentView === 'worn' ? 'active' : ''} onClick={() => setGarmentView('worn')}>As worn</button>
-                <button type="button" role="tab" aria-selected={garmentView === 'flat'} className={garmentView === 'flat' ? 'active' : ''} onClick={() => setGarmentView('flat')}>Flat pieces</button>
-              </div>
-              {garmentView === 'worn' ? <AssembledView plan={plan} hex={yarn.hex} onOpen={setView} /> : <GarmentView plan={plan} hex={yarn.hex} statuses={statuses} onOpen={setView} />}
-              <p className="stage-caption">{garmentView === 'worn' ? 'The front as worn, at true proportions, with the sleeves folded at the shoulders. Click a piece to see its stitches.' : 'Each piece as the machine knits it at your gauge, over its drafted shape (dashed), with the knitted sizes. Click a piece to see its stitches.'}</p>
-            </div>
-          : selected.raster
-            ? <div className="piece-wrap">
-                <div className="piece-summary"><h2>{selected.name}{selected.copies > 1 ? ` — knit ${selected.copies}` : ''}</h2><p>{selected.raster.realized.castOnStitches} stitches cast on · {selected.raster.rows.length} rows · {selected.raster.realized.widthCm} cm wide · {selected.raster.realized.heightCm} cm tall</p></div>
-                <PieceView raster={selected.raster} hex={yarn.hex} label={selected.name} mode={pieceMode} onMode={setPieceMode} editor={selected.id === 'neckband' ? undefined : (() => {
-                  const kind = selected.id === 'sleeve' ? 'sleeve' as const : 'body' as const;
-                  const object = plan.object;
-                  return {
-                    kind,
-                    edge: plan.draft.edges[kind],
-                    custom: plan.custom[kind],
-                    outline: selected.draft.outline,
-                    onChange: (edge, label) => { operate(label[0]!.toUpperCase() + label.slice(1), [sweaterEdit({ ...object, shapes: { ...object.shapes, [kind]: edge } })]); },
-                    onReset: () => {
-                      const { [kind]: _dropped, ...others } = object.shapes ?? {};
-                      operate(`${kind === 'body' ? 'Body' : 'Sleeve'} shape from the measurements`, [sweaterEdit({ ...object, shapes: Object.keys(others).length > 0 ? others : undefined })]);
-                    },
-                  };
-                })()} machineFile={(() => {
-                  // Only the file for this exact design: while it is rewritten after a change, say so rather than show the old one.
-                  const piece = run.current ? run.summary?.pieces.find((item) => item.id === selected.id) : undefined;
-                  if (piece?.file && piece.kcText) return <KnitFileView key={selected.id} file={piece.file} kcText={piece.kcText} fileName={`${selected.id}.kc`} copies={selected.copies} hex={yarn.hex} carriers={plan.carriers} stitchCm={selected.raster!.stitchCm} rowCm={selected.raster!.rowCm} onDownload={() => downloadPiece(selected.id)} />;
-                  return <p className="knitfile-waiting" role="status">{!run.current || run.status === 'checking' ? `Writing ${selected.id}.kc for this design and reading it back…` : piece?.error ?? `${selected.name} has no machine file: it did not pass the machine checks.`}</p>;
-                })()} />
-              </div>
-            : <p className="stage-error">{selected.error}</p>}
-      </div>
+      <div className="stage-body">{body}</div>
     </section>
-    <SweaterStatusPanel plan={plan} run={run} onOpenFile={(id) => { setView(id); setPieceMode('file'); }} onDownloadPiece={downloadPiece} onPackage={() => void downloadPackage()} onPrint={() => setShowPattern(true)} packaging={packaging} />
-    {showPattern && <GarmentSheet markdown={sweaterInstructions(project, plan, run.current ? run.summary : null)} schematic={sweaterSchematicSvg(plan, yarn.hex)} onClose={() => setShowPattern(false)} />}
+    <SweaterStatusPanel plan={plan} run={run} onOpenFile={openFile} onDownloadPiece={onDownloadPiece} onPackage={onPackage} onPrint={onPrint} packaging={packaging}
+      fileDetail={selected?.raster ? { id: selected.id, content: <ShapingList raster={selected.raster} onHover={setHighlight} /> } : undefined} />
   </main>;
 }

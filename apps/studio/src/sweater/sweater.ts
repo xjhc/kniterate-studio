@@ -172,8 +172,8 @@ export function planSweater(state: ProjectState): SweaterPlan {
   const needsSecond = pieces.some((piece) => piece.raster?.rows.some((row) => row.segments.length === 2) ?? false);
   const carriers = carriersOf(state, needsSecond);
 
-  if (gauge.source === 'assumed') findings.push({ rule: 'gauge-assumed', severity: 'warning', piece: null, path: 'gauge', message: `The body gauge (${gauge.stitchesPer10cm} st / ${gauge.rowsPer10cm} rows per 10 cm) is assumed, so every size in cm is a guess until you knit and measure a swatch in this yarn and ${object.body.name.toLowerCase()}.` });
-  if (ribGauge.source === 'assumed') findings.push({ rule: 'gauge-assumed', severity: 'warning', piece: null, path: 'object.ribGauge', message: `The rib gauge (${ribGauge.rowsPer10cm} rows per 10 cm) is assumed, so the rib heights are a guess until measured.` });
+  if (gauge.source === 'assumed') findings.push({ rule: 'gauge-assumed', severity: 'warning', piece: null, path: 'gauge', message: `Body gauge ${gauge.stitchesPer10cm} st / ${gauge.rowsPer10cm} rows per 10 cm is a guess: measure a ${object.body.name.toLowerCase()} swatch.` });
+  if (ribGauge.source === 'assumed') findings.push({ rule: 'gauge-assumed', severity: 'warning', piece: null, path: 'object.ribGauge', message: `Rib gauge ${ribGauge.rowsPer10cm} rows per 10 cm is a guess: measure a rib swatch.` });
   for (const piece of pieces) {
     if (piece.error !== null) { findings.push({ rule: 'sweater-piece-unplanned', severity: 'error', piece: piece.id, path: `pieces/${piece.id}`, message: `${piece.name}: ${piece.error}` }); continue; }
     const raster = piece.raster!;

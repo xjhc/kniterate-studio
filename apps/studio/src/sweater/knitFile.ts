@@ -1,13 +1,18 @@
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
-import type { PanelPlan } from './rasterize';
 
 /**
- * What a piece's .kc file makes the machine do, read back from the emitted
- * file itself (its strict trace), not from the design: every carriage pass
- * in order, grouped into the courses of fabric it knits and into the
+ * What a .kc file makes the machine do, read back from the emitted file
+ * itself (its strict trace and the compiler's row links), not from the
+ * design: every carriage pass in order, the fabric it knits, and the
  * sections of the run (waste yarn, draw thread, cast-on, rib, body, the
- * shoulders after the neck split, the top). The picture and the pass list
- * the browser shows are drawn only from this.
+ * shoulders after a neck split, the top). The picture and the pass list the
+ * browser shows are drawn only from this.
+ *
+ * The picture is the face of the fabric: each design row is one course; a
+ * needle shows its front-bed stitch (a knit), or its back-bed stitch (a purl
+ * from this side) when the front bed did not knit it. Passes outside the
+ * design rows (waste yarn, draw thread, cast-on, the top) stack on their own
+ * needles.
  *
  * Needle numbers are Studio's numbering (the pattern's), through the
  * verified authored-to-trace bridge; physical bed labels stay unverified.
@@ -32,7 +37,7 @@ export interface KnitFilePass {
   needles: { lo: number; hi: number } | null;
   /** Line span in the .kc text, 1-based and inclusive. */
   lines: { start: number; end: number } | null;
-  /** The design row (0-based) this pass belongs to, when it is part of one. */
+  /** The design row (0-based, in knitting order) this pass belongs to, when it is part of one. */
   row: number | null;
   /** The course this pass knits into, for passes that knit or tuck. */
   course: number | null;
@@ -42,7 +47,7 @@ export interface KnitFilePass {
 }
 
 export interface KnitFileCourse {
-  /** Per needle from `needles.lo`: '.' nothing, 'k' knit on the front bed, 'p' knit on the back bed, 'x' both, 't' tuck. */
+  /** Per needle from `needles.lo`: '.' nothing, 'k' a knit, 'p' a purl (back bed), 't' a tuck. */
   stitches: string;
   /** Per needle: the carrier that made the stitch, '.' for none. */
   carriers: string;
@@ -71,13 +76,20 @@ export interface KnitFile {
 }
 
 export interface KnitFileCarriers {
+  /** The yarn that casts on. */
   main: string;
+  /** A second cone of the main yarn (a sweater's right shoulder). */
   second: string | null;
   waste: string;
   draw: string;
+  /** Colourwork: every pattern carrier's yarn. */
+  yarns?: Record<string, { name: string; hex: string }>;
 }
 
-export function readKnitFile(kcode: KCodeArtifact, raster: PanelPlan, carriers: KnitFileCarriers, pieceKind: 'body' | 'sleeve' | 'band'): KnitFile | null {
+export type KnitFileKind = 'body' | 'sleeve' | 'band' | 'panel' | 'beanie';
+
+export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: number) => 'rib' | 'body'; carriers: KnitFileCarriers; kind: KnitFileKind }): KnitFile | null {
+  const { zoneOfRow, carriers, kind } = options;
   const trace = kcode.trace;
   if (trace === null || !kcode.ok) return null;
   const offset = kcode.coordinateBridge?.offsets.compilerProjectToTraceCoordinate ?? 0;
@@ -89,6 +101,7 @@ export function readKnitFile(kcode: KCodeArtifact, raster: PanelPlan, carriers: 
   const firstBody = kcode.passProvenance.findIndex((item) => item.sourceRows.length > 0);
   let lastBody = -1;
   kcode.passProvenance.forEach((item, index) => { if (item.sourceRows.length > 0) lastBody = index; });
+  const yarn = (carrier: string) => carrier === carriers.main || carrier === carriers.second || (carriers.yarns?.[carrier] !== undefined);
   const splitRow = (() => {
     if (carriers.second === null) return null;
     const index = trace.passes.findIndex((pass, i) => i >= firstBody && i <= lastBody && pass.carrier === carriers.second && pass.actions.some((action) => action.kind === 'knit'));
@@ -101,7 +114,7 @@ export function readKnitFile(kcode: KCodeArtifact, raster: PanelPlan, carriers: 
   let lastRole: KnitSectionKind = 'waste';
   let lastWork = -1;
   trace.passes.forEach((pass, index) => { if (pass.actions.some((action) => action.kind !== 'move')) lastWork = index; });
-  // The cast-on is the main yarn's knitting after the last draw-thread pass; before it, the main yarn is only being brought in.
+  // The cast-on is the yarn's knitting after the last draw-thread pass; before it, a yarn is only being brought in.
   let lastDraw = -1;
   trace.passes.forEach((pass, index) => { if ((firstBody === -1 || index < firstBody) && pass.carrier === carriers.draw && pass.actions.some((action) => action.kind === 'knit')) lastDraw = index; });
   trace.passes.forEach((pass, index) => {
@@ -109,10 +122,10 @@ export function readKnitFile(kcode: KCodeArtifact, raster: PanelPlan, carriers: 
     let role: KnitSectionKind;
     if (firstBody === -1 || index < firstBody) {
       if (!stitches) role = lastRole;
-      else role = pass.carrier === carriers.draw ? 'draw' : pass.carrier === carriers.main && index > lastDraw ? 'cast-on' : 'waste';
+      else role = pass.carrier === carriers.draw ? 'draw' : yarn(pass.carrier) && index > lastDraw ? 'cast-on' : 'waste';
     } else if (index <= lastBody) {
-      const row = rowOf(index)!;
-      role = raster.rows[row]?.zone === 'rib' ? 'rib' : splitRow !== null && row >= splitRow ? 'shoulders' : 'body';
+      const row = rowOf(index);
+      role = row === null ? lastRole : zoneOfRow(row) === 'rib' ? 'rib' : splitRow !== null && row >= splitRow ? 'shoulders' : 'body';
     } else {
       role = index > lastWork ? 'carriers-out' : 'top';
     }
@@ -130,7 +143,7 @@ export function readKnitFile(kcode: KCodeArtifact, raster: PanelPlan, carriers: 
     const section = sections.at(-1)!;
     passSection.push(sections.length - 1);
     const carrier = trace.passes[index]!.carrier;
-    if (carrier !== '0' && trace.passes[index]!.actions.some((action) => action.kind !== 'move') && !section.carriers.includes(carrier)) {
+    if (carrier !== '0' && trace.passes[index]!.actions.some((action) => action.kind !== 'move') && !section.carriers.includes(carrier) && !section.joins.includes(carrier)) {
       if (role === 'waste' && carrier !== carriers.waste) section.joins.push(carrier);
       else section.carriers.push(carrier);
     }
@@ -138,12 +151,8 @@ export function readKnitFile(kcode: KCodeArtifact, raster: PanelPlan, carriers: 
     if (row !== null) section.rows = section.rows ? { from: Math.min(section.rows.from, row), to: Math.max(section.rows.to, row) } : { from: row, to: row };
   });
   let ribRuns = 0;
-  for (const section of sections) section.label = sectionLabel(section, carriers, pieceKind, () => ribRuns++);
+  for (const section of sections) section.label = sectionLabel(section, carriers, kind, () => ribRuns++);
 
-  // Courses: stitches stack on their own needle, as fabric grows on each
-  // wale. Passes on different needles (two shoulders, the steps of a
-  // bind-off chain, the halves of a cast-on) share a course, and one
-  // shoulder's extra bind-off pass opens no gap in the other.
   let lo = Infinity;
   let hi = -Infinity;
   for (const pass of trace.passes) for (const action of pass.actions) {
@@ -151,55 +160,70 @@ export function readKnitFile(kcode: KCodeArtifact, raster: PanelPlan, carriers: 
   }
   if (!Number.isFinite(lo)) return null;
   const width = hi - lo + 1;
+  // Stitches outside the design rows stack on their own needles.
   const height = new Array<number>(width).fill(0);
   const grid: { stitches: string[]; carriers: string[]; passes: number[]; row: number | null; section: number }[] = [];
+  const course = (level: number, section: number) => {
+    while (grid.length <= level) grid.push({ stitches: new Array<string>(width).fill('.'), carriers: new Array<string>(width).fill('.'), passes: [], row: null, section });
+    return grid[level]!;
+  };
+  let bodyBase: number | null = null;
+  let bodyTop = -1;
+  const place = (target: ReturnType<typeof course>, at: number, mark: string, front: boolean, carrier: string) => {
+    // The face shows the front bed; a back-bed stitch only where the front bed has none.
+    const before = target.stitches[at]!;
+    if (!front && (before === 'k' || before === 't')) return;
+    target.stitches[at] = mark;
+    target.carriers[at] = carrier === '0' ? '.' : carrier;
+  };
   const passes: KnitFilePass[] = trace.passes.map((pass, index) => {
     const knit = { front: 0, rear: 0 };
     const transfer = { toRear: 0, toFront: 0 };
     let tuck = 0;
     let drop = 0;
-    const touched: { needle: number; mark: string }[] = [];
+    const touched: { needle: number; mark: string; front: boolean }[] = [];
     for (const action of pass.actions) {
-      if (action.kind === 'knit') { knit[action.at.bed === 'front' ? 'front' : 'rear']++; touched.push({ needle: needleOf(action.at.traceCoordinate), mark: action.at.bed === 'front' ? 'k' : 'p' }); }
-      else if (action.kind === 'tuck') { tuck++; touched.push({ needle: needleOf(action.at.traceCoordinate), mark: 't' }); }
+      if (action.kind === 'knit' || action.kind === 'tuck') {
+        const front = action.at.bed === 'front';
+        if (action.kind === 'knit') knit[front ? 'front' : 'rear']++; else tuck++;
+        touched.push({ needle: needleOf(action.at.traceCoordinate), mark: action.kind === 'tuck' ? 't' : front ? 'k' : 'p', front });
+      }
       else if (action.kind === 'xfer' || action.kind === 'split') transfer[action.source.bed === 'front' ? 'toRear' : 'toFront']++;
       else if (action.kind === 'drop') drop++;
     }
     const selected = [...pass.selections.front, ...pass.selections.rear].map((selection) => needleOf(selection.traceCoordinate));
-    const inside = (needle: number) => needle >= lo && needle <= hi;
-    let course: number | null = null;
-    if (touched.length > 0) {
+    const row = rowOf(index);
+    let placedAt: number | null = null;
+    if (touched.length > 0 && row !== null) {
+      // A design row is one course.
+      bodyBase ??= Math.max(0, ...height);
+      placedAt = bodyBase + row;
+      const target = course(placedAt, passSection[index]!);
+      for (const item of touched) place(target, item.needle - lo, item.mark, item.front, pass.carrier);
+      target.passes.push(index);
+      target.row = target.row === null ? row : Math.min(target.row, row);
+      bodyTop = Math.max(bodyTop, placedAt);
+    } else if (touched.length > 0) {
+      // After the design rows, stacking starts above them.
+      if (bodyBase !== null && index > lastBody && height.some((value) => value <= bodyTop)) for (let k = 0; k < width; k++) height[k] = Math.max(height[k]!, bodyTop + 1);
       // The pass's course is where most of its needles are; a needle with no
-      // fabric below that (a new stitch from an increase) starts there, and
-      // one already above it (the last stitch of a bind-off chain, knitted
-      // again by the row) stacks on its own needle.
+      // fabric below that starts there, and one already above it stacks on its own needle.
       const levels = new Map<number, number>();
       for (const item of touched) levels.set(item.needle, height[item.needle - lo]!);
       const counts = new Map<number, number>();
       for (const level of levels.values()) counts.set(level, (counts.get(level) ?? 0) + 1);
-      course = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]![0];
-      const row = rowOf(index);
+      placedAt = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0]![0];
       for (const [needle, own] of levels) {
-        const level = Math.max(own, course);
-        while (grid.length <= level) grid.push({ stitches: new Array<string>(width).fill('.'), carriers: new Array<string>(width).fill('.'), passes: [], row: null, section: passSection[index]! });
-        const target = grid[level]!;
-        const at = needle - lo;
-        for (const item of touched) {
-          if (item.needle !== needle) continue;
-          const before = target.stitches[at]!;
-          // Both beds knitting one needle position in one pass is a double stitch.
-          target.stitches[at] = before !== '.' && before !== item.mark && item.mark !== 't' && before !== 't' ? 'x' : item.mark;
-        }
-        target.carriers[at] = pass.carrier === '0' ? '.' : pass.carrier;
-        height[at] = level + 1;
+        const level = Math.max(own, placedAt);
+        const target = course(level, passSection[index]!);
+        for (const item of touched) if (item.needle === needle) place(target, needle - lo, item.mark, item.front, pass.carrier);
+        height[needle - lo] = level + 1;
       }
-      const target = grid[course]!;
-      target.passes.push(index);
-      if (row !== null) target.row = target.row === null ? row : Math.min(target.row, row);
+      course(placedAt, passSection[index]!).passes.push(index);
     }
     // A pass that knits nothing sits on top of the last stitches its needles hold.
-    const onNeedles = selected.filter(inside);
-    const at = course ?? (onNeedles.length > 0 ? Math.max(...onNeedles.map((needle) => height[needle - lo]!)) - 1 : null);
+    const onNeedles = selected.filter((needle) => needle >= lo && needle <= hi);
+    const at = placedAt ?? (row !== null && bodyBase !== null ? bodyBase + row - 1 : onNeedles.length > 0 ? Math.max(...onNeedles.map((needle) => height[needle - lo]!)) - 1 : null);
     const line = kcode.passLines[index];
     return {
       carrier: pass.carrier,
@@ -215,13 +239,19 @@ export function readKnitFile(kcode: KCodeArtifact, raster: PanelPlan, carriers: 
       drop,
       needles: selected.length > 0 ? { lo: Math.min(...selected), hi: Math.max(...selected) } : null,
       lines: line ? { start: line.lineStart, end: line.lineEnd } : null,
-      row: rowOf(index),
-      course,
+      row,
+      course: placedAt,
       at: at !== null && at >= 0 ? at : null,
       section: passSection[index]!,
     };
   });
-  const courses: KnitFileCourse[] = grid.map((item) => ({ stitches: item.stitches.join(''), carriers: item.carriers.join(''), passes: item.passes, row: item.row, section: item.section }));
+  // A design row whose passes are all linked to an earlier row leaves its course empty: close the gap.
+  const kept: number[] = [];
+  const renumber = new Map<number, number>();
+  grid.forEach((item, index) => { if (item.passes.length > 0 || item.stitches.some((mark) => mark !== '.')) { renumber.set(index, kept.length); kept.push(index); } });
+  const nearest = (index: number) => { for (let k = index; k >= 0; k--) { const to = renumber.get(k); if (to !== undefined) return to; } return null; };
+  for (const pass of passes) { pass.course = pass.course === null ? null : nearest(pass.course); pass.at = pass.at === null ? null : nearest(pass.at); }
+  const courses: KnitFileCourse[] = kept.map((index) => { const item = grid[index]!; return { stitches: item.stitches.join(''), carriers: item.carriers.join(''), passes: item.passes, row: item.row, section: item.section }; });
 
   return {
     passCount: trace.passes.length,
@@ -233,18 +263,19 @@ export function readKnitFile(kcode: KCodeArtifact, raster: PanelPlan, carriers: 
   };
 }
 
-function sectionLabel(section: KnitFileSection, carriers: KnitFileCarriers, pieceKind: 'body' | 'sleeve' | 'band', nextRib: () => number): string {
+function sectionLabel(section: KnitFileSection, carriers: KnitFileCarriers, kind: KnitFileKind, nextRib: () => number): string {
   switch (section.kind) {
     case 'waste': return 'Waste yarn';
     case 'draw': return 'Draw thread';
     case 'cast-on': return 'Cast-on';
     case 'rib': {
       const first = nextRib() === 0;
-      return pieceKind === 'band' ? 'Rib' : first ? (pieceKind === 'sleeve' ? 'Cuff rib' : 'Hem rib') : 'Top rib';
+      if (!first) return 'Top rib';
+      return kind === 'sleeve' || kind === 'beanie' ? 'Cuff rib' : kind === 'body' ? 'Hem rib' : 'Rib';
     }
-    case 'body': return 'Body';
+    case 'body': return kind === 'panel' ? 'Pattern' : 'Body';
     case 'shoulders': return carriers.second ? `Neck split: left shoulder on C${carriers.main}, right on C${carriers.second}` : 'Shoulders';
-    case 'top': return section.carriers.includes(carriers.waste) ? 'Waste yarn on top' : 'Bind-off';
+    case 'top': return kind === 'beanie' ? 'Crown' : section.carriers.includes(carriers.waste) ? 'Waste yarn on top' : 'Bind-off';
     case 'carriers-out': return 'Carriers out';
   }
 }

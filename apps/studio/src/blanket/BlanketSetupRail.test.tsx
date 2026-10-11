@@ -25,7 +25,7 @@ describe('authored verdict badge', () => {
 });
 
 describe('BlanketSetupRail', () => {
-  it('shows the fixed Customist frame and plan totals without a second verdict', () => {
+  it('shows size, colours and backing in plain words, without a second verdict or the machine frame', () => {
     const project = createColorworkProjectV1({
       kind: 'knitlab-colorwork-chart', version: 1, title: 'proof', width: 12, height: 8,
       rowNumbering: 'bottom-up',
@@ -46,11 +46,11 @@ describe('BlanketSetupRail', () => {
       onAssignment={() => {}}
     />);
     expect(markup).not.toContain('proven');
-    expect(markup).toContain(`${artifact.stats.passCount.toLocaleString()} passes`);
-    // The frame is fixed by the matched Customist program, not editable.
-    expect(markup).toContain('Customist fairisle.kc');
-    // The matched fairisle program brings in C1 as a frame yarn; the operator must load it.
-    expect(markup).toContain('frame yarn C1');
+    expect(markup).toMatch(/<h2>Size<\/h2>[^]*<h2>Colours<\/h2>[^]*<h2>Backing<\/h2>/);
+    expect(markup).toContain(`${Math.ceil(artifact.stats.estimatedKnitTimeSeconds! / 60)} min`);
+    // The machine frame (waste yarn, draw thread) is read in the Machine file view, not set here.
+    expect(markup).not.toContain('Customist');
+    expect(markup).not.toContain('passes');
     expect(markup).not.toContain('aria-label="Waste rows"');
     expect(markup).not.toContain('Complement');
   });

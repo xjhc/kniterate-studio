@@ -1,10 +1,11 @@
-import { AlertTriangle, CheckCircle2, CircleAlert, Download, LoaderCircle, Package, Printer } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { StatusPanel, type StatusTone } from '../workspace/StatusPanel';
 import type { PieceId } from './draft';
 import type { SweaterPlan } from './sweater';
 import type { SweaterRunState } from './sweaterRun';
 
-/** Plain-language state of the whole sweater: whether it can be knitted, what to fix, and the files. */
-export function SweaterStatusPanel({ plan, run, onOpenFile, onDownloadPiece, onPackage, onPrint, packaging }: {
+/** Whether the sweater can be knitted, what to fix, and its machine files. */
+export function SweaterStatusPanel({ plan, run, onOpenFile, onDownloadPiece, onPackage, onPrint, packaging, fileDetail }: {
   plan: SweaterPlan;
   run: SweaterRunState;
   /** Opens the piece's machine file: what the machine will knit for it. */
@@ -13,61 +14,50 @@ export function SweaterStatusPanel({ plan, run, onOpenFile, onDownloadPiece, onP
   onPackage: () => void;
   onPrint: () => void;
   packaging: boolean;
+  fileDetail?: { id: PieceId; content: ReactNode };
 }) {
   const summary = run.summary;
   const checking = run.status === 'checking' || !run.current;
   const designErrors = plan.findings.filter((finding) => finding.severity === 'error');
-  let tone: 'checking' | 'ready' | 'warn' | 'blocked' = 'checking';
+  let tone: StatusTone = 'checking';
   let title = 'Checking every piece…';
-  let detail = 'Each piece is being compiled and checked as a machine program.';
+  let detail = '';
   if (run.status === 'failed') { tone = 'blocked'; title = 'The check stopped'; detail = run.error ?? 'Unknown error.'; }
   else if (summary && !checking) {
-    if (!summary.exportReady) { tone = 'blocked'; title = 'Not knittable yet'; detail = 'A piece cannot be knitted as designed. Fix what is listed below.'; }
-    else if (summary.readiness.ready) { tone = 'ready'; title = 'Ready to knit'; detail = 'Every piece passed the machine checks and every size is backed by measured gauges.'; }
-    else { tone = 'warn'; title = 'Knittable — sizes not confirmed'; detail = 'Every piece passed the machine checks. The sizes rest on assumptions until you resolve the notes below.'; }
+    if (!summary.exportReady) { tone = 'blocked'; title = 'Not knittable yet'; detail = 'Fix what is listed below.'; }
+    else if (summary.readiness.ready) { tone = 'ready'; title = 'Ready to knit'; }
+    else { tone = 'warn'; title = 'Knittable — sizes not confirmed'; detail = 'Measure a swatch and enter your gauge to confirm the sizes.'; }
   } else if (designErrors.length > 0) { tone = 'blocked'; title = 'Not knittable yet'; detail = designErrors[0]!.message; }
   const notes = (summary && !checking ? summary.findings : plan.findings.map((finding) => ({ ...finding, owner: 'design' as const }))).filter((finding) => finding.severity !== 'info');
   const operator = summary && !checking ? summary.findings.filter((finding) => finding.severity === 'info' && finding.owner === 'operator') : [];
-  const Icon = tone === 'ready' ? CheckCircle2 : tone === 'warn' ? AlertTriangle : tone === 'blocked' ? CircleAlert : LoaderCircle;
-  return <aside className="sweater-status" aria-label="Status">
-    <section className={`status-card tone-${tone}`} role="status">
-      <Icon size={22} className={tone === 'checking' ? 'spin' : undefined} />
-      <div><strong>{title}</strong><p>{detail}</p></div>
-    </section>
-    {notes.length > 0 && <section className="status-notes">
-      <h3>{tone === 'blocked' ? 'To fix' : 'Before you knit'}</h3>
-      <ul>{notes.map((note, index) => <li key={index} className={`note-${note.severity}`}>{note.message}</li>)}</ul>
-    </section>}
-    <section className="status-pieces">
-      <h3>Machine files</h3>
-      <p className="design-hint">One file per run on the machine. Open one to see exactly what it knits.</p>
-      <ul>
-        {plan.pieces.map((piece) => {
-          const result = summary?.pieces.find((item) => item.id === piece.id);
-          const state = checking || !result ? 'checking' : result.verdict.state === 'blocked' ? 'blocked' : 'ok';
-          const raster = piece.raster;
-          return <li key={piece.id} className={`piece-row piece-${state}`}>
-            <button type="button" className="piece-open" onClick={() => onOpenFile(piece.id)} title={`Open ${piece.id}.kc: what the machine knits for the ${piece.name.toLowerCase()}`}>
-              <span className="piece-dot" aria-hidden="true" />
-              <span className="piece-name"><code>{piece.id}.kc</code> {piece.name}{piece.copies > 1 ? <em> · run {piece.copies}×</em> : null}</span>
-              <span className="piece-facts">{raster ? `${raster.realized.castOnStitches} st · ${raster.rows.length} rows` : 'not planned'}{result?.passCount && !checking ? ` · ${result.passCount.toLocaleString()} passes` : ''}</span>
-            </button>
-            <button type="button" className="icon-button" disabled={state !== 'ok' || !result?.kcText} onClick={() => onDownloadPiece(piece.id)} title={`Download ${piece.id}.kc`} aria-label={`Download ${piece.name} program`}><Download size={15} /></button>
-            {state === 'blocked' && result?.error && <p className="piece-error">{result.error}</p>}
-          </li>;
-        })}
-      </ul>
-      <p className="design-hint" title={plan.yarn.how}>About {plan.yarn.metres.toLocaleString('en')} m of yarn in all (an estimate from the stitch count).</p>
-    </section>
-    <section className="status-actions">
-      <button type="button" className="primary-button" disabled={!summary?.exportReady || checking || packaging} onClick={onPackage}>{packaging ? <LoaderCircle size={16} className="spin" /> : <Package size={16} />}Download knitting package</button>
-      <button type="button" className="secondary-button" disabled={checking || !summary} onClick={onPrint}><Printer size={16} />Pattern &amp; assembly</button>
-      <p className="design-hint">The package holds every piece's .kc, the written pattern, the schematic and the project file.</p>
-    </section>
-    {operator.length > 0 && <section className="status-notes operator">
-      <h3>At the machine</h3>
-      <ul>{operator.map((note, index) => <li key={index}>{note.message}</li>)}</ul>
-    </section>}
-    {summary && !checking && <p className="status-verdict" title={summary.verdict.annotation}>Software check: {summary.verdict.label}. Yarn behaviour and fit are only proven by knitting.</p>}
-  </aside>;
+  return <StatusPanel
+    tone={tone}
+    title={title}
+    detail={detail}
+    notes={notes.map((note) => ({ severity: note.severity, text: note.message }))}
+    files={plan.pieces.map((piece) => {
+      const result = summary?.pieces.find((item) => item.id === piece.id);
+      const state = checking || !result ? 'checking' as const : result.verdict.state === 'blocked' ? 'blocked' as const : result.kcText ? 'ok' as const : 'checking' as const;
+      const raster = piece.raster;
+      return {
+        id: piece.id,
+        name: piece.name,
+        fileName: `${piece.id}.kc`,
+        copies: piece.copies,
+        facts: `${raster ? `${raster.realized.castOnStitches} st · ${raster.rows.length} rows` : 'not planned'}${result?.passCount && !checking ? ` · ${result.passCount.toLocaleString()} passes` : ''}`,
+        state,
+        error: result?.error ?? null,
+      };
+    })}
+    onOpenFile={(id) => onOpenFile(id as PieceId)}
+    onDownloadFile={(id) => onDownloadPiece(id as PieceId)}
+    onPackage={onPackage}
+    onPrint={onPrint}
+    packaging={packaging}
+    canPackage={Boolean(summary?.exportReady) && !checking}
+    canPrint={!checking && summary !== null}
+    atTheMachine={operator.map((note) => note.message)}
+    fileDetail={fileDetail}
+    footer={<p className="design-hint status-yarn" title={plan.yarn.how}>About {plan.yarn.metres.toLocaleString('en')} m of yarn.</p>}
+  />;
 }

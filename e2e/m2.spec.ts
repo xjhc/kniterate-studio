@@ -1,5 +1,6 @@
 import { stat, writeFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
+import { menu } from './menu';
 
 test('opens, navigates, diffs, prints, and blocks foreign machine files', async ({ page }, testInfo) => {
   const errors: string[] = [];
@@ -9,7 +10,7 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
   const machineInput = page.locator('input[accept=".kc,.k,text/plain"]');
   await machineInput.setInputFiles('packages/machine-lib/reference/fairisle.kc');
   await expect(page.getByRole('dialog', { name: 'How was this KCode produced?' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Pass grid' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Passes' })).toBeVisible();
   await expect(page.getByText('Surface-proven (imported)', { exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Exact machine movement' })).toBeVisible();
   await expect(page.getByText('KCode coordinates; physical needle labels unverified.')).toBeVisible();
@@ -17,7 +18,7 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
   await page.keyboard.press('ArrowDown');
   await expect(page.locator('.pass-row.selected .pass-number')).not.toHaveText(selectedBefore);
 
-  await page.getByRole('button', { name: 'Open run sheet', exact: true }).click();
+  await menu(page, 'File', 'Print knitting sheet');
   await expect(page.locator('.run-sheet')).toContainText('fairisle.kc');
   if (testInfo.project.name === 'chromium') {
     const pdfPath = testInfo.outputPath('foreign-run-sheet.pdf');
@@ -74,7 +75,7 @@ test('opens the two 150k-selection corpus files without overflow or page errors'
   // Imports now yield to the browser while compiling in a Worker. Allow the
   // unoptimized development build bounded compilation time for these fixtures.
   await expect(page.locator('.brand-copy small')).toHaveText('back.kc', { timeout: 30_000 });
-  await expect(page.getByRole('heading', { name: 'Pass grid' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Passes' })).toBeVisible();
   await expect(page.locator('.stat-strip')).toContainText('2,108');
   // Transfer-aware endpoints remove the two stale float findings; the
   // 82 depth-three loop-stack observations remain non-blocking notes.

@@ -42,7 +42,7 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
     event.preventDefault();
     if (synthetic === null || typeof preview !== 'object' || preview === null) return;
     const revision = trialRevision(project, { ...record, synthetic }, { id: `trial-${crypto.randomUUID().slice(0, 8)}`, recordedAt: new Date().toISOString(), pixels: pixels ?? undefined, currentCandidateSha256: candidateSha256 });
-    onRecord(`Record ${synthetic ? 'SYNTHETIC ' : ''}measurements of candidate ${record.candidate.kcodeSha256.slice(0, 12)} and revise`, revision.edits);
+    onRecord(`Enter ${synthetic ? 'test-data ' : ''}measurements`, revision.edits);
   };
   const gaugeInputs = (key: 'bodyGauge' | 'ribGauge', label: string) => <fieldset><legend>{label} <small>per 10 cm</small></legend><div className="project-dialog-grid">
     <label>Stitches<input type="number" step="0.5" min="1" max="100" value={record[key].stitchesPer10cm ?? ''} onChange={(event) => { const value = num(event.currentTarget.value); set((draft) => { draft[key].stitchesPer10cm = value; }); }} /></label>
@@ -50,7 +50,7 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
   </div></fieldset>;
   return <div className="modal-backdrop project-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <section className="project-dialog measure-dialog" role="dialog" aria-modal="true" aria-labelledby="measure-title">
-      <header><h2 id="measure-title">Record measurements</h2><button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
+      <header><h2 id="measure-title">Enter measurements</h2><button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
       <form onSubmit={submit}>
         <label>Filled form from the package (optional)<input type="file" accept=".json,application/json" aria-label="Load measurements.json" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (!file) return; void file.text().then((text) => { try { const loaded = JSON.parse(text) as MeasurementRecord; if (loaded?.kind !== 'kniterate-studio-measurements' || loaded.schemaVersion !== 1) throw new Error('Not a measurements.json from a Studio package.'); setRecord({ ...measurementTemplate(project, ''), ...loaded }); setLoadedForm(loaded); setSynthetic(typeof loaded.synthetic === 'boolean' ? loaded.synthetic : null); setLoadError(null); } catch (error) { setLoadError(error instanceof Error ? error.message : String(error)); } }); }} /></label>
         {loadError && <p className="setup-error" role="alert">{loadError}</p>}
@@ -77,7 +77,7 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
           {preview.comparisons.length > 0 && <table><thead><tr><th>Measure</th><th>Predicted</th><th>Measured</th><th>Off by</th></tr></thead><tbody>{preview.comparisons.map((row) => <tr key={row.measure}><td>{row.measure}</td><td>{row.predictedCm ?? '—'}</td><td>{row.measuredCm}</td><td>{row.deviation === null ? '—' : `${(row.deviation * 100).toFixed(1)}%`}</td></tr>)}</tbody></table>}
           <p className="garment-help"><b>Revision of the current design:</b></p>
           <ul>{preview.changes.map((change) => <li key={change}>{change}</li>)}</ul>
-          <p className="garment-help">The knitted candidate stays as it was; this records the trial in the project and revises it as one undoable change.</p>
+          <p className="garment-help">Saved in the project as one change you can undo.</p>
         </div>}
         <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={synthetic === null || typeof preview !== 'object' || preview === null}><Check size={16} /> Record and revise</button></footer>
       </form>

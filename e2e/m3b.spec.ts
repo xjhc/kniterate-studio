@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
+import { menu } from './menu';
 
 const fixture = 'fixtures/colorwork-chart-v1/four-color-checker.json';
 
@@ -61,13 +62,13 @@ test('imports, edits with every tool, uses history and clipboard, then reopens e
   await page.getByRole('button', { name: 'Copy selection', exact: true }).click();
   await page.getByRole('button', { name: 'Paste', exact: true }).click();
   await page.getByRole('button', { name: 'Cut selection', exact: true }).click();
-  await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await menu(page, 'Edit', 'Undo');
+  await menu(page, 'Edit', 'Redo');
   await page.keyboard.press('p');
   await expect(page.getByRole('button', { name: 'Pen', exact: true })).toHaveClass(/active/);
 
   const firstDownload = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save project', exact: true }).click();
+  await menu(page, 'File', 'Save project');
   const firstPath = testInfo.outputPath('edited-project.json');
   await (await firstDownload).saveAs(firstPath);
   const saved = JSON.parse(await readFile(firstPath, 'utf8'));
@@ -76,20 +77,22 @@ test('imports, edits with every tool, uses history and clipboard, then reopens e
 
   await page.locator('input[accept=".json,application/json"]').setInputFiles(firstPath);
   const secondDownload = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save project', exact: true }).click();
+  await menu(page, 'File', 'Save project');
   const secondPath = testInfo.outputPath('reopened-project.json');
   await (await secondDownload).saveAs(secondPath);
   expect(JSON.parse(await readFile(secondPath, 'utf8'))).toEqual(saved);
 });
 
 test('a 100-cell pen drag is continuous and creates one project edit', async ({ page }, testInfo) => {
+  // Wide enough that all 100 cells are on screen beside the design and status panels.
+  await page.setViewportSize({ width: 1800, height: 900 });
   await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
   await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
   const { point } = await canvasGeometry(page, 16 / 1.2 / 1.2);
   await drag(page, point(0, 0), point(99, 0), 100);
 
   const downloadEvent = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save project', exact: true }).click();
+  await menu(page, 'File', 'Save project');
   const path = testInfo.outputPath('continuous-pen-project.json');
   await (await downloadEvent).saveAs(path);
   const saved = JSON.parse(await readFile(path, 'utf8'));
@@ -118,7 +121,7 @@ test('wheel zoom, drag pan, and the mobile dark canvas remain usable', async ({ 
   expect(afterPan.top).toBeGreaterThan(before.top);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Toggle theme', exact: true }).click();
+  await menu(page, 'View', 'Dark mode');
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'dark');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
   await expect(page.locator('canvas.chart-canvas').first()).toBeVisible();

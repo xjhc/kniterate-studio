@@ -12,7 +12,7 @@ import type { ProjectPlan, Valued } from '../plan';
 
 function cm(value: Valued<number> | null | undefined): string {
   if (!value) return '—';
-  return `${value.provenance === 'assumed' ? '≈' : ''}${value.value} cm`;
+  return `${value.value} cm`;
 }
 
 /** A number the designer types; an out-of-range value is shown as not applied, with the reason, never silently dropped. */

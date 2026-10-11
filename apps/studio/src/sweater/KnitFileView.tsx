@@ -23,6 +23,8 @@ function tint(hex: string, amount: number): string {
 }
 
 export function carrierRole(carrier: string, carriers: KnitFileCarriers): string {
+  const named = carriers.yarns?.[carrier];
+  if (named) return `${named.name} yarn`;
   if (carrier === carriers.main) return 'your yarn';
   if (carrier === carriers.second) return 'your yarn, second cone';
   if (carrier === carriers.waste) return 'waste yarn';
@@ -121,7 +123,7 @@ export function KnitFileView({ file, kcText, fileName, copies, hex, carriers, st
     if (colorBy === 'carrier') return CARRIER_COLORS[carrier] ?? '#888888';
     if (carrier === carriers.waste) return WASTE_HEX;
     if (carrier === carriers.draw) return DRAW_HEX;
-    return hex;
+    return carriers.yarns?.[carrier]?.hex ?? hex;
   };
 
   useEffect(() => {
@@ -258,7 +260,7 @@ export function KnitFileView({ file, kcText, fileName, copies, hex, carriers, st
     <aside className="knitfile-side" aria-label="Machine file">
       <header className="knitfile-head">
         <div><b>{fileName}</b><small>{plural(file.passCount, 'pass')} · {plural(file.lineCount, 'line')} · needles {file.needles.lo}–{file.needles.hi}{copies > 1 ? ` · run it ${copies} times` : ''}</small></div>
-        <button type="button" className="secondary-button" onClick={onDownload}><Download size={14} />{fileName}</button>
+        <button type="button" className="secondary-button" onClick={onDownload} aria-label={`Download ${fileName}`}><Download size={14} />Download</button>
       </header>
       <ul className="knitfile-carriers">
         {used.map((carrier) => <li key={carrier}><i style={{ background: colorFor(carrier) }} />C{carrier}<span>{carrierRole(carrier, carriers)}</span></li>)}

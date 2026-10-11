@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { kcDownload } from './menu';
 import type { ColorworkChartV1 } from '@kniterate-studio/chart-contract';
 
 interface DecodedReference {
@@ -74,7 +75,7 @@ for (const name of ['fairisle', 'jacquard', 'dbj'] as const) {
     if (name === 'dbj') {
       await page.getByRole('button', { name: /^Birdseye/ }).click();
     }
-    const exportButton = page.getByRole('button', { name: 'Export k-code' });
+    const exportButton = kcDownload(page);
     await expect(exportButton).toBeEnabled({ timeout: 20_000 });
     const downloadPromise = page.waitForEvent('download');
     await exportButton.click();

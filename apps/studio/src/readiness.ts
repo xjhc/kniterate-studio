@@ -58,13 +58,18 @@ function title(rule: string, severity: Finding['severity'], message: string): st
  * (e.g. carrier spacing and stopping distance). Those settings then live only
  * on the controller, so they become an operator check with the intended value.
  */
+/** A Knitout header's setting in words: `X-carrier-spacing` is carrier spacing. */
+export function settingName(header: string): string {
+  return header.replace(/^X-/, '').replace(/-/g, ' ');
+}
+
 function operatorHeader(rule: string, message: string, knitoutLines: readonly string[]): string | null {
   if (rule !== 'vendor-converter-note') return null;
   const match = /:(\d+) WARNING: Unknown comment header '([^']+)'/.exec(message);
   if (match === null) return null;
   const line = knitoutLines[Number(match[1]) - 1] ?? '';
   const value = line.startsWith(';;') ? line.slice(line.indexOf(':') + 1).trim() : '';
-  return `${match[2]}${value ? ` = ${value}` : ''} is not encoded in the .kc; confirm the controller setting before knitting.`;
+  return `Set ${settingName(match[2]!)}${value ? ` to ${value}` : ''} on the machine; the file does not set it.`;
 }
 
 /**

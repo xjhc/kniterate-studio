@@ -279,7 +279,7 @@ ship," trust this file and the working tree instead.
       welts, rib) compile Surface-proven with zero validator errors;
     - an independent trace replay leaves the live loops exactly on the shaped
       needles for fashion 1–3.
-  - Browser: New project → Sweater, then a three-column workspace:
+  - Browser: New project → Sweater, then the shared workspace (below):
     - design (style cards, size and fit chips, measurements with wanted vs
       knitted, a texture library with a tile editor, rib edges, yarn and
       gauges, each change one undoable operation);
@@ -468,12 +468,25 @@ ship," trust this file and the working tree instead.
   grid, back-face preview, browser `.kc` conversion in a Worker
   (`src/kcode/convert.worker.ts`), strict emitted-output proof, validated export,
   local autosave, run sheet.
-- **Synchronized authored workspace.** Chart, backing/frame strategy, exact
-  emitted design-row passes, full-program frame regions, KCode-native findings,
-  carriage/carrier/two-bed movement, loop-state transitions, and collapsible
-  Knitout/KCode source now share the canonical cause/effect layout.
-  Narrow screens use explicit Chart / Strategy / Machine tabs; export remains
-  hard-gated by the authored verdict.
+- **One workspace for every project (2026-10-11, user decision).** The
+  three-column Chart / Strategy / Machine layout is retired.
+  - Layout: scarf/blanket, beanie and sweater share the sweater's layout. A
+    menu bar (File / Edit / View) replaces the icon ribbons.
+    - Left: what you are making.
+    - Middle: Design / Schematic / Machine file, always in the same place.
+    - Right: status, what to fix, the machine files, the package and the
+      knitting sheet.
+  - Schematics come from the machine file read back (`workspace/RunSchematic`).
+    They show the whole run: waste yarn, draw thread, the piece and its
+    finish, scarves included.
+  - The Machine file view (`sweater/knitFile.ts`, `KnitFileView`) reads any
+    emitted `.kc`. Its "Step through" mode holds the exact movement, pass
+    grid, checks and source that used to be the separate machine workspace.
+  - Words are plain: no "≈", no "machine truth" or "trials". Operator
+    settings read like "Set carrier spacing to 2 on the machine".
+  - Export stays hard-gated by the authored verdict.
+  - Contract: `docs/mockups/workspace-target.md`. Coverage:
+    `e2e/workspace.spec.ts` and the updated specs.
 - **Central authored verdict policy + typed provenance.**
   `engine.ts::resolveAuthoredVerdict` is the sole authored 3-rung policy owner.
   Design-row provenance travels on typed Knitout ops and is joined through the
@@ -600,6 +613,7 @@ metadata; controller observation stays pending until an accepted registry run.
 - `DESIGN-LANGUAGE.md` — v2 Design → Plan → Program contract for people and agents (proposed).
 - `HANDOFF.md` — reduced to present truth; points here.
 - `docs/archive/BUILD-S1.md` — **historical** M2 implementation contract (S1 shipped).
-- `docs/mockups/workspace-target.html` + `workspace-target.md` — canonical V1
-  workspace mockup and binding implementation contract.
+- `docs/mockups/workspace-target.md` — the binding workspace contract (one
+  layout for every project, 2026-10-11); `workspace-target.html` is the
+  retired three-column mockup, kept for history.
 - `docs/mockups/workspace-v2.html` — superseded design reference.

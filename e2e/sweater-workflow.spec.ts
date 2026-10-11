@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { menu } from './menu';
 
 async function createSweater(page: Page, style: 'Drop shoulder' | 'J-sleeve' | 'Set-in sleeve', stitch: string) {
   await page.goto('/?theme=light');
@@ -13,6 +14,7 @@ async function createSweater(page: Page, style: 'Drop shoulder' | 'J-sleeve' | '
 }
 
 const status = (page: Page) => page.locator('.status-card');
+
 const knitted = (page: Page, label: string) => page.locator('.measure-row').filter({ has: page.getByLabel(label, { exact: true }) }).locator('.knitted');
 
 test('a sweater is designed from size, style and stitch, checked piece by piece and packaged', async ({ page }) => {
@@ -33,9 +35,9 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   await chest.press('Enter');
   await expect(knitted(page, 'Chest')).toHaveText(/^1(19|20|21)(\.\d)?$/);
   await expect(page.locator('.section-aside').filter({ hasText: 'Custom' })).toBeVisible();
-  await page.getByRole('button', { name: 'Undo' }).click();
+  await menu(page, 'Edit', 'Undo');
   await expect(chest).toHaveValue('110');
-  await page.getByRole('button', { name: 'Redo' }).click();
+  await menu(page, 'Edit', 'Redo');
   await expect(chest).toHaveValue('120');
 
   // A boat neck has no neckband: the piece goes away and the top gets a rib edge.
@@ -85,11 +87,11 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   await page.getByRole('button', { name: 'Download knitting package' }).click();
   expect((await download).suggestedFilename()).toMatch(/^weekend-sweater-[0-9a-f]{8}-sweater\.zip$/);
   const sleeve = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Download Sleeve program' }).click();
+  await page.getByRole('button', { name: 'Download sleeve.kc' }).click();
   expect((await sleeve).suggestedFilename()).toMatch(/-sleeve\.kc$/);
 
   // The written pattern says how to knit and sew it.
-  await page.getByRole('button', { name: 'Pattern & assembly' }).click();
+  await page.getByRole('button', { name: 'Print knitting sheet' }).click();
   const sheet = page.getByRole('dialog', { name: 'Knitting instructions' });
   await expect(sheet).toContainText('Sleeve — knit 2');
   await expect(sheet).toContainText('Bind off the centre');
@@ -147,7 +149,7 @@ test('a piece is shaped by hand like a garment-shaping machine: drag, add a wais
   await page.getByRole('button', { name: 'Back to measurements' }).click();
   await expect(page.getByRole('button', { name: /^Hem: 55 cm wide, 0 cm up/ })).toBeVisible();
   await expect(page.locator('.measure-row.locked')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Undo' }).click();
+  await menu(page, 'Edit', 'Undo');
   await expect(page.getByRole('button', { name: /^Point 2: 48 cm wide/ })).toBeVisible();
 });
 
@@ -184,6 +186,11 @@ test('each machine file shows exactly what it knits: the fabric, its sections, a
   await expect(page.locator('.knitfile-head')).toContainText('sleeve.kc');
   await expect(page.locator('.knitfile-head')).toContainText('run it 2 times');
   await expect(sections.filter({ hasText: 'Cuff rib' })).toHaveCount(1);
+  // The whole sweater's files, in the order the machine runs them.
+  await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Whole sweater' }).click();
+  await expect(page.getByRole('heading', { name: '5 runs on the machine' })).toBeVisible();
+  await page.getByRole('button', { name: /^sleeve\.kc Sleeve/ }).first().click();
+  await page.getByRole('tab', { name: 'Design' }).click();
   await page.getByRole('tab', { name: 'Stitches' }).click();
   await expect(page.getByRole('img', { name: /^Sleeve: \d+ rows/ })).toBeVisible();
 });

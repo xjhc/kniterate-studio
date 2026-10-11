@@ -49,7 +49,7 @@ const RULE_STORIES: Record<string, RuleStory> = {
   'gauge-assumed': {
     part: 'Fit',
     consequence: 'The finished size is a calculation from a guessed gauge, so the hat may not fit.',
-    action: 'Knit and measure a swatch (or the trial piece) and enter the measured gauge.',
+    action: 'Knit a swatch, measure it and enter the gauge.',
     target: (finding) => (finding.path === 'object.ribGauge' ? 'gauge.rib' : 'gauge.body'),
   },
   'size-needs-gauge': {
@@ -178,7 +178,7 @@ export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], 
   }
   const synthetic = trials.filter((trial) => trial.synthetic);
   const notices = synthetic.length
-    ? [`${synthetic.length} recorded trial${synthetic.length === 1 ? ' is' : 's are'} SYNTHETIC (made up to test the software): ${synthetic.length === 1 ? 'its' : 'their'} gauges count as assumed, not measured, and nothing was knitted.`]
+    ? [`${synthetic.length} saved measurement${synthetic.length === 1 ? ' is' : 's are'} test data, so the gauge still counts as a guess.`]
     : [];
   return { status, headline, detail, evidence, items, operatorChecks: readiness.operatorChecks, notices };
 }
@@ -219,7 +219,7 @@ export function carrierRequirements(state: ProjectState, result: Pick<AuthoredPi
 
 function valued(value: Valued<number> | null | undefined): string {
   if (!value) return 'unknown (no gauge)';
-  return `${value.provenance === 'assumed' ? '≈ ' : ''}${value.value} cm (${value.how})`;
+  return `${value.value} cm (${value.how})`;
 }
 
 export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectPlan, result: AuthoredPipelineResult, findings: readonly Finding[], readiness: Readiness): string {
@@ -277,13 +277,13 @@ const escapeXml = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&
 
 function cmLabel(value: Valued<number> | null | undefined, rows: number): string {
   if (!value) return `${rows} rows`;
-  return `${value.provenance === 'assumed' || value.how.includes('assumed') ? '≈' : ''}${value.value} cm`;
+  return `${value.value} cm`;
 }
 
 /**
  * A dimensioned schematic from the Plan: the flat piece as knitted (cuff with
  * its fold line, body, crown, seam edges, motif) and the finished front with
- * the cuff folded up. Labels marked ≈ rest on an assumed gauge or estimate.
+ * the cuff folded up. A note says when the sizes rest on an assumed gauge.
  * Returns null for a panel.
  */
 export function schematicSvg(project: ColorworkProjectV1, plan: ProjectPlan): string | null {
@@ -343,7 +343,7 @@ export function schematicSvg(project: ColorworkProjectV1, plan: ProjectPlan): st
   // Seam edges.
   for (const x of [x0, x0 + W]) parts.push(`<path d="M${x} ${crownTop + (x === x0 ? 0 : 0)}V${base}" stroke="#2563eb" stroke-width="3" stroke-opacity="0.7"/>`);
   text(x0 + W + 4, base - cuff - body / 2, 'seam', 'start', 11);
-  const widthLabel = plan.predicted ? `${plan.predicted.widthCm.provenance === 'assumed' || gauge?.source === 'assumed' ? '≈' : ''}${plan.predicted.widthCm.value} cm finished circumference` : `${widthStitches} needles`;
+  const widthLabel = plan.predicted ? `${plan.predicted.widthCm.value} cm finished circumference` : `${widthStitches} needles`;
   parts.push(`<path d="M${x0} ${base + 14}H${x0 + W}M${x0} ${base + 10}v8M${x0 + W} ${base + 10}v8" stroke="currentColor"/>`);
   text(x0 + W / 2, base + 30, `${widthStitches} needles · ${widthLabel}`, 'middle', 11);
 
@@ -385,7 +385,7 @@ export function schematicSvg(project: ColorworkProjectV1, plan: ProjectPlan): st
   text(fx + fW / 2, fBase + 30, plan.predicted ? `${cmLabel(plan.predicted.widthCm, 0)} around ÷ 2 = ${(plan.predicted.widthCm.value / 2).toFixed(1)} cm flat` : 'width unknown (no gauge)', 'middle', 11);
   if (sections.finishedHeightCm) text(fx + fW / 2, fBase + 46, `height ${cmLabel(sections.finishedHeightCm, 0)} flat, before gathering the crown`, 'middle', 11);
   const assumed = gauge?.source === 'assumed' || state.object?.ribGauge?.source === 'assumed';
-  text(450, 474, assumed ? '≈ marks values from an assumed gauge or an estimate; measure a swatch to confirm.' : '≈ marks estimates (the crown uses the body gauge).', 'middle', 11);
+  text(450, 474, assumed ? 'Sizes use an assumed gauge until you measure a swatch.' : 'The crown uses the body gauge.', 'middle', 11);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 486" width="900" height="486" role="img" aria-label="Dimensioned schematic of ${escapeXml(project.title)}" style="color:#1f2937;background:#fff;font-family:system-ui,sans-serif">${parts.join('')}</svg>`;
 }
 
@@ -435,7 +435,7 @@ export function measurementTemplate(project: ColorworkProjectV1, kcodeSha256: st
 
 export function measurementFormMarkdown(project: ColorworkProjectV1, plan: ProjectPlan, kcodeSha256: string): string {
   const sections = plan.sections;
-  const predicted = (value: Valued<number> | null | undefined) => (value ? `${value.provenance === 'assumed' ? '≈' : ''}${value.value} cm` : '—');
+  const predicted = (value: Valued<number> | null | undefined) => (value ? `${value.value} cm` : '—');
   return `${[
     `# Measurement form: ${project.title}`,
     '',

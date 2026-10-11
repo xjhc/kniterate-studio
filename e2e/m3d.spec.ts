@@ -1,8 +1,9 @@
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
+import { kcDownload, menu } from './menu';
 
 async function waitForExport(page: Page, timeout = 20_000) {
-  const button = page.getByRole('button', { name: 'Export k-code', exact: true });
+  const button = kcDownload(page);
   await expect(button).toBeEnabled({ timeout });
   return button;
 }
@@ -31,9 +32,9 @@ test('exports validated k-code and reproduces it byte-identically after project 
   expect(firstBytes.toString('utf8')).toContain('FRNT:');
   expect(firstBytes.toString('utf8')).toContain('>>');
 
-  await page.getByRole('tab', { name: 'K-code .kc', exact: true }).click();
-  await expect(page.locator('.generated-source-content')).toContainText('FRNT:');
-  await page.getByRole('button', { name: 'Open run sheet', exact: true }).click();
+  await page.getByRole('tab', { name: 'Machine file', exact: true }).click();
+  await expect(page.locator('.knitfile-source')).toContainText('FRNT:');
+  await menu(page, 'File', 'Print knitting sheet');
   await expect(page.locator('.run-sheet')).toContainText('C1');
   await expect(page.locator('.run-sheet')).toContainText('C6');
   if (testInfo.project.name === 'chromium') {
@@ -44,7 +45,7 @@ test('exports validated k-code and reproduces it byte-identically after project 
   await page.getByRole('button', { name: /Close/ }).click();
 
   const projectDownload = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save project', exact: true }).click();
+  await menu(page, 'File', 'Save project');
   const projectPath = testInfo.outputPath('blanket-project.json');
   await (await projectDownload).saveAs(projectPath);
   await page.reload();
@@ -80,7 +81,7 @@ test('exports and reopens the canonical 200x300 four-color authored blanket', as
   await page.goto('/');
   const started = Date.now();
   await page.locator('input[accept=".json,application/json"]').setInputFiles(chartPath);
-  await page.getByRole('button', { name: 'Toggle theme', exact: true }).click();
+  await menu(page, 'View', 'Dark mode');
   await expect(page.locator('.app-shell')).toHaveAttribute('data-theme', 'dark');
   const firstExport = await waitForExport(page, 60_000);
   const readyAfterMs = Date.now() - started;
@@ -90,12 +91,11 @@ test('exports and reopens the canonical 200x300 four-color authored blanket', as
   const firstBytes = await readFile(firstKc);
   expect(firstBytes.length).toBeGreaterThan(1_000_000);
   expect(firstBytes.toString('utf8')).toContain('FRNT:');
-  // The corrected generic body emits all front and rear passes. This is
-  // the plan estimate; the exact emitted trace contains 3,148 passes.
-  await expect(page.locator('.strategy-segments button.active')).toContainText('3,150 passes');
+  // The corrected generic body emits all front and rear passes: the file read back has 3,148.
+  await expect(page.locator('.status-pieces .piece-facts')).toContainText('3,148 passes');
 
   const projectDownload = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Save project', exact: true }).click();
+  await menu(page, 'File', 'Save project');
   const projectPath = testInfo.outputPath('canonical-200x300.kniterate-studio.json');
   await (await projectDownload).saveAs(projectPath);
   await page.reload();
@@ -137,6 +137,6 @@ test('refuses an oversized authored Birdseye project before compiler allocation'
   expect(blockedAfterMs).toBeLessThan(15_000);
   testInfo.annotations.push({ type: 'benchmark', description: `Oversized authored refusal reported after ${blockedAfterMs} ms` });
   await expect(page.getByLabel('Verdict: Blocked')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Export k-code', exact: true })).toBeDisabled();
-  await expect(page.locator('.strategy-segments button.active')).toContainText('Blocked');
+  await expect(kcDownload(page)).toBeDisabled();
+  await expect(page.locator('.strategy-segments button.active')).toContainText('Cannot knit');
 });

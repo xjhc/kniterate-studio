@@ -113,7 +113,7 @@
 .piece-wrap { display: grid; gap: 10px; padding: 14px 18px 24px; }
 .piece-summary h2 { margin: 0; font-family: Georgia, serif; font-size: 20px; font-weight: 500; }
 .piece-summary p { margin: 3px 0 0; color: var(--ink-2); }
-.piece-view { display: grid; grid-template-columns: 34px max-content 260px; align-items: start; gap: 12px; width: max-content; }
+.piece-view { display: grid; grid-template-columns: 34px max-content; align-items: start; gap: 12px; width: max-content; }
 .piece-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .piece-zoom { display: flex; align-items: center; gap: 4px; }
 .piece-mode { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
@@ -254,7 +254,10 @@
 .knitfile-source { max-height: 220px; margin: 0; overflow: auto; padding: 6px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--paper-2); font-size: 11px; line-height: 1.5; }
 .knitfile-source span { display: flex; white-space: pre; }
 .knitfile-source span.highlighted { background: color-mix(in srgb, var(--accent) 16%, transparent); }
-.knitfile-source i { position: sticky; left: 0; flex: none; width: 54px; padding-right: 8px; background: inherit; color: var(--ink-3); font-style: normal; text-align: right; }
-.knitfile-source span:not(.highlighted) i { background: var(--paper-2); }
+.knitfile-source i { position: sticky; left: 0; z-index: 1; flex: none; width: 54px; padding-right: 8px; background: var(--paper-2); color: var(--ink-3); font-style: normal; text-align: right; }
+.knitfile-source span.highlighted i { background: color-mix(in srgb, var(--accent) 16%, var(--paper-2)); }
 .knitfile-waiting { margin: 24px 0; color: var(--ink-2); }
 @media (max-width: 1100px) { .knitfile { grid-template-columns: 1fr; } }
+
+.garment-waste { fill: #A9B0B8; opacity: .85; }
+.garment-draw { stroke: #C2413A; stroke-width: .5; }

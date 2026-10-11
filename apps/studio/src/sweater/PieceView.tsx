@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { Maximize2, RotateCcw, Trash2, ZoomIn, ZoomOut } from 'lucide-react';
 import { sampleEdge, type EdgeKind, type Point, type ShapePoint } from './draft';
 import type { PanelPlan, ShapingEvent } from './rasterize';
-import { pieceRhythm, type RhythmStep } from './rhythm';
+import type { RhythmStep } from './rhythm';
 import { inkFor, STITCH_NAMES } from './TextureSwatch';
 
 /**
@@ -58,42 +58,33 @@ export function pointName(kind: EdgeKind, edge: readonly ShapePoint[], index: nu
   return `point ${index + 1}`;
 }
 
-function RhythmList({ title, steps, onHover }: { title: string; steps: readonly RhythmStep[]; onHover: (step: RhythmStep | null) => void }) {
-  if (steps.length === 0) return null;
-  return <section>
-    <h4>{title}</h4>
-    <ol>{steps.map((step, index) => <li key={index} className={`rhythm-${step.kind}`} onMouseEnter={() => onHover(step)} onMouseLeave={() => onHover(null)}>{step.text}</li>)}</ol>
-  </section>;
-}
+export type PieceMode = 'stitches' | 'shape';
 
-export type PieceMode = 'stitches' | 'shape' | 'file';
-
-export function PieceView({ raster, hex, label, editor, machineFile, mode, onMode: setMode }: { raster: PanelPlan; hex: string; label: string; editor?: EdgeEditor; machineFile?: ReactNode; mode: PieceMode; onMode: (mode: PieceMode) => void }) {
+export function PieceView({ raster, hex, label, editor, mode, onMode: setMode, highlight = null }: { raster: PanelPlan; hex: string; label: string; editor?: EdgeEditor; mode: PieceMode; onMode: (mode: PieceMode) => void; highlight?: RhythmStep | null }) {
   const host = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const overlay = useRef<SVGSVGElement>(null);
   const [room, setRoom] = useState({ width: 640, height: 640 });
   const [zoom, setZoom] = useState(1);
   const [hover, setHover] = useState<{ row: number; needle: number | null; x: number; y: number } | null>(null);
-  const [highlight, setHighlight] = useState<RhythmStep | null>(null);
   const [drag, setDrag] = useState<{ index: number; edge: ShapePoint[]; moved: boolean } | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
   useEffect(() => {
-    // The space the piece may fill: its container's width less the ruler and the shaping list,
+    // The space the piece may fill: its container's width less the ruler,
     // and the scrolling stage's height below the piece's header.
     const element = host.current?.parentElement;
     const stage = element?.parentElement;
     if (!element || !stage) return;
     const measure = () => {
       const below = host.current!.getBoundingClientRect().top - stage.getBoundingClientRect().top + stage.scrollTop;
-      setRoom({ width: Math.max(240, element.clientWidth - 36 - 34 - 260 - 24), height: Math.max(320, stage.clientHeight - below - 24) });
+      setRoom({ width: Math.max(240, element.clientWidth - 36 - 34 - 24), height: Math.max(320, stage.clientHeight - below - 24) });
     };
     const observer = new ResizeObserver(measure);
     observer.observe(element);
     observer.observe(stage);
     return () => observer.disconnect();
   }, []);
-  useEffect(() => { if ((!editor && mode === 'shape') || (!machineFile && mode === 'file')) setMode('stitches'); }, [editor, machineFile, mode, setMode]);
+  useEffect(() => { if (!editor && mode === 'shape') setMode('stitches'); }, [editor, mode, setMode]);
   useEffect(() => { if (selected !== null && editor && selected >= editor.edge.length) setSelected(null); }, [editor, selected]);
   const lo = Math.min(...raster.rows.map((row) => row.segments[0]!.lo));
   const hi = Math.max(...raster.rows.map((row) => row.segments.at(-1)!.hi));
@@ -114,7 +105,6 @@ export function PieceView({ raster, hex, label, editor, machineFile, mode, onMod
   const headroom = editor && mode === 'shape' ? Math.round(12 * scale) : 0;
   const width = Math.ceil(columns * cellW);
   const height = Math.ceil(total);
-  const rhythm = useMemo(() => pieceRhythm(raster), [raster]);
   // cm ↔ px on the canvas: x from the centre line, y up from the cast-on.
   const xOrigin = (raster.centre - lo) * cellW;
   const px = (point: Point) => ({ x: xOrigin + point.x * scale, y: headroom + height - point.y * scale });
@@ -223,17 +213,16 @@ export function PieceView({ raster, hex, label, editor, machineFile, mode, onMod
 
   return <>
   <div className="piece-toolbar">
-    {mode !== 'file' && <div className="piece-zoom" role="group" aria-label="Zoom">
+    <div className="piece-zoom" role="group" aria-label="Zoom">
       <button type="button" className="icon-button" onClick={() => setZoom((value) => Math.max(1, value / 1.6))} disabled={zoom <= 1} aria-label="Zoom out" title="Zoom out"><ZoomOut size={15} /></button>
       <button type="button" className="icon-button" onClick={() => setZoom(1)} disabled={zoom === 1} aria-label="Fit the piece" title="Fit"><Maximize2 size={15} /></button>
       <button type="button" className="icon-button" onClick={() => setZoom((value) => Math.min(8, value * 1.6))} disabled={zoom >= 8} aria-label="Zoom in" title="Zoom in to see the stitches"><ZoomIn size={15} /></button>
-    </div>}
-    {(editor || machineFile) && <div className="piece-mode" role="tablist" aria-label="Piece view">
+    </div>
+    {editor && <div className="piece-mode" role="tablist" aria-label="Piece view">
       <button type="button" role="tab" aria-selected={mode === 'stitches'} className={mode === 'stitches' ? 'active' : ''} onClick={() => setMode('stitches')}>Stitches</button>
-      {editor && <button type="button" role="tab" aria-selected={mode === 'shape'} className={mode === 'shape' ? 'active' : ''} onClick={() => setMode('shape')}>Shape</button>}
-      {machineFile && <button type="button" role="tab" aria-selected={mode === 'file'} className={mode === 'file' ? 'active' : ''} onClick={() => setMode('file')}>Machine file</button>}
+      <button type="button" role="tab" aria-selected={mode === 'shape'} className={mode === 'shape' ? 'active' : ''} onClick={() => setMode('shape')}>Shape</button>
     </div>}
-    <span className="piece-hint">{mode === 'file' ? 'Exactly what this piece\'s .kc tells the machine to do, read back from the file.' : mode === 'shape' ? editor?.kind === 'body' ? 'Drag a point. Click + on an edge to add one. Front and back share this edge, so the side seams match.' : 'Drag a point. Click + on an edge to add one. The cuff is at the bottom.' : cellW >= 6 ? 'Hover a row to see what the machine does there.' : 'Zoom in to see the stitches; hover a row for its shaping.'}</span>
+    <span className="piece-hint">{mode === 'shape' ? editor?.kind === 'body' ? 'Drag a point. Click + on an edge to add one. Front and back share this edge, so the side seams match.' : 'Drag a point. Click + on an edge to add one. The cuff is at the bottom.' : cellW >= 6 ? 'Hover a row to see what the machine does there.' : 'Zoom in to see the stitches; hover a row for its shaping.'}</span>
   </div>
   {editor && mode === 'shape' && <div className="shape-bar">
     <span className={`shape-source${editor.custom ? ' custom' : ''}`}>{editor.custom ? 'Your shape — the measurements no longer draw it' : 'Drawn from your measurements — dragging makes it your own'}</span>
@@ -246,8 +235,7 @@ export function PieceView({ raster, hex, label, editor, machineFile, mode, onMod
       {removable(selected) && <button type="button" className="icon-button" onClick={() => remove(selected)} aria-label="Remove the point" title="Remove the point (Delete)"><Trash2 size={15} /></button>}
     </div>}
   </div>}
-  {mode === 'file' && machineFile}
-  <div className="piece-view" ref={host} hidden={mode === 'file'}>
+  <div className="piece-view" ref={host}>
     <div className="piece-ruler" style={{ height: height + headroom }} aria-hidden="true">
       {raster.rows.map((_, index) => (index + 1) % 20 === 0 || index === 0 ? <span key={index} style={{ top: headroom + tops[index]! - 6 }}>{index + 1}</span> : null)}
     </div>
@@ -293,13 +281,6 @@ export function PieceView({ raster, hex, label, editor, machineFile, mode, onMod
         })}
       </svg>}
     </div>
-    <aside className="piece-rhythm" aria-label="Shaping">
-      <h3>Shaping <small>each side</small></h3>
-      <RhythmList title="Edges" steps={rhythm.edge} onHover={setHighlight} />
-      <RhythmList title="Neck" steps={rhythm.neck} onHover={setHighlight} />
-      {rhythm.edge.length === 0 && rhythm.neck.length === 0 && <p className="design-hint">Straight: no shaping.</p>}
-      <p className="design-hint">The right side mirrors the left; a bind-off there comes one row later, where its yarn starts the row.</p>
-    </aside>
   </div>
   </>;
 }

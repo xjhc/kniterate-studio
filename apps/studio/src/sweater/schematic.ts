@@ -67,9 +67,10 @@ function outlinePath(outline: readonly Point[], ox: number, oy: number): string 
   return `${outline.map((p, i) => `${i === 0 ? 'M' : 'L'}${r1(ox + p.x)} ${r1(oy - p.y)}`).join('')}Z`;
 }
 
-export function schematicLayout(plan: SweaterPlan): SchematicLayout {
+/** `belowCm`: room under the pieces for what is knitted before them (waste yarn, draw thread). */
+export function schematicLayout(plan: SweaterPlan, only?: SchematicPiece['id'], belowCm = 0): SchematicLayout {
   const pieces: SchematicPiece[] = [];
-  const placed = plan.pieces.filter((piece) => piece.raster !== null);
+  const placed = plan.pieces.filter((piece) => piece.raster !== null && (only === undefined || piece.id === only));
   const main = placed.filter((piece) => piece.id !== 'neckband');
   // Pieces stand on one baseline, in a row; the neckband lies under the front.
   const baseline = Math.max(0, ...main.map((piece) => piece.raster!.realized.heightCm)) + GAP;
@@ -80,12 +81,12 @@ export function schematicLayout(plan: SweaterPlan): SchematicLayout {
     pieces.push(pieceLayout(plan, piece.id, piece.name, piece.copies, raster, piece.draft.outline, cursor + width / 2, baseline, width));
     cursor += width + GAP;
   }
-  let height = baseline + GAP;
+  let height = baseline + belowCm + GAP;
   const band = placed.find((piece) => piece.id === 'neckband');
   if (band) {
     const raster = band.raster!;
     const width = raster.realized.widestStitches * raster.stitchCm;
-    const y = baseline + GAP + raster.realized.heightCm + 4;
+    const y = baseline + belowCm + GAP + raster.realized.heightCm + 4;
     const front = pieces.find((piece) => piece.id === 'front') ?? pieces[0];
     const x = Math.max(GAP + width / 2, front?.x ?? 0);
     pieces.push(pieceLayout(plan, band.id, band.name, band.copies, raster, band.draft.outline, x, y, width));
