@@ -514,6 +514,12 @@ ship," trust this file and the working tree instead.
     so with no choice. A one-yarn beanie body is "Single layer" (fairisle)
     or "Double layer" (birdseye knits its back layer in the same yarn; both
     export, `backing.test.ts`). A rib beanie has no Backing section.
+  - Freehand drawing on any chart: a round brush 1 to 9 stitches across,
+    round on the fabric at the gauge's row aspect, a circle tool, and
+    mirror left–right / top–bottom (a beanie mirrors within its body). They
+    are pure `@knitlab/colorwork-core` tools (`brushOffsets`, `stamp`,
+    `ellipse`, `mirror`); each stroke is still one paint edit
+    (`e2e/m3b.spec.ts`).
   - On screen the verdict reads "Can't knit yet", "Ready to knit" or "Proven
     on the machine" (`engine.ts::VERDICT_WORDS`). Files, the CLI and the docs
     keep Blocked, Surface-proven and Knit-proven.

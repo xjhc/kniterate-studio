@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Ruler, Wrench } from 'lucide-react';
-import { clear, copy, cut, paste, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
+import { clear, copy, cut, paste, type MirrorAxes, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
 import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendProjectOperation, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
-import { ChartToolbar, type ChartTool } from './ChartToolbar';
+import { BRUSH_SIZES, ChartToolbar, type ChartTool } from './ChartToolbar';
 import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './ColorworkCanvas';
 import { beanieFitEdits, withSizingFixes, type BeanieFitChange } from '../beanie';
 import type { ReadinessStory } from '../handoff';
@@ -80,6 +80,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   stepThrough: ReactNode;
 }) {
   const [tool, setTool] = useState<ChartTool>('pen');
+  const [brush, setBrush] = useState(1);
+  const [mirror, setMirror] = useState<MirrorAxes>({ leftRight: false, topBottom: false });
   const [paletteIndex, setPaletteIndex] = useState(1);
   const [selection, setSelection] = useState<Rect | null>(null);
   const [clipboard, setClipboard] = useState<PixelClipboard | null>(null);
@@ -147,6 +149,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const stalePlacements = useMemo(() => new Set(plan.findings.filter((finding) => finding.rule === 'placement-size-off').map((finding) => finding.path.replace('placements/', ''))), [plan]);
   // A beanie's bottom rows are rib in its main yarn (all of them without a cuff), and the machine shapes the crown above the chart.
   const ribRows = isGarment && plan.sections ? (plan.sections.cuff?.rows ?? (plan.sections.body.fabric === 'rib' ? chart.height : 0)) : 0;
+  // A beanie mirrors within its body: the cuff below it is rib in one yarn.
+  const mirrorBox = useMemo<Rect | null>(() => (ribRows > 0 && ribRows < chart.height ? { left: 0, top: 0, right: chart.width - 1, bottom: chart.height - ribRows - 1 } : null), [ribRows, chart.width, chart.height]);
   const piece = useMemo(() => (isGarment && plan.sections ? {
     ribRows,
     crown: plan.sections.crown?.needles ?? [],
@@ -228,11 +232,16 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'v' && clipboard) { event.preventDefault(); commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 })); return; }
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key === 'Delete' && selection) { event.preventDefault(); commitMutation(clear(chart, selection)); return; }
-      const map: Record<string, ChartTool> = { p: 'pen', s: 'select', m: 'move', l: 'line', r: 'rectangle', e: 'erase', f: 'fill' };
+      if (event.key === '[' || event.key === ']') {
+        const index = BRUSH_SIZES.findIndex((size) => size >= brush);
+        setBrush(BRUSH_SIZES[Math.max(0, Math.min(BRUSH_SIZES.length - 1, (index < 0 ? BRUSH_SIZES.length - 1 : index) + (event.key === ']' ? 1 : -1)))]!);
+        return;
+      }
+      const map: Record<string, ChartTool> = { p: 'pen', s: 'select', m: 'move', l: 'line', r: 'rectangle', c: 'ellipse', e: 'erase', f: 'fill' };
       if (map[event.key.toLowerCase()]) setTool(map[event.key.toLowerCase()]!);
     };
     window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler);
-  }, [project, chart, selection, clipboard, view]);
+  }, [project, chart, selection, clipboard, view, brush]);
 
   // The status panel: whether it can be knitted, then the steps. A garment's gauge is its swatch step, not a design note.
   const tone: StatusTone = story === null ? (storyPending ? 'checking' : 'blocked') : story.status === 'ready' ? 'ready' : story.status === 'blocked' ? 'blocked' : story.status === 'needs-measurements' ? 'next' : 'warn';
@@ -272,11 +281,11 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       </div>;
     }
     return <div className="chart-design-stage">
-      <ChartToolbar active={tool} onTool={setTool} onCopy={() => selection && setClipboard(copy(chart, selection))} onCut={() => { if (!selection) return; const result = cut(chart, selection); setClipboard(result.clipboard); commitMutation(result.mutation); }} onPaste={() => clipboard && commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 }))} onDelete={() => selection && commitMutation(clear(chart, selection))} onZoomIn={() => setZoom(Math.min(3, zoom * 1.2))} onZoomOut={() => setZoom(Math.max(MIN_CHART_ZOOM, zoom / 1.2))} onZoomSelection={() => selection ? setZoom(Math.min(2.5, Math.max(.6, 400 / Math.max(selection.right - selection.left + 1, selection.bottom - selection.top + 1) / 16))) : setFitRequest((request) => request + 1)} hasSelection={selection !== null} canPaste={clipboard !== null} />
+      <ChartToolbar active={tool} onTool={setTool} brush={brush} onBrush={setBrush} mirror={mirror} onMirror={setMirror} onCopy={() => selection && setClipboard(copy(chart, selection))} onCut={() => { if (!selection) return; const result = cut(chart, selection); setClipboard(result.clipboard); commitMutation(result.mutation); }} onPaste={() => clipboard && commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 }))} onDelete={() => selection && commitMutation(clear(chart, selection))} onZoomIn={() => setZoom(Math.min(3, zoom * 1.2))} onZoomOut={() => setZoom(Math.max(MIN_CHART_ZOOM, zoom / 1.2))} onZoomSelection={() => selection ? setZoom(Math.min(2.5, Math.max(.6, 400 / Math.max(selection.right - selection.left + 1, selection.bottom - selection.top + 1) / 16))) : setFitRequest((request) => request + 1)} hasSelection={selection !== null} canPaste={clipboard !== null} />
       <div className="target-chart-stage">
         <PaletteRail chart={chart} carriers={paletteCarriers} active={activePaletteIndex} onSelect={setPaletteIndex} />
         <div className="canvas-stack">
-          <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} fitRequest={fitRequest} fitScope={project.id} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={noPassCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => setFocusedRowId(rowIds[row]!)} firstNeedle={materialized.state.machine.needleOffset} highlightedNeedles={null} rowAspect={gauge ? gauge.stitchesPer10cm / gauge.rowsPer10cm : 1} piece={piece} placements={canvasPlacements} selectedPlacement={selectedPlacement} onPlacementPick={setSelectedPlacement} onPlacementMove={(id, columns, rows) => { const placement = materialized.state.placements?.find((item) => item.id === id); if (placement) operate(`Move ${id}`, [{ kind: 'set-placement', placement: movedPlacement(materialized.state, placement, columns, rows) }]); }} />
+          <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} brush={brush} mirror={mirror} mirrorBox={mirrorBox} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} fitRequest={fitRequest} fitScope={project.id} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={noPassCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => setFocusedRowId(rowIds[row]!)} firstNeedle={materialized.state.machine.needleOffset} highlightedNeedles={null} rowAspect={gauge ? gauge.stitchesPer10cm / gauge.rowsPer10cm : 1} piece={piece} placements={canvasPlacements} selectedPlacement={selectedPlacement} onPlacementPick={setSelectedPlacement} onPlacementMove={(id, columns, rows) => { const placement = materialized.state.placements?.find((item) => item.id === id); if (placement) operate(`Move ${id}`, [{ kind: 'set-placement', placement: movedPlacement(materialized.state, placement, columns, rows) }]); }} />
         </div>
       </div>
     </div>;

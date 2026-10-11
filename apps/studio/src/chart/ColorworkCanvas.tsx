@@ -1,14 +1,22 @@
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
+  brushOffsets,
+  ellipse,
   erase,
   floodFill,
   line,
+  mirror as mirrored,
+  mirrorPoints,
   move,
   pen,
   rectangle,
   rectInChart,
   selectionFromPoints,
+  stamp,
   translateRect,
+  type MirrorAxes,
+  type PixelCell,
+  type PixelMutation,
   type Point,
   type Rect,
 } from '@knitlab/colorwork-core';
@@ -57,14 +65,21 @@ function contrastTint(hex: string, alpha: number): string {
   return luminance < 0.5 ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`;
 }
 
+const NO_MIRROR: MirrorAxes = { leftRight: false, topBottom: false };
+
 function rectContains(rect: Rect, point: Point): boolean {
   return point.column >= rect.left && point.column <= rect.right && point.row >= rect.top && point.row <= rect.bottom;
 }
 
-export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow, firstNeedle, highlightedNeedles, placements = [], selectedPlacement = null, onPlacementPick, onPlacementMove, rowAspect = 1, piece = null }: {
+export function ColorworkCanvas({ chart, tool, paletteIndex, brush = 1, mirror = NO_MIRROR, mirrorBox = null, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow, firstNeedle, highlightedNeedles, placements = [], selectedPlacement = null, onPlacementPick, onPlacementMove, rowAspect = 1, piece = null }: {
   chart: ColorworkChartV1;
   tool: ChartTool;
   paletteIndex: number;
+  /** Brush size in stitches across: the pen, eraser, line and shapes draw with a round brush this wide. */
+  brush?: number;
+  /** Draw each change reflected too, across the middle of `mirrorBox` (the whole chart by default). */
+  mirror?: MirrorAxes;
+  mirrorBox?: Rect | null;
   selection: Rect | null;
   onSelection: (selection: Rect | null) => void;
   onCommit: (mutation: ReturnType<typeof pen>) => boolean;
@@ -121,6 +136,27 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   })();
   const labelRoom = piece ? PIECE_LABEL_ROOM : 0;
   const pixelChart = { width: chart.width, height: chart.height, cells: chart.cells };
+  const [hover, setHover] = useState<Point | null>(null);
+  const brushCells = useMemo(() => brushOffsets(brush, rowAspect), [brush, rowAspect]);
+  const box = mirrorBox ?? { left: 0, top: 0, right: chart.width - 1, bottom: chart.height - 1 };
+  const mirroring = mirror.leftRight || mirror.topBottom;
+  /** A drawn change with the brush and the mirror applied: the one thing the preview shows and the chart receives. */
+  const drawn = (mutation: PixelMutation): PixelMutation => mirrored(pixelChart, stamp(pixelChart, mutation, brushCells), mirror, box);
+  /** What the drawing tool in hand makes of a drag; null for the tools that do not draw. */
+  const drawing = (points: Point[], start: Point, end: Point): PixelMutation | null => {
+    if (tool === 'pen') return drawn(pen(pixelChart, points, paletteIndex));
+    if (tool === 'erase') return drawn(erase(pixelChart, points, 0));
+    if (tool === 'line') return drawn(line(pixelChart, start, end, paletteIndex));
+    if (tool === 'rectangle') return drawn(rectangle(pixelChart, start, end, paletteIndex));
+    if (tool === 'ellipse') return drawn(ellipse(pixelChart, start, end, paletteIndex));
+    return null;
+  };
+  /** Flood fill from the point and from its reflections. */
+  const filled = (point: Point): PixelMutation => {
+    const cells = new Map<string, PixelCell>();
+    for (const seed of mirrorPoints(pixelChart, point, mirror, box)) for (const cell of floodFill(pixelChart, seed, paletteIndex).cells) cells.set(`${cell.row}:${cell.column}`, cell);
+    return { kind: 'paint', cells: [...cells.values()] };
+  };
 
   useEffect(() => {
     const element = viewport.current;
@@ -340,12 +376,27 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       overlay.lineWidth = 3;
       overlay.strokeRect(GUTTER + keyboardPoint.column * cell - scroll.left + 1.5, top0 + keyboardPoint.row * rowH - scroll.top + 1.5, cell - 3, rowH - 3);
     }
-    if (!gesture || !end || gesture.pan || gesture.placement || tool === 'select' || tool === 'move' || tool === 'fill') return;
-    const mutation = tool === 'pen' ? pen(pixelChart, gesture.points, paletteIndex)
-      : tool === 'erase' ? erase(pixelChart, gesture.points, 0)
-      : tool === 'line' ? line(pixelChart, gesture.start, end, paletteIndex)
-      : rectangle(pixelChart, gesture.start, end, paletteIndex);
+    if (mirroring) {
+      // The mirror lines, through the middle of the area that is mirrored.
+      const left = GUTTER + box.left * cell - scroll.left; const right = GUTTER + (box.right + 1) * cell - scroll.left;
+      const top = top0 + box.top * rowH - scroll.top; const bottom = top0 + (box.bottom + 1) * rowH - scroll.top;
+      overlay.strokeStyle = '#2563eb'; overlay.lineWidth = 1.5; overlay.setLineDash([6, 4]);
+      if (mirror.leftRight) { const x = (left + right) / 2; overlay.beginPath(); overlay.moveTo(x, top); overlay.lineTo(x, bottom); overlay.stroke(); }
+      if (mirror.topBottom) { const y = (top + bottom) / 2; overlay.beginPath(); overlay.moveTo(left, y); overlay.lineTo(right, y); overlay.stroke(); }
+      overlay.setLineDash([]);
+    }
     const previewPalette = tool === 'erase' ? 0 : paletteIndex;
+    if (!gesture && hover && (tool === 'pen' || tool === 'erase')) {
+      // Where the brush will paint, before you press.
+      const footprint = drawn(pen(pixelChart, [hover], previewPalette));
+      overlay.globalAlpha = .4;
+      overlay.fillStyle = chart.palette[previewPalette]!.hex;
+      for (const point of footprint.cells) overlay.fillRect(GUTTER + point.column * cell - scroll.left, top0 + point.row * rowH - scroll.top, cell, rowH);
+      overlay.globalAlpha = 1;
+    }
+    if (!gesture || !end || gesture.pan || gesture.placement) return;
+    const mutation = drawing(gesture.points, gesture.start, end);
+    if (!mutation) return;
     overlay.globalAlpha = .7;
     overlay.fillStyle = chart.palette[previewPalette]!.hex;
     for (const point of mutation.cells) overlay.fillRect(GUTTER + point.column * cell - scroll.left, top0 + point.row * rowH - scroll.top, cell, rowH);
@@ -400,7 +451,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
   };
 
   useLayoutEffect(drawRuler, [chart.width, scroll.left, zoom, viewportSize, isDarkMode, firstNeedle, highlightedNeedles]);
-  useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex, keyboardPoint, keyboardActive, placements, selectedPlacement, rowAspect, top0]);
+  useLayoutEffect(drawOverlay, [chart, scroll, zoom, viewportSize, selection, gesture, tool, paletteIndex, keyboardPoint, keyboardActive, placements, selectedPlacement, rowAspect, top0, hover, brushCells, mirror, mirrorBox]);
 
   useEffect(() => {
     const element = viewport.current;
@@ -432,10 +483,8 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       setGesture(null);
       return;
     }
-    if (tool === 'pen') onCommit(pen(pixelChart, gesture.points, paletteIndex));
-    else if (tool === 'erase') onCommit(erase(pixelChart, gesture.points, 0));
-    else if (tool === 'line') onCommit(line(pixelChart, gesture.start, end, paletteIndex));
-    else if (tool === 'rectangle') onCommit(rectangle(pixelChart, gesture.start, end, paletteIndex));
+    const mutation = drawing(gesture.points, gesture.start, end);
+    if (mutation) onCommit(mutation);
     else if (tool === 'select') onSelection(selectionFromPoints(gesture.start, end));
     else if (tool === 'move' && selection) {
       const destination = selectionMoveDestination(selection, gesture.start, end);
@@ -474,7 +523,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         else if (event.key === 'ArrowDown') next = { ...next, row: Math.min(chart.height - 1, next.row + 1) };
         else if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          onCommit(pen(pixelChart, [keyboardPoint], paletteIndex));
+          onCommit(drawn(pen(pixelChart, [keyboardPoint], paletteIndex)));
           return;
         } else return;
         event.preventDefault();
@@ -519,11 +568,12 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
         if (tool === 'move' && (!selection || !rectContains(selection, point))) return;
         event.currentTarget.setPointerCapture(event.pointerId);
         if (event.button === 1 || event.altKey) setGesture({ start: point, points: [point], pan: { x: event.clientX, y: event.clientY } });
-        else if (tool === 'fill') onCommit(floodFill(pixelChart, point, paletteIndex));
+        else if (tool === 'fill') onCommit(filled(point));
         else setGesture({ start: point, points: [point] });
       }}
       onPointerMove={(event) => {
         const hoverPoint = pointAt(event);
+        if (hoverPoint?.row !== hover?.row || hoverPoint?.column !== hover?.column) setHover(hoverPoint);
         if (!gesture) return;
         if (gesture.pan) {
           const element = viewport.current!;
@@ -537,6 +587,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, selection, onSelect
       }}
       onPointerUp={finish}
       onPointerCancel={() => setGesture(null)}
+      onPointerLeave={() => setHover(null)}
     />
     <canvas ref={uiLayer} style={{ transform: `translate(${scroll.left}px, ${scroll.top}px)` }} className="chart-canvas ui-layer" aria-hidden="true" />
     <div className="chart-canvas-spacer" style={{ width: GUTTER + chart.width * cell + labelRoom, height: top0 + chart.height * rowH }} />

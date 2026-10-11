@@ -104,6 +104,42 @@ test('a 100-cell pen drag is continuous and creates one project edit', async ({ 
   );
 });
 
+test('draws freehand: a round brush, a circle and a mirror, each as one edit', async ({ page }, testInfo) => {
+  const { point } = await canvasGeometry(page);
+  await page.getByRole('button', { name: 'Use Red', exact: true }).click();
+  // A 3-stitch brush, mirrored left and right: one click paints a dot on each side.
+  await page.getByRole('button', { name: 'Brush size 3', exact: true }).click();
+  await page.getByRole('button', { name: 'Mirror left and right', exact: true }).click();
+  await page.mouse.click(point(10, 5).x, point(10, 5).y);
+  // Keys: C for the circle, [ for a smaller brush; then the mirror off.
+  await page.locator('canvas.chart-canvas').first().focus();
+  await page.keyboard.press('c');
+  await expect(page.getByRole('button', { name: 'Circle', exact: true })).toHaveClass(/active/);
+  await page.keyboard.press('[');
+  await page.keyboard.press('[');
+  await expect(page.getByRole('button', { name: 'Brush size 1', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Mirror left and right', exact: true }).click();
+  await drag(page, point(20, 10), point(28, 16));
+
+  const download = page.waitForEvent('download');
+  await menu(page, 'File', 'Save project');
+  const path = testInfo.outputPath('drawn-project.json');
+  await (await download).saveAs(path);
+  const saved = JSON.parse(await readFile(path, 'utf8'));
+  expect(saved.history.entries).toHaveLength(2);
+  const [dot, circle] = saved.history.entries.map((entry: { edit: { cells: { rowId: string; column: number }[] } }) => entry.edit.cells);
+  // The chart is 200 needles: column 10 reflects onto 189.
+  expect([...new Set(dot.map((cell: { column: number }) => cell.column))].sort((a, b) => (a as number) - (b as number))).toEqual([9, 10, 11, 188, 189, 190]);
+  expect(dot).toHaveLength(18);
+  const columns = circle.map((cell: { column: number }) => cell.column);
+  expect(Math.min(...columns)).toBe(20);
+  expect(Math.max(...columns)).toBe(28);
+  expect(new Set(circle.map((cell: { rowId: string }) => cell.rowId)).size).toBe(7);
+  // An outline: the middle stays empty, and the box's corners are not on the circle.
+  expect(circle.some((cell: { column: number }) => cell.column === 24)).toBe(true);
+  expect(circle.length).toBeLessThan(9 * 7);
+});
+
 test('wheel zoom, drag pan, and the mobile dark canvas remain usable', async ({ page }) => {
   const shell = page.locator('.chart-canvas-shell');
   await shell.evaluate((element) => { element.scrollLeft = 600; element.scrollTop = 600; });
