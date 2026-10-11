@@ -1,5 +1,5 @@
 import { BIRDSEYE_BODY_EXTRA_FRONT_ROWS, CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH, planEightLineCrown } from '@kniterate-studio/machine-lib/browser';
-import {
+import { beanieObjectOf,
   AUTHORED_CAPACITY_LIMITS_V1,
   type ResolvedProjectPlacement,
   type ProjectEdit,
@@ -165,14 +165,15 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
   const gauge = state.gauge ?? null;
   // A beanie's fit intent (head circumference and ease) is its finished-circumference target.
   const head = state.object?.kind === 'beanie' ? state.object.headCircumferenceCm : undefined;
-  const ease = state.object?.ease ?? DEFAULT_BEANIE_EASE;
+  const ease = beanieObjectOf(state)?.ease ?? DEFAULT_BEANIE_EASE;
   const target: ProjectTarget | null = head === undefined
     ? state.target ?? null
     : { ...state.target, widthCm: round1(head * (1 + ease)) };
   const findings: PlanFinding[] = [];
   const beanie = state.object?.kind === 'beanie';
   // A cuff-and-body beanie: the height target is the body above the rib cuff.
-  const cuffRows = state.object?.construction === 'rib-cuff-jersey-body' ? Math.min(state.object.cuffRows ?? 0, state.chart.height) : 0;
+  const beanieObject = beanieObjectOf(state);
+  const cuffRows = beanieObject?.construction === 'rib-cuff-jersey-body' ? Math.min(beanieObject.cuffRows ?? 0, state.chart.height) : 0;
   // Ground rows the construction knits in the body beyond the chart's (a birdseye body starts and joins its back layer).
   const bodyExtraRows = cuffRows > 0 && state.strategy.technique === 'birdseye' ? BIRDSEYE_BODY_EXTRA_FRONT_ROWS : 0;
 
@@ -274,7 +275,7 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
     });
   }
 
-  const object = state.object;
+  const object = beanieObjectOf(state);
   const ribGauge = object?.ribGauge ?? null;
   const fold = object?.cuffFold === true;
   // Cuff intent: visible height × (2 when it folds up) at the rib's row gauge.
@@ -341,7 +342,7 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
         'The top comes off the machine as live stitches (the last front loops are dropped). Thread the main-yarn tail through the top stitches straight away, before they ladder, and pull them closed.',
         'Pull the draw thread (C1) to separate the waste yarn from the cast-on edge.',
         'Sew the two long edges together with mattress stitch, one stitch in from each edge, from the crown down to the brim. Where the brim will fold up, sew from the other side so the seam is hidden.',
-        ...(state.object?.cuffFold ? [`Fold the rib cuff up along its middle (the cuff is ${cuffRows} rows, so fold at row ${Math.floor(cuffRows / 2)}); the folded half shows the rib's reverse, which looks the same for 2x2 rib.`] : []),
+        ...(beanieObjectOf(state)?.cuffFold ? [`Fold the rib cuff up along its middle (the cuff is ${cuffRows} rows, so fold at row ${Math.floor(cuffRows / 2)}); the folded half shows the rib's reverse, which looks the same for 2x2 rib.`] : []),
         'Weave in the ends. Wash or steam as the yarn label says, then measure.',
       ]
     : ['Pull the draw thread (C1) to separate the waste yarn from the cast-on edge.', 'Weave in the ends. Wash or steam as the yarn label says, then measure.'];

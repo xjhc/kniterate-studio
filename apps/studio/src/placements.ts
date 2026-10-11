@@ -1,3 +1,4 @@
+import { beanieObjectOf } from '@kniterate-studio/project-contract';
 import type { ColorworkChartV1 } from '@kniterate-studio/chart-contract';
 import type { ProjectEdit, ProjectGauge, ProjectPlacement, ProjectState, ResolvedProjectPlacement } from '@kniterate-studio/project-contract';
 import { IMAGE_CHART_CONVERTER, imageToChart } from './imageChart';
@@ -170,7 +171,8 @@ export interface PlacementBox {
 }
 
 function cuffRowsOf(state: ProjectState): number {
-  return state.object?.construction === 'rib-cuff-jersey-body' ? state.object.cuffRows ?? 0 : 0;
+  const object = beanieObjectOf(state);
+  return object?.construction === 'rib-cuff-jersey-body' ? object.cuffRows ?? 0 : 0;
 }
 
 /** Where each placement sits (or would sit, for a conflict), with the anchor rules materialization uses. */

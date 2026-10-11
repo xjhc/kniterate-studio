@@ -45,7 +45,7 @@ export {
   projectColorworkChartV1,
   type ProjectedColorworkChart,
 } from './colorwork/from-colorwork-chart.js';
-export type { YarnBinding } from './knitout/types.js';
+export type { CarrierId, YarnBinding } from './knitout/types.js';
 export type { PredictedPass } from './knitout/sim/types.js';
 export {
   projectBackFaceFromArtifact,
@@ -222,6 +222,7 @@ export {
   type KnitProvenRegistryEntry,
 } from './physical-registry.js';
 export { buildCustomistRibBeanie, type CustomistRibBeanieInput } from './knitout/passes/customist-rib-beanie.js';
+export { emitShapedPanelV1, ShapedPanelError, type PanelRowV1, type PanelSegmentV1, type PanelStitchV1, type ShapedPanelInputV1 } from './knitout/passes/shaped-panel.js';
 export { CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH } from './knitout/passes/customist-rib-beanie-crown.js';
 export { BIRDSEYE_BODY_EXTRA_FRONT_ROWS } from './knitout/passes/customist-rib-beanie.js';
 export { EIGHT_LINE_CROWN_V1, planEightLineCrown } from './knitout/passes/rib-crown-plan.js';

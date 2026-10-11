@@ -1,4 +1,4 @@
-import { materializeColorworkProject, type ColorworkProjectV1, type ProjectState, type ProjectTrial, type ResolvedProjectPlacement } from '@kniterate-studio/project-contract';
+import { beanieObjectOf, materializeColorworkProject, type ColorworkProjectV1, type ProjectState, type ProjectTrial, type ResolvedProjectPlacement } from '@kniterate-studio/project-contract';
 import type { AuthoredPipelineResult } from './authoredPipeline';
 import type { ProjectPlan, Valued } from './plan';
 import type { Finding, Readiness } from './readiness';
@@ -226,7 +226,7 @@ export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectP
   const { state, placements } = materializeColorworkProject(project);
   const story = readinessStory(plan, findings, readiness, result.verdict, state.trials ?? []);
   const sections = plan.sections;
-  const head = state.object?.headCircumferenceCm;
+  const head = beanieObjectOf(state)?.headCircumferenceCm;
   const lines = [
     `# ${project.title}`,
     '',
@@ -238,7 +238,7 @@ export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectP
     '## What it knits',
     plan.piece === 'beanie' ? `Flat beanie, seamed afterwards: ${constructionLine(plan)}.` : `${constructionLine(plan)}.`,
     `Frame: ${result.compiled?.frame?.preset ?? 'unknown'}.`,
-    ...(head !== undefined ? [`Fit: ${head} cm head with ${Math.round(Math.abs(state.object?.ease ?? -0.1) * 100)}% ${(state.object?.ease ?? -0.1) < 0 ? 'negative' : 'positive'} ease.`] : []),
+    ...(head !== undefined ? [`Fit: ${head} cm head with ${Math.round(Math.abs(beanieObjectOf(state)?.ease ?? -0.1) * 100)}% ${(beanieObjectOf(state)?.ease ?? -0.1) < 0 ? 'negative' : 'positive'} ease.`] : []),
     plan.gauge ? `Body gauge: ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}).` : 'No gauge recorded: sizes in cm are unknown.',
     ...(state.object?.ribGauge ? [`Rib gauge: ${state.object.ribGauge.stitchesPer10cm} st / ${state.object.ribGauge.rowsPer10cm} rows per 10 cm (${state.object.ribGauge.source}).`] : []),
     ...(plan.predicted ? [`${plan.piece === 'beanie' ? 'Finished circumference' : 'Width'}: ${valued(plan.predicted.widthCm)}.`] : []),

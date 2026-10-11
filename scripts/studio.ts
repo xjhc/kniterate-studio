@@ -29,6 +29,8 @@ import { parseMeasurementRecord, trialRevision } from '../apps/studio/src/trials
 import { beanieFitEdits, createBeanieProject, fitChangeLabel, type BeanieFitChange } from '../apps/studio/src/beanie.ts';
 import { collectFindings, resolveReadiness, type Finding, type Readiness } from '../apps/studio/src/readiness.ts';
 import { decodePng, encodePng } from './lib/png.ts';
+import { SWEATER_USAGE, SweaterUsageError, isSweaterProject, sweaterCheck, sweaterCommand, sweaterPlanJson, type SweaterCliIo } from './lib/sweater-cli.ts';
+import { planSweater } from '../apps/studio/src/sweater/sweater.ts';
 import { RENDER_VIEWS, renderView, type RenderView } from './lib/render.ts';
 
 const USAGE = `Usage: pnpm --silent studio -- <command> [args]
@@ -98,7 +100,11 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
   explain <term|rule>
       Plain-language meaning of a design term, plan rule, or validator rule.
   schema
-      JSON Schema for <edit>.`;
+      JSON Schema for <edit>.
+  sweater <command> …
+      Flat-panel sweaters (set-in, J-sleeve, drop shoulder; any knit/purl/tuck texture; rib trims):
+      sweater choices | new | plan | set | check | package | pattern | schematic. Run "sweater help".
+      plan, describe, readiness, compile and package on a sweater project use the sweater commands.`;
 
 const MAX_FINDINGS = 200;
 
@@ -419,8 +425,29 @@ async function placementEdit(parsed: Parsed, project: ColorworkProjectV1): Promi
   return { kind: 'set-placement', placement: { id, motif, x, rowsAboveCuff: above, colors, ...(source ? { source } : {}) } };
 }
 
+const sweaterIo: SweaterCliIo = { print, readProject, writeProject, newId };
+
+/** Generic commands on a sweater project: the same answers through the sweater pipeline. */
+async function sweaterRoute(parsed: Parsed): Promise<number | null> {
+  if (!['plan', 'describe', 'readiness', 'compile', 'export', 'package'].includes(parsed.command ?? '')) return null;
+  const path = parsed.positionals[0];
+  if (path === undefined) return null;
+  const project = await readProject(path);
+  if (!isSweaterProject(project)) return null;
+  switch (parsed.command) {
+    case 'plan': print(sweaterPlanJson(project, planSweater(materializeColorworkProject(project).state))); return 0;
+    case 'export': throw new UsageError('A sweater has several pieces, one .kc each: use "sweater package <project.json> -o <directory>".');
+    case 'package': return sweaterCommand(['package', path, ...(parsed.out ? ['-o', parsed.out] : [])], sweaterIo);
+    default: return sweaterCheck(project, sweaterIo);
+  }
+}
+
 async function main(): Promise<number> {
-  const parsed = parseArguments(process.argv.slice(2));
+  const args = process.argv.slice(2).filter((argument, index) => !(index === 0 && argument === '--'));
+  if (args[0] === 'sweater') return sweaterCommand(args.slice(1), sweaterIo);
+  const parsed = parseArguments(args);
+  const routed = await sweaterRoute(parsed);
+  if (routed !== null) return routed;
   switch (parsed.command) {
     case null:
       throw new UsageError('A command is required.');
@@ -437,7 +464,8 @@ async function main(): Promise<number> {
       if (parsed.out === null) throw new UsageError('new requires -o <project.json>.');
       let project = parsed.options.get('--object') === 'beanie'
         ? newBeanie(parsed)
-        : parsed.options.has('--object') ? (() => { throw new UsageError('--object supports only beanie.'); })()
+        : parsed.options.get('--object') === 'sweater' ? (() => { throw new UsageError('Sweaters have their own options: use "sweater new -o <project.json> …" (see "sweater help").'); })()
+        : parsed.options.has('--object') ? (() => { throw new UsageError('--object supports beanie (and sweater through "sweater new").'); })()
         : parsed.positionals.length > 0
         ? await readProject(positional(parsed, 0, 'chart or project file'))
         : createColorworkProjectV1(blankChart(parsed), { id: newId() });
@@ -632,8 +660,8 @@ main().then((code) => { process.exitCode = code; }, (error: unknown) => {
   print({
     kind: 'kniterate-studio-cli-error',
     schemaVersion: 1,
-    error: { kind: error instanceof UsageError ? 'usage' : 'input-or-io', message },
-    ...(error instanceof UsageError ? { usage: USAGE } : {}),
+    error: { kind: error instanceof UsageError || error instanceof SweaterUsageError ? 'usage' : 'input-or-io', message },
+    ...(error instanceof UsageError ? { usage: USAGE } : error instanceof SweaterUsageError ? { usage: SWEATER_USAGE } : {}),
   });
   process.exitCode = 2;
 });

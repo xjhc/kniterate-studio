@@ -235,6 +235,66 @@ ship," trust this file and the working tree instead.
     - an agent `fit` reviewed in the Changes panel;
     - recovery from an invalid width and an oversized motif;
     - a synthetic measurement revision.
+- **Flat-panel sweater, software slice (M7, 2026-10-10).** A sweater is one
+  project (`object: { kind: 'sweater', … }`): finished measurements, a
+  silhouette (`set-in`, `j-sleeve`, `drop-shoulder`), a neckline (`crew`,
+  `boat`), a body texture, rib trims, gauges and a top finish. The chart holds
+  only the yarn.
+  - `apps/studio/src/sweater/draft.ts` drafts each piece as a cm outline:
+    back, front, sleeve (knit twice) and, for a crew neck, a rib neckband.
+    Size and fit chips give standard finished measurements. A set-in cap's
+    slope is fitted to the armhole edge (at most 80% of the armhole depth). A
+    J-sleeve's flat top matches the straight armhole.
+  - `rasterize.ts` slices the outline into rows at the gauge using only legal
+    machine moves:
+    - transfers for 1–2 stitches;
+    - chain bind-offs of 3 or more, only on a row that starts at that edge;
+      a fresh step that waits a row binds off the same count as the first side;
+    - one-stitch increases;
+    - the neck split on a row that starts on the right.
+    Lag against the outline is reported (`sweater-shape-lag`).
+  - `packages/machine-lib/src/knitout/passes/shaped-panel.ts` knits any such
+    rows in one yarn with any `k/p/t/u/s` texture. It uses the choreography
+    decoded from `reference/front.kc` and `sleeves.kc`:
+    - edge shifts through the rear bed at rack ∓d (`fashion` 1–3);
+    - chain bind-offs;
+    - a centre neck bind-off, after which the right shoulder knits on a
+      second carrier brought in during the waste section.
+    The start is Customist's flat start, now shared with the rib beanie
+    (`customist-flat-start.ts`); the beanie stays trace-identical to its
+    reference.
+    Before each row, rack-0 transfers set every stitch's bed. Selvedges and
+    the stitches the next row moves knit plain, so no needle ever holds more
+    than two loops. A row that knits and tucks on one bed is refused.
+  - `sweaterPipeline.ts` compiles every piece through the same strict KCode
+    conversion, validation and `resolveAuthoredVerdict`. The sweater's
+    verdict is its worst piece. Readiness blocks on assumed body and rib
+    gauges. The second-cone yarn and the carried strand are operator checks.
+  - Tests:
+    - every silhouette × neckline × the library textures (stockinette, seed,
+      garter, moss, basketweave, half and full cardigan, slip tweed,
+      welts, rib) compile Surface-proven with zero validator errors;
+    - an independent trace replay leaves the live loops exactly on the shaped
+      needles for fashion 1–3.
+  - Browser: New project → Sweater, then a three-column workspace:
+    - design (style cards, size and fit chips, measurements with wanted vs
+      knitted, a texture library with a tile editor, rib edges, yarn and
+      gauges, each change one undoable operation);
+    - the garment, as worn or as flat pieces to scale, and each piece stitch
+      by stitch with its shaping;
+    - status in plain words, per-piece downloads, the package and the written
+      pattern.
+    `e2e/sweater-workflow.spec.ts` covers it (Chromium, Firefox).
+  - CLI: `studio sweater choices|new|plan|set|check|package|pattern|schematic`.
+    The generic `plan`/`describe`/`readiness`/`compile`/`package` route
+    sweater projects there. The `knit-design` skill documents it.
+  - Not built:
+    - raglan, V-neck, colorwork or stripes on sweater pieces;
+    - picked-up collars;
+    - Customist's sweater template parity (CP-A3–A7 stay open: no captured
+      reference reproduces a Studio panel).
+    Nothing has been knitted. Sweater programs are development evidence at
+    best, and the release checker is still rectangle-only.
 - **Customist parity scoreboard.** `pnpm parity [--json]` compares the 13
   captured references. Schema v2 reserves `reproduced` for an export-ready,
   strict whole-program machine-trace match, including rack, settings, stops,

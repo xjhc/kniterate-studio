@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
+import { beanieObjectOf,
   appendProjectEdit,
   appendProjectOperation,
   createColorworkProjectV1,
@@ -87,7 +87,7 @@ describe('beanie intent', () => {
     project = appendProjectEdit(project, { id: 'paint', source: 'human', edit: { kind: 'paint-cells', cells: [60, 61, 62, 63].map((column) => ({ rowId: firstBodyRow, column, paletteIndex: 1 })) } });
     const taller = operate(project, beanieFitEdits(project, { cuffCm: 8 }), 'Cuff 8 cm');
     const after = materializeColorworkProject(taller).state;
-    expect(after.object?.cuffRows).toBe(51);
+    expect(beanieObjectOf(after)?.cuffRows).toBe(51);
     // The painted row is still the first body row, and the cuff is still one color.
     expect(after.rowIds[after.chart.height - 1 - 51]).toBe(firstBodyRow);
     expect(compileColorworkProject(taller).messages.filter((message) => message.severity === 'error')).toEqual([]);
@@ -287,9 +287,9 @@ describe('third review', () => {
     let project = toque({ ribGauge: { stitchesPer10cm: 30, rowsPer10cm: 60, source: 'measured' } });
     const before = materializeColorworkProject(project).state;
     const big = operate(project, beanieFitEdits(project, { cuffCm: 30 }), 'Cuff 30 cm');
-    expect(materializeColorworkProject(big).state.object?.cuffRows).toBe(360);
+    expect(beanieObjectOf(materializeColorworkProject(big).state)?.cuffRows).toBe(360);
     const undone = materializeColorworkProject(undoProjectEdit(big)).state;
-    expect([undone.chart.height, undone.object?.cuffRows, undone.object?.cuffTargetCm]).toEqual([before.chart.height, before.object?.cuffRows, 7]);
+    expect([undone.chart.height, beanieObjectOf(undone)?.cuffRows, beanieObjectOf(undone)?.cuffTargetCm]).toEqual([before.chart.height, beanieObjectOf(before)?.cuffRows, 7]);
     // Fill history past its limit with multi-edit operations: compaction never splits one.
     for (let index = 0; index < 140; index += 1) project = operate(project, [{ kind: 'set-target', target: { heightCm: 13 + (index % 2) } }, { kind: 'set-target', target: { heightCm: 13 } }]);
     const groups = project.history.entries.map((entry) => entry.group);

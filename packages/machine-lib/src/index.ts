@@ -224,6 +224,7 @@ export {
   type RunArtifact,
 } from './knitout/run-artifact.js';
 export { parseKcPasses, type ParsedKcPass } from './knitout/sim/kc-parse.js';
+export { emitShapedPanelV1, ShapedPanelError, type PanelRowV1, type PanelSegmentV1, type PanelStitchV1, type ShapedPanelInputV1 } from './knitout/passes/shaped-panel.js';
 export { CarriageSimulator, type CarriageSimulatorOptions } from './knitout/sim/carriage-simulator.js';
 export {
   validateKnitoutProgram,

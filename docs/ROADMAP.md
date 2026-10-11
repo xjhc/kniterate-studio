@@ -303,6 +303,24 @@ Gate: parity against captured Customist panels, including the collar.
 `front.kc`, `back.kc` and `sleeves.kc` are shaping references. The
 benchmark's sweater cases pass.
 
+**Status 2026-10-10: software slice built ahead of the beanie trial (user
+request).**
+
+Built: one-yarn flat-panel sweaters in set-in, J-sleeve and drop-shoulder
+styles with crew or boat necks. They take any knit/purl/tuck/slip texture and
+rib trims, in a multi-piece project with per-piece programs, seam checks, a
+package and a written pattern. Browser and CLI are covered (see STATUS).
+
+Open:
+
+- Customist panel parity (no captured reference is reproduced) and the
+  CP-A3–A7 rows;
+- raglan and V-neck;
+- colorwork, stripes and picked-up collars on pieces;
+- benchmark sweater cases;
+- a development knit;
+- the multi-artifact release checker (M9).
+
 ## M8 - Remaining parity
 
 The rest of the inventory:

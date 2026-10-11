@@ -212,7 +212,7 @@ async function check(item: EvalCase, directory: string, reported: ReturnType<typ
       if (item.expect.noCarrierInNames && state.machine.yarnAssignments.some((assignment) => /\bC[1-6]\b/.test(assignment.yarnName))) failures.push('a yarn name still contains a carrier number');
       const object = item.expect.object;
       if (object !== undefined) {
-        const actual = state.object;
+        const actual = state.object?.kind === 'beanie' ? state.object : undefined;
         if (actual === undefined) failures.push('no beanie object recorded');
         else {
           if (object.construction !== undefined && actual.construction !== object.construction) failures.push(`construction ${actual.construction}, expected ${object.construction}`);

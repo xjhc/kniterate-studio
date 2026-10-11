@@ -5,6 +5,7 @@ import {
   observeAuthoredCapacityV1,
   type AuthoredCapacitySupportedV1,
   type AuthoredCapacityV1,
+  type BeanieObject,
   type ColorworkProjectV1,
   type ResolvedProjectOverride,
   type ResolvedProjectPlacement,
@@ -177,7 +178,12 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     };
   }
   const { state, overrides, placements } = materializeColorworkProject(project);
-  if (state.object?.kind === 'beanie') return compileBeanieProject(project, state, overrides, placements, capacity as AuthoredCapacitySupportedV1);
+  // A sweater's pieces each compile through their own construction (sweater/sweaterPipeline.ts); its chart only holds the yarn.
+  if (state.object?.kind === 'sweater') {
+    const message = setupError('project-sweater-pieces', 'This project is a sweater: each piece compiles separately; see the sweater workspace or `studio sweater`.');
+    return { ...preflightBase, ok: false, compileVerdict: 'blocked', inputHash: null, messages: [message], knitoutText: null, passes: [], programOpSourceRows: [], rowProvenance: [], backFace: null, frame: null, diagnostics: [{ ...message, opIndex: null, rowId: null, passIndices: [] }] };
+  }
+  if (state.object?.kind === 'beanie') return compileBeanieProject(project, state, state.object, overrides, placements, capacity as AuthoredCapacitySupportedV1);
   const usedPaletteIndexes = new Set(state.chart.cells.flat());
   const usedPalette = state.chart.palette.filter((_entry, index) => usedPaletteIndexes.has(index));
   const assignments = new Map(state.machine.yarnAssignments.map((assignment) => [assignment.paletteId, assignment]));
@@ -343,11 +349,11 @@ export const BEANIE_WIDTH_LIMITS = { min: 60, max: 244 } as const;
 function compileBeanieProject(
   project: ColorworkProjectV1,
   state: ProjectState,
+  object: BeanieObject,
   overrides: readonly ResolvedProjectOverride[],
   placements: readonly ResolvedProjectPlacement[],
   capacity: AuthoredCapacitySupportedV1,
 ): BlanketCompileArtifact {
-  const object = state.object!;
   const width = state.chart.width;
   // Knitting order: the bottom chart row first (cells are stored top row first).
   const knitRows = [...state.chart.cells].reverse();

@@ -95,7 +95,7 @@ export type ProjectTarget = z.infer<typeof TargetSchema>;
  * is the rib body (width = needles, height = rib rows, one color) and the
  * construction adds the frame, crown, and knit-off.
  */
-const ObjectSchema = z.object({
+const BeanieObjectSchema = z.object({
   kind: z.literal('beanie'),
   /**
    * `flat-rib-2x2`: the whole body is 2×2 rib. `rib-cuff-jersey-body`: the
@@ -114,7 +114,81 @@ const ObjectSchema = z.object({
   /** Gauge of the 2×2 rib (the cuff); the body uses the project gauge. */
   ribGauge: z.lazy(() => GaugeSchema).optional(),
 }).refine((object) => object.construction === 'flat-rib-2x2' || object.cuffRows !== undefined, 'rib-cuff-jersey-body needs cuffRows');
+export type BeanieObject = z.infer<typeof BeanieObjectSchema>;
+
+/**
+ * A stitch texture as a small repeat, rows as seen with the top row first
+ * (the bottom row is knitted first). `k` knit, `p` purl (knit on the rear
+ * bed), `t`/`u` tuck on the front/rear bed, `s` slip.
+ */
+const TextureSchema = z.array(z.string().regex(/^[kptus]+$/, 'a texture row uses only k, p, t, u and s').min(1).max(24)).min(1).max(24)
+  .refine((rows) => rows.every((row) => row.length === rows[0]!.length), 'every texture row needs the same number of stitches');
+const RibTrimSchema = z.object({
+  /** One rib row, e.g. "kp" (1×1) or "kkpp" (2×2). */
+  rib: z.string().regex(/^[kp]+$/, 'a rib uses only k and p').min(2).max(12),
+  cm: z.number().min(0).max(40),
+});
+const SweaterCm = z.number().positive().max(250);
+
+/**
+ * A flat-panel sweater: the front, back, two sleeves and (for a crew neck) a
+ * neckband are knitted as separate pieces and sewn. Measurements are the
+ * finished garment's, in cm; the pieces' shapes are drafted from them and
+ * their stitches and rows come from the project gauge (the body texture)
+ * and `ribGauge` (the trims). The chart's palette holds the yarn.
+ */
+const SweaterObjectSchema = z.object({
+  kind: z.literal('sweater'),
+  /** `drop-shoulder`: straight body, flat-topped sleeve. `j-sleeve`: a short underarm curve, then straight. `set-in`: a shaped armhole and a capped sleeve. */
+  silhouette: z.enum(['drop-shoulder', 'j-sleeve', 'set-in']),
+  /** `crew`: a shaped neck finished with a rib neckband. `boat`: a straight top with a rib edge; the shoulder seams leave the neck open. */
+  neckline: z.enum(['crew', 'boat']),
+  measurements: z.object({
+    /** Finished chest circumference (front + back). */
+    chest: SweaterCm,
+    /** Back length from the hem to the shoulder at the neck. */
+    length: SweaterCm,
+    /** Underarm to the cuff's edge. */
+    sleeveLength: SweaterCm,
+    /** Finished upper-arm circumference. */
+    upperArm: SweaterCm,
+    /** Finished cuff circumference. */
+    cuff: SweaterCm,
+    /** Underarm to shoulder, straight up. */
+    armholeDepth: SweaterCm,
+    /** Shoulder point to shoulder point across the back (set-in and J-sleeve). */
+    shoulderWidth: SweaterCm,
+    neckWidth: SweaterCm,
+    frontNeckDepth: SweaterCm,
+    backNeckDepth: z.number().min(0).max(30),
+    /** How far the shoulder line drops from the neck to the shoulder point. */
+    shoulderDrop: z.number().min(0).max(15).optional(),
+  }),
+  /** Where the measurements came from: a standard size and a fit, or custom. */
+  size: z.string().min(1).max(40).optional(),
+  body: z.object({ name: z.string().min(1).max(80), texture: TextureSchema }),
+  trims: z.object({ hem: RibTrimSchema, cuff: RibTrimSchema, neck: RibTrimSchema }),
+  /** Gauge of the rib trims; the body uses the project gauge. */
+  ribGauge: z.lazy(() => GaugeSchema).optional(),
+  /** How each piece's top is finished: a machine chain bind-off, or waste yarn to bind off or graft by hand. */
+  top: z.enum(['bind-off', 'waste']).optional(),
+  /** Stitches moved by each decrease and increase: 1 at the edge, 2–3 for a fashioning line set in from it. */
+  fashion: z.number().int().min(1).max(3).optional(),
+});
+export type SweaterObject = z.infer<typeof SweaterObjectSchema>;
+
+const ObjectSchema = z.union([BeanieObjectSchema, SweaterObjectSchema]);
 export type ProjectObject = z.infer<typeof ObjectSchema>;
+
+/** The project's beanie, when it is one. */
+export function beanieObjectOf(state: { object?: ProjectObject }): BeanieObject | undefined {
+  return state.object?.kind === 'beanie' ? state.object : undefined;
+}
+
+/** The project's sweater, when it is one. */
+export function sweaterObjectOf(state: { object?: ProjectObject }): SweaterObject | undefined {
+  return state.object?.kind === 'sweater' ? state.object : undefined;
+}
 
 /**
  * A motif placed as intent rather than painted cells. Materialization draws
@@ -1364,7 +1438,7 @@ function replayState(project: ColorworkProjectV1): ProjectState {
 
 /** Draws each placement over the chart from its anchor; a placement that does not fit is not drawn at all. */
 function drawPlacements(state: ProjectState): ResolvedProjectPlacement[] {
-  const cuffRows = state.object?.construction === 'rib-cuff-jersey-body' ? state.object.cuffRows ?? 0 : 0;
+  const cuffRows = state.object?.kind === 'beanie' && state.object.construction === 'rib-cuff-jersey-body' ? state.object.cuffRows ?? 0 : 0;
   const paletteIndex = new Map(state.chart.palette.map((entry, index) => [entry.id, index]));
   return (state.placements ?? []).map((placement): ResolvedProjectPlacement => {
     const { motif } = placement;

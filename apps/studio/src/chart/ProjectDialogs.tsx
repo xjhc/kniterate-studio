@@ -8,6 +8,10 @@ import {
   type ProjectGauge,
 } from '@kniterate-studio/project-contract';
 import type { BeanieIntent } from '../beanie';
+import { FITS, SIZES, type Fit, type Size } from '../sweater/draft';
+import { SWEATER_CHOICES, type SweaterIntent } from '../sweater/sweater';
+import { TEXTURES } from '../sweater/textures';
+import { SilhouetteIcon } from '../sweater/SilhouetteIcon';
 
 export const DEFAULT_PROJECT_PALETTE: readonly ColorworkChartPaletteEntry[] = [
   { id: 'natural', name: 'Natural', hex: '#F4F0E6' },
@@ -32,15 +36,43 @@ export interface NewProjectValues {
   colorCount: number;
 }
 
-export function NewProjectDialog({ onCreate, onCreateBeanie, onClose }: { onCreate: (values: NewProjectValues) => void; onCreateBeanie?: (intent: BeanieIntent) => void; onClose: () => void }) {
-  const [kind, setKind] = useState<'rectangle' | 'beanie'>('rectangle');
+export function NewProjectDialog({ onCreate, onCreateBeanie, onCreateSweater, onClose, initialKind = 'rectangle' }: { onCreate: (values: NewProjectValues) => void; onCreateBeanie?: (intent: BeanieIntent) => void; onCreateSweater?: (intent: SweaterIntent) => void; onClose: () => void; initialKind?: 'rectangle' | 'beanie' | 'sweater' }) {
+  const [kind, setKind] = useState<'rectangle' | 'beanie' | 'sweater'>(initialKind);
+  const kinds = [['sweater', 'Sweater'], ['beanie', 'Beanie'], ['rectangle', 'Scarf or blanket']] as const;
   return <DialogShell title="New project" onClose={onClose}>
-    {onCreateBeanie && <div className="project-kind" role="tablist" aria-label="Kind of project">
-      <button type="button" role="tab" aria-selected={kind === 'rectangle'} className={kind === 'rectangle' ? 'active' : ''} onClick={() => setKind('rectangle')}>Rectangle</button>
-      <button type="button" role="tab" aria-selected={kind === 'beanie'} className={kind === 'beanie' ? 'active' : ''} onClick={() => setKind('beanie')}>Beanie</button>
+    {(onCreateBeanie || onCreateSweater) && <div className="project-kind" role="tablist" aria-label="Kind of project">
+      {kinds.filter(([id]) => id === 'rectangle' || (id === 'beanie' ? onCreateBeanie : onCreateSweater)).map(([id, name]) => <button key={id} type="button" role="tab" aria-selected={kind === id} className={kind === id ? 'active' : ''} onClick={() => setKind(id)}>{name}</button>)}
     </div>}
-    {kind === 'beanie' && onCreateBeanie ? <NewBeanieForm onCreate={onCreateBeanie} onClose={onClose} /> : <NewRectangleForm onCreate={onCreate} onClose={onClose} />}
+    {kind === 'beanie' && onCreateBeanie ? <NewBeanieForm onCreate={onCreateBeanie} onClose={onClose} />
+      : kind === 'sweater' && onCreateSweater ? <NewSweaterForm onCreate={onCreateSweater} onClose={onClose} />
+        : <NewRectangleForm onCreate={onCreate} onClose={onClose} />}
   </DialogShell>;
+}
+
+function NewSweaterForm({ onCreate, onClose }: { onCreate: (intent: SweaterIntent) => void; onClose: () => void }) {
+  const [title, setTitle] = useState('Sweater');
+  const [silhouette, setSilhouette] = useState<SweaterIntent['silhouette']>('set-in');
+  const [neckline, setNeckline] = useState<SweaterIntent['neckline']>('crew');
+  const [size, setSize] = useState<Size>('M');
+  const [fit, setFit] = useState<Fit>('classic');
+  const [textureId, setTextureId] = useState('stockinette');
+  const [yarn, setYarn] = useState({ name: 'Oatmeal', hex: '#D9CBB0' });
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    onCreate({ title: title.trim(), silhouette, neckline, size, fit, textureId, yarn });
+  };
+  return <form onSubmit={submit} className="new-sweater">
+    <label>Project name<input autoFocus required maxLength={200} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></label>
+    <fieldset><legend>Style</legend><div className="silhouette-cards">{SWEATER_CHOICES.silhouettes.map((choice) => <button key={choice.id} type="button" className={silhouette === choice.id ? 'active' : ''} aria-pressed={silhouette === choice.id} onClick={() => setSilhouette(choice.id)} title={choice.note}><SilhouetteIcon silhouette={choice.id} neckline={neckline} /><b>{choice.name}</b></button>)}</div>
+      <p className="garment-help">{SWEATER_CHOICES.silhouettes.find((choice) => choice.id === silhouette)!.note}</p></fieldset>
+    <fieldset><legend>Neck</legend><div className="color-count-control">{SWEATER_CHOICES.necklines.map((choice) => <button key={choice.id} type="button" className={neckline === choice.id ? 'active' : ''} onClick={() => setNeckline(choice.id)}>{choice.name}</button>)}</div></fieldset>
+    <fieldset><legend>Size and fit</legend><div className="color-count-control">{SIZES.map((id) => <button key={id} type="button" className={size === id ? 'active' : ''} onClick={() => setSize(id)}>{id}</button>)}</div>
+      <div className="color-count-control">{FITS.map((id) => <button key={id} type="button" className={fit === id ? 'active' : ''} onClick={() => setFit(id)}>{id[0]!.toUpperCase() + id.slice(1)}</button>)}</div>
+      <p className="garment-help">Every measurement can be changed after.</p></fieldset>
+    <label>Stitch<select value={textureId} onChange={(event) => setTextureId(event.currentTarget.value)}>{TEXTURES.map((texture) => <option key={texture.id} value={texture.id}>{texture.name}</option>)}</select></label>
+    <fieldset><legend>Yarn</legend><div className="yarn-pick"><label>Name<input aria-label="Yarn name" value={yarn.name} onChange={(event) => setYarn({ ...yarn, name: event.currentTarget.value })} /><input type="color" aria-label="Yarn color" value={yarn.hex} onChange={(event) => setYarn({ ...yarn, hex: event.currentTarget.value.toUpperCase() })} /></label></div></fieldset>
+    <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || !yarn.name.trim()}><Check size={16} /> Create sweater</button></footer>
+  </form>;
 }
 
 function NewRectangleForm({ onCreate, onClose }: { onCreate: (values: NewProjectValues) => void; onClose: () => void }) {

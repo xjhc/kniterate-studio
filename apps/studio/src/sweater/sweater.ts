@@ -1,0 +1,256 @@
+import {
+  appendProjectOperation,
+  createColorworkProjectV1,
+  sweaterObjectOf,
+  type ColorworkProjectV1,
+  type ProjectEdit,
+  type ProjectEditEntry,
+  type ProjectGauge,
+  type ProjectState,
+  type SweaterObject,
+} from '@kniterate-studio/project-contract';
+import { defaultMeasurements, draftSweater, type DraftPiece, type Fit, type Measurements, type PieceId, type Silhouette, type Size, type SweaterDraft } from './draft';
+import { rasterizePiece, type Gauge, type PanelPlan } from './rasterize';
+import { RIBS, TEXTURES, textureById, textureMatching, textureProblem } from './textures';
+
+/**
+ * A sweater as a designer states it, and its plan: the drafted pieces at the
+ * gauge, with every derived count, the seam checks and the findings that
+ * block knitting. Shared by the CLI and the browser.
+ */
+
+export const SWEATER_WASTE_CARRIER = '6';
+export const SWEATER_DRAW_CARRIER = '1';
+/** Default rib gauge (2×2 rib, worsted at 7gg) while it is assumed. */
+export const DEFAULT_RIB_GAUGE: Gauge = { stitchesPer10cm: 30, rowsPer10cm: 32 };
+/** The 252-needle bed keeps a few needles clear at each end for carrier parking. */
+export const SWEATER_MAX_NEEDLES = 240;
+const BED_CENTRE = 127;
+
+export interface SweaterIntent {
+  title: string;
+  silhouette: Silhouette;
+  neckline: SweaterObject['neckline'];
+  size: Size;
+  fit: Fit;
+  textureId: string;
+  yarn: { name: string; hex: string };
+  /** Body gauge for the texture; the texture's typical gauge (assumed) when missing. */
+  gauge?: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'>;
+  ribGauge?: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'>;
+  hemRib?: string;
+  measurements?: Partial<Measurements>;
+}
+
+export function sweaterObjectFor(intent: SweaterIntent): SweaterObject {
+  const texture = textureById(intent.textureId) ?? TEXTURES[0]!;
+  const rib = intent.hemRib ?? 'kkpp';
+  return {
+    kind: 'sweater',
+    silhouette: intent.silhouette,
+    neckline: intent.neckline,
+    size: `${intent.size} ${intent.fit}`,
+    measurements: { ...defaultMeasurements(intent.size, intent.fit, intent.silhouette), ...intent.measurements },
+    body: { name: texture.name, texture: [...texture.rows] },
+    trims: { hem: { rib, cm: 6 }, cuff: { rib, cm: 6 }, neck: { rib: 'kp', cm: 2.5 } },
+    ribGauge: { ...(intent.ribGauge ?? { ...DEFAULT_RIB_GAUGE, source: 'assumed' as const }) },
+  };
+}
+
+/** A new sweater project. The chart holds only the yarn: the pieces come from the drafted shapes. */
+export function createSweaterProject(intent: SweaterIntent, options: { id: string; source: ProjectEditEntry['source']; group: string }): ColorworkProjectV1 {
+  const texture = textureById(intent.textureId) ?? TEXTURES[0]!;
+  const chart = {
+    kind: 'knitlab-colorwork-chart' as const, version: 1 as const, title: intent.title, width: 1, height: 1, rowNumbering: 'bottom-up' as const,
+    palette: [{ id: 'main', name: intent.yarn.name, hex: intent.yarn.hex }],
+    cells: [[0]],
+  };
+  const project = createColorworkProjectV1(chart, { id: options.id, title: intent.title });
+  const edits: ProjectEdit[] = [
+    { kind: 'set-object', object: sweaterObjectFor(intent) },
+    { kind: 'set-yarn-assignment', assignment: { paletteId: 'main', carrier: '3', yarnName: intent.yarn.name } },
+    { kind: 'set-gauge', gauge: { ...(intent.gauge ?? { ...texture.gauge, source: 'assumed' as const }) } },
+  ];
+  return appendProjectOperation(project, { group: options.group, source: options.source, label: `Create ${intent.title}`, edits });
+}
+
+/** The edit that replaces the sweater's design with `next`. */
+export function sweaterEdit(next: SweaterObject): ProjectEdit {
+  return { kind: 'set-object', object: next };
+}
+
+export interface SweaterPieceFinding {
+  rule: string;
+  severity: 'error' | 'warning' | 'info';
+  /** The piece it concerns, or null for the whole sweater. */
+  piece: PieceId | null;
+  path: string;
+  message: string;
+}
+
+export interface SweaterPiecePlan {
+  id: PieceId;
+  name: string;
+  copies: number;
+  draft: DraftPiece;
+  raster: PanelPlan | null;
+  /** Why the piece cannot be rasterized (it does not fit the bed, the shape is degenerate). */
+  error: string | null;
+}
+
+export interface SweaterPlan {
+  object: SweaterObject;
+  draft: SweaterDraft;
+  gauge: Gauge & { source: 'measured' | 'assumed' };
+  ribGauge: Gauge & { source: 'measured' | 'assumed' };
+  pieces: SweaterPiecePlan[];
+  /** Main yarn carrier, and the second carrier (same yarn) that knits the right shoulder after a crew neck's split. */
+  carriers: { main: string; second: string | null; waste: string; draw: string };
+  findings: SweaterPieceFinding[];
+  /** Realized measurements of the finished garment, from the knitted counts. */
+  realized: { label: string; target: number | null; cm: number; how: string }[];
+  /** Each measurement as knitted, cm, where the pieces define it. */
+  knitted: Partial<Record<keyof Measurements, number>>;
+}
+
+const round1 = (value: number) => Math.round(value * 10) / 10;
+
+/** The yarn's carrier and a free one for the second neck yarn. */
+function carriersOf(state: ProjectState, needsSecond: boolean): SweaterPlan['carriers'] {
+  const main = state.machine.yarnAssignments.find((item) => item.paletteId === state.chart.palette[0]?.id)?.carrier ?? '3';
+  const second = needsSecond ? (['4', '5', '2', '3'] as const).find((carrier) => carrier !== main) ?? null : null;
+  return { main, second, waste: SWEATER_WASTE_CARRIER, draw: SWEATER_DRAW_CARRIER };
+}
+
+export function planSweater(state: ProjectState): SweaterPlan {
+  const object = sweaterObjectOf(state);
+  if (object === undefined) throw new Error('This project is not a sweater.');
+  const draft = draftSweater(object);
+  const gauge = state.gauge ?? { ...(textureMatching(object.body.texture)?.gauge ?? TEXTURES[0]!.gauge), source: 'assumed' as const };
+  const ribGauge = object.ribGauge ?? { ...DEFAULT_RIB_GAUGE, source: 'assumed' as const };
+  const findings: SweaterPieceFinding[] = [];
+  const problem = textureProblem(object.body.texture);
+  if (problem !== null) findings.push({ rule: 'sweater-texture-unknittable', severity: 'error', piece: null, path: 'object.body.texture', message: problem });
+  const pieces: SweaterPiecePlan[] = draft.pieces.map((piece) => {
+    const rib = piece.id === 'sleeve' ? object.trims.cuff.rib : piece.id === 'neckband' ? object.trims.neck.rib : object.trims.hem.rib;
+    try {
+      const raster = rasterizePiece({
+        piece,
+        gauge,
+        ribGauge,
+        texture: problem === null ? object.body.texture : ['k'],
+        rib,
+        topRib: object.trims.neck.rib,
+        centre: BED_CENTRE,
+      });
+      return { id: piece.id, name: piece.name, copies: piece.copies, draft: piece, raster, error: null };
+    } catch (error) {
+      return { id: piece.id, name: piece.name, copies: piece.copies, draft: piece, raster: null, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+  const needsSecond = pieces.some((piece) => piece.raster?.rows.some((row) => row.segments.length === 2) ?? false);
+  const carriers = carriersOf(state, needsSecond);
+
+  if (gauge.source === 'assumed') findings.push({ rule: 'gauge-assumed', severity: 'warning', piece: null, path: 'gauge', message: `The body gauge (${gauge.stitchesPer10cm} st / ${gauge.rowsPer10cm} rows per 10 cm) is assumed, so every size in cm is a guess until you knit and measure a swatch in this yarn and ${object.body.name.toLowerCase()}.` });
+  if (ribGauge.source === 'assumed') findings.push({ rule: 'gauge-assumed', severity: 'warning', piece: null, path: 'object.ribGauge', message: `The rib gauge (${ribGauge.rowsPer10cm} rows per 10 cm) is assumed, so the rib heights are a guess until measured.` });
+  for (const piece of pieces) {
+    if (piece.error !== null) { findings.push({ rule: 'sweater-piece-unplanned', severity: 'error', piece: piece.id, path: `pieces/${piece.id}`, message: `${piece.name}: ${piece.error}` }); continue; }
+    const raster = piece.raster!;
+    if (raster.realized.widestStitches > SWEATER_MAX_NEEDLES) findings.push({ rule: 'sweater-piece-too-wide', severity: 'error', piece: piece.id, path: `pieces/${piece.id}`, message: `${piece.name} is ${raster.realized.widestStitches} stitches at its widest (${raster.realized.widthCm} cm); the bed takes ${SWEATER_MAX_NEEDLES}. Use a finer gauge or a smaller measurement.` });
+    if (raster.lag.stitches >= 3) findings.push({ rule: 'sweater-shape-lag', severity: 'warning', piece: piece.id, path: `pieces/${piece.id}`, message: `${piece.name} narrows or widens faster than the machine can follow: at row ${raster.lag.row + 1} it is ${raster.lag.cm} cm off the drafted shape.` });
+    if (raster.realized.castOnStitches < 8) findings.push({ rule: 'sweater-piece-too-narrow', severity: 'error', piece: piece.id, path: `pieces/${piece.id}`, message: `${piece.name} casts on ${raster.realized.castOnStitches} stitches; a piece needs at least 8.` });
+  }
+
+  // Seam checks, from the knitted counts.
+  const byId = new Map(pieces.map((piece) => [piece.id, piece.raster]));
+  const front = byId.get('front');
+  const back = byId.get('back');
+  const sleeve = byId.get('sleeve');
+  /** The first row at or above the drafted underarm (where the side seam ends). */
+  const rowsToUnderarm = (raster: PanelPlan | null | undefined) => {
+    if (!raster) return null;
+    const row = raster.rows.findIndex((item) => item.y >= draft.seams.sideSeam);
+    return row < 0 ? null : row;
+  };
+  const realized: SweaterPlan['realized'] = [];
+  if (front && back) {
+    realized.push({ label: 'Chest', target: object.measurements.chest, cm: round1((front.realized.castOnStitches + back.realized.castOnStitches) * front.stitchCm), how: `${front.realized.castOnStitches} + ${back.realized.castOnStitches} stitches` });
+    realized.push({ label: 'Length', target: object.measurements.length, cm: back.realized.heightCm, how: `${back.realized.rows} rows` });
+    const frontUnderarm = rowsToUnderarm(front);
+    const backUnderarm = rowsToUnderarm(back);
+    if (frontUnderarm !== null && backUnderarm !== null && frontUnderarm !== backUnderarm) {
+      findings.push({ rule: 'sweater-seam-mismatch', severity: 'warning', piece: null, path: 'seams/side', message: `The front reaches the underarm at row ${frontUnderarm + 1} and the back at row ${backUnderarm + 1}; the side seams will not match.` });
+    }
+  }
+  if (sleeve && back) {
+    realized.push({ label: 'Upper arm', target: object.measurements.upperArm, cm: round1(sleeve.realized.widestStitches * sleeve.stitchCm), how: `${sleeve.realized.widestStitches} stitches` });
+    realized.push({ label: 'Cuff', target: object.measurements.cuff, cm: round1(sleeve.realized.castOnStitches * sleeve.stitchCm), how: `${sleeve.realized.castOnStitches} stitches` });
+    // The sleeve top sews into the armhole: compare the edges' knitted lengths.
+    const armholeRows = back.rows.length - (rowsToUnderarm(back) ?? back.rows.length);
+    const armholeCm = object.silhouette === 'drop-shoulder' ? round1(armholeRows * back.rowCm.body) : round1(draft.seams.armhole);
+    const sleeveTopCm = object.silhouette === 'drop-shoulder' ? round1((sleeve.rows.at(-1)!.segments[0]!.hi - sleeve.rows.at(-1)!.segments[0]!.lo + 1) * sleeve.stitchCm / 2) : round1(draft.seams.sleeveTop);
+    realized.push({ label: 'Armhole edge', target: null, cm: armholeCm, how: object.silhouette === 'drop-shoulder' ? `${armholeRows} rows from the underarm to the shoulder` : 'one armhole edge, as drafted' });
+    realized.push({ label: 'Sleeve top (one side)', target: null, cm: sleeveTopCm, how: object.silhouette === 'drop-shoulder' ? 'half the sleeve top' : 'one cap edge, as drafted' });
+    const tolerance = object.silhouette === 'set-in' ? 2.5 : 1.5;
+    if (Math.abs(armholeCm - sleeveTopCm) > tolerance) {
+      findings.push({ rule: 'sweater-seam-mismatch', severity: 'warning', piece: 'sleeve', path: 'seams/armhole', message: `One side of the sleeve top is ${sleeveTopCm} cm but the armhole edge it sews to is ${armholeCm} cm (${round1(sleeveTopCm - armholeCm)} cm difference; up to ${tolerance} cm eases in). ${object.silhouette === 'drop-shoulder' ? 'Make the upper arm twice the armhole depth.' : 'Adjust the upper arm or the armhole depth.'}` });
+    }
+  }
+  if (object.neckline === 'crew') realized.push({ label: 'Neck opening', target: null, cm: round1(draft.seams.neckline), how: 'front and back neck edges' });
+  return { object, draft, gauge, ribGauge, pieces, carriers, findings, realized, knitted: knittedMeasurements(draft, front, back, sleeve) };
+}
+
+/** Heights of row starts, cm above the cast-on. */
+function rowStarts(raster: PanelPlan): number[] {
+  let y = 0;
+  return raster.rows.map((row) => { const start = y; y += row.zone === 'rib' ? raster.rowCm.rib : raster.rowCm.body; return start; });
+}
+
+function knittedMeasurements(draft: SweaterDraft, front: PanelPlan | null | undefined, back: PanelPlan | null | undefined, sleeve: PanelPlan | null | undefined): SweaterPlan['knitted'] {
+  const out: SweaterPlan['knitted'] = {};
+  const span = (raster: PanelPlan, row: number) => { const segments = raster.rows[row]!.segments; return (segments.at(-1)!.hi - segments[0]!.lo + 1) * raster.stitchCm; };
+  const underarmRow = (raster: PanelPlan, y: number) => Math.max(0, raster.rows.findIndex((row) => row.y >= y));
+  if (front && back) {
+    const frontUnder = underarmRow(front, draft.seams.sideSeam);
+    const backUnder = underarmRow(back, draft.seams.sideSeam);
+    out.chest = round1(span(front, Math.max(0, frontUnder - 1)) + span(back, Math.max(0, backUnder - 1)));
+    out.length = back.realized.heightCm;
+    const starts = rowStarts(back);
+    // Armhole depth runs from the underarm to the shoulder point; the shoulder slope sits above it.
+    const shoulderRow = back.rows.findIndex((row) => row.y >= draft.levels.shoulderPoint);
+    const shoulderTop = shoulderRow < 0 ? back.realized.heightCm : starts[shoulderRow]!;
+    out.armholeDepth = round1(shoulderTop - starts[backUnder]!);
+    out.shoulderWidth = round1(span(back, Math.max(0, (shoulderRow < 0 ? back.rows.length : shoulderRow) - 1)));
+    const frontStarts = rowStarts(front);
+    const frontSplit = front.rows.findIndex((row) => row.segments.length === 2);
+    if (frontSplit > 0) {
+      out.frontNeckDepth = round1(front.realized.heightCm - frontStarts[frontSplit]!);
+      const top = front.rows.at(-1)!.segments;
+      if (top.length === 2) out.neckWidth = round1((top[1]!.lo - top[0]!.hi - 1) * front.stitchCm);
+    }
+    const backSplit = back.rows.findIndex((row) => row.segments.length === 2);
+    out.backNeckDepth = backSplit > 0 ? round1(back.realized.heightCm - starts[backSplit]!) : 0;
+  }
+  if (sleeve) {
+    const under = underarmRow(sleeve, draft.seams.sleeveSeam);
+    out.sleeveLength = round1(rowStarts(sleeve)[under]!);
+    out.upperArm = round1(sleeve.realized.widestStitches * sleeve.stitchCm);
+    out.cuff = round1(sleeve.realized.castOnStitches * sleeve.stitchCm);
+  }
+  return out;
+}
+
+/** Library and rib choices, for the UI and the CLI's help. */
+export const SWEATER_CHOICES = {
+  silhouettes: [
+    { id: 'drop-shoulder', name: 'Drop shoulder', note: 'Straight body and a flat-topped sleeve: the easiest to knit and sew.' },
+    { id: 'j-sleeve', name: 'J-sleeve', note: 'A drop shoulder with a short curved step under the arm: less bulk at the underarm.' },
+    { id: 'set-in', name: 'Set-in sleeve', note: 'A shaped armhole and a capped sleeve: the most tailored fit.' },
+  ] as const,
+  necklines: [
+    { id: 'crew', name: 'Crew neck', note: 'A shaped neck finished with a rib neckband.' },
+    { id: 'boat', name: 'Boat neck', note: 'A straight top with a rib edge; the shoulder seams leave the neck open.' },
+  ] as const,
+  ribs: RIBS,
+  textures: TEXTURES,
+} as const;

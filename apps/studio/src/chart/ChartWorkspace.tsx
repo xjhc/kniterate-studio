@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { Cloud, CloudOff, Download, LoaderCircle, Plus, Ruler, Settings2, Upload } from 'lucide-react';
 import { clear, copy, cut, paste, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
-import { AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendProjectOperation, materializeColorworkProject, redoProjectEdit, serializeColorworkProjectV1, undoProjectEdit, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
+import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendProjectOperation, materializeColorworkProject, redoProjectEdit, serializeColorworkProjectV1, undoProjectEdit, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
 import { ChartToolbar, type ChartTool } from './ChartToolbar';
 import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './ColorworkCanvas';
 import { beanieFitEdits, type BeanieFitChange } from '../beanie';
@@ -246,7 +246,7 @@ export function ChartWorkspace({ project, onProject, onOpenProject, onNewProject
       <AuthoredMachinePanel artifact={compile.artifact} kcode={kcode} outputStatus={outputStatus} outputError={outputError} focusedRowId={focusedRowId} selectedPass={selectedPass} region={programRegion} onRegion={selectProgramRegion} onPass={selectPass} mobileActive={mobilePanel === 'machine'} />
     </div>
     {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); setChartView('chart'); setFitRequest((request) => request + 1); } }} />}
-    {showMeasure && <MeasureDialog project={project} hasCuff={materialized.state.object?.construction === 'rib-cuff-jersey-body'} candidateSha256={candidateSha256} onClose={() => setShowMeasure(false)} onRecord={(label, edits) => { if (operate(label, edits)) setShowMeasure(false); }} />}
+    {showMeasure && <MeasureDialog project={project} hasCuff={beanieObjectOf(materialized.state)?.construction === 'rib-cuff-jersey-body'} candidateSha256={candidateSha256} onClose={() => setShowMeasure(false)} onRecord={(label, edits) => { if (operate(label, edits)) setShowMeasure(false); }} />}
     <GeneratedSourceDock artifact={compile.artifact} kcode={kcode} selectedPass={selectedPass} format={sourceFormat} collapsed={sourceCollapsed} onFormat={setSourceFormat} onCollapsed={setSourceCollapsed} />
   </main>;
 }

@@ -1,6 +1,6 @@
 ---
 name: knit-design
-description: Design a Kniterate machine-knitting project (scarf, blanket, rectangle panel, colorwork from an image) from a plain-language request, using the Kniterate Studio CLI. Use when someone asks to make, size, resize, or check something to knit on the Kniterate.
+description: Design a Kniterate machine-knitting project (sweater in flat pieces, beanie, scarf, blanket, rectangle panel, colorwork from an image) from a plain-language request, using the Kniterate Studio CLI. Use when someone asks to make, size, resize, or check something to knit on the Kniterate.
 ---
 
 # Knit design with the Kniterate Studio CLI
@@ -82,7 +82,47 @@ For both kinds:
   3-loop stack, so readiness reports a warning. Other widths use our
   eight-line crown, which has never been knitted; say so.
 
-Not supported yet: sweaters, other shaping, seamless tubes, and float
+**Sweaters: flat pieces, sewn** (`sweater help` lists everything). A
+sweater is one project: front, back, a sleeve knitted twice and (crew neck)
+a neckband, each its own `.kc`. You state the design; Studio drafts the
+shapes from finished measurements and the gauge, and every piece compiles
+through the same strict checks.
+
+- Styles: `--silhouette set-in` (shaped armhole, capped sleeve), `j-sleeve`
+  (a drop shoulder with a short curved underarm step and a flat-topped
+  sleeve) or `drop-shoulder` (straight body, flat sleeve top). Necks:
+  `--neck crew` (shaped, separate rib neckband; the right shoulder knits on
+  a second cone of the same yarn) or `boat` (straight top with a rib edge).
+- Size: `--size XS…XXL --fit fitted|classic|relaxed|oversized` gives finished
+  measurements; override any with `--measure chest=112,length=66,…` (cm,
+  the garment not the body).
+- Stitch: `--stitch <id>` from `sweater choices` (stockinette, reverse,
+  1×1/2×2 rib, seed, moss, garter, broken rib, welts, basketweave, half
+  cardigan, fisherman rib, slip-stitch tweed), or your own repeat with
+  `--texture "kp/pk"`: rows top first, `k` knit, `p` purl, `t`/`u` tuck on
+  the front/back bed, `s` slip. A row cannot both knit and tuck on the same
+  bed (one carriage pass); the refusal says which row and why.
+- Edges: `--hem-rib kkpp --hem-cm 6`, `--cuff-rib`, `--cuff-cm`,
+  `--neck-rib`, `--neck-cm`; `--top bind-off|waste`; `--fashion 2` moves the
+  shaping two stitches in from the edge.
+
+```bash
+pnpm --silent studio -- sweater new -o s.json --title "Weekend" --silhouette j-sleeve --size L --fit relaxed --stitch seed --yarn "Moss=#5B6B3A"
+pnpm --silent studio -- sweater set s.json --measure length=70 --gauge 24,38 --gauge-source measured   # one undoable change
+pnpm --silent studio -- sweater plan s.json      # pieces as pattern steps; each measurement wanted vs knitted
+pnpm --silent studio -- sweater check s.json     # every piece compiled and checked; exit 0 only when ready
+pnpm --silent studio -- sweater package s.json -o s-package/   # every .kc/.k, instructions.md, schematic.svg, manifest
+```
+
+Quote `plan`'s knitted measurements; never compute counts. A crew neck
+needs the same yarn on a second carrier (C4 by default) — say so. Readiness
+blocks on assumed gauges (body and rib) until measured. The shaping (fashioned
+transfers, chain bind-offs, the split neck) follows Kniterate's own sweater
+programs but has no captured reference parity and has never been knitted:
+say that a first sweater is a development knit. Raglan, V-neck, colorwork on
+sweater pieces and stripes are not built yet.
+
+Not supported yet: raglan and V-neck sweaters, colorwork on sweaters, seamless tubes, and float
 catching or any beanie body backing other than fairisle and full birdseye (another backing is
 refused with `project-beanie-backing-unsupported`). Say so and offer the
 nearest supported thing instead of approximating.
