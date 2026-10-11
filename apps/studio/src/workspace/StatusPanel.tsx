@@ -3,7 +3,8 @@ import { AlertTriangle, CheckCircle2, CircleAlert, Download, LoaderCircle, Packa
 
 /**
  * The right-hand panel of every project, in the same order: can it be
- * knitted, what to fix, the machine files, then download and print.
+ * knitted, what to fix, the machine files, download and print, what to do at
+ * the machine and after knitting.
  */
 
 export type StatusTone = 'checking' | 'ready' | 'warn' | 'blocked';
@@ -25,7 +26,7 @@ export interface StatusFile {
   error?: string | null;
 }
 
-export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onDownloadFile, onPackage, onPrint, packaging, canPackage, canPrint, atTheMachine, footer, fileDetail }: {
+export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onDownloadFile, onPackage, onPrint, packaging, canPackage, canPrint, atTheMachine, afterKnitting, footer, fileDetail }: {
   tone: StatusTone;
   title: string;
   detail: string;
@@ -39,6 +40,8 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
   canPackage: boolean;
   canPrint: boolean;
   atTheMachine: string[];
+  /** What to do with the knitted piece: measure it and revise the design. */
+  afterKnitting?: ReactNode;
   footer?: ReactNode;
   /** More about the open file's piece (its shaping), shown under it. */
   fileDetail?: { id: string; content: ReactNode };
@@ -75,6 +78,10 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
     {atTheMachine.length > 0 && <section className="status-notes operator">
       <h3>At the machine</h3>
       <ul>{atTheMachine.map((note, index) => <li key={index}>{note}</li>)}</ul>
+    </section>}
+    {afterKnitting && <section className="status-notes after-knitting">
+      <h3>After knitting</h3>
+      {afterKnitting}
     </section>}
     {footer}
   </aside>;

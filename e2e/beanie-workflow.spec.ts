@@ -68,15 +68,15 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   await menu(page, 'Edit', 'Redo');
   await expect(derived(page, /^122 needles/)).toBeVisible({ timeout: 30_000 });
 
-  // A stitch-gauge change marks the motif stale; refresh re-converts it.
+  // Your swatch's gauge resizes the whole hat and its motif in one change.
+  const motifSize = await page.getByRole('button', { name: /^motif-1/ }).innerText();
   await page.getByLabel(/^Body .* stitches per 10 cm$/).fill('30');
   await page.getByLabel(/^Body .* rows per 10 cm$/).focus();
   await page.getByLabel(/^Body .* rows per 10 cm$/).fill('34');
   await page.getByLabel(/^Body .* rows per 10 cm$/).blur();
-  await expect(page.getByText('needs refresh')).toBeVisible({ timeout: 30_000 });
-  await page.getByRole('button', { name: /^motif-1/ }).click();
-  await page.getByRole('button', { name: 'Refresh', exact: true }).click();
-  await expect(page.getByText('needs refresh')).toHaveCount(0, { timeout: 30_000 });
+  await expect(page.getByRole('status').filter({ hasText: /^Resized: 122 → \d+ needles/ })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: /^motif-1/ })).not.toHaveText(motifSize, { timeout: 30_000 });
+  await expect(page.getByText('needs refresh')).toHaveCount(0);
 
   // A second motif gets its own id; removing the first and adding again never replaces the second.
   await placeImage(page, '3');
@@ -97,8 +97,8 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   await expect(page.getByRole('button', { name: /^motif-3 \d+ × \d+ st/ })).toBeVisible({ timeout: 30_000 });
 
   // Measured gauges make it ready.
-  await page.getByLabel(/^Body .* source$/).selectOption('measured');
-  await page.getByLabel('Cuff (2x2 rib) source').selectOption('measured');
+  await page.getByLabel(/^Body .* measured$/).check();
+  await page.getByLabel('Cuff (2x2 rib) measured').check();
   await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit', { timeout: 30_000 });
 
   // The package carries the project, the exact program and the measurement form.

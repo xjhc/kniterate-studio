@@ -59,19 +59,24 @@ function GaugeFields({ id, label, gauge, onCommit }: { id: string; label: string
     <div className="gauge-row">
       <label><span>Stitches</span><input aria-label={`${label} stitches per 10 cm`} type="number" step="0.5" min="1" max="100" value={stitches} onChange={(event) => setDraft({ stitches: event.currentTarget.value, rows })} /></label>
       <label><span>Rows</span><input aria-label={`${label} rows per 10 cm`} type="number" step="0.5" min="1" max="100" value={rows} onChange={(event) => setDraft({ stitches, rows: event.currentTarget.value })} /></label>
-      <label><span>Source</span><select aria-label={`${label} source`} value={gauge?.source ?? 'assumed'} onChange={(event) => commit(event.currentTarget.value as ProjectGauge['source'])}><option value="measured">Measured</option><option value="assumed">Assumed</option></select></label>
+      <label className="measured-check"><input type="checkbox" aria-label={`${label} measured`} checked={gauge?.source === 'measured'} onChange={(event) => commit(event.currentTarget.checked ? 'measured' : 'assumed')} />measured</label>
     </div>
-    {gauge?.source === 'assumed' && <p className="garment-note">Assumed: sizes in cm are a guess until you measure a swatch in this yarn and fabric.</p>}
   </fieldset>;
 }
 
 export function GarmentFitSection({ state, plan, onFit }: { state: ProjectState; plan: ProjectPlan; onFit: (change: BeanieFitChange, label: string) => void }) {
+  const [resizedFrom, setResizedFrom] = useState<{ needles: number; rows: number } | null>(null);
   const intent = beanieIntentOf(state);
   if (intent === null) return null;
   const sections = plan.sections;
   const widthCheck = plan.sizeChecks.find((check) => check.dimension === 'width');
   const cuff = intent.construction === 'rib-cuff-jersey-body';
   const easePercent = Math.round((intent.ease ?? -0.1) * 1000) / 10;
+  // A new gauge resizes the whole hat: say by how much.
+  const counts = { needles: plan.stitches.value, rows: plan.rows.value };
+  const setGauge = (change: BeanieFitChange, label: string) => { setResizedFrom(counts); onFit(change, label); };
+  const resized = resizedFrom && (resizedFrom.needles !== counts.needles || resizedFrom.rows !== counts.rows) ? resizedFrom : null;
+  const measured = state.gauge?.source === 'measured' && (!cuff || state.object?.ribGauge?.source === 'measured');
   return <>
     <section className="garment-section"><h2>Fit</h2>
       <NumberField id="fit.head" label="Head circumference" value={intent.headCircumferenceCm} min={30} max={80} suffix="cm" onCommit={(headCircumferenceCm) => onFit({ headCircumferenceCm }, `Head ${headCircumferenceCm} cm`)} />
@@ -90,9 +95,11 @@ export function GarmentFitSection({ state, plan, onFit }: { state: ProjectState;
       {sections?.crown && <p className="garment-derived" title={sections.crown.cm?.how}>Crown: {sections.crown.rows} rows to {sections.crown.finalStitches} stitches · {cm(sections.crown.cm)}</p>}
       {sections?.finishedHeightCm && <p className="garment-derived" title={sections.finishedHeightCm.how}>Finished height {cm(sections.finishedHeightCm)} flat</p>}
     </section>
-    <section className="garment-section"><h2>Gauge</h2>
-      <GaugeFields id="gauge.body" label={cuff ? `Body (${state.strategy.technique === 'birdseye' ? 'birdseye' : 'fairisle'} fabric)` : 'Rib'} gauge={state.gauge} onCommit={(bodyGauge) => onFit({ bodyGauge }, 'Body gauge')} />
-      {cuff && <GaugeFields id="gauge.rib" label="Cuff (2x2 rib)" gauge={state.object?.ribGauge} onCommit={(ribGauge) => onFit({ ribGauge }, 'Rib gauge')} />}
+    <section className="garment-section"><h2>Your swatch</h2>
+      <p className="garment-help">{measured ? 'From your swatch. The whole hat is sized from it.' : 'Typical values. Enter what 10 cm of your swatch measures and the whole hat follows.'}</p>
+      <GaugeFields id="gauge.body" label={cuff ? `Body (${state.strategy.technique === 'birdseye' ? 'birdseye' : 'fairisle'} fabric)` : 'Rib'} gauge={state.gauge} onCommit={(bodyGauge) => setGauge({ bodyGauge }, `Body gauge ${bodyGauge.stitchesPer10cm}/${bodyGauge.rowsPer10cm} (${bodyGauge.source})`)} />
+      {cuff && <GaugeFields id="gauge.rib" label="Cuff (2x2 rib)" gauge={state.object?.ribGauge} onCommit={(ribGauge) => setGauge({ ribGauge }, `Rib gauge ${ribGauge.stitchesPer10cm}/${ribGauge.rowsPer10cm} (${ribGauge.source})`)} />}
+      {resized && <p className="garment-derived" role="status">Resized: {resized.needles} → {counts.needles} needles, {resized.rows} → {counts.rows} rows.</p>}
     </section>
   </>;
 }

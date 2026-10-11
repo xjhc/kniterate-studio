@@ -7,9 +7,10 @@ import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './Colorwo
 import { beanieFitEdits, type BeanieFitChange } from '../beanie';
 import type { ReadinessStory } from '../handoff';
 import type { ProjectPlan } from '../plan';
-import { movedPlacement, placedCells, placementBoxes, type PlacementConversion } from '../placements';
+import { movedPlacement, placedCells, placementBoxes, type PlacementConversion, type PlacementImage } from '../placements';
+import { reconvertMotifs } from '../trials';
 import { GarmentFitSection } from '../garment/GarmentFitSection';
-import { ImageIntakeDialog, MotifSection } from '../garment/MotifPanel';
+import { ImageIntakeDialog, MotifSection, placementPixels } from '../garment/MotifPanel';
 import { MeasureDialog } from '../garment/MeasureDialog';
 import { readKnitFile, type KnitFileCarriers } from '../sweater/knitFile';
 import { KnitFileView } from '../sweater/KnitFileView';
@@ -94,8 +95,17 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const materialized = useMemo(() => materializeColorworkProject(project), [project]);
   const { chart, rowIds } = materialized.state;
   const isGarment = materialized.state.object?.kind === 'beanie';
-  // A garment opens fitted to the view, so the whole piece (and its motifs) can be seen.
-  useEffect(() => { if (isGarment) setFitRequest((request) => request + 1); }, [project.id, isGarment]);
+  // A garment is fitted to the view whenever it opens or changes size, so the whole piece (and its motifs) can be seen.
+  useEffect(() => { if (isGarment) setFitRequest((request) => request + 1); }, [project.id, isGarment, chart.width, chart.height]);
+  // Each motif's source image, decoded, so a new gauge re-converts the motifs in the same change.
+  const [motifPixels, setMotifPixels] = useState<ReadonlyMap<string, PlacementImage['pixels']>>(() => new Map());
+  const motifSources = (materialized.state.placements ?? []).flatMap((placement) => (placement.source ? [`${placement.id}:${placement.source.sha256}`] : [])).join(' ');
+  useEffect(() => {
+    let active = true;
+    const placements = (materialized.state.placements ?? []).filter((placement) => placement.source);
+    void Promise.all(placements.map(async (placement) => [placement.id, await placementPixels(placement)] as const)).then((entries) => { if (active) setMotifPixels(new Map(entries)); }, () => {});
+    return () => { active = false; };
+  }, [motifSources]);
   const activePaletteIndex = Math.min(paletteIndex, chart.palette.length - 1);
   // A newly opened file starts clean: no selection, clipboard or chosen motif from the last one.
   useEffect(() => { setSelectedPlacement(null); setSelection(null); setClipboard(null); setPaletteIndex(Math.min(1, chart.palette.length - 1)); }, [generation]);
@@ -156,7 +166,13 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     return commit(pixelMutationToProjectEdit(project, rowIds, mutation));
   };
   const fit = (change: BeanieFitChange, label: string) => {
-    try { operate(label, beanieFitEdits(project, change)); } catch (error) { setIssue(error instanceof Error ? error.message : String(error)); }
+    try {
+      const edits = beanieFitEdits(project, change);
+      // A new body gauge resizes the motifs too, so they keep their size in cm.
+      const gauge = materialized.state.gauge;
+      if (change.bodyGauge && (change.bodyGauge.stitchesPer10cm !== gauge?.stitchesPer10cm || change.bodyGauge.rowsPer10cm !== gauge?.rowsPer10cm)) edits.push(...reconvertMotifs(materialized.state, change.bodyGauge, motifPixels).edits);
+      operate(label, edits);
+    } catch (error) { setIssue(error instanceof Error ? error.message : String(error)); }
   };
   const goTo = (target: string) => {
     if (target === 'program') { onView('file'); return; }
@@ -252,10 +268,6 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       garment={isGarment ? <>
         <GarmentFitSection key={`fit-${project.id}`} state={materialized.state} plan={plan} onFit={fit} />
         <MotifSection key={`motifs-${project.id}-${renderedGeneration}`} latestState={latestMotifState} state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={setSelectedPlacement} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement, refresh) => setIntake({ replacing: placement, refresh })} />
-        <section className="garment-section" id="swatch"><h2><Ruler size={12} /> Your swatch</h2>
-          {(materialized.state.trials ?? []).length === 0 ? <p className="garment-help">No measurements yet.</p> : <ul className="trial-list">{materialized.state.trials!.map((trial) => <li key={trial.id}>{trial.recordedAt.slice(0, 10)} · {trial.outcome}{trial.bodyGauge ? ` · ${trial.bodyGauge.stitchesPer10cm} st / ${trial.bodyGauge.rowsPer10cm} rows` : ''}{trial.synthetic ? ' (test data)' : ''}</li>)}</ul>}
-          <button type="button" className="secondary-button motif-add" onClick={() => setShowMeasure(true)}>Enter measurements</button>
-        </section>
       </> : null} onWidth={(width) => Number.isInteger(width) && width > 0 && width <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })} onHeight={(height) => { if (!Number.isInteger(height) || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }} onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} onStrategy={(technique) => { if (technique === materialized.state.strategy.technique) return; if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`); else commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } }); }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
     <section className="sweater-stage" aria-label={kindName}>
       <header className="stage-head">
@@ -279,6 +291,10 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       canPackage={status.exportReady}
       canPrint={status.exportReady}
       atTheMachine={story?.operatorChecks ?? []}
+      afterKnitting={isGarment ? <>
+        {(materialized.state.trials ?? []).length > 0 && <ul className="trial-list">{materialized.state.trials!.map((trial) => <li key={trial.id}>{trial.recordedAt.slice(0, 10)} · {trial.outcome}{trial.bodyGauge ? ` · ${trial.bodyGauge.stitchesPer10cm} st / ${trial.bodyGauge.rowsPer10cm} rows` : ''}{trial.synthetic ? ' (test data)' : ''}</li>)}</ul>}
+        <button type="button" className="secondary-button" onClick={() => setShowMeasure(true)}><Ruler size={15} /> Enter measurements</button>
+      </> : undefined}
       footer={story?.notices.map((notice) => <p className="design-hint" role="note" key={notice}>{notice}</p>)}
     />
     {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); onView('design'); setFitRequest((request) => request + 1); } }} />}

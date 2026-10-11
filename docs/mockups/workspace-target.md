@@ -23,8 +23,9 @@ runs, and the workspace shows exactly what those files knit.
   - View: Design, Schematic, Machine file, History, Dark mode.
 - **Left panel:** what you are making, as collapsible sections.
   - Sweater: style, size, measurements, stitch, edges, yarn and gauge.
-  - Beanie: fit, cuff, body, gauge, motifs, swatch measurements, colours
-    and backing.
+  - Beanie: fit, cuff, body, your swatch (its gauge: a new gauge resizes
+    the whole hat and its motifs in one change), motifs, colours and
+    backing.
   - Colorwork scarf or blanket: size, colours and backing.
 - **Middle:** the pieces, when there are several, on the left of the stage
   bar. On its right, always in the same place, the three views:
@@ -48,6 +49,7 @@ runs, and the workspace shows exactly what those files knit.
      shaping steps are shown under its file.
   4. Download knitting package and Print knitting sheet.
   5. What to do at the machine.
+  6. After knitting: enter what the knitted piece measures (beanie).
 - **The knitting sheet** is for after exporting, at the machine. It traps
   focus and returns it to the menu.
 

@@ -63,6 +63,8 @@
 .chart-design .gauge-fields .gauge-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .chart-design .gauge-fields label { display: grid; gap: 3px; color: var(--ink-3); font-size: 11px; }
 .chart-design .gauge-fields input, .chart-design .gauge-fields select { height: 30px; padding: 3px 6px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--paper); color: var(--ink); font-size: 13px; }
+.chart-design .gauge-fields label.measured-check { display: flex; grid-column: auto; grid-row: auto; align-items: center; align-self: end; gap: 5px; height: 30px; color: var(--ink-2); font-size: 12px; }
+.chart-design .gauge-fields label.measured-check input { width: 15px; height: 15px; padding: 0; }
 .file-mode { margin: 0 0 10px; }
 .step-through { min-height: 600px; }
 @media (max-width: 720px) {

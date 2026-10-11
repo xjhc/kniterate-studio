@@ -177,6 +177,9 @@
 .status-notes ul { display: grid; gap: 6px; margin: 0; padding-left: 16px; color: var(--ink-2); font-size: 12px; line-height: 1.45; }
 .status-notes li.note-error { color: var(--blocked); }
 .status-notes.operator li { color: var(--ink-2); }
+.status-notes.after-knitting { display: grid; gap: 8px; }
+.status-notes.after-knitting .trial-list { padding-left: 0; font-size: 12px; }
+.status-notes.after-knitting > button { justify-self: start; display: inline-flex; align-items: center; gap: 6px; }
 .status-pieces ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .piece-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; }
 .piece-open { display: grid; grid-template-columns: 10px minmax(0, 1fr); align-items: center; column-gap: 8px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); text-align: left; cursor: pointer; }

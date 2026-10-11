@@ -1,4 +1,4 @@
-import { appendProjectEdit, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectTrial } from '@kniterate-studio/project-contract';
+import { appendProjectEdit, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectState, type ProjectTrial } from '@kniterate-studio/project-contract';
 import { beanieFitEdits, withSizingFixes } from './beanie';
 import type { MeasurementRecord } from './handoff';
 import { planProject, type ProjectPlan } from './plan';
@@ -54,6 +54,40 @@ function planOf(project: ColorworkProjectV1): ProjectPlan {
 }
 
 /**
+ * Each motif with a source image, re-converted at a new body gauge, so it
+ * keeps its size in cm. A motif whose image now shows colours with no yarn
+ * keeps its stitches (readiness then asks for a refresh, where those colours
+ * are chosen).
+ */
+export function reconvertMotifs(state: ProjectState, bodyGauge: { stitchesPer10cm: number; rowsPer10cm: number }, pixels: ReadonlyMap<string, PlacementImage['pixels']>): { edits: ProjectEdit[]; refreshed: string[]; needsColorChoices: string[] } {
+  const edits: ProjectEdit[] = [];
+  const refreshed: string[] = [];
+  const needsColorChoices: string[] = [];
+  for (const placement of state.placements ?? []) {
+    const image = pixels.get(placement.id);
+    if (!placement.source || !image) continue;
+    try {
+      edits.push({ kind: 'set-placement', placement: refreshedPlacement(placement, image, bodyGauge) });
+      refreshed.push(placement.id);
+    } catch (error) {
+      if (!(error instanceof PlacementColorDecisionError)) throw error;
+      // Legacy placements have no conversion gauge. Preserve the prior
+      // project gauge so even a stitch-only change requires a refresh.
+      if (placement.source.gauge === undefined && state.gauge) {
+        edits.push({ kind: 'set-placement', placement: {
+          ...placement,
+          source: { ...placement.source, gauge: { stitchesPer10cm: state.gauge.stitchesPer10cm, rowsPer10cm: state.gauge.rowsPer10cm } },
+        } });
+      }
+      // Keep the previous motif. Its saved gauge now differs, so readiness
+      // requires a refresh, where the designer can resolve the new colors.
+      needsColorChoices.push(`${placement.id}: image color${error.missing.length === 1 ? '' : 's'} ${error.missing.map((item) => item.color).join(', ')}`);
+    }
+  }
+  return { edits, refreshed, needsColorChoices };
+}
+
+/**
  * `pixels` holds each placement's decoded source image (by placement id):
  * with them, motifs are re-converted at the measured gauge in the same
  * operation, so the revised candidate is coherent. Without them, they are
@@ -91,31 +125,8 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
     edits = withSizingFixes(project, [recordEdit, ...(bodyGauge ? [{ kind: 'set-gauge', gauge: { ...bodyGauge, source, note } } as ProjectEdit] : [])]);
   }
   // Re-convert motifs at the measured body gauge.
-  const refreshed: string[] = [];
-  const needsColorChoices: string[] = [];
-  if (bodyGauge && options.pixels) {
-    for (const placement of state.placements ?? []) {
-      const pixels = options.pixels.get(placement.id);
-      if (!placement.source || !pixels) continue;
-      try {
-        edits.push({ kind: 'set-placement', placement: refreshedPlacement(placement, pixels, bodyGauge) });
-        refreshed.push(placement.id);
-      } catch (error) {
-        if (!(error instanceof PlacementColorDecisionError)) throw error;
-        // Legacy placements have no conversion gauge. Preserve the prior
-        // project gauge so even a stitch-only change requires a refresh.
-        if (placement.source.gauge === undefined && state.gauge) {
-          edits.push({ kind: 'set-placement', placement: {
-            ...placement,
-            source: { ...placement.source, gauge: { stitchesPer10cm: state.gauge.stitchesPer10cm, rowsPer10cm: state.gauge.rowsPer10cm } },
-          } });
-        }
-        // Keep the previous motif. Its saved gauge now differs, so readiness
-        // requires a refresh, where the designer can resolve the new colors.
-        needsColorChoices.push(`${placement.id}: image color${error.missing.length === 1 ? '' : 's'} ${error.missing.map((item) => item.color).join(', ')}`);
-      }
-    }
-  }
+  const { edits: motifEdits, refreshed, needsColorChoices } = bodyGauge && options.pixels ? reconvertMotifs(state, bodyGauge, options.pixels) : { edits: [], refreshed: [], needsColorChoices: [] };
+  edits.push(...motifEdits);
   // Compare with what the knitted candidate predicted, never with a later draft.
   const sections = before.sections;
   const fromForm = record.candidate.predictedCm;

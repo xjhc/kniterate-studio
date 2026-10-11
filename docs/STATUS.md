@@ -484,7 +484,13 @@ ship," trust this file and the working tree instead.
     beanie's Design view shows the whole piece: the rib cuff (painting stays
     out of it), the colour body, and above it the crown as the construction
     knits it, row by row (`plan.sections.crown.needles`, from the same crown
-    steps the compiler emits).
+    steps the compiler emits). The crown's straight rows at the end are named
+    "Gathered top" in Design, the schematic and the machine file, and yarn
+    that one pass carries across empty needles is drawn as a strand.
+  - A beanie's swatch is its gauge ("Your swatch", left). A new gauge resizes
+    the whole hat and re-converts its motifs in the same change
+    (`trials.ts::reconvertMotifs`). Measuring a knitted hat (the trial record)
+    is under "After knitting" in the right panel.
   - The Machine file view (`sweater/knitFile.ts`, `KnitFileView`) reads any
     emitted `.kc`. Its "Step through" mode holds the exact movement, pass
     grid, checks and source that used to be the separate machine workspace.
