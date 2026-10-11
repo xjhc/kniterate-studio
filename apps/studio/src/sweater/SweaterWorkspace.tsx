@@ -19,10 +19,11 @@ import { sweaterEdit, type SweaterPlan } from './sweater';
 import { SweaterDesignPanel } from './SweaterDesignPanel';
 import type { SweaterRunState } from './sweaterRun';
 import { SweaterStatusPanel } from './SweaterStatusPanel';
+import type { SwatchFile } from '../useSwatchFile';
 import './sweater.css';
 
 /** The sweater workspace: what you are making on the left, the views in the middle, status and files on the right. */
-export function SweaterWorkspace({ project, onProject, plan, run, view, onView, onPackage, onPrint, onDownloadPiece, packaging, downloaded }: {
+export function SweaterWorkspace({ project, onProject, plan, run, view, onView, onPackage, onPrint, onDownloadPiece, packaging, downloaded, swatchFile }: {
   project: ColorworkProjectV1;
   onProject: (project: ColorworkProjectV1) => void;
   plan: SweaterPlan;
@@ -35,6 +36,7 @@ export function SweaterWorkspace({ project, onProject, plan, run, view, onView, 
   packaging: boolean;
   /** Whether this design's files were downloaded since its last change. */
   downloaded: boolean;
+  swatchFile: SwatchFile;
 }) {
   const { state } = useMemo(() => materializeColorworkProject(project), [project]);
   const [piece, setPiece] = useState<'garment' | PieceId>('garment');
@@ -138,7 +140,7 @@ export function SweaterWorkspace({ project, onProject, plan, run, view, onView, 
       {error && <p className="stage-error" role="alert">{error}<button type="button" className="link-button" onClick={() => setError(null)}>Dismiss</button></p>}
       <div className="stage-body">{body}</div>
     </section>
-    <SweaterStatusPanel plan={plan} run={run} ribUsed downloaded={downloaded} onOpenFile={openFile} onDownloadPiece={onDownloadPiece} onPackage={onPackage} onPrint={onPrint} packaging={packaging}
+    <SweaterStatusPanel plan={plan} run={run} ribUsed downloaded={downloaded} swatchFile={swatchFile} onOpenFile={openFile} onDownloadPiece={onDownloadPiece} onPackage={onPackage} onPrint={onPrint} packaging={packaging}
       fileDetail={selected?.raster ? { id: selected.id, content: <ShapingList raster={selected.raster} onHover={setHighlight} /> } : undefined} />
   </main>;
 }

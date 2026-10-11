@@ -17,11 +17,12 @@ import { panelEdit, type PanelPlan } from './panel';
 import { PieceView, type PieceMode } from './PieceView';
 import type { SweaterRunState } from './sweaterRun';
 import { SweaterStatusPanel } from './SweaterStatusPanel';
+import type { SwatchFile } from '../useSwatchFile';
 import { RIBS } from './textures';
 import './sweater.css';
 
 /** A one-yarn scarf or blanket in the shared workspace: its size, stitch and ends on the left; the piece in the middle; status and file on the right. */
-export function PanelWorkspace({ project, onProject, plan, run, view, onView, onPackage, onPrint, onDownloadPiece, packaging, downloaded }: {
+export function PanelWorkspace({ project, onProject, plan, run, view, onView, onPackage, onPrint, onDownloadPiece, packaging, downloaded, swatchFile }: {
   project: ColorworkProjectV1;
   onProject: (project: ColorworkProjectV1) => void;
   plan: PanelPlan;
@@ -34,6 +35,7 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
   packaging: boolean;
   /** Whether this design's files were downloaded since its last change. */
   downloaded: boolean;
+  swatchFile: SwatchFile;
 }) {
   const { state } = useMemo(() => materializeColorworkProject(project), [project]);
   const [mode, setMode] = useState<PieceMode>('stitches');
@@ -94,6 +96,6 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
       {error && <p className="stage-error" role="alert">{error}<button type="button" className="link-button" onClick={() => setError(null)}>Dismiss</button></p>}
       <div className="stage-body">{body}</div>
     </section>
-    <SweaterStatusPanel plan={plan} run={run} ribUsed={object.ends.cm > 0} downloaded={downloaded} onOpenFile={() => onView('file')} onDownloadPiece={onDownloadPiece} onPackage={onPackage} onPrint={onPrint} packaging={packaging} />
+    <SweaterStatusPanel plan={plan} run={run} ribUsed={object.ends.cm > 0} downloaded={downloaded} swatchFile={swatchFile} onOpenFile={() => onView('file')} onDownloadPiece={onDownloadPiece} onPackage={onPackage} onPrint={onPrint} packaging={packaging} />
   </main>;
 }

@@ -49,6 +49,7 @@ import { ChartWorkspace } from './chart/ChartWorkspace';
 import { TYPICAL_COLOURWORK_GAUGE } from './chart/ChartSizeSection';
 import { authoredKnitoutNeedleRange } from './kcode/kcodeProtocol';
 import { useKCodeArtifact } from './kcode/useKCodeArtifact';
+import { useSwatchFile } from './useSwatchFile';
 import type { KCodeArtifact } from './kcode/kcodeProtocol';
 import { MachineMovementView, type MachineMovementViewProps } from './kcode/MachineMovementView';
 import { programRegionForPass } from './chart/AuthoredMachinePanel';
@@ -584,6 +585,7 @@ export function App() {
   const revision = `${project.id}@${project.history.entries[project.history.cursor - 1]?.id ?? ''}`;
   const [downloadedRevision, setDownloadedRevision] = useState<string | null>(null);
   const downloaded = downloadedRevision === revision;
+  const swatchFile = useSwatchFile(project, !document && !showStart, download);
   const authoredNeedleRange = useMemo(() => authoredKnitoutNeedleRange(authoredState), [authoredState]);
   const kcodeState = useKCodeArtifact(blanketCompile.artifact, authoredNeedleRange);
   const outputCurrent = blanketCompile.artifact?.inputHash != null
@@ -838,10 +840,10 @@ export function App() {
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {!document && isSweater && sweaterPlan ? <SweaterWorkspace project={project} onProject={setProject} plan={sweaterPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} downloaded={downloaded} />
-        : !document && isPanel && panelPlan ? <PanelWorkspace project={project} onProject={setProject} plan={panelPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} downloaded={downloaded} />
+      {!document && isSweater && sweaterPlan ? <SweaterWorkspace project={project} onProject={setProject} plan={sweaterPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} downloaded={downloaded} swatchFile={swatchFile} />
+        : !document && isPanel && panelPlan ? <PanelWorkspace project={project} onProject={setProject} plan={panelPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} downloaded={downloaded} swatchFile={swatchFile} />
         : !document ? <ChartWorkspace project={project} onProject={setProject} generation={openGeneration} plan={plan} story={authoredStory?.story ?? null} storyPending={blanketCompile.status !== 'ready' || displayedOutputStatus === 'converting'} candidateSha256={authoredExportReady ? kcodeState.artifact?.kcHash ?? null : null} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputError={kcodeState.error} view={workspaceView} onView={setWorkspaceView}
-            status={{ verdict: authoredVerdict, exportReady: authoredExportReady, packaging, downloaded, onPackage: packageProject, onPrint: printSheet, onDownloadKc: downloadKCode }}
+            status={{ verdict: authoredVerdict, exportReady: authoredExportReady, packaging, downloaded, swatchFile, onPackage: packageProject, onPrint: printSheet, onDownloadKc: downloadKCode }}
             stepThrough={blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : null} />
         : (
         <div className="workspace">

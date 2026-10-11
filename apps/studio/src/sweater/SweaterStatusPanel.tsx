@@ -1,17 +1,19 @@
 import type { ReactNode } from 'react';
 import { StatusPanel, type StatusTone } from '../workspace/StatusPanel';
 import { revealSection } from '../workspace/panel';
+import type { SwatchFile } from '../useSwatchFile';
 import type { PieceId } from './draft';
 import type { PiecesPlan } from './sweater';
 import type { SweaterRunState } from './sweaterRun';
 
 /** Whether a flat-piece project (a sweater, a scarf or blanket) can be knitted, the steps to knit it, and its machine files. */
-export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, onOpenFile, onDownloadPiece, onPackage, onPrint, packaging, fileDetail }: {
+export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile, onOpenFile, onDownloadPiece, onPackage, onPrint, packaging, fileDetail }: {
   plan: PiecesPlan;
   run: SweaterRunState;
   /** Whether the design has rib, so a rib swatch sizes it too. */
   ribUsed: boolean;
   downloaded: boolean;
+  swatchFile: SwatchFile;
   /** Opens the piece's machine file: what the machine will knit for it. */
   onOpenFile: (piece: PieceId) => void;
   onDownloadPiece: (piece: PieceId) => void;
@@ -65,7 +67,7 @@ export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, onOpenFile,
     canPackage={Boolean(summary?.exportReady) && !checking}
     canPrint={!checking && summary !== null}
     downloaded={downloaded}
-    swatch={{ gauges, onEnter: () => revealSection('swatch') }}
+    swatch={{ gauges, onEnter: () => revealSection('swatch'), file: swatchFile }}
     atTheMachine={operator.map((note) => note.message)}
     fileDetail={fileDetail}
     footer={<p className="design-hint status-yarn" title={plan.yarn.how}>About {plan.yarn.metres.toLocaleString('en')} m of yarn.</p>}

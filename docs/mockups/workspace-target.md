@@ -59,7 +59,13 @@ runs, and the workspace shows exactly what those files knit.
   marked as the next one.
   1. Design: what to fix or check, with buttons that show or fix it.
   2. Measure a swatch: each fabric the sizes come from, typical or
-     measured, and a button to the swatch fields.
+     measured, Download swatch file, and a button to the swatch fields.
+     The swatch is made by the project's own construction, in its stitch,
+     yarns, backing and gauge: a sweater's or scarf's body stitch between
+     rib bands, a narrow beanie with an unfolded cuff and both yarns in
+     its body, or a piece of a colour chart. It goes through the same
+     pipeline and verdict, and only a swatch that can be knitted is
+     downloaded.
   3. Download: the machine files (open, or download each one; the open
      piece's shaping steps are shown under its file), Download knitting
      package and Print knitting sheet. Ticked once this design is

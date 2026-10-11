@@ -28,8 +28,12 @@ export interface StatusFile {
   error?: string | null;
 }
 
-/** The swatch step: each fabric the sizes come from, whether its gauge was measured, and where to enter it. */
-export interface SwatchStep { gauges: { name: string; measured: boolean }[]; onEnter: () => void }
+/** The swatch step: each fabric the sizes come from, whether its gauge was measured, where to enter it, and the swatch's machine file. */
+export interface SwatchStep {
+  gauges: { name: string; measured: boolean }[];
+  onEnter: () => void;
+  file?: { onDownload: (() => void) | null; writing: boolean; problem: string | null };
+}
 
 /** The last step for a piece you can measure once knitted (a beanie). */
 export interface MeasureStep { done: boolean; title: string; content: ReactNode }
@@ -96,7 +100,12 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
       <Step number={number('design')} title="Design" state={state('design')}><Notes notes={notes} /></Step>
       {swatch && <Step number={number('swatch')} title="Measure a swatch" state={state('swatch')}>
         <ul className="swatch-gauges">{swatch.gauges.map((gauge) => <li key={gauge.name} className={gauge.measured ? 'measured' : ''}>{gauge.name}<span>{gauge.measured ? 'measured' : 'typical values'}</span></li>)}</ul>
-        <button type="button" className="secondary-button step-action" onClick={swatch.onEnter}><Ruler size={15} />{done.swatch ? 'Change your swatch' : 'Enter your swatch'}</button>
+        {!done.swatch && swatch.file?.onDownload && <p className="step-hint">Knit the swatch file, wash and dry it like the finished piece, then measure 10 cm in the middle.</p>}
+        <div className="step-buttons">
+          {swatch.file?.onDownload && <button type="button" className="secondary-button step-action" disabled={swatch.file.writing} onClick={swatch.file.onDownload}>{swatch.file.writing ? <LoaderCircle size={15} className="spin" /> : <Download size={15} />}{swatch.file.writing ? 'Writing the swatch file…' : 'Download swatch file'}</button>}
+          <button type="button" className="secondary-button step-action" onClick={swatch.onEnter}><Ruler size={15} />{done.swatch ? 'Change your swatch' : 'Enter your swatch'}</button>
+        </div>
+        {swatch.file?.problem && <p className="piece-error" role="alert">{swatch.file.problem}</p>}
       </Step>}
       <Step number={number('download')} title="Download" state={state('download')}>
         <section className="status-pieces" aria-label="Machine files">

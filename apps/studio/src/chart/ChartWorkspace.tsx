@@ -17,6 +17,7 @@ import { KnitFileView } from '../sweater/KnitFileView';
 import { RunSchematic } from '../workspace/RunSchematic';
 import { StatusPanel, type StatusNote, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
 import { revealSection } from '../workspace/panel';
+import type { SwatchFile } from '../useSwatchFile';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
 import type { AuthoredVerdict } from '../engine';import { PaletteRail } from './PaletteRail';
 import { ChartSizeSection } from './ChartSizeSection';
@@ -43,6 +44,7 @@ export interface ChartStatus {
   packaging: boolean;
   /** Whether this design's file was downloaded since its last change. */
   downloaded: boolean;
+  swatchFile: SwatchFile;
   onPackage: () => void;
   onPrint: () => void;
   onDownloadKc: () => void;
@@ -240,7 +242,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       ...(cuffed ? [{ name: 'Cuff (2x2 rib)', measured: ribGauge?.source === 'measured' }] : []),
     ],
     onEnter: () => { onView('design'); revealSection('swatch'); },
-  } : gauge ? { gauges: [{ name: `Colourwork (${materialized.state.strategy.technique})`, measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); } } : undefined;
+    file: status.swatchFile,
+  } : gauge ? { gauges: [{ name: `Colourwork (${materialized.state.strategy.technique})`, measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); }, file: status.swatchFile } : undefined;
   const notes: StatusNote[] = (story?.items ?? []).filter((item) => !(swatch && (item.rule === 'gauge-assumed' || item.rule === 'size-needs-gauge'))).map((item) => ({
     severity: item.severity === 'error' ? 'error' : item.severity === 'warning' ? 'warning' : 'info',
     text: `${item.part}: ${item.action}`,

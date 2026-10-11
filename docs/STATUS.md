@@ -474,8 +474,9 @@ ship," trust this file and the working tree instead.
     menu bar (File / Edit / View) replaces the icon ribbons.
     - Left: what you are making.
     - Middle: Design / Schematic / Machine file, always in the same place.
-    - Right: status, what to fix, the machine files, the package and the
-      knitting sheet.
+    - Right: whether it can be knitted, then the steps in order (Design,
+      Measure a swatch, Download, Knit, and Measure the hat for a beanie),
+      each holding what belongs to it; the next one is marked.
   - Schematics come from the machine file read back (`workspace/RunSchematic`).
     They show the whole run: waste yarn, draw thread, the piece and its
     finish, scarves included.
@@ -490,7 +491,25 @@ ship," trust this file and the working tree instead.
   - A beanie's swatch is its gauge ("Your swatch", left). A new gauge resizes
     the whole hat and re-converts its motifs in the same change
     (`trials.ts::reconvertMotifs`). Measuring a knitted hat (the trial record)
-    is under "After knitting" in the right panel.
+    is the last step on the right.
+  - The beanie's left panel matches the sweater's (2026-10-11 UX pass):
+    folding sections with summaries, Snug / Classic / Loose fits, and a
+    Wanted / Knitted / Rows table. Its counts are the schematic's: the
+    machine file reader gives rows the chart does not have (a birdseye
+    back's ground rows) their own courses, and a beanie's body runs to its
+    first crown decrease (`sweater/knitFile.test.ts`).
+  - A colour chart is created and sized in cm (Size and Your swatch, like
+    the beanie); a new size or swatch resizes it through the plan's sizing
+    fixes. A chart with no gauge keeps needles and rows.
+  - Download swatch file (`swatch.ts`, `swatch.worker.ts`): a swatch made by
+    the project's own construction, in its stitch, yarns, backing and gauge.
+    That is a sweater's or scarf's body stitch between rib bands, a narrow
+    beanie with an unfolded cuff and both yarns in its body, or a piece of a
+    colour chart. It runs through the same pipeline and verdict, and only an
+    exportable swatch is downloaded (`swatch.test.ts`).
+  - On screen the verdict reads "Can't knit yet", "Ready to knit" or "Proven
+    on the machine" (`engine.ts::VERDICT_WORDS`). Files, the CLI and the docs
+    keep Blocked, Surface-proven and Knit-proven.
   - The Machine file view (`sweater/knitFile.ts`, `KnitFileView`) reads any
     emitted `.kc`. Its "Step through" mode holds the exact movement, pass
     grid, checks and source that used to be the separate machine workspace.

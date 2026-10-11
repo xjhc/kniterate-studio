@@ -45,6 +45,10 @@ test('the status panel walks the steps: the swatch is next, then the download, e
   const steps = page.getByRole('list', { name: 'Steps' });
   const next = steps.locator('[aria-current="step"] > .step-body > h3');
   await expect(next).toHaveText('Measure a swatch');
+  // The swatch is its own checked machine file, in the hat's yarns, backing and gauge.
+  const swatch = page.waitForEvent('download');
+  await steps.getByRole('button', { name: 'Download swatch file' }).click();
+  expect((await swatch).suggestedFilename()).toMatch(/-swatch\.kc$/);
   await steps.getByRole('button', { name: 'Enter your swatch' }).click();
   await expect(page.getByLabel(/^Body \(.+ fabric\) stitches per 10 cm$/)).toBeFocused();
   // Measured gauges tick the swatch step; the download is next until this design is downloaded.
