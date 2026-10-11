@@ -84,7 +84,7 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
         })}
       </div>
       {(['body', 'sleeve'] as const).filter((kind) => plan.custom[kind]).map((kind) => <p key={kind} className="shape-note">The {kind === 'body' ? 'front and back follow' : 'sleeves follow'} your own shape. <button type="button" className="link-button" onClick={() => releaseShape(kind)}>Use the measurements</button></p>)}
-      <p className="design-hint">Measurements are the finished sweater, not the body. "Knitted" is what the machine makes at your gauge. To shape a piece freely, open it and choose Shape.</p>
+      <p className="design-hint">Finished sizes, not body sizes. Knitted: what your gauge makes.</p>
     </Section>
 
     <StitchSection body={object.body} hex={yarn.hex} gaugeAssumed={gauge.source === 'assumed'} onChange={(label, body, edits) => change(label, { ...object, body }, edits)} />

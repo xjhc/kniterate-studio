@@ -254,7 +254,7 @@ export function KnitFileView({ file, kcText, fileName, copies, hex, carriers, st
           </div>}
         </div>
       </div>
-      <p className="design-hint">Bottom to top, in the order the machine knits it. Each stitch shown is a knit or tuck in the file{cell >= 5 ? ': V is a knit on the front bed, a bump a knit on the back bed (a purl from this side)' : '; zoom in to see each one'}.</p>
+      <p className="design-hint">Bottom to top, as the machine knits it.{cell >= 5 ? ' V: knit. Bump: purl.' : ' Zoom in to see each stitch.'}</p>
     </div>
 
     <aside className="knitfile-side" aria-label="Machine file">
@@ -302,7 +302,7 @@ export function KnitFileView({ file, kcText, fileName, copies, hex, carriers, st
           const inside = pass.lines !== null && line.lineNumber >= pass.lines.start && line.lineNumber <= pass.lines.end;
           return <span key={line.lineNumber} className={inside ? 'highlighted' : ''}><i>{line.lineNumber}</i><code>{line.text || ' '}</code></span>;
         })}</pre>
-        <p className="design-hint">FRNT and REAR say what each needle on the front and back bed does (a slash marks where the carriage stops, a digit where the carrier stops); STIF and STIR give each needle's stitch-size code; the last line is direction, operation, carrier, speed and roller. Lines starting with // are the converter's comments; their row count is its own, not the pattern's.</p>
+        <p className="design-hint">FRNT, REAR: each needle on the front and back bed. STIF, STIR: stitch size. Last line: direction, operation, carrier, speed, roller. Lines with // are comments.</p>
       </section>
     </aside>
   </div>;

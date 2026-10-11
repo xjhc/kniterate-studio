@@ -56,7 +56,7 @@ export function YarnGaugeSection({ yarn, carrier, bodyName, gauge, ribGauge, ope
     </label>
     <GaugeRow label={`${bodyName} gauge`} gauge={gauge} onChange={(next) => setGauge(next, `Body gauge ${next.stitchesPer10cm}/${next.rowsPer10cm} (${next.source})`)} />
     {ribGauge && <GaugeRow label="Rib gauge" gauge={ribGauge} onChange={(next) => onRibGauge(next, `Rib gauge ${next.stitchesPer10cm}/${next.rowsPer10cm} (${next.source})`)} />}
-    <p className="design-hint">{gauge.source === 'assumed' ? 'Gauges are typical values. Knit a swatch, measure stitches and rows over 10 cm, and enter them to get true sizes.' : 'Sizes come from your measured gauge.'}</p>
+    <p className="design-hint">{gauge.source === 'assumed' ? 'Typical values. Measure 10 cm of a swatch for true sizes.' : 'From your swatch.'}</p>
   </Section>;
 }
 

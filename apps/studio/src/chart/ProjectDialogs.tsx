@@ -200,7 +200,7 @@ export function NewBeanieForm({ onCreate, onClose }: { onCreate: (intent: Beanie
     {cuff && <fieldset><legend>Body backing</legend><div className="color-count-control">
       <button type="button" className={backing === 'birdseye' ? 'active' : ''} onClick={() => setBacking('birdseye')}>Birdseye</button>
       <button type="button" className={backing === 'fairisle' ? 'active' : ''} onClick={() => setBacking('fairisle')}>Fairisle</button>
-    </div><p className="garment-help">{backing === 'birdseye' ? 'Every color knits its share of the back on every row: no floats, so logos and thin lines are fine. Thicker and warmer; measure the gauge on birdseye fabric.' : 'Unused colors float behind the work: lighter, but floats over 7 stitches (and colors idle for many rows) are not ready to knit.'}</p></fieldset>}
+    </div><p className="garment-help">{backing === 'birdseye' ? 'Thicker and warmer. No long floats, so thin lines and logos work.' : 'Light. Unused colours float behind the work.'}</p></fieldset>}
     <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || !main.name.trim()}><Check size={16} /> Create beanie</button></footer>
   </form>;
 }
