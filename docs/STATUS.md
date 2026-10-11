@@ -377,8 +377,10 @@ ship," trust this file and the working tree instead.
   an assigned pattern yarn, the waste carrier, or the preset's declared frame
   yarn (C1); otherwise compilation blocks with `project-unassigned-carrier`.
   This refuses the matched birdseye program for fewer than four colors, since
-  it is laid out for C2-C5. New projects default to Birdseye only for
-  four-color palettes, Fairisle otherwise.
+  it is laid out for C2-C5; that case is reported as
+  `project-birdseye-color-count` ("Birdseye needs four colours"), with a
+  Use Fairisle fix. New projects default to Birdseye only for four-color
+  palettes, Fairisle otherwise.
 - **Active overrides fail closed.** Stitch/pass overrides are schema-valid
   project intent, but the compiler does not consume them yet; any active
   override blocks compilation (`project-override-unsupported`) rather than
@@ -507,6 +509,11 @@ ship," trust this file and the working tree instead.
     beanie with an unfolded cuff and both yarns in its body, or a piece of a
     colour chart. It runs through the same pipeline and verdict, and only an
     exportable swatch is downloaded (`swatch.test.ts`).
+  - Backing is offered only where it changes the fabric (`backing.ts`). A
+    one-colour chart knits plain whatever backing is set, so Backing says
+    so with no choice. A one-yarn beanie body is "Single layer" (fairisle)
+    or "Double layer" (birdseye knits its back layer in the same yarn; both
+    export, `backing.test.ts`). A rib beanie has no Backing section.
   - On screen the verdict reads "Can't knit yet", "Ready to knit" or "Proven
     on the machine" (`engine.ts::VERDICT_WORDS`). Files, the CLI and the docs
     keep Blocked, Surface-proven and Knit-proven.

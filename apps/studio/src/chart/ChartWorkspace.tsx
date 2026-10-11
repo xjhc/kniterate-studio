@@ -23,6 +23,7 @@ import type { AuthoredVerdict } from '../engine';import { PaletteRail } from './
 import { ChartSizeSection } from './ChartSizeSection';
 import { makeRowId, pixelMutationToProjectEdit } from './projectCanvasAdapter';
 import { BlanketSetupRail } from '../blanket/BlanketSetupRail';
+import { projectBackingWords } from '../backing';
 import type { BlanketCompileState } from '../blanket/useBlanketCompiler';
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
 
@@ -236,14 +237,15 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   // The status panel: whether it can be knitted, then the steps. A garment's gauge is its swatch step, not a design note.
   const tone: StatusTone = story === null ? (storyPending ? 'checking' : 'blocked') : story.status === 'ready' ? 'ready' : story.status === 'blocked' ? 'blocked' : story.status === 'needs-measurements' ? 'next' : 'warn';
   const cuffed = beanieObjectOf(materialized.state)?.construction === 'rib-cuff-jersey-body';
+  const backing = projectBackingWords(materialized.state);
   const swatch: SwatchStep | undefined = isGarment ? {
     gauges: [
-      { name: cuffed ? `Body (${materialized.state.strategy.technique === 'birdseye' ? 'birdseye' : 'fairisle'})` : '2x2 rib', measured: gauge?.source === 'measured' },
+      { name: cuffed ? `Body (${backing?.fabric ?? 'fairisle fabric'})` : '2x2 rib', measured: gauge?.source === 'measured' },
       ...(cuffed ? [{ name: 'Cuff (2x2 rib)', measured: ribGauge?.source === 'measured' }] : []),
     ],
     onEnter: () => { onView('design'); revealSection('swatch'); },
     file: status.swatchFile,
-  } : gauge ? { gauges: [{ name: `Colourwork (${materialized.state.strategy.technique})`, measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); }, file: status.swatchFile } : undefined;
+  } : gauge ? { gauges: [{ name: backing ? `Colourwork (${backing.fabric})` : 'Plain stockinette', measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); }, file: status.swatchFile } : undefined;
   const notes: StatusNote[] = (story?.items ?? []).filter((item) => !(swatch && (item.rule === 'gauge-assumed' || item.rule === 'size-needs-gauge'))).map((item) => ({
     severity: item.severity === 'error' ? 'error' : item.severity === 'warning' ? 'warning' : 'info',
     text: `${item.part}: ${item.action}`,

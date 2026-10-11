@@ -128,13 +128,14 @@ describe('blanket project compiler', () => {
 
   it('refuses a program that would knit a carrier with no assigned yarn', () => {
     // The matched birdseye program is laid out for four colors on C2-C5; with
-    // two colors it would bring in C4/C5 with no yarn loaded.
+    // two colors it would bring in C4/C5 with no yarn loaded. The refusal says
+    // so in the designer's terms: birdseye needs four colours.
     let project = createColorworkProjectV1(chart, { id: 'birdseye-two-colors', needleOffset: 40 });
     project = appendProjectEdit(project, { id: 'strategy', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'birdseye', floatLimit: 5 } } });
     const artifact = compileColorworkProject(project);
     expect(artifact.ok).toBe(false);
     expect(artifact.knitoutText).toBeNull();
-    expect(artifact.messages).toContainEqual(expect.objectContaining({ rule: 'project-unassigned-carrier', severity: 'error' }));
+    expect(artifact.messages).toContainEqual(expect.objectContaining({ rule: 'project-birdseye-color-count', severity: 'error', message: 'Birdseye needs four colours, and this chart uses 2. Use Fairisle, or paint with four colours.' }));
   });
 
   it('keeps row provenance and declares only the preset frame yarn for four-color birdseye', () => {

@@ -33,6 +33,12 @@ runs, and the workspace shows exactly what those files knit.
     and the first needle on the bed), your swatch (a new gauge resizes the
     chart to keep its size in cm), colours and backing. A chart with no
     gauge is sized in needles and rows until a swatch is entered.
+  - Backing is chosen only where it changes the fabric. A chart in one
+    colour knits plain, so Backing says so and offers no choice until a
+    second colour is painted. A beanie body in one yarn is "Single layer"
+    (fairisle) or "Double layer" (birdseye, the yarn knitting its own back
+    layer). A rib beanie has no Backing section. A chart's Birdseye needs
+    four colours; with fewer it says so and offers Use Fairisle.
 - **New project** asks only what shapes the piece, with pictures where a
   style is chosen: a sweater's style, neck, size and fit; a beanie's style
   (cuffed or rib), head size, fit and cuff; a scarf or blanket in cm.

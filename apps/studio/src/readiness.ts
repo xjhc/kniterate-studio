@@ -118,7 +118,7 @@ export function collectFindings(plan: ProjectPlan, result: AuthoredPipelineResul
       title: title(diagnostic.rule, diagnostic.severity, diagnostic.message),
       message: diagnostic.message,
       passIndices: diagnostic.passIndices,
-      fixes: [],
+      fixes: diagnostic.rule === 'project-birdseye-color-count' ? [{ label: 'Use Fairisle', edits: [{ kind: 'set-strategy', strategy: { ...plan.backing, technique: 'fairisle' } }] }] : [],
     });
   }
   const knitoutLines = result.compiled?.knitoutText?.split('\n') ?? [];

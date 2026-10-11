@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import type { ProjectGauge, ProjectState } from '@kniterate-studio/project-contract';
 import type { BeanieFitChange } from '../beanie';
 import { BEANIE_FITS, beanieIntentOf } from '../beanie';
+import { projectBackingWords } from '../backing';
 import type { ProjectPlan, Valued } from '../plan';
 import { Chips, Section } from '../workspace/panel';
 
@@ -118,7 +119,7 @@ export function GarmentFitSection({ state, plan, onFit }: { state: ProjectState;
     </Section>
     <Section id="swatch" title="Your swatch" aside={measured ? <em className="section-aside ok">measured</em> : <em className="section-aside warn">typical</em>}>
       <p className="garment-help">{measured ? 'From your swatch. The whole hat is sized from it.' : 'Typical values. Enter what 10 cm of your swatch measures and the whole hat follows.'}</p>
-      <GaugeFields id="gauge.body" label={cuff ? `Body (${state.strategy.technique === 'birdseye' ? 'birdseye' : 'fairisle'} fabric)` : 'Rib'} gauge={state.gauge} onCommit={(bodyGauge) => setGauge({ bodyGauge }, `Body gauge ${bodyGauge.stitchesPer10cm}/${bodyGauge.rowsPer10cm} (${bodyGauge.source})`)} />
+      <GaugeFields id="gauge.body" label={cuff ? `Body (${projectBackingWords(state)?.fabric ?? 'fairisle fabric'})` : 'Rib'} gauge={state.gauge} onCommit={(bodyGauge) => setGauge({ bodyGauge }, `Body gauge ${bodyGauge.stitchesPer10cm}/${bodyGauge.rowsPer10cm} (${bodyGauge.source})`)} />
       {cuff && <GaugeFields id="gauge.rib" label="Cuff (2x2 rib)" gauge={state.object?.ribGauge} onCommit={(ribGauge) => setGauge({ ribGauge }, `Rib gauge ${ribGauge.stitchesPer10cm}/${ribGauge.rowsPer10cm} (${ribGauge.source})`)} />}
       {resized && <p className="garment-derived" role="status">Resized: {resized.needles} → {counts.needles} needles, {resized.rows} → {counts.rows} rows.</p>}
     </Section>

@@ -8,6 +8,7 @@ import {
 } from '@kniterate-studio/project-contract';
 import { BEANIE_FITS, BEANIE_HEADS, type BeanieIntent } from '../beanie';
 import { BeanieIcon } from '../garment/BeanieIcon';
+import { backingWords } from '../backing';
 import { FITS, SIZES, type Fit, type Size } from '../sweater/draft';
 import { SWEATER_CHOICES, type SweaterIntent } from '../sweater/sweater';
 import type { PanelIntent } from '../sweater/panel';
@@ -197,10 +198,10 @@ export function NewBeanieForm({ onCreate, onClose }: { onCreate: (intent: Beanie
       {cuff && (accent ? <label>Accent<input aria-label="Accent yarn name" value={accent.name} onChange={(event) => setAccent({ ...accent, name: event.currentTarget.value })} /><input type="color" aria-label="Accent yarn colour" value={accent.hex} onChange={(event) => setAccent({ ...accent, hex: event.currentTarget.value.toUpperCase() })} /><button type="button" className="secondary-button" onClick={() => setAccent(null)}>Remove</button></label>
         : <button type="button" className="secondary-button" onClick={() => setAccent({ name: 'White', hex: '#F2F2F2' })}>Add an accent yarn</button>)}
     </div></fieldset>
-    {cuff && <fieldset className="choice-rows"><legend>Body backing</legend><div><span /><div className="choice-pills">
-      <button type="button" className={backing === 'birdseye' ? 'active' : ''} aria-pressed={backing === 'birdseye'} onClick={() => setBacking('birdseye')}>Birdseye</button>
-      <button type="button" className={backing === 'fairisle' ? 'active' : ''} aria-pressed={backing === 'fairisle'} onClick={() => setBacking('fairisle')}>Fairisle</button>
-    </div></div><p className="garment-help">{backing === 'birdseye' ? 'Thicker and warmer. No long floats, so thin lines and logos work.' : 'Light. Unused colours float behind the work.'}</p></fieldset>}
+    {/* With one yarn there is nothing to back: the choice is one layer or two. */}
+    {cuff && <fieldset className="choice-rows"><legend>{accent ? 'Body backing' : 'Body fabric'}</legend><div><span /><div className="choice-pills">
+      {(['birdseye', 'fairisle'] as const).map((id) => <button key={id} type="button" className={backing === id ? 'active' : ''} aria-pressed={backing === id} onClick={() => setBacking(id)}>{backingWords(id, accent ? 2 : 1, true)!.name}</button>)}
+    </div></div><p className="garment-help">{backingWords(backing, accent ? 2 : 1, true)!.help}</p></fieldset>}
     <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || !main.name.trim() || !(head >= 30 && head <= 80)}><Check size={16} /> Create beanie</button></footer>
   </form>;
 }

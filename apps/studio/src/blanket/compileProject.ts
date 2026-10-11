@@ -260,7 +260,9 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     frame.frameCarriers = extra.filter((carrier) => presetFrameCarriers.has(carrier));
     const unassigned = extra.filter((carrier) => !presetFrameCarriers.has(carrier));
     if (unassigned.length > 0) {
-      carrierMessages.push(setupError('project-unassigned-carrier', `The compiled ${technique} program uses ${unassigned.map((carrier) => `C${carrier}`).join(', ')}, which ${unassigned.length === 1 ? 'has' : 'have'} no yarn assigned.${technique === 'birdseye' ? ' The Customist-matched birdseye program is laid out for four colors on C2-C5; use four colors or Fairisle.' : ''}`));
+      // The matched birdseye program is laid out for four colours on C2-C5: with fewer, say so in the designer's terms.
+      if (technique === 'birdseye' && usedPalette.length < 4) carrierMessages.push(setupError('project-birdseye-color-count', `Birdseye needs four colours, and this chart uses ${usedPalette.length}. Use Fairisle, or paint with four colours.`));
+      else carrierMessages.push(setupError('project-unassigned-carrier', `The compiled ${technique} program uses ${unassigned.map((carrier) => `C${carrier}`).join(', ')}, which ${unassigned.length === 1 ? 'has' : 'have'} no yarn assigned.`));
     }
   }
   const exactCapacity = artifact.knitoutText === null

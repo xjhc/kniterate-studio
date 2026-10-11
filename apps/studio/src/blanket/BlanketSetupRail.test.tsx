@@ -5,6 +5,7 @@ import { AuthoredVerdictBadge } from '../App';
 import { BlanketSetupRail } from './BlanketSetupRail';
 import { ChartSizeSection } from '../chart/ChartSizeSection';
 import { compileColorworkProject } from './compileProject';
+import { createBeanieProject } from '../beanie';
 
 describe('authored verdict badge', () => {
   it('shows Knit-proven with its exact physical match', () => {
@@ -52,5 +53,29 @@ describe('BlanketSetupRail', () => {
     expect(markup).not.toContain('passes');
     expect(markup).not.toContain('aria-label="Waste rows"');
     expect(markup).not.toContain('Complement');
+  });
+
+  it('with one colour there is no backing to choose: a chart knits plain, a beanie body is one layer or two', () => {
+    const rail = (project: Parameters<typeof compileColorworkProject>[0]) => {
+      const state = materializeColorworkProject(project).state;
+      return renderToStaticMarkup(<BlanketSetupRail state={state} compile={{ status: 'ready', artifact: null, error: null, comparisons: [] }} outputError={null} size={null} onStrategy={() => {}} onFloatLimit={() => {}} onAssignment={() => {}} />);
+    };
+    const plain = rail(createColorworkProjectV1({
+      kind: 'knitlab-colorwork-chart', version: 1, title: 'plain', width: 12, height: 8, rowNumbering: 'bottom-up',
+      palette: [{ id: 'natural', name: 'Natural', hex: '#f1ede3' }, { id: 'navy', name: 'Navy', hex: '#29445f' }],
+      cells: Array.from({ length: 8 }, () => Array(12).fill(0)),
+    }, { id: 'plain', title: 'plain' }));
+    expect(plain).toContain('One colour knits plain, with no backing.');
+    expect(plain).not.toContain('Fairisle');
+    expect(plain).not.toContain('Longest float');
+
+    const gauge = { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'assumed' as const };
+    const hat = rail(createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: gauge, cuffCm: 7, ribGauge: { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'assumed' }, fold: true, backing: 'birdseye', main: { name: 'Black', hex: '#111111' } }, { id: 'hat', source: 'human', group: 'create' }));
+    expect(hat).toContain('Double layer');
+    expect(hat).toContain('Single layer');
+    expect(hat).not.toContain('Birdseye');
+
+    const ribHat = rail(createBeanieProject({ title: 'Rib hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: gauge, main: { name: 'Black', hex: '#111111' } }, { id: 'rib-hat', source: 'human', group: 'create' }));
+    expect(ribHat).not.toContain('<span>Backing</span>');
   });
 });
