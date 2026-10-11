@@ -10,7 +10,7 @@ export function ChartToolbar({ active, onTool, onCopy, onCut, onPaste, onDelete,
   active: ChartTool; onTool: (tool: ChartTool) => void; onCopy: () => void; onCut: () => void; onPaste: () => void; onDelete: () => void; onZoomIn: () => void; onZoomOut: () => void; onZoomSelection: () => void; hasSelection: boolean; canPaste: boolean;
 }) {
   return <div className="chart-toolbar" aria-label="Chart tools">
-    <div className="tool-group">{tools.map(({ id, label, key, hint, icon: Icon }) => <button className={active === id ? 'active' : ''} type="button" key={id} onClick={() => onTool(id)} title={`${label} (${key})${hint ? `. ${hint}` : ''}`} aria-label={label}><Icon size={16} /></button>)}</div>
+    <div className="tool-group">{tools.map(({ id, label, key, hint, icon: Icon }) => <button className={active === id ? 'active' : ''} type="button" key={id} onClick={() => onTool(id)} title={`${label} (${key})${hint ? `. ${hint}` : ''}`} aria-label={label}><Icon size={16} /></button>)}<span className="tool-name" aria-live="polite">{tools.find((tool) => tool.id === active)?.label}</span></div>
     {(hasSelection || canPaste) && <div className="tool-group" aria-label="Selection actions">
       {hasSelection && <><button type="button" onClick={onCopy} title="Copy selection" aria-label="Copy selection"><Clipboard size={16} /></button><button type="button" onClick={onCut} title="Cut selection" aria-label="Cut selection"><Scissors size={16} /></button></>}
       {canPaste && <button type="button" onClick={onPaste} title="Paste" aria-label="Paste"><ClipboardPaste size={16} /></button>}

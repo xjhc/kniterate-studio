@@ -9,6 +9,8 @@ import type { KnitFile, KnitSectionKind } from '../sweater/knitFile';
 const WASTE = '#A9B0B8';
 const DRAW = '#C2413A';
 const MIN_LABEL_GAP = 14;
+/** A long run of waste yarn is drawn this many rows tall, with a break mark: its label keeps the real count. */
+const WASTE_SHOWN = 10;
 
 function shade(hex: string, amount: number): string {
   const value = Number.parseInt(hex.slice(1), 16);
@@ -42,6 +44,9 @@ export function RunSchematic({ file, hex, stitchCm, rowCm, label }: {
   const st = stitchCm ?? 0.4;
   const rowOf = (kind: KnitSectionKind) => (rowCm ? (kind === 'rib' ? rowCm.rib : rowCm.body) : 0.3);
   const heights = file.courses.map((course) => rowOf(file.sections[course.section]!.kind));
+  // Long waste runs are shortened so the piece, not its waste yarn, fills the drawing.
+  const broken = bands.filter((band) => band.kind === 'waste' && band.to - band.from + 1 > WASTE_SHOWN);
+  for (const band of broken) for (let index = band.from; index <= band.to; index++) heights[index]! *= WASTE_SHOWN / (band.to - band.from + 1);
   const tops: number[] = [];
   let total = 0;
   for (const value of heights) { tops.push(total); total += value; }
@@ -87,6 +92,12 @@ export function RunSchematic({ file, hex, stitchCm, rowCm, label }: {
         ...strands.map(([from, to]) => <rect key={`${index}-strand-${from}`} className="run-strand" x={x(from)} y={top + height * 0.4} width={x(to + 1) - x(from)} height={Math.max(0.5, height * 0.2)} fill={fill(kind)} />),
         ...runs.map(([from, to]) => <rect key={`${index}-${from}`} className={`run-band band-${kind}`} x={x(from)} y={top} width={x(to + 1) - x(from)} height={height} fill={fill(kind)} />),
       ];
+    })}
+    {broken.map((band) => {
+      const mid = y((tops[band.from]! + tops[band.to]! + heights[band.to]!) / 2);
+      const left = x(band.lo) - 6; const right = x(band.hi + 1) + 6; const step = 10;
+      const points = Array.from({ length: Math.ceil((right - left) / step) + 1 }, (_, k) => `${Math.min(right, left + k * step)},${mid + (k % 2 === 0 ? -3 : 3)}`).join(' ');
+      return <polyline key={`break-${band.from}`} className="run-break" points={points} />;
     })}
     {labels.map(({ band, at, mid, text }, index) => <g key={index} className="run-label">
       <line x1={x(band.hi + 1) + 4} y1={mid} x2={pad.left + widest * k + 16} y2={at} />

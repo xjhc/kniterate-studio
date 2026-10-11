@@ -55,9 +55,9 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   await page.getByRole('button', { name: 'Restore' }).click();
 
   // "Leave the ground" for the motif's color keeps it placed (nothing drawn), never "does not fit".
-  await page.getByLabel('Image color 1').selectOption({ label: 'Leave the ground' });
+  await page.getByLabel('Image colour 1').selectOption({ label: 'Leave the ground' });
   await expect(page.getByRole('button', { name: /^motif-1 \d+ × \d+ st/ })).toBeVisible({ timeout: 30_000 });
-  await page.getByLabel('Image color 1').selectOption({ label: 'White' });
+  await page.getByLabel('Image colour 1').selectOption({ label: 'White' });
 
   // A fit change is one operation; one undo restores it.
   const head = page.locator('#fit\\.head');
@@ -173,7 +173,7 @@ test('refreshing a motif reviews newly visible colors before changing its source
   const intake = page.getByRole('dialog', { name: 'Place an image' });
   await intake.getByLabel('Image file').setInputFiles({ name: 'refresh-colors.png', mimeType: 'image/png', buffer: refreshColorsPng() });
   await intake.getByLabel('Visible height (cm)').fill('4');
-  await intake.getByLabel('Colors').selectOption('3');
+  await intake.getByLabel('Colours').selectOption('3');
   await intake.getByLabel('Sampling').selectOption('mode');
   await expect(intake.getByRole('button', { name: 'Place', exact: true })).toBeEnabled();
   await intake.getByRole('button', { name: 'Place', exact: true }).click();
@@ -187,12 +187,12 @@ test('refreshing a motif reviews newly visible colors before changing its source
   await expect(page.getByText('needs refresh')).toBeVisible();
   await page.getByRole('button', { name: /^motif-1/ }).click();
   const beforeRefresh = await savedProject();
-  const review = page.getByRole('dialog', { name: 'Review colors for motif-1' });
+  const review = page.getByRole('dialog', { name: 'Review colours for motif-1' });
   const openReview = async () => {
     await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     // The saved PNG is loaded automatically; no replacement file is supplied.
     await expect(review.getByRole('img', { name: 'The supplied image' })).toBeVisible();
-    await expect(review.getByRole('alert').filter({ hasText: 'Image color 2 (9 stitches) has no matching yarn' })).toBeVisible();
+    await expect(review.getByRole('alert').filter({ hasText: 'Image colour 2 (9 stitches) has no matching yarn' })).toBeVisible();
     await expect(review.getByRole('button', { name: 'Apply refresh' })).toBeDisabled();
   };
   await openReview();
@@ -202,7 +202,7 @@ test('refreshing a motif reviews newly visible colors before changing its source
   await expect(page.getByText('needs refresh')).toBeVisible();
 
   await openReview();
-  await review.getByLabel('Image color 2').selectOption({ label: 'White' });
+  await review.getByLabel('Image colour 2').selectOption({ label: 'White' });
   await expect(review.getByRole('button', { name: 'Apply refresh' })).toBeEnabled();
   await review.getByRole('button', { name: 'Apply refresh' }).click();
   await expect(review).toBeHidden();
@@ -251,10 +251,10 @@ test('edits made while a motif refresh is decoding are never lost, and colors ar
   const intake = page.getByRole('dialog', { name: 'Place an image' });
   await intake.getByLabel('Image file').setInputFiles({ name: 'two-shapes.png', mimeType: 'image/png', buffer: twoShapesPng() });
   await intake.getByLabel('Visible height (cm)').fill('4');
-  await intake.getByLabel('Colors').selectOption('3');
-  await expect(intake.getByRole('alert').filter({ hasText: /Image color 2 \(\d+ stitches\) has no matching yarn/ })).toBeVisible();
+  await intake.getByLabel('Colours').selectOption('3');
+  await expect(intake.getByRole('alert').filter({ hasText: /Image colour 2 \(\d+ stitches\) has no matching yarn/ })).toBeVisible();
   await expect(intake.getByRole('button', { name: 'Place' })).toBeDisabled();
-  await intake.getByLabel('Image color 2').selectOption({ label: 'Black' });
+  await intake.getByLabel('Image colour 2').selectOption({ label: 'Black' });
   await expect(intake.getByRole('button', { name: 'Place' })).toBeEnabled();
   await intake.getByRole('button', { name: 'Place' }).click();
   await expect(page.getByRole('button', { name: /^motif-\d+ \d+ × \d+ st/ })).toBeVisible();

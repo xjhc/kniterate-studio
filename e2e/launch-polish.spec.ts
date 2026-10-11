@@ -22,7 +22,7 @@ test('creates, renames, recolors, autosaves, and recovers a customer project', a
   await menu(page, 'Edit', 'Name and colours…');
   const settings = page.getByRole('dialog', { name: 'Project settings' });
   await settings.getByLabel('Project name').fill('Harbor blanket v1');
-  await settings.getByLabel('Palette color 1 name').fill('Ivory');
+  await settings.getByLabel('Palette colour 1 name').fill('Ivory');
   await settings.locator('input[type="color"]').first().fill('#E8E1D2');
   await settings.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.locator('.brand-copy small')).toContainText('Harbor blanket v1');

@@ -52,7 +52,7 @@ export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank }
         <button type="button" onClick={() => onNew('beanie')}>
           <BeanieIcon />
           <b>Beanie</b>
-          <small>Sized to a head, with a rib cuff and a colorwork body or a logo.</small>
+          <small>Sized to a head, with a rib cuff and a colourwork body or a logo.</small>
         </button>
         <button type="button" onClick={() => onNew('rectangle')}>
           <ScarfIcon />

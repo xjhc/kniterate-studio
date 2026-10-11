@@ -97,10 +97,10 @@ type MobileView = 'movement' | 'passes' | 'diagnostics' | 'source';
 
 function defaultProject(): ColorworkProjectV1 {
   return createColorworkProjectV1({
-    kind: 'knitlab-colorwork-chart', version: 1, title: 'Untitled colorwork', width: 200, height: 300, rowNumbering: 'bottom-up',
+    kind: 'knitlab-colorwork-chart', version: 1, title: 'Untitled colourwork', width: 200, height: 300, rowNumbering: 'bottom-up',
     palette: DEFAULT_PROJECT_PALETTE.map((entry) => ({ ...entry })),
     cells: Array.from({ length: 300 }, () => Array.from({ length: 200 }, () => 0)),
-  }, { id: 'studio-default', title: 'Untitled colorwork' });
+  }, { id: 'studio-default', title: 'Untitled colourwork' });
 }
 
 function initialProject(): { project: ColorworkProjectV1; recoveredAt: string | null } {
@@ -332,7 +332,7 @@ function CompiledMachineWorkspace({ artifact, kcode, outputStatus, outputError, 
   return <div className="workspace">
     <nav className="side-rail" aria-label="Workspace views"><button className={!topology ? 'active' : ''} type="button" title="Machine passes" onClick={() => setTopology(false)}><Rows3 size={19} /></button><button className={topology ? 'active' : ''} type="button" title="Schematic topology" onClick={() => setTopology(true)}><Network size={19} /></button></nav>
     <main className="machine-workspace compiled-workspace">
-      <div className="workspace-head"><div><span className="eyebrow">Compiled project</span><h1>Exact emitted machine trace</h1></div><div className="stat-strip"><span><b>{(kcode?.passCount ?? 0).toLocaleString()}</b> passes</span><span><b>{artifact.stats.patternColors}</b> pattern colors</span><span><b>{artifact.stats.needles}</b> design columns</span><span><b>{errorCount + (outputStatus === 'failed' ? 1 : 0)}</b> errors</span></div></div>
+      <div className="workspace-head"><div><span className="eyebrow">Compiled project</span><h1>Exact emitted machine trace</h1></div><div className="stat-strip"><span><b>{(kcode?.passCount ?? 0).toLocaleString()}</b> passes</span><span><b>{artifact.stats.patternColors}</b> pattern colours</span><span><b>{artifact.stats.needles}</b> design columns</span><span><b>{errorCount + (outputStatus === 'failed' ? 1 : 0)}</b> errors</span></div></div>
       {topology ? <MachineTopologyView trace={kcode?.trace ?? null} eligible={kcode?.ok === true && kcode.validation?.ok === true} blockedReason="Topology requires current validated output." selectedPass={selected} onSelect={(pass, action) => execution.selectAction(pass, action)} /> : <div className="compiled-machine-layout">
         {kcode?.scene ? <MachineMovementView className="compiled-movement" execution={execution} scene={kcode.scene} validation={kcode.validation} overallContext={kcodeOverallContext(kcode)} selectedPass={selected} onSelect={(pass) => execution.selectAction(pass)} />
           : kcode ? <div className="compiled-movement compiled-blocked" role="alert"><CircleAlert size={18} /><span><strong>Exact machine scene blocked</strong><small>{outputMessages.find((message) => message.severity === 'error')?.message ?? 'Strict parsing or MachineTrace projection did not produce an inspectable scene.'}</small></span></div>
@@ -630,19 +630,19 @@ export function App() {
       kind: 'knitlab-colorwork-chart', version: 1, title, width, height, rowNumbering: 'bottom-up', palette,
       cells: Array.from({ length: height }, () => Array.from({ length: width }, () => 0)),
     }, { id: projectId(title), title }));
-    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setShowStart(false);
+    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setShowStart(false); setWorkspaceView('design');
   };
   const createBeanie = (intent: BeanieIntent) => {
     setProject(createBeanieProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }));
-    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false);
+    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false); setWorkspaceView('design');
   };
   const createPanel = (intent: PanelIntent) => {
     setProject(createPanelProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }));
-    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false);
+    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false); setWorkspaceView('design');
   };
   const createSweater = (intent: SweaterIntent) => {
     setProject(createSweaterProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }));
-    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false);
+    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false); setWorkspaceView('design');
   };
   /** An opened project that continues this one (same id, this history as its prefix) arrives as new changes to review. */
   const openProjectFile = (opened: ColorworkProjectV1) => {
@@ -650,6 +650,7 @@ export function App() {
     setProject(opened);
     setOpenGeneration((value) => value + 1);
     setShowStart(false);
+    setWorkspaceView('design');
     if (from !== null) { setChangesFrom(from); setShowChanges(true); } else setChangesFrom(null);
   };
   const downloadPackage = async () => {
