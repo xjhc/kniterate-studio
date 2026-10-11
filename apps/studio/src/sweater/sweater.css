@@ -173,13 +173,26 @@
 .status-card.tone-blocked { border-color: var(--blocked); background: var(--blocked-soft); }
 .status-card.tone-blocked svg { color: var(--blocked); }
 .status-card.tone-checking svg { color: var(--ink-3); }
-.sweater-status h3 { margin: 0 0 6px; color: var(--ink-3); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
-.status-notes ul { display: grid; gap: 6px; margin: 0; padding-left: 16px; color: var(--ink-2); font-size: 12px; line-height: 1.45; }
-.status-notes li.note-error { color: var(--blocked); }
-.status-notes.operator li { color: var(--ink-2); }
-.status-notes.after-knitting { display: grid; gap: 8px; }
-.status-notes.after-knitting .trial-list { padding-left: 0; font-size: 12px; }
-.status-notes.after-knitting > button { justify-self: start; display: inline-flex; align-items: center; gap: 6px; }
+.status-card.tone-next { border-color: var(--line-strong); background: var(--paper); }
+.status-card.tone-next svg { color: var(--ink-2); }
+.status-steps { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.status-step { display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 10px; position: relative; padding-bottom: 14px; }
+.status-step:not(:last-child)::before { content: ""; position: absolute; left: 10px; top: 24px; bottom: 2px; width: 2px; background: var(--line); }
+.step-mark { display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--line-strong); border-radius: 50%; background: var(--panel); color: var(--ink-3); font-size: 11px; font-weight: 800; }
+.step-done .step-mark { border-color: var(--proven); background: var(--proven); color: var(--panel); }
+.step-current .step-mark { border-color: var(--accent); background: var(--accent); color: #fff; }
+.step-body { display: grid; gap: 8px; min-width: 0; }
+.step-body > h3 { margin: 2px 0 0; color: var(--ink); font-size: 13px; font-weight: 700; }
+.step-todo .step-body > h3, .step-done .step-body > h3 { color: var(--ink-2); }
+.step-action { justify-self: start; display: inline-flex; align-items: center; gap: 6px; }
+.status-step .trial-list { padding-left: 0; font-size: 12px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.swatch-gauges { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; font-size: 12px; }
+.swatch-gauges li { display: flex; justify-content: space-between; gap: 8px; color: var(--ink-2); }
+.swatch-gauges span { color: var(--warning); font-weight: 600; }
+.swatch-gauges li.measured span { color: var(--proven); }
+ul.status-notes { display: grid; gap: 6px; margin: 0; padding-left: 16px; color: var(--ink-2); font-size: 12px; line-height: 1.45; }
+ul.status-notes li.note-error { color: var(--blocked); }
 .status-pieces ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .piece-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; }
 .piece-open { display: grid; grid-template-columns: 10px minmax(0, 1fr); align-items: center; column-gap: 8px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); text-align: left; cursor: pointer; }

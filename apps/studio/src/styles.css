@@ -181,12 +181,19 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
 .popover-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 9px 8px 13px; border-bottom: 1px solid var(--line); font-size: 12px; }
 .verdict-summary { display: flex; align-items: center; gap: 9px; margin: 14px 14px 0; padding: 11px; border-left: 3px solid currentColor; background: var(--panel-2); }
 .verdict-panel p { margin: 11px 14px; color: var(--ink-2); font-size: 11px; line-height: 1.5; }
-.verdict-ladder { display: grid; grid-template-columns: repeat(3, 1fr); margin: 17px 14px 14px; padding: 0; list-style: none; }
-.verdict-ladder li { position: relative; padding-top: 14px; color: var(--ink-3); font-size: 8px; text-align: center; }
-.verdict-ladder li::before { position: absolute; top: 4px; left: 0; width: 100%; height: 1px; background: var(--line); content: ''; }
-.verdict-ladder i { position: absolute; z-index: 1; top: 0; left: calc(50% - 4px); width: 9px; height: 9px; border: 2px solid var(--panel); border-radius: 50%; background: var(--line-strong); }
-.verdict-ladder .current { color: var(--ink); font-weight: 800; }
-.verdict-ladder .current i { background: currentColor; }
+.verdict-ladder { display: grid; gap: 10px; margin: 14px; padding: 0; list-style: none; }
+.verdict-ladder li { display: grid; grid-template-columns: 12px minmax(0, 1fr); gap: 9px; color: var(--ink-3); font-size: 12px; line-height: 1.4; }
+.verdict-ladder i { width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; background: var(--line-strong); }
+.verdict-ladder b { font-weight: 650; }
+.verdict-ladder small { color: var(--ink-3); font-size: 10px; }
+.verdict-ladder em { display: block; font-style: normal; }
+.verdict-ladder .current { color: var(--ink); }
+.verdict-ladder .current b { font-weight: 800; }
+.verdict-ladder .current i { background: var(--proven); }
+.verdict-ladder .current:first-child i { background: var(--blocked); }
+.verdict-detail { margin: 0 14px 12px; color: var(--ink-2); font-size: 11px; }
+.verdict-detail summary { cursor: pointer; font-weight: 650; }
+.verdict-detail p { margin: 6px 0 0 !important; }
 .profile-chip { display: block; margin: 0 14px 14px; padding: 6px 8px; border: 1px solid var(--line); color: var(--ink-2); background: var(--panel-2); font-size: 10px; text-align: center; }
 
 .diff-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 0; color: var(--ink-2); }

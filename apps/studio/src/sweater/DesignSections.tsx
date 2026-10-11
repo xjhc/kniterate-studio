@@ -50,7 +50,7 @@ export function YarnGaugeSection({ yarn, carrier, bodyName, gauge, ribGauge, ope
   onRibGauge: (next: GaugeValue, label: string) => void;
 }) {
   const setGauge = (next: GaugeValue, label: string) => operate(label, [{ kind: 'set-gauge', gauge: { ...next } }]);
-  return <Section title="Yarn & gauge" aside={gauge.source === 'assumed' ? <em className="section-aside warn">assumed</em> : <em className="section-aside ok">measured</em>}>
+  return <Section id="swatch" title="Yarn & swatch" aside={gauge.source === 'assumed' ? <em className="section-aside warn">typical</em> : <em className="section-aside ok">measured</em>}>
     <label className="yarn-row"><input type="color" value={yarn.hex} aria-label="Yarn colour" onChange={(event) => operate('Yarn colour', [{ kind: 'set-palette-entry', paletteId: yarn.id, name: yarn.name, hex: event.currentTarget.value.toUpperCase() }])} />
       <input type="text" defaultValue={yarn.name} key={yarn.name} aria-label="Yarn name" onBlur={(event) => { const name = event.currentTarget.value.trim(); if (name && name !== yarn.name) operate(`Yarn: ${name}`, [{ kind: 'set-palette-entry', paletteId: yarn.id, name, hex: yarn.hex }, { kind: 'set-yarn-assignment', assignment: { paletteId: yarn.id, carrier: carrier as '2' | '3' | '4' | '5', yarnName: name } }]); }} />
     </label>

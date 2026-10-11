@@ -15,7 +15,8 @@ import { MeasureDialog } from '../garment/MeasureDialog';
 import { readKnitFile, type KnitFileCarriers } from '../sweater/knitFile';
 import { KnitFileView } from '../sweater/KnitFileView';
 import { RunSchematic } from '../workspace/RunSchematic';
-import { StatusPanel, type StatusNote, type StatusTone } from '../workspace/StatusPanel';
+import { StatusPanel, type StatusNote, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
+import { revealSection } from '../workspace/panel';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
 import type { AuthoredVerdict } from '../engine';import { PaletteRail } from './PaletteRail';
 import { makeRowId, pixelMutationToProjectEdit } from './projectCanvasAdapter';
@@ -39,6 +40,8 @@ export interface ChartStatus {
   verdict: AuthoredVerdict | null;
   exportReady: boolean;
   packaging: boolean;
+  /** Whether this design's file was downloaded since its last change. */
+  downloaded: boolean;
   onPackage: () => void;
   onPrint: () => void;
   onDownloadKc: () => void;
@@ -225,9 +228,17 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler);
   }, [project, chart, selection, clipboard, view]);
 
-  // The status panel: whether it can be knitted, what to fix, the file.
-  const tone: StatusTone = story === null ? (storyPending ? 'checking' : 'blocked') : story.status === 'ready' ? 'ready' : story.status === 'blocked' ? 'blocked' : 'warn';
-  const notes: StatusNote[] = (story?.items ?? []).map((item) => ({
+  // The status panel: whether it can be knitted, then the steps. A garment's gauge is its swatch step, not a design note.
+  const tone: StatusTone = story === null ? (storyPending ? 'checking' : 'blocked') : story.status === 'ready' ? 'ready' : story.status === 'blocked' ? 'blocked' : story.status === 'needs-measurements' ? 'next' : 'warn';
+  const cuffed = beanieObjectOf(materialized.state)?.construction === 'rib-cuff-jersey-body';
+  const swatch: SwatchStep | undefined = isGarment ? {
+    gauges: [
+      { name: cuffed ? `Body (${materialized.state.strategy.technique === 'birdseye' ? 'birdseye' : 'fairisle'})` : '2x2 rib', measured: gauge?.source === 'measured' },
+      ...(cuffed ? [{ name: 'Cuff (2x2 rib)', measured: ribGauge?.source === 'measured' }] : []),
+    ],
+    onEnter: () => { onView('design'); revealSection('swatch'); },
+  } : undefined;
+  const notes: StatusNote[] = (story?.items ?? []).filter((item) => !(swatch && (item.rule === 'gauge-assumed' || item.rule === 'size-needs-gauge'))).map((item) => ({
     severity: item.severity === 'error' ? 'error' : item.severity === 'warning' ? 'warning' : 'info',
     text: `${item.part}: ${item.action}`,
     actions: item.target || item.fixes.length > 0 ? <>
@@ -279,7 +290,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     </section>
     <StatusPanel
       tone={tone}
-      title={story?.headline ?? (storyPending ? 'Checking…' : 'Cannot knit yet')}
+      title={story?.headline ?? (storyPending ? 'Checking…' : "Can't knit yet")}
       detail={story?.status === 'ready' ? '' : story?.detail ?? ''}
       notes={notes}
       files={[{ id: 'file', name: kindName, fileName, facts: `${chart.width} st · ${chart.height} rows${kcode ? ` · ${kcode.passCount.toLocaleString()} passes` : ''}`, state: fileState, error: fileState === 'blocked' ? story?.detail ?? null : null }]}
@@ -290,11 +301,13 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       packaging={status.packaging}
       canPackage={status.exportReady}
       canPrint={status.exportReady}
+      downloaded={status.downloaded}
+      swatch={swatch}
       atTheMachine={story?.operatorChecks ?? []}
-      afterKnitting={isGarment ? <>
+      measure={isGarment ? { done: (materialized.state.trials ?? []).some((trial) => !trial.synthetic), title: 'Measure the hat', content: <>
         {(materialized.state.trials ?? []).length > 0 && <ul className="trial-list">{materialized.state.trials!.map((trial) => <li key={trial.id}>{trial.recordedAt.slice(0, 10)} · {trial.outcome}{trial.bodyGauge ? ` · ${trial.bodyGauge.stitchesPer10cm} st / ${trial.bodyGauge.rowsPer10cm} rows` : ''}{trial.synthetic ? ' (test data)' : ''}</li>)}</ul>}
-        <button type="button" className="secondary-button" onClick={() => setShowMeasure(true)}><Ruler size={15} /> Enter measurements</button>
-      </> : undefined}
+        <button type="button" className="secondary-button step-action" onClick={() => setShowMeasure(true)}><Ruler size={15} /> Enter measurements</button>
+      </> } : undefined}
       footer={story?.notices.map((notice) => <p className="design-hint" role="note" key={notice}>{notice}</p>)}
     />
     {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); onView('design'); setFitRequest((request) => request + 1); } }} />}

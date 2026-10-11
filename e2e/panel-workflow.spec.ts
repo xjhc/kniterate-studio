@@ -16,7 +16,7 @@ test('a one-colour scarf in any stitch: sized in cm, rib ends, the whole run in 
   await dialog.getByRole('button', { name: 'Create' }).click();
 
   const status = page.locator('.status-card');
-  await expect(status).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+  await expect(status).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
   await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(1);
   await expect(page.locator('.status-pieces')).toContainText('panel.kc');
 
@@ -31,7 +31,7 @@ test('a one-colour scarf in any stitch: sized in cm, rib ends, the whole run in 
   await page.getByRole('radio', { name: /^Garter stitch/ }).click();
   const ends = page.getByLabel('End rib height', { exact: true });
   await ends.fill('0'); await ends.press('Enter');
-  await expect(status).toContainText(/Knittable/, { timeout: 90_000 });
+  await expect(status).toContainText(/Ready to knit/, { timeout: 90_000 });
 
   // The schematic is the whole run; the machine file reads back from waste yarn to bind-off.
   await page.getByRole('tab', { name: 'Schematic', exact: true }).click();

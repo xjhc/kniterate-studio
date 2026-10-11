@@ -22,7 +22,7 @@ async function createBeanie(page: Page) {
   await expect(dialog.getByRole('tab', { name: 'Beanie' })).toHaveAttribute('aria-selected', 'true');
   await dialog.getByLabel('Project name').fill('Ring toque');
   await dialog.getByRole('button', { name: 'Create beanie' }).click();
-  await expect(page.getByTestId('readiness-headline')).toHaveText('Fit needs measurements', { timeout: 30_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
 }
 
 async function placeImage(page: Page, heightCm: string) {
@@ -37,10 +37,28 @@ async function placeImage(page: Page, heightCm: string) {
 
 const derived = (page: Page, text: RegExp) => page.locator('.garment-derived').filter({ hasText: text });
 
+test('the status panel walks the steps: the swatch is next, then the download, each ticked when done', async ({ page }) => {
+  test.setTimeout(120_000);
+  await createBeanie(page);
+  const steps = page.getByRole('list', { name: 'Steps' });
+  const next = steps.locator('[aria-current="step"] > .step-body > h3');
+  await expect(next).toHaveText('Measure a swatch');
+  await steps.getByRole('button', { name: 'Enter your swatch' }).click();
+  await expect(page.getByLabel(/^Body \(.+ fabric\) stitches per 10 cm$/)).toBeFocused();
+  // Measured gauges tick the swatch step; the download is next until this design is downloaded.
+  await page.getByLabel(/^Body \(.+ fabric\) measured$/).check();
+  await page.getByLabel('Cuff (2x2 rib) measured').check();
+  await expect(next).toHaveText('Download', { timeout: 30_000 });
+  const download = page.waitForEvent('download');
+  await steps.getByRole('button', { name: 'Download knitting package' }).click();
+  await download;
+  await expect(next).toHaveText('Knit');
+});
+
 test('a beanie is edited as a garment: fit, motifs, readiness, package and measurements', async ({ page }) => {
   test.setTimeout(180_000);
   await createBeanie(page);
-  await expect(page.getByLabel('Verdict: Surface-proven')).toBeVisible();
+  await expect(page.getByLabel('Verdict: Ready to knit')).toBeVisible();
   await expect(derived(page, /^134 needles · 50.8 cm finished around$/)).toBeVisible();
 
   // Motifs are objects: placed and listed.
@@ -118,7 +136,7 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   await measure.getByRole('button', { name: 'Record and revise' }).click();
   await expect(page.getByText(/clean .*\(test data\)/)).toBeVisible();
   // Synthetic values never satisfy the real-measurement requirement, and readiness says why.
-  await expect(page.getByTestId('readiness-headline')).toHaveText('Fit needs measurements', { timeout: 30_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
   await expect(page.getByRole('note').filter({ hasText: 'test data' })).toBeVisible();
 
   // The changes panel lists the operations, newest first.

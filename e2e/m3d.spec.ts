@@ -20,7 +20,7 @@ test('exports validated k-code and reproduces it byte-identically after project 
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await page.locator('input[accept=".json,application/json"]').setInputFiles('fixtures/colorwork-chart-v1/four-color-checker.json');
-  await expect(page.getByLabel('Verdict: Surface-proven')).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByLabel('Verdict: Ready to knit')).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole('button', { name: /Fairisle/ }).click();
   await page.getByRole('button', { name: /Birdseye/ }).click();
@@ -56,7 +56,7 @@ test('exports validated k-code and reproduces it byte-identically after project 
   expect(await readFile(secondKc)).toEqual(firstBytes);
 
   await page.locator('input[accept=".kc,.k,text/plain"]').first().setInputFiles(secondKc);
-  await expect(page.getByText('Surface-proven (imported)', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('Verdict: Ready to knit')).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -106,7 +106,7 @@ test('exports and reopens the canonical 200x300 four-color authored blanket', as
   expect(await readFile(secondKc)).toEqual(firstBytes);
 
   await page.locator('input[accept=".kc,.k,text/plain"]').first().setInputFiles(secondKc);
-  await expect(page.getByText('Surface-proven (imported)', { exact: true })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByLabel('Verdict: Ready to knit')).toBeVisible({ timeout: 30_000 });
   expect(errors).toEqual([]);
 });
 
@@ -136,7 +136,7 @@ test('refuses an oversized authored Birdseye project before compiler allocation'
   const blockedAfterMs = Date.now() - started;
   expect(blockedAfterMs).toBeLessThan(15_000);
   testInfo.annotations.push({ type: 'benchmark', description: `Oversized authored refusal reported after ${blockedAfterMs} ms` });
-  await expect(page.getByLabel('Verdict: Blocked')).toBeVisible();
+  await expect(page.getByLabel("Verdict: Can't knit yet")).toBeVisible();
   await expect(kcDownload(page)).toBeDisabled();
   await expect(page.locator('.strategy-segments button.active')).toContainText('Cannot knit');
 });

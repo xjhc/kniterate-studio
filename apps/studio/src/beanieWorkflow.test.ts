@@ -178,13 +178,13 @@ describe('handoff', () => {
     const findings = collectFindings(plan, result);
     const readiness = resolveReadiness({ verdict: result.verdict, findings });
     const story = readinessStory(plan, findings, readiness, result.verdict);
-    expect(story).toMatchObject({ status: 'needs-measurements', headline: 'Fit needs measurements', detail: 'Body and rib gauges are assumed. Enter measured gauges to check the finished dimensions.' });
+    expect(story).toMatchObject({ status: 'needs-measurements', headline: 'Ready to knit, sizes not confirmed', detail: 'The body and rib gauges are typical values until you measure a swatch.' });
     expect(story.evidence).toBe('Software checks passed · Surface-proven · physical knit pending');
     expect(story.items.map((item) => item.target).sort()).toEqual(['gauge.body', 'gauge.rib']);
     expect(schematicSvg(project, plan)).toContain('fold line');
     const files = await handoffFiles({ project, serializedProject: JSON.stringify(project), plan, result, findings, readiness, sha256: async (bytes) => String(typeof bytes === 'string' ? bytes.length : bytes.byteLength) });
     expect(Object.keys(files).sort()).toEqual(['instructions.md', 'manifest.json', 'measurement-form.md', 'measurements.json', 'program.k', 'program.kc', 'project.kniterate-studio.json', 'schematic.svg']);
-    expect(files['instructions.md']).toContain('**Fit needs measurements.**');
+    expect(files['instructions.md']).toContain('**Ready to knit, sizes not confirmed.**');
     expect(files['instructions.md']).toContain('Fold the rib cuff up');
     expect(JSON.parse(files['manifest.json'] as string).identity.kcodeSha256).toBe(result.kcode!.kcHash);
   });
@@ -243,7 +243,7 @@ describe('third review', () => {
     const readiness = resolveReadiness({ verdict: result.verdict, findings });
     expect(readiness.ready).toBe(false);
     const story = readinessStory(plan, findings, readiness, result.verdict, materializeColorworkProject(revised).state.trials);
-    expect(story.headline).toBe('Fit needs measurements');
+    expect(story.headline).toBe('Ready to knit, sizes not confirmed');
     expect(story.notices[0]).toContain('test data');
     const files = await handoffFiles({ project: revised, serializedProject: JSON.stringify(revised), plan, result, findings, readiness, sha256: async () => 'h' });
     expect(files['instructions.md']).toContain('SYNTHETIC (software test, not knitted)');

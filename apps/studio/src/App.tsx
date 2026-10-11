@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { KNITERATE_7GG_KCODE_PROFILE_V2, deriveMachineTraceProgrammedMotionV1, matchKnitProvenArtifact, type MachineTraceProgrammedMotionV1 } from '@kniterate-studio/machine-lib/browser';
-import { MACHINE_PASS_ORIGIN_LABELS, formatPassRoleCounts, machinePassRoleLabel, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDiff, type MachinePass } from './engine';
+import { MACHINE_PASS_ORIGIN_LABELS, VERDICT_WORDS, formatPassRoleCounts, machinePassRoleLabel, resolveAuthoredVerdict, type AuthoredVerdict, type MachineDiagnostic, type MachineDiff, type MachinePass } from './engine';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, redoProjectEdit, renameColorworkProject, serializeColorworkProjectV1, undoProjectEdit, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import type { AuthoredPipelineResult } from './authoredPipeline';
 import { createBeanieProject, type BeanieIntent } from './beanie';
@@ -143,9 +143,9 @@ function projectId(title: string): string {
 
 function Verdict({ document, onClick }: { document: MachineDocument; onClick: () => void }) {
   return (
-    <button className={`verdict verdict-${document.verdict.state}`} type="button" onClick={onClick}>
+    <button className={`verdict verdict-${document.verdict.state}`} type="button" onClick={onClick} title={document.verdict.label} aria-label={`Verdict: ${VERDICT_WORDS[document.verdict.state].name}`}>
       <span className="verdict-dot" />
-      {document.verdict.label}
+      {VERDICT_WORDS[document.verdict.state].name}
       <ChevronDown size={14} />
     </button>
   );
@@ -154,7 +154,7 @@ function Verdict({ document, onClick }: { document: MachineDocument; onClick: ()
 export function AuthoredVerdictBadge({ verdict, pending, onClick }: { verdict: AuthoredVerdict | null; pending: 'compiling' | 'checking'; onClick: () => void }) {
   // A null verdict means lowering is still in progress; the badge is the top bar's single progress and verdict signal.
   if (!verdict) return <span className="verdict authored-verdict verdict-pending" role="status" aria-label={pending === 'compiling' ? 'Writing the machine file' : 'Checking the machine file'}><LoaderCircle size={12} className="spin" />{pending === 'compiling' ? 'Writing' : 'Checking'}</span>;
-  return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={verdict.annotation} aria-label={`Verdict: ${verdict.label}${verdict.evidenceId ? ' / Exact physical match' : ''}`} onClick={onClick}><span className="verdict-dot" />{verdict.label}</button>;
+  return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={`${verdict.label}: ${verdict.annotation}`} aria-label={`Verdict: ${VERDICT_WORDS[verdict.state].name}${verdict.evidenceId ? ' / Exact physical match' : ''}`} onClick={onClick}><span className="verdict-dot" />{VERDICT_WORDS[verdict.state].name}</button>;
 }
 
 function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = false }: {
@@ -392,18 +392,22 @@ export function SourceDock({ document, selected, preferredLine, emitted = false,
   );
 }
 
+/** The three rungs, each in plain words with what it means; the ladder's own name is kept small beside it. */
+function VerdictLadder({ state }: { state: AuthoredVerdict['state'] }) {
+  const names = { blocked: 'Blocked', surface: 'Surface-proven', knit: 'Knit-proven' } as const;
+  return <ol className="verdict-ladder">{(['blocked', 'surface', 'knit'] as const).map((rung) => <li key={rung} className={state === rung ? 'current' : ''}>
+    <i /><span><b>{VERDICT_WORDS[rung].name}</b> <small>{names[rung]}</small><em>{VERDICT_WORDS[rung].meaning}</em></span>
+  </li>)}</ol>;
+}
+
 function VerdictPanel({ document, onClose }: { document: MachineDocument; onClose: () => void }) {
   return (
     <div className="popover verdict-panel">
       <div className="popover-head"><strong>Verdict</strong><button className="icon-button" type="button" onClick={onClose} aria-label="Close verdict"><X size={16} /></button></div>
-      <div className={`verdict-summary verdict-${document.verdict.state}`}><span className="verdict-dot" /><strong>{document.verdict.label}</strong></div>
+      <div className={`verdict-summary verdict-${document.verdict.state}`}><span className="verdict-dot" /><strong>{VERDICT_WORDS[document.verdict.state].name}</strong></div>
       <p>{document.verdict.annotation}</p>
       <p><strong>Format evidence</strong> {document.sourceDisclosure.summary}</p>
-      <ol className="verdict-ladder">
-        <li className={document.verdict.state === 'blocked' ? 'current' : ''}><i />Blocked</li>
-        <li className={document.verdict.state === 'surface' ? 'current' : ''}><i />Surface-proven</li>
-        <li className={document.verdict.state === 'knit' ? 'current' : ''}><i />Knit-proven</li>
-      </ol>
+      <VerdictLadder state={document.verdict.state} />
       <span className="profile-chip">7gg worsted · 252 needles</span>
     </div>
   );
@@ -411,10 +415,10 @@ function VerdictPanel({ document, onClose }: { document: MachineDocument; onClos
 
 function AuthoredVerdictPanel({ verdict, onClose }: { verdict: AuthoredVerdict; onClose: () => void }) {
   return <div className="popover verdict-panel">
-    <div className="popover-head"><strong>Output verdict</strong><button className="icon-button" type="button" onClick={onClose} aria-label="Close verdict"><X size={16} /></button></div>
-    <div className={`verdict-summary verdict-${verdict.state}`}><span className="verdict-dot" /><strong>{verdict.label}</strong></div>
-    <p>{verdict.annotation}</p>
-    <ol className="verdict-ladder"><li className={verdict.state === 'blocked' ? 'current' : ''}><i />Blocked</li><li className={verdict.state === 'surface' ? 'current' : ''}><i />Surface-proven</li><li className={verdict.state === 'knit' ? 'current' : ''}><i />Knit-proven</li></ol>
+    <div className="popover-head"><strong>Can it be knitted?</strong><button className="icon-button" type="button" onClick={onClose} aria-label="Close verdict"><X size={16} /></button></div>
+    <div className={`verdict-summary verdict-${verdict.state}`}><span className="verdict-dot" /><strong>{VERDICT_WORDS[verdict.state].name}</strong></div>
+    <VerdictLadder state={verdict.state} />
+    <details className="verdict-detail"><summary>What was checked</summary><p>{verdict.annotation}</p></details>
     <span className="profile-chip">7gg worsted / 252-needle bed</span>
   </div>;
 }
@@ -575,6 +579,10 @@ export function App() {
   const [showChanges, setShowChanges] = useState(false);
   const [changesFrom, setChangesFrom] = useState<number | null>(null);
   const [packaging, setPackaging] = useState(false);
+  // The design as it is now: its files count as downloaded until the next change.
+  const revision = `${project.id}@${project.history.entries[project.history.cursor - 1]?.id ?? ''}`;
+  const [downloadedRevision, setDownloadedRevision] = useState<string | null>(null);
+  const downloaded = downloadedRevision === revision;
   const authoredNeedleRange = useMemo(() => authoredKnitoutNeedleRange(authoredState), [authoredState]);
   const kcodeState = useKCodeArtifact(blanketCompile.artifact, authoredNeedleRange);
   const outputCurrent = blanketCompile.artifact?.inputHash != null
@@ -663,6 +671,7 @@ export function App() {
       link.download = `${project.id}-package.zip`;
       link.click();
       URL.revokeObjectURL(link.href);
+      setDownloadedRevision(revision);
     } finally { setPackaging(false); }
   };
   const saveProjectSettings = (title: string, palette: { id: string; name: string; hex: string }[]) => {
@@ -678,6 +687,7 @@ export function App() {
   const downloadKCode = () => {
     if (!authoredExportReady || !kcodeState.artifact) return;
     download(`${project.id}.kc`, new Blob([kcodeState.artifact.kcText], { type: 'text/plain' }));
+    setDownloadedRevision(revision);
   };
 
   // One place for every project action: the menu and the panels call these.
@@ -700,17 +710,21 @@ export function App() {
       const input = { project, serializedProject: serializeColorworkProjectV1(project), summary: sweaterRun.summary, sha256: sha256Hex };
       const files = panelPlan ? await panelPackageFiles({ ...input, plan: panelPlan }) : await sweaterPackageFiles({ ...input, plan: sweaterPlan! });
       download(`${project.id}-${panelPlan ? 'panel' : 'sweater'}.zip`, new Blob([zipStore(files)], { type: 'application/zip' }));
+      setDownloadedRevision(revision);
     } catch (error) { setAppError(error instanceof Error ? error.message : String(error)); } finally { setPackaging(false); }
   };
   const downloadSweaterPiece = (id: PieceId) => {
     // Only a file compiled from the design as it is now.
     const piece = sweaterRun.current ? sweaterRun.summary?.pieces.find((item) => item.id === id) : undefined;
     if (piece?.kcText) download(`${project.id}-${id}.kc`, new Blob([piece.kcText], { type: 'text/plain' }));
+    // A one-piece project's file is all of it.
+    if (piece?.kcText && sweaterRun.summary?.pieces.length === 1) setDownloadedRevision(revision);
   };
   const downloadSweaterFiles = () => {
     const pieces = sweaterRun.current && sweaterRun.summary?.exportReady ? sweaterRun.summary.pieces.filter((piece) => piece.kcText) : [];
     if (pieces.length === 0) return;
     download(`${project.id}-machine-files.zip`, new Blob([zipStore(Object.fromEntries(pieces.map((piece) => [`${piece.id}.kc`, piece.kcText!])))], { type: 'application/zip' }));
+    setDownloadedRevision(revision);
   };
   const canPackage = isPieces ? Boolean(sweaterReady && sweaterRun.summary?.exportReady) : authoredExportReady;
   const canPrint = isPieces ? Boolean(sweaterReady) : authoredExportReady;
@@ -817,10 +831,10 @@ export function App() {
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
-      {!document && isSweater && sweaterPlan ? <SweaterWorkspace project={project} onProject={setProject} plan={sweaterPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} />
-        : !document && isPanel && panelPlan ? <PanelWorkspace project={project} onProject={setProject} plan={panelPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} />
+      {!document && isSweater && sweaterPlan ? <SweaterWorkspace project={project} onProject={setProject} plan={sweaterPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} downloaded={downloaded} />
+        : !document && isPanel && panelPlan ? <PanelWorkspace project={project} onProject={setProject} plan={panelPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} downloaded={downloaded} />
         : !document ? <ChartWorkspace project={project} onProject={setProject} generation={openGeneration} plan={plan} story={authoredStory?.story ?? null} storyPending={blanketCompile.status !== 'ready' || displayedOutputStatus === 'converting'} candidateSha256={authoredExportReady ? kcodeState.artifact?.kcHash ?? null : null} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputError={kcodeState.error} view={workspaceView} onView={setWorkspaceView}
-            status={{ verdict: authoredVerdict, exportReady: authoredExportReady, packaging, onPackage: packageProject, onPrint: printSheet, onDownloadKc: downloadKCode }}
+            status={{ verdict: authoredVerdict, exportReady: authoredExportReady, packaging, downloaded, onPackage: packageProject, onPrint: printSheet, onDownloadKc: downloadKCode }}
             stepThrough={blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : null} />
         : (
         <div className="workspace">

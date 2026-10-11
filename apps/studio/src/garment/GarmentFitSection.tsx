@@ -95,7 +95,7 @@ export function GarmentFitSection({ state, plan, onFit }: { state: ProjectState;
       {sections?.crown && <p className="garment-derived" title={sections.crown.cm?.how}>Crown: {sections.crown.rows} rows to {sections.crown.finalStitches} stitches · {cm(sections.crown.cm)}</p>}
       {sections?.finishedHeightCm && <p className="garment-derived" title={sections.finishedHeightCm.how}>Finished height {cm(sections.finishedHeightCm)} flat</p>}
     </section>
-    <section className="garment-section"><h2>Your swatch</h2>
+    <section className="garment-section" id="swatch"><h2>Your swatch</h2>
       <p className="garment-help">{measured ? 'From your swatch. The whole hat is sized from it.' : 'Typical values. Enter what 10 cm of your swatch measures and the whole hat follows.'}</p>
       <GaugeFields id="gauge.body" label={cuff ? `Body (${state.strategy.technique === 'birdseye' ? 'birdseye' : 'fairisle'} fabric)` : 'Rib'} gauge={state.gauge} onCommit={(bodyGauge) => setGauge({ bodyGauge }, `Body gauge ${bodyGauge.stitchesPer10cm}/${bodyGauge.rowsPer10cm} (${bodyGauge.source})`)} />
       {cuff && <GaugeFields id="gauge.rib" label="Cuff (2x2 rib)" gauge={state.object?.ribGauge} onCommit={(ribGauge) => setGauge({ ribGauge }, `Rib gauge ${ribGauge.stitchesPer10cm}/${ribGauge.rowsPer10cm} (${ribGauge.source})`)} />}

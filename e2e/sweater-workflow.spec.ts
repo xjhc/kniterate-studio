@@ -22,7 +22,7 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   await createSweater(page, 'J-sleeve', 'Seed stitch');
 
   // Every piece compiles to a checked program; with assumed gauges the sizes are not confirmed.
-  await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+  await expect(status(page)).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
   const pieces = page.locator('.status-pieces .piece-row');
   await expect(pieces).toHaveCount(4);
   await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(4);
@@ -53,7 +53,7 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   await expect(pieces).toHaveCount(4);
   await expect(neckDepth).not.toHaveValue(crewDepth);
   expect(Number(await neckDepth.inputValue())).toBeGreaterThan(2 * Number(crewDepth));
-  await expect(status(page)).toContainText(/Knittable/, { timeout: 90_000 });
+  await expect(status(page)).toContainText(/Ready to knit/, { timeout: 90_000 });
   await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(4);
   await page.getByRole('radio', { name: 'Crew neck' }).click();
   await expect(pieces).toHaveCount(4);
@@ -74,9 +74,9 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   // The top row becomes tuck + knit on the front bed, which one carriage pass cannot do.
   await page.getByRole('button', { name: /^Row 2, stitch 1: Purl/ }).click();
   await expect(page.getByRole('alert').filter({ hasText: 'knits and tucks on the front bed' })).toBeVisible();
-  await expect(status(page)).toContainText('Not knittable yet', { timeout: 30_000 });
+  await expect(status(page)).toContainText("Can't knit yet", { timeout: 30_000 });
   await page.getByRole('radio', { name: /Seed stitch/ }).click();
-  await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+  await expect(status(page)).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
 
   // Measured gauges make every size real: ready to knit.
   for (const label of ['Seed stitch gauge', 'Rib gauge']) await page.getByRole('group', { name: label }).getByLabel('measured').check();
@@ -102,11 +102,11 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
 test('each sleeve style keeps every piece knittable', async ({ page }) => {
   test.setTimeout(240_000);
   await createSweater(page, 'Set-in sleeve', 'Stockinette');
-  await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+  await expect(status(page)).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
   for (const style of ['Drop shoulder', 'J-sleeve'] as const) {
     await page.getByRole('radio', { name: style }).click();
     await expect(page.getByRole('radio', { name: style })).toHaveAttribute('aria-checked', 'true');
-    await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+    await expect(status(page)).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
     await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(4);
   }
 });
@@ -114,7 +114,7 @@ test('each sleeve style keeps every piece knittable', async ({ page }) => {
 test('a piece is shaped by hand like a garment-shaping machine: drag, add a waist, type a point, reset', async ({ page }) => {
   test.setTimeout(240_000);
   await createSweater(page, 'Set-in sleeve', 'Stockinette');
-  await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+  await expect(status(page)).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
   await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Front' }).click();
   await page.getByRole('tab', { name: 'Shape' }).click();
   await expect(page.locator('.shape-source')).toHaveText('Drawn from your measurements — dragging makes it your own');
@@ -140,7 +140,7 @@ test('a piece is shaped by hand like a garment-shaping machine: drag, add a wais
   await expect(page.locator('.piece-rhythm')).toContainText(/increase 1 every/);
 
   // Every piece still compiles; the back shares the edge.
-  await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+  await expect(status(page)).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
   await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(4);
   await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Back' }).click();
   await expect(page.getByRole('button', { name: /^Point 2: 48 cm wide/ })).toBeVisible();
@@ -156,7 +156,7 @@ test('a piece is shaped by hand like a garment-shaping machine: drag, add a wais
 test('each machine file shows exactly what it knits: the fabric, its sections, and every pass in words and as written', async ({ page }) => {
   test.setTimeout(180_000);
   await createSweater(page, 'Set-in sleeve', 'Seed stitch');
-  await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+  await expect(status(page)).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
 
   // The panel lists the files the machine runs; one opens straight into what it knits.
   await page.locator('.status-pieces').getByRole('button', { name: /^front\.kc Front/ }).click();

@@ -42,14 +42,24 @@ runs, and the workspace shows exactly what those files knit.
     machine movement, the checks and the source.
   - A sweater's Whole sweater view lists every file in the order the machine
     runs them.
-- **Right panel:** the same order for every project.
-  1. Can it be knitted.
-  2. What to fix, with buttons that show or fix it.
-  3. The machine files: open, or download each one. The open piece's
-     shaping steps are shown under its file.
-  4. Download knitting package and Print knitting sheet.
-  5. What to do at the machine.
-  6. After knitting: enter what the knitted piece measures (beanie).
+- **Right panel:** the same for every project. First, whether it can be
+  knitted, in plain words: "Can't knit yet", "Ready to knit" (sizes not
+  confirmed until a swatch is measured), or "Ready to knit". Then the steps,
+  in order, each holding what belongs to it. The first step not done is
+  marked as the next one.
+  1. Design: what to fix or check, with buttons that show or fix it.
+  2. Measure a swatch: each fabric the sizes come from, typical or
+     measured, and a button to the swatch fields.
+  3. Download: the machine files (open, or download each one; the open
+     piece's shaping steps are shown under its file), Download knitting
+     package and Print knitting sheet. Ticked once this design is
+     downloaded.
+  4. Knit: what to do at the machine.
+  5. Measure the hat (beanie): enter what the knitted hat measures.
+- **The verdict badge** uses the same plain words: Blocked is "Can't knit
+  yet", Surface-proven is "Ready to knit", Knit-proven is "Proven on the
+  machine". Its popover keeps the ladder's names, what each means, and what
+  was checked. Files, the CLI and the docs keep the ladder's names.
 - **The knitting sheet** is for after exporting, at the machine. It traps
   focus and returns it to the menu.
 

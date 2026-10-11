@@ -158,7 +158,7 @@ export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], 
   let detail: string;
   if (verdict.state === 'blocked') {
     status = 'blocked';
-    headline = 'Cannot knit yet';
+    headline = "Can't knit yet";
     detail = items.find((item) => item.severity === 'error')?.message ?? verdict.annotation;
   } else if (readiness.ready) {
     status = 'ready';
@@ -166,14 +166,13 @@ export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], 
     detail = plan.piece === 'beanie' ? 'Every software check passed and every measurement is recorded as measured.' : 'Every software check passed.';
   } else if (items.every((item) => MEASUREMENT_RULES.has(item.rule))) {
     status = 'needs-measurements';
-    headline = 'Fit needs measurements';
+    headline = 'Ready to knit, sizes not confirmed';
     const parts = [...new Set(items.map((item) => (item.target === 'gauge.rib' ? 'rib' : 'body')))];
-    const named = parts.join(' and ');
-    detail = `${named[0]!.toUpperCase()}${named.slice(1)} gauge${parts.length === 1 ? ' is' : 's are'} assumed. Enter measured ${parts.length === 1 ? 'gauge' : 'gauges'} to check the finished dimensions.`;
+    detail = `The ${parts.join(' and ')} gauge${parts.length === 1 ? ' is a typical value' : 's are typical values'} until you measure a swatch.`;
   } else {
     status = 'design-issues';
     const design = items.filter((item) => !MEASUREMENT_RULES.has(item.rule));
-    headline = `${design.length} design issue${design.length === 1 ? '' : 's'} to resolve`;
+    headline = `${design.length} ${design.length === 1 ? 'thing' : 'things'} to check`;
     detail = design[0]!.consequence;
   }
   const synthetic = trials.filter((trial) => trial.synthetic);

@@ -49,6 +49,16 @@ export interface AuthoredVerdict {
   evidenceId: string | null;
 }
 
+/**
+ * The verdict in plain words, for the screen. `label` keeps the ladder's own
+ * names (Blocked, Surface-proven, Knit-proven) for files, the CLI and the docs.
+ */
+export const VERDICT_WORDS: Record<VerdictState, { name: string; meaning: string }> = {
+  blocked: { name: "Can't knit yet", meaning: 'The machine file did not pass its checks.' },
+  surface: { name: 'Ready to knit', meaning: 'The machine file passed every check. It has not been knitted yet.' },
+  knit: { name: 'Proven on the machine', meaning: 'This exact file was knitted and recorded.' },
+};
+
 export interface AuthoredVerdictInput {
   compileStatus: 'queued' | 'compiling' | 'ready' | 'failed';
   compileOk: boolean | null;

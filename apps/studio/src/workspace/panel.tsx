@@ -3,9 +3,9 @@ import { ChevronDown } from 'lucide-react';
 
 /** The pieces every design panel is built from: a collapsible section, a number field and a row of choices. */
 
-export function Section({ title, children, defaultOpen = true, aside }: { title: string; children: ReactNode; defaultOpen?: boolean; aside?: ReactNode }) {
+export function Section({ id, title, children, defaultOpen = true, aside }: { id?: string; title: string; children: ReactNode; defaultOpen?: boolean; aside?: ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
-  return <section className={`design-section${open ? ' open' : ''}`}>
+  return <section id={id} className={`design-section${open ? ' open' : ''}`}>
     <button type="button" className="design-section-head" onClick={() => setOpen(!open)} aria-expanded={open}>
       <span>{title}</span>{aside}<ChevronDown size={15} />
     </button>
@@ -31,4 +31,15 @@ export function Chips<T extends string>({ value, options, onPick, label }: { val
   return <div className="chips" role="radiogroup" aria-label={label}>
     {options.map((option) => <button key={option.id} type="button" role="radio" aria-checked={value === option.id} className={value === option.id ? 'active' : ''} title={option.note} onClick={() => onPick(option.id)}>{option.name}</button>)}
   </div>;
+}
+
+/** Opens a left-panel section if it is folded, scrolls to it and puts the cursor in its first field. */
+export function revealSection(id: string) {
+  const section = document.getElementById(id);
+  if (!section) return;
+  if (section.classList.contains('design-section') && !section.classList.contains('open')) section.querySelector<HTMLButtonElement>('.design-section-head')?.click();
+  requestAnimationFrame(() => {
+    section.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    section.querySelector<HTMLElement>('input, select')?.focus({ preventScroll: true });
+  });
 }
