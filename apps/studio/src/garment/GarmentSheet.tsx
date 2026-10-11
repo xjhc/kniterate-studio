@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Printer, X } from 'lucide-react';
 import { svgDataUrl } from './ChangesPanel';
 
@@ -46,6 +46,11 @@ export function InstructionsView({ markdown }: { markdown: string }) {
 }
 
 export function GarmentSheet({ markdown, schematic, onClose }: { markdown: string; schematic: string | null; onClose: () => void }) {
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); onClose(); } };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
   return <div className="modal-backdrop"><article className="run-sheet garment-sheet" role="dialog" aria-modal="true" aria-label="Knitting instructions">
     <div className="run-sheet-actions"><button className="secondary-button" type="button" onClick={onClose}><X size={16} /> Close</button><button className="primary-button" type="button" onClick={() => window.print()}><Printer size={16} /> Print</button></div>
     {schematic && <img className="sheet-schematic" src={svgDataUrl(schematic)} alt="Dimensioned schematic" />}

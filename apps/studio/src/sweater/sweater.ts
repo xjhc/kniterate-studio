@@ -111,6 +111,8 @@ export interface SweaterPlan {
   realized: { label: string; target: number | null; cm: number; how: string }[];
   /** Each measurement as knitted, cm, where the pieces define it. */
   knitted: Partial<Record<keyof Measurements, number>>;
+  /** Main yarn for every piece, from the stitch count: an estimate for buying yarn, not a measurement. */
+  yarn: { metres: number; stitches: number; how: string };
 }
 
 const round1 = (value: number) => Math.round(value * 10) / 10;
@@ -197,7 +199,25 @@ export function planSweater(state: ProjectState): SweaterPlan {
     }
   }
   if (object.neckline === 'crew') realized.push({ label: 'Neck opening', target: null, cm: round1(draft.seams.neckline), how: 'front and back neck edges' });
-  return { object, draft, gauge, ribGauge, pieces, carriers, findings, realized, knitted: knittedMeasurements(draft, front, back, sleeve) };
+  return { object, draft, gauge, ribGauge, pieces, carriers, findings, realized, knitted: knittedMeasurements(draft, front, back, sleeve), yarn: yarnEstimate(pieces) };
+}
+
+/**
+ * Yarn for every stitch of every copy of every piece. A knitted loop takes
+ * about 2.7 stitch widths of yarn; tucks and ribs take more, so the estimate
+ * is rounded up and given ±20%.
+ */
+function yarnEstimate(pieces: readonly SweaterPiecePlan[]): SweaterPlan['yarn'] {
+  let stitches = 0;
+  let centimetres = 0;
+  for (const piece of pieces) {
+    const raster = piece.raster;
+    if (!raster) continue;
+    const count = raster.rows.reduce((sum, row) => sum + row.segments.reduce((part, segment) => part + segment.hi - segment.lo + 1, 0), 0) * piece.copies;
+    stitches += count;
+    centimetres += count * raster.stitchCm * 2.7;
+  }
+  return { metres: Math.ceil((centimetres / 100) * 1.1 / 50) * 50, stitches, how: `${stitches.toLocaleString('en')} stitches × about 2.7 stitch widths each, plus 10%; a rough estimate, ±20%` };
 }
 
 /** Heights of row starts, cm above the cast-on. */
@@ -220,6 +240,7 @@ function knittedMeasurements(draft: SweaterDraft, front: PanelPlan | null | unde
     const shoulderRow = back.rows.findIndex((row) => row.y >= draft.levels.shoulderPoint);
     const shoulderTop = shoulderRow < 0 ? back.realized.heightCm : starts[shoulderRow]!;
     out.armholeDepth = round1(shoulderTop - starts[backUnder]!);
+    out.shoulderDrop = round1(back.realized.heightCm - shoulderTop);
     out.shoulderWidth = round1(span(back, Math.max(0, (shoulderRow < 0 ? back.rows.length : shoulderRow) - 1)));
     const frontStarts = rowStarts(front);
     const frontSplit = front.rows.findIndex((row) => row.segments.length === 2);

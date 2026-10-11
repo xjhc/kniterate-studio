@@ -55,6 +55,7 @@ export function SweaterStatusPanel({ plan, run, onOpenPiece, onDownloadPiece, on
           </li>;
         })}
       </ul>
+      <p className="design-hint" title={plan.yarn.how}>About {plan.yarn.metres.toLocaleString('en')} m of yarn in all (an estimate from the stitch count).</p>
     </section>
     <section className="status-actions">
       <button type="button" className="primary-button" disabled={!summary?.exportReady || checking || packaging} onClick={onPackage}>{packaging ? <LoaderCircle size={16} className="spin" /> : <Package size={16} />}Download knitting package</button>

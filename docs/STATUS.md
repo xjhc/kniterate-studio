@@ -288,6 +288,12 @@ ship," trust this file and the working tree instead.
   - CLI: `studio sweater choices|new|plan|set|check|package|pattern|schematic`.
     The generic `plan`/`describe`/`readiness`/`compile`/`package` route
     sweater projects there. The `knit-design` skill documents it.
+  - The plan gives a yarn estimate from the stitch count (±20%, labelled as
+    an estimate).
+  - Each piece is subject to the authored program limits. An oversized
+    garter or seed piece can need more than the 200,000 checked needle
+    selections; that is a design-owned `sweater-piece-too-large` error that
+    names the size, gauge and stitch changes. The limit itself is unchanged.
   - Not built:
     - raglan, V-neck, colorwork or stripes on sweater pieces;
     - picked-up collars;

@@ -16,6 +16,7 @@ import { resolveAuthoredVerdict, type AuthoredVerdict } from '../engine';
 import { resolveReadiness, type Finding, type Readiness } from '../readiness';
 import type { PieceId } from './draft';
 import { planSweater, type SweaterPiecePlan, type SweaterPlan } from './sweater';
+import { textureTransfersPerRepeat } from './textures';
 
 /**
  * Sweater project → one validated program per piece. Each piece goes through
@@ -139,6 +140,7 @@ export async function runSweaterPipeline(project: ColorworkProjectV1): Promise<S
         }
       }
     } else if (compiled !== null) outputError = capacity.status === 'blocked' ? capacity.message : 'Capacity was not assessed.';
+    if (outputError !== null) outputError = capacityInWords(piece.name, outputError, plan);
     const outputReady = kcode?.ok === true;
     const knitProven = matchKnitProvenArtifact(outputReady ? compiled?.inputHash : null, outputReady ? kcode?.kcHash : null);
     const verdict = resolveAuthoredVerdict({
@@ -170,6 +172,18 @@ export async function runSweaterPipeline(project: ColorworkProjectV1): Promise<S
   };
 }
 
+/**
+ * The authored program limits (records, passes, selected cells) are checks on
+ * one program's size. For a sweater piece the cause is its size and texture,
+ * so say that, and what to change.
+ */
+function capacityInWords(name: string, error: string, plan: SweaterPlan): string {
+  const limit = /raster cells/i.test(error) ? 'needle selections' : /lowered passes/i.test(error) ? 'machine passes' : /records/i.test(error) ? 'program lines' : null;
+  if (limit === null) return error;
+  const transfers = textureTransfersPerRepeat(plan.object.body.texture) > 0;
+  return `${name} needs more ${limit} than Studio checks in one program. Make it smaller, use a coarser gauge${transfers ? `, or choose a stitch that moves fewer stitches between beds (${plan.object.body.name.toLowerCase()} moves stitches on most rows)` : ''}.`;
+}
+
 /** Every finding of the sweater, each with an owner. */
 export function sweaterFindings(plan: SweaterPlan, pieces: readonly SweaterPieceResult[]): Finding[] {
   const findings: Finding[] = plan.findings.map((finding) => ({
@@ -199,7 +213,10 @@ export function sweaterFindings(plan: SweaterPlan, pieces: readonly SweaterPiece
     if (piece.compileError !== null && !plan.findings.some((finding) => finding.severity === 'error' && (finding.piece === null || finding.piece === piece.id))) {
       findings.push({ stage: 'pipeline', rule: 'compile-failed', severity: 'error', owner: 'compiler', path: `pieces/${piece.id}`, title: 'compile-failed', message: piece.compileError, fixes: [] });
     }
-    if (piece.outputError !== null) findings.push({ stage: 'pipeline', rule: 'output-failed', severity: 'error', owner: 'compiler', path: `pieces/${piece.id}`, title: 'output-failed', message: `${piece.name}: ${piece.outputError}`, fixes: [] });
+    if (piece.outputError !== null) {
+      const size = piece.outputError.includes('than Studio checks in one program');
+      findings.push({ stage: 'pipeline', rule: size ? 'sweater-piece-too-large' : 'output-failed', severity: 'error', owner: size ? 'design' : 'compiler', path: `pieces/${piece.id}`, title: size ? 'sweater-piece-too-large' : 'output-failed', message: size ? piece.outputError : `${piece.name}: ${piece.outputError}`, fixes: [] });
+    }
   }
   // What the operator loads and watches; never marked complete by software.
   const yarn = plan.object.body.name;

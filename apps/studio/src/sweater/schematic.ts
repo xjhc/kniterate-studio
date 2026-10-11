@@ -133,7 +133,7 @@ export function sweaterSchematicSvg(plan: SweaterPlan, yarnHex: string): string 
   const scale = 8;
   const w = Math.ceil(layout.width * scale);
   const h = Math.ceil(layout.height * scale);
-  const label = (text: string, x: number, y: number, anchor = 'middle', size = 11) => `<text x="${r1(x * scale)}" y="${r1(y * scale)}" text-anchor="${anchor}" font-size="${size}" font-family="sans-serif" fill="#333">${escapeXml(text)}</text>`;
+  const label = (text: string, x: number, y: number, anchor = 'middle', size = 15) => `<text x="${r1(x * scale)}" y="${r1(y * scale)}" text-anchor="${anchor}" font-size="${size}" font-family="sans-serif" fill="#333">${escapeXml(text)}</text>`;
   const body = layout.pieces.map((piece) => [
     `<g transform="scale(${scale})">`,
     `<path d="${piece.draftPath}" fill="none" stroke="#999" stroke-width="0.15" stroke-dasharray="0.6 0.4"/>`,
@@ -141,16 +141,16 @@ export function sweaterSchematicSvg(plan: SweaterPlan, yarnHex: string): string 
     `<path d="${piece.ribPath}" fill="${yarnHex}" fill-opacity="0.85" stroke="none"/>`,
     ...piece.dimensions.map((d) => `<line x1="${d.x1}" y1="${d.y1}" x2="${d.x2}" y2="${d.y2}" stroke="#555" stroke-width="0.12"/>`),
     '</g>',
-    label(`${piece.name}${piece.copies > 1 ? ` ×${piece.copies}` : ''}`, piece.x, piece.y + 7.5, 'middle', 13),
+    label(`${piece.name}${piece.copies > 1 ? ` ×${piece.copies}` : ''}`, piece.x, piece.y + 9, 'middle', 18),
     ...piece.dimensions.map((d) => {
       const mx = (d.x1 + d.x2) / 2;
       const my = (d.y1 + d.y2) / 2;
       if (d.side === 'left') return label(d.text, mx - 0.8, my, 'end');
       if (d.side === 'right') return label(d.text, mx + 0.8, my, 'start');
-      return label(d.text, mx, d.side === 'above' ? my - 0.8 : my + 2.2);
+      return label(d.text, mx, d.side === 'above' ? my - 0.9 : my + 2.6);
     }),
   ].join('')).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="#fff"/>${body}<text x="10" y="${h - 8}" font-size="10" font-family="sans-serif" fill="#666">Shaded: as knitted at the gauge. Dashed: the drafted shape. ${plan.gauge.source === 'assumed' ? 'Sizes come from an assumed gauge.' : 'Sizes come from the measured gauge.'}</text></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="#fff"/>${body}<text x="10" y="${h - 8}" font-size="13" font-family="sans-serif" fill="#666">Shaded: as knitted at the gauge. Dashed: the drafted shape. ${plan.gauge.source === 'assumed' ? 'Sizes come from an assumed gauge.' : 'Sizes come from the measured gauge.'}</text></svg>`;
 }
 
 function escapeXml(text: string): string {

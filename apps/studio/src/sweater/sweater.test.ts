@@ -176,6 +176,16 @@ describe('sweater pipeline', () => {
     expect(blocked.exportReady).toBe(false);
   });
 
+  it('explains a piece too large to check in one program as a design change, not a backing', { timeout: 120_000 }, async () => {
+    const result = await runSweaterPipeline(create({ size: 'XXL', fit: 'oversized', silhouette: 'drop-shoulder', textureId: 'garter' }));
+    const tooLarge = result.findings.filter((finding) => finding.rule === 'sweater-piece-too-large');
+    expect(tooLarge.map((finding) => finding.path)).toEqual(['pieces/back', 'pieces/front']);
+    expect(tooLarge[0]).toMatchObject({ owner: 'design', severity: 'error' });
+    expect(tooLarge[0]!.message).toMatch(/^Back needs more needle selections than Studio checks in one program\. Make it smaller, use a coarser gauge, or choose a stitch that moves fewer stitches/);
+    expect(result.verdict.state).toBe('blocked');
+    expect(result.plan.yarn.metres).toBeGreaterThan(1000);
+  });
+
   it('writes a package with every program, the pattern and a hash manifest', { timeout: 60_000 }, async () => {
     const project = create({ silhouette: 'j-sleeve' });
     const result = await runSweaterPipeline(project);

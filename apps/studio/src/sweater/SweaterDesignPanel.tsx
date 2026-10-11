@@ -98,7 +98,7 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
       <div className="field-row"><span>Size</span><Chips label="Size" value={custom ? null : size} options={SIZES.map((id) => ({ id, name: id }))} onPick={(id) => applySize(id, fit ?? 'classic')} /></div>
       <div className="field-row"><span>Fit</span><Chips label="Fit" value={custom ? null : fit} options={FITS.map((id) => ({ id, name: id[0]!.toUpperCase() + id.slice(1) }))} onPick={(id) => applySize(size ?? 'M', id)} /></div>
       <div className="measure-table" role="group" aria-label="Finished measurements">
-        <div className="measure-head"><span /><span>Wanted</span><span>Knits</span></div>
+        <div className="measure-head"><span /><span>Wanted</span><span>Knitted</span></div>
         {FIELDS.filter((field) => field.show?.(object) ?? true).map((field) => {
           const wanted = object.measurements[field.key] ?? (field.key === 'shoulderDrop' ? 2 : 0);
           const knitted = plan.knitted[field.key];
@@ -111,7 +111,7 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
           </label>;
         })}
       </div>
-      <p className="design-hint">Measurements are the finished sweater, not the body. "Knits" is what the machine makes at your gauge.</p>
+      <p className="design-hint">Measurements are the finished sweater, not the body. "Knitted" is what the machine makes at your gauge.</p>
     </Section>
 
     <Section title="Stitch" aside={<em className="section-aside">{object.body.name}</em>}>
