@@ -30094,7 +30094,7 @@
     ]
   },
   "contract": {
-    "sha256": "2566a94f537ac18fc81d482f40fb5adfad71a14cd41dd8a4a4e1605239e4a252",
+    "sha256": "5f726e0675b0d16627fc722ff99929193e9fef4730e5c3c255f3665320c15c5b",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30128,8 +30128,8 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "98282dc1dd6083d117d2b3250dfdd4358416cb3233721687d7b33ab2105d833a",
-        "bytes": 72174
+        "sha256": "6f2c1998e23c7b36214d78ed63a01490dd8fef0f3bb566e2ad9c0119e0180f8d",
+        "bytes": 72176
       },
       {
         "path": "../../apps/studio/src/StartScreen.tsx",
@@ -30183,8 +30183,8 @@
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.test.tsx",
-        "sha256": "65d81c7fabc7adf278db61e91098d1a8354529b064119813af7260443b646af2",
-        "bytes": 2885
+        "sha256": "01663461713b722b83df4a3e18d04398a6770854cf99963ea72d95937ccf6df9",
+        "bytes": 2877
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.tsx",
@@ -30243,13 +30243,13 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "c5abd978dd30cd75e947395b26dddbff721b63a33a59b140c75ac7599864e8ac",
-        "bytes": 23672
+        "sha256": "849c951de0ce11e3d5d6c0c10a00d078f3938439f3091fbc7d939f2ddb5ebc8e",
+        "bytes": 26234
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
-        "sha256": "239fcb8502a88697067b2a25cf8dcb9033251cefdf2426b85d2b89079c694d1a",
-        "bytes": 23985
+        "sha256": "d1b60b8816718e8e6a50fe90a46f2886070adf3ee34e0df55f6aca2db0d543bb",
+        "bytes": 29528
       },
       {
         "path": "../../apps/studio/src/chart/PaletteRail.tsx",
@@ -30263,8 +30263,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/canvasCoordinates.test.ts",
-        "sha256": "777032b05e42b3085986b7c709666a90a13bcc9fff5ae8ef0d6ab2c6c5d0da4d",
-        "bytes": 1527
+        "sha256": "353999807a6ffca94fea5b93d03f0050b58121808dfcdb3f2837315acd8dd375",
+        "bytes": 1933
       },
       {
         "path": "../../apps/studio/src/chart/canvasCoordinates.ts",
@@ -30378,8 +30378,8 @@
       },
       {
         "path": "../../apps/studio/src/garment/GarmentFitSection.tsx",
-        "sha256": "71a66ac7969edca24da4ab9fc65200ec52548671f323ea83b9c6fc75ca37dac0",
-        "bytes": 8054
+        "sha256": "f988ca3b16fc312af08880deb972c364748904a712690dac6c246d1d2442fa3b",
+        "bytes": 8955
       },
       {
         "path": "../../apps/studio/src/garment/GarmentSheet.tsx",
@@ -30548,13 +30548,13 @@
       },
       {
         "path": "../../apps/studio/src/plan.test.ts",
-        "sha256": "d183f92eb23bcd13e53dce104b59e904a95db2cccacf092314895dcdd0f8e115",
-        "bytes": 14316
+        "sha256": "a8495baaf8abd2f2f8346d1c264df8c076198bb360c9cb66a65ce237e55a510d",
+        "bytes": 14934
       },
       {
         "path": "../../apps/studio/src/plan.ts",
-        "sha256": "0930889d8e56349fffd1302cbf76df9a00f57654fc8e2aabfd4c9e0fbd3dc686",
-        "bytes": 23418
+        "sha256": "6d874d77888f8f2aaef114c0171285b449d3253dd48c5f73c764e01c4beba637",
+        "bytes": 24036
       },
       {
         "path": "../../apps/studio/src/readiness.ts",
@@ -30648,13 +30648,13 @@
       },
       {
         "path": "../../apps/studio/src/sweater/knitFile.test.ts",
-        "sha256": "6f57adaf186f9247fd14e49adcbd41b045c9de59863c73303309ed349a3d692b",
-        "bytes": 5774
+        "sha256": "7f288f368efb68982b644438f96833cb37f90c4c0d18a84d91f30430a392d9f1",
+        "bytes": 8105
       },
       {
         "path": "../../apps/studio/src/sweater/knitFile.ts",
-        "sha256": "7d1d349187009919397e956d45d02951c3ce59fd11de8588b8751600cae8e0db",
-        "bytes": 14417
+        "sha256": "ff3e2708d4d20c59436dae28758951c4434699ca0eaabdd3c6829eb20ea93c0c",
+        "bytes": 16138
       },
       {
         "path": "../../apps/studio/src/sweater/panel.test.ts",
@@ -30688,8 +30688,8 @@
       },
       {
         "path": "../../apps/studio/src/sweater/sweater.css",
-        "sha256": "602085c36977cfe415f5d52bfa1f2fadc9c7cfff5b4a47a5ce5b478ce1eee12d",
-        "bytes": 24353
+        "sha256": "abcdae83fe00e094d8965222fc3b1fff652751fc697eac8bae07108284130ad1",
+        "bytes": 24619
       },
       {
         "path": "../../apps/studio/src/sweater/sweater.test.ts",
@@ -30728,8 +30728,8 @@
       },
       {
         "path": "../../apps/studio/src/trials.ts",
-        "sha256": "d3a7912854b133119910a5963b160e29af0442e52ebb07a0a5a5ad0b34efe95c",
-        "bytes": 9462
+        "sha256": "a1782191c624cbe8fd86816d4755d2b7fd8eba8d995a635e9a2fd37454688a88",
+        "bytes": 10201
       },
       {
         "path": "../../apps/studio/src/workspace/FilesOverview.tsx",
@@ -30743,13 +30743,13 @@
       },
       {
         "path": "../../apps/studio/src/workspace/RunSchematic.tsx",
-        "sha256": "1b04df7284c2ef9989b9a0e486f5494aa7abab7365607240520e5cedb23e8145",
-        "bytes": 5853
+        "sha256": "f857774108ccb84291cdef639adeade123b19c6badfdaa6343eb5bd756df7188",
+        "bytes": 6532
       },
       {
         "path": "../../apps/studio/src/workspace/StatusPanel.tsx",
-        "sha256": "5beb5c999848249331c8c0dcf1eeab9ee6a9ff5fde1ae8dbc8ff11e57e218107",
-        "bytes": 3907
+        "sha256": "65b5cbb8f50d727aa4ea1176cd9f139c3ce976cf20dc373daf05684fb5c90d1c",
+        "bytes": 4213
       },
       {
         "path": "../../apps/studio/src/workspace/ViewSwitch.tsx",
@@ -30763,8 +30763,8 @@
       },
       {
         "path": "../../apps/studio/src/workspace/workspace.css",
-        "sha256": "577530b9c4a27c767d7976d977210ca67840184cfcfbe2f906954afe92501a5b",
-        "bytes": 7756
+        "sha256": "228334321c0f8f58ba8be3127f74380cf8a625b709a4b65a129ab81f49f9a385",
+        "bytes": 8093
       },
       {
         "path": "../../apps/studio/src/zip.ts",
@@ -30783,8 +30783,8 @@
       },
       {
         "path": "../../e2e/beanie-workflow.spec.ts",
-        "sha256": "2c6c00ecee774a1209e8dd29cc03f05bf352a2b538224337000981ead64f98de",
-        "bytes": 21175
+        "sha256": "2355fd8f384984dcaaa95e5579e894311e9342c8ec72ca9e3db21c8eadf79749",
+        "bytes": 21229
       },
       {
         "path": "../../e2e/execution-inspector.spec.ts",
