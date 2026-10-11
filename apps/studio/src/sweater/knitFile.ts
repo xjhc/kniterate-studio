@@ -255,12 +255,19 @@ export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: n
 
   return {
     passCount: trace.passes.length,
-    lineCount: kcode.kcText.split('\n').length,
+    lineCount: lineCount(kcode.kcText),
     needles: { lo, hi },
     courses,
     passes,
     sections,
   };
+}
+
+/** Lines in a text, counted without splitting it (a .kc can be megabytes). */
+function lineCount(text: string): number {
+  let count = 1;
+  for (let at = text.indexOf('\n'); at !== -1; at = text.indexOf('\n', at + 1)) count++;
+  return count;
 }
 
 function sectionLabel(section: KnitFileSection, carriers: KnitFileCarriers, kind: KnitFileKind, nextRib: () => number): string {

@@ -204,7 +204,26 @@ const SweaterObjectSchema = z.object({
 });
 export type SweaterObject = z.infer<typeof SweaterObjectSchema>;
 
-const ObjectSchema = z.union([BeanieObjectSchema, SweaterObjectSchema]);
+/**
+ * A one-yarn panel (a scarf or a blanket) in any knit/purl/tuck/slip stitch,
+ * knitted flat as one piece. Sized in cm; its stitches and rows come from the
+ * project gauge (the body stitch) and `ribGauge` (the rib ends). The chart's
+ * palette holds the yarn.
+ */
+const PanelObjectSchema = z.object({
+  kind: z.literal('panel'),
+  widthCm: z.number().min(5).max(110),
+  lengthCm: z.number().min(5).max(400),
+  body: z.object({ name: z.string().min(1).max(80), texture: TextureSchema }),
+  /** A rib band at each end (`cm` 0 for none). */
+  ends: RibTrimSchema,
+  ribGauge: z.lazy(() => GaugeSchema).optional(),
+  /** How the top is finished: a machine chain bind-off, or waste yarn. */
+  top: z.enum(['bind-off', 'waste']).optional(),
+});
+export type PanelObject = z.infer<typeof PanelObjectSchema>;
+
+const ObjectSchema = z.union([BeanieObjectSchema, SweaterObjectSchema, PanelObjectSchema]);
 export type ProjectObject = z.infer<typeof ObjectSchema>;
 
 /** The project's beanie, when it is one. */
@@ -215,6 +234,11 @@ export function beanieObjectOf(state: { object?: ProjectObject }): BeanieObject 
 /** The project's sweater, when it is one. */
 export function sweaterObjectOf(state: { object?: ProjectObject }): SweaterObject | undefined {
   return state.object?.kind === 'sweater' ? state.object : undefined;
+}
+
+/** The project's one-yarn panel (scarf or blanket), when it is one. */
+export function panelObjectOf(state: { object?: ProjectObject }): PanelObject | undefined {
+  return state.object?.kind === 'panel' ? state.object : undefined;
 }
 
 /**

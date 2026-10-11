@@ -86,6 +86,7 @@ test('imports, edits with every tool, uses history and clipboard, then reopens e
 test('a 100-cell pen drag is continuous and creates one project edit', async ({ page }, testInfo) => {
   // Wide enough that all 100 cells are on screen beside the design and status panels.
   await page.setViewportSize({ width: 1800, height: 900 });
+  await expect.poll(async () => (await page.locator('canvas.chart-canvas').first().boundingBox())?.width ?? 0).toBeGreaterThan(900);
   await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
   await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
   const { point } = await canvasGeometry(page, 16 / 1.2 / 1.2);

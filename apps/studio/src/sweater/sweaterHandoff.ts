@@ -1,7 +1,7 @@
 import { materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import type { PanelPlan } from './rasterize';
 import { edgeRhythm } from './rhythm';
-import type { SweaterPiecePlan, SweaterPlan } from './sweater';
+import type { PiecesPlan, SweaterPiecePlan, SweaterPlan } from './sweater';
 import type { SweaterRunSummary } from './sweaterRun';
 import { sweaterSchematicSvg } from './schematic';
 import { ribName, textureMatching } from './textures';
@@ -17,19 +17,24 @@ const SILHOUETTE_NAMES = { 'drop-shoulder': 'drop-shoulder', 'j-sleeve': 'J-slee
 const width = (raster: PanelPlan, row: number) => raster.rows[row]!.segments.reduce((sum, segment) => sum + segment.hi - segment.lo + 1, 0);
 
 /** The shaping of one piece, as pattern lines. */
-export function pieceSteps(piece: SweaterPiecePlan, plan: SweaterPlan): string[] {
+export function pieceSteps(piece: SweaterPiecePlan, plan: PiecesPlan): string[] {
   const raster = piece.raster;
   if (raster === null) return [`Not planned: ${piece.error ?? 'no rows'}.`];
   const object = plan.object;
-  const rib = piece.id === 'sleeve' ? object.trims.cuff.rib : piece.id === 'neckband' ? object.trims.neck.rib : object.trims.hem.rib;
+  // A sweater's trims, or a one-yarn panel's rib ends.
+  const rib = 'trims' in object
+    ? (piece.id === 'sleeve' ? (object as SweaterPlan['object']).trims.cuff.rib : piece.id === 'neckband' ? (object as SweaterPlan['object']).trims.neck.rib : (object as SweaterPlan['object']).trims.hem.rib)
+    : 'ends' in object ? (object as { ends: { rib: string } }).ends.rib : 'kkpp';
   const steps: string[] = [];
   const bottom = raster.realized.ribRows.bottom;
   steps.push(`Cast on ${raster.realized.castOnStitches} stitches over waste yarn and the draw thread.`);
   if (piece.id === 'neckband') {
     steps.push(`Rows 1–${raster.rows.length}: ${ribName(rib)} rib.`);
   } else {
-    if (bottom > 0) steps.push(`Rows 1–${bottom}: ${ribName(rib)} rib (${piece.id === 'sleeve' ? 'cuff' : 'hem'}).`);
+    if (bottom > 0) steps.push(`Rows 1–${bottom}: ${ribName(rib)} rib (${piece.id === 'sleeve' ? 'cuff' : piece.id === 'panel' ? 'end' : 'hem'}).`);
     steps.push(`From row ${bottom + 1}: ${object.body.name.toLowerCase()}.`);
+    const top = raster.realized.ribRows.top;
+    if (top > 0) steps.push(`Rows ${raster.rows.length - top + 1}–${raster.rows.length}: ${ribName(rib)} rib (${piece.id === 'panel' ? 'end' : 'neck edge'}).`);
   }
   // Shaping in the machine knitter's rhythm, with the stitch count after each step.
   const split = raster.events.find((event) => event.kind === 'neck-split');

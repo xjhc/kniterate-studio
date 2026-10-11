@@ -487,6 +487,21 @@ ship," trust this file and the working tree instead.
   - Export stays hard-gated by the authored verdict.
   - Contract: `docs/mockups/workspace-target.md`. Coverage:
     `e2e/workspace.spec.ts` and the updated specs.
+- **One-colour scarf or blanket (2026-10-11).** A new `object: { kind:
+  'panel' }` is one flat rectangle in one yarn.
+  - Settings: sized in cm, any knit/purl/tuck/slip stitch from the sweater's
+    library (or your own), an optional rib band at each end, and a bind-off
+    or waste-yarn top.
+  - It is planned (`sweater/panel.ts`) and compiled exactly like a sweater
+    piece, through the same rasterizer, shaped-panel construction, checks
+    and verdict (`runSweaterPipeline` takes any flat-piece plan). It opens
+    in the shared workspace.
+  - Its written pattern and package are in `sweater/panelHandoff.ts`.
+  - The colour-chart scarf or blanket is still offered next to it in New
+    project.
+  - Seed, stockinette and full-cardigan panels compile Surface-proven
+    (`sweater/panel.test.ts`, `e2e/panel-workflow.spec.ts`).
+  - Not yet built: a CLI command for panels.
 - **Central authored verdict policy + typed provenance.**
   `engine.ts::resolveAuthoredVerdict` is the sole authored 3-rung policy owner.
   Design-row provenance travels on typed Knitout ops and is joined through the

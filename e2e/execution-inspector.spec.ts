@@ -16,7 +16,8 @@ test('keeps the execution cursor, breakpoint, loop source, and all carrier stops
   await page.goto('/');
   await page.locator('input[accept=".kc,.k,text/plain"]').setInputFiles('packages/machine-lib/reference/fairisle.kc');
   const controls = page.getByRole('region', { name: 'Execution controls' });
-  await expect(controls).toBeVisible();
+  // The strict import (parse, replay, scene) takes a few seconds while the whole suite runs.
+  await expect(controls).toBeVisible({ timeout: 30_000 });
   await controls.getByRole('button', { name: 'Next event', exact: true }).click();
   await expect(controls).toContainText('Pass 1 · action 1 · knit');
   await expect(page.getByRole('region', { name: 'Machine state at cursor' })).toContainText('1 modeled loops');

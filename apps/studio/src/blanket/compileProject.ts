@@ -178,9 +178,9 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     };
   }
   const { state, overrides, placements } = materializeColorworkProject(project);
-  // A sweater's pieces each compile through their own construction (sweater/sweaterPipeline.ts); its chart only holds the yarn.
-  if (state.object?.kind === 'sweater') {
-    const message = setupError('project-sweater-pieces', 'This project is a sweater: each piece compiles separately; see the sweater workspace or `studio sweater`.');
+  // A sweater's pieces, and a one-yarn panel, compile through the shaped-panel construction (sweater/sweaterPipeline.ts); their chart only holds the yarn.
+  if (state.object?.kind === 'sweater' || state.object?.kind === 'panel') {
+    const message = setupError('project-sweater-pieces', state.object.kind === 'sweater' ? 'This project is a sweater: each piece compiles separately; see the sweater workspace or `studio sweater`.' : 'This project is a one-yarn panel: it compiles as a piece; see its workspace.');
     return { ...preflightBase, ok: false, compileVerdict: 'blocked', inputHash: null, messages: [message], knitoutText: null, passes: [], programOpSourceRows: [], rowProvenance: [], backFace: null, frame: null, diagnostics: [{ ...message, opIndex: null, rowId: null, passIndices: [] }] };
   }
   if (state.object?.kind === 'beanie') return compileBeanieProject(project, state, state.object, overrides, placements, capacity as AuthoredCapacitySupportedV1);

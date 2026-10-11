@@ -25,7 +25,7 @@ export const SWEATER_DRAW_CARRIER = '1';
 export const DEFAULT_RIB_GAUGE: Gauge = { stitchesPer10cm: 30, rowsPer10cm: 32 };
 /** The 252-needle bed keeps a few needles clear at each end for carrier parking. */
 export const SWEATER_MAX_NEEDLES = 240;
-const BED_CENTRE = 127;
+export const BED_CENTRE = 127;
 
 export interface SweaterIntent {
   title: string;
@@ -110,7 +110,28 @@ export interface SweaterPiecePlan {
   error: string | null;
 }
 
-export interface SweaterPlan {
+/**
+ * What the piece pipeline needs from any flat-piece project (a sweater, or a
+ * one-yarn scarf or blanket): its pieces, carriers and findings, and the body
+ * stitch and finish they are knitted with.
+ */
+export interface PiecesPlan {
+  object: { body: { name: string; texture: readonly string[] }; top?: 'bind-off' | 'waste'; fashion?: number };
+  gauge: Gauge & { source: 'measured' | 'assumed' };
+  ribGauge: Gauge & { source: 'measured' | 'assumed' };
+  pieces: SweaterPiecePlan[];
+  carriers: { main: string; second: string | null; waste: string; draw: string };
+  findings: SweaterPieceFinding[];
+  yarn: { metres: number; stitches: number; how: string };
+}
+
+/** A pipeline plan that is a sweater's (it has a draft), not a one-yarn panel's. */
+export function sweaterPlanOf(plan: PiecesPlan): SweaterPlan {
+  if (!('draft' in plan)) throw new Error('This project is not a sweater.');
+  return plan as SweaterPlan;
+}
+
+export interface SweaterPlan extends PiecesPlan {
   object: SweaterObject;
   draft: SweaterDraft;
   gauge: Gauge & { source: 'measured' | 'assumed' };
@@ -229,7 +250,7 @@ export function planSweater(state: ProjectState): SweaterPlan {
  * about 2.7 stitch widths of yarn; tucks and ribs take more, so the estimate
  * is rounded up and given ±20%.
  */
-function yarnEstimate(pieces: readonly SweaterPiecePlan[]): SweaterPlan['yarn'] {
+export function yarnEstimate(pieces: readonly SweaterPiecePlan[]): SweaterPlan['yarn'] {
   let stitches = 0;
   let centimetres = 0;
   for (const piece of pieces) {

@@ -3,7 +3,7 @@ import { appendProjectOperation, materializeColorworkProject, sweaterObjectOf, t
 import { defaultMeasurements, draftSweater, edgeProblem, SIZES, type ShapePoint, type Silhouette } from './draft';
 import { edgeRhythm } from './rhythm';
 import { rasterizePiece, sliceOutline } from './rasterize';
-import { createSweaterProject, planSweater, sweaterEdit, type SweaterIntent } from './sweater';
+import { sweaterPlanOf, createSweaterProject, planSweater, sweaterEdit, type SweaterIntent } from './sweater';
 import { runSweaterPipeline } from './sweaterPipeline';
 import { pieceSteps, sweaterInstructions, sweaterPackageFiles } from './sweaterHandoff';
 import { summarizeSweaterRun } from './sweaterRun';
@@ -261,13 +261,14 @@ describe('sweater pipeline', () => {
     const project = create({ silhouette: 'j-sleeve' });
     const result = await runSweaterPipeline(project);
     const summary = summarizeSweaterRun(result);
-    const files = await sweaterPackageFiles({ project, serializedProject: JSON.stringify(project), plan: result.plan, summary, sha256: async (bytes) => String(bytes.length) });
+    const plan = sweaterPlanOf(result.plan);
+    const files = await sweaterPackageFiles({ project, serializedProject: JSON.stringify(project), plan, summary, sha256: async (bytes) => String(bytes.length) });
     expect(Object.keys(files).sort()).toEqual(['back.k', 'back.kc', 'front.k', 'front.kc', 'instructions.md', 'manifest.json', 'neckband.k', 'neckband.kc', 'project.json', 'schematic.svg', 'sleeve.k', 'sleeve.kc']);
     const manifest = JSON.parse(new TextDecoder().decode(files['manifest.json']));
     expect(manifest.pieces.find((piece: { id: string }) => piece.id === 'sleeve')).toMatchObject({ copies: 2, file: 'sleeve.kc', verdict: 'Surface-proven' });
-    const pattern = sweaterInstructions(project, result.plan, summary);
+    const pattern = sweaterInstructions(project, plan, summary);
     expect(pattern).toMatch(/### Sleeve — knit 2/);
     expect(pattern).toMatch(/Row \d+: neck\. Bind off the centre \d+ stitches/);
-    expect(pieceSteps(result.plan.pieces[2]!, result.plan).join(' ')).toMatch(/Rows \d+–\d+ at each side: increase 1 every (\d+–)?\d+(th|rd|nd)? rows?, \d+ times → \d+ stitches\./);
+    expect(pieceSteps(plan.pieces[2]!, plan).join(' ')).toMatch(/Rows \d+–\d+ at each side: increase 1 every (\d+–)?\d+(th|rd|nd)? rows?, \d+ times → \d+ stitches\./);
   });
 });

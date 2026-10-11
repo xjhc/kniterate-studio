@@ -10,7 +10,8 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
   const machineInput = page.locator('input[accept=".kc,.k,text/plain"]');
   await machineInput.setInputFiles('packages/machine-lib/reference/fairisle.kc');
   await expect(page.getByRole('dialog', { name: 'How was this KCode produced?' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Passes' })).toBeVisible();
+  // The strict import (parse, replay, scene) takes a few seconds while the whole suite runs.
+  await expect(page.getByRole('heading', { name: 'Passes' })).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText('Surface-proven (imported)', { exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Exact machine movement' })).toBeVisible();
   await expect(page.getByText('KCode coordinates; physical needle labels unverified.')).toBeVisible();

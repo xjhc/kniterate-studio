@@ -15,7 +15,8 @@ import type { KCodeArtifact } from '../kcode/kcodeProtocol';
 import { resolveAuthoredVerdict, type AuthoredVerdict } from '../engine';
 import { resolveReadiness, settingName, type Finding, type Readiness } from '../readiness';
 import type { PieceId } from './draft';
-import { planSweater, type SweaterPiecePlan, type SweaterPlan } from './sweater';
+import { planSweater, type PiecesPlan, type SweaterPiecePlan } from './sweater';
+import { planPanel } from './panel';
 import { textureTransfersPerRepeat } from './textures';
 
 /**
@@ -46,7 +47,7 @@ export interface SweaterPieceResult {
 }
 
 export interface SweaterPipelineResult {
-  plan: SweaterPlan;
+  plan: PiecesPlan;
   pieces: SweaterPieceResult[];
   findings: Finding[];
   readiness: Readiness;
@@ -57,7 +58,7 @@ export interface SweaterPipelineResult {
 }
 
 /** One piece's Knitout program, from the plan. Throws ShapedPanelError when the shaping is not machine-knittable. */
-export function compileSweaterPiece(plan: SweaterPlan, piece: SweaterPiecePlan): CompiledPiece {
+export function compileSweaterPiece(plan: PiecesPlan, piece: SweaterPiecePlan): CompiledPiece {
   const raster = piece.raster;
   if (raster === null) throw new Error(piece.error ?? `${piece.name} has no rows.`);
   const rows: PanelRowV1[] = raster.rows.map((row, index) => ({
@@ -102,7 +103,8 @@ const BLOCKED = (annotation: string): AuthoredVerdict => ({ state: 'blocked', la
 
 export async function runSweaterPipeline(project: ColorworkProjectV1): Promise<SweaterPipelineResult> {
   const { state } = materializeColorworkProject(project);
-  const plan = planSweater(state);
+  // A sweater's pieces, or a one-yarn panel's single piece.
+  const plan: PiecesPlan = state.object?.kind === 'panel' ? planPanel(state) : planSweater(state);
   const capacity = assessAuthoredCapacityV1(project);
   const designErrors = plan.findings.filter((finding) => finding.severity === 'error');
   const pieces: SweaterPieceResult[] = [];
@@ -177,7 +179,7 @@ export async function runSweaterPipeline(project: ColorworkProjectV1): Promise<S
  * one program's size. For a sweater piece the cause is its size and texture,
  * so say that, and what to change.
  */
-function capacityInWords(name: string, error: string, plan: SweaterPlan): string {
+function capacityInWords(name: string, error: string, plan: PiecesPlan): string {
   const limit = /raster cells/i.test(error) ? 'needle selections' : /lowered passes/i.test(error) ? 'machine passes' : /records/i.test(error) ? 'program lines' : null;
   if (limit === null) return error;
   const transfers = textureTransfersPerRepeat(plan.object.body.texture) > 0;
@@ -185,7 +187,7 @@ function capacityInWords(name: string, error: string, plan: SweaterPlan): string
 }
 
 /** Every finding of the sweater, each with an owner. */
-export function sweaterFindings(plan: SweaterPlan, pieces: readonly SweaterPieceResult[]): Finding[] {
+export function sweaterFindings(plan: PiecesPlan, pieces: readonly SweaterPieceResult[]): Finding[] {
   const findings: Finding[] = plan.findings.map((finding) => ({
     stage: 'plan',
     rule: finding.rule,

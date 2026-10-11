@@ -32,6 +32,9 @@ import { openStudioProjectFile } from './chart/projectFile';
 import './workspace/workspace.css';
 import { useSweaterRun } from './sweater/sweaterRun';
 import { SweaterWorkspace } from './sweater/SweaterWorkspace';
+import { PanelWorkspace } from './sweater/PanelWorkspace';
+import { createPanelProject, planPanel, type PanelIntent } from './sweater/panel';
+import { panelInstructions, panelPackageFiles } from './sweater/panelHandoff';
 import { StartScreen } from './StartScreen';
 import { handoffFiles, instructionsMarkdown, readinessStory, schematicSvg } from './handoff';
 import { planProject } from './plan';
@@ -562,8 +565,12 @@ export function App() {
   const materializedProject = useMemo(() => materializeColorworkProject(project), [project]);
   const authoredState = materializedProject.state;
   const isSweater = authoredState.object?.kind === 'sweater';
-  const sweaterRun = useSweaterRun(isSweater ? project : null);
+  // A one-yarn scarf or blanket: one flat piece, through the same piece pipeline as a sweater.
+  const isPanel = authoredState.object?.kind === 'panel';
+  const isPieces = isSweater || isPanel;
+  const sweaterRun = useSweaterRun(isPieces ? project : null);
   const sweaterPlan = useMemo(() => (isSweater ? planSweater(authoredState) : null), [isSweater, authoredState]);
+  const panelPlan = useMemo(() => (isPanel ? planPanel(authoredState) : null), [isPanel, authoredState]);
   const plan = useMemo(() => planProject(materializedProject.state, materializedProject.placements), [materializedProject]);
   const [showChanges, setShowChanges] = useState(false);
   const [changesFrom, setChangesFrom] = useState<number | null>(null);
@@ -629,6 +636,10 @@ export function App() {
     setProject(createBeanieProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }));
     setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false);
   };
+  const createPanel = (intent: PanelIntent) => {
+    setProject(createPanelProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }));
+    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false);
+  };
   const createSweater = (intent: SweaterIntent) => {
     setProject(createSweaterProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }));
     setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false);
@@ -680,13 +691,14 @@ export function App() {
     if (!file) return;
     try { openProjectFile((await openStudioProjectFile(file)).project); setDocument(null); setAppError(null); } catch (error) { setAppError(error instanceof Error ? error.message : String(error)); }
   };
-  const sweaterReady = isSweater && sweaterRun.current && sweaterRun.summary !== null;
+  const sweaterReady = isPieces && sweaterRun.current && sweaterRun.summary !== null;
   const downloadSweaterPackage = async () => {
-    if (!sweaterPlan || !sweaterRun.current || !sweaterRun.summary?.exportReady) return;
+    if (!(sweaterPlan || panelPlan) || !sweaterRun.current || !sweaterRun.summary?.exportReady) return;
     setPackaging(true);
     try {
-      const files = await sweaterPackageFiles({ project, serializedProject: serializeColorworkProjectV1(project), plan: sweaterPlan, summary: sweaterRun.summary, sha256: sha256Hex });
-      download(`${project.id}-sweater.zip`, new Blob([zipStore(files)], { type: 'application/zip' }));
+      const input = { project, serializedProject: serializeColorworkProjectV1(project), summary: sweaterRun.summary, sha256: sha256Hex };
+      const files = panelPlan ? await panelPackageFiles({ ...input, plan: panelPlan }) : await sweaterPackageFiles({ ...input, plan: sweaterPlan! });
+      download(`${project.id}-${panelPlan ? 'panel' : 'sweater'}.zip`, new Blob([zipStore(files)], { type: 'application/zip' }));
     } catch (error) { setAppError(error instanceof Error ? error.message : String(error)); } finally { setPackaging(false); }
   };
   const downloadSweaterPiece = (id: PieceId) => {
@@ -699,9 +711,9 @@ export function App() {
     if (pieces.length === 0) return;
     download(`${project.id}-machine-files.zip`, new Blob([zipStore(Object.fromEntries(pieces.map((piece) => [`${piece.id}.kc`, piece.kcText!])))], { type: 'application/zip' }));
   };
-  const canPackage = isSweater ? Boolean(sweaterReady && sweaterRun.summary?.exportReady) : authoredExportReady;
-  const canPrint = isSweater ? Boolean(sweaterReady) : authoredExportReady;
-  const packageProject = () => void (isSweater ? downloadSweaterPackage() : downloadPackage());
+  const canPackage = isPieces ? Boolean(sweaterReady && sweaterRun.summary?.exportReady) : authoredExportReady;
+  const canPrint = isPieces ? Boolean(sweaterReady) : authoredExportReady;
+  const packageProject = () => void (isPieces ? downloadSweaterPackage() : downloadPackage());
   const printSheet = () => { if (document || canPrint) setShowRunSheet(true); };
 
   const showOpenedDocument = (opened: MachineDocument, comparison: boolean) => {
@@ -769,7 +781,7 @@ export function App() {
       ...(document ? [{ label: 'Back to your project', onSelect: () => { setDocument(null); setView('chart'); } }] : []),
       'separator',
       { label: 'Download knitting package', onSelect: packageProject, disabled: !projectChrome || !canPackage || packaging },
-      { label: isSweater ? 'Download machine files' : 'Download machine file', onSelect: isSweater ? downloadSweaterFiles : downloadKCode, disabled: !projectChrome || !canPackage },
+      { label: isSweater ? 'Download machine files' : 'Download machine file', onSelect: isSweater ? downloadSweaterFiles : isPanel ? () => downloadSweaterPiece('panel') : downloadKCode, disabled: !projectChrome || !canPackage },
       { label: 'Print knitting sheet', onSelect: printSheet, disabled: document ? false : !projectChrome || !canPrint },
       'separator',
       { label: 'Check a machine file…', onSelect: () => fileInput.current?.click() },
@@ -783,7 +795,7 @@ export function App() {
     { label: 'View', items: [
       ...viewItems,
       'separator',
-      { label: 'History', onSelect: () => setShowChanges((value) => !value), checked: showChanges, disabled: !projectChrome || isSweater },
+      { label: 'History', onSelect: () => setShowChanges((value) => !value), checked: showChanges, disabled: !projectChrome || isPieces },
       { label: 'Dark mode', onSelect: () => setTheme(theme === 'light' ? 'dark' : 'light'), checked: theme === 'dark' },
     ] },
   ];
@@ -795,8 +807,8 @@ export function App() {
         <MenuBar menus={menus} />
         <span className="topbar-spacer" />
         {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
-        {projectChrome && isSweater && <AuthoredVerdictBadge verdict={sweaterRun.current ? sweaterRun.summary?.verdict ?? null : null} pending="checking" onClick={() => setShowVerdict((value) => !value)} />}
-        {projectChrome && !isSweater && <AuthoredVerdictBadge verdict={authoredVerdict} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} onClick={() => setShowVerdict((value) => !value)} />}
+        {projectChrome && isPieces && <AuthoredVerdictBadge verdict={sweaterRun.current ? sweaterRun.summary?.verdict ?? null : null} pending="checking" onClick={() => setShowVerdict((value) => !value)} />}
+        {projectChrome && !isPieces && <AuthoredVerdictBadge verdict={authoredVerdict} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} onClick={() => setShowVerdict((value) => !value)} />}
       </header>
       {appError && <div className="machine-import-status" role="alert"><span>{appError}</span><button className="secondary-button" type="button" onClick={() => setAppError(null)}>Dismiss</button></div>}
       <input ref={projectInput} className="file-input" type="file" accept=".json,application/json" aria-label="Project file to open" onChange={(event) => void openProjectInput(event)} />
@@ -805,6 +817,7 @@ export function App() {
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
       {!document && isSweater && sweaterPlan ? <SweaterWorkspace project={project} onProject={setProject} plan={sweaterPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} />
+        : !document && isPanel && panelPlan ? <PanelWorkspace project={project} onProject={setProject} plan={panelPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} />
         : !document ? <ChartWorkspace project={project} onProject={setProject} generation={openGeneration} plan={plan} story={authoredStory?.story ?? null} storyPending={blanketCompile.status !== 'ready' || displayedOutputStatus === 'converting'} candidateSha256={authoredExportReady ? kcodeState.artifact?.kcHash ?? null : null} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputError={kcodeState.error} view={workspaceView} onView={setWorkspaceView}
             status={{ verdict: authoredVerdict, exportReady: authoredExportReady, packaging, onPackage: packageProject, onPrint: printSheet, onDownloadKc: downloadKCode }}
             stepThrough={blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : null} />
@@ -838,15 +851,16 @@ export function App() {
         </div>
       )}
       {document && showVerdict && <VerdictPanel document={document} onClose={() => setShowVerdict(false)} />}
-      {!document && showVerdict && !isSweater && authoredVerdict && <AuthoredVerdictPanel verdict={authoredVerdict} onClose={() => setShowVerdict(false)} />}
-      {!document && showVerdict && isSweater && sweaterRun.current && sweaterRun.summary && <AuthoredVerdictPanel verdict={sweaterRun.summary.verdict} onClose={() => setShowVerdict(false)} />}
+      {!document && showVerdict && !isPieces && authoredVerdict && <AuthoredVerdictPanel verdict={authoredVerdict} onClose={() => setShowVerdict(false)} />}
+      {!document && showVerdict && isPieces && sweaterRun.current && sweaterRun.summary && <AuthoredVerdictPanel verdict={sweaterRun.summary.verdict} onClose={() => setShowVerdict(false)} />}
       {document && showRunSheet && <RunSheet document={document} onClose={() => setShowRunSheet(false)} />}
+      {!document && showRunSheet && isPanel && panelPlan && <GarmentSheet markdown={panelInstructions(project, panelPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={null} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && isSweater && sweaterPlan && <GarmentSheet markdown={sweaterInstructions(project, sweaterPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={sweaterSchematicSvg(sweaterPlan, authoredState.chart.palette[0]!.hex)} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && authoredExportReady && authoredStory && authoredState.object?.kind === 'beanie' && <GarmentSheet markdown={instructionsMarkdown(project, plan, authoredStory.result, authoredStory.findings, authoredStory.readiness)} schematic={schematicSvg(project, plan)} onClose={() => setShowRunSheet(false)} />}
-      {!document && showRunSheet && !isSweater && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && authoredState.object?.kind !== 'beanie' && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
+      {!document && showRunSheet && !isPieces && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && authoredState.object?.kind !== 'beanie' && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
       {showStart && !document && <StartScreen onNew={(kind) => { setNewProjectKind(kind); setShowNewProject(true); }} onOpenProject={openProjectFile} onOpenMachineFile={() => fileInput.current?.click()} onBlank={() => setShowStart(false)} />}
-      {showNewProject && <NewProjectDialog onCreate={createProject} onCreateBeanie={createBeanie} onCreateSweater={createSweater} initialKind={newProjectKind ?? (isSweater ? 'sweater' : 'rectangle')} onClose={() => { setShowNewProject(false); setNewProjectKind(null); }} />}
-      {!document && !isSweater && showChanges && <ChangesPanel project={project} highlightFrom={changesFrom} onProject={setProject} onClose={() => { setShowChanges(false); setChangesFrom(null); }} />}
+      {showNewProject && <NewProjectDialog onCreate={createProject} onCreateBeanie={createBeanie} onCreateSweater={createSweater} onCreatePanel={createPanel} initialKind={newProjectKind ?? (isSweater ? 'sweater' : 'rectangle')} onClose={() => { setShowNewProject(false); setNewProjectKind(null); }} />}
+      {!document && !isPieces && showChanges && <ChangesPanel project={project} highlightFrom={changesFrom} onProject={setProject} onClose={() => { setShowChanges(false); setChangesFrom(null); }} />}
       {showProjectSettings && <ProjectSettingsDialog project={project} onSave={saveProjectSettings} onClose={() => setShowProjectSettings(false)} />}
     </div>
   );

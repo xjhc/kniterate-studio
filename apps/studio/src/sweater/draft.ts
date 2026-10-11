@@ -10,7 +10,7 @@ import type { SweaterObject, SweaterShapePoint } from '@kniterate-studio/project
 
 export type Silhouette = SweaterObject['silhouette'];
 export type Measurements = SweaterObject['measurements'];
-export type PieceId = 'back' | 'front' | 'sleeve' | 'neckband';
+export type PieceId = 'back' | 'front' | 'sleeve' | 'neckband' | 'panel';
 
 export interface Point { x: number; y: number }
 

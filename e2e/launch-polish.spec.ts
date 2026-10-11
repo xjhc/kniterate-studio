@@ -11,6 +11,7 @@ test('creates, renames, recolors, autosaves, and recovers a customer project', a
   await expect(page.getByRole('heading', { name: 'What would you like to make?' })).toBeVisible();
   await page.getByRole('button', { name: /^Scarf or blanket/ }).click();
   const newProject = page.getByRole('dialog', { name: 'New project' });
+  await newProject.getByRole('radio', { name: 'Colour chart' }).click();
   await newProject.getByLabel('Project name').fill('Harbor blanket');
   await newProject.getByLabel('Needles').fill('64');
   await newProject.getByLabel('Rows').fill('72');

@@ -12,7 +12,7 @@ import {
   type SweaterObject,
 } from '../../packages/project-contract/src/index.ts';
 import { FITS, SIZES, defaultMeasurements, edgeProblem, withNeckline, type Fit, type Measurements, type ShapePoint, type Size } from '../../apps/studio/src/sweater/draft.ts';
-import { SWEATER_CHOICES, createSweaterProject, planSweater, type SweaterIntent, type SweaterPlan } from '../../apps/studio/src/sweater/sweater.ts';
+import { SWEATER_CHOICES, createSweaterProject, planSweater, sweaterPlanOf, type SweaterIntent, type SweaterPlan } from '../../apps/studio/src/sweater/sweater.ts';
 import { runSweaterPipeline } from '../../apps/studio/src/sweater/sweaterPipeline.ts';
 import { pieceSteps, sweaterInstructions, sweaterPackageFiles } from '../../apps/studio/src/sweater/sweaterHandoff.ts';
 import { summarizeSweaterRun } from '../../apps/studio/src/sweater/sweaterRun.ts';
@@ -408,7 +408,7 @@ export async function sweaterCommand(args: readonly string[], io: SweaterCliIo):
         io.print({ packaged: null, verdict: result.verdict, readiness: result.readiness, pieces: result.pieces.map((piece) => ({ id: piece.id, verdict: piece.verdict.label, error: piece.compileError ?? piece.outputError })), findings: result.findings });
         return 1;
       }
-      const files = await sweaterPackageFiles({ project, serializedProject: serializeColorworkProjectV1(project), plan: result.plan, summary: summarizeSweaterRun(result), sha256: async (bytes) => createHash('sha256').update(bytes).digest('hex') });
+      const files = await sweaterPackageFiles({ project, serializedProject: serializeColorworkProjectV1(project), plan: sweaterPlanOf(result.plan), summary: summarizeSweaterRun(result), sha256: async (bytes) => createHash('sha256').update(bytes).digest('hex') });
       await mkdir(parsed.out, { recursive: true });
       for (const [name, bytes] of Object.entries(files)) await writeFile(resolvePath(parsed.out, name), bytes);
       io.print({ packaged: parsed.out, files: Object.keys(files), pieces: result.pieces.map((piece) => ({ id: piece.id, copies: piece.copies, passes: piece.kcode?.passCount, kcodeSha256: piece.kcode?.kcHash })), readiness: { ready: result.readiness.ready, blockers: result.readiness.blockers } });
@@ -417,7 +417,7 @@ export async function sweaterCommand(args: readonly string[], io: SweaterCliIo):
     case 'pattern': {
       const project = await io.readProject(projectPath());
       const result = await runSweaterPipeline(project);
-      const markdown = sweaterInstructions(project, result.plan, summarizeSweaterRun(result));
+      const markdown = sweaterInstructions(project, sweaterPlanOf(result.plan), summarizeSweaterRun(result));
       if (parsed.out) { await writeFile(parsed.out, markdown); io.print({ written: parsed.out }); }
       else process.stdout.write(markdown);
       return 0;

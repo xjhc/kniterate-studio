@@ -161,7 +161,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     return { main: assignments[0]!.carrier, second: null, waste: frame.wasteCarrier ?? '6', draw: frame.frameCarriers[0] ?? '1', yarns };
   }, [compile.artifact, materialized.state.machine.yarnAssignments, chart.palette]);
   const cuffRows = plan.sections?.cuff?.rows ?? 0;
-  const knitFile = useMemo(() => (kcode && carriers ? readKnitFile(kcode, { zoneOfRow: (row) => (row < cuffRows ? 'rib' : 'body'), carriers, kind: isGarment ? 'beanie' : 'panel' }) : null), [kcode, carriers, cuffRows, isGarment]);
+  // Read only when a view shows it: a large chart's file is a lot of work for the main thread.
+  const knitFile = useMemo(() => (view !== 'design' && kcode && carriers ? readKnitFile(kcode, { zoneOfRow: (row) => (row < cuffRows ? 'rib' : 'body'), carriers, kind: isGarment ? 'beanie' : 'panel' }) : null), [view === 'design', kcode, carriers, cuffRows, isGarment]);
   const gauge = materialized.state.gauge;
   const ribGauge = materialized.state.object?.ribGauge;
   const stitchCm = gauge ? 10 / gauge.stitchesPer10cm : null;

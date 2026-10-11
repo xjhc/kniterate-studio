@@ -1,12 +1,10 @@
-import { useState } from 'react';
-import { Pencil } from 'lucide-react';
 import { Chips, NumberInput, Section } from '../workspace/panel';
 import type { ProjectEdit, ProjectGauge, ProjectState, SweaterObject } from '@kniterate-studio/project-contract';
 import { FITS, SIZES, defaultMeasurements, parseSize, withNeckline, type Fit, type Measurements, type Size } from './draft';
 import { SHAPE_MEASUREMENTS, SWEATER_CHOICES, sweaterEdit, withoutShapes, type SweaterPlan } from './sweater';
-import { RIBS, TEXTURES, textureMatching } from './textures';
-import { TextureEditor, TextureSwatch } from './TextureSwatch';
+import { RIBS } from './textures';
 import { SilhouetteIcon } from './SilhouetteIcon';
+import { StitchSection, YarnGaugeSection } from './DesignSections';
 
 /**
  * The design: style, size, measurements, stitch, trims, yarn and gauge.
@@ -33,7 +31,6 @@ const FIELDS: { key: keyof Measurements; label: string; hint: string; show?: (ob
 export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectState; plan: SweaterPlan; operate: Operate }) {
   const object = plan.object;
   const yarn = state.chart.palette[0]!;
-  const [editingTexture, setEditingTexture] = useState(false);
   const change = (label: string, next: SweaterObject, extra: ProjectEdit[] = []) => operate(label, [sweaterEdit(next), ...extra]);
   const { size, fit } = parseSize(object.size);
   const sized = size !== null && fit !== null ? defaultMeasurements(size, fit, object.silhouette, object.neckline) : null;
@@ -46,9 +43,7 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
     const { [kind]: _dropped, ...others } = object.shapes ?? {};
     change(`${kind === 'body' ? 'Body' : 'Sleeve'} shape from the measurements`, { ...object, shapes: Object.keys(others).length > 0 ? others : undefined });
   };
-  const library = textureMatching(object.body.texture);
   const gauge = plan.gauge;
-  const setGauge = (next: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'>, label: string) => operate(label, [{ kind: 'set-gauge', gauge: { ...next } }]);
   const setRibGauge = (next: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'>, label: string) => change(label, { ...object, ribGauge: { ...next } });
 
   return <aside className="sweater-design" aria-label="Design">
@@ -92,27 +87,7 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
       <p className="design-hint">Measurements are the finished sweater, not the body. "Knitted" is what the machine makes at your gauge. To shape a piece freely, open it and choose Shape.</p>
     </Section>
 
-    <Section title="Stitch" aside={<em className="section-aside">{object.body.name}</em>}>
-      <div className="texture-grid" role="radiogroup" aria-label="Body stitch">
-        {TEXTURES.map((texture) => <button key={texture.id} type="button" role="radio" aria-checked={library?.id === texture.id} className={library?.id === texture.id ? 'active' : ''} title={texture.note} onClick={() => {
-          if (library?.id === texture.id) return;
-          const edits: ProjectEdit[] = gauge.source === 'assumed' ? [{ kind: 'set-gauge', gauge: { ...texture.gauge, source: 'assumed' } }] : [];
-          change(`${texture.name}`, { ...object, body: { name: texture.name, texture: [...texture.rows] } }, edits);
-        }}>
-          <TextureSwatch rows={texture.rows} hex={yarn.hex} size={8} columns={8} rowsShown={6} />
-          <span>{texture.name}</span>
-        </button>)}
-        <button type="button" role="radio" aria-checked={library === undefined} className={`custom-texture${library === undefined ? ' active' : ''}`} onClick={() => setEditingTexture(true)}>
-          {library === undefined ? <TextureSwatch rows={object.body.texture} hex={yarn.hex} size={8} columns={8} rowsShown={6} /> : <span className="custom-mark"><Pencil size={16} /></span>}
-          <span>{library === undefined ? 'Your stitch' : 'Make your own'}</span>
-        </button>
-      </div>
-      {library && <p className="design-hint">{library.note}</p>}
-      {(editingTexture || library === undefined) && <div className="texture-editor-wrap">
-        <TextureEditor rows={object.body.texture} hex={yarn.hex} onChange={(rows) => { change('Edit the stitch', { ...object, body: { name: textureMatching(rows)?.name ?? 'Custom stitch', texture: rows } }); }} />
-        {editingTexture && <button type="button" className="link-button" onClick={() => setEditingTexture(false)}>Done</button>}
-      </div>}
-    </Section>
+    <StitchSection body={object.body} hex={yarn.hex} gaugeAssumed={gauge.source === 'assumed'} onChange={(label, body, edits) => change(label, { ...object, body }, edits)} />
 
     <Section title="Edges">
       {([['hem', 'Hem'], ['cuff', 'Cuffs'], ['neck', object.neckline === 'boat' ? 'Neck edge' : 'Neckband']] as const).map(([key, label]) => <div key={key} className="trim-row">
@@ -124,22 +99,6 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
       <div className="field-row"><span>Shaping</span><Chips label="Shaping line" value={String(object.fashion ?? 1) as '1' | '2' | '3'} options={[{ id: '1', name: 'At the edge', note: 'Decreases and increases at the very edge.' }, { id: '2', name: '2 in', note: 'A fashioning line 2 stitches in from the edge.' }, { id: '3', name: '3 in', note: 'A fashioning line 3 stitches in.' }]} onPick={(fashion) => change(fashion === '1' ? 'Shape at the edge' : `Fashion ${fashion} stitches in`, { ...object, fashion: Number(fashion) })} /></div>
     </Section>
 
-    <Section title="Yarn & gauge" aside={gauge.source === 'assumed' ? <em className="section-aside warn">assumed</em> : <em className="section-aside ok">measured</em>}>
-      <label className="yarn-row"><input type="color" value={yarn.hex} aria-label="Yarn colour" onChange={(event) => operate('Yarn colour', [{ kind: 'set-palette-entry', paletteId: yarn.id, name: yarn.name, hex: event.currentTarget.value.toUpperCase() }])} />
-        <input type="text" defaultValue={yarn.name} key={yarn.name} aria-label="Yarn name" onBlur={(event) => { const name = event.currentTarget.value.trim(); if (name && name !== yarn.name) operate(`Yarn: ${name}`, [{ kind: 'set-palette-entry', paletteId: yarn.id, name, hex: yarn.hex }, { kind: 'set-yarn-assignment', assignment: { paletteId: yarn.id, carrier: plan.carriers.main as '2' | '3' | '4' | '5', yarnName: name } }]); }} />
-      </label>
-      <GaugeRow label={`${object.body.name} gauge`} gauge={gauge} onChange={(next) => setGauge(next, `Body gauge ${next.stitchesPer10cm}/${next.rowsPer10cm} (${next.source})`)} />
-      <GaugeRow label="Rib gauge" gauge={plan.ribGauge} onChange={(next) => setRibGauge(next, `Rib gauge ${next.stitchesPer10cm}/${next.rowsPer10cm} (${next.source})`)} />
-      <p className="design-hint">{gauge.source === 'assumed' ? 'Gauges are typical values. Knit a swatch, measure stitches and rows over 10 cm, and enter them to get true sizes.' : 'Sizes come from your measured gauge.'}</p>
-    </Section>
+    <YarnGaugeSection yarn={yarn} carrier={plan.carriers.main} bodyName={object.body.name} gauge={gauge} ribGauge={plan.ribGauge} operate={operate} onRibGauge={setRibGauge} />
   </aside>;
-}
-
-function GaugeRow({ label, gauge, onChange }: { label: string; gauge: { stitchesPer10cm: number; rowsPer10cm: number; source: 'measured' | 'assumed' }; onChange: (next: { stitchesPer10cm: number; rowsPer10cm: number; source: 'measured' | 'assumed' }) => void }) {
-  return <div className="gauge-row" role="group" aria-label={label}>
-    <span>{label}</span>
-    <NumberInput label={`${label} stitches per 10 cm`} value={gauge.stitchesPer10cm} min={5} max={60} step={0.5} suffix="st" onCommit={(stitchesPer10cm) => onChange({ ...gauge, stitchesPer10cm })} />
-    <NumberInput label={`${label} rows per 10 cm`} value={gauge.rowsPer10cm} min={5} max={100} step={0.5} suffix="rows" onCommit={(rowsPer10cm) => onChange({ ...gauge, rowsPer10cm })} />
-    <label className="measured-check"><input type="checkbox" checked={gauge.source === 'measured'} onChange={(event) => onChange({ ...gauge, source: event.currentTarget.checked ? 'measured' : 'assumed' })} />measured</label>
-  </div>;
 }

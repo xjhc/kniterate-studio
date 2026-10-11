@@ -57,7 +57,7 @@ export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank }
         <button type="button" onClick={() => onNew('rectangle')}>
           <ScarfIcon />
           <b>Scarf or blanket</b>
-          <small>A rectangle of colorwork, painted stitch by stitch.</small>
+          <small>One colour in any stitch, or a colour chart painted stitch by stitch.</small>
         </button>
       </div>
       <div className="start-secondary">

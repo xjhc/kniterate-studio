@@ -142,5 +142,5 @@ describe('placement refresh color decisions', () => {
     const readyResult = await runAuthoredPipeline(readyProject);
     expect(resolveReadiness({ verdict: readyResult.verdict, findings: collectFindings(readyPlan, readyResult) }).ready).toBe(true);
     expect(JSON.stringify(project)).toBe(original);
-  });
+  }, 30_000); // Two full beanie compiles: room for a busy test run.
 });

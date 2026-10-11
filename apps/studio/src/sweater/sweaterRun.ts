@@ -48,7 +48,7 @@ export function summarizeSweaterRun(result: SweaterPipelineResult): SweaterRunSu
       file: (() => {
         const raster = result.plan.pieces.find((item) => item.id === piece.id)?.raster ?? null;
         if (!piece.kcode?.ok || raster === null) return null;
-        return readKnitFile(piece.kcode, { zoneOfRow: (row) => raster.rows[row]?.zone ?? 'body', carriers: result.plan.carriers, kind: piece.id === 'sleeve' ? 'sleeve' : piece.id === 'neckband' ? 'band' : 'body' });
+        return readKnitFile(piece.kcode, { zoneOfRow: (row) => raster.rows[row]?.zone ?? 'body', carriers: result.plan.carriers, kind: piece.id === 'sleeve' ? 'sleeve' : piece.id === 'neckband' ? 'band' : piece.id === 'panel' ? 'panel' : 'body' });
       })(),
       knitoutText: piece.compiled?.knitoutText ?? null,
       error: piece.compileError ?? piece.outputError,

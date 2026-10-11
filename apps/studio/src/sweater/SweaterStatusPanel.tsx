@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
 import { StatusPanel, type StatusTone } from '../workspace/StatusPanel';
 import type { PieceId } from './draft';
-import type { SweaterPlan } from './sweater';
+import type { PiecesPlan } from './sweater';
 import type { SweaterRunState } from './sweaterRun';
 
-/** Whether the sweater can be knitted, what to fix, and its machine files. */
+/** Whether a flat-piece project (a sweater, a scarf or blanket) can be knitted, what to fix, and its machine files. */
 export function SweaterStatusPanel({ plan, run, onOpenFile, onDownloadPiece, onPackage, onPrint, packaging, fileDetail }: {
-  plan: SweaterPlan;
+  plan: PiecesPlan;
   run: SweaterRunState;
   /** Opens the piece's machine file: what the machine will knit for it. */
   onOpenFile: (piece: PieceId) => void;

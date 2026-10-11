@@ -10,6 +10,7 @@ import {
 import type { BeanieIntent } from '../beanie';
 import { FITS, SIZES, type Fit, type Size } from '../sweater/draft';
 import { SWEATER_CHOICES, type SweaterIntent } from '../sweater/sweater';
+import type { PanelIntent } from '../sweater/panel';
 import { TEXTURES } from '../sweater/textures';
 import { SilhouetteIcon } from '../sweater/SilhouetteIcon';
 
@@ -36,7 +37,7 @@ export interface NewProjectValues {
   colorCount: number;
 }
 
-export function NewProjectDialog({ onCreate, onCreateBeanie, onCreateSweater, onClose, initialKind = 'rectangle' }: { onCreate: (values: NewProjectValues) => void; onCreateBeanie?: (intent: BeanieIntent) => void; onCreateSweater?: (intent: SweaterIntent) => void; onClose: () => void; initialKind?: 'rectangle' | 'beanie' | 'sweater' }) {
+export function NewProjectDialog({ onCreate, onCreateBeanie, onCreateSweater, onCreatePanel, onClose, initialKind = 'rectangle' }: { onCreate: (values: NewProjectValues) => void; onCreateBeanie?: (intent: BeanieIntent) => void; onCreateSweater?: (intent: SweaterIntent) => void; onCreatePanel?: (intent: PanelIntent) => void; onClose: () => void; initialKind?: 'rectangle' | 'beanie' | 'sweater' }) {
   const [kind, setKind] = useState<'rectangle' | 'beanie' | 'sweater'>(initialKind);
   const kinds = [['sweater', 'Sweater'], ['beanie', 'Beanie'], ['rectangle', 'Scarf or blanket']] as const;
   return <DialogShell title="New project" onClose={onClose}>
@@ -45,8 +46,44 @@ export function NewProjectDialog({ onCreate, onCreateBeanie, onCreateSweater, on
     </div>}
     {kind === 'beanie' && onCreateBeanie ? <NewBeanieForm onCreate={onCreateBeanie} onClose={onClose} />
       : kind === 'sweater' && onCreateSweater ? <NewSweaterForm onCreate={onCreateSweater} onClose={onClose} />
-        : <NewRectangleForm onCreate={onCreate} onClose={onClose} />}
+        : <RectangleChoice onCreate={onCreate} onCreatePanel={onCreatePanel} onClose={onClose} />}
   </DialogShell>;
+}
+
+/** A scarf or blanket: one colour in any stitch, or a colour chart. */
+function RectangleChoice({ onCreate, onCreatePanel, onClose }: { onCreate: (values: NewProjectValues) => void; onCreatePanel?: (intent: PanelIntent) => void; onClose: () => void }) {
+  const [style, setStyle] = useState<'stitch' | 'chart'>(onCreatePanel ? 'stitch' : 'chart');
+  return <>
+    {onCreatePanel && <div className="choice-pills rectangle-style" role="radiogroup" aria-label="Scarf or blanket">
+      <button type="button" role="radio" aria-checked={style === 'stitch'} className={style === 'stitch' ? 'active' : ''} onClick={() => setStyle('stitch')}>One colour, any stitch</button>
+      <button type="button" role="radio" aria-checked={style === 'chart'} className={style === 'chart' ? 'active' : ''} onClick={() => setStyle('chart')}>Colour chart</button>
+    </div>}
+    {style === 'stitch' && onCreatePanel ? <NewPanelForm onCreate={onCreatePanel} onClose={onClose} /> : <NewRectangleForm onCreate={onCreate} onClose={onClose} />}
+  </>;
+}
+
+function NewPanelForm({ onCreate, onClose }: { onCreate: (intent: PanelIntent) => void; onClose: () => void }) {
+  const [title, setTitle] = useState('Scarf');
+  const [widthCm, setWidthCm] = useState(25);
+  const [lengthCm, setLengthCm] = useState(160);
+  const [textureId, setTextureId] = useState('seed');
+  const [endsCm, setEndsCm] = useState(4);
+  const [yarn, setYarn] = useState({ name: 'Moss', hex: '#6B7F4E' });
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    onCreate({ title: title.trim(), widthCm, lengthCm, textureId, ends: { rib: 'kkpp', cm: endsCm }, yarn });
+  };
+  return <form onSubmit={submit} className="new-sweater">
+    <label>Project name<input autoFocus required maxLength={200} value={title} onChange={(event) => setTitle(event.currentTarget.value)} /></label>
+    <div className="project-dialog-grid">
+      <label>Width (cm)<input required type="number" min="5" max="110" step="0.5" value={widthCm} onChange={(event) => setWidthCm(Number(event.currentTarget.value))} /></label>
+      <label>Length (cm)<input required type="number" min="5" max="400" step="0.5" value={lengthCm} onChange={(event) => setLengthCm(Number(event.currentTarget.value))} /></label>
+    </div>
+    <label>Stitch<select value={textureId} onChange={(event) => setTextureId(event.currentTarget.value)}>{TEXTURES.map((texture) => <option key={texture.id} value={texture.id}>{texture.name}</option>)}</select></label>
+    <label>Rib at each end (cm, 0 for none)<input type="number" min="0" max="30" step="0.5" value={endsCm} onChange={(event) => setEndsCm(Number(event.currentTarget.value))} /></label>
+    <fieldset><legend>Yarn</legend><div className="yarn-pick"><label>Name<input aria-label="Yarn name" value={yarn.name} onChange={(event) => setYarn({ ...yarn, name: event.currentTarget.value })} /><input type="color" aria-label="Yarn color" value={yarn.hex} onChange={(event) => setYarn({ ...yarn, hex: event.currentTarget.value.toUpperCase() })} /></label></div></fieldset>
+    <footer><button className="secondary-button" type="button" onClick={onClose}>Cancel</button><button className="primary-button" type="submit" disabled={!title.trim() || !yarn.name.trim() || !(widthCm >= 5 && widthCm <= 110 && lengthCm >= 5 && lengthCm <= 400)}><Check size={16} /> Create</button></footer>
+  </form>;
 }
 
 function NewSweaterForm({ onCreate, onClose }: { onCreate: (intent: SweaterIntent) => void; onClose: () => void }) {
