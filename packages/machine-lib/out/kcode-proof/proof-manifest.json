@@ -30095,7 +30095,7 @@
     ]
   },
   "contract": {
-    "sha256": "232b20128eff20b562d9d966267661bc8eb2421295b120bb5d56678c73bdc83c",
+    "sha256": "3b0694522e3a8a52a6d53885ebd06ec8ef7728aae9844c3164b1f845977ffecf",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30129,8 +30129,13 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "12c6f0bb90acf66af544af4dd6f0948f02ecc8b9edaf334c8a610265c0e39251",
-        "bytes": 64355
+        "sha256": "f89e06e32d84f9f9933c161ddc21423bccfa65f3309b3304d4dc711b336093a8",
+        "bytes": 66638
+      },
+      {
+        "path": "../../apps/studio/src/StartScreen.tsx",
+        "sha256": "cbf3005ac143c5094d1e2bc864245e42ef993f859aab63eaca9ad169699ba2bb",
+        "bytes": 3903
       },
       {
         "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
@@ -30174,8 +30179,8 @@
       },
       {
         "path": "../../apps/studio/src/beanieWorkflow.test.ts",
-        "sha256": "6b163925addc03234e001f61c0cd0eabdba8a3e4519bce1ab337883d0ac54552",
-        "bytes": 26871
+        "sha256": "886a4c83d9d293156d5b585f194ba02710ff9888551d958b34b8bf70a6f52934",
+        "bytes": 26932
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.test.tsx",
@@ -30204,8 +30209,8 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.ts",
-        "sha256": "137bcc5d0c06ee2b635db04049e09791c828128c6428cd5411ad654b0925977e",
-        "bytes": 24165
+        "sha256": "280b2cc76d59e337525d2dcd22c3819351e3a8900888342233e5e42cac9573b9",
+        "bytes": 24823
       },
       {
         "path": "../../apps/studio/src/blanket/useBlanketCompiler.ts",
@@ -30244,8 +30249,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "c0f0a7c3a45bd346a6bf478dfcbf85e68e42e9d4266095e69b3b099b7e03517e",
-        "bytes": 25869
+        "sha256": "e6248b72f3b12356f12c4e000b130c20469326bde4cfa8871d8854217ae15eb1",
+        "bytes": 25894
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
@@ -30269,8 +30274,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/ProjectDialogs.tsx",
-        "sha256": "d41e6b1cb01d29a3a050a34710d7b0ce9ee019a0372d957b3ee318afa49f1837",
-        "bytes": 11656
+        "sha256": "1c420f266d5430db7eab3d5c9b607a0a601b9cd6f68792e12b34aa16ddf859fe",
+        "bytes": 15571
       },
       {
         "path": "../../apps/studio/src/chart/canvasCoordinates.test.ts",
@@ -30394,8 +30399,8 @@
       },
       {
         "path": "../../apps/studio/src/garment/GarmentSheet.tsx",
-        "sha256": "02f6cab6840ceebeaa1c03b9b79d51bcf56237667d9f31a475627478b07bf856",
-        "bytes": 2963
+        "sha256": "38a57279daf016fce9d86dc0d4ee5c0ded5e4f13393ce00d5dfe07a9ea73b6e4",
+        "bytes": 3243
       },
       {
         "path": "../../apps/studio/src/garment/MeasureDialog.tsx",
@@ -30404,8 +30409,8 @@
       },
       {
         "path": "../../apps/studio/src/garment/MotifPanel.tsx",
-        "sha256": "83889c88009523f783f6bde8ab267c1439ef17423d55a08c770f7f368ebea3ae",
-        "bytes": 21268
+        "sha256": "e994378185e343ddf1f8033472e9a9d0f43636cfb51dd6224bd983459a8cff84",
+        "bytes": 21355
       },
       {
         "path": "../../apps/studio/src/garment/ReadinessCard.tsx",
@@ -30414,8 +30419,8 @@
       },
       {
         "path": "../../apps/studio/src/handoff.ts",
-        "sha256": "079a73dd1a2ba3854b94e2f01fc4ffb153d35e811ea36022ca949fb4d303ada2",
-        "bytes": 31863
+        "sha256": "a40dcfebcb8e31da21578a3ca38ac63e3cea8e53f83c02c21cc1e9f246fe9dcb",
+        "bytes": 31906
       },
       {
         "path": "../../apps/studio/src/imageChart.ts",
@@ -30559,8 +30564,8 @@
       },
       {
         "path": "../../apps/studio/src/placements.ts",
-        "sha256": "54146426aee9b91ef06f85df7339a789a1e0678b67e79b47af307d5dce75fcbd",
-        "bytes": 13348
+        "sha256": "08123e9b4b764a5634fa03dedf591150ce0291dad31233734a851cfc9ce4df5b",
+        "bytes": 13445
       },
       {
         "path": "../../apps/studio/src/plan.test.ts",
@@ -30569,8 +30574,8 @@
       },
       {
         "path": "../../apps/studio/src/plan.ts",
-        "sha256": "9bd4a5858a4b5d0bfac113937ac0362e59e94575fca64480534c76d4500c53b1",
-        "bytes": 23329
+        "sha256": "0930889d8e56349fffd1302cbf76df9a00f57654fc8e2aabfd4c9e0fbd3dc686",
+        "bytes": 23418
       },
       {
         "path": "../../apps/studio/src/readiness.ts",
@@ -30588,14 +30593,114 @@
         "bytes": 4170
       },
       {
+        "path": "../../apps/studio/src/start.css",
+        "sha256": "2e4edc1cea55aec36996a943d8275d2b29ab18d318fb1c1ebad6f93ce0d8279f",
+        "bytes": 1677
+      },
+      {
         "path": "../../apps/studio/src/studioCli.test.ts",
-        "sha256": "525400df3fa40f9bf23c21952dcff5866e0d6dc4ffd28cc10fdc4d8eb6bf2bce",
-        "bytes": 22215
+        "sha256": "65e832e1fd25ad2146468095ff242131f553a7f1d795b564005fe8f1b9a8022c",
+        "bytes": 24799
       },
       {
         "path": "../../apps/studio/src/styles.css",
-        "sha256": "b7c94dcfedc2e4ba0822d5f3789ddc3080e51e31d493b17568004fb531a592ac",
-        "bytes": 59644
+        "sha256": "c490056977bf7e02a40947b3bf32c02e96f185b04d2481c54e7dcf4c37eaa95f",
+        "bytes": 59695
+      },
+      {
+        "path": "../../apps/studio/src/sweater/GarmentView.tsx",
+        "sha256": "763eedb71a906caf0aa7faef538676f2b93d40e48ff93189e5cafb8363800666",
+        "bytes": 4357
+      },
+      {
+        "path": "../../apps/studio/src/sweater/PieceView.tsx",
+        "sha256": "d6b040a3b3c71b0c7aba845a4130ea63bcb291fe4149d4041bf77b2da9063385",
+        "bytes": 22260
+      },
+      {
+        "path": "../../apps/studio/src/sweater/SilhouetteIcon.tsx",
+        "sha256": "cc64cf6369bdf4e1ed63f31243986c44cb465a65675677e7d41247f2286564e0",
+        "bytes": 1616
+      },
+      {
+        "path": "../../apps/studio/src/sweater/SweaterDesignPanel.tsx",
+        "sha256": "e03da13df1512803e39c34e4e5eb22b29e75ddacbdd4dc2e87a86a7e09cd2f74",
+        "bytes": 16363
+      },
+      {
+        "path": "../../apps/studio/src/sweater/SweaterStatusPanel.tsx",
+        "sha256": "f592b8e0a21476d306acf2aa6c61a0e774c5ead8d32c04ee54288b20db97dec3",
+        "bytes": 5390
+      },
+      {
+        "path": "../../apps/studio/src/sweater/SweaterWorkspace.tsx",
+        "sha256": "2caf52df065879b83f0e4caca0730a66a32e960cf0240ecfa6f8d27690c648e3",
+        "bytes": 10935
+      },
+      {
+        "path": "../../apps/studio/src/sweater/TextureSwatch.tsx",
+        "sha256": "8b2e0ad6fae7cde357c43c23551ac1a320b11529c76da09c0a9a50c6ba30adf5",
+        "bytes": 5480
+      },
+      {
+        "path": "../../apps/studio/src/sweater/draft.ts",
+        "sha256": "a98e9bc021895ddf38279d182720b165d4bad4f2d63781593622e1b085a6187c",
+        "bytes": 22101
+      },
+      {
+        "path": "../../apps/studio/src/sweater/rasterize.ts",
+        "sha256": "797cc31e286a63e0ac2c573fbb23d666c92a3ee2024d8e39f40cbfe2beef69a8",
+        "bytes": 12535
+      },
+      {
+        "path": "../../apps/studio/src/sweater/rhythm.ts",
+        "sha256": "5bab72051872eca92f9fb51460956aa2ab91b73fac42c70e6f1574ff4c1db609",
+        "bytes": 2645
+      },
+      {
+        "path": "../../apps/studio/src/sweater/schematic.ts",
+        "sha256": "b1f5a8a555bbf78f9c39b76c7e69dd53082f3d4f4d5b60a0f7875d600b9ea0e4",
+        "bytes": 14737
+      },
+      {
+        "path": "../../apps/studio/src/sweater/sweater.css",
+        "sha256": "e2946850557cab4fad6bda4df808848b90391e25c831d452b22b890669caadb3",
+        "bytes": 18731
+      },
+      {
+        "path": "../../apps/studio/src/sweater/sweater.test.ts",
+        "sha256": "af33d0c6985358430658ab9f4c16314fb5993bb585dab3e47278ef457f5c93cc",
+        "bytes": 18255
+      },
+      {
+        "path": "../../apps/studio/src/sweater/sweater.ts",
+        "sha256": "c03099e07a0240ab320248d32a25ea2a40c3eb4f5a02a22f9862e60098b3e31d",
+        "bytes": 18993
+      },
+      {
+        "path": "../../apps/studio/src/sweater/sweater.worker.ts",
+        "sha256": "93874296c89f384d894dbb9fdfefa24f90e302ef7e4818719dc881fb7049319e",
+        "bytes": 1008
+      },
+      {
+        "path": "../../apps/studio/src/sweater/sweaterHandoff.ts",
+        "sha256": "e845ead21b9b0b1e8621ee5b10e08d648b1452a0af5efcf6b821df0f15dfa8ce",
+        "bytes": 10783
+      },
+      {
+        "path": "../../apps/studio/src/sweater/sweaterPipeline.ts",
+        "sha256": "db29b7e0f65938f90286da929a87fbf11e1bbca6de1eccc61680620022ea6794",
+        "bytes": 12028
+      },
+      {
+        "path": "../../apps/studio/src/sweater/sweaterRun.ts",
+        "sha256": "5824bb12e1633c47cccf865390a33e6babc38d8aff67ee7fe1afa0fc40fe3a27",
+        "bytes": 3662
+      },
+      {
+        "path": "../../apps/studio/src/sweater/textures.ts",
+        "sha256": "a3de169afab06c464cd04112359333c87f27342ae9d35f04cb3c114d9336f2de",
+        "bytes": 6120
       },
       {
         "path": "../../apps/studio/src/trials.ts",
@@ -30619,8 +30724,8 @@
       },
       {
         "path": "../../e2e/beanie-workflow.spec.ts",
-        "sha256": "ddff38292370562bcb3da67bb664be988d2c703d6ab3d5868f98324a7e37da70",
-        "bytes": 21430
+        "sha256": "71c5da7c25bef4c525dac276c58c7aab2cbd7b6b0ab2c56d466ef7f8f8490d13",
+        "bytes": 21459
       },
       {
         "path": "../../e2e/execution-inspector.spec.ts",
@@ -30629,8 +30734,8 @@
       },
       {
         "path": "../../e2e/launch-polish.spec.ts",
-        "sha256": "106a3ad735c01bd753a2623eaab906cbc763497f9ab9b024e1361d242910d3ff",
-        "bytes": 1903
+        "sha256": "9365826affe27a03fea444b068174a49e9fcd57958ce13ae602dc402202c6269",
+        "bytes": 2052
       },
       {
         "path": "../../e2e/m2.spec.ts",
@@ -30639,8 +30744,8 @@
       },
       {
         "path": "../../e2e/m3b.spec.ts",
-        "sha256": "544c831ec5e17384bc1f19c2f59c740582de0d0485be62dffbea6641ff33b557",
-        "bytes": 6462
+        "sha256": "d8c5335ac2b42af686492ed041169fbcb48b6a55a677132415a1856bf52e8bf6",
+        "bytes": 6542
       },
       {
         "path": "../../e2e/m3c.spec.ts",
@@ -30656,6 +30761,11 @@
         "path": "../../e2e/reference-patterns.spec.ts",
         "sha256": "f815c2e32bcc3f829833746a4c0f28d3196e2c7e46decefdd98a969fe6dd6171",
         "bytes": 4304
+      },
+      {
+        "path": "../../e2e/sweater-workflow.spec.ts",
+        "sha256": "4c388e3716834c8ff5eed16829a80634acdce9cb3dbb3f4b2f418aaed3423480",
+        "bytes": 9501
       },
       {
         "path": "../../e2e/workspace-target.spec.ts",
@@ -30714,8 +30824,8 @@
       },
       {
         "path": "../../scripts/eval-design-language.ts",
-        "sha256": "a53fb428757a8b9e7a236e9070a899d1e19e741a9dfa704cda97d4541cce4961",
-        "bytes": 19659
+        "sha256": "5ce7dd2974da18a30a106edf5d709eaabd37e99bb8878a645d59e8e2d5e4eb2c",
+        "bytes": 19705
       },
       {
         "path": "../../scripts/lib/png.ts",
@@ -30726,6 +30836,11 @@
         "path": "../../scripts/lib/render.ts",
         "sha256": "469e4f0f1d3afcab301c2880a33cbc03b7fe48088cb426e253889d32b1222e49",
         "bytes": 7358
+      },
+      {
+        "path": "../../scripts/lib/sweater-cli.ts",
+        "sha256": "95d63af60da0b2c7b4e93332030c2c395c20d0f77acfb21000f305bf490cca79",
+        "bytes": 26138
       },
       {
         "path": "../../scripts/parity.ts",
@@ -30739,8 +30854,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "11e13c2796ae55d64cb2c0bccb9d4c30d69ee7b4dbc8e62d32430b337b535346",
-        "bytes": 39369
+        "sha256": "eaf065945d055d64b915f05e8d071536f16bf8129b89acd2991f06fb34a91713",
+        "bytes": 41481
       },
       {
         "path": "../../tsconfig.base.json",
@@ -30804,8 +30919,8 @@
       },
       {
         "path": "../project-contract/src/index.ts",
-        "sha256": "e2296b4f5ea42e686a3c195655acfe8ce36665af85ec911f52d3be601817617d",
-        "bytes": 71206
+        "sha256": "0ebc505ea69fbd0df0842a901243ff1e4f8354c89d71099630276970ebe04728",
+        "bytes": 76150
       },
       {
         "path": "../project-contract/tsconfig.json",
@@ -30894,7 +31009,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "cd884a96aab29c1ceb48d9f8903ec100d1a0129bf298c544db04793cbe6091ee",
+        "sha256": "92ea1eeee8d4e346c58c7647772f98837512d3823676ba63e6ac4ed9ba455e2e",
         "bytes": 179
       },
       {
@@ -31039,8 +31154,8 @@
       },
       {
         "path": "src/browser.ts",
-        "sha256": "66909a86bd30f232072e6e37d69d969769d7c2b12a1e47459822b88dab984df4",
-        "bytes": 7679
+        "sha256": "1b945b658bbb389d087a88bc97dca3bdd04edaca5f958aee6bbb791db69fbb5c",
+        "bytes": 7861
       },
       {
         "path": "src/chart-core/__row_space_canary__.ts",
@@ -31149,8 +31264,8 @@
       },
       {
         "path": "src/index.ts",
-        "sha256": "0d91d09321c25db6b937b99b924685cbe61953e1aa80535ab55e7159e74759c2",
-        "bytes": 7827
+        "sha256": "90b6f0dd9778ee5ebeeff829bfe6339ab1441515ee537db52ea35d9babe92bad",
+        "bytes": 7998
       },
       {
         "path": "src/knitout/back-face-projection.ts",
@@ -31398,14 +31513,19 @@
         "bytes": 8670
       },
       {
+        "path": "src/knitout/passes/customist-flat-start.ts",
+        "sha256": "faa9a31dd5b86ae27f9e3e1fa1cb171d001fffe179172a99ba2c7e1144f6500a",
+        "bytes": 8755
+      },
+      {
         "path": "src/knitout/passes/customist-rib-beanie-crown.ts",
         "sha256": "f1ccc27b4d7fa85bb5055a53c84ce3d68a7e1e97c74e2a2448b57323d38e8101",
         "bytes": 28528
       },
       {
         "path": "src/knitout/passes/customist-rib-beanie.ts",
-        "sha256": "62fce42904ad6e591cfcf7a15cc531db3f2728b93ede737c299ad0c14c04cbe7",
-        "bytes": 18626
+        "sha256": "c93ccdae4c7ecdfd389459ff1f89bef5b6ab556792b7ba11d0fa4da56595015b",
+        "bytes": 12971
       },
       {
         "path": "src/knitout/passes/first-row-speed.ts",
@@ -31461,6 +31581,11 @@
         "path": "src/knitout/passes/rib-crown-plan.ts",
         "sha256": "02df01b38b1b79e67ec3471feb287894a65c817c6c72fca7fc97b79dd972203d",
         "bytes": 8991
+      },
+      {
+        "path": "src/knitout/passes/shaped-panel.ts",
+        "sha256": "04bb4643b6a9df1d2fcfae3759a4ed941ccd168fbda28d3528821aac9b175d90",
+        "bytes": 21666
       },
       {
         "path": "src/knitout/passes/shaped-tube.ts",
@@ -31998,6 +32123,11 @@
         "bytes": 5658
       },
       {
+        "path": "test/knitout/shaped-panel.test.ts",
+        "sha256": "24221fd7af0d58d04c580e00f76e7be62a1b59d837d3830a585361a0b2237561",
+        "bytes": 10043
+      },
+      {
         "path": "test/knitout/sim/kc-section.test.ts",
         "sha256": "9ab9b8eec74a270c3aeb7ce86079e550f1a3d4545772cefedafa75a6c60d3e4f",
         "bytes": 1913
@@ -32024,8 +32154,8 @@
       },
       {
         "path": "test/public-api.test.ts",
-        "sha256": "7d277bd6d47e1e0d7dbfda8bf8ab4b0264358ee2ca06793d3c568d8095a9c7a9",
-        "bytes": 3350
+        "sha256": "92531618cace045f50a3ad396d954b78e84297d5fe94255b17cb28e8099e20d8",
+        "bytes": 3391
       },
       {
         "path": "tsconfig.json",
