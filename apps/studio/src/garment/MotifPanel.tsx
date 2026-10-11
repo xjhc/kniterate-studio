@@ -1,8 +1,9 @@
 import { beanieObjectOf } from '@kniterate-studio/project-contract';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { Check, ImagePlus, Layers, RefreshCw, Trash2, X } from 'lucide-react';
+import { Check, ImagePlus, RefreshCw, Trash2, X } from 'lucide-react';
 import type { ColorworkChartV1 } from '@kniterate-studio/chart-contract';
 import type { ProjectEdit, ProjectPlacement, ProjectState, ResolvedProjectPlacement } from '@kniterate-studio/project-contract';
+import { Section } from '../workspace/panel';
 import { convertPlacementImage, defaultPlacementColors, isSamePlacement, unmappedColors, nextPlacementId, placementToStitchesEdits, refreshedPlacement, PlacementColorDecisionError, type PlacementConversion, type PlacementImage } from '../placements';
 
 /**
@@ -219,7 +220,7 @@ export function MotifSection({ latestState, state, placements, selected, staleId
     finally { if (mounted.current) setBusy(null); }
   };
   const motifColors = current ? [...new Set(current.placement.motif.cells.flat())].sort((a, b) => a - b) : [];
-  return <section className="garment-section motif-section" id="placements" tabIndex={-1}><h2><Layers size={12} /> Motifs</h2>
+  return <Section id="placements" title="Motifs" aside={<em className="section-aside">{placements.length === 0 ? 'none' : `${placements.length}`}</em>}>
     <div className="motif-list">{placements.length === 0 ? <p className="garment-help">No motifs yet.</p> : placements.map((item) => <button type="button" key={item.placement.id} className={`motif-row${item.placement.id === selected ? ' active' : ''}${item.status === 'conflict' ? ' conflict' : ''}`} id={`placement:${item.placement.id}`} onClick={() => onSelect(item.placement.id)}>
       <b>{item.placement.id}</b><small>{item.status === 'conflict' ? item.problem === 'color' ? 'Colour has no yarn' : 'Does not fit' : `${item.placement.motif.width} × ${item.placement.motif.height} st${staleIds.has(item.placement.id) ? ' · needs refresh' : ''}`}</small>
     </button>)}</div>
@@ -243,5 +244,5 @@ export function MotifSection({ latestState, state, placements, selected, staleId
         <button type="button" className="secondary-button danger" onClick={() => { onOperation(`Remove ${current.placement.id}`, [{ kind: 'remove-placement', placementId: current.placement.id }]); onSelect(null); }}><Trash2 size={13} /> Remove</button>
       </div>
     </div>}
-  </section>;
+  </Section>;
 }

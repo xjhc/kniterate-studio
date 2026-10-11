@@ -21,11 +21,14 @@ runs, and the workspace shows exactly what those files knit.
     machine file(s), print the knitting sheet, check a machine file.
   - Edit: undo, redo, name and colours.
   - View: Design, Schematic, Machine file, History, Dark mode.
-- **Left panel:** what you are making, as collapsible sections.
-  - Sweater: style, size, measurements, stitch, edges, yarn and gauge.
-  - Beanie: fit, cuff, body, your swatch (its gauge: a new gauge resizes
-    the whole hat and its motifs in one change), motifs, colours and
-    backing.
+- **Left panel:** what you are making, as folding sections, each with a
+  one-line summary beside its name.
+  - Sweater: style, size, measurements, stitch, edges, yarn and swatch.
+  - Beanie: size (Snug, Classic or Loose, and a Wanted / Knitted / Rows
+    table for head, cuff, body, crown and height, the same counts the
+    schematic reads back from the machine file), your swatch (its gauge: a
+    new gauge resizes the whole hat and its motifs in one change), motifs,
+    colours and backing.
   - Colorwork scarf or blanket: size, colours and backing.
 - **Middle:** the pieces, when there are several, on the left of the stage
   bar. On its right, always in the same place, the three views:

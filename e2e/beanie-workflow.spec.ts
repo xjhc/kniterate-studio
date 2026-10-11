@@ -35,7 +35,9 @@ async function placeImage(page: Page, heightCm: string) {
   await expect(intake).toBeHidden();
 }
 
-const derived = (page: Page, text: RegExp) => page.locator('.garment-derived').filter({ hasText: text });
+/** The Head row of the size table: the knitted circumference, and the needles it takes. */
+const headRow = (page: Page) => page.getByRole('group', { name: 'Finished measurements' }).locator('.measure-row').filter({ hasText: /^Head/ });
+const needles = (page: Page, count: number) => headRow(page).locator('.count').filter({ hasText: new RegExp(`^${count} st$`) });
 
 test('the status panel walks the steps: the swatch is next, then the download, each ticked when done', async ({ page }) => {
   test.setTimeout(120_000);
@@ -59,7 +61,8 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   test.setTimeout(180_000);
   await createBeanie(page);
   await expect(page.getByLabel('Verdict: Ready to knit')).toBeVisible();
-  await expect(derived(page, /^134 needles · 50.8 cm finished around$/)).toBeVisible();
+  await expect(needles(page, 134)).toBeVisible();
+  await expect(headRow(page).locator('.knitted').first()).toHaveText('50.8');
 
   // Motifs are objects: placed and listed.
   await placeImage(page, '6');
@@ -69,7 +72,7 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   const headField = page.locator('#fit\\.head');
   await headField.fill('100'); await headField.press('Enter');
   await expect(page.getByRole('alert').filter({ hasText: 'Not applied: enter 30–80 cm' })).toBeVisible();
-  await expect(derived(page, /^134 needles/)).toBeVisible();
+  await expect(needles(page, 134)).toBeVisible();
   await page.getByRole('button', { name: 'Restore' }).click();
 
   // "Leave the ground" for the motif's color keeps it placed (nothing drawn), never "does not fit".
@@ -80,11 +83,11 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   // A fit change is one operation; one undo restores it.
   const head = page.locator('#fit\\.head');
   await head.fill('52'); await head.press('Enter');
-  await expect(derived(page, /^122 needles/)).toBeVisible({ timeout: 30_000 });
+  await expect(needles(page, 122)).toBeVisible({ timeout: 30_000 });
   await menu(page, 'Edit', 'Undo');
-  await expect(derived(page, /^134 needles/)).toBeVisible({ timeout: 30_000 });
+  await expect(needles(page, 134)).toBeVisible({ timeout: 30_000 });
   await menu(page, 'Edit', 'Redo');
-  await expect(derived(page, /^122 needles/)).toBeVisible({ timeout: 30_000 });
+  await expect(needles(page, 122)).toBeVisible({ timeout: 30_000 });
 
   // Your swatch's gauge resizes the whole hat and its motif in one change.
   const motifSize = await page.getByRole('button', { name: /^motif-1/ }).innerText();
@@ -186,7 +189,7 @@ test('refreshing a motif reviews newly visible colors before changing its source
   };
   await createBeanie(page);
   await setBodyGauge('30');
-  await expect(derived(page, /^154 needles/)).toBeVisible({ timeout: 30_000 });
+  await expect(needles(page, 154)).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Add image' }).click();
   const intake = page.getByRole('dialog', { name: 'Place an image' });
   await intake.getByLabel('Image file').setInputFiles({ name: 'refresh-colors.png', mimeType: 'image/png', buffer: refreshColorsPng() });
@@ -201,7 +204,7 @@ test('refreshing a motif reviews newly visible colors before changing its source
   expect(original.source?.gauge).toEqual({ stitchesPer10cm: 30, rowsPer10cm: 30 });
 
   await setBodyGauge('40');
-  await expect(derived(page, /^202 needles/)).toBeVisible({ timeout: 30_000 });
+  await expect(needles(page, 202)).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText('needs refresh')).toBeVisible();
   await page.getByRole('button', { name: /^motif-1/ }).click();
   const beforeRefresh = await savedProject();

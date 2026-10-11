@@ -46,7 +46,7 @@ describe('BlanketSetupRail', () => {
       onAssignment={() => {}}
     />);
     expect(markup).not.toContain('proven');
-    expect(markup).toMatch(/<h2>Size<\/h2>[^]*<h2>Colours<\/h2>[^]*<h2>Backing<\/h2>/);
+    expect(markup).toMatch(/<span>Size<\/span>[^]*<span>Colours<\/span>[^]*<span>Backing<\/span>/);
     expect(markup).toContain(`${Math.ceil(artifact.stats.estimatedKnitTimeSeconds! / 60)} min`);
     // The machine frame (waste yarn, draw thread) is read in the Machine file view, not set here.
     expect(markup).not.toContain('Customist');

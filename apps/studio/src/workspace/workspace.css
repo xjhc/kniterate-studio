@@ -76,3 +76,10 @@
   .stage-head { flex-wrap: wrap; }
 }
 .rectangle-style { padding: 12px 16px 0; }
+/* A beanie's size table: wanted, knitted, and its stitches or rows. */
+.measure-head.garment-measure, .measure-row.garment-measure { grid-template-columns: minmax(0, 1fr) 92px 38px 46px; }
+.garment-measure .knitted.count { color: var(--ink-3); }
+.garment-measure .garment-error { grid-column: 1 / -1; margin: 0; }
+.garment-measure .number-input i { color: var(--ink-3); font-size: 12px; font-style: normal; }
+.chart-design .fold-check { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 12px; cursor: pointer; }
+.chart-design .fold-check input { width: 16px; height: 16px; margin: 0; }

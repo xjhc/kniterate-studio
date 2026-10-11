@@ -117,15 +117,36 @@ export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: n
   // The cast-on is the yarn's knitting after the last draw-thread pass; before it, a yarn is only being brought in.
   let lastDraw = -1;
   trace.passes.forEach((pass, index) => { if ((firstBody === -1 || index < firstBody) && pass.carrier === carriers.draw && pass.actions.some((action) => action.kind === 'knit')) lastDraw = index; });
+  const knits = (index: number) => trace.passes[index]!.actions.some((action) => action.kind === 'knit' || action.kind === 'tuck');
+  const frontKnits = (index: number) => trace.passes[index]!.actions.flatMap((action) => (action.kind === 'knit' && action.at.bed === 'front' ? [action.at.traceCoordinate] : [])).sort((a, b) => a - b).join(' ');
+  // A beanie's body runs to its first crown decrease: rows after the design's
+  // last that knit the same front needles (a birdseye back joining the face) are still body.
+  let bodyEnd = lastBody;
+  if (kind === 'beanie' && lastBody !== -1) {
+    const across = frontKnits(lastBody);
+    for (let index = lastBody + 1; index < trace.passes.length; index++) {
+      if (!knits(index)) continue;
+      if (frontKnits(index) !== across) break;
+      bodyEnd = index;
+    }
+  }
+  const roleOfRow = (row: number): KnitSectionKind => (zoneOfRow(row) === 'rib' ? 'rib' : splitRow !== null && row >= splitRow ? 'shoulders' : 'body');
+  // A row the design does not have, between its rows (a ground row starting a birdseye back), belongs to the section it leads into.
+  const nextRowRole: (KnitSectionKind | null)[] = new Array(trace.passes.length).fill(null);
+  for (let index = trace.passes.length - 1, next: KnitSectionKind | null = null; index >= 0; index--) {
+    const row = rowOf(index);
+    if (row !== null) next = roleOfRow(row);
+    nextRowRole[index] = next;
+  }
   trace.passes.forEach((pass, index) => {
-    const stitches = pass.actions.some((action) => action.kind === 'knit' || action.kind === 'tuck');
+    const stitches = knits(index);
     let role: KnitSectionKind;
     if (firstBody === -1 || index < firstBody) {
       if (!stitches) role = lastRole;
       else role = pass.carrier === carriers.draw ? 'draw' : yarn(pass.carrier) && index > lastDraw ? 'cast-on' : 'waste';
-    } else if (index <= lastBody) {
+    } else if (index <= bodyEnd) {
       const row = rowOf(index);
-      role = row === null ? lastRole : zoneOfRow(row) === 'rib' ? 'rib' : splitRow !== null && row >= splitRow ? 'shoulders' : 'body';
+      role = row !== null ? roleOfRow(row) : stitches && index < lastBody ? nextRowRole[index] ?? lastRole : lastRole;
     } else {
       role = index > lastWork ? 'carriers-out' : 'top';
     }
@@ -190,6 +211,8 @@ export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: n
   };
   let bodyBase: number | null = null;
   let bodyTop = -1;
+  // Courses for rows the design does not have, between its rows: the design rows above move up by as many.
+  let extra = 0;
   const place = (target: ReturnType<typeof course>, at: number, mark: string, front: boolean, carrier: string) => {
     // The face shows the front bed; a back-bed stitch only where the front bed has none.
     const before = target.stitches[at]!;
@@ -218,11 +241,18 @@ export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: n
     if (touched.length > 0 && row !== null) {
       // A design row is one course.
       bodyBase ??= Math.max(0, ...height);
-      placedAt = bodyBase + row;
+      placedAt = bodyBase + row + extra;
       const target = course(placedAt, passSection[index]!);
       for (const item of touched) place(target, item.needle - lo, item.mark, item.front, pass.carrier);
       target.passes.push(index);
       target.row = target.row === null ? row : Math.min(target.row, row);
+      bodyTop = Math.max(bodyTop, placedAt);
+    } else if (touched.length > 0 && bodyBase !== null && index < lastBody) {
+      // A row the design does not have, between its rows: a row on the face is a course of its own; a back-bed row lies behind the last one.
+      if (touched.some((item) => item.front)) { extra++; placedAt = bodyTop + 1; } else placedAt = bodyTop;
+      const target = course(placedAt, passSection[index]!);
+      for (const item of touched) place(target, item.needle - lo, item.mark, item.front, pass.carrier);
+      target.passes.push(index);
       bodyTop = Math.max(bodyTop, placedAt);
     } else if (touched.length > 0) {
       // After the design rows, stacking starts above them.
@@ -244,7 +274,7 @@ export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: n
     }
     // A pass that knits nothing sits on top of the last stitches its needles hold.
     const onNeedles = selected.filter((needle) => needle >= lo && needle <= hi);
-    const at = placedAt ?? (row !== null && bodyBase !== null ? bodyBase + row - 1 : onNeedles.length > 0 ? Math.max(...onNeedles.map((needle) => height[needle - lo]!)) - 1 : null);
+    const at = placedAt ?? (row !== null && bodyBase !== null ? bodyBase + row + extra - 1 : bodyBase !== null && index < lastBody ? bodyTop : onNeedles.length > 0 ? Math.max(...onNeedles.map((needle) => height[needle - lo]!)) - 1 : null);
     const line = kcode.passLines[index];
     return {
       carrier: pass.carrier,

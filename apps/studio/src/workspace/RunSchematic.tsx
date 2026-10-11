@@ -20,13 +20,17 @@ function shade(hex: string, amount: number): string {
 
 interface Band { kind: KnitSectionKind; label: string; from: number; to: number; lo: number; hi: number; left: number[]; right: number[] }
 
-export function RunSchematic({ file, hex, stitchCm, rowCm, label }: {
+export function RunSchematic({ file, hex, stitchCm, rowCm, label, notes = {}, widthNote }: {
   file: KnitFile;
   hex: string;
   /** Centimetres per stitch and per row, when the gauge is known. */
   stitchCm: number | null;
   rowCm: { rib: number; body: number } | null;
   label: string;
+  /** More about a section, after its size: e.g. that a cuff folds up. */
+  notes?: Readonly<Record<string, string>>;
+  /** More about the width, after it: e.g. what a seamed piece measures around. */
+  widthNote?: string;
 }) {
   // Bands: runs of courses in one section, with each course's knitted extent.
   const bands: Band[] = [];
@@ -53,7 +57,9 @@ export function RunSchematic({ file, hex, stitchCm, rowCm, label }: {
   const widest = Math.max(...bands.map((band) => band.hi - band.lo + 1)) * st;
   // Pixels per cm, so the drawing fits about 560 px tall and 420 px wide.
   const k = Math.min(560 / Math.max(total, 1), 420 / Math.max(widest, 1));
-  const pad = { left: 70, right: 230, top: 24, bottom: 46 };
+  // Room on the right for the longest label (about 6.5 px a character at 12 px).
+  const longest = Math.max(0, ...bands.map((band) => band.label.length + (notes[band.label]?.length ?? 0))) + 24;
+  const pad = { left: 70, right: Math.max(230, Math.ceil(longest * 6.5) + 30), top: 24, bottom: 46 };
   const width = Math.ceil(widest * k) + pad.left + pad.right;
   const height = Math.ceil(total * k) + pad.top + pad.bottom;
   const x = (stitch: number) => pad.left + stitch * st * k;
@@ -70,7 +76,7 @@ export function RunSchematic({ file, hex, stitchCm, rowCm, label }: {
     const at = Math.max(mid, lastLabel + MIN_LABEL_GAP);
     lastLabel = at;
     const size = band.kind === 'draw' ? '' : ` · ${rows} ${rows === 1 ? 'row' : 'rows'}${stitchCm && rowCm && band.kind !== 'waste' ? `, ${cm(rows * rowOf(band.kind))}` : ''}`;
-    return { band, at, mid, text: `${band.label}${size}` };
+    return { band, at, mid, text: `${band.label}${size}${notes[band.label] ? `; ${notes[band.label]}` : ''}` };
   });
   return <svg className="run-schematic" data-testid="schematic" viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={`${label}: the whole machine run, from the waste yarn to the finish`}>
     {file.courses.map((course, index) => {
@@ -105,7 +111,7 @@ export function RunSchematic({ file, hex, stitchCm, rowCm, label }: {
     </g>)}
     {piece && <g className="run-dimension">
       <line x1={x(piece.lo)} y1={height - 24} x2={x(piece.hi + 1)} y2={height - 24} />
-      <text x={(x(piece.lo) + x(piece.hi + 1)) / 2} y={height - 8} textAnchor="middle">{piece.hi - piece.lo + 1} stitches{stitchCm ? `, ${cm((piece.hi - piece.lo + 1) * stitchCm)}` : ''}</text>
+      <text x={(x(piece.lo) + x(piece.hi + 1)) / 2} y={height - 8} textAnchor="middle">{piece.hi - piece.lo + 1} stitches{stitchCm ? `, ${cm((piece.hi - piece.lo + 1) * stitchCm)}` : ''}{widthNote ? `; ${widthNote}` : ''}</text>
       <line x1={pad.left - 18} y1={y(tops[piece.from]!)} x2={pad.left - 18} y2={y(tops[piece.to]! + heights[piece.to]!)} />
       <text x={pad.left - 24} y={(y(tops[piece.from]!) + y(tops[piece.to]! + heights[piece.to]!)) / 2} textAnchor="end">{rowCm ? cm(tops[piece.to]! + heights[piece.to]! - tops[piece.from]!) : `${piece.to - piece.from + 1} rows`}</text>
     </g>}

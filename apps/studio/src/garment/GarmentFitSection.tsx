@@ -1,18 +1,26 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { ProjectGauge, ProjectState } from '@kniterate-studio/project-contract';
 import type { BeanieFitChange } from '../beanie';
 import { beanieIntentOf } from '../beanie';
 import type { ProjectPlan, Valued } from '../plan';
+import { Chips, Section } from '../workspace/panel';
 
 /**
- * The garment's fit as a designer states it. Every input is a change of
- * intent; the Plan derives needles and rows (shown beside each input with
- * how they were derived). Ids match readiness targets (`fit.head`, ...).
+ * The garment's fit as a designer states it: what you want beside what your
+ * gauge knits, the same counts the schematic reads back from the machine
+ * file. Every input is a change of intent; the Plan derives needles and rows.
+ * Ids match readiness targets (`fit.head`, `gauge.body`, ...).
  */
 
+/** How much smaller than the head the hat is knitted, so it stays on. */
+const FITS = [
+  { id: 'snug', name: 'Snug', ease: -0.15 },
+  { id: 'classic', name: 'Classic', ease: -0.1 },
+  { id: 'loose', name: 'Loose', ease: -0.05 },
+] as const;
+
 function cm(value: Valued<number> | null | undefined): string {
-  if (!value) return '—';
-  return `${value.value} cm`;
+  return value ? String(value.value) : '—';
 }
 
 /** A number the designer types; an out-of-range value is shown as not applied, with the reason, never silently dropped. */
@@ -30,15 +38,22 @@ function NumberField({ id, label, value, step = 0.5, min, max, suffix, onCommit 
     setError(null); setDraft(null);
     if (next !== value) onCommit(next);
   };
-  return <div className="garment-field-wrap">
-    <label className="strategy-field garment-field" htmlFor={id}>
-      <span>{label}</span>
-      <span className="garment-input"><input id={id} type="number" inputMode="decimal" step={step} min={min} max={max} value={shown} aria-invalid={error !== null} aria-describedby={error ? `${id}-error` : undefined}
-        onChange={(event) => { setDraft(event.currentTarget.value); setError(null); }}
-        onBlur={commit}
-        onKeyDown={(event) => { if (event.key === 'Enter') commit(); if (event.key === 'Escape') { setDraft(null); setError(null); } }} /><i>{suffix}</i></span>
-    </label>
+  return <>
+    <span className="garment-input number-input"><input id={id} type="number" inputMode="decimal" step={step} min={min} max={max} value={shown} aria-label={label} aria-invalid={error !== null} aria-describedby={error ? `${id}-error` : undefined}
+      onChange={(event) => { setDraft(event.currentTarget.value); setError(null); }}
+      onBlur={commit}
+      onKeyDown={(event) => { if (event.key === 'Enter') commit(); if (event.key === 'Escape') { setDraft(null); setError(null); } }} /><i>{suffix}</i></span>
     {error && <p className="garment-error" id={`${id}-error`} role="alert">{error} <button type="button" className="link-button" onClick={() => { setDraft(null); setError(null); }}>Restore</button></p>}
+  </>;
+}
+
+/** One row of the table: what you want (if you set it), what your gauge knits, and its stitches or rows. */
+function MeasureRow({ label, hint, wanted, knitted, count, off = false }: { label: string; hint: string; wanted: ReactNode; knitted: string; count: string; off?: boolean }) {
+  return <div className="measure-row garment-measure" title={hint}>
+    <span>{label}</span>
+    {wanted ?? <span />}
+    <span className={`knitted${off ? ' off' : ''}`}>{knitted}</span>
+    <span className="knitted count">{count}</span>
   </div>;
 }
 
@@ -71,35 +86,46 @@ export function GarmentFitSection({ state, plan, onFit }: { state: ProjectState;
   const sections = plan.sections;
   const widthCheck = plan.sizeChecks.find((check) => check.dimension === 'width');
   const cuff = intent.construction === 'rib-cuff-jersey-body';
-  const easePercent = Math.round((intent.ease ?? -0.1) * 1000) / 10;
+  const ease = intent.ease ?? -0.1;
+  const fit = FITS.find((choice) => Math.abs(choice.ease - ease) < 0.001) ?? null;
+  const easePercent = Math.round(ease * 1000) / 10;
   // A new gauge resizes the whole hat: say by how much.
   const counts = { needles: plan.stitches.value, rows: plan.rows.value };
   const setGauge = (change: BeanieFitChange, label: string) => { setResizedFrom(counts); onFit(change, label); };
   const resized = resizedFrom && (resizedFrom.needles !== counts.needles || resizedFrom.rows !== counts.rows) ? resizedFrom : null;
   const measured = state.gauge?.source === 'measured' && (!cuff || state.object?.ribGauge?.source === 'measured');
+  const off = (wanted: number | undefined, knitted: Valued<number> | null | undefined) => wanted !== undefined && knitted != null && Math.abs(knitted.value - wanted) >= 1;
+  const fitName = fit ? fit.name.toLowerCase() : `${easePercent}%`;
   return <>
-    <section className="garment-section"><h2>Fit</h2>
-      <NumberField id="fit.head" label="Head circumference" value={intent.headCircumferenceCm} min={30} max={80} suffix="cm" onCommit={(headCircumferenceCm) => onFit({ headCircumferenceCm }, `Head ${headCircumferenceCm} cm`)} />
-      <NumberField id="fit.ease" label="Ease (negative = snug)" value={easePercent} step={1} min={-40} max={40} suffix="%" onCommit={(percent) => onFit({ ease: percent / 100 }, `Ease ${percent}%`)} />
-      <p className="garment-derived" title={widthCheck?.required.how ?? plan.predicted?.widthCm.how}>{plan.stitches.value} needles · {cm(plan.predicted?.widthCm)} finished around</p>
-    </section>
-    {cuff && <section className="garment-section"><h2>Cuff</h2>
-      <NumberField id="fit.cuff" label="Visible cuff height" value={intent.cuffCm} min={1} max={30} suffix="cm" onCommit={(cuffCm) => onFit({ cuffCm }, `Cuff ${cuffCm} cm`)} />
-      <label className="check-label">Folds up (knitted twice as tall)<input type="checkbox" checked={intent.fold === true} onChange={(event) => onFit({ fold: event.currentTarget.checked }, event.currentTarget.checked ? 'Fold the cuff up' : 'Unfolded cuff')} /></label>
-      {sections?.cuff && <p className="garment-derived" title={sections.cuff.knittedCm?.how}>{sections.cuff.rows} rib rows · knitted {cm(sections.cuff.knittedCm)}{sections.cuff.folds ? ` · ${cm(sections.cuff.visibleCm)} folded` : ''}</p>}
-    </section>}
-    <section className="garment-section"><h2>Body</h2>
-      <NumberField id="fit.body" label={cuff ? 'Body height above the cuff' : 'Rib body height'} value={intent.bodyCm} min={2} max={60} suffix="cm" onCommit={(bodyCm) => onFit({ bodyCm }, `Body ${bodyCm} cm`)} />
-      <p className="garment-help">Measured from the {cuff ? 'cuff top' : 'cast-on'} to the first crown decrease.</p>
-      {sections && <p className="garment-derived" title={sections.body.cm?.how}>{sections.body.rows} rows of {sections.body.fabric} · {cm(sections.body.cm)}</p>}
-      {sections?.crown && <p className="garment-derived" title={sections.crown.cm?.how}>Crown: {sections.crown.rows} rows to {sections.crown.finalStitches} stitches · {cm(sections.crown.cm)}</p>}
-      {sections?.finishedHeightCm && <p className="garment-derived" title={sections.finishedHeightCm.how}>Finished height {cm(sections.finishedHeightCm)} flat</p>}
-    </section>
-    <section className="garment-section" id="swatch"><h2>Your swatch</h2>
+    <Section title="Size" aside={<em className="section-aside">{intent.headCircumferenceCm} cm · {fitName}</em>}>
+      <div className="field-row"><span>Fit</span><Chips label="Fit" value={fit?.id ?? 'custom'}
+        options={[...FITS.map((choice) => ({ id: choice.id, name: choice.name, note: `Knitted ${Math.round(-choice.ease * 100)}% smaller than the head, so it stays on.` })), ...(fit ? [] : [{ id: 'custom' as const, name: `${easePercent}%`, note: 'Your own ease: how much smaller than the head the hat is knitted.' }])]}
+        onPick={(id) => { const choice = FITS.find((item) => item.id === id); if (choice) onFit({ ease: choice.ease }, `${choice.name} fit`); }} /></div>
+      <div className="measure-table" role="group" aria-label="Finished measurements">
+        <div className="measure-head garment-measure"><span /><span>Wanted</span><span>Knitted</span><span>Rows</span></div>
+        <MeasureRow label="Head" hint={`Head circumference. The hat is ${Math.round(-ease * 100)}% smaller around so it stays on, measured once seamed: ${plan.predicted?.widthCm.how ?? ''}. ${widthCheck?.required.how ?? ''}`}
+          wanted={<NumberField id="fit.head" label="Head circumference" value={intent.headCircumferenceCm} min={30} max={80} suffix="cm" onCommit={(headCircumferenceCm) => onFit({ headCircumferenceCm }, `Head ${headCircumferenceCm} cm`)} />}
+          knitted={cm(plan.predicted?.widthCm)} count={`${plan.stitches.value} st`} />
+        {cuff && <MeasureRow label={intent.fold ? 'Cuff, folded' : 'Cuff'} hint={sections?.cuff ? `${sections.cuff.folds ? `Folded, as worn. Knitted ${cm(sections.cuff.knittedCm)} cm and folded up. ` : ''}${sections.cuff.knittedCm?.how ?? ''}` : 'The rib cuff.'}
+          wanted={<NumberField id="fit.cuff" label="Cuff height" value={intent.cuffCm} min={1} max={30} suffix="cm" onCommit={(cuffCm) => onFit({ cuffCm }, `Cuff ${cuffCm} cm`)} />}
+          knitted={sections?.cuff ? cm(sections.cuff.folds ? sections.cuff.visibleCm : sections.cuff.knittedCm) : '—'} count={sections?.cuff ? String(sections.cuff.rows) : '—'}
+          off={off(intent.cuffCm, sections?.cuff ? (sections.cuff.folds ? sections.cuff.visibleCm : sections.cuff.knittedCm) : null)} />}
+        <MeasureRow label={cuff ? 'Body' : 'Rib body'} hint={`From the ${cuff ? 'cuff top' : 'cast-on'} to the first crown decrease. ${sections?.body.cm?.how ?? ''}`}
+          wanted={<NumberField id="fit.body" label={cuff ? 'Body height' : 'Rib body height'} value={intent.bodyCm} min={2} max={60} suffix="cm" onCommit={(bodyCm) => onFit({ bodyCm }, `Body ${bodyCm} cm`)} />}
+          knitted={cm(sections?.body.cm)} count={sections ? String(sections.body.rows) : '—'} off={off(intent.bodyCm, sections?.body.cm)} />
+        {sections?.crown && <MeasureRow label="Crown" hint={`Decreases to ${sections.crown.finalStitches} stitches, then straight rows that are gathered. ${sections.crown.cm?.how ?? ''}`}
+          wanted={null} knitted={cm(sections.crown.cm)} count={String(sections.crown.rows)} />}
+        {sections?.finishedHeightCm && <MeasureRow label="Height" hint={`Flat, ${cuff && sections.cuff?.folds ? 'with the cuff folded. ' : ''}${sections.finishedHeightCm.how}`}
+          wanted={null} knitted={cm(sections.finishedHeightCm)} count="" />}
+      </div>
+      {cuff && <label className="check-label fold-check"><input type="checkbox" checked={intent.fold === true} onChange={(event) => onFit({ fold: event.currentTarget.checked }, event.currentTarget.checked ? 'Fold the cuff up' : 'Unfolded cuff')} />The cuff folds up (knitted twice as tall)</label>}
+      <p className="design-hint">Knitted: what your swatch makes, in cm.</p>
+    </Section>
+    <Section id="swatch" title="Your swatch" aside={measured ? <em className="section-aside ok">measured</em> : <em className="section-aside warn">typical</em>}>
       <p className="garment-help">{measured ? 'From your swatch. The whole hat is sized from it.' : 'Typical values. Enter what 10 cm of your swatch measures and the whole hat follows.'}</p>
       <GaugeFields id="gauge.body" label={cuff ? `Body (${state.strategy.technique === 'birdseye' ? 'birdseye' : 'fairisle'} fabric)` : 'Rib'} gauge={state.gauge} onCommit={(bodyGauge) => setGauge({ bodyGauge }, `Body gauge ${bodyGauge.stitchesPer10cm}/${bodyGauge.rowsPer10cm} (${bodyGauge.source})`)} />
       {cuff && <GaugeFields id="gauge.rib" label="Cuff (2x2 rib)" gauge={state.object?.ribGauge} onCommit={(ribGauge) => setGauge({ ribGauge }, `Rib gauge ${ribGauge.stitchesPer10cm}/${ribGauge.rowsPer10cm} (${ribGauge.source})`)} />}
       {resized && <p className="garment-derived" role="status">Resized: {resized.needles} → {counts.needles} needles, {resized.rows} → {counts.rows} rows.</p>}
-    </section>
+    </Section>
   </>;
 }

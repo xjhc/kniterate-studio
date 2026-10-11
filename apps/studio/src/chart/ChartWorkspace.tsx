@@ -181,6 +181,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     if (target === 'program') { onView('file'); return; }
     if (target.startsWith('placement:')) { setSelectedPlacement(target.slice(10)); onView('design'); }
     else if (target.startsWith('rows/')) { setFocusedRowId(target.slice(5)); onView('design'); }
+    // A folded section hides its fields: open the folded ones so the target can be shown.
+    if (!document.getElementById(target)) document.querySelectorAll<HTMLButtonElement>('.chart-design .design-section:not(.open) > .design-section-head').forEach((head) => head.click());
     requestAnimationFrame(() => {
       const element = document.getElementById(target);
       element?.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -251,7 +253,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const center: ReactNode = (() => {
     if (view === 'schematic') {
       if (!knitFile) return <p className="knitfile-waiting" role="status">{fileState === 'blocked' ? 'No schematic: this design cannot be knitted yet.' : 'Writing the machine file…'}</p>;
-      return <div className="schematic-stage"><RunSchematic file={knitFile} hex={chart.palette[0]?.hex ?? '#D9CBB0'} stitchCm={stitchCm} rowCm={rowCm} label={kindName} />{!gauge && <p className="design-hint">Not to scale: there is no gauge.</p>}</div>;
+      return <div className="schematic-stage"><RunSchematic file={knitFile} hex={chart.palette[0]?.hex ?? '#D9CBB0'} stitchCm={stitchCm} rowCm={rowCm} label={kindName} notes={plan.sections?.cuff?.folds && plan.sections.cuff.visibleCm ? { 'Cuff rib': `folds up to ${plan.sections.cuff.visibleCm.value} cm` } : undefined} widthNote={isGarment && plan.predicted ? `${plan.predicted.widthCm.value} cm around once seamed` : undefined} />{!gauge && <p className="design-hint">Not to scale: there is no gauge.</p>}</div>;
     }
     if (view === 'file') {
       if (!knitFile || !kcode || !carriers) return <p className="knitfile-waiting" role="status">{fileState === 'blocked' ? story?.detail ?? 'This design cannot be knitted yet.' : 'Writing the machine file for this design…'}</p>;
