@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { appendProjectOperation, materializeColorworkProject, sweaterObjectOf, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { defaultMeasurements, draftSweater, SIZES, type Silhouette } from './draft';
+import { defaultMeasurements, draftSweater, edgeProblem, SIZES, type Silhouette } from './draft';
+import { edgeRhythm } from './rhythm';
 import { rasterizePiece, sliceOutline } from './rasterize';
 import { createSweaterProject, planSweater, sweaterEdit, type SweaterIntent } from './sweater';
 import { runSweaterPipeline } from './sweaterPipeline';
@@ -130,6 +131,56 @@ describe('sweater rasterizing', () => {
   });
 });
 
+describe('hand-shaped edges', () => {
+  it('drafts front and back from one shared body edge and refits a set-in cap to a hand-made armhole', () => {
+    const project = create();
+    const object = sweaterObjectOf(materializeColorworkProject(project).state)!;
+    const before = planOf(project);
+    const body = before.draft.edges.body.map((point) => ({ ...point }));
+    // Deepen the armhole: drop the underarm (and the step beside it) by 4 cm.
+    const underarmY = body.find((item) => item.underarm)!.y;
+    for (const point of body) if (point.y === underarmY) point.y -= 4;
+    const shaped = appendProjectOperation(project, { group: 'shape', source: 'human', label: 'shape', edits: [sweaterEdit({ ...object, shapes: { body } })] });
+    const after = planOf(shaped);
+    expect(after.custom).toEqual({ body: true, sleeve: false });
+    expect(after.draft.edges.body).toEqual(body);
+    expect(after.draft.seams.armhole).toBeGreaterThan(before.draft.seams.armhole + 1.5);
+    // The sleeve cap follows the longer armhole.
+    expect(after.draft.seams.sleeveTop).toBeGreaterThan(before.draft.seams.sleeveTop + 1);
+    expect(after.knitted.armholeDepth).toBeGreaterThan(before.knitted.armholeDepth! + 3);
+    const back = after.pieces.find((piece) => piece.id === 'back')!.raster!;
+    const front = after.pieces.find((piece) => piece.id === 'front')!.raster!;
+    expect(back.events.find((event) => event.kind === 'bind-off')!.row).toBe(front.events.find((event) => event.kind === 'bind-off')!.row);
+  });
+
+  it('refuses an edge that goes down or has no underarm', () => {
+    expect(edgeProblem([{ x: 20, y: 0 }, { x: 20, y: 30, underarm: true }, { x: 18, y: 20 }], 'body')).toMatch(/goes down/);
+    expect(edgeProblem([{ x: 20, y: 0 }, { x: 18, y: 40 }], 'body')).toMatch(/exactly one underarm/);
+    const project = create();
+    const object = sweaterObjectOf(materializeColorworkProject(project).state)!;
+    const bad = appendProjectOperation(project, { group: 'bad', source: 'human', label: 'bad', edits: [sweaterEdit({ ...object, shapes: { body: [{ x: 20, y: 0 }, { x: 18, y: 40 }] } })] });
+    expect(planOf(bad).findings).toContainEqual(expect.objectContaining({ rule: 'sweater-shape-invalid', severity: 'error' }));
+  });
+
+  it('reads shaping as a machine knitter does: steady runs, alternating intervals, bind-offs on their own', () => {
+    const events = [
+      { row: 10, kind: 'decrease' as const, edge: 'left' as const, stitches: 1 },
+      { row: 14, kind: 'decrease' as const, edge: 'left' as const, stitches: 1 },
+      { row: 18, kind: 'decrease' as const, edge: 'left' as const, stitches: 1 },
+      { row: 40, kind: 'bind-off' as const, edge: 'left' as const, stitches: 6 },
+      { row: 50, kind: 'increase' as const, edge: 'left' as const, stitches: 1 },
+      { row: 56, kind: 'increase' as const, edge: 'left' as const, stitches: 1 },
+      { row: 63, kind: 'increase' as const, edge: 'left' as const, stitches: 1 },
+      { row: 69, kind: 'increase' as const, edge: 'right' as const, stitches: 1 },
+    ];
+    expect(edgeRhythm(events, ['left']).map((step) => step.text)).toEqual([
+      'Rows 11–19: decrease 1 every 4th row, 3 times',
+      'Row 41: bind off 6',
+      'Rows 51–64: increase 1 every 6–7 rows, 3 times',
+    ]);
+  });
+});
+
 describe('sweater views', () => {
   it('lays out every style flat and as worn, with the sleeves hinged at the shoulders', () => {
     for (const silhouette of ['drop-shoulder', 'j-sleeve', 'set-in'] as Silhouette[]) {
@@ -197,6 +248,6 @@ describe('sweater pipeline', () => {
     const pattern = sweaterInstructions(project, result.plan, summary);
     expect(pattern).toMatch(/### Sleeve — knit 2/);
     expect(pattern).toMatch(/Row \d+: neck\. Bind off the centre \d+ stitches/);
-    expect(pieceSteps(result.plan.pieces[2]!, result.plan).join(' ')).toMatch(/Increase 1 stitch at each edge/);
+    expect(pieceSteps(result.plan.pieces[2]!, result.plan).join(' ')).toMatch(/Rows \d+–\d+ at each side: increase 1 every (\d+–)?\d+(th|rd|nd)? rows?, \d+ times → \d+ stitches\./);
   });
 });

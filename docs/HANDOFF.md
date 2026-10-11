@@ -25,6 +25,14 @@
   rectangle, a beanie and a complete sweater at the frozen final fingerprint
   (`V1-PHYSICAL-TRIAL.md`). Do not tag `1.0.0` before that; a rectangle-only run
   is development evidence.
+- **Built since (software only, nothing knitted):**
+  - M5 design language on rectangles.
+  - M6 flat seamed beanies, whose acrylic dev trial (candidate `79670c31`) waits
+    for an operator.
+  - An M7 slice (2026-10-10): flat-panel sweaters (set-in, J-sleeve, drop
+    shoulder; crew or boat neck; any knit/purl/tuck/slip texture; rib trims).
+    They are designed in their own browser workspace or with
+    `studio sweater …`; see STATUS.
 
 ## Next work
 

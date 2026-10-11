@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ChevronDown, Pencil } from 'lucide-react';
 import type { ProjectEdit, ProjectGauge, ProjectState, SweaterObject } from '@kniterate-studio/project-contract';
 import { FITS, SIZES, defaultMeasurements, type Fit, type Measurements, type Size } from './draft';
-import { SWEATER_CHOICES, sweaterEdit, type SweaterPlan } from './sweater';
+import { SHAPE_MEASUREMENTS, SWEATER_CHOICES, sweaterEdit, withoutShapes, type SweaterPlan } from './sweater';
 import { RIBS, TEXTURES, textureMatching } from './textures';
 import { TextureEditor, TextureSwatch } from './TextureSwatch';
 import { SilhouetteIcon } from './SilhouetteIcon';
@@ -71,7 +71,14 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
   const { size, fit } = parseSize(object.size);
   const sized = size !== null && fit !== null ? defaultMeasurements(size, fit, object.silhouette) : null;
   const custom = sized === null || FIELDS.some((field) => (field.show?.(object) ?? true) && Math.abs((sized[field.key] ?? 0) - (object.measurements[field.key] ?? 0)) > 0.05);
-  const applySize = (nextSize: Size, nextFit: Fit, silhouette = object.silhouette) => change(`Size ${nextSize}, ${nextFit} fit`, { ...object, silhouette, size: `${nextSize} ${nextFit}`, measurements: defaultMeasurements(nextSize, nextFit, silhouette) });
+  const shaped = plan.custom.body || plan.custom.sleeve;
+  const resetNote = shaped ? ' (your shapes reset)' : '';
+  const applySize = (nextSize: Size, nextFit: Fit, silhouette = object.silhouette) => change(`Size ${nextSize}, ${nextFit} fit${resetNote}`, { ...withoutShapes(object), silhouette, size: `${nextSize} ${nextFit}`, measurements: defaultMeasurements(nextSize, nextFit, silhouette) });
+  const lockedBy = (key: keyof Measurements): 'body' | 'sleeve' | null => (plan.custom.body && SHAPE_MEASUREMENTS.body.includes(key) ? 'body' : plan.custom.sleeve && SHAPE_MEASUREMENTS.sleeve.includes(key) ? 'sleeve' : null);
+  const releaseShape = (kind: 'body' | 'sleeve') => {
+    const { [kind]: _dropped, ...others } = object.shapes ?? {};
+    change(`${kind === 'body' ? 'Body' : 'Sleeve'} shape from the measurements`, { ...object, shapes: Object.keys(others).length > 0 ? others : undefined });
+  };
   const library = textureMatching(object.body.texture);
   const gauge = plan.gauge;
   const setGauge = (next: Pick<ProjectGauge, 'stitchesPer10cm' | 'rowsPer10cm' | 'source'>, label: string) => operate(label, [{ kind: 'set-gauge', gauge: { ...next } }]);
@@ -84,7 +91,7 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
           if (choice.id === object.silhouette) return;
           // Keep a standard size standard: the new style gets its own fitted measurements.
           if (size !== null && fit !== null && !custom) applySize(size, fit, choice.id);
-          else change(`${choice.name}`, { ...object, silhouette: choice.id });
+          else change(`${choice.name}${resetNote}`, { ...withoutShapes(object), silhouette: choice.id });
         }}>
           <SilhouetteIcon silhouette={choice.id} neckline={object.neckline} />
           <b>{choice.name}</b>
@@ -102,16 +109,20 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
         {FIELDS.filter((field) => field.show?.(object) ?? true).map((field) => {
           const wanted = object.measurements[field.key] ?? (field.key === 'shoulderDrop' ? 2 : 0);
           const knitted = plan.knitted[field.key];
-          const off = knitted !== undefined && Math.abs(knitted - wanted) >= 1;
-          return <label key={field.key} className="measure-row" title={field.hint}>
+          const locked = lockedBy(field.key);
+          const off = locked === null && knitted !== undefined && Math.abs(knitted - wanted) >= 1;
+          return <label key={field.key} className={`measure-row${locked ? ' locked' : ''}`} title={locked ? `Your ${locked} shape sets this; the knitted value is shown.` : field.hint}>
             <span>{field.label}</span>
-            <NumberInput label={field.label} value={wanted} min={field.key === 'backNeckDepth' || field.key === 'shoulderDrop' ? 0 : 1} max={field.key === 'shoulderDrop' ? 15 : 250} suffix="cm"
-              onCommit={(value) => change(`${field.label} ${value} cm`, { ...object, measurements: { ...object.measurements, [field.key]: value } })} />
+            {locked
+              ? <span className="shape-locked">from shape</span>
+              : <NumberInput label={field.label} value={wanted} min={field.key === 'backNeckDepth' || field.key === 'shoulderDrop' ? 0 : 1} max={field.key === 'shoulderDrop' ? 15 : 250} suffix="cm"
+                  onCommit={(value) => change(`${field.label} ${value} cm`, { ...object, measurements: { ...object.measurements, [field.key]: value } })} />}
             <span className={`knitted${off ? ' off' : ''}`}>{knitted === undefined ? '—' : `${knitted}`}</span>
           </label>;
         })}
       </div>
-      <p className="design-hint">Measurements are the finished sweater, not the body. "Knitted" is what the machine makes at your gauge.</p>
+      {(['body', 'sleeve'] as const).filter((kind) => plan.custom[kind]).map((kind) => <p key={kind} className="shape-note">The {kind === 'body' ? 'front and back follow' : 'sleeves follow'} your own shape. <button type="button" className="link-button" onClick={() => releaseShape(kind)}>Use the measurements</button></p>)}
+      <p className="design-hint">Measurements are the finished sweater, not the body. "Knitted" is what the machine makes at your gauge. To shape a piece freely, open it and choose Shape.</p>
     </Section>
 
     <Section title="Stitch" aside={<em className="section-aside">{object.body.name}</em>}>

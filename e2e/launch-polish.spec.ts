@@ -6,7 +6,9 @@ test('creates, renames, recolors, autosaves, and recovers a customer project', a
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
 
-  await page.getByRole('button', { name: 'New project' }).first().click();
+  // A first visit starts by choosing what to make.
+  await expect(page.getByRole('heading', { name: 'What would you like to make?' })).toBeVisible();
+  await page.getByRole('button', { name: /^Scarf or blanket/ }).click();
   const newProject = page.getByRole('dialog', { name: 'New project' });
   await newProject.getByLabel('Project name').fill('Harbor blanket');
   await newProject.getByLabel('Needles').fill('64');

@@ -310,3 +310,31 @@ describe('authored CLI command receipts', () => {
     expect(missingFile.receipt.error.message).toContain('ENOENT');
   });
 });
+
+describe('sweater CLI', () => {
+  it('creates a sweater, reads and hand-shapes its edge, and resets it, each as one operation', { timeout: 60_000 }, () => {
+    const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-sweater-'));
+    const projectPath = resolve(directory, 'sweater.json');
+    const created = cli(['sweater', 'new', '-o', projectPath, '--silhouette', 'drop-shoulder', '--size', 'M', '--fit', 'relaxed', '--stitch', 'seed']);
+    expect(created.status).toBe(0);
+    expect(created.receipt).toMatchObject({ kind: 'kniterate-studio-sweater-plan', design: { silhouette: 'drop-shoulder', stitch: { name: 'Seed stitch' } }, shapes: { body: { custom: false } } });
+    expect(created.receipt.shapes.body.points).toMatch(/^60,0 60,[\d.]+,underarm 60,[\d.]+$/);
+    // A flared hem and a waist: the measurements that drew the body now come from the shape.
+    const shaped = cli(['sweater', 'shape', projectPath, '--body', '66,0 54,22 60,44,underarm 60,62']);
+    expect(shaped.status).toBe(0);
+    expect(shaped.receipt).toMatchObject({ changed: 'body shaped by hand', shapes: { body: { custom: true, points: '66,0 54,22 60,44,underarm 60,62' } } });
+    const plan = cli(['sweater', 'plan', projectPath]).receipt;
+    expect(plan.measurements.find((item: { key: string }) => item.key === 'chest')).toMatchObject({ setBy: 'shape', knittedCm: 120 });
+    expect(plan.seams.find((item: { label: string }) => item.label === 'Hem')).toMatchObject({ cm: 131.2 });
+    expect(plan.pieces[0].steps.join(' ')).toMatch(/at each side: decrease 1 every .* times → \d+ stitches\..* at each side: increase 1 every/);
+    // The drop-shoulder sleeve top no longer matches the shortened armhole: a seam warning, not a silent mismatch.
+    expect(plan.findings.map((finding: { rule: string }) => finding.rule)).toContain('sweater-seam-mismatch');
+    const refused = cli(['sweater', 'shape', projectPath, '--body', '60,0 60,50 58,40,underarm']);
+    expect(refused.status).toBe(2);
+    expect(refused.receipt.error.message).toMatch(/goes down between point 2 and point 3/);
+    const reset = cli(['sweater', 'shape', projectPath, '--reset', 'body']);
+    expect(reset.receipt).toMatchObject({ changed: 'body shape from the measurements', shapes: { body: { custom: false } } });
+    const project = parseColorworkProjectV1(JSON.parse(readFileSync(projectPath, 'utf8')));
+    expect(project.history.entries.filter((entry) => entry.label).map((entry) => entry.label)).toEqual(['Create Sweater', 'Seed stitch', 'Body shaped by hand', 'Body shape from the measurements']);
+  });
+});

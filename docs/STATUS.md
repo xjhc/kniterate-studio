@@ -290,6 +290,20 @@ ship," trust this file and the working tree instead.
     sweater projects there. The `knit-design` skill documents it.
   - The plan gives a yarn estimate from the stitch count (±20%, labelled as
     an estimate).
+  - **Hand shaping (2026-10-10, garment-shaping-machine style).** Each edge
+    is a few key points (`object.shapes.body`, shared by front and back so
+    the side seams match, and `object.shapes.sleeve`). Each segment is
+    straight, concave or convex, and one point is the underarm.
+    - The style draws them from the measurements until the knitter drags,
+      adds, types or deletes a point in the piece's Shape mode (or with
+      `studio sweater shape`). After that, the measurements that drew the
+      edge are marked as set by the shape, and "Back to measurements" resets.
+    - A set-in or J sleeve cap refits itself to the drafted armhole, whatever
+      its shape.
+    - Shaping is shown and written as a knitter reads it: "Rows 21–129:
+      increase 1 every 3–4 rows, 33 times → 120 stitches".
+  - **First visit:** a start screen offers Sweater, Beanie or Scarf/blanket, a
+    project file or a machine file, or a blank chart.
   - Each piece is subject to the authored program limits. An oversized
     garter or seed piece can need more than the 200,000 checked needle
     selections; that is a design-owned `sweater-piece-too-large` error that

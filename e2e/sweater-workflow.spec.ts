@@ -2,9 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function createSweater(page: Page, style: 'Drop shoulder' | 'J-sleeve' | 'Set-in sleeve', stitch: string) {
   await page.goto('/?theme=light');
-  await page.getByRole('button', { name: 'New project' }).first().click();
+  await page.getByRole('button', { name: /^Sweater/ }).click();
   const dialog = page.getByRole('dialog', { name: 'New project' });
-  await dialog.getByRole('tab', { name: 'Sweater' }).click();
+  await expect(dialog.getByRole('tab', { name: 'Sweater' })).toHaveAttribute('aria-selected', 'true');
   await dialog.getByLabel('Project name').fill('Weekend sweater');
   await dialog.getByRole('button', { name: style }).click();
   await dialog.getByLabel('Stitch').selectOption({ label: stitch });
@@ -52,7 +52,7 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   const box = (await canvas.boundingBox())!;
   await page.mouse.move(box.x + box.width / 2, box.y + box.height - 2);
   await expect(page.locator('.piece-tooltip')).toContainText(/^Row [12] · \d+ stitches · rib/);
-  await expect(page.locator('.piece-events li').first()).toBeVisible();
+  await expect(page.locator('.piece-rhythm li').first()).toContainText(/^Rows? \d+/);
   await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Whole sweater' }).click();
 
   // An unknittable custom stitch is explained and blocks; a fix unblocks.
@@ -95,4 +95,46 @@ test('each sleeve style keeps every piece knittable', async ({ page }) => {
     await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
     await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(4);
   }
+});
+
+test('a piece is shaped by hand like a garment-shaping machine: drag, add a waist, type a point, reset', async ({ page }) => {
+  test.setTimeout(240_000);
+  await createSweater(page, 'Set-in sleeve', 'Stockinette');
+  await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+  await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Front' }).click();
+  await page.getByRole('tab', { name: 'Shape' }).click();
+  await expect(page.locator('.shape-source')).toHaveText('Drawn from your measurements — dragging makes it your own');
+
+  // Drag the hem point out: an A-line. The measurements it replaces now say so.
+  const hem = page.getByRole('button', { name: /^Hem: 55 cm wide, 0 cm up/ });
+  const box = (await hem.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2, { steps: 8 });
+  await page.mouse.up();
+  await expect(page.getByRole('button', { name: /^Hem: 6\d(\.5)? cm wide, 0 cm up/ })).toBeVisible();
+  await expect(page.locator('.shape-source')).toHaveText('Your shape — the measurements no longer draw it');
+  await expect(page.locator('.measure-row.locked')).toHaveCount(4);
+  await expect(page.locator('.piece-rhythm')).toContainText(/decrease 1 every/);
+
+  // Add a waist between the hem and the underarm, and type its width.
+  await page.getByRole('button', { name: 'Add a point between the hem and the underarm' }).click();
+  const width = page.getByLabel('Point width (cm)');
+  await width.fill('48');
+  await width.press('Enter');
+  await expect(page.getByRole('button', { name: /^Point 2: 48 cm wide/ })).toBeVisible();
+  await expect(page.locator('.piece-rhythm')).toContainText(/increase 1 every/);
+
+  // Every piece still compiles; the back shares the edge.
+  await expect(status(page)).toContainText('Knittable — sizes not confirmed', { timeout: 90_000 });
+  await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(4);
+  await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Back' }).click();
+  await expect(page.getByRole('button', { name: /^Point 2: 48 cm wide/ })).toBeVisible();
+
+  // Back to the measurements, as one undoable change.
+  await page.getByRole('button', { name: 'Back to measurements' }).click();
+  await expect(page.getByRole('button', { name: /^Hem: 55 cm wide, 0 cm up/ })).toBeVisible();
+  await expect(page.locator('.measure-row.locked')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByRole('button', { name: /^Point 2: 48 cm wide/ })).toBeVisible();
 });

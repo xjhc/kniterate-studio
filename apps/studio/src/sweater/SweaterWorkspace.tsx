@@ -17,7 +17,7 @@ import { zipStore } from '../zip';
 import type { PieceId } from './draft';
 import { AssembledView, GarmentView } from './GarmentView';
 import { PieceView } from './PieceView';
-import { planSweater } from './sweater';
+import { planSweater, sweaterEdit } from './sweater';
 import { SweaterDesignPanel } from './SweaterDesignPanel';
 import { sweaterInstructions, sweaterPackageFiles } from './sweaterHandoff';
 import type { SweaterRunState } from './sweaterRun';
@@ -137,7 +137,21 @@ export function SweaterWorkspace({ project, onProject, onOpenProject, onNewProje
           : selected.raster
             ? <div className="piece-wrap">
                 <div className="piece-summary"><h2>{selected.name}{selected.copies > 1 ? ` — knit ${selected.copies}` : ''}</h2><p>{selected.raster.realized.castOnStitches} stitches cast on · {selected.raster.rows.length} rows · {selected.raster.realized.widthCm} cm wide · {selected.raster.realized.heightCm} cm tall</p></div>
-                <PieceView raster={selected.raster} hex={yarn.hex} label={selected.name} />
+                <PieceView raster={selected.raster} hex={yarn.hex} label={selected.name} editor={selected.id === 'neckband' ? undefined : (() => {
+                  const kind = selected.id === 'sleeve' ? 'sleeve' as const : 'body' as const;
+                  const object = plan.object;
+                  return {
+                    kind,
+                    edge: plan.draft.edges[kind],
+                    custom: plan.custom[kind],
+                    outline: selected.draft.outline,
+                    onChange: (edge, label) => { operate(label[0]!.toUpperCase() + label.slice(1), [sweaterEdit({ ...object, shapes: { ...object.shapes, [kind]: edge } })]); },
+                    onReset: () => {
+                      const { [kind]: _dropped, ...others } = object.shapes ?? {};
+                      operate(`${kind === 'body' ? 'Body' : 'Sleeve'} shape from the measurements`, [sweaterEdit({ ...object, shapes: Object.keys(others).length > 0 ? others : undefined })]);
+                    },
+                  };
+                })()} />
               </div>
             : <p className="stage-error">{selected.error}</p>}
       </div>

@@ -131,6 +131,21 @@ const RibTrimSchema = z.object({
 const SweaterCm = z.number().positive().max(250);
 
 /**
+ * A key point of a piece edge (the right half, bottom up): x cm from the
+ * centre line, y cm above the cast-on. `curve` says how the edge arrives here
+ * from the previous point; `underarm` marks where the armhole or the sleeve
+ * cap starts.
+ */
+const ShapePointSchema = z.object({
+  x: z.number().min(0).max(130),
+  y: z.number().min(0).max(250),
+  curve: z.enum(['concave', 'convex']).optional(),
+  underarm: z.literal(true).optional(),
+});
+export type SweaterShapePoint = z.infer<typeof ShapePointSchema>;
+const ShapeEdgeSchema = z.array(ShapePointSchema).min(2).max(60);
+
+/**
  * A flat-panel sweater: the front, back, two sleeves and (for a crew neck) a
  * neckband are knitted as separate pieces and sewn. Measurements are the
  * finished garment's, in cm; the pieces' shapes are drafted from them and
@@ -174,6 +189,13 @@ const SweaterObjectSchema = z.object({
   top: z.enum(['bind-off', 'waste']).optional(),
   /** Stitches moved by each decrease and increase: 1 at the edge, 2–3 for a fashioning line set in from it. */
   fashion: z.number().int().min(1).max(3).optional(),
+  /**
+   * The knitter's own shapes, replacing the style's: the body edge (side seam,
+   * armhole and shoulder point, shared by front and back so the side seams
+   * match) and the sleeve edge (cuff to the top's outer corner). The
+   * measurements that drew an edge no longer change it.
+   */
+  shapes: z.object({ body: ShapeEdgeSchema.optional(), sleeve: ShapeEdgeSchema.optional() }).optional(),
 });
 export type SweaterObject = z.infer<typeof SweaterObjectSchema>;
 

@@ -1,4 +1,4 @@
-import type { SweaterObject } from '@kniterate-studio/project-contract';
+import type { SweaterObject, SweaterShapePoint } from '@kniterate-studio/project-contract';
 
 /**
  * Drafting: a sweater's finished measurements become the outline of each
@@ -48,6 +48,8 @@ export interface SweaterDraft {
   };
   /** Heights that the measurements are taken between, cm above the cast-on edge. */
   levels: { underarm: number; shoulderPoint: number; top: number; sleeveUnderarm: number };
+  /** The body and sleeve edges the pieces were drafted from: the style's, or the knitter's own. */
+  edges: { body: ShapePoint[]; sleeve: ShapePoint[] };
   /** Derived drafting values, each with how it was found. */
   derived: { label: string; cm: number; how: string }[];
 }
@@ -135,6 +137,43 @@ export function polylineLength(points: readonly Point[]): number {
   return length;
 }
 
+/**
+ * One edge of a piece's right half, as key points from the bottom up: x cm
+ * from the centre line, y cm above the cast-on. Each point says how the edge
+ * arrives at it from the point before: straight, `concave` (setting off
+ * across, arriving upright: an armhole) or `convex` (setting off upright,
+ * arriving across: the top of a sleeve cap). `underarm` marks where the
+ * armhole (or the sleeve cap) starts.
+ */
+export type ShapePoint = SweaterShapePoint;
+export type EdgeKind = 'body' | 'sleeve';
+
+/** The edge as a polyline, curves sampled. */
+export function sampleEdge(points: readonly ShapePoint[]): Point[] {
+  const out: Point[] = points.length > 0 ? [{ x: points[0]!.x, y: points[0]!.y }] : [];
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1]!;
+    const cur = points[i]!;
+    if (cur.curve === 'concave') out.push(...bezier(prev, { x: prev.x + (cur.x - prev.x) * 0.55, y: prev.y }, { x: cur.x, y: prev.y + (cur.y - prev.y) * 0.45 }, cur, 16).slice(1));
+    else if (cur.curve === 'convex') out.push(...bezier(prev, { x: prev.x, y: prev.y + (cur.y - prev.y) * 0.55 }, { x: prev.x + (cur.x - prev.x) * 0.45, y: cur.y }, cur, 12).slice(1));
+    else out.push({ x: cur.x, y: cur.y });
+  }
+  return out;
+}
+
+/** Why an edge cannot be knitted from the bottom up, or null. */
+export function edgeProblem(points: readonly ShapePoint[], kind: EdgeKind): string | null {
+  const name = kind === 'body' ? 'The body edge' : 'The sleeve edge';
+  if (points.length < 2) return `${name} needs at least two points.`;
+  if (points[0]!.y !== 0) return `${name} must start at the cast-on (height 0).`;
+  for (let i = 1; i < points.length; i++) if (points[i]!.y < points[i - 1]!.y) return `${name} goes down between point ${i} and point ${i + 1}; a knitted edge only rises.`;
+  if (points.some((point) => point.x < 1)) return `${name} comes within 1 cm of the centre line.`;
+  const underarm = points.filter((point) => point.underarm).length;
+  if (underarm !== 1) return `${name} needs exactly one underarm point (it has ${underarm}).`;
+  if (kind === 'body' && points[0]!.underarm) return 'The body’s underarm cannot be at the hem.';
+  return null;
+}
+
 /** A neck edge from the neck point (half width at the top) down to the centre front, flat at the bottom. */
 function neckCurve(halfWidth: number, top: number, depth: number, flatFraction: number): Point[] {
   if (depth <= 0) return [{ x: halfWidth, y: top }, { x: 0, y: top }];
@@ -156,41 +195,116 @@ function mirror(right: Point[]): Point[] {
   return [...right, ...left];
 }
 
-/** The armhole edge of a body piece, from the underarm at the side to the shoulder point. */
-function armholeEdge(silhouette: Silhouette, width: number, shoulderWidth: number, underarm: number, shoulderPoint: number): Point[] {
-  const side = width / 2;
+const shoulderDropOf = (object: SweaterObject) => (object.neckline === 'boat' ? 0 : Math.max(0, object.measurements.shoulderDrop ?? (object.silhouette === 'set-in' ? 2 : 1.5)));
+
+/** The style's body edge from the measurements: side seam, armhole and the shoulder point. */
+export function templateBodyEdge(object: SweaterObject): ShapePoint[] {
+  const m = object.measurements;
+  const side = m.chest / 4;
+  const shoulderWidth = object.silhouette === 'drop-shoulder' ? m.chest / 2 : Math.min(m.chest / 2, m.shoulderWidth);
+  const shoulderPoint = m.length - shoulderDropOf(object);
+  const underarm = Math.max(object.trims.hem.cm + 5, shoulderPoint - m.armholeDepth);
   const inset = Math.max(0, side - shoulderWidth / 2);
-  if (silhouette === 'drop-shoulder' || inset < 0.5) return [{ x: side, y: underarm }, { x: side, y: shoulderPoint }];
+  if (object.silhouette === 'drop-shoulder' || inset < 0.5) return [{ x: side, y: 0 }, { x: side, y: underarm, underarm: true }, { x: side, y: shoulderPoint }];
   // A bind-off at the underarm, then a curve into the straight armhole.
-  const bindOff = inset * (silhouette === 'j-sleeve' ? 0.6 : 0.4);
-  const curveHeight = silhouette === 'j-sleeve' ? inset : Math.min((shoulderPoint - underarm) * 0.4, inset * 1.6);
-  const start = { x: side - bindOff, y: underarm };
-  const end = { x: shoulderWidth / 2, y: underarm + curveHeight };
-  const curve = bezier(start, { x: start.x - (start.x - end.x) * 0.55, y: underarm }, { x: end.x, y: underarm + curveHeight * 0.45 }, end, 16);
-  return [{ x: side, y: underarm }, ...curve, { x: end.x, y: shoulderPoint }];
+  const bindOff = inset * (object.silhouette === 'j-sleeve' ? 0.6 : 0.4);
+  const curveHeight = object.silhouette === 'j-sleeve' ? inset : Math.min((shoulderPoint - underarm) * 0.4, inset * 1.6);
+  return [
+    { x: side, y: 0 },
+    { x: side, y: underarm, underarm: true },
+    { x: side - bindOff, y: underarm },
+    { x: shoulderWidth / 2, y: underarm + curveHeight, curve: 'concave' },
+    { x: shoulderWidth / 2, y: shoulderPoint },
+  ];
 }
 
-/** Draft every piece of the sweater from its finished measurements. */
+/**
+ * The style's sleeve edge: cuff rib, a taper to the upper arm 4 cm below the
+ * underarm, then the top. The top is fitted to the body's actual armhole
+ * (its own, or the one the knitter shaped): flat for a drop shoulder, the
+ * armhole's step and curve under a flat top for a J-sleeve, and for a set-in
+ * sleeve the step, a short curve, a slope and a rounded top, the slope's
+ * height fitted so one cap edge matches one armhole edge (at most 80% of the
+ * armhole depth).
+ */
+export function templateSleeveEdge(object: SweaterObject, body: readonly ShapePoint[]): { edge: ShapePoint[]; derived: SweaterDraft['derived'] } {
+  const m = object.measurements;
+  const cuffHalf = m.cuff / 2;
+  const armHalf = Math.max(cuffHalf, m.upperArm / 2);
+  const sleeveUnderarm = Math.max(object.trims.cuff.cm + 6, m.sleeveLength);
+  const taperEnd = Math.max(object.trims.cuff.cm + 2, sleeveUnderarm - 4);
+  const base: ShapePoint[] = [
+    { x: cuffHalf, y: 0 },
+    { x: cuffHalf, y: object.trims.cuff.cm },
+    ...(armHalf - cuffHalf > 0.05 ? [{ x: armHalf, y: taperEnd }] : []),
+    { x: armHalf, y: sleeveUnderarm, underarm: true },
+  ];
+  const at = body.findIndex((point) => point.underarm);
+  const armhole = body.slice(Math.max(0, at));
+  const underarm = armhole[0]!;
+  const last = armhole.at(-1)!;
+  const inset = underarm.x - last.x;
+  if (object.silhouette === 'drop-shoulder' || inset < 0.5) {
+    return { edge: base, derived: [{ label: 'Sleeve top width', cm: round1(armHalf * 2), how: 'the upper arm; it sews straight along both armhole edges' }] };
+  }
+  // The armhole's step and curve: the points after the underarm, without the straight run up to the shoulder.
+  let curveEnd = armhole.length - 1;
+  while (curveEnd > 1 && Math.abs(armhole[curveEnd - 1]!.x - last.x) < 1e-6) curveEnd--;
+  const shaped = armhole.slice(1, curveEnd + 1);
+  const map = (point: ShapePoint): ShapePoint => ({ x: armHalf - (underarm.x - point.x), y: sleeveUnderarm + (point.y - underarm.y), ...(point.curve ? { curve: point.curve } : {}) });
+  if (object.silhouette === 'j-sleeve') {
+    const edge = [...base, ...shaped.map(map)];
+    const straight = last.y - (shaped.at(-1)?.y ?? underarm.y);
+    return { edge, derived: [{ label: 'Sleeve top width', cm: round1(edge.at(-1)!.x * 2), how: `sews along the straight armhole edges (${round1(straight * 2)} cm front and back)` }] };
+  }
+  const armholeLength = polylineLength(sampleEdge(armhole));
+  const bindOff = shaped[0] && Math.abs(shaped[0].y - underarm.y) < 1e-6 ? underarm.x - shaped[0].x : 0;
+  const topHalf = Math.max(2.5, m.upperArm * 0.12);
+  const capStart: ShapePoint = { x: armHalf - bindOff, y: sleeveUnderarm };
+  const curveInset = Math.max(0.5, Math.min(capStart.x - topHalf - 1, inset - bindOff));
+  const underCurveHeight = Math.min(3, curveInset);
+  const curveTop: ShapePoint = { x: capStart.x - curveInset, y: capStart.y + underCurveHeight, curve: 'concave' };
+  const round = Math.min(2, Math.max(0.5, (curveTop.x - topHalf) / 3));
+  const capFor = (slope: number): ShapePoint[] => [capStart, curveTop, { x: topHalf + round, y: curveTop.y + slope }, { x: topHalf, y: curveTop.y + slope + round, curve: 'convex' }];
+  const wanted = armholeLength + 0.5;
+  // The cap's height limit follows the armhole actually drafted (the measurement, unless the knitter shaped it).
+  const armholeDepth = last.y - underarm.y;
+  const maxSlope = Math.max(0.5, armholeDepth * 0.8 - underCurveHeight - round);
+  let lo = 0;
+  let hi = maxSlope;
+  const capLength = (slope: number) => bindOff + polylineLength(sampleEdge([capStart, ...capFor(slope).slice(1)]));
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (capLength(mid) < wanted) lo = mid; else hi = mid;
+  }
+  const cap = capFor(hi);
+  const edge = [...base, ...(bindOff > 0 ? [cap[0]!] : []), ...cap.slice(1)];
+  return { edge, derived: [{ label: 'Sleeve cap height', cm: round1(edge.at(-1)!.y - sleeveUnderarm), how: `the armhole's bind-off and curve, then a slope fitted so the cap edge (${round1(capLength(hi))} cm) matches the armhole edge (${round1(armholeLength)} cm), at most 80% of the armhole depth` }] };
+}
+
+/** Draft every piece of the sweater: the style's edges from the measurements, or the knitter's own shapes. */
 export function draftSweater(object: SweaterObject): SweaterDraft {
   const m = object.measurements;
-  const { silhouette, neckline } = object;
-  const width = m.chest / 2;
-  const shoulderWidth = silhouette === 'drop-shoulder' ? width : Math.min(width, m.shoulderWidth);
-  const drop = neckline === 'boat' ? 0 : Math.max(0, m.shoulderDrop ?? (silhouette === 'set-in' ? 2 : 1.5));
-  const top = m.length;
-  const shoulderPoint = top - drop;
-  const underarm = Math.max(object.trims.hem.cm + 5, shoulderPoint - m.armholeDepth);
-  const neckHalf = Math.min(m.neckWidth / 2, shoulderWidth / 2 - 4);
-  const derived: SweaterDraft['derived'] = [];
-
-  const armhole = armholeEdge(silhouette, width, shoulderWidth, underarm, shoulderPoint);
-  const shoulderLine = [{ x: shoulderWidth / 2, y: shoulderPoint }, { x: neckHalf, y: top }];
+  const { neckline } = object;
+  const bodyEdge = object.shapes?.body ?? templateBodyEdge(object);
+  const sleeveTemplate = templateSleeveEdge(object, bodyEdge);
+  const sleeveEdge = object.shapes?.sleeve ?? sleeveTemplate.edge;
+  const derived: SweaterDraft['derived'] = object.shapes?.sleeve ? [] : [...sleeveTemplate.derived];
+  const bodyPoints = sampleEdge(bodyEdge);
+  const shoulder = bodyEdge.at(-1)!;
+  const shoulderPoint = shoulder.y;
+  const top = shoulderPoint + shoulderDropOf(object);
+  const underarmPoint = bodyEdge.find((point) => point.underarm) ?? bodyEdge[0]!;
+  const underarm = underarmPoint.y;
+  const width = bodyEdge[0]!.x * 2;
+  const neckHalf = Math.max(1, Math.min(m.neckWidth / 2, shoulder.x - 4));
+  const armhole = sampleEdge(bodyEdge.slice(bodyEdge.indexOf(underarmPoint)));
+  const shoulderLine = [{ x: shoulder.x, y: shoulderPoint }, { x: neckHalf, y: top }];
   const bodyPiece = (id: 'back' | 'front', neckDepth: number, flat: number): DraftPiece => {
-    const neck = neckline === 'crew' ? neckCurve(neckHalf, top, neckDepth, flat) : [{ x: shoulderWidth / 2, y: top }, { x: 0, y: top }];
+    const neck = neckline === 'crew' ? neckCurve(neckHalf, top, neckDepth, flat) : [{ x: shoulder.x, y: top }, { x: 0, y: top }];
     const right: Point[] = [
       { x: 0, y: 0 },
-      { x: width / 2, y: 0 },
-      ...armhole,
+      ...bodyPoints,
       ...(neckline === 'crew' ? [...shoulderLine.slice(1), ...neck.slice(1)] : neck),
     ];
     return {
@@ -203,94 +317,35 @@ export function draftSweater(object: SweaterObject): SweaterDraft {
       allRib: false,
       edges: {
         hem: [{ x: -width / 2, y: 0 }, { x: width / 2, y: 0 }],
-        side: [{ x: width / 2, y: 0 }, { x: width / 2, y: underarm }],
+        side: sampleEdge(bodyEdge.slice(0, bodyEdge.indexOf(underarmPoint) + 1)),
         armhole,
-        ...(neckline === 'crew' ? { shoulder: shoulderLine, neck } : { top: [{ x: -shoulderWidth / 2, y: top }, { x: shoulderWidth / 2, y: top }] }),
+        ...(neckline === 'crew' ? { shoulder: shoulderLine, neck } : { top: [{ x: -shoulder.x, y: top }, { x: shoulder.x, y: top }] }),
       },
     };
   };
   const back = bodyPiece('back', Math.min(m.backNeckDepth, m.frontNeckDepth), 0.7);
   const front = bodyPiece('front', m.frontNeckDepth, 0.4);
-  const armholeLength = polylineLength(armhole);
 
-  // Sleeve: cuff rib, a straight taper to the upper arm 4 cm below the underarm, then the top.
-  const cuffHalf = m.cuff / 2;
-  const armHalf = Math.max(cuffHalf, m.upperArm / 2);
-  const sleeveUnderarm = Math.max(object.trims.cuff.cm + 6, m.sleeveLength);
-  const taperEnd = Math.max(object.trims.cuff.cm + 2, sleeveUnderarm - 4);
-  const bodyInset = width / 2 - shoulderWidth / 2;
-  let sleeveTop: Point[];
-  let sleeveTopLength: number;
-  if (silhouette === 'drop-shoulder' || bodyInset < 0.5) {
-    sleeveTop = [{ x: armHalf, y: sleeveUnderarm }, { x: 0, y: sleeveUnderarm }];
-    sleeveTopLength = armHalf;
-    derived.push({ label: 'Sleeve top width', cm: round1(armHalf * 2), how: 'the upper arm; it sews straight along both armhole edges' });
-  } else {
-    // The cap starts with the armhole's underarm bind-off. A J-sleeve's cap
-    // mirrors its short armhole curve under a flat top; a set-in cap curves
-    // in, then slopes to a rounded top, with the slope's height fitted so one
-    // cap edge matches one armhole edge.
-    const bindOff = armhole[0]!.x - armhole[1]!.x;
-    if (silhouette === 'j-sleeve') {
-      const curve = armhole.slice(1, -1).map((p) => ({ x: armHalf - (armhole[0]!.x - p.x), y: sleeveUnderarm + (p.y - underarm) }));
-      const curveEnd = curve.at(-1)!;
-      const straightArmhole = shoulderPoint - armhole.at(-2)!.y;
-      const capCurveLength = bindOff + polylineLength(curve);
-      // The flat top sews along the straight part of both armhole edges.
-      sleeveTop = [{ x: armHalf, y: sleeveUnderarm }, ...curve, { x: 0, y: curveEnd.y }];
-      sleeveTopLength = capCurveLength + curveEnd.x;
-      derived.push({ label: 'Sleeve top width', cm: round1(curveEnd.x * 2), how: `sews along the straight armhole edges (${round1(straightArmhole * 2)} cm front and back)` });
-    } else {
-      const topHalf = Math.max(2.5, m.upperArm * 0.12);
-      // A short underarm curve (the rest of the armhole's inset), then the slope.
-      const capStart = { x: armHalf - bindOff, y: sleeveUnderarm };
-      const inset = Math.max(0.5, Math.min(capStart.x - topHalf - 1, armhole[0]!.x - shoulderWidth / 2 - bindOff));
-      const underCurveHeight = Math.min(3, inset);
-      const underCurve = bezier(capStart, { x: capStart.x - inset * 0.6, y: capStart.y }, { x: capStart.x - inset, y: capStart.y + underCurveHeight * 0.4 }, { x: capStart.x - inset, y: capStart.y + underCurveHeight }, 10);
-      const curveTop = underCurve.at(-1)!;
-      const round = Math.min(2, Math.max(0.5, (curveTop.x - topHalf) / 3));
-      const capFor = (slope: number): Point[] => {
-        const slopeEnd = { x: topHalf + round, y: curveTop.y + slope };
-        const arc = Array.from({ length: 9 }, (_, i) => {
-          const angle = (Math.PI / 2) * (i / 8);
-          return { x: topHalf + round * Math.cos(angle), y: slopeEnd.y + round * Math.sin(angle) };
-        });
-        return [...underCurve, slopeEnd, ...arc.slice(1)];
-      };
-      const wanted = armholeLength + 0.5;
-      const maxSlope = Math.max(0.5, m.armholeDepth * 0.8 - underCurveHeight - round);
-      let lo = 0;
-      let hi = maxSlope;
-      for (let i = 0; i < 40; i++) {
-        const mid = (lo + hi) / 2;
-        if (bindOff + polylineLength(capFor(mid)) < wanted) lo = mid; else hi = mid;
-      }
-      const cap = capFor(hi);
-      const capTop = cap.at(-1)!;
-      sleeveTop = [{ x: armHalf, y: sleeveUnderarm }, ...cap, { x: 0, y: capTop.y }];
-      sleeveTopLength = bindOff + polylineLength(cap);
-      derived.push({ label: 'Sleeve cap height', cm: round1(capTop.y - sleeveUnderarm), how: `the armhole's bind-off and curve, then a slope fitted so the cap edge (${round1(sleeveTopLength)} cm) matches the armhole edge (${round1(armholeLength)} cm), at most 80% of the armhole depth` });
-    }
-  }
-  const sleeveRight: Point[] = [
-    { x: 0, y: 0 },
-    { x: cuffHalf, y: 0 },
-    { x: cuffHalf, y: object.trims.cuff.cm },
-    { x: armHalf, y: taperEnd },
-    ...sleeveTop,
-  ];
+  const sleevePoints = sampleEdge(sleeveEdge);
+  const sleeveUnderarmPoint = sleeveEdge.find((point) => point.underarm) ?? sleeveEdge.at(-1)!;
+  const sleeveUnderarm = sleeveUnderarmPoint.y;
+  const sleeveTopCorner = sleeveEdge.at(-1)!;
+  const cap = sampleEdge(sleeveEdge.slice(sleeveEdge.indexOf(sleeveUnderarmPoint)));
+  // A J-sleeve's or drop shoulder's flat top sews along the straight armhole too.
+  const sleeveTopLength = polylineLength(cap) + (object.silhouette === 'set-in' ? 0 : sleeveTopCorner.x);
+  const cuffHalf = sleeveEdge[0]!.x;
   const sleeve: DraftPiece = {
     id: 'sleeve',
     name: 'Sleeve',
     copies: 2,
-    outline: mirror(dedupe(sleeveRight)),
+    outline: mirror(dedupe([{ x: 0, y: 0 }, ...sleevePoints, { x: 0, y: sleeveTopCorner.y }])),
     bottomRibCm: object.trims.cuff.cm,
     topRibCm: 0,
     allRib: false,
     edges: {
       cuff: [{ x: -cuffHalf, y: 0 }, { x: cuffHalf, y: 0 }],
-      underarm: [{ x: cuffHalf, y: 0 }, { x: cuffHalf, y: object.trims.cuff.cm }, { x: armHalf, y: taperEnd }, { x: armHalf, y: sleeveUnderarm }],
-      cap: sleeveTop,
+      underarm: sampleEdge(sleeveEdge.slice(0, sleeveEdge.indexOf(sleeveUnderarmPoint) + 1)),
+      cap: [...cap, { x: 0, y: sleeveTopCorner.y }],
     },
   };
 
@@ -315,19 +370,20 @@ export function draftSweater(object: SweaterObject): SweaterDraft {
     derived.push({ label: 'Neckband length', cm: round1(bandLength), how: `90% of the neck opening (${round1(neckOpening)} cm) so it sits flat` });
   }
   derived.unshift(
-    { label: 'Body width', cm: round1(width), how: 'half the chest' },
-    { label: 'Underarm height', cm: round1(underarm), how: 'length − shoulder drop − armhole depth' },
+    { label: 'Body width', cm: round1(width), how: object.shapes?.body ? 'from your body shape' : 'half the chest' },
+    { label: 'Underarm height', cm: round1(underarm), how: object.shapes?.body ? 'from your body shape' : 'length − shoulder drop − armhole depth' },
   );
   return {
     pieces,
     seams: {
       sideSeam: underarm,
       sleeveSeam: sleeveUnderarm,
-      armhole: armholeLength,
+      armhole: polylineLength(armhole),
       sleeveTop: sleeveTopLength,
       neckline: neckOpening,
     },
     levels: { underarm, shoulderPoint, top, sleeveUnderarm },
+    edges: { body: bodyEdge, sleeve: sleeveEdge },
     derived,
   };
 }

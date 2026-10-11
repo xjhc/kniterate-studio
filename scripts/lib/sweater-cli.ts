@@ -11,7 +11,7 @@ import {
   type ProjectEdit,
   type SweaterObject,
 } from '../../packages/project-contract/src/index.ts';
-import { FITS, SIZES, defaultMeasurements, type Fit, type Measurements, type Size } from '../../apps/studio/src/sweater/draft.ts';
+import { FITS, SIZES, defaultMeasurements, edgeProblem, type Fit, type Measurements, type ShapePoint, type Size } from '../../apps/studio/src/sweater/draft.ts';
 import { SWEATER_CHOICES, createSweaterProject, planSweater, type SweaterIntent, type SweaterPlan } from '../../apps/studio/src/sweater/sweater.ts';
 import { runSweaterPipeline } from '../../apps/studio/src/sweater/sweaterPipeline.ts';
 import { pieceSteps, sweaterInstructions, sweaterPackageFiles } from '../../apps/studio/src/sweater/sweaterHandoff.ts';
@@ -36,6 +36,14 @@ export const SWEATER_USAGE = `Sweaters (flat pieces, sewn): pnpm --silent studio
         [--hem-cm X] [--cuff-cm X] [--neck-cm X] [--cuff-rib R] [--neck-rib R] [-o <out.json>]
       Change the design as one undoable operation; prints the knitted measurements before and after.
       --size/--fit replace every measurement with that size's; --measure changes just those named.
+  sweater shape <project.json> [--body "<points>"] [--sleeve "<points>"] [--reset body|sleeve|all] [-o <out.json>]
+      Shape the pieces by hand, like a garment-shaping knitting machine: each edge is key points from the
+      bottom up, "width,height[,underarm][,concave|convex]" in cm, the width being the piece's full width
+      at that height. The body edge (side seam, armhole, shoulder point) is shared by front and back; the
+      sleeve edge runs from the cuff to the top's outer corner. Exactly one point is the underarm (where
+      the armhole or sleeve cap starts); curves describe how the edge arrives at a point. "plan" prints
+      the current points. The measurements that drew a hand-shaped edge no longer change it; --reset
+      returns it to them.
   sweater check <project.json>
       Compile every piece to KCode and check it exactly as Studio does. Exit 0 when ready, 1 when not.
   sweater package <project.json> -o <directory>
@@ -53,7 +61,7 @@ export class SweaterUsageError extends Error {}
 
 interface SweaterArgs { command: string | null; positionals: string[]; out: string | null; options: Map<string, string> }
 
-const OPTIONS = ['--title', '--silhouette', '--neck', '--size', '--fit', '--stitch', '--texture', '--yarn', '--gauge', '--rib-gauge', '--gauge-source', '--hem-rib', '--cuff-rib', '--neck-rib', '--hem-cm', '--cuff-cm', '--neck-cm', '--measure', '--top', '--fashion', '--source'];
+const OPTIONS = ['--body', '--sleeve', '--reset', '--title', '--silhouette', '--neck', '--size', '--fit', '--stitch', '--texture', '--yarn', '--gauge', '--rib-gauge', '--gauge-source', '--hem-rib', '--cuff-rib', '--neck-rib', '--hem-cm', '--cuff-cm', '--neck-cm', '--measure', '--top', '--fashion', '--source'];
 
 function parse(args: readonly string[]): SweaterArgs {
   const parsed: SweaterArgs = { command: null, positionals: [], out: null, options: new Map() };
@@ -153,6 +161,30 @@ function sourceOf(parsed: SweaterArgs): 'human' | 'assistant' {
   return raw;
 }
 
+/** An edge as the CLI writes it: full width and height in cm, then flags. */
+function formatEdge(edge: readonly ShapePoint[]): string {
+  return edge.map((point) => [Math.round(point.x * 20) / 10, Math.round(point.y * 10) / 10, ...(point.underarm ? ['underarm'] : []), ...(point.curve ? [point.curve] : [])].join(',')).join(' ');
+}
+
+function parseEdge(text: string, kind: 'body' | 'sleeve'): ShapePoint[] {
+  const points = text.trim().split(/\s+/).map((token, index) => {
+    const [width, height, ...flags] = token.split(',');
+    const x = Number(width) / 2;
+    const y = Number(height);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) throw new SweaterUsageError(`--${kind} point ${index + 1} ("${token}") needs width,height in cm.`);
+    const point: ShapePoint = { x, y };
+    for (const flag of flags) {
+      if (flag === 'underarm') point.underarm = true;
+      else if (flag === 'concave' || flag === 'convex') point.curve = flag;
+      else throw new SweaterUsageError(`--${kind} point ${index + 1}: "${flag}" is not underarm, concave or convex.`);
+    }
+    return point;
+  });
+  const problem = edgeProblem(points, kind);
+  if (problem) throw new SweaterUsageError(`--${kind}: ${problem}`);
+  return points;
+}
+
 /** The plan as an agent reads it: pieces, measurements, seams and findings. */
 export function sweaterPlanJson(project: ColorworkProjectV1, plan: SweaterPlan) {
   const { state } = materializeColorworkProject(project);
@@ -171,7 +203,8 @@ export function sweaterPlanJson(project: ColorworkProjectV1, plan: SweaterPlan) 
       yarn: { ...state.chart.palette[0], carrier: plan.carriers.main },
     },
     gauge: { body: plan.gauge, rib: plan.ribGauge },
-    measurements: MEASUREMENT_KEYS.filter((key) => object.measurements[key] !== undefined).map((key) => ({ key, wantedCm: object.measurements[key], knittedCm: plan.knitted[key] ?? null })),
+    measurements: MEASUREMENT_KEYS.filter((key) => object.measurements[key] !== undefined).map((key) => ({ key, wantedCm: object.measurements[key], knittedCm: plan.knitted[key] ?? null, ...(plan.custom.body && ['chest', 'length', 'armholeDepth', 'shoulderWidth'].includes(key) || plan.custom.sleeve && ['sleeveLength', 'upperArm', 'cuff'].includes(key) ? { setBy: 'shape' } : {}) })),
+    shapes: Object.fromEntries((['body', 'sleeve'] as const).map((kind) => [kind, { custom: plan.custom[kind], points: formatEdge(plan.draft.edges[kind]) }])),
     carriers: plan.carriers,
     pieces: plan.pieces.map((piece) => ({
       id: piece.id,
@@ -324,6 +357,8 @@ export async function sweaterCommand(args: readonly string[], io: SweaterCliIo):
       if (body || (source && !parsed.options.has('--rib-gauge'))) { extra.push({ kind: 'set-gauge', gauge: { ...(body ?? before.gauge), source: source ?? before.gauge.source } }); labels.push(`body gauge ${(body ?? before.gauge).stitchesPer10cm}/${(body ?? before.gauge).rowsPer10cm}`); }
       const ribGauge = gauge(parsed, '--rib-gauge');
       if (ribGauge || (source && parsed.options.has('--rib-gauge'))) { object.ribGauge = { ...(ribGauge ?? before.ribGauge), source: source ?? before.ribGauge.source }; labels.push('rib gauge'); }
+      // A new style or size redraws the shapes: hand-shaped edges reset, as in the browser.
+      if ((silhouette || size || fit) && object.shapes) { delete object.shapes; labels.push('your shapes reset'); }
       const edits: ProjectEdit[] = [];
       if (JSON.stringify(object) !== JSON.stringify(before.object)) edits.push({ kind: 'set-object', object });
       edits.push(...extra);
@@ -338,6 +373,29 @@ export async function sweaterCommand(args: readonly string[], io: SweaterCliIo):
       const next = appendProjectOperation(project, { group: `set-${io.newId()}`, source: sourceOf(parsed), label: label[0]!.toUpperCase() + label.slice(1), edits });
       await io.writeProject(parsed.out ?? path, next);
       io.print({ changed: label, before: snapshot(before), after: snapshot(planFor(next)) });
+      return 0;
+    }
+    case 'shape': {
+      const path = projectPath();
+      const project = await io.readProject(path);
+      const before = planFor(project);
+      const object: SweaterObject = structuredClone(before.object);
+      const shapes = { ...object.shapes };
+      const labels: string[] = [];
+      const reset = choice(parsed, '--reset', ['body', 'sleeve', 'all'] as const);
+      if (reset === 'body' || reset === 'all') { delete shapes.body; labels.push('body shape from the measurements'); }
+      if (reset === 'sleeve' || reset === 'all') { delete shapes.sleeve; labels.push('sleeve shape from the measurements'); }
+      for (const kind of ['body', 'sleeve'] as const) {
+        const text = parsed.options.get(`--${kind}`);
+        if (text !== undefined) { shapes[kind] = parseEdge(text, kind); labels.push(`${kind} shaped by hand`); }
+      }
+      if (labels.length === 0) throw new SweaterUsageError('sweater shape needs --body, --sleeve or --reset.');
+      if (Object.keys(shapes).length > 0) object.shapes = shapes; else delete object.shapes;
+      const label = labels.join(', ');
+      const next = appendProjectOperation(project, { group: `shape-${io.newId()}`, source: sourceOf(parsed), label: label[0]!.toUpperCase() + label.slice(1), edits: [{ kind: 'set-object', object }] });
+      await io.writeProject(parsed.out ?? path, next);
+      const after = planFor(next);
+      io.print({ changed: label, shapes: Object.fromEntries((['body', 'sleeve'] as const).map((kind) => [kind, { custom: after.custom[kind], points: formatEdge(after.draft.edges[kind]) }])), before: snapshot(before), after: snapshot(after) });
       return 0;
     }
     case 'check':

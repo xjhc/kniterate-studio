@@ -16,9 +16,9 @@ function ringPng(): Buffer {
 
 async function createBeanie(page: Page) {
   await page.goto('/?theme=light');
-  await page.getByRole('button', { name: 'New project' }).first().click();
+  await page.getByRole('button', { name: /^Beanie/ }).click();
   const dialog = page.getByRole('dialog', { name: 'New project' });
-  await dialog.getByRole('tab', { name: 'Beanie' }).click();
+  await expect(dialog.getByRole('tab', { name: 'Beanie' })).toHaveAttribute('aria-selected', 'true');
   await dialog.getByLabel('Project name').fill('Ring toque');
   await dialog.getByRole('button', { name: 'Create beanie' }).click();
   await expect(page.getByTestId('readiness-headline')).toHaveText('Fit needs measurements', { timeout: 30_000 });

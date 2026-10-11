@@ -9,7 +9,7 @@ import {
   type ProjectState,
   type SweaterObject,
 } from '@kniterate-studio/project-contract';
-import { defaultMeasurements, draftSweater, type DraftPiece, type Fit, type Measurements, type PieceId, type Silhouette, type Size, type SweaterDraft } from './draft';
+import { defaultMeasurements, draftSweater, edgeProblem, type DraftPiece, type Fit, type Measurements, type PieceId, type Silhouette, type Size, type SweaterDraft } from './draft';
 import { rasterizePiece, type Gauge, type PanelPlan } from './rasterize';
 import { RIBS, TEXTURES, textureById, textureMatching, textureProblem } from './textures';
 
@@ -74,6 +74,18 @@ export function createSweaterProject(intent: SweaterIntent, options: { id: strin
   return appendProjectOperation(project, { group: options.group, source: options.source, label: `Create ${intent.title}`, edits });
 }
 
+/** The measurements a hand-shaped edge replaces. */
+export const SHAPE_MEASUREMENTS: Record<'body' | 'sleeve', readonly (keyof Measurements)[]> = {
+  body: ['chest', 'length', 'armholeDepth', 'shoulderWidth'],
+  sleeve: ['sleeveLength', 'upperArm', 'cuff'],
+};
+
+/** The design without the knitter's own shapes, for a change that redraws them (a style or size). */
+export function withoutShapes(object: SweaterObject): SweaterObject {
+  const { shapes: _shapes, ...rest } = object;
+  return rest;
+}
+
 /** The edit that replaces the sweater's design with `next`. */
 export function sweaterEdit(next: SweaterObject): ProjectEdit {
   return { kind: 'set-object', object: next };
@@ -111,6 +123,8 @@ export interface SweaterPlan {
   realized: { label: string; target: number | null; cm: number; how: string }[];
   /** Each measurement as knitted, cm, where the pieces define it. */
   knitted: Partial<Record<keyof Measurements, number>>;
+  /** Edges the knitter shaped by hand: the measurements that drew them no longer apply. */
+  custom: { body: boolean; sleeve: boolean };
   /** Main yarn for every piece, from the stitch count: an estimate for buying yarn, not a measurement. */
   yarn: { metres: number; stitches: number; how: string };
 }
@@ -133,6 +147,11 @@ export function planSweater(state: ProjectState): SweaterPlan {
   const findings: SweaterPieceFinding[] = [];
   const problem = textureProblem(object.body.texture);
   if (problem !== null) findings.push({ rule: 'sweater-texture-unknittable', severity: 'error', piece: null, path: 'object.body.texture', message: problem });
+  for (const kind of ['body', 'sleeve'] as const) {
+    const edge = object.shapes?.[kind];
+    const issue = edge ? edgeProblem(edge, kind) : null;
+    if (issue !== null) findings.push({ rule: 'sweater-shape-invalid', severity: 'error', piece: kind === 'sleeve' ? 'sleeve' : null, path: `object.shapes.${kind}`, message: issue });
+  }
   const pieces: SweaterPiecePlan[] = draft.pieces.map((piece) => {
     const rib = piece.id === 'sleeve' ? object.trims.cuff.rib : piece.id === 'neckband' ? object.trims.neck.rib : object.trims.hem.rib;
     try {
@@ -176,7 +195,10 @@ export function planSweater(state: ProjectState): SweaterPlan {
   };
   const realized: SweaterPlan['realized'] = [];
   if (front && back) {
-    realized.push({ label: 'Chest', target: object.measurements.chest, cm: round1((front.realized.castOnStitches + back.realized.castOnStitches) * front.stitchCm), how: `${front.realized.castOnStitches} + ${back.realized.castOnStitches} stitches` });
+    // Chest is taken just below the underarm, where the hem's shape no longer matters.
+    const below = (raster: PanelPlan) => { const row = raster.rows[Math.max(0, (rowsToUnderarm(raster) ?? raster.rows.length) - 1)]!; return row.segments.at(-1)!.hi - row.segments[0]!.lo + 1; };
+    realized.push({ label: 'Chest', target: object.measurements.chest, cm: round1((below(front) + below(back)) * front.stitchCm), how: `${below(front)} + ${below(back)} stitches below the underarm` });
+    if (front.realized.castOnStitches !== below(front)) realized.push({ label: 'Hem', target: null, cm: round1((front.realized.castOnStitches + back.realized.castOnStitches) * front.stitchCm), how: `${front.realized.castOnStitches} + ${back.realized.castOnStitches} stitches cast on` });
     realized.push({ label: 'Length', target: object.measurements.length, cm: back.realized.heightCm, how: `${back.realized.rows} rows` });
     const frontUnderarm = rowsToUnderarm(front);
     const backUnderarm = rowsToUnderarm(back);
@@ -199,7 +221,7 @@ export function planSweater(state: ProjectState): SweaterPlan {
     }
   }
   if (object.neckline === 'crew') realized.push({ label: 'Neck opening', target: null, cm: round1(draft.seams.neckline), how: 'front and back neck edges' });
-  return { object, draft, gauge, ribGauge, pieces, carriers, findings, realized, knitted: knittedMeasurements(draft, front, back, sleeve), yarn: yarnEstimate(pieces) };
+  return { object, draft, gauge, ribGauge, pieces, carriers, findings, realized, knitted: knittedMeasurements(draft, front, back, sleeve), yarn: yarnEstimate(pieces), custom: { body: object.shapes?.body !== undefined, sleeve: object.shapes?.sleeve !== undefined } };
 }
 
 /**
@@ -229,7 +251,8 @@ function rowStarts(raster: PanelPlan): number[] {
 function knittedMeasurements(draft: SweaterDraft, front: PanelPlan | null | undefined, back: PanelPlan | null | undefined, sleeve: PanelPlan | null | undefined): SweaterPlan['knitted'] {
   const out: SweaterPlan['knitted'] = {};
   const span = (raster: PanelPlan, row: number) => { const segments = raster.rows[row]!.segments; return (segments.at(-1)!.hi - segments[0]!.lo + 1) * raster.stitchCm; };
-  const underarmRow = (raster: PanelPlan, y: number) => Math.max(0, raster.rows.findIndex((row) => row.y >= y));
+  // The first row at or above a level; a level at the very top (a drop shoulder's sleeve) is the end of the piece.
+  const underarmRow = (raster: PanelPlan, y: number) => { const row = raster.rows.findIndex((item) => item.y >= y); return row < 0 ? raster.rows.length : row; };
   if (front && back) {
     const frontUnder = underarmRow(front, draft.seams.sideSeam);
     const backUnder = underarmRow(back, draft.seams.sideSeam);
@@ -239,7 +262,7 @@ function knittedMeasurements(draft: SweaterDraft, front: PanelPlan | null | unde
     // Armhole depth runs from the underarm to the shoulder point; the shoulder slope sits above it.
     const shoulderRow = back.rows.findIndex((row) => row.y >= draft.levels.shoulderPoint);
     const shoulderTop = shoulderRow < 0 ? back.realized.heightCm : starts[shoulderRow]!;
-    out.armholeDepth = round1(shoulderTop - starts[backUnder]!);
+    out.armholeDepth = round1(shoulderTop - (starts[backUnder] ?? back.realized.heightCm));
     out.shoulderDrop = round1(back.realized.heightCm - shoulderTop);
     out.shoulderWidth = round1(span(back, Math.max(0, (shoulderRow < 0 ? back.rows.length : shoulderRow) - 1)));
     const frontStarts = rowStarts(front);
@@ -254,7 +277,7 @@ function knittedMeasurements(draft: SweaterDraft, front: PanelPlan | null | unde
   }
   if (sleeve) {
     const under = underarmRow(sleeve, draft.seams.sleeveSeam);
-    out.sleeveLength = round1(rowStarts(sleeve)[under]!);
+    out.sleeveLength = round1(rowStarts(sleeve)[under] ?? sleeve.realized.heightCm);
     out.upperArm = round1(sleeve.realized.widestStitches * sleeve.stitchCm);
     out.cuff = round1(sleeve.realized.castOnStitches * sleeve.stitchCm);
   }

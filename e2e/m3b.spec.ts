@@ -35,6 +35,7 @@ test.beforeEach(async ({ page }) => {
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(page.getByText('Kniterate Studio', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Start with a blank chart' }).click();
   (page as Page & { browserErrors?: string[] }).browserErrors = errors;
 });
 

@@ -1,5 +1,6 @@
 import { materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import type { PanelPlan, ShapingEvent } from './rasterize';
+import type { PanelPlan } from './rasterize';
+import { edgeRhythm } from './rhythm';
 import type { SweaterPiecePlan, SweaterPlan } from './sweater';
 import type { SweaterRunSummary } from './sweaterRun';
 import { sweaterSchematicSvg } from './schematic';
@@ -12,12 +13,6 @@ import { ribName, textureMatching } from './textures';
  */
 
 const SILHOUETTE_NAMES = { 'drop-shoulder': 'drop-shoulder', 'j-sleeve': 'J-sleeve', 'set-in': 'set-in sleeve' } as const;
-
-/** "row 12" or "rows 12, 15, 18", one-based. */
-function list(rows: readonly number[]): string {
-  const shown = rows.slice(0, 12).map((row) => row + 1).join(', ');
-  return `${rows.length === 1 ? 'row' : 'rows'} ${rows.length > 12 ? `${shown} … ${rows.at(-1)! + 1}` : shown}`;
-}
 
 const width = (raster: PanelPlan, row: number) => raster.rows[row]!.segments.reduce((sum, segment) => sum + segment.hi - segment.lo + 1, 0);
 
@@ -36,29 +31,19 @@ export function pieceSteps(piece: SweaterPiecePlan, plan: SweaterPlan): string[]
     if (bottom > 0) steps.push(`Rows 1–${bottom}: ${ribName(rib)} rib (${piece.id === 'sleeve' ? 'cuff' : 'hem'}).`);
     steps.push(`From row ${bottom + 1}: ${object.body.name.toLowerCase()}.`);
   }
-  const events = raster.events;
-  const at = (kind: ShapingEvent['kind'], edges: ShapingEvent['edge'][]) => events.filter((event) => event.kind === kind && edges.includes(event.edge));
-  const increases = at('increase', ['left']);
-  if (increases.length > 0) steps.push(`Increase 1 stitch at each edge on ${list(increases.map((event) => event.row))} (${increases.length} times), to ${width(raster, increases.at(-1)!.row)} stitches.`);
-  const firstBindOff = events.find((event) => event.kind === 'bind-off' && (event.edge === 'left' || event.edge === 'right'));
-  const split = events.find((event) => event.kind === 'neck-split');
-  const outerDecreases = at('decrease', ['left']).filter((event) => split === undefined || event.row < split.row);
-  const bodyDecreases = outerDecreases.filter((event) => firstBindOff === undefined || event.row < firstBindOff.row);
-  if (bodyDecreases.length > 0) steps.push(`Decrease 1 stitch at each edge on ${list(bodyDecreases.map((event) => event.row))}.`);
-  if (firstBindOff !== undefined && (split === undefined || firstBindOff.row < split.row)) {
-    const pair = events.filter((event) => event.kind === 'bind-off' && (event.edge === 'left' || event.edge === 'right') && event.row <= firstBindOff.row + 1);
-    steps.push(`${piece.id === 'sleeve' ? 'Cap' : 'Armholes'}: ${pair.map((event) => `row ${event.row + 1} binds off ${event.stitches} at the ${event.edge} edge`).join('; ')}.`);
-    const curve = outerDecreases.filter((event) => event.row >= firstBindOff.row);
-    if (curve.length > 0) steps.push(`Then decrease at each edge on ${list(curve.map((event) => event.row))}${curve.length > 1 ? ` (${curve.length} times)` : ''}, to ${width(raster, curve.at(-1)!.row)} stitches.`);
-    const capSteps = events.filter((event) => event.kind === 'bind-off' && event.row > firstBindOff.row + 1 && (split === undefined || event.row < split.row));
-    if (capSteps.length > 0) steps.push(`${list(capSteps.map((event) => event.row)).replace(/^r/, 'R')}: bind off ${capSteps.map((event) => event.stitches).join(', ')} at the edges.`);
-  }
+  // Shaping in the machine knitter's rhythm, with the stitch count after each step.
+  const split = raster.events.find((event) => event.kind === 'neck-split');
+  const before = raster.events.filter((event) => split === undefined || event.row < split.row);
+  const after = split === undefined ? [] : raster.events.filter((event) => event.row > split.row);
+  // A bind-off on the right comes a row after its left one; count after both.
+  const settled = (row: number) => Math.max(row, ...before.filter((event) => event.kind === 'bind-off' && event.edge === 'right' && event.row >= row && event.row <= row + 1).map((event) => event.row));
+  for (const step of edgeRhythm(before, ['left'])) steps.push(`${step.text.replace(': ', ' at each side: ')} → ${width(raster, step.kind === 'bind-off' ? settled(step.to) : step.to)} stitches.`);
   if (split !== undefined) {
     steps.push(`Row ${split.row + 1}: neck. Bind off the centre ${split.stitches} stitches. From here the left shoulder knits on C${plan.carriers.main} and the right shoulder on C${plan.carriers.second}, at the same time.`);
-    const neck = events.filter((event) => event.edge === 'neck-left' && event.row > split.row);
-    if (neck.length > 0) steps.push(`Shape the neck: at each neck edge, ${neck.map((event) => `${event.kind === 'bind-off' ? 'bind off' : 'decrease'} ${event.stitches} on row ${event.row + 1}`).join(', ')}.`);
-    const shoulder = events.filter((event) => event.kind === 'bind-off' && event.edge === 'left' && event.row > split.row);
-    if (shoulder.length > 0) steps.push(`Slope the shoulders: bind off ${shoulder.map((event) => event.stitches).join(', ')} stitches at each armhole edge on ${list(shoulder.map((event) => event.row))}, both shoulders on the same rows.`);
+    const neck = edgeRhythm(after, ['neck-left']);
+    if (neck.length > 0) steps.push(`Each neck edge: ${neck.map((step) => step.text.replace(/^Rows? /, (match) => match.toLowerCase())).join('; ')}.`);
+    const shoulder = edgeRhythm(after, ['left']);
+    if (shoulder.length > 0) steps.push(`Each armhole edge: ${shoulder.map((step) => step.text.replace(/^Rows? /, (match) => match.toLowerCase())).join('; ')}; both shoulders on the same rows.`);
   }
   const last = raster.rows.length - 1;
   const lastRow = raster.rows[last]!;

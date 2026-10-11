@@ -105,11 +105,22 @@ through the same strict checks.
 - Edges: `--hem-rib kkpp --hem-cm 6`, `--cuff-rib`, `--cuff-cm`,
   `--neck-rib`, `--neck-cm`; `--top bind-off|waste`; `--fashion 2` moves the
   shaping two stitches in from the edge.
+- **Any silhouette by hand** (A-line, waist, cropped, boxy, a deeper
+  armhole), like a garment-shaping knitting machine: `sweater plan` prints
+  `shapes.body.points` and `shapes.sleeve.points` as `"width,height[,underarm][,concave|convex]"`
+  (cm; the full width at that height, bottom up). Change the points and send
+  them back with `sweater shape s.json --body "66,0 50,22 56,41,underarm 50.6,41 41.5,49.4,concave 41.5,62"`.
+  Front and back share the body edge, so the side seams match. A set-in or
+  J sleeve cap refits itself to the new armhole. `--reset body|sleeve|all`
+  returns to the measurements. The measurements a shape replaces are marked
+  `setBy: "shape"`. Read the seam findings after: a drop-shoulder sleeve top
+  must match its armhole.
 
 ```bash
 pnpm --silent studio -- sweater new -o s.json --title "Weekend" --silhouette j-sleeve --size L --fit relaxed --stitch seed --yarn "Moss=#5B6B3A"
 pnpm --silent studio -- sweater set s.json --measure length=70 --gauge 24,38 --gauge-source measured   # one undoable change
-pnpm --silent studio -- sweater plan s.json      # pieces as pattern steps; each measurement wanted vs knitted
+pnpm --silent studio -- sweater plan s.json      # pieces as pattern steps (shaping rhythm); measurements wanted vs knitted; shape points
+pnpm --silent studio -- sweater shape s.json --body "64,0 54,24 58,41,underarm 58,62"   # hand-shape the body
 pnpm --silent studio -- sweater check s.json     # every piece compiled and checked; exit 0 only when ready
 pnpm --silent studio -- sweater package s.json -o s-package/   # every .kc/.k, instructions.md, schematic.svg, manifest
 ```

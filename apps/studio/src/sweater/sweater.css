@@ -35,6 +35,9 @@
 .measure-row > span:first-child { color: var(--ink-2); }
 .knitted { color: var(--ink-3); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
 .knitted.off { color: var(--warning); font-weight: 700; }
+.measure-row.locked { cursor: default; }
+.shape-locked { color: var(--accent); font-size: 11px; font-weight: 700; }
+.shape-note { margin: 0; padding: 7px 9px; border-left: 3px solid var(--accent); background: var(--accent-soft); color: var(--ink); font-size: 12px; }
 .number-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; }
 .number-input input, .yarn-row input[type="text"] { width: 100%; min-width: 0; height: 30px; padding: 3px 7px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--paper); color: var(--ink); font-variant-numeric: tabular-nums; }
 .number-input input[aria-invalid="true"] { border-color: var(--blocked); background: var(--blocked-soft); }
@@ -78,7 +81,7 @@
 .stage-tools { display: flex; align-items: center; gap: 4px; }
 .tool-divider { width: 1px; height: 22px; margin: 0 4px; background: var(--line); }
 .stage-error { display: flex; justify-content: space-between; gap: 12px; margin: 8px 12px 0; padding: 9px 12px; border-left: 3px solid var(--blocked); color: var(--blocked); background: var(--blocked-soft); font-size: 12px; }
-.stage-body { min-height: 0; overflow: auto; }
+.stage-body { min-height: 0; overflow: auto; scrollbar-gutter: stable; }
 .garment-wrap { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; height: 100%; padding: 12px 18px; }
 .garment-view { width: 100%; height: 100%; min-height: 320px; }
 .garment-piece { cursor: pointer; outline: none; }
@@ -103,13 +106,48 @@
 .piece-wrap { display: grid; gap: 10px; padding: 14px 18px 24px; }
 .piece-summary h2 { margin: 0; font-family: Georgia, serif; font-size: 20px; font-weight: 500; }
 .piece-summary p { margin: 3px 0 0; color: var(--ink-2); }
-.piece-view { display: grid; grid-template-columns: 34px max-content 120px; align-items: start; gap: 8px; width: max-content; }
-.piece-zoom { display: flex; align-items: center; gap: 4px; color: var(--ink-3); font-size: 12px; }
-.piece-zoom span { margin-left: 6px; }
-.piece-ruler, .piece-events { position: relative; margin: 0; padding: 0; list-style: none; }
+.piece-view { display: grid; grid-template-columns: 34px max-content 260px; align-items: start; gap: 12px; width: max-content; }
+.piece-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.piece-zoom { display: flex; align-items: center; gap: 4px; }
+.piece-mode { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.piece-mode button { min-height: 28px; padding: 0 14px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 700; cursor: pointer; }
+.piece-mode button.active { background: var(--ink); color: var(--panel); }
+.piece-hint { color: var(--ink-3); font-size: 12px; }
+.shape-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.shape-source { color: var(--ink-2); font-size: 12px; }
+.shape-source.custom { color: var(--accent); font-weight: 700; }
+.shape-bar .secondary-button { min-height: 28px; font-size: 12px; }
+.shape-point { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-left: auto; padding-left: 10px; border-left: 1px solid var(--line); font-size: 12px; }
+.shape-point label { display: flex; align-items: center; gap: 4px; color: var(--ink-2); }
+.shape-point input { width: 68px; height: 28px; padding: 2px 6px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--paper); color: var(--ink); }
+.shape-point select { height: 28px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--paper); color: var(--ink); }
+.shape-point i { color: var(--ink-3); font-style: normal; }
+.shape-overlay { position: absolute; inset: 0; overflow: visible; touch-action: none; }
+.shape-outline { fill: none; stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 4 3; opacity: .7; pointer-events: none; }
+.shape-edge { fill: none; stroke: var(--accent); stroke-width: 2.5; pointer-events: none; }
+.shape-edge.mirror { stroke-dasharray: 5 4; opacity: .6; }
+.shape-add { cursor: copy; }
+.shape-add circle { fill: var(--panel); stroke: var(--accent); stroke-width: 1.5; opacity: .85; }
+.shape-add path { stroke: var(--accent); stroke-width: 1.6; }
+.shape-add:hover circle, .shape-add:focus-visible circle { fill: var(--accent-soft); opacity: 1; }
+.shape-handle { fill: var(--panel); stroke: var(--ink); stroke-width: 2; cursor: grab; }
+.shape-handle.role { fill: var(--accent); stroke: var(--panel); }
+.shape-handle.selected { stroke: var(--accent); stroke-width: 3; }
+.shape-handle.mirror { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 2 2; cursor: default; pointer-events: none; }
+.shape-handle:active { cursor: grabbing; }
+.shape-label { fill: var(--ink); font-size: 12px; font-weight: 700; paint-order: stroke; stroke: var(--panel); stroke-width: 3px; pointer-events: none; }
+.piece-highlight { position: absolute; left: 0; right: 0; pointer-events: none; background: color-mix(in srgb, var(--accent) 18%, transparent); outline: 1px solid var(--accent); }
+.piece-rhythm { display: grid; gap: 10px; align-content: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.piece-rhythm h3 { margin: 0; font-size: 13px; }
+.piece-rhythm h3 small { color: var(--ink-3); font-weight: 500; }
+.piece-rhythm h4 { margin: 0 0 4px; color: var(--ink-3); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+.piece-rhythm ol { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.piece-rhythm li { padding: 3px 6px; border-radius: 4px; color: var(--ink-2); font-size: 12px; line-height: 1.35; cursor: default; }
+.piece-rhythm li:hover { background: var(--accent-soft); color: var(--ink); }
+.piece-rhythm li.rhythm-bind-off, .piece-rhythm li.rhythm-neck-split { color: var(--ink); font-weight: 650; }
+.piece-ruler { position: relative; }
 .piece-ruler span { position: absolute; right: 0; color: var(--ink-3); font-size: 10px; font-variant-numeric: tabular-nums; }
-.piece-events li { position: absolute; left: 0; color: var(--accent); font-size: 11px; font-weight: 700; white-space: nowrap; }
-.piece-canvas-wrap { position: relative; }
+.piece-canvas-wrap { position: relative; box-sizing: content-box; }
 .piece-canvas-wrap canvas { display: block; cursor: crosshair; }
 .piece-hover-row { position: absolute; left: 0; right: 0; pointer-events: none; outline: 1px solid var(--accent); }
 .piece-tooltip { position: absolute; z-index: 5; display: grid; gap: 2px; width: 230px; padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: 6px; box-shadow: 0 6px 18px #0002; background: var(--panel); color: var(--ink-2); font-size: 11px; pointer-events: none; }
