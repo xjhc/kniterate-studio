@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { appendProjectOperation, materializeColorworkProject, sweaterObjectOf, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { defaultMeasurements, draftSweater, edgeProblem, SIZES, type Silhouette } from './draft';
+import { defaultMeasurements, draftSweater, edgeProblem, SIZES, type ShapePoint, type Silhouette } from './draft';
 import { edgeRhythm } from './rhythm';
 import { rasterizePiece, sliceOutline } from './rasterize';
 import { createSweaterProject, planSweater, sweaterEdit, type SweaterIntent } from './sweater';
@@ -151,6 +151,26 @@ describe('hand-shaped edges', () => {
     const back = after.pieces.find((piece) => piece.id === 'back')!.raster!;
     const front = after.pieces.find((piece) => piece.id === 'front')!.raster!;
     expect(back.events.find((event) => event.kind === 'bind-off')!.row).toBe(front.events.find((event) => event.kind === 'bind-off')!.row);
+  });
+
+  it('compiles any hand shape the editor allows, or refuses it in words: never an invalid program', { timeout: 240_000 }, async () => {
+    let seed = 777;
+    const rand = () => (seed = (seed * 1103515245 + 12345) % 2 ** 31) / 2 ** 31;
+    const jiggle = (edge: readonly ShapePoint[]) => edge.map((point, index) => ({ ...point, x: Math.max(2, Math.round(point.x * (0.5 + rand()) * 2) / 2), y: index === 0 ? point.y : point.y + Math.round((rand() - 0.5) * 16) / 2 }))
+      .map((point, index, all) => (index > 0 ? { ...point, y: Math.max(point.y, all.slice(0, index).reduce((top, item) => Math.max(top, item.y), 0)) } : point));
+    for (const [silhouette, neckline, textureId] of [['set-in', 'v', 'seed'], ['j-sleeve', 'crew', 'stockinette'], ['drop-shoulder', 'square', 'full-cardigan'], ['set-in', 'boat', 'stockinette']] as const) {
+      const project = create({ silhouette, neckline, textureId });
+      const object = sweaterObjectOf(materializeColorworkProject(project).state)!;
+      const drafted = planOf(project).draft.edges;
+      const shaped = appendProjectOperation(project, { group: 'jiggle', source: 'human', label: 'jiggle', edits: [sweaterEdit({ ...object, shapes: { body: jiggle(drafted.body), sleeve: jiggle(drafted.sleeve) } })] });
+      const plan = planOf(shaped);
+      expect(plan.custom, `${silhouette}: the shapes are used, not refused`).toEqual({ body: true, sleeve: true });
+      const result = await runSweaterPipeline(shaped);
+      for (const piece of result.pieces) {
+        expect(piece.kcode?.validation?.diagnostics.filter((diagnostic) => diagnostic.severity === 'error') ?? []).toEqual([]);
+        if (piece.verdict.state !== 'surface') expect(piece.compileError ?? plan.findings.find((finding) => finding.severity === 'error')?.message, `${silhouette} ${piece.id} is blocked with a reason`).toBeTruthy();
+      }
+    }
   });
 
   it('refuses an edge that goes down or has no underarm', () => {
