@@ -319,6 +319,9 @@ ship," trust this file and the working tree instead.
       browser's storage is full, the switch stops and says so.
     - File → Open recent and the start screen list them, newest first.
       Removing one asks twice; nothing is dropped to make room.
+    - The same project open in two tabs (2026-10-12): a change saved in one
+      is taken up by the other, so neither saves over it. If both changed at
+      once, the second tab's version goes on as a copy and says so.
   - **Machine file view (2026-10-11).** Each piece's mode "Machine file" shows
     what its `.kc` makes the machine do, read back from the emitted file's
     strict trace (`sweater/knitFile.ts`), never from the design.

@@ -79,3 +79,37 @@ test('starting another project keeps the first one on this device, to open again
   await expect(recent.getByRole('button', { name: /^Ring toque/ })).toContainText('open now');
   expect(errors).toEqual([]);
 });
+
+test('the same project open in two tabs: a change in either is taken up by the other, so neither saves over it', async ({ page, context }) => {
+  test.setTimeout(120_000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/?theme=light');
+  await page.getByRole('button', { name: /^Beanie/ }).click();
+  const create = page.getByRole('dialog', { name: 'New project' });
+  await create.getByLabel('Project name').fill('Ring toque');
+  await create.getByRole('button', { name: 'Create beanie' }).click();
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+
+  const other = await context.newPage();
+  other.on('pageerror', (error) => errors.push(error.message));
+  await other.goto('/?theme=light');
+  await expect(other.locator('.brand-copy small')).toContainText('Ring toque');
+  await expect(other.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+
+  await page.getByLabel('Head circumference').fill('60');
+  await page.getByLabel('Head circumference').press('Enter');
+  await expect(other.getByLabel('Head circumference')).toHaveValue('60');
+  await other.getByLabel('Cuff height').fill('9');
+  await other.getByLabel('Cuff height').press('Enter');
+  await expect(page.getByLabel('Cuff height')).toHaveValue('9');
+  await expect(other.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+
+  // Both changes are kept, in one project: there is no other to open.
+  await page.reload();
+  await expect(page.getByLabel('Head circumference')).toHaveValue('60');
+  await expect(page.getByLabel('Cuff height')).toHaveValue('9');
+  await page.getByRole('navigation', { name: 'Menu' }).getByRole('button', { name: 'File', exact: true }).click();
+  await expect(page.getByRole('menu', { name: 'File' }).getByRole('menuitem', { name: 'Open recent…' })).toBeDisabled();
+  expect(errors).toEqual([]);
+});

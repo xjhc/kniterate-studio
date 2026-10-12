@@ -46,6 +46,11 @@ export function readRecentProjects(storage: Pick<Storage, 'getItem'>): RecentPro
   }
 }
 
+/** The slot a storage key holds a project for, or null for any other key. */
+export function recentSlotOf(key: string | null): string | null {
+  return key?.startsWith(SLOT_PREFIX) ? key.slice(SLOT_PREFIX.length) : null;
+}
+
 export function readRecentProject(storage: Pick<Storage, 'getItem'>, slot: string): ColorworkProjectV1 | null {
   return parseProjectAutosave(storage.getItem(SLOT_PREFIX + slot))?.project ?? null;
 }

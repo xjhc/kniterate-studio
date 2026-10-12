@@ -54,8 +54,8 @@ import type { KCodeArtifact } from './kcode/kcodeProtocol';
 import { MachineMovementView, type MachineMovementViewProps } from './kcode/MachineMovementView';
 import { programRegionForPass } from './chart/AuthoredMachinePanel';
 import { NewProjectDialog, ProjectSettingsDialog, RecentProjectsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
-import { readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
-import { ACTIVE_SLOT_KEY, forgetProject, newRecentSlot, readRecentProject, readRecentProjects, recentKind, rememberProject, type RecentProject } from './chart/recentProjects';
+import { parseProjectAutosave, readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
+import { ACTIVE_SLOT_KEY, RECENT_INDEX_KEY, forgetProject, newRecentSlot, readRecentProject, readRecentProjects, recentKind, recentSlotOf, rememberProject, type RecentProject } from './chart/recentProjects';
 import { indexSourceLines, sourceWindow } from './sourceWindow';
 import { formatForeignRunSheetFindingAnchor, groupForeignRunSheetFindings } from './foreignRunSheetFindings';
 import { ForeignFabricView, MachineTopologyView } from './fabric/ForeignFabricView';
@@ -633,7 +633,11 @@ export function App() {
     const readiness = resolveReadiness({ verdict: authoredVerdict, findings });
     return { result, findings, readiness, story: readinessStory(plan, findings, readiness, authoredVerdict, materializedProject.state.trials ?? []) };
   }, [plan, blanketCompile.artifact, blanketCompile.error, kcodeState.artifact, kcodeState.error, outputCurrent, verdictKey, authoredExportReady]);
+  // What this tab last saved, or took up from another tab. Until the project changes, there is nothing new to save.
+  const saved = useRef<{ project: ColorworkProjectV1; slot: string } | null>(null);
+  const unchanged = () => saved.current?.project === project && saved.current.slot === slot;
   useEffect(() => {
+    if (unchanged()) return;
     setAutosaveState('saving');
     const kind = recentKind(authoredState.object);
     const timeout = window.setTimeout(() => {
@@ -641,12 +645,36 @@ export function App() {
         window.localStorage.setItem(PROJECT_AUTOSAVE_KEY, serializeProjectAutosave(project));
         window.localStorage.setItem(ACTIVE_SLOT_KEY, slot);
         if (!untouchedDefault(project)) setRecent(rememberProject(window.localStorage, { slot, project, kind }));
+        saved.current = { project, slot };
         setAutosaveState('saved');
       } catch {
         setAutosaveState('failed');
       }
     }, 350);
     return () => window.clearTimeout(timeout);
+  }, [project, slot]);
+  /**
+   * The same project open in another tab: a change saved there is taken up
+   * here, so neither tab saves over the other. If this tab had a change of its
+   * own not yet saved, both are kept: this tab's goes on as a copy.
+   */
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.storageArea !== window.localStorage) return;
+      if (event.key === RECENT_INDEX_KEY) { setRecent(readRecentProjects(window.localStorage)); return; }
+      if (recentSlotOf(event.key) !== slot) return;
+      const theirs = parseProjectAutosave(event.newValue)?.project;
+      if (!theirs) return;
+      if (unchanged()) {
+        saved.current = { project: theirs, slot };
+        setProject(theirs);
+        return;
+      }
+      setSlot(newRecentSlot());
+      setAppError(`“${project.title}” was also changed in another tab, so this tab's version is kept as a copy. Both are under File → Open recent.`);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, [project, slot]);
   useEffect(() => {
     const url = new URL(window.location.href);
