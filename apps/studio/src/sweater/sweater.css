@@ -190,6 +190,7 @@
 .step-action { justify-self: start; display: inline-flex; align-items: center; gap: 6px; }
 .step-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
 .step-hint { margin: 0; color: var(--ink-2); font-size: 12px; line-height: 1.45; }
+.after-knitting { display: grid; gap: 8px; }
 .status-step .trial-list { padding-left: 0; font-size: 12px; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .swatch-gauges { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; font-size: 12px; }

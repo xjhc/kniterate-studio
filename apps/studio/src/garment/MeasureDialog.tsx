@@ -23,6 +23,8 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
   const [synthetic, setSynthetic] = useState<boolean | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadedForm, setLoadedForm] = useState<MeasurementRecord | null>(null);
+  // Open only when there is no file to fill in: the design is not knittable yet.
+  const [showFile, setShowFile] = useState(() => !/^[0-9a-f]{64}$/.test(candidateSha256 ?? ''));
   // Decoded motif images, so the revision re-converts motifs at the measured gauge.
   const [pixels, setPixels] = useState<ReadonlyMap<string, PlacementImage['pixels']> | null>(null);
   useEffect(() => {
@@ -52,14 +54,19 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
     <section className="project-dialog measure-dialog" role="dialog" aria-modal="true" aria-labelledby="measure-title">
       <header><h2 id="measure-title">Enter measurements</h2><button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
       <form onSubmit={submit}>
-        <label>Filled form from the package (optional)<input type="file" accept=".json,application/json" aria-label="Load measurements.json" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (!file) return; void file.text().then((text) => { try { const loaded = JSON.parse(text) as MeasurementRecord; if (loaded?.kind !== 'kniterate-studio-measurements' || loaded.schemaVersion !== 1) throw new Error('Not a measurements.json from a Studio package.'); setRecord({ ...measurementTemplate(project, ''), ...loaded }); setLoadedForm(loaded); setSynthetic(typeof loaded.synthetic === 'boolean' ? loaded.synthetic : null); setLoadError(null); } catch (error) { setLoadError(error instanceof Error ? error.message : String(error)); } }); }} /></label>
-        {loadError && <p className="setup-error" role="alert">{loadError}</p>}
-        <label>Candidate (KCode SHA-256 of the file that was knitted)<input required pattern="[0-9a-f]{64}" value={record.candidate.kcodeSha256} onChange={(event) => {
-          const value = event.currentTarget.value.trim();
-          // Predictions belong to one candidate: a different hash drops them (they come back only for the loaded form's own candidate).
-          set((draft) => { draft.candidate = { kcodeSha256: value, label: draft.candidate.label, ...(loadedForm && loadedForm.candidate.kcodeSha256 === value && loadedForm.candidate.predictedCm ? { predictedCm: loadedForm.candidate.predictedCm } : {}) }; });
-        }} /></label>
-        {record.candidate.predictedCm && <p className="garment-help">Predictions from the loaded form for candidate <code>{record.candidate.kcodeSha256.slice(0, 12)}</code>.</p>}
+        <p className="garment-help">Measure the finished hat flat, after washing and drying. It is compared with the plan, and the design is corrected so the next one fits.</p>
+        {/* Which exact file was knitted: filled in with this design's file, so it is only opened to change it. */}
+        <details className="measure-file" open={showFile || loadError !== null} onToggle={(event) => setShowFile(event.currentTarget.open)}>
+          <summary>Knitted file <code>{record.candidate.kcodeSha256.slice(0, 12) || 'not set'}</code></summary>
+          <label>Filled form from the package (optional)<input type="file" accept=".json,application/json" aria-label="Load measurements.json" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (!file) return; void file.text().then((text) => { try { const loaded = JSON.parse(text) as MeasurementRecord; if (loaded?.kind !== 'kniterate-studio-measurements' || loaded.schemaVersion !== 1) throw new Error('Not a measurements.json from a Studio package.'); setRecord({ ...measurementTemplate(project, ''), ...loaded }); setLoadedForm(loaded); setSynthetic(typeof loaded.synthetic === 'boolean' ? loaded.synthetic : null); setLoadError(null); } catch (error) { setLoadError(error instanceof Error ? error.message : String(error)); } }); }} /></label>
+          {loadError && <p className="setup-error" role="alert">{loadError}</p>}
+          <label>Candidate (KCode SHA-256 of the file that was knitted)<input required pattern="[0-9a-f]{64}" value={record.candidate.kcodeSha256} onChange={(event) => {
+            const value = event.currentTarget.value.trim();
+            // Predictions belong to one candidate: a different hash drops them (they come back only for the loaded form's own candidate).
+            set((draft) => { draft.candidate = { kcodeSha256: value, label: draft.candidate.label, ...(loadedForm && loadedForm.candidate.kcodeSha256 === value && loadedForm.candidate.predictedCm ? { predictedCm: loadedForm.candidate.predictedCm } : {}) }; });
+          }} /></label>
+          {record.candidate.predictedCm && <p className="garment-help">Predictions from the loaded form for candidate <code>{record.candidate.kcodeSha256.slice(0, 12)}</code>.</p>}
+        </details>
         <fieldset><legend>Where do these values come from?</legend>
           <label className="check-label"><input type="radio" name="synthetic" checked={synthetic === false} onChange={() => setSynthetic(false)} /> A real knit of this exact file</label>
           <label className="check-label"><input type="radio" name="synthetic" checked={synthetic === true} onChange={() => setSynthetic(true)} /> Synthetic: made up to test the software</label>

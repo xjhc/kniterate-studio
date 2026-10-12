@@ -477,8 +477,9 @@ ship," trust this file and the working tree instead.
     - Left: what you are making.
     - Middle: Design / Schematic / Machine file, always in the same place.
     - Right: whether it can be knitted, then the steps in order (Design,
-      Measure a swatch, Download, Knit, and Measure the hat for a beanie),
-      each holding what belongs to it; the next one is marked.
+      Measure a swatch, Download, Knit), each holding what belongs to it;
+      the next one is marked. A beanie's Knit step ends with measuring the
+      finished hat, which corrects the design for the next one.
   - Schematics come from the machine file read back (`workspace/RunSchematic`).
     They show the whole run: waste yarn, draw thread, the piece and its
     finish, scarves included.

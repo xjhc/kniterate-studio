@@ -35,8 +35,8 @@ export interface SwatchStep {
   file?: { onDownload: (() => void) | null; writing: boolean; problem: string | null };
 }
 
-/** The last step for a piece you can measure once knitted (a beanie). */
-export interface MeasureStep { done: boolean; title: string; content: ReactNode }
+/** After knitting, for a piece you can measure once it is off the machine (a beanie): part of the Knit step, done once real measurements are recorded. */
+export interface MeasureStep { done: boolean; content: ReactNode }
 
 type StepState = 'done' | 'current' | 'todo';
 
@@ -85,9 +85,8 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
     swatch: swatch?.gauges.every((gauge) => gauge.measured) ?? true,
     download: downloaded,
     knit: measure?.done ?? false,
-    measure: measure?.done ?? false,
   };
-  const order = ['design', ...(swatch ? ['swatch'] : []), 'download', 'knit', ...(measure ? ['measure'] : [])] as (keyof typeof done)[];
+  const order = ['design', ...(swatch ? ['swatch'] : []), 'download', 'knit'] as (keyof typeof done)[];
   const current = tone === 'checking' ? null : order.find((step) => !done[step]) ?? null;
   const state = (step: keyof typeof done): StepState => (done[step] ? 'done' : current === step ? 'current' : 'todo');
   const number = (step: keyof typeof done) => order.indexOf(step) + 1;
@@ -129,8 +128,8 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
       </Step>
       <Step number={number('knit')} title="Knit" state={state('knit')}>
         {atTheMachine.length > 0 && <ul className="status-notes operator">{atTheMachine.map((note, index) => <li key={index}>{note}</li>)}</ul>}
+        {measure && <div className="after-knitting">{measure.content}</div>}
       </Step>
-      {measure && <Step number={number('measure')} title={measure.title} state={state('measure')}>{measure.content}</Step>}
     </ol>
     {footer}
   </aside>;

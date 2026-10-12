@@ -395,6 +395,10 @@ test('a loaded form keeps its predictions only for its own candidate, and fit dr
 
   await page.getByRole('button', { name: 'Enter measurements' }).click();
   const measure = page.getByRole('dialog', { name: 'Enter measurements' });
+  // The knitted file is filled in with this design's (the fold-out starts open while there is none); it is opened to load a form or name another file.
+  const knittedFile = measure.locator('details.measure-file');
+  if (await knittedFile.getAttribute('open') === null) await knittedFile.locator('summary').click();
+  await expect(knittedFile).toHaveAttribute('open', '');
   const form = { kind: 'kniterate-studio-measurements', schemaVersion: 1, candidate: { kcodeSha256: 'a'.repeat(64), label: 'Other', predictedCm: { circumference: 50, cuffVisible: 7, body: 25.9, crown: 9, total: 42 } }, synthetic: true, outcome: 'clean', bodyGauge: { stitchesPer10cm: null, rowsPer10cm: null }, ribGauge: { stitchesPer10cm: null, rowsPer10cm: null }, finishedCm: { circumference: null, cuffVisible: null, body: 12.9, crown: null, total: null }, notes: '' };
   await measure.getByLabel('Load measurements.json').setInputFiles({ name: 'measurements.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(form)) });
   await expect(measure.getByText(/Predictions from the loaded form for candidate aaaaaaaaaaaa/)).toBeVisible();

@@ -339,7 +339,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       downloaded={status.downloaded}
       swatch={swatch}
       atTheMachine={story?.operatorChecks ?? []}
-      measure={isGarment ? { done: (materialized.state.trials ?? []).some((trial) => !trial.synthetic), title: 'Measure the hat', content: <>
+      measure={isGarment ? { done: (materialized.state.trials ?? []).some((trial) => !trial.synthetic), content: <>
+        <p className="step-hint">Once it is off the machine, washed and dry, measure the finished hat. The design is corrected from it, so the next one fits.</p>
         {(materialized.state.trials ?? []).length > 0 && <ul className="trial-list">{materialized.state.trials!.map((trial) => <li key={trial.id}>{trial.recordedAt.slice(0, 10)} · {trial.outcome}{trial.bodyGauge ? ` · ${trial.bodyGauge.stitchesPer10cm} st / ${trial.bodyGauge.rowsPer10cm} rows` : ''}{trial.synthetic ? ' (test data)' : ''}</li>)}</ul>}
         <button type="button" className="secondary-button step-action" onClick={() => setShowMeasure(true)}><Ruler size={15} /> Enter measurements</button>
       </> } : undefined}

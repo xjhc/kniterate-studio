@@ -82,8 +82,10 @@ runs, and the workspace shows exactly what those files knit.
      piece's shaping steps are shown under its file), Download knitting
      package and Print knitting sheet. Ticked once this design is
      downloaded.
-  4. Knit: what to do at the machine.
-  5. Measure the hat (beanie): enter what the knitted hat measures.
+  4. Knit: what to do at the machine. For a beanie, then: once it is off
+     the machine, washed and dry, measure the finished hat (Enter
+     measurements); the design is corrected from it so the next one fits.
+     The knitted file is filled in with this design's, in a fold-out.
 - **The verdict badge** uses the same plain words: Blocked is "Can't knit
   yet", Surface-proven is "Ready to knit", Knit-proven is "Proven on the
   machine". Its popover keeps the ladder's names, what each means, and what
