@@ -571,6 +571,10 @@ ship," trust this file and the working tree instead.
       keeps the numbers but not as measured ("Measured on Seed stitch.
       Measure a swatch of 1×1 rib…").
     - Going back to that fabric counts them as measured again.
+  - A backing card shows its fabric-back preview and knit time only when
+    the program gives them (2026-10-12). A beanie's construction has
+    neither, so its cards no longer wait on "…" forever. The states spec
+    fails on any "…" left once a state has settled.
   - One gauge editor for every kind (`workspace/gauge.tsx::GaugeFields`).
     It saves each gauge as one change, on Enter or when focus leaves it. The
     words for where gauges come from are shared too ("measured", "typical",

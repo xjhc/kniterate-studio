@@ -39,7 +39,11 @@ export function BlanketSetupRail({ state, compile, outputError, size, onStrategy
         const selected = technique === id;
         const minutes = selected ? compile.artifact?.stats.estimatedKnitTimeSeconds ?? comparison?.estimatedKnitTimeSeconds : comparison?.estimatedKnitTimeSeconds;
         const blocked = selected ? compile.status === 'failed' || compile.artifact?.compileVerdict === 'blocked' : comparison?.compileVerdict === 'blocked';
-        return <button type="button" className={selected ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{words(id)!.name}</b><small>{blocked ? 'Cannot knit' : minutes == null ? '…' : `${Math.ceil(minutes / 60)} min`}</small></span></button>;
+        // Once compared, show only what the program gives: a beanie's construction has no back-face preview or knit time.
+        const compared = compile.comparisons.length > 0;
+        const preview = !compared || comparison?.backFace ? <BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /> : null;
+        const note = blocked ? 'Cannot knit' : minutes != null ? `${Math.ceil(minutes / 60)} min` : compared ? null : '…';
+        return <button type="button" className={`${selected ? 'active' : ''}${preview ? '' : ' no-preview'}`} key={id} onClick={() => onStrategy(id)}>{preview}<span><b>{words(id)!.name}</b>{note && <small>{note}</small>}</span></button>;
       })}</div>{current && <p className="garment-help">{current.help}</p>}{technique === 'fairisle' && colours >= 2 && <label className="strategy-field"><span>Longest float</span><input type="number" min="1" max="30" defaultValue={state.strategy.floatLimit} key={`float-${state.strategy.floatLimit}`} onBlur={(event) => onFloatLimit(Number(event.currentTarget.value))} /></label>}</Section>;
   return <aside className="sweater-design chart-design" aria-label="Design">
     {size}

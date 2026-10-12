@@ -47,6 +47,9 @@ async function check(page: Page, name: string, expected: string | RegExp) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
   await expect(page.getByRole('tab', { name: 'Machine file' })).toBeInViewport();
 
+  // Nothing still loading once the state has settled.
+  await expect(page.locator('.app-shell')).not.toContainText('…', { timeout: 60_000 });
+
   // Plain words.
   const text = await page.locator('.app-shell').innerText();
   for (const word of NOT_SAID) expect(text, `says "${word}"`).not.toContain(word);
