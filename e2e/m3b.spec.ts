@@ -140,6 +140,30 @@ test('draws freehand: a round brush, a circle and a mirror, each as one edit', a
   expect(circle.length).toBeLessThan(9 * 7);
 });
 
+test('a drag ends where the pointer comes up, even when its last moves arrive with the release', async ({ page }, testInfo) => {
+  const { canvas, point } = await canvasGeometry(page);
+  await page.getByRole('button', { name: 'Use Red', exact: true }).click();
+  await page.getByRole('button', { name: 'Line', exact: true }).click();
+  const at = (column: number) => point(column, 4);
+  await page.mouse.move(at(10).x, at(10).y);
+  await page.mouse.down();
+  // The moves and the release in one go, before the moves are drawn: how WebKit delivers a fast drag.
+  const pointer = { bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true };
+  await canvas.evaluate((element, { moves, end, pointer }) => {
+    for (const move of moves) element.dispatchEvent(new PointerEvent('pointermove', { ...pointer, clientX: move.x, clientY: move.y, buttons: 1 }));
+    element.dispatchEvent(new PointerEvent('pointerup', { ...pointer, clientX: end.x, clientY: end.y, button: 0, buttons: 0 }));
+  }, { moves: [at(12), at(14), at(16)], end: at(16), pointer });
+  await page.mouse.up();
+
+  const download = page.waitForEvent('download');
+  await menu(page, 'File', 'Save project');
+  const path = testInfo.outputPath('line-project.json');
+  await (await download).saveAs(path);
+  const saved = JSON.parse(await readFile(path, 'utf8'));
+  const columns = saved.history.entries.at(-1).edit.cells.map((cell: { column: number }) => cell.column);
+  expect([Math.min(...columns), Math.max(...columns)]).toEqual([10, 16]);
+});
+
 test('wheel zoom, drag pan, and the mobile dark canvas remain usable', async ({ page }) => {
   const shell = page.locator('.chart-canvas-shell');
   await shell.evaluate((element) => { element.scrollLeft = 600; element.scrollTop = 600; });

@@ -474,16 +474,19 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, brush = 1, mirror =
     return () => element.removeEventListener('wheel', handler);
   }, [zoom, cell, rowH, rowAspect, onZoomChange]);
 
-  const finish = () => {
+  // The drag ends where the pointer comes up: the last moves may not have been drawn yet (WebKit delivers them together).
+  const finish = (event: PointerEvent<HTMLCanvasElement>) => {
     if (!gesture || gesture.pan) { setGesture(null); return; }
-    const end = gesture.points.at(-1) ?? gesture.start;
+    const up = pointAt(event);
+    const points = up && !gesture.points.some((item) => item.row === up.row && item.column === up.column) ? [...gesture.points, up] : gesture.points;
+    const end = up ?? points.at(-1) ?? gesture.start;
     if (gesture.placement) {
       const columns = end.column - gesture.start.column; const rows = end.row - gesture.start.row;
       if (columns !== 0 || rows !== 0) onPlacementMove?.(gesture.placement, columns, rows);
       setGesture(null);
       return;
     }
-    const mutation = drawing(gesture.points, gesture.start, end);
+    const mutation = drawing(points, gesture.start, end);
     if (mutation) onCommit(mutation);
     else if (tool === 'select') onSelection(selectionFromPoints(gesture.start, end));
     else if (tool === 'move' && selection) {
