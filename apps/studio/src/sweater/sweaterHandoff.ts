@@ -2,7 +2,7 @@ import { materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate
 import type { PanelPlan } from './rasterize';
 import { edgeRhythm, pairedRhythm, type RhythmStep } from './rhythm';
 import type { PiecesPlan, SweaterPiecePlan, SweaterPlan } from './sweater';
-import type { SweaterRunSummary } from './sweaterRun';
+import { piecesStoryLines, type SweaterRunSummary } from './sweaterRun';
 import { sweaterSchematicSvg } from './schematic';
 import { ribName, textureMatching } from './textures';
 
@@ -97,8 +97,7 @@ export function sweaterInstructions(project: ColorworkProjectV1, plan: SweaterPl
   const texture = textureMatching(object.body.texture);
   const lines: string[] = [`# ${project.title}`, ''];
   if (summary) {
-    lines.push(summary.readiness.ready ? '**Ready to knit.** Every piece passed the software checks.' : `**Not ready yet.** ${summary.readiness.blockers.length} thing${summary.readiness.blockers.length === 1 ? '' : 's'} to resolve:`);
-    for (const finding of summary.findings.filter((item) => item.severity !== 'info')) lines.push(`- ${finding.message}`);
+    lines.push(...piecesStoryLines(summary, 'Every piece passed the software checks.'));
     lines.push('', `Software verdict: ${summary.verdict.label}. Physical knitting, yarn and fit are checked only by knitting.`, '');
   }
   lines.push(

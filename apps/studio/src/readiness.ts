@@ -142,6 +142,9 @@ export function collectFindings(plan: ProjectPlan, result: AuthoredPipelineResul
   return findings;
 }
 
+/** Findings that only say a size is not confirmed by a measured swatch: the file can still be knitted. */
+export const MEASUREMENT_RULES: ReadonlySet<string> = new Set(['gauge-assumed', 'size-needs-gauge']);
+
 const PLAN_BLOCKER_KIND: Partial<Record<string, 'assumed-value' | 'missing-input' | 'unsupported'>> = {
   'gauge-assumed': 'assumed-value',
   'size-needs-gauge': 'missing-input',

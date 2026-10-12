@@ -1,7 +1,7 @@
 import { beanieObjectOf, materializeColorworkProject, type ColorworkProjectV1, type ProjectState, type ProjectTrial, type ResolvedProjectPlacement } from '@kniterate-studio/project-contract';
 import type { AuthoredPipelineResult } from './authoredPipeline';
 import type { ProjectPlan, Valued } from './plan';
-import type { Finding, Readiness } from './readiness';
+import { MEASUREMENT_RULES, type Finding, type Readiness } from './readiness';
 
 /**
  * Everything a person reads about a project, from one place, so the CLI, the
@@ -131,8 +131,6 @@ const RULE_STORIES: Record<string, RuleStory> = {
     target: () => 'yarns',
   },
 };
-
-const MEASUREMENT_RULES = new Set(['gauge-assumed', 'size-needs-gauge']);
 
 export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], readiness: Readiness, verdict: AuthoredPipelineResult['verdict'], trials: readonly ProjectTrial[] = []): ReadinessStory {
   const items: StoryItem[] = findings.filter((finding) => finding.severity !== 'info').map((finding) => {

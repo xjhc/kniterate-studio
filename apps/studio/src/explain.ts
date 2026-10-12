@@ -28,7 +28,7 @@ const GLOSSARY: Record<string, string> = {
 const PLAN_RULES: Record<string, string> = {
   'size-off-target': 'The chart does not have the stitch or row count the target size needs at the recorded gauge. Apply the finding\'s fix edits (set-width or set-height) or change the target.',
   'size-needs-gauge': 'A target size is set but no gauge is recorded. Knit and measure a swatch, then record it with set-gauge.',
-  'gauge-assumed': 'Sizing uses an assumed gauge. The project is not ready until a measured gauge is recorded, because the finished size is unverified.',
+  'gauge-assumed': 'Sizing uses a typical gauge. The machine file can be knitted, but the finished size is not confirmed until you measure a swatch and record its gauge.',
   'size-exceeds-capacity': 'The target needs more needles, rows, or cells than the V1 bed and capacity allow. Reduce the target or the gauge.',
   'name-encodes-carrier': 'A yarn name mentions a carrier number that is not the carrier it is loaded on. Carrier numbers belong in the carrier field only.',
   'cuff-off-target': 'The beanie cuff does not have the rows its recorded height needs at the recorded 2x2 rib gauge (twice the height when it folds up). The fix sets the cuff rows and keeps the body rows.',

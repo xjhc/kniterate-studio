@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { materializeColorworkProject } from '@kniterate-studio/project-contract';
 import { createPanelProject, planPanel, type PanelIntent } from './panel';
+import { panelInstructions } from './panelHandoff';
 import { runSweaterPipeline } from './sweaterPipeline';
 import { summarizeSweaterRun } from './sweaterRun';
 
@@ -37,6 +38,11 @@ describe('one-yarn scarf or blanket', () => {
       expect(file.sections.find((section) => section.kind === 'body')!.label).toBe('Pattern');
       if ((overrides.ends?.cm ?? 4) > 0) expect(kinds.filter((kind) => kind === 'rib')).toHaveLength(2);
     }
+    // With a typical gauge it can be knitted; only the size is unconfirmed, as the panel says.
+    const result = await runSweaterPipeline(create());
+    const pattern = panelInstructions(create(), planPanel(materializeColorworkProject(create()).state), summarizeSweaterRun(result));
+    expect(pattern).toContain('**Ready to knit, sizes not confirmed.** Sizes use a typical gauge until you measure a swatch.');
+    expect(pattern).not.toMatch(/Not ready|assumed gauge/);
   });
 
   it('refuses a panel wider than the bed in words', () => {

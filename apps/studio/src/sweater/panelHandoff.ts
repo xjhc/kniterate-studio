@@ -1,7 +1,7 @@
 import { materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import type { PanelPlan } from './panel';
 import { pieceSteps } from './sweaterHandoff';
-import type { SweaterRunSummary } from './sweaterRun';
+import { piecesStoryLines, type SweaterRunSummary } from './sweaterRun';
 import { ribName, textureMatching } from './textures';
 
 /** A one-yarn scarf or blanket's written pattern and its download package. */
@@ -14,8 +14,7 @@ export function panelInstructions(project: ColorworkProjectV1, plan: PanelPlan, 
   const run = summary?.pieces[0];
   const lines: string[] = [`# ${project.title}`, ''];
   if (summary) {
-    lines.push(summary.readiness.ready ? '**Ready to knit.**' : `**Not ready yet.** ${summary.readiness.blockers.length} thing${summary.readiness.blockers.length === 1 ? '' : 's'} to resolve:`);
-    for (const finding of summary.findings.filter((item) => item.severity !== 'info')) lines.push(`- ${finding.message}`);
+    lines.push(...piecesStoryLines(summary, 'The machine file passed the software checks.'));
     lines.push('', `Software check: ${summary.verdict.label}. Yarn and size are proven only by knitting.`, '');
   }
   lines.push(

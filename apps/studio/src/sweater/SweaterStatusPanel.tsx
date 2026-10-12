@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 import { StatusPanel, type StatusTone } from '../workspace/StatusPanel';
 import { revealSection } from '../workspace/panel';
+import { MEASUREMENT_RULES } from '../readiness';
 import type { SwatchFile } from '../useSwatchFile';
 import type { PieceId } from './draft';
 import type { PiecesPlan } from './sweater';
-import type { SweaterRunState } from './sweaterRun';
+import { piecesStory, type SweaterRunState } from './sweaterRun';
 
 /** Whether a flat-piece project (a sweater, a scarf or blanket) can be knitted, the steps to knit it, and its machine files. */
 export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile, onOpenFile, onDownloadPiece, onPackage, onPrint, packaging, fileDetail }: {
@@ -27,16 +28,19 @@ export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile,
   const designErrors = plan.findings.filter((finding) => finding.severity === 'error');
   const findings = (summary && !checking ? summary.findings : plan.findings.map((finding) => ({ ...finding, owner: 'design' as const }))).filter((finding) => finding.severity !== 'info');
   // The gauge is the swatch step's; everything else is the design's.
-  const designNotes = findings.filter((finding) => finding.rule !== 'gauge-assumed');
+  const designNotes = findings.filter((finding) => !MEASUREMENT_RULES.has(finding.rule));
   let tone: StatusTone = 'checking';
   let title = 'Checking every piece…';
   let detail = '';
   if (run.status === 'failed') { tone = 'blocked'; title = 'The check stopped'; detail = run.error ?? 'Unknown error.'; }
   else if (summary && !checking) {
-    if (!summary.exportReady) { tone = 'blocked'; title = "Can't knit yet"; detail = 'Fix what is listed under Design.'; }
-    else if (summary.readiness.ready) { tone = 'ready'; title = 'Ready to knit'; }
-    else if (designNotes.length > 0) { tone = 'warn'; title = `${designNotes.length} ${designNotes.length === 1 ? 'thing' : 'things'} to check`; detail = 'It can be knitted. See Design below.'; }
-    else { tone = 'next'; title = 'Ready to knit, sizes not confirmed'; detail = 'Sizes use a typical gauge until you measure a swatch.'; }
+    // The same headline as the written pattern.
+    const story = piecesStory(summary);
+    title = story.headline;
+    if (story.status === 'blocked') { tone = 'blocked'; detail = 'Fix what is listed under Design.'; }
+    else if (story.status === 'ready') tone = 'ready';
+    else if (story.status === 'design-issues') { tone = 'warn'; detail = 'It can be knitted. See Design below.'; }
+    else { tone = 'next'; detail = 'Sizes use a typical gauge until you measure a swatch.'; }
   } else if (designErrors.length > 0) { tone = 'blocked'; title = "Can't knit yet"; detail = designErrors[0]!.message; }
   const operator = summary && !checking ? summary.findings.filter((finding) => finding.severity === 'info' && finding.owner === 'operator') : [];
   const gauges = [{ name: plan.object.body.name, measured: plan.gauge.source === 'measured' }, ...(ribUsed ? [{ name: 'Rib', measured: plan.ribGauge.source === 'measured' }] : [])];

@@ -6,7 +6,7 @@ import { rasterizePiece, sliceOutline } from './rasterize';
 import { sweaterPlanOf, createSweaterProject, planSweater, sweaterEdit, type SweaterIntent } from './sweater';
 import { runSweaterPipeline } from './sweaterPipeline';
 import { pieceSteps, sweaterInstructions, sweaterPackageFiles } from './sweaterHandoff';
-import { summarizeSweaterRun } from './sweaterRun';
+import { piecesStory, summarizeSweaterRun } from './sweaterRun';
 import { TEXTURES, textureProblem } from './textures';
 import { assembledLayout, schematicLayout, sweaterSchematicSvg } from './schematic';
 
@@ -302,6 +302,10 @@ describe('sweater pipeline', () => {
     const manifest = JSON.parse(new TextDecoder().decode(files['manifest.json']));
     expect(manifest.pieces.find((piece: { id: string }) => piece.id === 'sleeve')).toMatchObject({ copies: 2, file: 'sleeve.kc', verdict: 'Surface-proven' });
     const pattern = sweaterInstructions(project, plan, summary);
+    // The panel's headline: a typical gauge leaves the sizes unconfirmed, not the sweater unknittable.
+    expect(piecesStory(summary).headline).toBe('Ready to knit, sizes not confirmed');
+    expect(pattern).toContain('**Ready to knit, sizes not confirmed.** Sizes use a typical gauge until you measure a swatch.');
+    expect(pattern).not.toContain('Not ready');
     expect(pattern).toMatch(/### Sleeve — knit 2/);
     expect(pattern).toMatch(/Row \d+: neck\. Bind off the centre \d+ stitches/);
     expect(pieceSteps(plan.pieces[2]!, plan).join(' ')).toMatch(/Rows \d+–\d+ at each side: increase 1 every (\d+–)?\d+(th|rd|nd)? rows?, \d+ times → \d+ stitches\./);

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import type { AuthoredVerdict } from '../engine';
-import type { Finding, Readiness } from '../readiness';
+import { MEASUREMENT_RULES, type Finding, type Readiness } from '../readiness';
 import type { PieceId } from './draft';
 import { readKnitFile, type KnitFile } from './knitFile';
 import type { SweaterPipelineResult } from './sweaterPipeline';
@@ -30,6 +30,26 @@ export interface SweaterRunSummary {
 export type SweaterRunResponse =
   | { kind: 'sweater-complete'; requestId: number; summary: SweaterRunSummary }
   | { kind: 'sweater-failed'; requestId: number; error: string };
+
+/**
+ * Whether a flat-piece project can be knitted, in the words the panel and the
+ * written pattern share. A typical gauge does not stop the knitting: it only
+ * leaves the sizes unconfirmed. `notes` are the findings other than that.
+ */
+export function piecesStory(summary: SweaterRunSummary): { status: 'blocked' | 'ready' | 'design-issues' | 'needs-measurements'; headline: string; notes: Finding[] } {
+  const notes = summary.findings.filter((finding) => finding.severity !== 'info' && !MEASUREMENT_RULES.has(finding.rule));
+  if (!summary.exportReady) return { status: 'blocked', headline: "Can't knit yet", notes };
+  if (summary.readiness.ready) return { status: 'ready', headline: 'Ready to knit', notes };
+  if (notes.length > 0) return { status: 'design-issues', headline: `${notes.length} ${notes.length === 1 ? 'thing' : 'things'} to check`, notes };
+  return { status: 'needs-measurements', headline: 'Ready to knit, sizes not confirmed', notes };
+}
+
+/** The pattern's opening lines: the shared headline, what it means, and what is left to check. */
+export function piecesStoryLines(summary: SweaterRunSummary, ready: string): string[] {
+  const story = piecesStory(summary);
+  const detail = { blocked: 'Fix these first:', ready, 'design-issues': 'It can be knitted. Check these first:', 'needs-measurements': 'Sizes use a typical gauge until you measure a swatch.' }[story.status];
+  return [`**${story.headline}.** ${detail}`, ...story.notes.map((finding) => `- ${finding.message}`)];
+}
 
 export function summarizeSweaterRun(result: SweaterPipelineResult): SweaterRunSummary {
   return {
