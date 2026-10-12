@@ -1,9 +1,6 @@
 /**
  * PatternProgram — the canonical input shape that goes into the compile
- * path. Both Track A (knitlab1 chart export) and Track B (garment-package
- * export) build a PatternProgram and feed it through the same compile
- * helpers (`compileExport` for the chart path; the package planner for
- * Track B).
+ * path (`compileExport` / `buildCompileInputForExport`).
  *
  * Phase 2 (2026-05-24): PatternProgram is now a production input, not
  * a test-only adapter. It carries everything `compileExport` needs to
@@ -14,10 +11,7 @@
  * intact; the derive step happens inside compile.
  *
  * Shape:
- *   - `chart: KnitlabChartState` — required for both tracks. Track A
- *     authors it directly; Track B derives it via
- *     `panelGridsFromPackage` / synthesize-panels and bundles it here.
- *   - `shape?: ShapeContract` — Track B only.
+ *   - `chart: KnitlabChartState` — the chart to compile.
  *   - `recipe: MachineRecipe | null` — `null` represents a detached
  *     manual config; the compile path falls back to engine defaults +
  *     overrides.
@@ -30,7 +24,6 @@
  */
 
 import type { KnitlabChartState } from '../colorwork/knitlab1-contract.js'
-import type { ShapeContract } from '../shape/types.js'
 import type { CarrierMode } from './export-helpers.js'
 import type { MachineRecipe } from './recipes/types.js'
 import type { CarrierId, YarnBinding } from './types.js'
@@ -41,11 +34,8 @@ import type { RecipeOverrides, UserIntent } from './wizard-config.js'
 export type YarnAssignment = YarnBinding
 
 export interface PatternProgram {
-  /** The chart to compile. Required for both tracks. */
+  /** The chart to compile. */
   chart: KnitlabChartState
-  /** Optional structural projection of the garment package. Present
-   *  for Track B; absent for Track A. */
-  shape?: ShapeContract
   /** The active MachineRecipe, or `null` for a detached manual
    *  config. The compile path uses this to compute the recipe
    *  baseline before applying overrides. */
@@ -102,69 +92,4 @@ export function trackAPatternProgram(input: {
     recipeOverrides: input.recipeOverrides,
     userIntent: input.userIntent,
   }
-}
-
-/** Convenience: build a PatternProgram for Track B (garment-package
- *  export). Caller is responsible for synthesizing the chart from the
- *  package before compile; the PatternProgram carries the synthesized
- *  chart so the compile pipeline treats it uniformly with Track A. */
-export function trackBPatternProgram(input: {
-  shape: ShapeContract
-  chart: KnitlabChartState
-  recipe: MachineRecipe | null
-  yarns: readonly YarnAssignment[]
-  allocationMode: CarrierMode
-  needleOffset?: number
-  protectFirstBodyRow?: boolean
-  swatchConfirmed?: boolean
-  recipeOverrides: RecipeOverrides
-  userIntent?: UserIntent
-}): PatternProgram {
-  return {
-    shape: input.shape,
-    chart: input.chart,
-    recipe: input.recipe,
-    yarns: input.yarns,
-    allocationMode: input.allocationMode,
-    needleOffset: input.needleOffset,
-    protectFirstBodyRow: input.protectFirstBodyRow,
-    swatchConfirmed: input.swatchConfirmed,
-    recipeOverrides: input.recipeOverrides,
-    userIntent: input.userIntent,
-  }
-}
-
-/** Type guard for selecting Track A vs Track B in the wizard shell. */
-export function isTrackA(program: PatternProgram): boolean {
-  return program.shape === undefined
-}
-
-export function isTrackB(program: PatternProgram): boolean {
-  return program.shape !== undefined
-}
-
-/** Mint a default YarnAssignment list from the recipe's swatch + a list
- *  of keyIds. Wizard uses this when the user picks a recipe; the
- *  assignment can be further tweaked.
- *
- *  P3.2 #3 (2026-05-23): respect carrier reservations. The recipe's
- *  `start.wasteCarrier` and `start.drawCarrier` are excluded from the
- *  pattern allocation pool so pattern yarns never collide with the
- *  waste/draw slots. `'none'` for draw means no reservation.
- */
-export function defaultYarnsForRecipe(
-  keyIds: readonly string[],
-  recipe: MachineRecipe,
-): YarnAssignment[] {
-  const reserved = new Set<CarrierId>()
-  reserved.add(recipe.sections.start.wasteCarrier)
-  if (recipe.sections.start.drawCarrier !== 'none') {
-    reserved.add(recipe.sections.start.drawCarrier)
-  }
-  const slots = recipe.swatch.machine.carrierSlots.filter(c => !reserved.has(c))
-  return keyIds.slice(0, slots.length).map((keyId, i) => ({
-    keyId,
-    carrier: slots[i] as CarrierId,
-    name: keyId,
-  }))
 }

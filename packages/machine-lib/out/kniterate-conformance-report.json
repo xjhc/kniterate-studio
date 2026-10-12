@@ -1,9 +1,12 @@
 {
   "kind": "kniterate-studio-m1-conformance-report",
   "schemaVersion": "1",
-  "generatedAt": "2026-07-13T05:55:23.541Z",
   "verdict": "Verified - swatch recommended",
-  "honestyCap": "Software extraction proof only; Knit-proven requires a matching physical registry entry.",
+  "honestyCap": "Software conformance only. Physical acceptance is a separate release:physical-check gate and never serves as a software oracle.",
+  "physicalAcceptance": {
+    "included": false,
+    "command": "pnpm release:physical-check"
+  },
   "gates": [
     {
       "layer": "0",
@@ -44,13 +47,6 @@
       "layer": 6,
       "name": "known-bad refusal corpus",
       "command": "kniterate:refusals",
-      "status": "pass",
-      "exitCode": 0
-    },
-    {
-      "layer": 7,
-      "name": "physical swatch registry integrity",
-      "command": "kniterate:swatches",
       "status": "pass",
       "exitCode": 0
     }

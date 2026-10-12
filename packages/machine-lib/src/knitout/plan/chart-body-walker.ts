@@ -255,8 +255,8 @@ const CHART_BODY_WALKER_RECORDS: readonly ChartBodyWalkerRecord[] = [
   },
   {
     kind: 'nonshape-row-stripes',
-    matches: ({ patternCarrierCount, shapeMode, colorMode }) =>
-      patternCarrierCount > 1 && !shapeMode && colorMode === 'horizontal-stripes',
+    matches: ({ patternCarrierCount, shapeMode, colorMode, backBedStyle }) =>
+      patternCarrierCount > 1 && !shapeMode && colorMode === 'horizontal-stripes' && backBedStyle !== 'birdseye',
     technique: 'stockinette-shaped-stripes',
     emit: emitRowStripeWalker,
   },
@@ -282,10 +282,10 @@ const CHART_BODY_WALKER_RECORDS: readonly ChartBodyWalkerRecord[] = [
     kind: 'jacquard-dbj-full',
     matches: ({ patternCarrierCount, shapeMode, backBedStyle, dbjBackingStrategy }) =>
       patternCarrierCount > 1 && !shapeMode && backBedStyle === 'birdseye' && dbjBackingStrategy === 'full',
-    technique: 'lined-jacquard',
+    technique: 'birdseye-jacquard',
     emit: (ctx) => {
       const input = ctx.input;
-      ctx.appendWalkResult(emitJacquardDbjFullWalk({
+      const result = emitJacquardDbjFullWalk({
         resolved: input.resolved,
         bindings: ctx.bindingMap,
         needleStart: input.needleStart,
@@ -293,8 +293,9 @@ const CHART_BODY_WALKER_RECORDS: readonly ChartBodyWalkerRecord[] = [
         wasteCarrier: '6',
         firstRowSpeedOverride: input.firstRowSpeedOverride,
         initialNextDirection: ctx.currentNextDirection(),
-      }));
-      ctx.setFinalKnitCarrier('4');
+      });
+      ctx.appendWalkResult(result);
+      ctx.setFinalKnitCarrier(result.finalKnitCarrier);
     },
   },
   {

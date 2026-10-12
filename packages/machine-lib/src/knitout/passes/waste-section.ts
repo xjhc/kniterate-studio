@@ -353,8 +353,9 @@ export function emitWasteSection(input: WasteSectionInput): WasteSectionResult {
   // The earlier implementation only handled the `+` case, so any chart
   // compiled with the default (even) `wastePasses` left live even-needle
   // back-bed loops, which then interfered with the both-beds cast-on.
-  // Conservative fix: drop EVERY needle on the back bed in range. `drop`
-  // on an empty needle is a safe no-op in knitout.
+  // Conservative modeled cleanup: drop every needle on the back bed in range.
+  // Empty targets do not change modeled loop state; their operational machine
+  // consequence remains unverified.
   ops.push(comment('--- DROP BACK-BED WASTE STITCHES ---'));
   for (let n = needleStart; n <= needleEnd; n++) {
     sim.drop(backBed(n));

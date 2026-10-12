@@ -142,23 +142,30 @@ chart canvas · strategy rail · pass grid · verdict badge · source dock · ru
    points** — the editability ladder as code, and the same `ProjectEdit` op union
    the AI uses (R7), so AI edits are reviewable and undoable by construction (R10).
 4. **Ports-and-adapters at the vendor boundary.** `KCodeConverter` (A.1): Node
-   subprocess adapter for CLI/tests, Worker adapter for the browser, same
-   vendored `.cjs`. The UI depends only on `predictedPasses` and parity-checked
-   output — never on vendor internals. The parity suite is the only code allowed
-   to hurt when the vendor changes.
-5. **Simulation is load-bearing, not optional.** `CarriageSimulator` does two
-   jobs: stateful emission (carrier parking, kickbacks) and `predictedPasses()` —
-   the prediction of what the vendor will emit (`sim/vendor-rules.ts`). The
-   machine column, pass counts, and time estimate are renderers over
-   `predictedPasses`; without it there is no machine view until after
-   conversion, and no oracle.
-6. **Parity as a CI ritual — and the oracle stated correctly.** Our `.kc` is
-   *produced by* the vendored backend, so "diff our output against the backend"
-   is circular. The real oracle is **predicted-vs-vendor parity**: the simulator
-   predicts the passes the backend will emit; `predicted-vs-vendor.test.ts`, the
-   reference-kc corpus (`machine-lib/reference/*.kc`), the refusal corpus, and
-   the topology oracle check prediction against actual. Any walker or vendor
-   change must be corpus-green before merge.
+   and browser Worker adapters execute the same pinned vendored source. The
+   backend returns an exact post-lowering scheduled-pass trace, including source
+   lines, alongside KCode. All mutable lowering settings are conversion-scoped;
+   repeat and cross-document ordering tests guard deterministic,
+   history-independent output.
+5. **Emitted KCode is machine-view authority.** `predictedPasses` remains useful
+   planning telemetry, but exact pass count, design-row joins, movement, source
+   spans, and output verdicts come from strict KCode → `MachineTraceV1` →
+   validator/`MachineSceneV1`. React renders those projections and performs no
+   raster, coordinate, or loop-state math.
+6. **Differential proof without circular trust.** The backend's scheduled-pass
+   IR is compared for every machine-executable KCode field with an independently
+   parsed MachineTrace. Backend-only `sourceLines` and `isAutoMove` are not part
+   of the KCode differential; serialized `comment` prose is preserved but is not
+   movement/state evidence. `sourceLines` and claimed design rows are
+   integrity-checked against parsed Knitout. Separate test-only
+   decoding/replay, byte round trips, adversarial grammar,
+   property and grammar/input-mutation tests, the 13-file reference corpus
+   parsed under the canonical V1 dialect without inferring an external producer,
+   refusal cases, and topology checks cover the public result. This is not
+   implementation-source mutation scoring; adding a source-mutation score is a
+   future gate opportunity. `pnpm verify:kcode` fingerprints the contract and
+   emits a deterministic manifest. A physical knit is deliberately a later
+   acceptance gate, never the software oracle.
 
 **Named gap:** `KniteratePlan` exists only as TypeScript types
 (`plan/types.ts`); `schemas/` holds only `colorwork-chart-v1`. Since the source
@@ -297,13 +304,21 @@ downstream work forks on them. **R1–R4 should be answered before S2 starts.**
   artifact match against a physical `registry/swatches` entry ⇒ **Knit-proven**.
   Never auto-Knit-proven. Reuse `validators/messages.ts` copy verbatim in the panel.
 - **Foreign-file rule (S1) — as implemented in `apps/studio/src/engine.ts`.** A
-  foreign `.kc`/`.k` (opened, not compiled by us) has no plan; its verdict is
-  computed from the `kcToKnitout` reconstruction run through the op-level +
-  bed-state validators. Any error **or unresolved warning** ⇒ **Blocked** (an
-  imported file has no project context in which to accept a warning). Clean ⇒
-  **Surface-proven (imported)** — with a mandatory annotation ("imported —
-  reconstructed") on the badge panel and run sheet. Knit-proven stays
-  registry-fingerprint-only — a file we previously exported can legitimately match.
+  foreign `.kc`/`.k` (opened, not compiled by us) has no project plan. `.kc`
+  intake is strict byte-preserving parse → MachineTrace → loop/kinematic replay;
+  `.k` intake first runs the pinned backend, then that same emitted-output rail
+  plus the scheduled-pass differential. Any error **or unresolved warning** ⇒
+  **Blocked** (an imported file has no project context in which to accept a
+  warning). One evidence-backed V1 presentation rule is narrower than a waiver:
+  the shared validator's depth-three loop-stack warning is informational at the
+  foreign Studio boundary because five captured references establish it as
+  observed corpus behavior. They do not establish an external producer or a
+  physical loop-stack limit; depth four remains an error. Otherwise clean ⇒
+  **Surface-proven (imported)** — with a mandatory annotation on the badge panel
+  and run sheet. Imported V1 files remain at that rung:
+  `openMachineDocument` accepts no registry evidence ID, and a future trusted
+  verifier must bind exact input bytes to the physical registry before reopening
+  an artifact can become Knit-proven.
   **Three rungs; no waiver, no Experimental.**
 
 ### R7 — AI tool-use surface & speculative compile

@@ -6,9 +6,43 @@ import {
 import { z } from 'zod';
 
 export const COLORWORK_PROJECT_KIND = 'kniterate-studio-project' as const;
-export const COLORWORK_PROJECT_VERSION = 1 as const;
+/** Files are written as version 2. Version 1 files are read and upgraded
+ * losslessly: v2 only adds the optional `gauge`/`target` state and their edits. */
+export const COLORWORK_PROJECT_VERSION = 2 as const;
+const READABLE_PROJECT_VERSIONS = [1, 2] as const;
 export const COLORWORK_PROJECT_PROFILE = 'kniterate-7gg-worsted-v1' as const;
 export const PROJECT_CHECKPOINT_INTERVAL = 50;
+
+/**
+ * One browser-safe admission contract for the fixed V1 authored compiler.
+ * `ColorworkChartV1` remains a neutral interchange format; these limits apply
+ * only after a chart becomes a Kniterate Studio project.
+ */
+export const AUTHORED_CAPACITY_LIMITS_V1 = {
+  projectSourceCodeUnits: 16 * 1024 * 1024,
+  chartWidth: 252,
+  chartHeight: 1_200,
+  chartCellsPerState: 75_600,
+  stateCellsTotal: 750_000,
+  stateElementsTotal: 1_000_000,
+  rowIdsPerState: 1_200,
+  rowIdsTotal: 10_800,
+  palettePerState: 256,
+  paletteTotal: 2_304,
+  yarnAssignmentsPerState: 4,
+  yarnAssignmentsTotal: 36,
+  overridesPerState: 75_600,
+  overridesTotal: 680_400,
+  historyEntries: 256,
+  historyCheckpoints: 8,
+  editItemsTotal: 200_000,
+  paintCellsPerEdit: 75_600,
+  replayCellVisits: 20_000_000,
+  knitoutRecords: 600_000,
+  loweredPasses: 8_192,
+  selectedCells: 200_000,
+  kcodeRecords: 100_000,
+} as const;
 
 const Id = z.string().min(1).max(120).regex(/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/);
 const Carrier = z.enum(['2', '3', '4', '5']);
@@ -27,7 +61,7 @@ const StrategySchema = z.object({
 });
 
 const FrameSchema = z.object({
-  wasteRows: z.number().int().min(1).max(200).default(20),
+  wasteRows: z.number().int().min(4).max(200).default(20),
   drawThread: z.boolean().default(true),
   bindOff: z.enum(['machine-bindoff', 'waste-and-drop']).default('machine-bindoff'),
 });
@@ -38,6 +72,236 @@ const StitchOverrideSchema = z.object({
   anchor: z.object({ rowId: RowId, needleIndex: z.number().int().min(0) }),
   operation: z.enum(['knit', 'tuck', 'miss', 'rear-knit', 'transfer']),
 });
+
+/** Measured or assumed fabric gauge. Sizing reads it; the compiler never does. */
+const GaugeSchema = z.object({
+  stitchesPer10cm: z.number().positive().max(100),
+  rowsPer10cm: z.number().positive().max(100),
+  source: z.enum(['measured', 'assumed']),
+  note: z.string().max(200).optional(),
+});
+export type ProjectGauge = z.infer<typeof GaugeSchema>;
+
+/** Requested finished size. The chart's stitch and row counts remain the only
+ * source of truth for the knitted program; the target is checked, not applied. */
+const TargetSchema = z.object({
+  widthCm: z.number().positive().max(1_000).optional(),
+  heightCm: z.number().positive().max(10_000).optional(),
+}).refine((target) => target.widthCm !== undefined || target.heightCm !== undefined, 'target needs widthCm or heightCm');
+export type ProjectTarget = z.infer<typeof TargetSchema>;
+
+/**
+ * The knitted object when it is not a plain rectangle. For a beanie the chart
+ * is the rib body (width = needles, height = rib rows, one color) and the
+ * construction adds the frame, crown, and knit-off.
+ */
+const BeanieObjectSchema = z.object({
+  kind: z.literal('beanie'),
+  /**
+   * `flat-rib-2x2`: the whole body is 2×2 rib. `rib-cuff-jersey-body`: the
+   * bottom `cuffRows` chart rows are the rib cuff (one yarn); the rows above
+   * are a jersey colorwork body (fairisle).
+   */
+  construction: z.enum(['flat-rib-2x2', 'rib-cuff-jersey-body']),
+  cuffRows: z.number().int().min(1).max(1_200).optional(),
+  /** The cuff is folded up when worn: it is knitted at twice its visible height and the fold shows the reverse. */
+  cuffFold: z.boolean().optional(),
+  /** Requested visible cuff height; the plan checks `cuffRows` against it at `ribGauge`. */
+  cuffTargetCm: z.number().positive().max(100).optional(),
+  /** Fit intent: the wearer's head circumference and the ease (a fraction, -0.1 = 10% negative ease); the plan derives the finished circumference from them. */
+  headCircumferenceCm: z.number().positive().max(100).optional(),
+  ease: z.number().gt(-0.5).lt(0.5).optional(),
+  /** Gauge of the 2×2 rib (the cuff); the body uses the project gauge. */
+  ribGauge: z.lazy(() => GaugeSchema).optional(),
+}).refine((object) => object.construction === 'flat-rib-2x2' || object.cuffRows !== undefined, 'rib-cuff-jersey-body needs cuffRows');
+export type BeanieObject = z.infer<typeof BeanieObjectSchema>;
+
+/**
+ * A stitch texture as a small repeat, rows as seen with the top row first
+ * (the bottom row is knitted first). `k` knit, `p` purl (knit on the rear
+ * bed), `t`/`u` tuck on the front/rear bed, `s` slip.
+ */
+const TextureSchema = z.array(z.string().regex(/^[kptus]+$/, 'a texture row uses only k, p, t, u and s').min(1).max(24)).min(1).max(24)
+  .refine((rows) => rows.every((row) => row.length === rows[0]!.length), 'every texture row needs the same number of stitches');
+const RibTrimSchema = z.object({
+  /** One rib row, e.g. "kp" (1×1) or "kkpp" (2×2). */
+  rib: z.string().regex(/^[kp]+$/, 'a rib uses only k and p').min(2).max(12),
+  cm: z.number().min(0).max(40),
+});
+const SweaterCm = z.number().positive().max(250);
+
+/**
+ * A key point of a piece edge (the right half, bottom up): x cm from the
+ * centre line, y cm above the cast-on. `curve` says how the edge arrives here
+ * from the previous point; `underarm` marks where the armhole or the sleeve
+ * cap starts.
+ */
+const ShapePointSchema = z.object({
+  x: z.number().min(0).max(130),
+  y: z.number().min(0).max(250),
+  curve: z.enum(['concave', 'convex']).optional(),
+  underarm: z.literal(true).optional(),
+});
+export type SweaterShapePoint = z.infer<typeof ShapePointSchema>;
+const ShapeEdgeSchema = z.array(ShapePointSchema).min(2).max(60);
+
+/**
+ * A flat-panel sweater: the front, back, two sleeves and (for a crew neck) a
+ * neckband are knitted as separate pieces and sewn. Measurements are the
+ * finished garment's, in cm; the pieces' shapes are drafted from them and
+ * their stitches and rows come from the project gauge (the body texture)
+ * and `ribGauge` (the trims). The chart's palette holds the yarn.
+ */
+const SweaterObjectSchema = z.object({
+  kind: z.literal('sweater'),
+  /** `drop-shoulder`: straight body, flat-topped sleeve. `j-sleeve`: a short underarm curve, then straight. `set-in`: a shaped armhole and a capped sleeve. */
+  silhouette: z.enum(['drop-shoulder', 'j-sleeve', 'set-in']),
+  /**
+   * `crew`: a round shaped neck; `v`: straight from the shoulders to a point;
+   * `square`: bound off flat with straight sides. Each is finished with a rib
+   * neckband. `boat`: a straight top with a rib edge; the shoulder seams leave
+   * the neck open.
+   */
+  neckline: z.enum(['crew', 'v', 'square', 'boat']),
+  measurements: z.object({
+    /** Finished chest circumference (front + back). */
+    chest: SweaterCm,
+    /** Back length from the hem to the shoulder at the neck. */
+    length: SweaterCm,
+    /** Underarm to the cuff's edge. */
+    sleeveLength: SweaterCm,
+    /** Finished upper-arm circumference. */
+    upperArm: SweaterCm,
+    /** Finished cuff circumference. */
+    cuff: SweaterCm,
+    /** Underarm to shoulder, straight up. */
+    armholeDepth: SweaterCm,
+    /** Shoulder point to shoulder point across the back (set-in and J-sleeve). */
+    shoulderWidth: SweaterCm,
+    neckWidth: SweaterCm,
+    frontNeckDepth: SweaterCm,
+    backNeckDepth: z.number().min(0).max(30),
+    /** How far the shoulder line drops from the neck to the shoulder point. */
+    shoulderDrop: z.number().min(0).max(15).optional(),
+  }),
+  /** Where the measurements came from: a standard size and a fit, or custom. */
+  size: z.string().min(1).max(40).optional(),
+  body: z.object({ name: z.string().min(1).max(80), texture: TextureSchema }),
+  trims: z.object({ hem: RibTrimSchema, cuff: RibTrimSchema, neck: RibTrimSchema }),
+  /** Gauge of the rib trims; the body uses the project gauge. */
+  ribGauge: z.lazy(() => GaugeSchema).optional(),
+  /** How each piece's top is finished: a machine chain bind-off, or waste yarn to bind off or graft by hand. */
+  top: z.enum(['bind-off', 'waste']).optional(),
+  /** Stitches moved by each decrease and increase: 1 at the edge, 2–3 for a fashioning line set in from it. */
+  fashion: z.number().int().min(1).max(3).optional(),
+  /**
+   * The knitter's own shapes, replacing the style's: the body edge (side seam,
+   * armhole and shoulder point, shared by front and back so the side seams
+   * match) and the sleeve edge (cuff to the top's outer corner). The
+   * measurements that drew an edge no longer change it.
+   */
+  shapes: z.object({ body: ShapeEdgeSchema.optional(), sleeve: ShapeEdgeSchema.optional() }).optional(),
+});
+export type SweaterObject = z.infer<typeof SweaterObjectSchema>;
+
+/**
+ * A one-yarn panel (a scarf or a blanket) in any knit/purl/tuck/slip stitch,
+ * knitted flat as one piece. Sized in cm; its stitches and rows come from the
+ * project gauge (the body stitch) and `ribGauge` (the rib ends). The chart's
+ * palette holds the yarn.
+ */
+const PanelObjectSchema = z.object({
+  kind: z.literal('panel'),
+  widthCm: z.number().min(5).max(110),
+  lengthCm: z.number().min(5).max(400),
+  body: z.object({ name: z.string().min(1).max(80), texture: TextureSchema }),
+  /** A rib band at each end (`cm` 0 for none). */
+  ends: RibTrimSchema,
+  ribGauge: z.lazy(() => GaugeSchema).optional(),
+  /** How the top is finished: a machine chain bind-off, or waste yarn. */
+  top: z.enum(['bind-off', 'waste']).optional(),
+});
+export type PanelObject = z.infer<typeof PanelObjectSchema>;
+
+const ObjectSchema = z.union([BeanieObjectSchema, SweaterObjectSchema, PanelObjectSchema]);
+export type ProjectObject = z.infer<typeof ObjectSchema>;
+
+/** The project's beanie, when it is one. */
+export function beanieObjectOf(state: { object?: ProjectObject }): BeanieObject | undefined {
+  return state.object?.kind === 'beanie' ? state.object : undefined;
+}
+
+/** The project's sweater, when it is one. */
+export function sweaterObjectOf(state: { object?: ProjectObject }): SweaterObject | undefined {
+  return state.object?.kind === 'sweater' ? state.object : undefined;
+}
+
+/** The project's one-yarn panel (scarf or blanket), when it is one. */
+export function panelObjectOf(state: { object?: ProjectObject }): PanelObject | undefined {
+  return state.object?.kind === 'panel' ? state.object : undefined;
+}
+
+/**
+ * A motif placed as intent rather than painted cells. Materialization draws
+ * it over the chart from its anchor, so it stays centred and above the cuff
+ * when the piece is resized; a placement that no longer fits is reported,
+ * never silently clipped.
+ */
+const PlacementSchema = z.object({
+  id: Id,
+  motif: z.unknown().transform((value, context): ColorworkChartV1 => {
+    try { return parseColorworkChartV1(value); } catch (error) {
+      for (const issue of error instanceof InvalidColorworkChartError ? error.issues : [String(error)]) context.addIssue({ code: 'custom', message: issue });
+      return z.NEVER;
+    }
+  }),
+  /** Stitches from the left edge, or centred on the current width. */
+  x: z.union([z.literal('center'), z.number().int().min(0)]),
+  /** Rows between the cuff top (or the cast-on, without a cuff) and the motif's bottom row. */
+  rowsAboveCuff: z.number().int().min(0),
+  /** Motif palette index (as a string) → project palette id. An unmapped color is left as the ground (transparent). */
+  colors: z.record(z.string(), Id),
+  /** The image the motif came from, kept so it can be re-converted when the gauge or size changes. */
+  source: z.object({
+    mediaType: z.literal('image/png'),
+    sha256: z.string().regex(/^[0-9a-f]{64}$/),
+    bytesBase64: z.string().max(4 * 1024 * 1024),
+    heightCm: z.number().positive().max(200),
+    colors: z.number().int().min(1).max(8),
+    pooling: z.enum(['mean', 'mode']),
+    converter: z.object({ id: z.string(), version: z.string() }),
+    /** The body gauge the motif was converted at; a different project gauge means it needs re-converting. */
+    gauge: z.object({ stitchesPer10cm: z.number().positive().max(100), rowsPer10cm: z.number().positive().max(100) }).optional(),
+  }).optional(),
+}).refine((placement) => placement.motif.width <= 252 && placement.motif.height <= 1_200 && placement.motif.width * placement.motif.height <= 75_600, 'placement motif exceeds the chart capacity (252 × 1,200, 75,600 cells)');
+export type ProjectPlacement = z.infer<typeof PlacementSchema>;
+
+const CmSchema = z.number().positive().max(500);
+const MeasuredGaugeSchema = z.object({ stitchesPer10cm: z.number().positive().max(100), rowsPer10cm: z.number().positive().max(100) });
+
+/**
+ * Measurements returned from knitting one exact candidate. They are evidence
+ * about that candidate only; recording them never changes a verdict.
+ * `synthetic` marks values made up for software testing, never a real knit.
+ */
+const TrialSchema = z.object({
+  id: Id,
+  candidate: z.object({ kcodeSha256: z.string().regex(/^[0-9a-f]{64}$/), label: z.string().max(200).optional() }),
+  recordedAt: z.string().max(40),
+  synthetic: z.boolean(),
+  outcome: z.enum(['clean', 'issues', 'failed']),
+  bodyGauge: MeasuredGaugeSchema.optional(),
+  ribGauge: MeasuredGaugeSchema.optional(),
+  finishedCm: z.object({
+    circumference: CmSchema.optional(),
+    cuffVisible: CmSchema.optional(),
+    body: CmSchema.optional(),
+    crown: CmSchema.optional(),
+    total: CmSchema.optional(),
+  }).optional(),
+  notes: z.string().max(4_000).optional(),
+});
+export type ProjectTrial = z.infer<typeof TrialSchema>;
 
 const PassOverrideSchema = z.object({
   id: Id,
@@ -68,6 +332,13 @@ const InsertRowEditSchema = z.object({
   cells: z.array(z.number().int().min(0)).min(1),
 });
 const DeleteRowEditSchema = z.object({ kind: z.literal('delete-row'), rowId: RowId });
+/** Several rows inserted together after `afterRowId` (null: at the top), in the order given. */
+const InsertRowsEditSchema = z.object({
+  kind: z.literal('insert-rows'),
+  afterRowId: RowId.nullable(),
+  rows: z.array(z.object({ rowId: RowId, cells: z.array(z.number().int().min(0)).min(1) })).min(1).max(AUTHORED_CAPACITY_LIMITS_V1.chartHeight),
+});
+const DeleteRowsEditSchema = z.object({ kind: z.literal('delete-rows'), rowIds: z.array(RowId).min(1).max(AUTHORED_CAPACITY_LIMITS_V1.chartHeight) });
 const SetWidthEditSchema = z.object({
   kind: z.literal('set-width'),
   width: z.number().int().min(1).max(252),
@@ -75,7 +346,7 @@ const SetWidthEditSchema = z.object({
 });
 const SetHeightEditSchema = z.object({
   kind: z.literal('set-height'),
-  height: z.number().int().min(1),
+  height: z.number().int().min(1).max(AUTHORED_CAPACITY_LIMITS_V1.chartHeight),
   fillPaletteIndex: z.number().int().min(0),
   newRowIds: z.array(RowId),
 });
@@ -93,13 +364,26 @@ const SetPaletteEntryEditSchema = z.object({
   name: z.string().min(1).max(100),
   hex: z.string().regex(/^#[0-9a-fA-F]{6}$/),
 });
+/** A new colour at the end of the palette; existing stitches keep their colour indexes. */
+const AddPaletteEntryEditSchema = z.object({
+  kind: z.literal('add-palette-entry'),
+  entry: z.object({ id: Id, name: z.string().min(1).max(100), hex: z.string().regex(/^#[0-9a-fA-F]{6}$/) }),
+});
 const AddOverrideEditSchema = z.object({ kind: z.literal('add-override'), override: ProjectOverrideSchema });
 const RemoveOverrideEditSchema = z.object({ kind: z.literal('remove-override'), overrideId: Id });
+const SetGaugeEditSchema = z.object({ kind: z.literal('set-gauge'), gauge: GaugeSchema.nullable() });
+const SetTargetEditSchema = z.object({ kind: z.literal('set-target'), target: TargetSchema.nullable() });
+const SetObjectEditSchema = z.object({ kind: z.literal('set-object'), object: ObjectSchema.nullable() });
+const SetPlacementEditSchema = z.object({ kind: z.literal('set-placement'), placement: PlacementSchema });
+const RemovePlacementEditSchema = z.object({ kind: z.literal('remove-placement'), placementId: Id });
+const RecordTrialEditSchema = z.object({ kind: z.literal('record-trial'), trial: TrialSchema });
 
 export const ProjectEditSchema = z.discriminatedUnion('kind', [
   PaintCellsEditSchema,
   InsertRowEditSchema,
   DeleteRowEditSchema,
+  InsertRowsEditSchema,
+  DeleteRowsEditSchema,
   SetWidthEditSchema,
   SetHeightEditSchema,
   SetNeedleOffsetEditSchema,
@@ -108,8 +392,15 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   SetYarnEditSchema,
   RemoveYarnEditSchema,
   SetPaletteEntryEditSchema,
+  AddPaletteEntryEditSchema,
   AddOverrideEditSchema,
   RemoveOverrideEditSchema,
+  SetGaugeEditSchema,
+  SetTargetEditSchema,
+  SetObjectEditSchema,
+  SetPlacementEditSchema,
+  RemovePlacementEditSchema,
+  RecordTrialEditSchema,
 ]);
 export type ProjectEdit = z.infer<typeof ProjectEditSchema>;
 
@@ -124,13 +415,30 @@ export interface ProjectState {
   strategy: z.infer<typeof StrategySchema>;
   frame: z.infer<typeof FrameSchema>;
   overrides: ProjectOverride[];
+  gauge?: ProjectGauge;
+  target?: ProjectTarget;
+  object?: ProjectObject;
+  placements?: ProjectPlacement[];
+  trials?: ProjectTrial[];
 }
 
 export interface ProjectEditEntry {
   id: string;
   source: 'human' | 'assistant' | 'system';
   edit: ProjectEdit;
+  /** Entries sharing a group are one operation: undo and redo move over all of them together. */
+  group?: string;
+  /** What the operation did, in words, on the first entry of a group. */
+  label?: string;
 }
+
+const ProjectEditEntrySchema = z.object({
+  id: Id,
+  source: z.enum(['human', 'assistant', 'system']),
+  edit: ProjectEditSchema,
+  group: Id.optional(),
+  label: z.string().min(1).max(200).optional(),
+});
 
 export interface ProjectCheckpoint {
   cursor: number;
@@ -156,9 +464,21 @@ export interface ResolvedProjectOverride {
   reason?: string;
 }
 
+export interface ResolvedProjectPlacement {
+  placement: ProjectPlacement;
+  status: 'placed' | 'conflict';
+  /** Left column and bottom knit row (0 = cast-on) of the motif, when it was drawn. */
+  at: { column: number; knitRow: number } | null;
+  reason?: string;
+  /** Why a conflict: it does not fit the piece, or a color maps to no yarn. */
+  problem?: 'fit' | 'color';
+}
+
 export interface MaterializedColorworkProject {
+  /** The authored state with placements drawn into the chart. */
   state: ProjectState;
   overrides: ResolvedProjectOverride[];
+  placements: ResolvedProjectPlacement[];
 }
 
 export class InvalidColorworkProjectError extends Error {
@@ -168,6 +488,614 @@ export class InvalidColorworkProjectError extends Error {
     this.name = 'InvalidColorworkProjectError';
     this.issues = issues;
   }
+}
+
+export type ProjectStructureCapacityMetricV1 =
+  | 'project-source'
+  | 'chart-width'
+  | 'chart-height'
+  | 'chart-cells'
+  | 'state-cells-total'
+  | 'state-elements-total'
+  | 'row-ids'
+  | 'palette'
+  | 'yarn-assignments'
+  | 'overrides'
+  | 'history-entries'
+  | 'history-checkpoints'
+  | 'edit-items'
+  | 'history-replay-cells';
+
+export interface ProjectStructureCapacityIssueV1 {
+  readonly rule: 'project-authored-capacity-v1';
+  readonly metric: ProjectStructureCapacityMetricV1;
+  readonly path: string;
+  readonly required: number;
+  readonly limit: number;
+  readonly message: string;
+}
+
+type UnknownRecord = Record<string, unknown>;
+
+function unknownRecord(value: unknown): UnknownRecord | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? value as UnknownRecord
+    : null;
+}
+
+function positiveSafeInteger(value: unknown): value is number {
+  return Number.isSafeInteger(value) && Number(value) > 0;
+}
+
+function structureCapacityIssue(
+  metric: ProjectStructureCapacityMetricV1,
+  path: string,
+  required: number,
+  limit: number,
+  unit: string,
+): ProjectStructureCapacityIssueV1 {
+  return {
+    rule: 'project-authored-capacity-v1',
+    metric,
+    path,
+    required,
+    limit,
+    message: `${path} requires ${required.toLocaleString('en-US')} ${unit}; the authored V1 capacity is ${limit.toLocaleString('en-US')}.`,
+  };
+}
+
+interface ProjectCapacityTotalsV1 {
+  stateCells: number;
+  stateElements: number;
+  rowIds: number;
+  palette: number;
+  yarnAssignments: number;
+  overrides: number;
+}
+
+interface ProjectCapacityDimensionsV1 {
+  width: number | null;
+  height: number | null;
+}
+
+function inspectProjectStateCapacityV1(
+  value: unknown,
+  path: string,
+  totals: ProjectCapacityTotalsV1,
+): { dimensions: ProjectCapacityDimensionsV1; issue: ProjectStructureCapacityIssueV1 | null } {
+  const state = unknownRecord(value);
+  const chart = unknownRecord(state?.chart);
+  const width = positiveSafeInteger(chart?.width) ? chart.width : null;
+  const height = positiveSafeInteger(chart?.height) ? chart.height : null;
+  const dimensions = { width, height };
+  if (width !== null && width > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) {
+    return { dimensions, issue: structureCapacityIssue('chart-width', `${path}.chart.width`, width, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'needles') };
+  }
+  if (height !== null && height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight) {
+    return { dimensions, issue: structureCapacityIssue('chart-height', `${path}.chart.height`, height, AUTHORED_CAPACITY_LIMITS_V1.chartHeight, 'rows') };
+  }
+  if (width !== null && height !== null && width * height > AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState) {
+    return { dimensions, issue: structureCapacityIssue('chart-cells', `${path}.chart`, width * height, AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState, 'cells') };
+  }
+
+  const cells = chart?.cells;
+  let stateCells = 0;
+  if (Array.isArray(cells)) {
+    if (cells.length > AUTHORED_CAPACITY_LIMITS_V1.chartHeight) {
+      return { dimensions, issue: structureCapacityIssue('chart-height', `${path}.chart.cells`, cells.length, AUTHORED_CAPACITY_LIMITS_V1.chartHeight, 'rows') };
+    }
+    for (let rowIndex = 0; rowIndex < cells.length; rowIndex++) {
+      const row = cells[rowIndex];
+      if (!Array.isArray(row)) continue;
+      if (row.length > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) {
+        return { dimensions, issue: structureCapacityIssue('chart-width', `${path}.chart.cells[${rowIndex}]`, row.length, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'cells') };
+      }
+      stateCells += row.length;
+      if (stateCells > AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState) {
+        return { dimensions, issue: structureCapacityIssue('chart-cells', `${path}.chart.cells`, stateCells, AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState, 'cells') };
+      }
+    }
+  }
+  totals.stateCells += stateCells;
+  totals.stateElements += stateCells;
+  if (totals.stateCells > AUTHORED_CAPACITY_LIMITS_V1.stateCellsTotal) {
+    return { dimensions, issue: structureCapacityIssue('state-cells-total', 'project base/checkpoint charts', totals.stateCells, AUTHORED_CAPACITY_LIMITS_V1.stateCellsTotal, 'cells') };
+  }
+
+  const rowIds = state?.rowIds;
+  if (Array.isArray(rowIds)) {
+    if (rowIds.length > AUTHORED_CAPACITY_LIMITS_V1.rowIdsPerState) {
+      return { dimensions, issue: structureCapacityIssue('row-ids', `${path}.rowIds`, rowIds.length, AUTHORED_CAPACITY_LIMITS_V1.rowIdsPerState, 'row IDs') };
+    }
+    totals.rowIds += rowIds.length;
+    totals.stateElements += rowIds.length;
+    if (totals.rowIds > AUTHORED_CAPACITY_LIMITS_V1.rowIdsTotal) {
+      return { dimensions, issue: structureCapacityIssue('row-ids', 'project base/checkpoint row IDs', totals.rowIds, AUTHORED_CAPACITY_LIMITS_V1.rowIdsTotal, 'row IDs') };
+    }
+  }
+
+  const palette = chart?.palette;
+  if (Array.isArray(palette)) {
+    if (palette.length > AUTHORED_CAPACITY_LIMITS_V1.palettePerState) {
+      return { dimensions, issue: structureCapacityIssue('palette', `${path}.chart.palette`, palette.length, AUTHORED_CAPACITY_LIMITS_V1.palettePerState, 'palette entries') };
+    }
+    totals.palette += palette.length;
+    totals.stateElements += palette.length;
+    if (totals.palette > AUTHORED_CAPACITY_LIMITS_V1.paletteTotal) {
+      return { dimensions, issue: structureCapacityIssue('palette', 'project base/checkpoint palettes', totals.palette, AUTHORED_CAPACITY_LIMITS_V1.paletteTotal, 'palette entries') };
+    }
+  }
+
+  const yarnAssignments = unknownRecord(state?.machine)?.yarnAssignments;
+  if (Array.isArray(yarnAssignments)) {
+    if (yarnAssignments.length > AUTHORED_CAPACITY_LIMITS_V1.yarnAssignmentsPerState) {
+      return { dimensions, issue: structureCapacityIssue('yarn-assignments', `${path}.machine.yarnAssignments`, yarnAssignments.length, AUTHORED_CAPACITY_LIMITS_V1.yarnAssignmentsPerState, 'assignments') };
+    }
+    totals.yarnAssignments += yarnAssignments.length;
+    totals.stateElements += yarnAssignments.length;
+    if (totals.yarnAssignments > AUTHORED_CAPACITY_LIMITS_V1.yarnAssignmentsTotal) {
+      return { dimensions, issue: structureCapacityIssue('yarn-assignments', 'project base/checkpoint yarn assignments', totals.yarnAssignments, AUTHORED_CAPACITY_LIMITS_V1.yarnAssignmentsTotal, 'assignments') };
+    }
+  }
+
+  const overrides = state?.overrides;
+  if (Array.isArray(overrides)) {
+    if (overrides.length > AUTHORED_CAPACITY_LIMITS_V1.overridesPerState) {
+      return { dimensions, issue: structureCapacityIssue('overrides', `${path}.overrides`, overrides.length, AUTHORED_CAPACITY_LIMITS_V1.overridesPerState, 'overrides') };
+    }
+    totals.overrides += overrides.length;
+    totals.stateElements += overrides.length;
+    if (totals.overrides > AUTHORED_CAPACITY_LIMITS_V1.overridesTotal) {
+      return { dimensions, issue: structureCapacityIssue('overrides', 'project base/checkpoint overrides', totals.overrides, AUTHORED_CAPACITY_LIMITS_V1.overridesTotal, 'overrides') };
+    }
+  }
+  if (totals.stateElements > AUTHORED_CAPACITY_LIMITS_V1.stateElementsTotal) {
+    return { dimensions, issue: structureCapacityIssue('state-elements-total', 'project base/checkpoint arrays', totals.stateElements, AUTHORED_CAPACITY_LIMITS_V1.stateElementsTotal, 'array items') };
+  }
+  return { dimensions, issue: null };
+}
+
+/**
+ * Cheaply rejects hostile or accidental project amplification before Zod,
+ * checkpoint validation, JSON cloning, or edit replay materializes it.
+ */
+export function inspectColorworkProjectStructureCapacityV1(
+  value: unknown,
+): ProjectStructureCapacityIssueV1 | null {
+  const project = unknownRecord(value);
+  if (project === null) return null;
+  const totals: ProjectCapacityTotalsV1 = {
+    stateCells: 0,
+    stateElements: 0,
+    rowIds: 0,
+    palette: 0,
+    yarnAssignments: 0,
+    overrides: 0,
+  };
+  const base = inspectProjectStateCapacityV1(project.base, 'project.base', totals);
+  if (base.issue !== null) return base.issue;
+
+  const history = unknownRecord(project.history);
+  const entries = history?.entries;
+  const checkpoints = history?.checkpoints;
+  if (Array.isArray(entries) && entries.length > AUTHORED_CAPACITY_LIMITS_V1.historyEntries) {
+    return structureCapacityIssue('history-entries', 'project.history.entries', entries.length, AUTHORED_CAPACITY_LIMITS_V1.historyEntries, 'entries');
+  }
+  if (Array.isArray(checkpoints) && checkpoints.length > AUTHORED_CAPACITY_LIMITS_V1.historyCheckpoints) {
+    return structureCapacityIssue('history-checkpoints', 'project.history.checkpoints', checkpoints.length, AUTHORED_CAPACITY_LIMITS_V1.historyCheckpoints, 'checkpoints');
+  }
+  if (Array.isArray(checkpoints)) {
+    for (let index = 0; index < checkpoints.length; index++) {
+      const checkpoint = unknownRecord(checkpoints[index]);
+      const inspected = inspectProjectStateCapacityV1(checkpoint?.state, `project.history.checkpoints[${index}].state`, totals);
+      if (inspected.issue !== null) return inspected.issue;
+    }
+  }
+  if (!Array.isArray(entries)) return null;
+
+  let width = base.dimensions.width;
+  let height = base.dimensions.height;
+  let editItems = 0;
+  let replayCellVisits = 0;
+  let overrideCount = Array.isArray(unknownRecord(project.base)?.overrides)
+    ? (unknownRecord(project.base)!.overrides as unknown[]).length
+    : 0;
+  for (let index = 0; index < entries.length; index++) {
+    if (width !== null && height !== null) {
+      replayCellVisits += width * height;
+      if (replayCellVisits > AUTHORED_CAPACITY_LIMITS_V1.replayCellVisits) {
+        return structureCapacityIssue('history-replay-cells', 'project history replay', replayCellVisits, AUTHORED_CAPACITY_LIMITS_V1.replayCellVisits, 'cell visits');
+      }
+    }
+    const edit = unknownRecord(unknownRecord(entries[index])?.edit);
+    if (edit === null) continue;
+    const editPath = `project.history.entries[${index}].edit`;
+    if (edit.kind === 'paint-cells' && Array.isArray(edit.cells)) {
+      if (edit.cells.length > AUTHORED_CAPACITY_LIMITS_V1.paintCellsPerEdit) {
+        return structureCapacityIssue('edit-items', `${editPath}.cells`, edit.cells.length, AUTHORED_CAPACITY_LIMITS_V1.paintCellsPerEdit, 'paint cells');
+      }
+      editItems += edit.cells.length;
+    } else if (edit.kind === 'insert-row' && Array.isArray(edit.cells)) {
+      if (edit.cells.length > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) {
+        return structureCapacityIssue('chart-width', `${editPath}.cells`, edit.cells.length, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'cells');
+      }
+      editItems += edit.cells.length;
+      if (height !== null) height += 1;
+    } else if (edit.kind === 'set-height') {
+      if (positiveSafeInteger(edit.height)) {
+        if (edit.height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight) {
+          return structureCapacityIssue('chart-height', `${editPath}.height`, edit.height, AUTHORED_CAPACITY_LIMITS_V1.chartHeight, 'rows');
+        }
+        height = edit.height;
+      }
+      if (Array.isArray(edit.newRowIds)) {
+        if (edit.newRowIds.length > AUTHORED_CAPACITY_LIMITS_V1.rowIdsPerState) {
+          return structureCapacityIssue('row-ids', `${editPath}.newRowIds`, edit.newRowIds.length, AUTHORED_CAPACITY_LIMITS_V1.rowIdsPerState, 'row IDs');
+        }
+        editItems += edit.newRowIds.length;
+      }
+    } else if (edit.kind === 'set-width' && positiveSafeInteger(edit.width)) {
+      if (edit.width > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) {
+        return structureCapacityIssue('chart-width', `${editPath}.width`, edit.width, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'needles');
+      }
+      width = edit.width;
+    } else if (edit.kind === 'add-override') {
+      overrideCount += 1;
+      if (overrideCount > AUTHORED_CAPACITY_LIMITS_V1.overridesPerState) {
+        return structureCapacityIssue('overrides', editPath, overrideCount, AUTHORED_CAPACITY_LIMITS_V1.overridesPerState, 'overrides');
+      }
+    } else if (edit.kind === 'remove-override') {
+      overrideCount = Math.max(0, overrideCount - 1);
+    } else if (edit.kind === 'delete-row' && height !== null) {
+      height = Math.max(1, height - 1);
+    } else if (edit.kind === 'insert-rows' && Array.isArray(edit.rows)) {
+      if (edit.rows.length > AUTHORED_CAPACITY_LIMITS_V1.chartHeight) {
+        return structureCapacityIssue('chart-height', `${editPath}.rows`, edit.rows.length, AUTHORED_CAPACITY_LIMITS_V1.chartHeight, 'rows');
+      }
+      for (const row of edit.rows) {
+        const cells = unknownRecord(row)?.cells;
+        if (Array.isArray(cells)) {
+          if (cells.length > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) return structureCapacityIssue('chart-width', `${editPath}.rows`, cells.length, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'cells');
+          editItems += cells.length;
+        }
+      }
+      if (height !== null) height += edit.rows.length;
+    } else if (edit.kind === 'delete-rows' && Array.isArray(edit.rowIds) && height !== null) {
+      height = Math.max(1, height - edit.rowIds.length);
+    }
+    if (editItems > AUTHORED_CAPACITY_LIMITS_V1.editItemsTotal) {
+      return structureCapacityIssue('edit-items', 'project history edit arrays', editItems, AUTHORED_CAPACITY_LIMITS_V1.editItemsTotal, 'items');
+    }
+    if (width !== null && height !== null && width * height > AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState) {
+      return structureCapacityIssue('chart-cells', editPath, width * height, AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState, 'chart cells');
+    }
+  }
+  return null;
+}
+
+function inspectIncomingProjectEditCapacityV1(value: unknown): ProjectStructureCapacityIssueV1 | null {
+  const edit = unknownRecord(unknownRecord(value)?.edit);
+  if (edit === null) return null;
+  if (edit.kind === 'paint-cells' && Array.isArray(edit.cells)
+    && edit.cells.length > AUTHORED_CAPACITY_LIMITS_V1.paintCellsPerEdit) {
+    return structureCapacityIssue('edit-items', 'entry.edit.cells', edit.cells.length, AUTHORED_CAPACITY_LIMITS_V1.paintCellsPerEdit, 'paint cells');
+  }
+  if (edit.kind === 'insert-row' && Array.isArray(edit.cells)
+    && edit.cells.length > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) {
+    return structureCapacityIssue('chart-width', 'entry.edit.cells', edit.cells.length, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'cells');
+  }
+  if (edit.kind === 'insert-rows' && Array.isArray(edit.rows)) {
+    if (edit.rows.length > AUTHORED_CAPACITY_LIMITS_V1.chartHeight) return structureCapacityIssue('chart-height', 'entry.edit.rows', edit.rows.length, AUTHORED_CAPACITY_LIMITS_V1.chartHeight, 'rows');
+    for (const row of edit.rows) {
+      const cells = unknownRecord(row)?.cells;
+      if (Array.isArray(cells) && cells.length > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) return structureCapacityIssue('chart-width', 'entry.edit.rows', cells.length, AUTHORED_CAPACITY_LIMITS_V1.chartWidth, 'cells');
+    }
+  }
+  if (edit.kind === 'set-height' && Array.isArray(edit.newRowIds)
+    && edit.newRowIds.length > AUTHORED_CAPACITY_LIMITS_V1.rowIdsPerState) {
+    return structureCapacityIssue('row-ids', 'entry.edit.newRowIds', edit.newRowIds.length, AUTHORED_CAPACITY_LIMITS_V1.rowIdsPerState, 'row IDs');
+  }
+  return null;
+}
+
+export type AuthoredOutputCapacityMetricV1 =
+  | 'knitout-records'
+  | 'lowered-passes'
+  | 'selected-cells'
+  | 'kcode-records';
+export type AuthoredCapacityMetricV1 = ProjectStructureCapacityMetricV1 | AuthoredOutputCapacityMetricV1;
+export type AuthoredCapacityEvidenceV1 = 'conservative-estimate' | 'exact-observation' | 'lower-bound';
+
+export interface AuthoredCapacityEstimateV1 {
+  readonly knitoutRecords: number;
+  readonly loweredPasses: number;
+  readonly selectedCells: number;
+  readonly kcodeRecords: number;
+}
+
+export interface AuthoredCapacityObservedV1 {
+  readonly knitoutRecords: number | null;
+  readonly loweredPasses: number | null;
+  readonly selectedCells: number | null;
+  readonly kcodeRecords: number | null;
+}
+
+export interface AuthoredCapacityProjectV1 {
+  readonly width: number;
+  readonly height: number;
+  readonly paletteColors: number;
+  readonly activeColors: number;
+  readonly technique: ProjectState['strategy']['technique'];
+  readonly birdseyeMode: 'minimal' | 'full' | null;
+  readonly wasteRows: number;
+}
+
+interface AuthoredCapacityBaseV1 {
+  readonly profile: 'authored-v1';
+  readonly limits: {
+    readonly knitoutRecords: number;
+    readonly loweredPasses: number;
+    readonly selectedCells: number;
+    readonly kcodeRecords: number;
+  };
+  readonly project: AuthoredCapacityProjectV1;
+  readonly estimate: AuthoredCapacityEstimateV1;
+  readonly observed: AuthoredCapacityObservedV1;
+}
+
+export interface AuthoredCapacitySupportedV1 extends AuthoredCapacityBaseV1 {
+  readonly status: 'supported';
+  readonly evidence: null;
+  readonly rule: null;
+  readonly metric: null;
+  readonly required: null;
+  readonly limit: null;
+  readonly message: null;
+  readonly remedy: null;
+}
+
+export interface AuthoredCapacityBlockedV1 extends AuthoredCapacityBaseV1 {
+  readonly status: 'blocked';
+  readonly evidence: AuthoredCapacityEvidenceV1;
+  readonly rule: 'project-authored-capacity-v1';
+  readonly metric: AuthoredCapacityMetricV1;
+  readonly required: number;
+  readonly limit: number;
+  readonly message: string;
+  readonly remedy: string;
+}
+
+export type AuthoredCapacityV1 = AuthoredCapacitySupportedV1 | AuthoredCapacityBlockedV1;
+
+const AUTHORED_OUTPUT_LIMITS_V1: AuthoredCapacityBaseV1['limits'] = {
+  knitoutRecords: AUTHORED_CAPACITY_LIMITS_V1.knitoutRecords,
+  loweredPasses: AUTHORED_CAPACITY_LIMITS_V1.loweredPasses,
+  selectedCells: AUTHORED_CAPACITY_LIMITS_V1.selectedCells,
+  kcodeRecords: AUTHORED_CAPACITY_LIMITS_V1.kcodeRecords,
+};
+
+function currentCapacityProjectV1(project: ColorworkProjectV1): AuthoredCapacityProjectV1 {
+  // Structural admission has already bounded this replay to 20m cell visits
+  // and one 75,600-cell current state. The exact active-color set avoids
+  // refusing large two-used-color charts merely because their palette retains
+  // additional unused entries.
+  const state = materializeColorworkProject(project).state;
+  const activePaletteIndexes = new Set<number>();
+  for (const row of state.chart.cells) {
+    for (const paletteIndex of row) activePaletteIndexes.add(paletteIndex);
+  }
+  return {
+    width: state.chart.width,
+    height: state.chart.height,
+    paletteColors: state.chart.palette.length,
+    activeColors: activePaletteIndexes.size,
+    technique: state.strategy.technique,
+    birdseyeMode: state.strategy.technique === 'birdseye'
+      ? state.strategy.birdseyeMode ?? 'minimal'
+      : null,
+    wasteRows: state.frame.wasteRows,
+  };
+}
+
+/**
+ * Upper bound on frame passes (waste interlock, carrier intro, closing waste,
+ * park-out) in the Customist-matched configurations authored backings compile
+ * through: 87 interlock passes plus intro and closing sections.
+ */
+const CUSTOMIST_FRAME_PASS_BOUND_V1 = 160;
+
+function capacityEstimateV1(project: AuthoredCapacityProjectV1): AuthoredCapacityEstimateV1 {
+  // Conservative upper bounds for the fixed V1 rectangular compiler: every
+  // design cell can expand to two actions per active carrier (measured at
+  // about 1.1 per carrier for both backings), and every frame pass can select
+  // the full width on both beds.
+  // Exact post-compile/lowering counts are still recorded and checked before
+  // output can become Surface-proven.
+  const colors = Math.max(1, Math.min(4, project.activeColors));
+  const recordMultiplier = colors * 2;
+  // Body/positioning passes per design row: Fairisle knits each active color
+  // once per row (measured 1.25-2 per color including kickbacks), bounded here
+  // at 2 per color plus 2; Birdseye keeps 16 (measured 10-12.5 at four
+  // colors). Plus four bind-off movements per needle and the fixed frame
+  // bound. The width-aware bind-off term is material at short, full-bed
+  // charts where a height-only estimate under-counts lowering.
+  const passesPerRow = project.technique === 'fairisle' ? 2 * colors + 2 : 16;
+  const loweredPasses = project.height * passesPerRow
+    + project.width * 4
+    + CUSTOMIST_FRAME_PASS_BOUND_V1 * 2;
+  return {
+    knitoutRecords: recordMultiplier * project.width * project.height
+      + 2 * project.width * CUSTOMIST_FRAME_PASS_BOUND_V1
+      + 1_200,
+    loweredPasses,
+    // Measured body selections are 1.41-1.43 per design cell at two colors
+    // and up to 2.43 at four, for both backings; frame selections are about
+    // 130 per needle of width.
+    selectedCells: Math.ceil((1 + 0.4 * colors) * project.width * project.height)
+      + 140 * project.width
+      + 10_000,
+    // The pinned serializer emits at most 12 records per pass plus three
+    // document headers. This keeps every pass-admitted authored artifact below
+    // the shared KCode parser/materialization ceiling.
+    kcodeRecords: 3 + 12 * loweredPasses,
+  };
+}
+
+function supportedCapacityV1(
+  project: AuthoredCapacityProjectV1,
+  estimate: AuthoredCapacityEstimateV1,
+): AuthoredCapacitySupportedV1 {
+  return {
+    profile: 'authored-v1',
+    status: 'supported',
+    evidence: null,
+    limits: AUTHORED_OUTPUT_LIMITS_V1,
+    project,
+    estimate,
+    observed: { knitoutRecords: null, loweredPasses: null, selectedCells: null, kcodeRecords: null },
+    rule: null,
+    metric: null,
+    required: null,
+    limit: null,
+    message: null,
+    remedy: null,
+  };
+}
+
+function structuralBlockedCapacityV1(
+  project: ColorworkProjectV1,
+  issue: ProjectStructureCapacityIssueV1,
+): AuthoredCapacityBlockedV1 {
+  const base = unknownRecord(project)?.base;
+  const state = unknownRecord(base);
+  const chart = unknownRecord(state?.chart);
+  const strategy = unknownRecord(state?.strategy);
+  const frame = unknownRecord(state?.frame);
+  const rawTechnique = strategy?.technique;
+  const technique: AuthoredCapacityProjectV1['technique'] = rawTechnique === 'fairisle'
+    || rawTechnique === 'ladder-back'
+    || rawTechnique === 'lined'
+    || rawTechnique === 'birdseye'
+    || rawTechnique === 'complement'
+    ? rawTechnique
+    : 'fairisle';
+  const rawBirdseyeMode = strategy?.birdseyeMode;
+  const summary: AuthoredCapacityProjectV1 = {
+    width: positiveSafeInteger(chart?.width) ? chart.width : 1,
+    height: positiveSafeInteger(chart?.height) ? chart.height : 1,
+    paletteColors: Array.isArray(chart?.palette) ? chart.palette.length : 1,
+    activeColors: Array.isArray(chart?.palette) ? chart.palette.length : 1,
+    technique,
+    birdseyeMode: technique === 'birdseye' && (rawBirdseyeMode === 'minimal' || rawBirdseyeMode === 'full')
+      ? rawBirdseyeMode
+      : technique === 'birdseye' ? 'minimal' : null,
+    wasteRows: positiveSafeInteger(frame?.wasteRows) ? frame.wasteRows : 20,
+  };
+  const supported = supportedCapacityV1(summary, capacityEstimateV1(summary));
+  return {
+    ...supported,
+    status: 'blocked',
+    evidence: 'exact-observation',
+    rule: issue.rule,
+    metric: issue.metric,
+    required: issue.required,
+    limit: issue.limit,
+    message: issue.message,
+    remedy: 'Reduce project dimensions or history before compiling.',
+  };
+}
+
+function blockCapacityV1(
+  capacity: AuthoredCapacityBaseV1,
+  metric: AuthoredCapacityMetricV1,
+  required: number,
+  limit: number,
+  phase: 'preflight' | 'compiled' | 'lowering' | 'lower-bound',
+): AuthoredCapacityBlockedV1 {
+  const label = metric === 'knitout-records' ? 'Knitout records'
+    : metric === 'lowered-passes' ? 'emitted KCode passes'
+    : metric === 'selected-cells' ? 'selected raster cells'
+    : metric === 'kcode-records' ? 'KCode records'
+    : metric.replace(/-/g, ' ');
+  const remedy = 'Reduce rows or needles, or choose a lower-expansion backing strategy such as Fairisle.';
+  const qualifier = phase === 'preflight' ? 'can require up to'
+    : phase === 'lower-bound' ? 'requires at least'
+    : 'requires';
+  return {
+    ...capacity,
+    status: 'blocked',
+    evidence: phase === 'preflight' ? 'conservative-estimate'
+      : phase === 'lower-bound' ? 'lower-bound'
+      : 'exact-observation',
+    rule: 'project-authored-capacity-v1',
+    metric,
+    required,
+    limit,
+    message: `${capacity.project.width}x${capacity.project.height} ${capacity.project.technique} ${qualifier} ${required.toLocaleString('en-US')} ${label}; the authored V1 limit is ${limit.toLocaleString('en-US')}. ${remedy}`,
+    remedy,
+  };
+}
+
+/** Assess the active project without cloning cells or replaying edits. */
+export function assessAuthoredCapacityV1(project: ColorworkProjectV1): AuthoredCapacityV1 {
+  const structureIssue = inspectColorworkProjectStructureCapacityV1(project);
+  if (structureIssue !== null) return structuralBlockedCapacityV1(project, structureIssue);
+  const current = currentCapacityProjectV1(project);
+  const estimate = capacityEstimateV1(current);
+  const supported = supportedCapacityV1(current, estimate);
+  if (estimate.knitoutRecords > supported.limits.knitoutRecords) {
+    return blockCapacityV1(supported, 'knitout-records', estimate.knitoutRecords, supported.limits.knitoutRecords, 'preflight');
+  }
+  if (estimate.loweredPasses > supported.limits.loweredPasses) {
+    return blockCapacityV1(supported, 'lowered-passes', estimate.loweredPasses, supported.limits.loweredPasses, 'preflight');
+  }
+  if (estimate.selectedCells > supported.limits.selectedCells) {
+    return blockCapacityV1(supported, 'selected-cells', estimate.selectedCells, supported.limits.selectedCells, 'preflight');
+  }
+  if (estimate.kcodeRecords > supported.limits.kcodeRecords) {
+    return blockCapacityV1(supported, 'kcode-records', estimate.kcodeRecords, supported.limits.kcodeRecords, 'preflight');
+  }
+  return supported;
+}
+
+/** Add exact compiler/lowering counts and fail closed on any exceeded budget. */
+export function observeAuthoredCapacityV1(
+  capacity: AuthoredCapacityV1,
+  observed: Partial<AuthoredCapacityObservedV1>,
+): AuthoredCapacityV1 {
+  if (capacity.status === 'blocked') return capacity;
+  const next: AuthoredCapacitySupportedV1 = {
+    ...capacity,
+    observed: { ...capacity.observed, ...observed },
+  };
+  const checks: Array<readonly [keyof AuthoredCapacityObservedV1, AuthoredCapacityMetricV1]> = [
+    ['knitoutRecords', 'knitout-records'],
+    ['loweredPasses', 'lowered-passes'],
+    ['selectedCells', 'selected-cells'],
+    ['kcodeRecords', 'kcode-records'],
+  ];
+  for (const [key, metric] of checks) {
+    const required = next.observed[key];
+    const limit = next.limits[key];
+    if (required !== null && required > limit) return blockCapacityV1(next, metric, required, limit, key === 'knitoutRecords' ? 'compiled' : 'lowering');
+  }
+  return next;
+}
+
+/** Record an aborted lowering refusal without pretending its first rejected
+ * item is a completed exact observation. */
+export function refuseAuthoredCapacityFromLowerBoundV1(
+  capacity: AuthoredCapacitySupportedV1,
+  metric: AuthoredOutputCapacityMetricV1,
+  requiredLowerBound: number,
+): AuthoredCapacityBlockedV1 {
+  const limit = capacity.limits[
+    metric === 'knitout-records' ? 'knitoutRecords'
+      : metric === 'lowered-passes' ? 'loweredPasses'
+        : metric === 'selected-cells' ? 'selectedCells'
+          : 'kcodeRecords'
+  ];
+  return blockCapacityV1(capacity, metric, Math.max(requiredLowerBound, limit + 1), limit, 'lower-bound');
 }
 
 const ChartSchema = z.unknown().transform((value, context): ColorworkChartV1 => {
@@ -191,17 +1119,23 @@ const ProjectStateSchema: z.ZodType<ProjectState> = z.object({
   strategy: StrategySchema,
   frame: FrameSchema,
   overrides: z.array(ProjectOverrideSchema),
+  gauge: GaugeSchema.optional(),
+  target: TargetSchema.optional(),
+  object: ObjectSchema.optional(),
+  placements: z.array(PlacementSchema).max(16).optional(),
+  trials: z.array(TrialSchema).max(64).optional(),
 }).superRefine(validateStateRelationships);
 
 const ProjectSchema: z.ZodType<ColorworkProjectV1> = z.object({
   kind: z.literal(COLORWORK_PROJECT_KIND),
-  version: z.literal(COLORWORK_PROJECT_VERSION),
+  version: z.union(READABLE_PROJECT_VERSIONS.map((version) => z.literal(version)) as [z.ZodLiteral<1>, z.ZodLiteral<2>])
+    .transform(() => COLORWORK_PROJECT_VERSION),
   id: Id,
   title: z.string().min(1).max(200),
   base: ProjectStateSchema,
   history: z.object({
     cursor: z.number().int().min(0),
-    entries: z.array(z.object({ id: Id, source: z.enum(['human', 'assistant', 'system']), edit: ProjectEditSchema })),
+    entries: z.array(ProjectEditEntrySchema),
     checkpoints: z.array(z.object({ cursor: z.number().int().min(0), state: ProjectStateSchema })),
   }),
 }).superRefine((project, context) => {
@@ -247,9 +1181,71 @@ function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+function jsonStringCodeUnits(value: string): number {
+  let codeUnits = 2; // opening and closing quotes
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index);
+    if (code === 0x22 || code === 0x5c || code === 0x08 || code === 0x0c
+      || code === 0x0a || code === 0x0d || code === 0x09) {
+      codeUnits += 2;
+    } else if (code <= 0x1f) {
+      codeUnits += 6;
+    } else if (code >= 0xd800 && code <= 0xdbff) {
+      const next = value.charCodeAt(index + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        codeUnits += 2;
+        index++;
+      } else {
+        codeUnits += 6;
+      }
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      codeUnits += 6;
+    } else {
+      codeUnits++;
+    }
+  }
+  return codeUnits;
+}
+
+/** Exact compact-JSON size without allocating the serialized project string. */
+function jsonValueCodeUnits(value: unknown): number {
+  if (value === null) return 4;
+  if (typeof value === 'string') return jsonStringCodeUnits(value);
+  if (typeof value === 'number') return JSON.stringify(value).length;
+  if (typeof value === 'boolean') return value ? 4 : 5;
+  if (Array.isArray(value)) {
+    let codeUnits = 2 + Math.max(0, value.length - 1);
+    for (const item of value) codeUnits += jsonValueCodeUnits(item);
+    return codeUnits;
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value).filter(([, item]) => item !== undefined);
+    let codeUnits = 2 + Math.max(0, entries.length - 1);
+    for (const [key, item] of entries) {
+      codeUnits += jsonStringCodeUnits(key) + 1 + jsonValueCodeUnits(item);
+    }
+    return codeUnits;
+  }
+  throw new Error(`Project contains a non-JSON value of type ${typeof value}.`);
+}
+
 function parseProjectStructure(value: unknown): ColorworkProjectV1 {
+  const capacityIssue = inspectColorworkProjectStructureCapacityV1(value);
+  if (capacityIssue !== null) throw new InvalidColorworkProjectError([capacityIssue.message]);
   const parsed = ProjectSchema.safeParse(value);
   if (!parsed.success) throw new InvalidColorworkProjectError(formatIssues(parsed.error));
+  const serializedCodeUnits = jsonValueCodeUnits(parsed.data);
+  if (serializedCodeUnits > AUTHORED_CAPACITY_LIMITS_V1.projectSourceCodeUnits) {
+    throw new InvalidColorworkProjectError([
+      structureCapacityIssue(
+        'project-source',
+        'project canonical JSON',
+        serializedCodeUnits,
+        AUTHORED_CAPACITY_LIMITS_V1.projectSourceCodeUnits,
+        'code units',
+      ).message,
+    ]);
+  }
   return parsed.data;
 }
 
@@ -277,6 +1273,17 @@ export function parseColorworkProjectV1(value: unknown): ColorworkProjectV1 {
 
 export function parseColorworkProjectV1Json(json: string): ColorworkProjectV1 {
   try {
+    if (json.length > AUTHORED_CAPACITY_LIMITS_V1.projectSourceCodeUnits) {
+      throw new InvalidColorworkProjectError([
+        structureCapacityIssue(
+          'project-source',
+          'project source',
+          json.length,
+          AUTHORED_CAPACITY_LIMITS_V1.projectSourceCodeUnits,
+          'code units',
+        ).message,
+      ]);
+    }
     return parseColorworkProjectV1(JSON.parse(json) as unknown);
   } catch (error) {
     if (error instanceof InvalidColorworkProjectError) throw error;
@@ -284,7 +1291,15 @@ export function parseColorworkProjectV1Json(json: string): ColorworkProjectV1 {
   }
 }
 
+/** Canonical compact project JSON. Every accepted project is guaranteed to
+ * remain within the same source ceiling when saved and reopened. */
+export function serializeColorworkProjectV1(projectValue: ColorworkProjectV1): string {
+  return JSON.stringify(parseColorworkProjectV1(projectValue));
+}
+
 export function createColorworkProjectV1(chartValue: unknown, options: { id: string; title?: string; needleOffset?: number }): ColorworkProjectV1 {
+  const capacityIssue = inspectColorworkProjectStructureCapacityV1({ base: { chart: chartValue } });
+  if (capacityIssue !== null) throw new InvalidColorworkProjectError([capacityIssue.message]);
   const chart = parseColorworkChartV1(chartValue);
   const id = Id.parse(options.id);
   const needleOffset = options.needleOffset ?? Math.floor((252 - chart.width) / 2) + 1;
@@ -297,7 +1312,8 @@ export function createColorworkProjectV1(chartValue: unknown, options: { id: str
       needleOffset,
       yarnAssignments: chart.palette.slice(0, 4).map((entry, index) => ({ paletteId: entry.id, carrier: carriers[index]!, yarnName: entry.name })),
     },
-    strategy: { technique: chart.palette.length === 2 ? 'fairisle' : 'birdseye', birdseyeMode: 'minimal', floatLimit: 5 },
+    // Studio's Customist-matched birdseye program is laid out for four colors on C2-C5.
+    strategy: { technique: chart.palette.length === 4 ? 'birdseye' : 'fairisle', birdseyeMode: 'minimal', floatLimit: 5 },
     frame: { wasteRows: 20, drawThread: true, bindOff: 'machine-bindoff' },
     overrides: [],
   };
@@ -348,6 +1364,29 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       state.rowIds.splice(index, 0, edit.rowId);
       state.chart.cells.splice(index, 0, [...edit.cells]);
       state.chart.height += 1;
+      break;
+    }
+    case 'insert-rows': {
+      const ids = edit.rows.map((row) => row.rowId);
+      if (new Set(ids).size !== ids.length || ids.some((id) => state.rowIds.includes(id))) throw new Error('inserted row ids must be new and unique');
+      for (const row of edit.rows) {
+        if (row.cells.length !== state.chart.width) throw new Error(`inserted row has ${row.cells.length} cells; expected ${state.chart.width}`);
+        row.cells.forEach((index) => assertPaletteIndex(state, index));
+      }
+      const index = edit.afterRowId === null ? 0 : rowIndex(edit.afterRowId) + 1;
+      state.rowIds.splice(index, 0, ...ids);
+      state.chart.cells.splice(index, 0, ...edit.rows.map((row) => [...row.cells]));
+      state.chart.height += edit.rows.length;
+      break;
+    }
+    case 'delete-rows': {
+      if (new Set(edit.rowIds).size !== edit.rowIds.length) throw new Error('deleted row ids must be unique');
+      if (edit.rowIds.length >= state.chart.height) throw new Error('a project must retain at least one row');
+      const gone = new Set(edit.rowIds);
+      edit.rowIds.forEach((id) => rowIndex(id));
+      state.chart.cells = state.chart.cells.filter((_row, index) => !gone.has(state.rowIds[index]!));
+      state.rowIds = state.rowIds.filter((id) => !gone.has(id));
+      state.chart.height = state.rowIds.length;
       break;
     }
     case 'delete-row': {
@@ -403,54 +1442,201 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       paletteEntry.hex = edit.hex.toUpperCase();
       break;
     }
+    case 'add-palette-entry':
+      if (state.chart.palette.some((entry) => entry.id === edit.entry.id)) throw new Error(`palette id "${edit.entry.id}" already exists`);
+      if (state.chart.palette.length >= AUTHORED_CAPACITY_LIMITS_V1.palettePerState) throw new Error(`project supports at most ${AUTHORED_CAPACITY_LIMITS_V1.palettePerState} palette entries`);
+      state.chart.palette.push({ id: edit.entry.id, name: edit.entry.name, hex: edit.entry.hex.toUpperCase() });
+      break;
     case 'add-override':
       if (state.overrides.some((item) => item.id === edit.override.id)) throw new Error(`override id "${edit.override.id}" already exists`);
+      if (state.overrides.length >= AUTHORED_CAPACITY_LIMITS_V1.overridesPerState) throw new Error(`project supports at most ${AUTHORED_CAPACITY_LIMITS_V1.overridesPerState.toLocaleString('en-US')} active overrides`);
       state.overrides.push(edit.override);
       break;
-    case 'remove-override': state.overrides = state.overrides.filter((item) => item.id !== edit.overrideId); break;
+    case 'remove-override': {
+      if (!state.overrides.some((item) => item.id === edit.overrideId)) throw new Error(`override id "${edit.overrideId}" does not exist`);
+      state.overrides = state.overrides.filter((item) => item.id !== edit.overrideId);
+      break;
+    }
+    case 'set-gauge':
+      if (edit.gauge === null) delete state.gauge;
+      else state.gauge = edit.gauge;
+      break;
+    case 'set-target':
+      if (edit.target === null) delete state.target;
+      else state.target = edit.target;
+      break;
+    case 'set-object':
+      if (edit.object === null) delete state.object;
+      else state.object = edit.object;
+      break;
+    case 'set-placement': {
+      const placements = (state.placements ?? []).filter((item) => item.id !== edit.placement.id);
+      if (placements.length >= 16) throw new Error('a project supports at most 16 placements');
+      state.placements = [...placements, edit.placement];
+      break;
+    }
+    case 'record-trial':
+      if ((state.trials ?? []).some((item) => item.id === edit.trial.id)) throw new Error(`trial "${edit.trial.id}" already exists`);
+      if ((state.trials ?? []).length >= 64) throw new Error('a project records at most 64 trials');
+      state.trials = [...(state.trials ?? []), edit.trial];
+      break;
+    case 'remove-placement':
+      if (!(state.placements ?? []).some((item) => item.id === edit.placementId)) throw new Error(`placement "${edit.placementId}" does not exist`);
+      state.placements = state.placements!.filter((item) => item.id !== edit.placementId);
+      if (state.placements.length === 0) delete state.placements;
+      break;
   }
   return state;
 }
 
-export function materializeColorworkProject(project: ColorworkProjectV1): MaterializedColorworkProject {
+/** The authored state at the cursor, before placements are drawn: what checkpoints store. */
+function replayState(project: ColorworkProjectV1): ProjectState {
   const checkpoint = [...project.history.checkpoints].reverse().find((item) => item.cursor <= project.history.cursor);
   let state = clone(checkpoint?.state ?? project.base);
   const start = checkpoint?.cursor ?? 0;
   for (let index = start; index < project.history.cursor; index += 1) state = applyEditToState(state, project.history.entries[index]!.edit);
+  return state;
+}
+
+/** Draws each placement over the chart from its anchor; a placement that does not fit is not drawn at all. */
+function drawPlacements(state: ProjectState): ResolvedProjectPlacement[] {
+  const cuffRows = state.object?.kind === 'beanie' && state.object.construction === 'rib-cuff-jersey-body' ? state.object.cuffRows ?? 0 : 0;
+  const paletteIndex = new Map(state.chart.palette.map((entry, index) => [entry.id, index]));
+  return (state.placements ?? []).map((placement): ResolvedProjectPlacement => {
+    const { motif } = placement;
+    const column = placement.x === 'center' ? Math.floor((state.chart.width - motif.width) / 2) : placement.x;
+    const knitRow = cuffRows + placement.rowsAboveCuff;
+    const conflict = (reason: string): ResolvedProjectPlacement => ({ placement, status: 'conflict', at: null, problem: 'fit', reason });
+    if (motif.width > state.chart.width || column < 0 || column + motif.width > state.chart.width) {
+      return conflict(`Placement "${placement.id}" is ${motif.width} stitches wide at column ${column}; the piece has ${state.chart.width}.`);
+    }
+    if (knitRow + motif.height > state.chart.height) {
+      return conflict(`Placement "${placement.id}" needs ${placement.rowsAboveCuff + motif.height} rows above ${cuffRows > 0 ? 'the cuff' : 'the cast-on'}; there are ${state.chart.height - cuffRows}.`);
+    }
+    const mapped = new Map<number, number>();
+    for (const color of new Set(motif.cells.flat())) {
+      // An unmapped image color is left as the ground (transparent).
+      const target = placement.colors[String(color)];
+      if (target === undefined) continue;
+      const index = paletteIndex.get(target);
+      if (index === undefined) return { placement, status: 'conflict', at: null, problem: 'color', reason: `Placement "${placement.id}" maps image color ${color} to "${target}", which is not a project color.` };
+      mapped.set(color, index);
+    }
+    motif.cells.forEach((cells, top) => cells.forEach((color, offset) => {
+      const index = mapped.get(color);
+      if (index === undefined) return;
+      // Motif rows are stored top first; knit rows count up from the cast-on; chart rows are stored top first.
+      const chartRow = state.chart.height - 1 - (knitRow + motif.height - 1 - top);
+      state.chart.cells[chartRow]![column + offset] = index;
+    }));
+    return { placement, status: 'placed', at: { column, knitRow } };
+  });
+}
+
+export function materializeColorworkProject(project: ColorworkProjectV1): MaterializedColorworkProject {
+  const state = replayState(project);
+  const placements = drawPlacements(state);
   const rows = new Set(state.rowIds);
   const overrides = state.overrides.map((override): ResolvedProjectOverride => {
     if (!rows.has(override.anchor.rowId)) return { override, status: 'quarantined', reason: `Row "${override.anchor.rowId}" no longer exists.` };
     if (override.kind === 'stitch' && override.anchor.needleIndex >= state.chart.width) return { override, status: 'quarantined', reason: `Needle index ${override.anchor.needleIndex} is outside width ${state.chart.width}.` };
     return { override, status: 'active' };
   });
-  return { state, overrides };
+  return { state, overrides, placements };
 }
 
 export function appendProjectEdit(projectValue: ColorworkProjectV1, entryValue: ProjectEditEntry): ColorworkProjectV1 {
+  return appendProjectEntries(projectValue, [entryValue]);
+}
+
+/** Whether history may be cut before entry `index`: never inside an operation (a group). */
+function isOperationBoundary(entries: readonly ProjectEditEntry[], index: number): boolean {
+  if (index <= 0 || index >= entries.length) return true;
+  const group = entries[index]!.group;
+  return group === undefined || entries[index - 1]!.group !== group;
+}
+
+/**
+ * Appends entries, then compacts history at an operation boundary so undo
+ * always restores a whole operation. Either every entry applies or the
+ * project is unchanged.
+ */
+function appendProjectEntries(projectValue: ColorworkProjectV1, entryValues: readonly ProjectEditEntry[]): ColorworkProjectV1 {
+  const existingCapacityIssue = inspectColorworkProjectStructureCapacityV1(projectValue);
+  if (existingCapacityIssue !== null) throw new InvalidColorworkProjectError([existingCapacityIssue.message]);
+  if (entryValues.length > AUTHORED_CAPACITY_LIMITS_V1.historyEntries) {
+    throw new InvalidColorworkProjectError([`an operation of ${entryValues.length} edits exceeds the ${AUTHORED_CAPACITY_LIMITS_V1.historyEntries}-entry history; use bulk edits (insert-rows, delete-rows, paint-cells)`]);
+  }
   const project = clone(projectValue);
-  const entry = z.object({ id: Id, source: z.enum(['human', 'assistant', 'system']), edit: ProjectEditSchema }).parse(entryValue);
-  if (project.history.entries.some((item) => item.id === entry.id)) throw new InvalidColorworkProjectError([`duplicate edit id "${entry.id}"`]);
   project.history.entries = project.history.entries.slice(0, project.history.cursor);
   project.history.checkpoints = project.history.checkpoints.filter((item) => item.cursor <= project.history.cursor);
-  project.history.entries.push(entry);
-  project.history.cursor += 1;
+  const newOperationStart = project.history.entries.length;
+  for (const entryValue of entryValues) {
+    const incomingCapacityIssue = inspectIncomingProjectEditCapacityV1(entryValue);
+    if (incomingCapacityIssue !== null) throw new InvalidColorworkProjectError([incomingCapacityIssue.message]);
+    const entry = ProjectEditEntrySchema.parse(entryValue);
+    if (project.history.entries.some((item) => item.id === entry.id)) throw new InvalidColorworkProjectError([`duplicate edit id "${entry.id}"`]);
+    project.history.entries.push(entry);
+    project.history.cursor += 1;
+  }
+  if (project.history.entries.length > AUTHORED_CAPACITY_LIMITS_V1.historyEntries) {
+    const excess = project.history.entries.length - AUTHORED_CAPACITY_LIMITS_V1.historyEntries;
+    // Cut at least `excess` entries, at an operation boundary, and never into the operation just appended
+    // (it fits: an operation is at most the history limit, so `excess` never exceeds its start).
+    const checkpoint = project.history.checkpoints.find((item) => item.cursor >= excess && item.cursor <= newOperationStart && isOperationBoundary(project.history.entries, item.cursor))?.cursor;
+    let rebaseCursor = checkpoint ?? Math.max(excess, Math.min(PROJECT_CHECKPOINT_INTERVAL, newOperationStart));
+    while (!isOperationBoundary(project.history.entries, rebaseCursor)) rebaseCursor += 1;
+    if (rebaseCursor > newOperationStart) rebaseCursor = newOperationStart;
+    let rebasedState = clone(project.base);
+    for (let index = 0; index < rebaseCursor; index += 1) rebasedState = applyEditToState(rebasedState, project.history.entries[index]!.edit);
+    project.base = rebasedState;
+    project.history.entries = project.history.entries.slice(rebaseCursor);
+    project.history.cursor -= rebaseCursor;
+    project.history.checkpoints = project.history.checkpoints
+      .filter((checkpoint) => checkpoint.cursor > rebaseCursor)
+      .map((checkpoint) => ({ cursor: checkpoint.cursor - rebaseCursor, state: checkpoint.state }));
+  }
+  const capacityIssue = inspectColorworkProjectStructureCapacityV1(project);
+  if (capacityIssue !== null) throw new InvalidColorworkProjectError([capacityIssue.message]);
   // Materialize now so invalid edits fail at the boundary, not during render.
-  const materialized = materializeColorworkProject(project);
-  if (project.history.cursor % PROJECT_CHECKPOINT_INTERVAL === 0) project.history.checkpoints.push({ cursor: project.history.cursor, state: materialized.state });
+  materializeColorworkProject(project);
+  // Checkpoints hold the authored state; placements are drawn only when materializing.
+  const lastCheckpoint = project.history.checkpoints.at(-1)?.cursor ?? 0;
+  if (project.history.cursor > lastCheckpoint && project.history.cursor - lastCheckpoint >= PROJECT_CHECKPOINT_INTERVAL) project.history.checkpoints.push({ cursor: project.history.cursor, state: replayState(project) });
   // The incoming project was already authoritative and the new edit was
   // materialized above. Structural validation is sufficient on the hot edit
   // path; full base+history replay remains mandatory when opening a file.
   return parseProjectStructure(project);
 }
 
+/**
+ * Appends several edits as one operation: they share a group, so one undo
+ * reverts all of them. Either every edit applies or the project is unchanged.
+ */
+export function appendProjectOperation(projectValue: ColorworkProjectV1, operation: { group: string; source: ProjectEditEntry['source']; label: string; edits: readonly ProjectEdit[] }): ColorworkProjectV1 {
+  return appendProjectEntries(projectValue, operation.edits.map((edit, index) => ({
+    id: `${operation.group}-${index}`,
+    source: operation.source,
+    edit,
+    group: operation.group,
+    ...(index === 0 ? { label: operation.label } : {}),
+  })));
+}
+
 export function undoProjectEdit(projectValue: ColorworkProjectV1): ColorworkProjectV1 {
   const project = clone(projectValue);
+  const { entries } = project.history;
+  const group = entries[project.history.cursor - 1]?.group;
   project.history.cursor = Math.max(0, project.history.cursor - 1);
+  if (group !== undefined) while (project.history.cursor > 0 && entries[project.history.cursor - 1]!.group === group) project.history.cursor -= 1;
   return parseProjectStructure(project);
 }
 
 export function redoProjectEdit(projectValue: ColorworkProjectV1): ColorworkProjectV1 {
   const project = clone(projectValue);
-  project.history.cursor = Math.min(project.history.entries.length, project.history.cursor + 1);
+  const { entries } = project.history;
+  const group = entries[project.history.cursor]?.group;
+  project.history.cursor = Math.min(entries.length, project.history.cursor + 1);
+  if (group !== undefined) while (project.history.cursor < entries.length && entries[project.history.cursor]!.group === group) project.history.cursor += 1;
   return parseProjectStructure(project);
 }

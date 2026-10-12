@@ -10,4 +10,23 @@ describe('browser converter source', () => {
     expect(browser).toBe(browserConverterSource(canonical));
     expect(browser).not.toContain("require('fs')");
   });
+
+  it('preserves the upstream MIT notice in source and Pages distribution input', () => {
+    const license = readFileSync(
+      resolve(vendorDirectory, 'LICENSE.knitout-backend-kniterate'),
+      'utf8',
+    ).trim();
+    const notice = readFileSync(
+      resolve(vendorDirectory, '../../../../../apps/studio/public/THIRD_PARTY_NOTICES.txt'),
+      'utf8',
+    );
+    const studioIndex = readFileSync(
+      resolve(vendorDirectory, '../../../../../apps/studio/index.html'),
+      'utf8',
+    );
+
+    expect(license).toContain('Copyright (c) 2020 Carnegie Mellon Textiles Lab');
+    expect(notice).toContain(license);
+    expect(studioIndex).toContain('rel="license" href="./THIRD_PARTY_NOTICES.txt"');
+  });
 });

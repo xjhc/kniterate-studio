@@ -1,27 +1,59 @@
 /**
- * Wrapper around the vendored knitout-to-kcode.cjs (from
- * textiles-lab/knitout-backend-kniterate). Invokes the script as a
- * Node subprocess: writes the input .k to a temp file, runs the CLI,
- * reads the output .kc, cleans up.
+ * Wrapper around this repository's locally maintained fork of
+ * textiles-lab/knitout-backend-kniterate (see the vendor README for immutable
+ * provenance and the patch ledger). The isolated entrypoint writes the input
+ * .k to a temp file, invokes the CLI, reads the output .kc, and cleans up.
  *
  * Used by:
  *   - scripts/chart-to-knitout.ts (CLI tool)
  *   - test/knitout/to-kcode.test.ts (smoke test)
  *
- * The browser path (for the wizard UI) will load the vendored .cjs as
- * a Worker module instead — that's Phase 7 work.
+ * The browser adapter runs the generated ESM copy of the same local fork.
  */
 
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import type { KCodeConverter } from '../run-artifact.js';
+import {
+  checkKnitoutSourceResourceLimits,
+  classifyKnitoutCapacityIssue,
+  type KnitoutCapacityIssueV1,
+  type KnitoutResourceProfileV1,
+} from '../parser.js';
+import {
+  vendorLoweringResourceLimits,
+  type VendorLoweringResourceLimits,
+  type VendorLoweringSettings,
+  type VendorScheduledKCode,
+  type VendorScheduledPass,
+} from './vendor-pass-contract.js';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const VENDOR_SCRIPT = resolve(__dirname, '..', 'vendor', 'knitout-to-kcode.cjs');
+const requireFromHere = createRequire(import.meta.url);
+
+interface VendorCompilerModule {
+  knitoutToPasses: (
+    knitout: string,
+    filename: string,
+    resourceLimits?: VendorLoweringResourceLimits,
+  ) => {
+    headers: Record<string, string[]>;
+    passes: unknown[];
+    lowering: VendorLoweringSettings;
+  };
+  passesToKCodeWithTrace: (
+    headers: Record<string, string[]>,
+    passes: unknown[],
+    filename: string,
+    lowering?: VendorLoweringSettings,
+  ) => VendorScheduledKCode;
+}
 
 export interface KnitoutToKCodeResult {
   ok: boolean;
@@ -31,9 +63,121 @@ export interface KnitoutToKCodeResult {
   exitCode: number;
 }
 
+export type KnitoutToScheduledKCodeResult =
+  | {
+      readonly ok: true;
+      readonly kcode: string;
+      readonly scheduledPasses: readonly VendorScheduledPass[];
+      readonly coordinateMapping: VendorScheduledKCode['coordinateMapping'];
+      readonly warnings: readonly string[];
+      readonly warningCount: number;
+    }
+  | {
+      readonly ok: false;
+      readonly error: string;
+      readonly warnings: readonly string[];
+      readonly warningCount: number;
+      readonly capacityIssue?: KnitoutCapacityIssueV1;
+    };
+
+/**
+ * In-process adapter used by conformance tests to retain the backend's exact
+ * scheduled-pass IR. Production conversion can continue using the isolated
+ * subprocess adapter above.
+ */
+function convertKnitoutToKCodeWithTrace(
+  knitoutText: string,
+  filename: string,
+  resourceProfile: KnitoutResourceProfileV1,
+): KnitoutToScheduledKCodeResult {
+  const warnings: string[] = [];
+  let warningCount = 0;
+  const captureWarning = (...values: unknown[]): void => {
+    warningCount++;
+    if (warnings.length < 512) warnings.push(values.map(String).join(' '));
+  };
+  const originalWarn = console.warn;
+  const originalLog = console.log;
+  const resourceIssue = checkKnitoutSourceResourceLimits(knitoutText, resourceProfile);
+  if (resourceIssue !== null) {
+    const message = `Line ${resourceIssue.line}: ${resourceIssue.message}`;
+    const capacityIssue = classifyKnitoutCapacityIssue(message, resourceProfile);
+    return {
+      ok: false,
+      error: message,
+      warnings,
+      warningCount,
+      ...(capacityIssue === undefined ? {} : { capacityIssue }),
+    };
+  }
+  console.warn = captureWarning;
+  // Studio's browser adapter treats routine vendor progress chatter as
+  // non-diagnostic. Keep Node verdicts identical: only console.warn is a
+  // backend warning; console.log is intentionally suppressed.
+  console.log = () => {};
+  try {
+    const vendor = requireFromHere(VENDOR_SCRIPT) as VendorCompilerModule;
+    const { headers, passes, lowering } = vendor.knitoutToPasses(
+      knitoutText,
+      filename,
+      vendorLoweringResourceLimits(resourceProfile),
+    );
+    const converted = vendor.passesToKCodeWithTrace(
+      headers,
+      passes,
+      filename.replace(/\.k$/i, '.kc'),
+      lowering,
+    );
+    return {
+      ok: true,
+      kcode: converted.kcode,
+      scheduledPasses: converted.passes,
+      coordinateMapping: converted.coordinateMapping,
+      warnings,
+      warningCount,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const capacityIssue = classifyKnitoutCapacityIssue(message, resourceProfile);
+    return {
+      ok: false,
+      error: message,
+      warnings,
+      warningCount,
+      ...(capacityIssue === undefined ? {} : { capacityIssue }),
+    };
+  } finally {
+    console.warn = originalWarn;
+    console.log = originalLog;
+  }
+}
+
+export function knitoutToKCodeWithTrace(
+  knitoutText: string,
+  filename = 'command.k',
+): KnitoutToScheduledKCodeResult {
+  return convertKnitoutToKCodeWithTrace(knitoutText, filename, 'foreign-v1');
+}
+
+export function authoredKnitoutToKCodeWithTrace(
+  knitoutText: string,
+  filename = 'command.k',
+): KnitoutToScheduledKCodeResult {
+  return convertKnitoutToKCodeWithTrace(knitoutText, filename, 'authored-v1');
+}
+
 /** Run the vendored knitout-to-kcode compiler on a knitout source string.
  *  Returns the .kc output as a string. */
 export function knitoutToKCode(knitoutText: string): KnitoutToKCodeResult {
+  const resourceIssue = checkKnitoutSourceResourceLimits(knitoutText);
+  if (resourceIssue !== null) {
+    return {
+      ok: false,
+      stdout: '',
+      stderr: `Line ${resourceIssue.line}: ${resourceIssue.message}`,
+      exitCode: 2,
+    };
+  }
   const dir = mkdtempSync(join(tmpdir(), 'knitlab-kcode-'));
   const inputPath = join(dir, 'input.k');
   //The Kniterate machine loads a file literally named `command.kc`;

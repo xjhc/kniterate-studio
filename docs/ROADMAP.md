@@ -55,8 +55,12 @@ First implementation slice (2026-07-12):
 - local `.kc`/`.k` intake, virtualized pass grid, source synchronization,
   validator-derived foreign-file verdict, diagnostics, `.kc` diff, and print
   run sheet
-- all 13 reference `.kc` files open Surface-proven (imported); full repository
-  verification and conformance rails remain green
+- all 13 reference `.kc` files open and render. Twelve open Surface-proven
+  (imported): five retain 220 modeled depth-three loop-stack observations in
+  total, presented as non-blocking informational evidence at the foreign Studio
+  boundary. `fox-baby-beanie.kc` remains Blocked by 183 empty-drop warnings.
+  The shared validator still records depth three as a conservative warning and
+  errors above three; all 13 fixtures have zero validation errors
 
 The six refusal programs are pinned through the browser-facing engine. Checked-in
 Playwright coverage now exercises foreign open, pass navigation, identical diff,
@@ -125,9 +129,9 @@ Completed 2026-07-12:
 
 - a dedicated Worker executes the same vendored converter source as the Node
   conformance adapter; a parity test pins byte-identical output
-- generated `.kc` is reconstructed and validator-gated before export, with
-  trusted body prediction checked against vendor passes and known-approximate
-  frame/finish deltas retained as non-gating provenance
+- generated `.kc` is strict-parsed into `MachineTraceV1`, replay-validated, and
+  checked against the pinned backend's exact scheduled-pass fields before
+  export; predicted passes remain planning telemetry
 - pass-to-`.kc` line spans join the existing design-row provenance and drive the
   generated source dock
 - export is disabled for blocked, converting, stale, reconstruction-failed, or
@@ -136,6 +140,10 @@ Completed 2026-07-12:
   C2-C5 yarns, findings, compile identity, and k-code SHA-256
 - browser tests prove gated export, print output, foreign-file revalidation,
   byte-identical save/reopen/recompile, and a responsive 200x300 four-color run
+- the canonical 200x300 four-color Birdseye project is admitted by the fixed
+  `authored-v1` envelope and now proves end-to-end export plus ordinary `.kc`
+  reimport in Chromium and Firefox; projects outside that envelope receive a
+  typed compile-stage capacity finding before compiler/lowering allocation
 
 M3 gate: author/import the four-color fixture, assign yarns, compile, export,
 reopen, and revalidate byte-identically in a browser test.
@@ -147,7 +155,7 @@ reopen, and revalidate byte-identically in a browser test.
 - CSP-compatible browser converter with generated-source and byte-parity checks
 - CI gates for full verification and Chromium/Firefox/WebKit browser coverage
 - decoded face designs from `fairisle.kc`, `jacquard.kc`, and `dbj.kc` author and
-  export through the real browser Worker path; all three references reconstruct
+  export through the real browser Worker path; all three references strict-parse
   and validate cleanly
 
 Fairisle and DBJ also retain exact machine-equivalent reference parity tests.
@@ -161,10 +169,179 @@ route as reference-equivalent until a dedicated walker is proven.
 Register physical swatches and allow a verdict to become Knit-proven only when
 the exact recipe matches the physical registry.
 
-Software readiness is complete: `pnpm release:trial` produces the validated,
-hash-pinned 120x160 four-color blanket package and operator checklist described
-in [`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md). The registration command,
+Software readiness is complete: from a clean tree, `pnpm release:trial`
+produces the validated, commit- and hash-pinned Customist fairisle reproduction
+package and operator checklist described in
+[`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md). Registration requires the
+same clean generating commit. The registration command,
 source-tree/output hash checks, browser registry manifest, exact-artifact
 matcher, Knit-proven setup/run-sheet state, and fail-closed promotion command
 are wired. Physical state remains 0/4 registry entries; actual machine runs are
 the remaining gate.
+
+---
+
+## Widened V1 (ruling 2026-09-28) — proposed, not started
+
+V1 is Customist Studio parity plus AI-driven rectangles, beanies and sweaters.
+See [`FOUNDING.md`](./FOUNDING.md) §1,
+[`CUSTOMIST-PARITY.md`](./CUSTOMIST-PARITY.md) (capability rows CP-*) and
+[`DESIGN-LANGUAGE.md`](./DESIGN-LANGUAGE.md). Each milestone has two
+checkpoints: **software completion**, then a separate **machine trial**. That
+way development keeps moving while machine time is arranged. Machine runs made
+before M9 are development evidence only
+([`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md)).
+
+## M5 - Design language on rectangles
+
+- The v2 project contract: `materializeDesign`, the Plan with value provenance,
+  findings with owners and design paths, and a pure `resolveReadiness`.
+- A lossless v1 → v2 migration (DESIGN-LANGUAGE §9).
+- CLI `show`/`plan`/`describe`/`readiness`/`render`/`explain`, with edit diffs.
+  The Claude Code skill.
+- The benchmark harness with rectangle cases.
+- Capacity raised for long rectangles; a 180 cm scarf currently exceeds the
+  300-row cap.
+- The bind-off configuration warning fixed at its source.
+- Rectangle parity rows: CP-A1/A2/A11, B1–B3, B6, B8, C3, E1–E4, F1–F5, G1–G4,
+  H2–H4.
+- The Customist reference-capture batch for M5.
+
+**Status 2026-09-29: software core built; parity rows open.**
+
+Built:
+
+- the v2 format (gauge and target) and the lossless v1 upgrade;
+- the Plan, findings with owners, and readiness;
+- the 1,200-row capacity and the colour-aware Fairisle estimate;
+- the bind-off warning fix;
+- CLI `new` (blank), `image`, `plan`, `describe`, `readiness`, `render` and
+  `explain`;
+- the skill, and the benchmark (12/12, 0 false readiness claims).
+
+Open:
+
+- **Rows that need Customist reference captures for R/E evidence:** CP-B1–B3,
+  B6, B8, C3, E1–E2, F1–F5, G3–G4. B1 also needs the carrier-role ruling.
+  F1/F2 also need the compiler to consume row-setting overrides.
+- **Rows at CLI level only:** CP-A1, A11, G1, G2 (no occupancy), H3. Level F
+  requires a browser test.
+
+Gate:
+
+- migrated fixtures are byte-identical at every cursor position;
+- the rectangle benchmark passes, with 0 false readiness claims;
+- the M5 parity rows reach level R or E;
+- `pnpm verify` is green.
+
+## M6 - Flat, seamed beanie end to end
+
+**Status 2026-09-29: thin slice built.**
+
+Built:
+
+- `customist-rib-beanie.ts` reproduces `reference/2x2-rib-beanie.kc` exactly
+  (strict trace identical, 530/530 passes), with adjustable height;
+- `pnpm studio -- beanie`, which writes `.k`, `.kc` and finishing
+  instructions and checks the output as an imported machine file.
+
+Remaining:
+
+- ~~a crown for any width; circumference sized from gauge~~ — done: the
+  eight-line crown covers 60–244 needles, and `beanie --head-cm` sizes the
+  width;
+- ~~a beanie project in the authored pipeline~~: done (`object: beanie`,
+  verdict via `resolveAuthoredVerdict`, readiness, finishing instructions);
+- ~~motif placement and the fold-up cuff~~: done as a rib cuff +
+  colorwork body. Placements are stored intent (anchor, color map, source
+  image) that survives resizing or reports a conflict;
+- ~~birdseye backing for beanie bodies~~: done, so the real bird is ready;
+- ~~the benchmark's beanie cases~~: done (`arc-style-toque`, `toque-resize`
+  with the real bird; not-ready answers are checked against the project);
+- ~~the garment in the browser~~: done (2026-10-02): fit and gauge editing,
+  motif objects, readiness story, schematic, package export, measurement
+  revisions and change review, sharing modules with the CLI;
+- a development knit in acrylic: prepared in
+  [`M6-ACRYLIC-DEV-TRIAL.md`](./M6-ACRYLIC-DEV-TRIAL.md), waiting for the
+  operator run. M7 stays queued until it is accepted.
+
+Goal: *given a natural-language request with dimensions, yarn, measured gauge
+and a motif, Studio produces an editable beanie project, one validated `.kc`
+file, previews, and complete knitting and finishing instructions. Changing the
+size or the motif regenerates everything reproducibly.*
+
+Done means:
+
+- Claude creates and edits typed project intent through the CLI.
+- Sizing accounts for measured gauge, intended fit, cuff and crown. The Plan
+  exposes every derivation, including crown cadence, height and closure.
+- The canonical compiler produces the complete program with no manual
+  machine-code edits.
+- Previews show motif placement, orientation and construction.
+- Readiness exposes unresolved warnings and missing measurements.
+- Tests cover the reference design (`2x2-rib-beanie.kc`, a flat 2×2 rib) and
+  meaningful size and pattern variations. Parity rows CP-A5 (rib), C5, D1, D2
+  (crown), D5 (piece end) and E1 (rib cast-on) reach level R or E.
+- The startup lowering is repaired. The knitlab2 beanie output fails the strict
+  parse because its first waste pass puts a carrier-6 marker outside the
+  carriage markers. The Studio beanie uses a Customist-matched start instead.
+- **Machine checkpoint:** a development run of the beanie. The final frozen
+  candidate is knitted in M9, finished and measured against the declared
+  tolerances. Only that exact artifact receives physical proof.
+
+## M7 - Sweater
+
+- The Customist 2.5 sweater template (CP-A3…A7): front, back, sleeves and
+  collar.
+- Shaped-panel compilation: increases, decreases, armhole bind-offs, neckline
+  split, interleave (CP-C7, D1–D5).
+- Multiple pieces in one project (CP-H1).
+- Seam and pickup compatibility checks.
+- An export bundle with assembly instructions.
+
+Gate: parity against captured Customist panels, including the collar.
+`front.kc`, `back.kc` and `sleeves.kc` are shaping references. The
+benchmark's sweater cases pass.
+
+**Status 2026-10-10: software slice built ahead of the beanie trial (user
+request).**
+
+Built: one-yarn flat-panel sweaters in set-in, J-sleeve and drop-shoulder
+styles with crew, V, square or boat necks. They take any knit/purl/tuck/slip texture and
+rib trims, in a multi-piece project with per-piece programs, seam checks, a
+package and a written pattern. Browser and CLI are covered (see STATUS).
+
+Open:
+
+- Customist panel parity (no captured reference is reproduced) and the
+  CP-A3–A7 rows;
+- raglan;
+- colorwork, stripes and picked-up collars on pieces;
+- benchmark sweater cases;
+- a development knit;
+- the multi-artifact release checker (M9).
+
+## M8 - Remaining parity
+
+The rest of the inventory:
+
+- vector import (CP-A8), txt import (A9), stitch image and block (A10);
+- invert and full-needle (B4, B5), borders (B7);
+- stitch palette and free edit (C1, C2, C4, C6, C8);
+- views and markers (G1 stitch view, G5);
+- the platform rows CP-J1…J4, as ruled.
+
+Gate: every CP row at level R, E or F.
+
+## M9 - V1 physical qualification
+
+- Extend `release:trial`, `release:register` and `release:physical-check` to a
+  multi-artifact manifest: every sweater panel, declared tolerances,
+  measurements, and assembly evidence.
+- Freeze the release candidate.
+- Knit, finish and measure the rectangle, the flat seamed beanie and the
+  complete sweater.
+- Register them all at the frozen fingerprint.
+
+Gate: the extended `pnpm release:physical-check` passes. Only then bump to
+`1.0.0`.

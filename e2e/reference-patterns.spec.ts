@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { kcDownload } from './menu';
 import type { ColorworkChartV1 } from '@kniterate-studio/chart-contract';
 
 interface DecodedReference {
@@ -69,11 +70,12 @@ for (const name of ['fairisle', 'jacquard', 'dbj'] as const) {
       name: `${name}.colorwork.json`, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(chart)),
     });
     await expect(page.locator('.brand-copy small')).toContainText(`${name} reference pattern`);
-    if (name !== 'fairisle') {
+    // Each reference is exported with its own backing: dbj is birdseye; the
+    // others keep the default for their palette.
+    if (name === 'dbj') {
       await page.getByRole('button', { name: /^Birdseye/ }).click();
-      await page.getByLabel('Color coverage').selectOption('full');
     }
-    const exportButton = page.getByRole('button', { name: 'Export k-code' });
+    const exportButton = kcDownload(page);
     await expect(exportButton).toBeEnabled({ timeout: 20_000 });
     const downloadPromise = page.waitForEvent('download');
     await exportButton.click();

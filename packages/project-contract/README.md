@@ -25,3 +25,12 @@ anchor quarantines the override with an explicit reason; it is never discarded.
 
 The v1 machine profile is fixed to `kniterate-7gg-worsted-v1`. Pattern yarns
 may bind only to C2-C5, at most once per palette color and carrier.
+
+## File versions
+
+Files are written as `version: 2`. Version 1 files are accepted and upgraded
+on read; v2 adds only optional state (`gauge`, `target`) and their edits
+(`set-gauge`, `set-target`), so every v1 edit, row ID, cursor, and override
+status is preserved unchanged. Gauge and target never change the compiled
+program: the chart's stitch and row counts remain its only source of truth,
+and Studio's plan checks them against the target at the recorded gauge.

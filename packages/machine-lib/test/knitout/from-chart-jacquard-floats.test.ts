@@ -396,18 +396,20 @@ describe('compileChartToKnitout — floats jacquard (Customist fairisle)', () =>
     }
     const ops = result.program!.ops;
     // All the major phases land in the right order.
-    const introIdx = ops.findIndex(
-      o => o.kind === 'comment' && o.text.includes('CARRIER INTRO'),
+    // The Customist Waste & Cast-on frame (waste, insertions, draw,
+    // cast-on, transfers) precedes the pattern, which precedes the park.
+    const frameIdx = ops.findIndex(
+      o => o.kind === 'comment' && o.text.includes('CUSTOMIST WASTE & CAST-ON'),
     );
-    const clearIdx = ops.findIndex(
-      o => o.kind === 'comment' && o.text.includes('BACK-BED CLEAR'),
+    const patternIdx = ops.findIndex(
+      o => o.kind === 'comment' && o.text.includes('--- PATTERN ---'),
     );
     const bindIdx = ops.findIndex(
       o => o.kind === 'comment' && o.text.includes('fairisle parity park'),
     );
-    expect(introIdx).toBeGreaterThan(0);
-    expect(clearIdx).toBeGreaterThan(introIdx);
-    expect(bindIdx).toBeGreaterThan(clearIdx);
+    expect(frameIdx).toBeGreaterThan(0);
+    expect(patternIdx).toBeGreaterThan(frameIdx);
+    expect(bindIdx).toBeGreaterThan(patternIdx);
     // At least one Tu-Tu park-out lands in the .kc end section.
     const knitoutText = writeKnitoutProgram(result.program!);
     const kc = knitoutToKCode(knitoutText);
@@ -573,9 +575,12 @@ describe('compileChartToKnitout — floats jacquard (Customist fairisle)', () =>
       o => o.kind === 'knit' && o.needle.bed === 'b',
     );
     expect(closingBackKnits.length).toBe(0);
-    // x-park-carriage op is emitted before the carrier-outs.
-    const parkIdx = tail.findIndex(o => o.kind === 'x-park-carriage');
+    // The release pass drops every front loop (the piece comes off on the
+    // closing waste) before the carrier-outs.
+    const parkIdx = tail.findIndex(o => o.kind === 'drop');
     expect(parkIdx).toBeGreaterThan(0);
+    const firstOut = tail.findIndex(o => o.kind === 'out');
+    expect(tail.slice(parkIdx, firstOut).filter(o => o.kind === 'drop' && o.needle.bed === 'f').length).toBeGreaterThan(0);
     // Each active carrier is taken out via `out` after the park.
     // For 2-color fairisle, that's the pattern carriers (3, 4) plus
     // C6 (closing waste) — but the pattern carrier matching `knitCarrier`

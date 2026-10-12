@@ -1,13 +1,17 @@
 /**
- * Customist-style full-back DBJ walker.
+ * Customist-framed Birdseye walker.
  *
- * This is intentionally separate from the generic birdseye/twill/striped
- * partitioned-back walker. `reference/dbj.kc` knits the front design and a
- * full back-bed lining in the same carriage pass for each design carrier,
- * with a fixed carrier order and a small vendor intro/terminus dance.
+ * The captured DBJ program supplies the carrier introduction and finish.
+ * It was captured in four colours; a chart in two or three brings in only
+ * its own carriers, in the captured order and with each carrier's captured
+ * moves, so no carrier is knitted that has no yarn on it.
+ * Its sample-specific body ordering and incomplete last row are not a
+ * general chart algorithm. The body uses the established full-mode
+ * Birdseye walker: every requested front stitch and one rear stitch per
+ * needle per design row, partitioned among the assigned colors. This is
+ * deliberately not a reproduction of the reference's heavier full back.
  */
 
-import { KEY_ID_EMPTY } from '../../colorwork/knitlab1-contract.js';
 import {
   b as backBed,
   comment,
@@ -20,14 +24,12 @@ import { CarriageSimulator } from '../sim/carriage-simulator.js';
 import type { CarrierSimState, PredictedPass } from '../sim/types.js';
 import {
   seedSimulatorCarrierFromHandoff,
+  simulatorHandoffFromBoundary,
   type SimulatorHandoff,
 } from './simulator-handoff.js';
 import type { ResolvedChart } from './resolve-chart.js';
-import {
-  applyFirstRowSpeedOverride,
-  restoreFirstRowSpeedOverride,
-  type FirstRowSpeedOverride,
-} from './first-row-speed.js';
+import type { FirstRowSpeedOverride } from './first-row-speed.js';
+import { emitJacquardBirdseyeWalk } from './jacquard-birdseye.js';
 
 export interface JacquardDbjFullInput {
   resolved: ResolvedChart;
@@ -46,10 +48,14 @@ export interface JacquardDbjFullResult {
   predictedPasses: readonly PredictedPass[];
   finalNextDirection: Direction;
   finalCarrierStates: ReadonlyMap<CarrierId, CarrierSimState>;
+  finalKnitCarrier: CarrierId;
 }
 
+/** The captured introduction order of the pattern carriers. */
 const INTRO_ORDER: readonly CarrierId[] = ['3', '2', '4', '5'];
-const BODY_ORDER: readonly CarrierId[] = ['2', '4', '5', '3'];
+/** Waste rows after each carrier is brought in; the captured program runs more after the last one, before the draw thread. */
+const INTRO_FILLER_ROWS = 2;
+const INTRO_LAST_FILLER_ROWS = 7;
 const CAMEO_CARRIER: CarrierId = '1';
 const DBJ_FULL_BODY_SPEED = 400;
 
@@ -57,8 +63,16 @@ export function emitJacquardDbjFullWalk(input: JacquardDbjFullInput): JacquardDb
   const { resolved, bindings, needleStart, handoff, wasteCarrier } = input;
   const ops: KnitoutOp[] = [];
   const needleEnd = needleStart + resolved.cols - 1;
+  // Only the chart's own pattern carriers are brought in. The ground (which
+  // starts the back layer) is C3 as captured, else the first one in.
+  const bound = new Set(bindings.values());
+  const introCarriers = INTRO_ORDER.filter((carrier) => bound.has(carrier));
+  if (introCarriers.length === 0 || introCarriers.length !== bound.size) {
+    throw new Error(`dbj-full: pattern carriers must be among C2-C5; got ${[...bound].join(', ') || 'none'}`);
+  }
+  const ground = introCarriers.includes('3') ? '3' : introCarriers[0]!;
 
-  const sim = new CarriageSimulator({
+  let sim = new CarriageSimulator({
     carriers: ['1', '2', '3', '4', '5', '6'],
     initialNextDirection: input.initialNextDirection,
   });
@@ -69,13 +83,8 @@ export function emitJacquardDbjFullWalk(input: JacquardDbjFullInput): JacquardDb
     }));
   }
 
-  const keyIdForCarrier = new Map<CarrierId, string>();
-  for (const [keyId, carrier] of bindings.entries()) {
-    keyIdForCarrier.set(carrier, keyId);
-  }
-
   ops.push(comment('--- DBJ FULL-BACK INTRO ---'));
-  emitIntro(sim, needleStart, needleEnd, wasteCarrier);
+  emitIntro(sim, needleStart, needleEnd, wasteCarrier, introCarriers, ground);
   ops.push(...sim.drainOps());
 
   ops.push(comment('--- DBJ FULL-BACK BODY ---'));
@@ -88,34 +97,32 @@ export function emitJacquardDbjFullWalk(input: JacquardDbjFullInput): JacquardDb
     ? { ...input.firstRowSpeedOverride, restoreSpeed: DBJ_FULL_BODY_SPEED }
     : undefined;
 
-  const bodyRows = resolved.rows;
-  for (let r = 0; r < bodyRows; r++) {
-    ops.push(...sim.drainOps());
-    ops.push(comment(`row ${r}`));
-    applyFirstRowSpeedOverride(sim, r, firstRowSpeedOverride);
-    const forward = r % 2 === 0;
-    const rowOrder = bodyOrderForRow(r);
-    for (let i = 0; i < rowOrder.length; i++) {
-      if (r === bodyRows - 1 && i === rowOrder.length - 1) continue;
-      const carrier = rowOrder[i]!;
-      const keyId = keyIdForCarrier.get(carrier);
-      if (keyId === undefined) continue;
-      const dir = directionForBodyCarrier(carrier, forward);
-      pushFullBackDesignPass({
-        sim,
-        resolved,
-        row: r,
-        keyId,
-        carrier,
-        direction: dir,
-        needleStart,
-        needleEnd,
-      });
-    }
-    restoreFirstRowSpeedOverride(sim, r, firstRowSpeedOverride);
+  const body = emitJacquardBirdseyeWalk({
+    resolved,
+    bindings,
+    needleStart,
+    handoff: simulatorHandoffFromBoundary({ finalCarrierStates: sim.snapshot() }),
+    mode: 'full',
+    strategy: 'birdseye',
+    homeBackBed: false,
+    initialNextDirection: sim.finalNextDirection(),
+    firstRowSpeedOverride,
+  });
+  ops.push(...sim.drainOps());
+  for (const op of body.ops) ops.push(op);
+  const predictedPasses = [...sim.predictedPasses(), ...body.predictedPasses];
+  sim = new CarriageSimulator({
+    carriers: ['1', '2', '3', '4', '5', '6'],
+    initialNextDirection: body.finalNextDirection,
+  });
+  const bodyHandoff = simulatorHandoffFromBoundary(body);
+  for (const c of bodyHandoff.keys()) {
+    seedSimulatorCarrierFromHandoff(sim, bodyHandoff, c, (side) => ({
+      anchorNeedle: side === 'left' ? f(needleStart) : f(needleEnd),
+      anchorDirection: side === 'left' ? '-' : '+',
+    }));
   }
 
-  ops.push(...sim.drainOps());
   ops.push(comment('--- DBJ FULL-BACK TRANSFER + CLOSING SETUP ---'));
   sim.setSpeed(DBJ_FULL_BODY_SPEED);
   sim.setRoller(450);
@@ -126,26 +133,23 @@ export function emitJacquardDbjFullWalk(input: JacquardDbjFullInput): JacquardDb
   sim.setStitch(6);
   sim.setPresserSpeed(600);
   sim.setPresserRoller(0);
-  // Reference pass 463: carrier 4 knits one full front-bed row before
-  // C6 closing waste takes over.
-  fullFrontRow(sim, '4', '-', needleEnd, needleStart);
   ops.push(...sim.drainOps());
 
+  let finalKnitCarrier: CarrierId = ground; // The final intro knit if the body is empty.
+  for (let index = body.ops.length - 1; index >= 0; index--) {
+    const op = body.ops[index]!;
+    if (op.kind === 'knit') {
+      finalKnitCarrier = op.carriers[0]!;
+      break;
+    }
+  }
   return {
     ops,
-    predictedPasses: sim.predictedPasses(),
+    predictedPasses: [...predictedPasses, ...sim.predictedPasses()],
     finalNextDirection: sim.finalNextDirection(),
     finalCarrierStates: sim.snapshot(),
+    finalKnitCarrier,
   };
-}
-
-function bodyOrderForRow(row: number): readonly CarrierId[] {
-  // In the reference footer sequence, groups after the vendor auto-move
-  // are the previous row's last carrier followed by this row's first
-  // three. The middle of the DBJ motif flips the last two carriers so
-  // those groups read 5243 instead of 3245.
-  if (row >= 5 && row <= 63) return ['2', '4', '3', '5'];
-  return BODY_ORDER;
 }
 
 function emitIntro(
@@ -153,6 +157,8 @@ function emitIntro(
   needleStart: number,
   needleEnd: number,
   wasteCarrier: CarrierId,
+  introCarriers: readonly CarrierId[],
+  ground: CarrierId,
 ): void {
   sim.setPresserSpeed(600);
   sim.setPresserRoller(0);
@@ -160,13 +166,14 @@ function emitIntro(
   sim.setRoller(400);
   sim.setStitch(5);
 
-  for (const carrier of INTRO_ORDER) {
+  introCarriers.forEach((carrier, index) => {
     if (!sim.positionOf(carrier)) sim.bringIn(carrier, { side: 'left' });
     interlockFull(sim, carrier, '+', needleStart, needleEnd);
+    // As captured, C2 and C5 interlock back across and wait on the left.
     if (carrier === '2' || carrier === '5') {
       interlockFull(sim, carrier, '-', needleStart, needleEnd);
     }
-    const fillerCount = carrier === '5' ? 7 : 2;
+    const fillerCount = index === introCarriers.length - 1 ? INTRO_LAST_FILLER_ROWS : INTRO_FILLER_ROWS;
     sim.setSpeed(200);
     sim.setRoller(200);
     for (let i = 0; i < fillerCount; i++) {
@@ -176,7 +183,7 @@ function emitIntro(
     }
     sim.setSpeed(200);
     sim.setRoller(400);
-  }
+  });
 
   if (!sim.positionOf(CAMEO_CARRIER)) sim.bringIn(CAMEO_CARRIER, { side: 'left' });
   interlockFull(sim, CAMEO_CARRIER, '+', needleStart, needleEnd);
@@ -193,22 +200,21 @@ function emitIntro(
   sim.setRoller(200);
   fullFrontRow(sim, CAMEO_CARRIER, '-', needleEnd, needleStart);
 
+  // The ground starts the back layer from the side it waits on (C3: the right).
   sim.setSpeed(200);
   sim.setRoller(400);
-  fullFrontRow(sim, '3', '-', needleEnd, needleStart);
-  fullFrontRow(sim, '3', '+', needleStart, needleEnd);
-  fullBackRow(sim, '3', '-', needleEnd, needleStart);
+  const out = directionForCarrier(sim, ground);
+  const back: Direction = out === '+' ? '-' : '+';
+  const span = (direction: Direction): [number, number] => (direction === '+' ? [needleStart, needleEnd] : [needleEnd, needleStart]);
+  fullFrontRow(sim, ground, out, ...span(out));
+  fullFrontRow(sim, ground, back, ...span(back));
+  fullBackRow(sim, ground, out, ...span(out));
 }
 
 function directionForCarrier(sim: CarriageSimulator, carrier: CarrierId): Direction {
   const state = sim.positionOf(carrier);
   if (!state) throw new Error(`dbj-full: carrier "${carrier}" is not active`);
   return state.side === 'left' ? '+' : '-';
-}
-
-function directionForBodyCarrier(carrier: CarrierId, forward: boolean): Direction {
-  if (carrier === '4') return forward ? '-' : '+';
-  return forward ? '+' : '-';
 }
 
 function interlockFull(
@@ -241,39 +247,6 @@ function fullBackRow(
   sim.knitRow(carrier, direction, 'b', start, end);
 }
 
-function pushFullBackDesignPass(input: {
-  sim: CarriageSimulator;
-  resolved: ResolvedChart;
-  row: number;
-  keyId: string;
-  carrier: CarrierId;
-  direction: Direction;
-  needleStart: number;
-  needleEnd: number;
-}): void {
-  const { sim, resolved, row, keyId, carrier, direction, needleStart, needleEnd } = input;
-  // chart-core/identity-read-ok: DBJ full-back reference pass uses resolved key ids for carrier selection only.
-  const cells = resolved.cells[row];
-  if (!cells) return;
-  const hasFrontStitches = cells.some(cell => cell === keyId);
-  if (!hasFrontStitches) {
-    if (direction === '+') fullBackRow(sim, carrier, direction, needleStart, needleEnd);
-    else fullBackRow(sim, carrier, direction, needleEnd, needleStart);
-    return;
-  }
-  const step = direction === '+' ? 1 : -1;
-  for (let n = direction === '+' ? needleStart : needleEnd;
-    step > 0 ? n <= needleEnd : n >= needleStart;
-    n += step) {
-    const cell = cells[n - needleStart]!;
-    if (cell === KEY_ID_EMPTY) {
-      throw new Error(`dbj-full: no-stitch cell at row ${row}`);
-    }
-    if (cell === keyId) sim.knit(carrier, direction, f(n));
-    else sim.miss(carrier, direction, f(n));
-  }
-}
-
 function xferBackToFrontSplit(
   sim: CarriageSimulator,
   needleStart: number,
@@ -288,7 +261,10 @@ function xferBackToFrontSplit(
     }
     return pairs;
   });
-  batches.forEach((batch, i) => {
+  // A one-needle panel has no odd transfer batch. Do not leave an
+  // x-add-roller-advance with no transfer to consume it: the backend
+  // would apply that setting to the following closing-waste knit.
+  batches.filter((batch) => batch.length > 0).forEach((batch, i) => {
     if (i > 0) {
       sim.seedRacking(0);
       sim.setRacking(0);

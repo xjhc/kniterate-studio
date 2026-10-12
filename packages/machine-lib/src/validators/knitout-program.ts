@@ -27,6 +27,8 @@ export interface ValidationMessage {
   message: string;
   /** Optional op index in `program.ops` the message refers to. */
   opIndex?: number;
+  /** Number of omitted findings represented by a bounded summary message. */
+  occurrences?: number;
 }
 
 export interface ValidationReport {
@@ -35,8 +37,51 @@ export interface ValidationReport {
   warningCount: number;
 }
 
+const MAX_VALIDATION_MESSAGE_DETAILS = 512;
+
+class BoundedValidationMessages {
+  readonly values: ValidationMessage[] = [];
+  errorCount = 0;
+  warningCount = 0;
+  private omittedCount = 0;
+  private omittedErrorCount = 0;
+  private omittedWarningCount = 0;
+  private omittedInfoCount = 0;
+
+  push(message: ValidationMessage): number {
+    if (message.severity === 'error') this.errorCount++;
+    if (message.severity === 'warning') this.warningCount++;
+    if (this.values.length < MAX_VALIDATION_MESSAGE_DETAILS) {
+      this.values.push(message);
+    } else {
+      this.omittedCount++;
+      if (message.severity === 'error') this.omittedErrorCount++;
+      if (message.severity === 'warning') this.omittedWarningCount++;
+      if (message.severity === 'info') this.omittedInfoCount++;
+    }
+    return this.values.length;
+  }
+
+  finish(): void {
+    if (this.omittedCount === 0) return;
+    for (const [severity, count] of [
+      ['error', this.omittedErrorCount],
+      ['warning', this.omittedWarningCount],
+      ['info', this.omittedInfoCount],
+    ] as const) {
+      if (count === 0) continue;
+      this.values.push({
+        severity,
+        rule: 'validation-message-summary',
+        message: `Validation diagnostics were truncated after ${MAX_VALIDATION_MESSAGE_DETAILS} detailed findings; omitted ${count} additional ${severity} finding${count === 1 ? '' : 's'} (${this.omittedCount} findings omitted across all severities).`,
+        occurrences: count,
+      });
+    }
+  }
+}
+
 export function validateKnitoutProgram(program: KnitoutProgram): ValidationReport {
-  const messages: ValidationMessage[] = [];
+  const messages = new BoundedValidationMessages();
 
   // ---- Header-level checks ----
   if (program.carriers.length === 0) {
@@ -302,9 +347,12 @@ export function validateKnitoutProgram(program: KnitoutProgram): ValidationRepor
     });
   }
 
-  const errorCount = messages.filter(m => m.severity === 'error').length;
-  const warningCount = messages.filter(m => m.severity === 'warning').length;
-  return { messages, errorCount, warningCount };
+  messages.finish();
+  return {
+    messages: messages.values,
+    errorCount: messages.errorCount,
+    warningCount: messages.warningCount,
+  };
 }
 
 function isLegalCarrier(c: string): c is CarrierId {

@@ -20,10 +20,12 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
+      - run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - run: PLAYWRIGHT_SERVE_BUILD=1 pnpm test:e2e
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

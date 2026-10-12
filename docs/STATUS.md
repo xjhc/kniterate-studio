@@ -1,7 +1,10 @@
 # STATUS — what is shipped vs. proposed
 
-**Front door. Read this before any planning doc.** Reconciled 2026-07-13 against
-the working tree. Repo at `1.0.0-rc.1`; `pnpm typecheck` and `pnpm test` green.
+**Front door. Read this before any planning doc.** Reconciled 2026-09-26 against
+the working tree. Repo at `1.0.0-rc.1`; `pnpm verify:kcode` and `pnpm verify`
+are the software gates. The debugger milestone below records implementation
+and focused local coverage; full-gate status belongs to the exact current
+proof receipt, not this document date.
 
 The other docs are framed as forward design and drifted behind the code. Where a
 planning doc says a thing is "proposed" / "not built" / "the first slice to
@@ -9,36 +12,638 @@ ship," trust this file and the working tree instead.
 
 ---
 
-## Shipped (in `apps/studio`, live today)
+## Implemented in `apps/studio`
 
-- **Foreign-`.kc`/`.k` workspace (Story 1 / "S1").** Open any `.kc` or knitout
-  `.k` → virtualized pass grid, anchored diagnostics, scroll-synced source dock,
-  `kc-diff` between two files, printable run sheet, verdict badge. Code:
+- **Foreign-`.kc`/`.k` workspace (Story 1 / "S1").** Open any `.kc` or Knitout
+  `.k` → canonical V1 KCode semantics, strict byte-preserving intake, pinned
+  lowering and scheduled-pass differential for `.k`, virtualized pass grid,
+  exact movement view, anchored diagnostics,
+  scroll-synced source dock, full-raster MachineTrace diff, printable run sheet,
+  verdict badge. Code:
   `apps/studio/src/engine.ts` (`openMachineDocument`) + `App.tsx`. **This is
   built — it is not a slice waiting to start.**
+- **One-file foreign checker.** `pnpm machine:check -- <file.k|file.kc>` uses
+  the same byte-preserving intake, pinned lowering, scene projection,
+  differential, diagnostics, and conservative warning verdict as Studio.
+  `--json` emits a bounded versioned receipt with SHA-256 and explicit format
+  evidence; use `pnpm --silent machine:check -- <file> --json` when stdout must
+  be JSON only. Exit `0` means Surface-proven (imported), `1` means checked but
+  Blocked, and `2` means usage/read/internal failure. Both the Studio verdict
+  panel/run sheet and the CLI disclose that direct KCode cannot prove source
+  carrier lifecycle.
+- **Headless authoring CLI.** `pnpm --silent studio -- new|image|show|plan|describe|readiness|edit|undo|redo|compile|export|render|explain|schema`
+  drives authored projects without a browser for scripts and agents. Edits are
+  the typed `ProjectEdit` log (recorded as `assistant` by default);
+  `apps/studio/src/authoredPipeline.ts` composes the same compile, strict KCode
+  conversion, registry match, and `resolveAuthoredVerdict` seams as the UI, and
+  `export` writes a `.kc` only when the UI Export gate would allow it. All
+  output is JSON; exit `0` ok/export-ready, `1` blocked, `2` usage/read error.
+  Compile/export receipts include the canonical compiled frame and every emitted
+  carrier requirement, including C1 frame yarn and C6 waste, not just palette yarns.
+- **M5 design language on rectangles (2026-09-29).** Project files are
+  written as version 2. That is version 1 plus optional `gauge`/`target` state
+  and their `set-gauge`/`set-target` edits. Version 1 files upgrade on read.
+  - Migration evidence: a v1 project with 18 edits, a redo branch and a
+    quarantined override compiled byte-identically (Knitout, KCode, verdict,
+    override status) against the pre-M5 code at all 19 cursor positions.
+  - `apps/studio/src/plan.ts` derives sizing with provenance: authored counts,
+    predicted cm under the gauge, and size checks whose fixes are verified
+    resize edits. It also flags yarn names that contradict their carrier.
+  - `apps/studio/src/readiness.ts` gives every diagnostic an owner (design,
+    compiler or operator). `resolveReadiness` is ready only with a non-Blocked
+    verdict and no warning or error. Dropped Knitout extension headers become
+    operator checks. The verdict policy is unchanged.
+  - Capacity: charts may have up to 1,200 rows (per-state cells unchanged at
+    75,600). The Fairisle pass estimate is colour-aware. A 65 × 612
+    three-colour scarf compiles to 780 passes.
+  - The fairisle recipe no longer supplies unused chain bind-off settings, so
+    clean compiles carry no `machine-setting-ignored` warning. KCode is
+    byte-identical.
+  - `.claude/skills/knit-design` and `pnpm eval:design`
+    (`evals/design-language`) are the agent host and benchmark. See
+    DESIGN-LANGUAGE "M5 status" for what is deliberately not built yet: no
+    garment schema, and no image bundling in projects.
+- **Flat 2×2 rib beanie, thin slice (M6, 2026-09-29).**
+  `packages/machine-lib/src/knitout/passes/customist-rib-beanie.ts` generates
+  Customist's flat 2×2 rib beanie: waste and cast-on, rib set-up, rib body,
+  crown, knit-off and carriers out.
+  - At the reference's 102 rib rows it reproduces `reference/2x2-rib-beanie.kc`
+    exactly: an identical strict whole-program machine trace, 530/530 passes
+    including carrier stops. It is the first exact entry on the parity
+    scoreboard.
+  - The crown is Customist's, replayed from data extracted from the reference
+    (`customist-rib-beanie-crown.ts`, regenerated byte-identically by a test).
+    It is therefore defined only for the reference width of 194 needles.
+  - Height is free: other rib-row counts stay machine-valid.
+  - `pnpm studio -- beanie` sizes the body from `--body-cm` and a rib gauge,
+    and writes `.k`, `.kc` and finishing instructions. It checks the `.kc`
+    through the same intake as `machine:check`, so the verdict is
+    Surface-proven (imported).
+  - Any width from 60 to 244 needles, centred on the bed. Other widths use
+    the eight-line crown (`rib-crown-plan.ts`): the reference crown's
+    topology (8 and 4 decrease lines, rib columns stacked onto the inner
+    column, everything outside sliding inward) with its own evenly placed
+    lines and transfers through the empty rear bed in hops of at most 4.
+    Tests replay the emitted trace:
+    - the stitch counts per crown row match the plan;
+    - no needle holds more than 2 loops;
+    - racking stays within ±4;
+    - widths 98, 150, 194 and 242 have zero validator diagnostics.
+  - **Beanies are authored projects.** Project state gains
+    `object: { kind: 'beanie', construction: 'flat-rib-2x2' }`. The chart is
+    the rib body (width = needles, height = rib rows, one yarn).
+    - `compileProject.ts` compiles it through the beanie construction into
+      the ordinary strict KCode artifact, with the verdict from
+      `resolveAuthoredVerdict`.
+    - The plan sizes the finished circumference with seam stitches and rib
+      rounding, keeps the piece centred, and lists finishing steps.
+    - `pnpm studio -- new --object beanie --head-cm --body-cm --gauge`
+      creates it, sized by the plan's own fixes. `export` writes finishing
+      instructions.
+    - The default 194 × 102 project on C3 still reproduces the reference
+      exactly through the authored pipeline. Its replayed crown carries one
+      3-loop stack, so readiness blocks on that conservative warning. The
+      eight-line crown stays at 2 loops or fewer, so sized beanies can be
+      ready.
+  - **Rib cuff + colorwork body (the Arc-style toque).**
+    - Construction `rib-cuff-jersey-body`: the bottom `cuffRows` chart rows
+      are the rib cuff, and the rows above are a fairisle body.
+    - In the machine program, the extra yarns are brought in during the
+      waste section and the rib transfers to the front bed. Each body row
+      knits one pass per color from the side its carrier is parked on, and
+      the eight-line crown is planned for jersey.
+    - Floats are measured along each carrier's real path in the emitted
+      trace, across rows, sections and transfers
+      (`readiness.ts::beanieFloatFindings`). Floats longer than `floatLimit`
+      (7 for these projects) are design-owned `long-float` warnings. A yarn
+      carried from the waste section to its first stitch is an operator
+      `carried-yarn` check.
+    - **Birdseye body** (`strategy.technique: 'birdseye'`): built in
+      `reference/dbj.kc`'s structure. At half rack, each color's pass knits
+      its front stitches plus every N-th rear needle. The back layer starts
+      and joins as in dbj.kc, adding 3 ground rows that the plan counts. With
+      fairisle, the real Arc'teryx bird has floats of 8–16 needles. With
+      birdseye it is ready at heads of 52/56/60 cm and bird heights of
+      6/8/10 cm. Any other backing (or minimal birdseye) is refused with
+      `project-beanie-backing-unsupported`.
+    - The object stores `cuffTargetCm`, `ribGauge` and `cuffFold`. The plan
+      checks the cuff (`cuff-off-target`, rib `gauge-assumed`) and reports
+      `sections`: cuff, body, crown (rows, recipe, final stitches) and
+      finished height, each in cm with its derivation.
+    - **Placements** (`set-placement`, `remove-placement`): a motif is
+      stored as intent. That covers its anchor (`x: 'center'` or a column,
+      `rowsAboveCuff`), color map, and source PNG with converter settings.
+      Materialization draws it, so resizing keeps it centred above the cuff.
+      A placement that no longer fits is a `project-placement-conflict` that
+      blocks export, never a clipped motif. Checkpoints keep the authored
+      chart. `place --image` converts at the body gauge, and
+      `place --refresh` re-converts after a gauge change
+      (`placement-size-off`).
+    - Row IDs added by resizing never reuse an ID still anchored by an
+      override, so quarantined overrides stay quarantined.
+    - `export` instructions state the construction from the plan's
+      sections, readiness, unresolved warnings and operator checks.
+    - Widths 98 and 150 have zero validator diagnostics (fairisle and
+      birdseye), and the accent yarn knits only the motif.
+  - The eight-line crown and the jersey and birdseye bodies have no
+    reference parity, and nothing has been knitted. The acrylic development
+    trial is prepared in `docs/M6-ACRYLIC-DEV-TRIAL.md` and waits for an
+    operator run.
+  - **Second review fixed (2026-10-02):**
+    - vertical carries (`project-long-carry`) and authored waste-to-body
+      carries (`carried-yarn`);
+    - placement conflicts block panels too;
+    - collision-free placement ids;
+    - stale motifs detected on either gauge axis;
+    - cuff changes at the cuff/body boundary;
+    - invalid widths as planned findings, with the target width as the fix;
+    - the benchmark binds motifs to the supplied image;
+    - development-run registration from a handoff package
+      (`release:register -- <name> --package <dir>`; the coordinate bridge
+      accepts carrier parking beyond the piece).
+  - **Garment product (browser).** A beanie is created from fit intent and
+    edited as a garment:
+    - head circumference and ease, cuff height and fold, body height, and
+      body and rib gauges (measured or assumed), each one undoable operation
+      that applies the plan's own fixes, with derived counts and cm beside
+      the inputs;
+    - motifs are placement objects: click to select, drag with Move, and an
+      inspector for size from the stored image, position, colors, refresh,
+      replace, remove and convert-to-stitches;
+    - painting over a motif's stitches is refused with an explanation;
+    - conflicts show as a red ghost and block export;
+    - the readiness card tells the shared story (`handoff.ts::readinessStory`)
+      with part, consequence, next step, show and fix;
+    - a dimensioned schematic (flat piece with fold line, seams and crown;
+      finished front with the folded cuff and motif);
+    - a zip package (`handoff.ts::handoffFiles`) and a print sheet from the
+      same instructions;
+    - recorded trials and a measurement dialog that previews the revision
+      (gauges measured, sizes refit, motifs re-converted) before applying it
+      as one operation, with synthetic values labelled;
+    - a Changes panel that reviews each operation (before/after measurements,
+      findings, schematics) and undoes it. A reopened file that continues
+      the project (an agent's CLI edits) opens it with the new operations
+      highlighted.
+  - **Third review fixed (2026-10-03):**
+    - synthetic measurements count as assumed and are disclosed in
+      readiness, print and package;
+    - the ground yarn's path includes the cuff and the crown;
+    - returnable forms are not hashed into the candidate;
+    - trials are compared with the knitted candidate's own predictions;
+    - history compacts only at operation boundaries, and cuff changes are
+      bulk row edits;
+    - the schematic draws the materialized chart and only the front in the
+      front view;
+    - switching fairisle to birdseye sets a supported strategy;
+    - an unmapped motif color is the ground, and a color problem is reported
+      as one;
+    - out-of-range fit input shows as not applied;
+    - agent continuations are detected at the cursor;
+    - both registration modes parse;
+    - beanie passes carry design-row provenance, so machine inspection
+      shows the waste, cuff and body, and crown sections.
+  - **Fourth review fixed (2026-10-03):**
+    - workspace operations apply to the latest project, and a motif refresh
+      that finishes after the motif changed is discarded with a message
+      (no lost edits);
+    - image colors with no matching yarn need a decision (a yarn, or leave
+      the ground) in the browser and the CLI (`--map`, `--leave`);
+    - changing a loaded form's candidate drops its predictions;
+    - compaction never cuts into the operation just appended;
+    - continuation is matched by entry id across compaction;
+    - fit drafts reset per project.
+  - **Refresh completion (2026-10-03):**
+    - pending motif conversions belong to the open document and are cancelled
+      when another file opens, including a file with the same project id;
+    - a refresh or resize that reveals a new unmapped image color keeps the
+      current motif and opens a preview with the saved image. Each new color
+      needs a yarn or an explicit background choice before applying;
+    - CLI refresh accepts `--map` and `--leave`; unresolved colors refuse the
+      change without saving. `--leave` removes default mappings, and conflicting
+      map/leave choices are rejected;
+    - returned measurements still record and revise the gauge when a motif
+      needs a color decision. That motif stays unchanged and stale until the
+      designer resolves it through Refresh.
+  - The CLI has the same story and modules: `fit`, `package`, `measure`.
+    `e2e/beanie-workflow.spec.ts` covers the browser journey (Chromium and
+    Firefox). A real-bird walkthrough (not committed: the image is a
+    trademark) checked:
+    - readiness identical in browser and CLI;
+    - a packaged `program.kc` byte-identical to a CLI recompile and the
+      manifest;
+    - an agent `fit` reviewed in the Changes panel;
+    - recovery from an invalid width and an oversized motif;
+    - a synthetic measurement revision.
+- **Flat-panel sweater, software slice (M7, 2026-10-10).** A sweater is one
+  project (`object: { kind: 'sweater', … }`): finished measurements, a
+  silhouette (`set-in`, `j-sleeve`, `drop-shoulder`), a neckline (`crew`,
+  `v`, `square`, `boat`), a body texture, rib trims, gauges and a top finish. The chart holds
+  only the yarn.
+  - `apps/studio/src/sweater/draft.ts` drafts each piece as a cm outline:
+    back, front, sleeve (knit twice) and, for a crew, V or square neck, a
+    rib neckband. A V splits on two bound-off centre needles and decreases
+    each neck edge to the shoulder; a square binds off its width flat; the
+    standard front neck depth follows the neckline (a V dips 2.2× a crew).
+    Size and fit chips give standard finished measurements. A set-in cap's
+    slope is fitted to the armhole edge (at most 80% of the armhole depth). A
+    J-sleeve's flat top matches the straight armhole.
+  - `rasterize.ts` slices the outline into rows at the gauge using only legal
+    machine moves:
+    - transfers for 1–2 stitches;
+    - chain bind-offs of 3 or more, only on a row that starts at that edge;
+      a fresh step that waits a row binds off the same count as the first side;
+    - one-stitch increases;
+    - the neck split on a row that starts on the right.
+    Lag against the outline is reported (`sweater-shape-lag`).
+  - `packages/machine-lib/src/knitout/passes/shaped-panel.ts` knits any such
+    rows in one yarn with any `k/p/t/u/s` texture. It uses the choreography
+    decoded from `reference/front.kc` and `sleeves.kc`:
+    - edge shifts through the rear bed at rack ∓d (`fashion` 1–3);
+    - chain bind-offs;
+    - a centre neck bind-off, after which the right shoulder knits on a
+      second carrier brought in during the waste section.
+    The start is Customist's flat start, now shared with the rib beanie
+    (`customist-flat-start.ts`); the beanie stays trace-identical to its
+    reference.
+    Before each row, rack-0 transfers set every stitch's bed. Selvedges and
+    the stitches the next row moves knit plain, so no needle ever holds more
+    than two loops. A row that knits and tucks on one bed is refused.
+  - `sweaterPipeline.ts` compiles every piece through the same strict KCode
+    conversion, validation and `resolveAuthoredVerdict`. The sweater's
+    verdict is its worst piece. Readiness blocks on assumed body and rib
+    gauges. The second-cone yarn and the carried strand are operator checks.
+  - Tests:
+    - every silhouette × neckline × the library textures (stockinette, seed,
+      garter, moss, basketweave, half and full cardigan, slip tweed,
+      welts, rib) compile Surface-proven with zero validator errors;
+    - an independent trace replay leaves the live loops exactly on the shaped
+      needles for fashion 1–3.
+  - Browser: New project → Sweater, then the shared workspace (below):
+    - design (style cards, size and fit chips, measurements with wanted vs
+      knitted, a texture library with a tile editor, rib edges, yarn and
+      gauges, each change one undoable operation);
+    - the garment, as worn or as flat pieces to scale, and each piece stitch
+      by stitch with its shaping;
+    - status in plain words, per-piece downloads, the package and the written
+      pattern.
+    `e2e/sweater-workflow.spec.ts` covers it (Chromium, Firefox).
+  - CLI: `studio sweater choices|new|plan|set|check|package|pattern|schematic`.
+    The generic `plan`/`describe`/`readiness`/`compile`/`package` route
+    sweater projects there. The `knit-design` skill documents it.
+  - The plan gives a yarn estimate from the stitch count (±20%, labelled as
+    an estimate).
+  - **Hand shaping (2026-10-10, garment-shaping-machine style).** Each edge
+    is a few key points (`object.shapes.body`, shared by front and back so
+    the side seams match, and `object.shapes.sleeve`). Each segment is
+    straight, concave or convex, and one point is the underarm.
+    - The style draws them from the measurements until the knitter drags,
+      adds, types or deletes a point in the piece's Shape mode (or with
+      `studio sweater shape`). After that, the measurements that drew the
+      edge are marked as set by the shape, and "Back to measurements" resets.
+    - A set-in or J sleeve cap refits itself to the drafted armhole, whatever
+      its shape.
+    - Shaping is shown and written as a knitter reads it: "Rows 21–129:
+      increase 1 every 3–4 rows, 33 times → 120 stitches". A run both edges
+      share reads "at each side"; where they differ (a bind-off on the right
+      comes a row after the left), each edge's steps are named in row order,
+      and a stitch count is given once every step up to its row is told.
+  - **First visit:** a start screen offers Sweater, Beanie or Scarf/blanket, a
+    project file or a machine file, or a blank chart. It returns for a visitor
+    whose only saved project is the untouched blank chart.
+  - **Projects kept on this device (2026-10-11).** Starting or opening another
+    project never replaces one (`chart/recentProjects.ts`).
+    - Each project autosaves in its own slot. A file opened twice gets two
+      slots, so an older file never overwrites newer work.
+    - Switching saves the open project first, with its latest change. If the
+      browser's storage is full, the switch stops and says so.
+    - File → Open recent and the start screen list them, newest first.
+      Removing one asks twice; nothing is dropped to make room.
+    - The same project open in two tabs (2026-10-12): a change saved in one
+      is taken up by the other, so neither saves over it. If both changed at
+      once, the second tab's version goes on as a copy and says so.
+  - **Machine file view (2026-10-11).** Each piece's mode "Machine file" shows
+    what its `.kc` makes the machine do, read back from the emitted file's
+    strict trace (`sweater/knitFile.ts`), never from the design.
+    - It draws every knit and tuck in the file once, stacked on its own
+      needle, coloured by carrier or as knitted.
+    - It lists the file's sections in machine order: waste yarn (with the
+      carriers brought in), draw thread, cast-on, rib, body, the neck split
+      (C3 and C4), the bind-off and carriers out.
+    - Every pass reads in words, with its settings and its exact lines in
+      the file.
+    - The status panel lists the pieces as their files (`front.kc`,
+      `sleeve.kc · run 2×`) and opens them here.
+    - Needle numbers are Studio's (the pattern's), through the verified
+      bridge; physical bed labels stay unverified.
+  - Each piece is subject to the authored program limits. An oversized
+    garter or seed piece can need more than the 200,000 checked needle
+    selections; that is a design-owned `sweater-piece-too-large` error that
+    names the size, gauge and stitch changes. The limit itself is unchanged.
+  - Not built:
+    - raglan, V-neck, colorwork or stripes on sweater pieces;
+    - picked-up collars;
+    - Customist's sweater template parity (CP-A3–A7 stay open: no captured
+      reference reproduces a Studio panel).
+    Nothing has been knitted. Sweater programs are development evidence at
+    best, and the release checker is still rectangle-only.
+- **Customist parity scoreboard.** `pnpm parity [--json]` compares the 13
+  captured references. Schema v2 reserves `reproduced` for an export-ready,
+  strict whole-program machine-trace match, including rack, settings, stops,
+  rasters, and both transfer stitch selectors. Current result: **1 exact,
+  4 partial, 1 blocked, 7 unsupported**; the exact one is `2x2-rib-beanie`
+  through its construction generator. Fairisle uses the checked-in 64×50
+  trial chart with C4/C3 assignments and matches 280/286 stitch passes at
+  offset zero; six passes have additional C4 front knits in the reference. Other colorwork candidates are
+  explicitly inferred knit-column inputs, with any trimmed edge rows disclosed.
+  Jacquard's two-color candidate blocks because its frame requires C2–C5.
+  `knitted-faces.ts` preserves coordinate holes and alternating-needle passes;
+  optional explicit pass windows avoid the default inferred window, which can
+  include cast-on and finish. Recovery refuses interior partial rows. Face
+  equality requires equal row counts and is only a relative knit-column
+  comparison: it ignores transfers and is not loop topology, authored-course
+  recovery, fabric appearance, or physical evidence.
+- **Customist-matched frames for authored backings.** Studio authors only the
+  backings that compile through a configuration matched to a captured
+  Customist program: Fairisle (`customist-studio-fairisle-7gg`, matched to
+  `reference/fairisle.kc`) and Birdseye (`customist-studio-birdseye-7gg`,
+  matched to `reference/dbj.kc`), via
+  `machine-lib::buildCustomistMatchedCompileInputV1`. Waste, carrier intro,
+  finish, carrier roles, and per-section speed/stitch/roller come from that
+  configuration; project `frame` fields no longer change the program and the
+  UI shows a read-only frame summary, including frame yarns (e.g. C1) the
+  program brings in. Ladder, Lined, and Complement have no Customist
+  reference and block with `project-technique-unmatched`; single-color charts
+  knit jersey inside the fairisle frame. The fairisle trial has 280/286
+  identical stitch passes and zero footer differences; the strict full-trace
+  comparison limits differences to six passes with reference-only C4 front knits.
+  The general catch-loop rule and physical effect of those 21 extra knits remain
+  unresolved. Birdseye uses the reference-derived DBJ
+  introduction and finish with the established generic body: every requested
+  front stitch plus one rear stitch per needle per design row, partitioned
+  across C2–C5. It no longer applies fixture-specific row ordering or omits the
+  final carrier. This body differs from Customist's full-needle DBJ backing;
+  footer or whole-program DBJ parity is not claimed. Exact emitted-trace tests
+  cover all final-row colors, sparse rows, stripes, carrier permutations, width
+  one, and rows beyond the old fixture's special range. Trial and registry
+  evidence record the compiled frame.
+  Machine-safety invariant: every carrier a compiled program brings in must be
+  an assigned pattern yarn, the waste carrier, or the preset's declared frame
+  yarn (C1); otherwise compilation blocks with `project-unassigned-carrier`
+  (`compileProject.ts::introducedCarriers`).
+  The captured DBJ introduction brings in all four pattern carriers; a chart
+  in two or three colours brings in only its own, in the captured order
+  (C3, C2, C4, C5) with each carrier's captured moves, the last one in
+  taking the captured seven settle rows, and its ground (C3, else the first
+  in) starting the back layer (`jacquard-dbj-full.ts`). Four-colour output
+  is byte-identical to before; `dbj-parity.test.ts` and
+  `birdseyeBody.test.ts` cover two and three colours, with and without C3.
+  New projects default to Birdseye only for four-color palettes, Fairisle
+  otherwise.
+- **Active overrides fail closed.** Stitch/pass overrides are schema-valid
+  project intent, but the compiler does not consume them yet; any active
+  override blocks compilation (`project-override-unsupported`) rather than
+  exporting output that silently omits it.
+- **Shared authored/imported topology inspection.** Validated emitted KCode
+  feeds the same schematic view in both workspaces. The Worker retains a full
+  bounded graph of up to 200,000 loops, 800,000 connections, and 600,000 transfer
+  movements. It indexes contiguous pass windows and returns at most 6,000 nodes,
+  18,000 edges, and 18,000 movements to the renderer; reaching a display-window
+  limit no longer rejects the entire accepted file. Stable IDs resolve lineage
+  outside the window, and incoming boundary connections are counted explicitly.
+  Local corpus coverage opens all 12 accepted reference files through this
+  pipeline. Blocked, malformed, or over-budget full graphs remain withheld.
+  Coordinates and geometry remain schematic software topology, not physical
+  fabric.
+- **Execution cursor for authored/imported KCode.** Ordered rack commands,
+  pass boundaries, and actions share source anchors with machine views and
+  topology selections. Step before/after an action, scrub backward, play program
+  order, and inspect full front/rear loop counts and all six carriers' last
+  encoded stops. The off-thread index uses event deltas and a checkpoint every
+  256 events, bounded to 400,000 events and 1,024 loop coordinates; inspection
+  replays at most 255 events. Unobserved carrier positions remain unknown,
+  within-pass motion and physical time are not reconstructed, and loop state
+  uses the empty-bed job assumption. Blocked/unknown loop state is withheld.
+- **Cancelable machine import and honest foreign setup.** Browser imports run
+  strict intake/lowering off-thread with cancellation and stale-result refusal.
+  KCode resource preflight streams line records and stops at the first exceeded
+  limit before materializing the record list. Foreign run sheets label carrier
+  roles unspecified; they do not inherit authored C1 draw/C6 waste assignments.
+- **Retained foreign inspection and source-bound checkpoints.** One import
+  Worker owns the full parse, trace, validation, execution index, topology, and
+  exact diff. The renderer receives source/verdict summaries, compact navigation,
+  and one inspected pass; replacing a document disposes its Worker. Large-file
+  browser coverage checks both responsiveness and Worker cleanup.
+  Imported `.kc` and KCode emitted from `.k` can save/load a JSON checkpoint
+  containing only a cursor, breakpoints, and exact KCode/profile binding. Restore
+  recomputes state and verifies the event anchor. It does not resume a machine,
+  accept loaded-bed state, or change the verdict.
+- **Exact authored-coordinate bridge for physical trials.** The pinned lowering
+  receipt now binds compiler/project endpoints to the actual `Position`-derived
+  marker-free KCode columns and normalized trace coordinates for the exact
+  KCode SHA-256. Trial and registry evidence persist and freshly compare that
+  basis, including increasing or decreasing physical-label orientation. This
+  closes the software seam only; two machine-observed endpoints and independent
+  pre-run verification remain required before any physical needle label claim.
+- **Provenance-safe row/pass metrics.** Authored run sheets distinguish design
+  rows from emitted machine passes. Foreign `.kc`/`.k` workspaces, print sheets,
+  and checker receipts expose strict-trace programmed passes and loop-forming
+  passes (knit/tuck/split) while explicitly marking authored rows unavailable;
+  transfer-family split is counted, but drop and repositioning passes are not.
+- **Pass roles and knitter-facing advisories.** Every strict-trace pass is
+  labelled loop-forming, transfer, drop, carrier move, carriage move, or
+  unclassified (`pass-metrics.ts`). Knitout imports join each emitted pass to
+  the pinned backend's scheduled source line, so a carrier-only pass stamped
+  with a knit/tuck/xfer line is shown as a backend-inserted kickback, while a
+  `miss`/`in`/`out` line is a requested carrier move; direct KCode records no
+  origin. `machine-advisories.ts` recomputes the official editor's float-distance
+  (default maximum 7, in the front-bed frame including rack) and unsafe
+  bed-range checks (facing needle outside the KCode column domain at the
+  current rack). Both are non-blocking information for foreign files and
+  never change the verdict. Endpoints retain bed/needle coordinates, use the
+  current rack, follow transfers/splits, and invalidate on drops or unknown
+  operations. The 13-file corpus now yields zero float and zero bed-range
+  advisories; the previous ten float findings used stale transferred/dropped
+  endpoints. Real synthetic long-float cases remain covered. KCode does not
+  encode carrier in/out, so a
+  between-pass float can be a parked or cut yarn; floats are not a physical
+  failure claim. Roles and advisories reach Studio, the run sheet, and
+  `machine:check`.
+- **Programmed-motion receipt.** Strict KCode traces expose exact encoded
+  stop-coordinate travel. A separate model uses the profile's documented 3.63
+  mm needle pitch and each pass's encoded speed only as explicit assumptions;
+  nonpositive contributing speed fails the time term closed. Foreign/authored
+  run sheets, checker receipts, and the exact-candidate trial manifest keep this
+  beside—not merged with—the authored-plan heuristic. No physical travel,
+  elapsed-time, lower-bound, or universal-calibration claim is made.
+- **Exact-candidate physical-settings receipt.** The release-trial manifest
+  extracts the compiled stitch, transfer-stitch, speed, roller, transfer style,
+  carrier spacing, and stopping-distance values and prints them for independent
+  controller comparison. Registration and the fresh physical-registry check
+  preserve those settings; any mismatch, deviation, or in-run intervention
+  blocks promotion. This is a candidate recipe, not a safe operating envelope.
 - **Authored chart → compile → k-code loop (Story 2 / "S2" core).** Embedded
   colorwork chart editor (`src/chart/*`), strategy rail (backing techniques,
   float budget, frame: waste/draw/bind-off), off-thread compile
   (`src/blanket/compile.worker.ts` → `compileToRunArtifact`), predicted pass
   grid, back-face preview, browser `.kc` conversion in a Worker
-  (`src/kcode/convert.worker.ts`), validated export, local autosave, run sheet.
-- **Synchronized authored workspace.** Chart, backing/frame strategy, selected
-  design-row passes, full-program frame regions, attributional diagnostics, and
-  collapsible Knitout/K-code source now share the canonical cause/effect layout.
-  Narrow screens use explicit Chart / Strategy / Machine tabs; export remains
-  hard-gated by the authored verdict.
+  (`src/kcode/convert.worker.ts`), strict emitted-output proof, validated export,
+  local autosave, run sheet.
+- **One workspace for every project (2026-10-11, user decision).** The
+  three-column Chart / Strategy / Machine layout is retired.
+  - Layout: scarf/blanket, beanie and sweater share the sweater's layout. A
+    menu bar (File / Edit / View) replaces the icon ribbons.
+    - Left: what you are making.
+    - Middle: Design / Schematic / Machine file, always in the same place.
+    - Right: whether it can be knitted, then the steps in order (Design,
+      Measure a swatch, Download), each holding what belongs to it; the
+      next one is marked. Download lists what to set at the machine before
+      knitting. Measuring a finished hat is not a step:
+      File → Record a finished hat (beanie) records it after knitting and
+      corrects the design for the next one.
+  - Schematics come from the machine file read back (`workspace/RunSchematic`).
+    They show the whole run: waste yarn, draw thread, the piece and its
+    finish, scarves included.
+  - A chart's Design view is drawn to scale when the project has a gauge
+    (rows are shorter than stitches are wide, as motifs are converted). A
+    beanie's Design view shows the whole piece: the rib cuff (painting stays
+    out of it), the colour body, and above it the crown as the construction
+    knits it, row by row (`plan.sections.crown.needles`, from the same crown
+    steps the compiler emits). The crown's straight rows at the end are named
+    "Gathered top" in Design, the schematic and the machine file, and yarn
+    that one pass carries across empty needles is drawn as a strand.
+  - **Whole hat (2026-10-11).** A beanie's stage has two tabs, like a
+    sweater's pieces: Whole hat and Beanie (the chart, where it opens).
+    - Whole hat's Design view draws the hat as worn, from the front or the
+      back (`garment/beanieWorn.ts`). It is flat and to scale like the
+      sweater's (2026-10-12; no shading): half the knitted circumference
+      wide, and as tall as the Height row, the crown rounding to the top.
+      The chart as knitted (motifs drawn in) has its middle at the front and
+      its edges at the back seam. A cuff is a shade darker, as the
+      sweater's rib is.
+    - It shows the hat unstretched. How far it stretches on a head, and how
+      the gathered top bunches, are not modelled. Clicking it opens the
+      chart.
+  - A beanie's swatch is its gauge ("Your swatch", left). A new gauge resizes
+    the whole hat and re-converts its motifs in the same change
+    (`trials.ts::reconvertMotifs`). Measuring a knitted hat (the trial record)
+    is the last step on the right.
+  - The beanie's left panel matches the sweater's (2026-10-11 UX pass):
+    folding sections with summaries, Snug / Classic / Loose fits, and a
+    Wanted / Knitted / Rows table. Its counts are the schematic's: the
+    machine file reader gives rows the chart does not have (a birdseye
+    back's ground rows) their own courses, and a beanie's body runs to its
+    first crown decrease (`sweater/knitFile.test.ts`).
+  - A colour chart is created and sized in cm (Size and Your swatch, like
+    the beanie); a new size or swatch resizes it through the plan's sizing
+    fixes. A chart with no gauge keeps needles and rows.
+  - Download swatch file (`swatch.ts`, `swatch.worker.ts`): a swatch made by
+    the project's own construction, in its stitch, yarns, backing and gauge.
+    That is a sweater's or scarf's body stitch between rib bands, a narrow
+    beanie with an unfolded cuff and both yarns in its body, or a piece of a
+    colour chart. It runs through the same pipeline and verdict, and only an
+    exportable swatch is downloaded (`swatch.test.ts`).
+  - Backing is offered only where it changes the fabric (`backing.ts`). A
+    one-colour chart knits plain whatever backing is set, so Backing says
+    so with no choice. A one-yarn beanie body is "Single layer" (fairisle)
+    or "Double layer" (birdseye knits its back layer in the same yarn; both
+    export, `backing.test.ts`). A rib beanie has no Backing section.
+  - Freehand drawing on any chart: a round brush 1 to 9 stitches across,
+    round on the fabric at the gauge's row aspect, a circle tool, and
+    mirror left–right / top–bottom (a beanie mirrors within its body). They
+    are pure `@knitlab/colorwork-core` tools (`brushOffsets`, `stamp`,
+    `ellipse`, `mirror`); each stroke is still one paint edit
+    (`e2e/m3b.spec.ts`).
+  - Add a colour: the project contract's `add-palette-entry` edit appends a
+    palette entry (stitches keep their indexes); the chart's Add button
+    applies it with a yarn on the next free carrier C2–C5 as one undoable
+    change. A one-yarn beanie can so become colourwork
+    (`e2e/beanie-workflow.spec.ts`). Files using the edit need this build
+    or later to open.
+  - On screen the verdict reads "Can't knit yet", "Ready to knit" or "Proven
+    on the machine" (`engine.ts::VERDICT_WORDS`). Files, the CLI and the docs
+    keep Blocked, Surface-proven and Knit-proven. While sizes rest on a
+    typical gauge, the top badge and the panel both read "Ready to knit,
+    sizes not confirmed" (2026-10-12); `readiness.ready` stays false then.
+  - A measured gauge belongs to its stitch (2026-10-12). Choosing another
+    stitch keeps the numbers but not as measured ("Measured on Seed stitch.
+    Measure a swatch of 1×1 rib…"); going back counts them as measured
+    again. A beanie's backing change does not do this yet.
+  - The Machine file view (`sweater/knitFile.ts`, `KnitFileView`) reads any
+    emitted `.kc`. Its "Step through" mode holds the exact movement, pass
+    grid, checks and source that used to be the separate machine workspace.
+  - A problem found in many places is one thing to check (2026-10-12,
+    `handoff.ts::storyNotes`): twenty long floats are one "Body colourwork"
+    note with one Show, and the headline counts kinds of problem. Each place
+    stays a finding of its own in the pattern's Unresolved list.
+  - Words are plain: no "≈", no "machine truth" or "trials". Operator
+    settings read like "Set carrier spacing to 2 on the machine".
+  - Export stays hard-gated by the authored verdict.
+  - Contract: `docs/mockups/workspace-target.md`. Coverage:
+    `e2e/workspace.spec.ts` and the updated specs.
+- **One-colour scarf or blanket (2026-10-11).** A new `object: { kind:
+  'panel' }` is one flat rectangle in one yarn.
+  - Settings: sized in cm, any knit/purl/tuck/slip stitch from the sweater's
+    library (or your own), an optional rib band at each end, and a bind-off
+    or waste-yarn top.
+  - It is planned (`sweater/panel.ts`) and compiled exactly like a sweater
+    piece, through the same rasterizer, shaped-panel construction, checks
+    and verdict (`runSweaterPipeline` takes any flat-piece plan). It opens
+    in the shared workspace.
+  - Its written pattern and package are in `sweater/panelHandoff.ts`.
+  - The colour-chart scarf or blanket is still offered next to it in New
+    project.
+  - Seed, stockinette and full-cardigan panels compile Surface-proven
+    (`sweater/panel.test.ts`, `e2e/panel-workflow.spec.ts`).
+  - Not yet built: a CLI command for panels.
 - **Central authored verdict policy + typed provenance.**
   `engine.ts::resolveAuthoredVerdict` is the sole authored 3-rung policy owner.
-  Design-row provenance travels on typed knitout ops, is exposed as an aligned
-  `RunArtifact` map, and joins validator diagnostics to chart rows without
-  scanning emitted comments.
-- **Engine (`packages/machine-lib`).** Chart→plan→knitout→`.kc` compile,
-  `CarriageSimulator` + `predictedPasses`, the three validator layers, `kc-diff`,
-  `kcToKnitout` reconstruction, Node + browser `KCodeConverter` adapters, the
-  13-file reference-kc corpus, the 6-case refusal corpus, topology oracle, and
-  the physical swatch registry (empty today).
+  Design-row provenance travels on typed Knitout ops and is joined through the
+  pinned backend's exact scheduled-pass source lines; the UI does not align
+  emitted output by predicted-pass position or scan comments.
+- **KCode proof engine (`packages/machine-lib`).** Strict lossless parser/emitter,
+  explicit versioned machine profile and eight-operation command decision table,
+  exact `MachineTraceV1`, KCode-native
+  kinematic and loop-state validator, renderer-ready `MachineSceneV1`, bounded
+  loop-identity `MachineTopologyV1`, indexed schematic windows, and
+  checkpointed `MachineExecutionIndexV1`, strict
+  trace diff, deterministic Node/browser lowering, independent test decoder and
+  replay oracle, the 13-file reference corpus, and seeded property,
+  grammar/input-mutation, 1,904-case independent command-legality matrix,
+  KCode-native refusal/rule-witness ledgers, backend differential, and
+  StrykerJS implementation-source mutation rails. Run `pnpm verify:kcode`; its
+  deterministic receipt is
+  `packages/machine-lib/out/kcode-proof/proof-manifest.json`.
+  Under the current foreign-file verdict policy, 12 of those fixtures open
+  Surface-proven. Five retain 220 depth-three loop-stack observations which the
+  foreign Studio boundary presents as non-blocking information; the shared
+  validator retains them as conservative warnings. `fox-baby-beanie.kc`
+  remains Blocked by 183 empty-drop warnings. All 13 have zero validation
+  errors.
 - **Dark mode**, **local-first** (no backend/login/telemetry), **R1 = B**
   (embedded shared canvas — adopted in FOUNDING §80 / ROADMAP M3B, shipped).
+- **Bounded authored export** uses a named V1 capacity contract rather than the
+  foreign-file limits: the canonical 200x300 four-color Birdseye project
+  exports, recompiles byte-identically, and reimports through the ordinary
+  strict KCode path; oversized projects fail at typed preflight.
+
+## Software-proof boundary
+
+Software now proves KCode grammar and bytes, deterministic pinned lowering,
+equivalence for every machine-executable scheduled field, programmed
+operation/direction/carrier/rack contract conformance, stops/selections/actions,
+carriage and carrier continuity, transfer pairing, and empty-bed loop-state
+transitions. Separately tested topology projection establishes a deterministic
+software graph and schematic rendering under that assumption. The validation
+report separates profile conformance, modeled state, operational policy, and
+controller acceptance. It does not
+translate serialized transfer tokens into controller-observed physical direction,
+claim physical needle-number labels, stitch geometry or fabric appearance, an
+operationally safe speed/roller/stack envelope, yarn behavior, collision
+dynamics outside encoded motion, or carrier lifecycle for foreign KCode (KCode
+does not encode `in`/`out`). Those boundaries remain explicit in the profile,
+validator report, UI, and proof manifest. See
+[`KCODE-SOFTWARE-PROOF.md`](./KCODE-SOFTWARE-PROOF.md).
 
 ## Verdict model (V1 — three rungs, no waivers)
 
@@ -50,33 +655,74 @@ later carrier-strategy feature can reintroduce the concept through a real projec
 schema.
 
 - **Foreign file** (`engine.ts`): any error **or unresolved warning** ⇒ Blocked
-  (no project context to accept a warning); clean ⇒ Surface-proven (imported);
-  registry artifact match ⇒ Knit-proven.
+  (no project context to accept a warning). The sole evidence-backed V1
+  reclassification is a depth-three loop-stack observation: it remains a
+  conservative validator warning, but is presented as non-blocking information
+  for foreign imports because it occurs in five captured reference fixtures.
+  This establishes observed corpus behavior, not who produced the bytes or a
+  physical loop-stack limit. Depth four remains an error. Otherwise clean ⇒
+  Surface-proven (imported).
+  Imported bytes cannot become Knit-proven through caller-supplied registry
+  metadata; that requires a future trusted verification seam.
 - **Authored** (`engine.ts::resolveAuthoredVerdict`): compile or output error ⇒ Blocked; clean ⇒
   Surface-proven (non-gating warnings, e.g. over-budget floats, stay visible on
   diagnostics and the run sheet); exact registry match ⇒ Knit-proven.
 
 ## Not yet built
 
+- **Loaded-bed/controller-resume input:** no supplied initial loop stacks, carrier state,
+  controller position, or resumed-job contract. Validation, topology, and cursor
+  replay still assume an empty bed at the beginning of the complete job.
+- **Physical/controller evidence:** operational speed/roller/stack envelopes,
+  controller-observed transfer direction, physical elapsed-time simulation, and
+  fabric mechanics remain unestablished. These are not unlocked by debugger
+  playback or a complete software topology graph.
+
 - **Forward design (still proposed, unbuilt):** the assistant / AI-as-diff (S3),
   swatch-registry UI (S4), and the L3–L5 upper editability ladder (stitch ops,
   pass overrides, machine-code editing stays read-only per FOUNDING §2).
+- **Widened V1 (ruled 2026-09-28):** Customist parity
+  ([`CUSTOMIST-PARITY.md`](./CUSTOMIST-PARITY.md)) plus AI-driven rectangles,
+  flat seamed beanies and sweaters through the design language
+  ([`DESIGN-LANGUAGE.md`](./DESIGN-LANGUAGE.md)); milestones M5–M9 in
+  `ROADMAP.md`. Only the M5 rectangle subset above is built. Beanies,
+  sweaters, shaping, rib, and the M5 parity rows that need Customist reference
+  captures are not.
 
 ## The one real promotion gate
 
-`1.0.0-rc.1` → `1.0.0` is gated **only** by a successful real-Kniterate run
+The trial candidate partially reproduces the captured Customist
+`reference/fairisle.kc` program (see `V1-PHYSICAL-TRIAL.md`): 280/286 passes
+match at stitch level. Its manifest records the strict full-trace differences.
+The modified candidate has no controller or physical-run evidence.
+
+**Revised 2026-09-28:** the V1 gate now requires exact-artifact qualification
+of a rectangle, a flat seamed beanie and a complete sweater at the frozen final
+compiler fingerprint, with tolerances declared before knitting
+(`V1-PHYSICAL-TRIAL.md`). A run of the current rectangle candidate is
+development evidence. The executable check below has **not** been extended yet
+and still covers only the fixed rectangle, so passing it no longer licenses the
+`1.0.0` tag.
+
+*(Superseded:)* `1.0.0-rc.1` → `1.0.0` is gated **only** by a successful real-Kniterate run
 (`V1-PHYSICAL-TRIAL.md`). Registration, hash checks, exact-artifact Knit-proven,
-and `release:physical-check` are implemented. **Do not tag `1.0.0` before the
-machine run succeeds.**
+and `release:physical-check` are implemented. `release:trial` requires a clean
+tree and records its full generating commit; registration requires that same
+clean commit. The trial package now binds exact command-legality and proof
+metadata; controller observation stays pending until an accepted registry run.
+**Do not tag `1.0.0` before the machine run succeeds.**
 
 ## Map of the docs
 
 - `FOUNDING.md` — product boundary (three verdict rungs; dark mode in scope).
 - `UX-PROPOSAL.md` — UX rationale; part shipped, part forward design (see its banner).
 - `SYSTEM-DESIGN.md` — architecture (A.*) + risk register (R*); R6 = 3-rung ruling.
-- `ROADMAP.md` — milestone ledger (M0–M3D complete).
+- `ROADMAP.md` — milestone ledger (M0–M3D complete; widened-V1 M5–M9 proposed).
+- `CUSTOMIST-PARITY.md` — V1 Customist capability inventory and acceptance rules (proposed).
+- `DESIGN-LANGUAGE.md` — v2 Design → Plan → Program contract for people and agents (proposed).
 - `HANDOFF.md` — reduced to present truth; points here.
 - `docs/archive/BUILD-S1.md` — **historical** M2 implementation contract (S1 shipped).
-- `docs/mockups/workspace-target.html` + `workspace-target.md` — canonical V1
-  workspace mockup and binding implementation contract.
+- `docs/mockups/workspace-target.md` — the binding workspace contract (one
+  layout for every project, 2026-10-11); `workspace-target.html` is the
+  retired three-column mockup, kept for history.
 - `docs/mockups/workspace-v2.html` — superseded design reference.

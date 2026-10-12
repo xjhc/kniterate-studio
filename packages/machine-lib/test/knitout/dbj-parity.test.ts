@@ -1,13 +1,8 @@
 /**
- * DBJ machine-equivalent parity harness.
- *
- * Drives the same productized seam as the Kniterate wizard:
- *   decode reference design -> author chart + dbj-backing: full ->
- *   detached wizard config -> compile -> vendor k-code -> diffKc.
- *
- * This is footer-level machine parity (direction / pass type / carrier /
- * speed / roller), matching the fairisle parity bar. Raw FRNT/REAR byte
- * layout is intentionally outside this test.
+ * DBJ reference comparison. The frame comes from the captured program;
+ * the authored body uses the generic Birdseye contract, not its fixture-
+ * specific full-back schedule. Exact authored row coverage is tested through
+ * the Studio pipeline in birdseyeBody.test.ts.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -27,7 +22,7 @@ import {
 import {
   compileExportFromState,
 } from '../../src/knitout/export-helpers.js';
-import { FAIRISLE_PARK_BINDOFF_DEFAULTS } from '../../src/knitout/passes/bind-off.js';
+import { CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES } from '../../src/knitout/recipes/customist-studio-birdseye-7gg.js';
 import {
   DEFAULT_KNITERATE_WIZARD_CONFIG,
   deriveKniterateExportState,
@@ -36,6 +31,12 @@ import {
 } from '../../src/knitout/wizard-config.js';
 import { writeKnitoutProgram } from '../../src/knitout/emitter.js';
 import { diffKc } from '../../src/knitout/kc-diff.js';
+import { buildCustomistMatchedCompileInputV1 } from '../../src/knitout/recipes/customist-matched.js';
+import { compileChartToKnitout } from '../../src/knitout/compile/from-chart.js';
+import { diffTraceStitchesV1 } from '../../src/knitout/kcode/trace-stitch-diff.js';
+import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js';
+import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js';
+import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../../src/knitout/kcode/machine-profile.js';
 import { knitoutToKCode } from '../../src/knitout/kniterate/to-kcode.js';
 import type { CompileChartResult } from '../../src/knitout/compile/from-chart.js';
 import { decodeCustomistDesign } from './reference-kc/customist-design-decode.js';
@@ -57,50 +58,7 @@ const BINDINGS = [
   { keyId: KEY_ID_COLOR_TEAL, carrier: '5' as const, name: 'c5' },
 ];
 
-const DBJ_MANUAL_OVERRIDES: RecipeOverrides = {
-  body: {
-    stitchNumber: 7,
-    speedNumber: 400,
-    rollerAdvance: 450,
-    xferStitchNumber: 5,
-    backBedStyle: 'birdseye',
-    birdseyeMode: 'full',
-  },
-  start: {
-    wastePasses: 80,
-    wasteCarrierOverride: '6',
-    drawCarrierOverride: 'none',
-    wasteMachineConfig: {
-      stitchNumber: 5,
-      castOnSpeed: 100,
-      castOnRoller: 440,
-      castOnPasses: 1,
-      castOnTuckPasses: 0,
-      castOnTuckSpeed: 300,
-      castOnTuckRoller: 0,
-      wasteSpeed: 400,
-      flatRollerPasses: 4,
-      rampRollerLeft: 440,
-      rampRollerRight: 0,
-      castOnFirstBed: 'front',
-      edgeInertNeedles: 0,
-    },
-  },
-  finish: {
-    bindOff: 'fairisle-park-bindoff',
-    fairisleParkConfig: {
-      ...FAIRISLE_PARK_BINDOFF_DEFAULTS,
-      closingWasteSpeed: 300,
-      closingWasteRoller: 450,
-      closingWasteStitchRamp: Array.from({ length: 20 }, () => 6),
-      parkSpeed: 300,
-      parkRoller: 450,
-      parkStitch: 6,
-      parkAutoMoveSpeed: 600,
-      parkAutoMoveRoller: 0,
-    },
-  },
-};
+const DBJ_MANUAL_OVERRIDES: RecipeOverrides = CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES;
 
 function buildDbjChart() {
   const design = decodeCustomistDesign(REFERENCE);
@@ -159,9 +117,9 @@ function compileViaDetachedWizardConfig(chart: KnitlabChartState): string {
   return toKc(compileExportFromState(chart, PALETTE, state, { developerMode: true }));
 }
 
-const BODY_REGION = { start: 112, end: 459 };
+const BODY_START_PASS = 112;
 
-describe('dbj.kc machine-equivalent parity', () => {
+describe('dbj.kc frame comparison and explicit body divergence', () => {
   const { design, chart } = buildDbjChart();
   const wizardKc = compileViaDetachedWizardConfig(chart);
   const diff = diffKc(wizardKc, REFERENCE, { maxDeltas: 400 });
@@ -181,15 +139,51 @@ describe('dbj.kc machine-equivalent parity', () => {
     expect(config.protectFirstBodyRow).toBe(false);
   });
 
-  it('the entire body footer schedule matches the reference', () => {
-    const bodyDeltas = diff.deltas.filter(
-      d => d.index >= BODY_REGION.start && d.index <= BODY_REGION.end,
-    );
-    expect(bodyDeltas).toHaveLength(0);
+  it('preserves the captured introduction footer schedule', () => {
+    const frameDeltas = diff.deltas.filter((delta) => delta.index < BODY_START_PASS);
+    expect(frameDeltas).toEqual([]);
   });
 
-  it('matches the reference at machine-equivalent footer parity', () => {
-    expect(diff.deltaCount).toBe(0);
-    expect(diff.deltas).toEqual([]);
+  it('reports the generic Birdseye body as different from the captured full-back program', () => {
+    const trace = (kcode: string) => {
+      const parsed = parseKCodeDocument(kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true });
+      if (!parsed.ok) throw new Error('not strict KCode');
+      return projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
+    };
+    const reference = trace(REFERENCE);
+    const authored = trace(wizardKc);
+    const stitches = diffTraceStitchesV1(reference, authored);
+    // A score or matching footer is not a correctness gate. Generic
+    // front/back passes deliberately differ; do not bless this as exact
+    // Customist parity by pinning a replacement identical-pass count.
+    expect(diff.deltaCount).toBeGreaterThan(0);
+    expect(stitches.actualPasses).toBeGreaterThan(stitches.expectedPasses);
+    expect(stitches.differingPassIndices.some((index) => index >= BODY_START_PASS)).toBe(true);
+  });
+
+  it('Studio and the detached configuration share the same body, apart from first-row protection', () => {
+    const { annotations: _annotations, ...plain } = chart;
+    const input = buildCustomistMatchedCompileInputV1({ technique: 'birdseye', chart: plain, keyPalette: PALETTE, yarnBindings: BINDINGS });
+    const studioDiff = diffKc(toKc(compileChartToKnitout(input)), wizardKc, { maxDeltas: 400 });
+    expect(studioDiff.deltas.every((delta) => delta.field === 'speed')).toBe(true);
+    expect(studioDiff.deltaCount).toBeGreaterThan(0);
+  });
+
+  it('a chart in two or three colours brings in only its own carriers, in the captured order', () => {
+    // The capture brings in C3, C2, C4, C5; fewer colours keep that order and leave the rest out,
+    // so no carrier knits without a yarn. The ground that starts the back layer is C3, else the first in.
+    for (const bindings of [BINDINGS.slice(0, 2), BINDINGS.slice(0, 3), [BINDINGS[0]!, BINDINGS[2]!], [BINDINGS[3]!, BINDINGS[1]!]]) {
+      const keys = bindings.map((binding) => binding.keyId);
+      const cells = Array.from({ length: 6 }, (_, row) => Array.from({ length: 12 }, (_, column) => keys[(row + column) % keys.length]!));
+      const subset = buildPunchcardChart({ name: 'dbj-subset', cols: 12, rows: 6, tile: { cols: 12, rows: 6, cells } });
+      const result = compileChartToKnitout(buildCustomistMatchedCompileInputV1({ technique: 'birdseye', chart: subset, keyPalette: PALETTE, yarnBindings: bindings, needleOffset: 40 }));
+      const carriers = bindings.map((binding) => binding.carrier as string);
+      expect(result.ok, carriers.join('+')).toBe(true);
+      const text = writeKnitoutProgram(result.program!);
+      expect([...text.matchAll(/^in ([1-6])$/gm)].map((match) => match[1])).toEqual(['6', ...['3', '2', '4', '5'].filter((carrier) => carriers.includes(carrier)), '1']);
+      const knitting = new Set([...text.matchAll(/^(?:knit|tuck|split) [+-] .* ([1-6])$/gm)].map((match) => match[1]));
+      expect([...knitting].sort()).toEqual([...carriers, '1', '6'].sort());
+      expect(toKc(result)).toContain('FRNT:');
+    }
   });
 });

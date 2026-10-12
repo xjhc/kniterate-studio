@@ -7,5 +7,7 @@ playwright-report/
 output/
 packages/machine-lib/out/rectangle-corpus/
 packages/machine-lib/out/rectangle-topology-report.json
+packages/machine-lib/.stryker-tmp/
+packages/machine-lib/out/kcode-proof/stryker-report.json
 out/v1-knit-trial/
 *.log

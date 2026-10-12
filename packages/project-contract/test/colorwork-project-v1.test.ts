@@ -2,12 +2,19 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  AUTHORED_CAPACITY_LIMITS_V1,
   appendProjectEdit,
+  appendProjectOperation,
+  assessAuthoredCapacityV1,
   createColorworkProjectV1,
+  inspectColorworkProjectStructureCapacityV1,
   materializeColorworkProject,
+  parseColorworkProjectV1,
   parseColorworkProjectV1Json,
   redoProjectEdit,
+  refuseAuthoredCapacityFromLowerBoundV1,
   renameColorworkProject,
+  serializeColorworkProjectV1,
   undoProjectEdit,
 } from '../src/index';
 
@@ -69,6 +76,26 @@ describe('ColorworkProjectV1', () => {
     expect(state.frame).toEqual({ wasteRows: 30, drawThread: true, bindOff: 'machine-bindoff' });
   });
 
+  it('admits the backend minimum of four waste rows and rejects one through three at project boundaries', () => {
+    const base = createColorworkProjectV1(chart, { id: 'waste-row-boundary' });
+    for (const wasteRows of [1, 3]) {
+      const imported = structuredClone(base);
+      imported.base.frame.wasteRows = wasteRows;
+      expect(() => parseColorworkProjectV1Json(JSON.stringify(imported))).toThrow(/>=4/);
+      expect(() => appendProjectEdit(base, {
+        id: `waste-${wasteRows}`,
+        source: 'human',
+        edit: { kind: 'set-frame', frame: { wasteRows, drawThread: true, bindOff: 'machine-bindoff' } },
+      })).toThrow(/>=4/);
+    }
+    const valid = appendProjectEdit(base, {
+      id: 'waste-4',
+      source: 'human',
+      edit: { kind: 'set-frame', frame: { wasteRows: 4, drawThread: true, bindOff: 'machine-bindoff' } },
+    });
+    expect(materializeColorworkProject(valid).state.frame.wasteRows).toBe(4);
+  });
+
   it('renames project metadata and palette entries without breaking checkpoints', () => {
     let project = createColorworkProjectV1(chart, { id: 'metadata' });
     for (let index = 0; index < 50; index += 1) project = appendProjectEdit(project, { id: `paint-${index}`, source: 'human', edit: { kind: 'paint-cells', cells: [{ rowId: 'row_0001', column: 0, paletteIndex: index % 2 }] } });
@@ -79,6 +106,25 @@ describe('ColorworkProjectV1', () => {
     expect(state.chart.title).toBe('Client blanket');
     expect(state.chart.palette[1]).toMatchObject({ name: 'Brick', hex: '#A12B34' });
     expect(parseColorworkProjectV1Json(JSON.stringify(project))).toEqual(project);
+  });
+
+  it('adds a colour to the palette without moving any stitch, refusing a duplicate id', () => {
+    let project = createColorworkProjectV1(chart, { id: 'add-colour' });
+    const before = materializeColorworkProject(project).state;
+    project = appendProjectOperation(project, { group: 'add-gold', source: 'human', label: 'Add a colour: Gold', edits: [
+      { kind: 'add-palette-entry', entry: { id: 'gold', name: 'Gold', hex: '#d6a633' } },
+      { kind: 'set-yarn-assignment', assignment: { paletteId: 'gold', carrier: '4', yarnName: 'Gold' } },
+      { kind: 'paint-cells', cells: [{ rowId: 'row_0001', column: 0, paletteIndex: before.chart.palette.length }] },
+    ] });
+    const state = materializeColorworkProject(project).state;
+    expect(state.chart.palette.at(-1)).toEqual({ id: 'gold', name: 'Gold', hex: '#D6A633' });
+    expect(state.chart.palette.slice(0, -1)).toEqual(before.chart.palette);
+    expect(state.machine.yarnAssignments.find((item) => item.paletteId === 'gold')?.carrier).toBe('4');
+    expect(state.chart.cells[0]![0]).toBe(before.chart.palette.length);
+    expect(() => appendProjectEdit(project, { id: 'again', source: 'human', edit: { kind: 'add-palette-entry', entry: { id: 'gold', name: 'Gold', hex: '#d6a633' } } })).toThrow(/already exists/);
+    expect(parseColorworkProjectV1Json(JSON.stringify(project))).toEqual(project);
+    // Undo removes it again.
+    expect(materializeColorworkProject(undoProjectEdit(project)).state.chart.palette).toEqual(before.chart.palette);
   });
 
   it('uses one history for human and assistant edits with deterministic undo/redo', () => {
@@ -117,5 +163,194 @@ describe('ColorworkProjectV1', () => {
     for (let index = 0; index < 50; index += 1) project = appendProjectEdit(project, { id: `paint-${index}`, source: 'human', edit: { kind: 'paint-cells', cells: [{ rowId: 'row_0001', column: 0, paletteIndex: index % 2 }] } });
     project.history.checkpoints[0]!.state.chart.cells[0]![0] = 0;
     expect(() => parseColorworkProjectV1Json(JSON.stringify(project))).toThrow(/checkpoint at cursor 50/);
+  });
+
+  it('rejects oversized raw charts and edit amplification before chart parsing or replay', () => {
+    const oversizedChart = {
+      ...chart,
+      width: 1,
+      height: 50_000,
+      cells: Array.from({ length: 50_000 }, () => [0]),
+    };
+    expect(() => createColorworkProjectV1(oversizedChart, { id: 'oversized-chart' }))
+      .toThrow(/50,000 rows.*capacity is 1,200/);
+
+    const project = createColorworkProjectV1(chart, { id: 'oversized-edit' });
+    const hostile = structuredClone(project) as unknown as Record<string, unknown>;
+    const history = (hostile.history as { entries: unknown[]; cursor: number });
+    history.entries.push({
+      id: 'grow-hostile',
+      source: 'human',
+      edit: { kind: 'set-height', height: 50_000, fillPaletteIndex: 0, newRowIds: [] },
+    });
+    history.cursor = 1;
+    expect(inspectColorworkProjectStructureCapacityV1(hostile)).toMatchObject({
+      metric: 'chart-height',
+      required: 50_000,
+      limit: AUTHORED_CAPACITY_LIMITS_V1.chartHeight,
+    });
+    expect(() => parseColorworkProjectV1(hostile)).toThrow(/50,000 rows.*capacity is 1,200/);
+  });
+
+  it('rebases old checkpointed history so ordinary editing stays bounded past 256 gestures', () => {
+    let project = createColorworkProjectV1(chart, { id: 'bounded-history' });
+    for (let index = 0; index < 310; index += 1) {
+      project = appendProjectEdit(project, {
+        id: `bounded-paint-${index}`,
+        source: 'human',
+        edit: {
+          kind: 'paint-cells',
+          cells: [{ rowId: 'row_0001', column: 0, paletteIndex: index % 2 }],
+        },
+      });
+    }
+
+    expect(project.history.entries.length).toBeLessThanOrEqual(AUTHORED_CAPACITY_LIMITS_V1.historyEntries);
+    expect(project.history.cursor).toBe(project.history.entries.length);
+    expect(project.history.checkpoints.length).toBeLessThanOrEqual(AUTHORED_CAPACITY_LIMITS_V1.historyCheckpoints);
+    expect(project.history.entries[0]?.id).toBe('bounded-paint-100');
+    expect(materializeColorworkProject(project).state.chart.cells[0]![0]).toBe(1);
+    expect(parseColorworkProjectV1Json(JSON.stringify(project))).toEqual(project);
+  });
+
+  it('keeps aborted lowering evidence as a lower bound without fabricating an exact observation', () => {
+    const capacity = assessAuthoredCapacityV1(createColorworkProjectV1(chart, { id: 'lower-bound-evidence' }));
+    if (capacity.status === 'blocked') throw new Error(capacity.message);
+    const refused = refuseAuthoredCapacityFromLowerBoundV1(
+      capacity,
+      'lowered-passes',
+      capacity.limits.loweredPasses + 1,
+    );
+    expect(refused).toMatchObject({
+      status: 'blocked',
+      evidence: 'lower-bound',
+      metric: 'lowered-passes',
+      required: capacity.limits.loweredPasses + 1,
+      observed: capacity.observed,
+    });
+    expect(refused.message).toContain(`requires at least ${(capacity.limits.loweredPasses + 1).toLocaleString('en-US')}`);
+  });
+
+  it('reads version 1 files losslessly and writes version 2', () => {
+    const fixture = JSON.parse(readFileSync(resolve('../../fixtures/colorwork-project-v1/four-color-checker-project.json'), 'utf8')) as Record<string, unknown>;
+    expect(fixture.version).toBe(1);
+    const project = parseColorworkProjectV1(fixture);
+    expect(project.version).toBe(2);
+    const { version: _from, ...fixtureRest } = fixture;
+    const { version: _to, ...projectRest } = JSON.parse(JSON.stringify(project)) as Record<string, unknown>;
+    expect(projectRest).toEqual(fixtureRest);
+    expect(JSON.parse(serializeColorworkProjectV1(project)).version).toBe(2);
+    expect(() => parseColorworkProjectV1({ ...fixture, version: 3 })).toThrow(/version/);
+  });
+
+  it('records gauge and target as undoable intent without touching the chart', () => {
+    let project = createColorworkProjectV1(chart, { id: 'sized' });
+    const before = materializeColorworkProject(project).state;
+    project = appendProjectEdit(project, { id: 'g', source: 'assistant', edit: { kind: 'set-gauge', gauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' } } });
+    project = appendProjectEdit(project, { id: 't', source: 'assistant', edit: { kind: 'set-target', target: { widthCm: 25, heightCm: 180 } } });
+    const after = materializeColorworkProject(project).state;
+    expect(after.gauge).toEqual({ stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' });
+    expect(after.target).toEqual({ widthCm: 25, heightCm: 180 });
+    expect(after.chart).toEqual(before.chart);
+    expect(parseColorworkProjectV1Json(serializeColorworkProjectV1(project))).toEqual(project);
+    project = appendProjectEdit(project, { id: 'clear', source: 'human', edit: { kind: 'set-gauge', gauge: null } });
+    expect(materializeColorworkProject(project).state.gauge).toBeUndefined();
+    expect(materializeColorworkProject(undoProjectEdit(project)).state.gauge?.rowsPer10cm).toBe(34);
+    expect(() => appendProjectEdit(project, { id: 'bad', source: 'human', edit: { kind: 'set-target', target: {} } as never })).toThrow();
+  });
+
+  it('admits long narrow charts up to the raised row capacity', () => {
+    const long = { ...chart, width: 2, height: 1_000, cells: Array.from({ length: 1_000 }, () => [0, 1]) };
+    const project = createColorworkProjectV1(long, { id: 'long-scarf' });
+    expect(project.base.rowIds).toHaveLength(1_000);
+    expect(AUTHORED_CAPACITY_LIMITS_V1.chartCellsPerState).toBe(75_600);
+  });
+
+  it('upgrades a v1 project with a real edit history without changing any cursor position', () => {
+    // Written by the v1 (pre-M5) contract: 18 edits, cursor 16 (a redo branch), an active and a quarantined override.
+    const source = readFileSync(resolve('../../fixtures/colorwork-project-v1/edited-history-project.json'), 'utf8');
+    const raw = JSON.parse(source) as { version: number; history: { cursor: number; entries: unknown[] } };
+    expect(raw.version).toBe(1);
+    const upgraded = parseColorworkProjectV1Json(source);
+    const reopened = parseColorworkProjectV1Json(serializeColorworkProjectV1(upgraded));
+    expect(reopened.version).toBe(2);
+    expect(reopened.history.cursor).toBe(raw.history.cursor);
+    expect(reopened.history.entries).toEqual(raw.history.entries);
+    const statuses: string[] = [];
+    for (let cursor = 0; cursor <= raw.history.entries.length; cursor += 1) {
+      const at = (project: typeof upgraded) => materializeColorworkProject({ ...project, history: { ...project.history, cursor, checkpoints: project.history.checkpoints.filter((checkpoint) => checkpoint.cursor <= cursor) } });
+      expect(at(reopened)).toEqual(at(upgraded));
+      statuses.push(at(reopened).overrides.map((item) => item.status).join(','));
+    }
+    expect(statuses).toContain('quarantined');
+    expect(materializeColorworkProject(redoProjectEdit(reopened)).state.machine.yarnAssignments).toHaveLength(1);
+  });
+
+  it('records the beanie object as undoable intent', () => {
+    let project = createColorworkProjectV1(chart, { id: 'beanie-object' });
+    project = appendProjectEdit(project, { id: 'o', source: 'assistant', edit: { kind: 'set-object', object: { kind: 'beanie', construction: 'flat-rib-2x2' } } });
+    expect(materializeColorworkProject(project).state.object).toEqual({ kind: 'beanie', construction: 'flat-rib-2x2' });
+    expect(parseColorworkProjectV1Json(serializeColorworkProjectV1(project))).toEqual(project);
+    expect(materializeColorworkProject(undoProjectEdit(project)).state.object).toBeUndefined();
+    expect(() => appendProjectEdit(project, { id: 'bad', source: 'human', edit: { kind: 'set-object', object: { kind: 'sweater' } } as never })).toThrow();
+  });
+
+  it('draws placements from their anchor, keeps checkpoints authored, and reports what does not fit', () => {
+    const ground = { ...chart, width: 20, height: 12, cells: Array.from({ length: 12 }, () => Array<number>(20).fill(0)) };
+    const motif = { ...chart, width: 4, height: 2, cells: [[1, 1, 0, 0], [0, 1, 1, 0]] };
+    let project = appendProjectEdit(createColorworkProjectV1(ground, { id: 'placed' }), { id: 'cuff', source: 'assistant', edit: { kind: 'set-object', object: { kind: 'beanie', construction: 'rib-cuff-jersey-body', cuffRows: 4 } } });
+    project = appendProjectEdit(project, { id: 'p1', source: 'assistant', edit: { kind: 'set-placement', placement: { id: 'logo', motif: motif as never, x: 'center', rowsAboveCuff: 1, colors: { 1: 'red' } } } });
+    const placed = materializeColorworkProject(project);
+    expect(placed.placements).toEqual([expect.objectContaining({ status: 'placed', at: { column: 8, knitRow: 5 } })]);
+    // Knit rows 5 (motif bottom) and 6 (motif top) are chart rows 6 and 5 counted from the top; color 0 is transparent.
+    expect(placed.state.chart.cells[6]!.slice(8, 12)).toEqual([0, 1, 1, 0]);
+    expect(placed.state.chart.cells[5]!.slice(8, 12)).toEqual([1, 1, 0, 0]);
+    expect(placed.state.chart.cells.flat().filter(Boolean)).toHaveLength(4);
+    // Narrowing keeps the motif centred.
+    const narrow = appendProjectEdit(project, { id: 'w', source: 'assistant', edit: { kind: 'set-width', width: 10, fillPaletteIndex: 0 } });
+    expect(materializeColorworkProject(narrow).placements[0]).toMatchObject({ status: 'placed', at: { column: 3, knitRow: 5 } });
+    // Too narrow: a conflict, and nothing is drawn.
+    const tiny = appendProjectEdit(project, { id: 'w', source: 'assistant', edit: { kind: 'set-width', width: 3, fillPaletteIndex: 0 } });
+    const conflict = materializeColorworkProject(tiny);
+    expect(conflict.placements[0]).toMatchObject({ status: 'conflict', at: null, reason: expect.stringContaining('4 stitches wide') });
+    expect(conflict.state.chart.cells.flat().filter(Boolean)).toHaveLength(0);
+    // History stores the authored chart; placements are never baked into checkpoints.
+    for (let index = 0; index < 30; index += 1) project = appendProjectEdit(project, { id: `g${index}`, source: 'assistant', edit: { kind: 'set-gauge', gauge: { stitchesPer10cm: 20 + index, rowsPer10cm: 30, source: 'measured' } } });
+    for (const checkpoint of project.history.checkpoints) expect(checkpoint.state.chart.cells.flat().filter(Boolean)).toHaveLength(0);
+    expect(parseColorworkProjectV1Json(serializeColorworkProjectV1(project))).toEqual(project);
+    const removed = appendProjectEdit(project, { id: 'rm', source: 'assistant', edit: { kind: 'remove-placement', placementId: 'logo' } });
+    expect(materializeColorworkProject(removed).state.chart.cells.flat().filter(Boolean)).toHaveLength(0);
+    expect(() => appendProjectEdit(removed, { id: 'rm2', source: 'assistant', edit: { kind: 'remove-placement', placementId: 'logo' } })).toThrow(/does not exist/);
+  });
+
+  it('undoes and redoes an operation as one step, and records trials as intent', () => {
+    let project = createColorworkProjectV1(chart, { id: 'grouped' });
+    project = appendProjectEdit(project, { id: 'single', source: 'human', edit: { kind: 'set-target', target: { widthCm: 10 } } });
+    project = appendProjectOperation(project, { group: 'fit-1', source: 'assistant', label: 'Change fit', edits: [
+      { kind: 'set-gauge', gauge: { stitchesPer10cm: 20, rowsPer10cm: 30, source: 'measured' } },
+      { kind: 'set-width', width: 6, fillPaletteIndex: 0 },
+    ] });
+    expect(project.history.entries.slice(1).map((entry) => [entry.group, entry.label])).toEqual([['fit-1', 'Change fit'], ['fit-1', undefined]]);
+    const undone = undoProjectEdit(project);
+    expect(undone.history.cursor).toBe(1);
+    expect(redoProjectEdit(undone).history.cursor).toBe(3);
+    expect(undoProjectEdit(undone).history.cursor).toBe(0);
+    // A failing operation leaves the project unchanged.
+    expect(() => appendProjectOperation(project, { group: 'bad', source: 'human', label: 'Bad', edits: [{ kind: 'set-width', width: 5, fillPaletteIndex: 0 }, { kind: 'delete-row', rowId: 'row_9999' }] })).toThrow();
+    const trial = { id: 'trial-1', candidate: { kcodeSha256: 'b'.repeat(64) }, recordedAt: '2026-10-02T10:00:00Z', synthetic: true, outcome: 'clean' as const, bodyGauge: { stitchesPer10cm: 24, rowsPer10cm: 30 } };
+    project = appendProjectEdit(project, { id: 'trial', source: 'human', edit: { kind: 'record-trial', trial } });
+    expect(materializeColorworkProject(project).state.trials).toEqual([trial]);
+    expect(parseColorworkProjectV1Json(serializeColorworkProjectV1(project))).toEqual(project);
+    expect(() => appendProjectEdit(project, { id: 'trial-again', source: 'human', edit: { kind: 'record-trial', trial } })).toThrow(/already exists/);
+  });
+
+  it('never compacts into the operation just appended, so it stays undoable', () => {
+    let project = createColorworkProjectV1({ ...chart, width: 4, height: 2 }, { id: 'compaction' });
+    for (let index = 0; index < 10; index += 1) project = appendProjectEdit(project, { id: `e${index}`, source: 'human', edit: { kind: 'set-target', target: { widthCm: 10 + index } } });
+    const before = materializeColorworkProject(project).state.chart.cells;
+    const big = appendProjectOperation(project, { group: 'big', source: 'assistant', label: 'Big', edits: Array.from({ length: 250 }, (_, index) => ({ kind: 'paint-cells' as const, cells: [{ rowId: 'row_0001', column: index % 4, paletteIndex: index % 2 }] })) });
+    expect(big.history.entries).toHaveLength(250);
+    expect(big.history.entries.every((entry) => entry.group === 'big')).toBe(true);
+    expect(materializeColorworkProject(undoProjectEdit(big)).state.chart.cells).toEqual(before);
   });
 });

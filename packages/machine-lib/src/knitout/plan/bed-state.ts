@@ -16,6 +16,7 @@
  * at bind-off" statistics.
  */
 
+import { KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1 } from '../kcode/machine-profile.js';
 import type { CarrierId, KnitoutOp } from '../types.js';
 import type { CarrierSide } from '../sim/types.js';
 import type {
@@ -60,15 +61,15 @@ export type BedStateRule =
   | 'adjacent-xfer-same-pass'
   | 'long-float';
 
-/** Maximum loops a single needle can hold before the machine jams. The
- *  kniterate cheatsheet's "≤ 2 tucks on same needle" is a stricter
- *  knit-tuck rule; physical loop stacking tolerates up to 2-3 stacked
- *  loops from xfer combos. We warn at 3 (decorative double decreases
- *  like sk2p/k3tog/sssk stack briefly to 3 between xfer dances and the
- *  next knit pass) and hard-error at 4+. Yarn thickness affects whether
- *  3 stacks actually clear the carriage — preview-grade, swatch first. */
-const MAX_LOOPS_PER_NEEDLE_WARN = 2;
-const MAX_LOOPS_PER_NEEDLE_HARD = 3;
+/**
+ * Shared authored/imported product policy. It deliberately does not encode a
+ * measured physical machine limit; it asks for review above two modeled loops
+ * and blocks above three until a different policy is deliberately versioned.
+ */
+const {
+  warningAbove: MAX_LOOPS_PER_NEEDLE_WARN,
+  errorAbove: MAX_LOOPS_PER_NEEDLE_HARD,
+} = KNITERATE_LOOP_STACK_SOFTWARE_POLICY_V1;
 
 /** Default front-bed float policy: warn when a run exceeds 5 stitches.
  *  Cameron's cheatsheet recommends ≤ 6-7 at 7gg; the plan §6.2 defaults
@@ -272,7 +273,7 @@ function applyOp(op: KnitoutOp, s: WorkingState): OpError | null {
       if (next.length > MAX_LOOPS_PER_NEEDLE_HARD) {
         return {
           rule: 'too-many-loops',
-          message: `tuck at ${op.needle.bed}${op.needle.needle} would stack ${next.length} loops (> ${MAX_LOOPS_PER_NEEDLE_HARD})`,
+          message: `tuck at ${op.needle.bed}${op.needle.needle} would stack ${next.length} loops, above the conservative software error threshold of ${MAX_LOOPS_PER_NEEDLE_HARD}; this is a product gate, not a physical machine-failure claim`,
         };
       }
       if (next.length > MAX_LOOPS_PER_NEEDLE_WARN) {
@@ -280,7 +281,7 @@ function applyOp(op: KnitoutOp, s: WorkingState): OpError | null {
         return {
           severity: 'warning',
           rule: 'too-many-loops',
-          message: `tuck at ${op.needle.bed}${op.needle.needle} stacks ${next.length} loops (> ${MAX_LOOPS_PER_NEEDLE_WARN}) — preview-grade, swatch first`,
+          message: `tuck at ${op.needle.bed}${op.needle.needle} stacks ${next.length} loops, above the conservative software review threshold of ${MAX_LOOPS_PER_NEEDLE_WARN}; this is not a physical safety-limit claim`,
         };
       }
       bedMap.set(op.needle.needle, next);
@@ -337,7 +338,7 @@ function applyOp(op: KnitoutOp, s: WorkingState): OpError | null {
         if (merged.length > MAX_LOOPS_PER_NEEDLE_HARD) {
           return {
             rule: 'too-many-loops',
-            message: `split to ${op.to.bed}${op.to.needle} would stack ${merged.length} loops (> ${MAX_LOOPS_PER_NEEDLE_HARD})`,
+            message: `split to ${op.to.bed}${op.to.needle} would stack ${merged.length} loops, above the conservative software error threshold of ${MAX_LOOPS_PER_NEEDLE_HARD}; this is a product gate, not a physical machine-failure claim`,
           };
         }
         toMap.set(op.to.needle, merged);
@@ -347,7 +348,7 @@ function applyOp(op: KnitoutOp, s: WorkingState): OpError | null {
           const warning: OpError = {
             severity: 'warning',
             rule: 'too-many-loops',
-            message: `split to ${op.to.bed}${op.to.needle} stacks ${merged.length} loops (> ${MAX_LOOPS_PER_NEEDLE_WARN}) — preview-grade, swatch first`,
+            message: `split to ${op.to.bed}${op.to.needle} stacks ${merged.length} loops, above the conservative software review threshold of ${MAX_LOOPS_PER_NEEDLE_WARN}; this is not a physical safety-limit claim`,
           };
           fromMap.set(op.from.needle, [{ carrier }]);
           s.carrierSides.set(carrier, op.direction === '+' ? 'right' : 'left');
@@ -399,7 +400,7 @@ function applyOp(op: KnitoutOp, s: WorkingState): OpError | null {
       if (merged.length > MAX_LOOPS_PER_NEEDLE_HARD) {
         return {
           rule: 'too-many-loops',
-          message: `xfer to ${op.to.bed}${op.to.needle} would stack ${merged.length} loops (> ${MAX_LOOPS_PER_NEEDLE_HARD})`,
+          message: `xfer to ${op.to.bed}${op.to.needle} would stack ${merged.length} loops, above the conservative software error threshold of ${MAX_LOOPS_PER_NEEDLE_HARD}; this is a product gate, not a physical machine-failure claim`,
         };
       }
       fromMap.delete(op.from.needle);
@@ -408,7 +409,7 @@ function applyOp(op: KnitoutOp, s: WorkingState): OpError | null {
         return {
           severity: 'warning',
           rule: 'too-many-loops',
-          message: `xfer to ${op.to.bed}${op.to.needle} stacks ${merged.length} loops (> ${MAX_LOOPS_PER_NEEDLE_WARN}) — preview-grade, swatch first`,
+          message: `xfer to ${op.to.bed}${op.to.needle} stacks ${merged.length} loops, above the conservative software review threshold of ${MAX_LOOPS_PER_NEEDLE_WARN}; this is not a physical safety-limit claim`,
         };
       }
       return null;

@@ -1,0 +1,66 @@
+/**
+ * Compile inputs with frames derived from captured Customist Studio programs.
+ *
+ * Studio's authored backings use reference-derived configurations: fairisle through
+ * `CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE` (reference/fairisle.kc) and
+ * birdseye through `CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES`
+ * (reference/dbj.kc frame, generic Birdseye body). Frame, carrier roles, and
+ * machine settings come from those configurations, not from the caller.
+ * This routes through `buildCompileInputForExport` so the input is the one
+ * the parity harnesses verify.
+ */
+
+import type { KnitlabChartState, KnitlabKeyDefinition } from '../../colorwork/knitlab1-contract.js'
+import type { CompileChartInput } from '../compile/from-chart.js'
+import { buildCompileInputForExport, carrierModeForColorCount } from '../export-helpers.js'
+import type { FloatPolicy } from '../plan/bed-state.js'
+import type { YarnBinding } from '../types.js'
+import { CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES } from './customist-studio-birdseye-7gg.js'
+import { CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE } from './customist-studio-fairisle-7gg.js'
+
+export type CustomistMatchedTechniqueV1 = 'fairisle' | 'birdseye'
+
+/**
+ * `frameCarriers`: carriers the matched frame brings in besides the pattern
+ * yarns and waste (Customist's draw/cameo yarn). Any other carrier in a
+ * compiled program has no declared yarn and must be refused by the caller.
+ */
+export const CUSTOMIST_MATCHED_PRESETS_V1 = {
+  fairisle: { id: 'customist-studio-fairisle-7gg', reference: 'reference/fairisle.kc', frameCarriers: ['1'] },
+  birdseye: { id: 'customist-studio-birdseye-7gg', reference: 'reference/dbj.kc', frameCarriers: ['1'] },
+} as const satisfies Record<CustomistMatchedTechniqueV1, { id: string, reference: string, frameCarriers: readonly string[] }>
+
+export interface CustomistMatchedCompileRequestV1 {
+  readonly technique: CustomistMatchedTechniqueV1
+  readonly chart: KnitlabChartState
+  readonly keyPalette: KnitlabKeyDefinition[]
+  /** Binding order is semantic: the first binding casts on and leads each row. */
+  readonly yarnBindings: readonly YarnBinding[]
+  readonly needleOffset?: number
+  /** Fairisle float warning threshold; does not change the program. */
+  readonly floatPolicy?: FloatPolicy
+}
+
+export function buildCustomistMatchedCompileInputV1(request: CustomistMatchedCompileRequestV1): CompileChartInput {
+  const chart: KnitlabChartState = request.technique === 'birdseye'
+    ? {
+        ...request.chart,
+        annotations: [
+          ...(request.chart.annotations ?? []).filter((annotation) => annotation.kind !== 'dbj-backing'),
+          { id: 'customist-birdseye', kind: 'dbj-backing', anchor: { scope: 'sheet' }, dbjStrategy: 'full' },
+        ],
+      }
+    : request.chart
+  return buildCompileInputForExport({
+    chart,
+    recipe: request.technique === 'fairisle' ? CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE : null,
+    yarns: request.yarnBindings,
+    allocationMode: carrierModeForColorCount(request.yarnBindings.length),
+    ...(request.needleOffset !== undefined ? { needleOffset: request.needleOffset } : {}),
+    protectFirstBodyRow: true,
+    recipeOverrides: request.technique === 'birdseye' ? CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES : {},
+  }, {
+    keyPalette: request.keyPalette,
+    ...(request.floatPolicy ? { floatPolicy: request.floatPolicy } : {}),
+  })
+}

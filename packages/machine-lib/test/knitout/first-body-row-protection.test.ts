@@ -180,7 +180,7 @@ describe('first body row speed protection', () => {
     expectProtectedFirstRow(result, 3);
   });
 
-  it('protects the full-back DBJ walker and restores its recipe body speed', () => {
+  it('protects the Customist-framed Birdseye walker and restores its recipe body speed', () => {
     const result = compileOk({
       chart: dbjFullChart(),
       keyPalette: DEFAULT_KEY_PALETTE,
@@ -193,7 +193,7 @@ describe('first body row speed protection', () => {
       needleOffset: 50,
     });
 
-    expect(result.plan!.technique).toBe('lined-jacquard');
+    expect(result.plan!.technique).toBe('birdseye-jacquard');
     expectProtectedFirstRow(result, 3, 400);
   });
 });

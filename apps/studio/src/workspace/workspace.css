@@ -1,0 +1,86 @@
+/* The shared frame: the menu bar, and the stage's view switch. */
+.menu-bar { display: flex; align-items: center; gap: 2px; margin-left: 8px; }
+.menu { position: relative; }
+.menu-title { min-height: 30px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font-size: 13px; font-weight: 600; cursor: pointer; }
+.menu-title:hover, .menu-title.open { background: var(--panel-2); }
+.menu-list { position: absolute; top: calc(100% + 4px); left: 0; z-index: 60; display: grid; min-width: 250px; padding: 5px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--panel); box-shadow: 0 12px 32px #0003; }
+.menu-list hr { width: 100%; margin: 4px 0; border: 0; border-top: 1px solid var(--line); }
+.menu-list button { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; align-items: center; gap: 6px; min-height: 30px; padding: 0 10px 0 6px; border: 0; border-radius: 5px; background: transparent; color: var(--ink); font-size: 13px; text-align: left; cursor: pointer; }
+.menu-list button:hover:not(:disabled), .menu-list button:focus-visible { background: var(--accent-soft); outline: none; }
+.menu-list button:disabled { color: var(--ink-3); cursor: default; }
+.menu-list kbd { color: var(--ink-3); font-family: inherit; font-size: 11px; }
+.menu-check { display: grid; place-items: center; color: var(--accent); }
+.topbar-spacer { flex: 1; }
+.view-switch { display: flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper-2); }
+.view-switch button { min-height: 28px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-2); font-size: 12px; font-weight: 650; white-space: nowrap; cursor: pointer; }
+.view-switch button.active { background: var(--panel); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line-strong); }
+.stage-title { color: var(--ink); font-size: 14px; font-weight: 700; }
+@media print { .menu-bar { display: none; } }
+.run-schematic { display: block; max-width: 100%; height: auto; margin: 0 auto; }
+.run-band { shape-rendering: crispEdges; }
+.run-break { fill: none; stroke: #fff; stroke-width: 5; stroke-linejoin: round; }
+.run-label line, .run-dimension line { stroke: var(--ink-3); stroke-width: 1; }
+.run-label text, .run-dimension text { fill: var(--ink-2); font-size: 12px; }
+.schematic-stage { display: grid; justify-items: center; gap: 10px; padding: 20px; }
+.files-overview { display: grid; gap: 12px; max-width: 760px; margin: 0 auto; padding: 24px; }
+.files-overview h2 { margin: 0; font-size: 16px; }
+.files-overview ol { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.files-overview button { display: grid; gap: 6px; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); text-align: left; cursor: pointer; }
+.files-overview button:hover { border-color: var(--accent); }
+.files-overview-name { font-weight: 700; }
+.files-overview-name em { color: var(--ink-3); font-style: normal; font-weight: 600; }
+.files-overview-strip { display: flex; height: 10px; overflow: hidden; border-radius: 3px; }
+.files-overview-strip i { min-width: 2px; background: var(--band); }
+.files-overview-facts { color: var(--ink-2); font-size: 12px; }
+.file-detail { grid-column: 1 / -1; padding: 6px 4px 2px 20px; }
+.sweater-design .garment-section { display: grid; gap: 10px; padding: 13px 16px 16px; border-bottom: 1px solid var(--line); }
+.sweater-design .garment-section > h2 { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--ink); font-size: 13px; font-weight: 750; letter-spacing: 0; text-transform: none; }
+.note-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.note-actions button { min-height: 26px; font-size: 12px; }
+/* A charted project's chart, and its left panel, in the shared workspace. */
+.stage-body.chart-stage-body { display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; }
+.chart-design-stage { display: grid; grid-template-rows: auto minmax(0, 1fr); min-width: 0; min-height: 0; }
+.chart-project .chart-toolbar { gap: 4px; padding: 6px 12px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.chart-project .target-chart-stage { min-height: 0; }
+.chart-toolbar .tool-name { align-self: center; min-width: 64px; padding: 0 6px; color: var(--ink-2); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.chart-project .canvas-stack { grid-template-rows: minmax(0, 1fr); }
+.chart-design .strategy-field { display: grid !important; grid-template-columns: minmax(0, 1fr) 110px; align-items: center; gap: 8px !important; margin: 0 !important; color: var(--ink-2); font-size: 12px !important; }
+.chart-design .strategy-field input, .chart-design .strategy-field select { width: 110px; height: 30px; padding: 3px 7px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--paper); color: var(--ink); font-size: 13px; }
+.chart-design .assignment-list { display: grid; gap: 6px; }
+.chart-design .assignment-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) 64px; align-items: center; gap: 8px; font-size: 12px; }
+.chart-design .assignment-row i { width: 18px; height: 18px; border-radius: 4px; box-shadow: inset 0 0 0 1px #0002; }
+.chart-design .assignment-row input, .chart-design .assignment-row select { height: 30px; padding: 3px 7px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--paper); color: var(--ink); font-size: 13px; }
+.chart-design .strategy-segments { display: grid; gap: 6px; }
+.chart-design .strategy-segments button { display: grid; grid-template-columns: 54px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 48px; padding: 5px 8px 5px 5px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--paper); color: var(--ink); font-size: 13px; text-align: left; cursor: pointer; }
+.chart-design .strategy-segments button.active { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+.chart-design .strategy-segments button small { display: block; color: var(--ink-3); font: 12px inherit; }
+.chart-design .garment-help, .chart-design .garment-derived, .chart-design .garment-note { margin: 0; color: var(--ink-3); font-size: 12px; line-height: 1.45; }
+.chart-design .garment-field { display: grid !important; grid-template-columns: minmax(0, 1fr) 110px; align-items: center; gap: 8px; margin: 0 !important; color: var(--ink-2); font-size: 12px !important; }
+.chart-design .garment-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px; }
+.chart-design .garment-input input { width: 100%; height: 30px; padding: 3px 7px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--paper); color: var(--ink); font-size: 13px; }
+.chart-design .garment-input i { color: var(--ink-3); font-size: 11px; font-style: normal; }
+.chart-design .setup-error { margin: 12px 16px; color: var(--blocked); font-size: 12px; }
+.chart-design .gauge-fields { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; }
+.chart-design .gauge-fields legend { margin-bottom: 6px; color: var(--ink-2); font-size: 12px; font-weight: 700; }
+.chart-design .gauge-fields .gauge-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.chart-design .gauge-fields label { display: grid; gap: 3px; color: var(--ink-3); font-size: 11px; }
+.chart-design .gauge-fields input, .chart-design .gauge-fields select { height: 30px; padding: 3px 6px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--paper); color: var(--ink); font-size: 13px; }
+.chart-design .gauge-fields label.measured-check { display: flex; grid-column: auto; grid-row: auto; align-items: center; align-self: end; gap: 5px; height: 30px; color: var(--ink-2); font-size: 12px; }
+.chart-design .gauge-fields label.measured-check input { width: 15px; height: 15px; padding: 0; }
+.file-mode { margin: 0 0 10px; }
+.step-through { min-height: 600px; }
+@media (max-width: 720px) {
+  .sweater-stage { order: -1; min-height: 75vh; }
+  .menu-bar { margin-left: 0; }
+  .menu-title { padding: 0 8px; }
+  .stage-head { flex-wrap: wrap; }
+}
+.rectangle-style { padding: 12px 16px 0; }
+/* A beanie's size table: wanted, knitted, and its stitches or rows. */
+.measure-head.garment-measure, .measure-row.garment-measure { grid-template-columns: minmax(0, 1fr) 88px 36px 58px; }
+.garment-measure .knitted { white-space: nowrap; }
+.garment-measure .knitted.count { color: var(--ink-3); }
+.garment-measure .garment-error { grid-column: 1 / -1; margin: 0; }
+.garment-measure .number-input i { color: var(--ink-3); font-size: 12px; font-style: normal; }
+.chart-design .fold-check { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 12px; cursor: pointer; }
+.chart-design .fold-check input { width: 16px; height: 16px; margin: 0; }

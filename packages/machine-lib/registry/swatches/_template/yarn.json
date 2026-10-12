@@ -1,31 +1,42 @@
 {
   "$schema": "../_schema.json",
+  "kind": "kniterate-yarn-evidence-v1",
+  "schemaVersion": 1,
   "yarns": [
     {
       "carrier": "2",
-      "name": "TODO: e.g. cream wool 2/12",
-      "fiber": "TODO: wool | cotton | alpaca | acrylic | blend",
+      "role": "pattern",
+      "name": "TODO: descriptive yarn name",
+      "brand": "TODO: manufacturer",
+      "line": "TODO: yarn line",
+      "lot": "TODO: dye lot or batch id",
+      "fiber": "TODO: fiber composition",
       "weight": "TODO: e.g. 2/12 Nm",
       "ply": 2,
-      "color": "TODO: hex or pantone",
-      "coneSource": "TODO: vendor + lot or batch id"
+      "color": "TODO: hex, Pantone, or supplier color id",
+      "coneSource": "TODO: vendor and cone identifier"
     }
   ],
   "tensionSwatch": {
-    "stsPer10cm": {
-      "offMachine": null,
-      "rested24h": null,
-      "steamed": null,
-      "wetFinished": null
-    },
-    "rowsPer10cm": {
-      "offMachine": null,
-      "rested24h": null,
-      "steamed": null,
-      "wetFinished": null
+    "machineProfile": "kniterate-7gg-worsted-v1",
+    "structure": "TODO: swatch structure",
+    "settings": {
+      "stitchNumber": 6,
+      "xferStitchNumber": 5,
+      "speedNumber": 300,
+      "rollerAdvance": 200,
+      "xferStyle": "four-pass",
+      "carrierSpacing": 2,
+      "carrierStoppingDistance": 2.5
     },
     "measuredBy": "TODO: who measured",
     "measuredOn": "1970-01-01",
-    "notes": "TODO: any drape / hand / weight observations"
+    "measurements": {
+      "offMachine": { "status": "not-performed", "reason": "TODO: measure or explain" },
+      "rested24h": { "status": "not-performed", "reason": "TODO: measure or explain" },
+      "steamed": { "status": "not-performed", "reason": "TODO: measure or explain" },
+      "wetFinished": { "status": "not-performed", "reason": "TODO: measure or explain" }
+    },
+    "notes": "TODO: drape, hand, and weight observations"
   }
 }

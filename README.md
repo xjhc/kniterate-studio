@@ -19,6 +19,47 @@ pnpm verify
 pnpm dev
 ```
 
+`pnpm verify` is the full gate used by CI; it ends with the read-only KCode
+proof check, which re-runs mutation testing. While iterating on code that does
+not touch the compiler, converter, or machine output, `pnpm verify:quick` runs
+everything except that proof check.
+
+Author, compile, and export a project headlessly (for scripts and agents). Every
+command prints JSON and uses the same compiler, strict KCode validation, and
+verdict policy as the Studio UI; `export` writes a `.kc` only when Studio's
+Export button would be enabled. Compile/export receipts include the compiled frame
+and all required carrier roles, including frame and waste yarns:
+
+```bash
+pnpm --silent studio -- new fixtures/colorwork-chart-v1/four-color-checker.json -o project.json
+pnpm --silent studio -- edit project.json '{"kind":"set-strategy","strategy":{"technique":"birdseye","floatLimit":5}}'
+pnpm --silent studio -- compile project.json
+pnpm --silent studio -- export project.json -o command.kc
+pnpm --silent studio -- schema   # JSON Schema for edits
+```
+
+Compare authored output against captured Customist references. Exact reproduction
+requires strict whole-program trace equality; face and stitch comparisons are
+separate diagnostics:
+
+```bash
+pnpm --silent parity
+```
+
+Check one foreign machine file with the same conservative verdict policy as
+Studio:
+
+```bash
+pnpm machine:check -- ./pattern.kc
+pnpm --silent machine:check -- ./pattern.k --json
+```
+
+The checker exits `0` only for `Surface-proven (imported)`, `1` for a checked
+but blocked file, and `2` for usage or read failures. JSON receipts include the
+input SHA-256 and format-evidence disclosure, but never source bytes. This is a
+software preflight; controller acceptance and physical knitting remain separate
+gates.
+
 Open `http://127.0.0.1:5173` and import a chart JSON exported by KnitLab Chart.
 `pnpm kniterate:conform` runs the extracted machine confidence ladder.
 
@@ -29,14 +70,14 @@ package `apps/studio/dist`, and deploy it through the `github-pages`
 environment. In the repository settings, select **GitHub Actions** under
 **Pages → Build and deployment → Source** before the first deployment.
 
-For an authored blanket, Studio keeps design rows intact, compares five backing
-choices, compiles off the UI thread, validates the vendored `.kc`, and enables
+For an authored blanket, Studio keeps design rows intact, supports Fairisle and
+Birdseye through reference-derived frames, compiles off the UI thread, validates the vendored `.kc`, and enables
 export only for the current validated project revision. Project JSON and the
 printed run sheet retain the carrier, frame, strategy, and artifact identities
 needed to reproduce a run.
 
 The software is currently `1.0.0-rc.1`. Run `pnpm release:trial` to generate the
-hash-pinned four-color physical-knit package. Promotion to `1.0.0` is reserved
+hash-pinned two-color fairisle physical-knit package. Promotion to `1.0.0` is reserved
 for a successful run of that exact package on a real Kniterate; see
 [`docs/V1-PHYSICAL-TRIAL.md`](./docs/V1-PHYSICAL-TRIAL.md).
 

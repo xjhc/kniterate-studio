@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { AUTHORED_CAPACITY_LIMITS_V1, createColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { parseProjectAutosave, serializeProjectAutosave } from './projectAutosave';
 
 const project = createColorworkProjectV1({
@@ -17,5 +17,6 @@ describe('project autosave', () => {
   it('rejects malformed or invalid saved projects', () => {
     expect(parseProjectAutosave('{')).toBeNull();
     expect(parseProjectAutosave(JSON.stringify({ schemaVersion: 1, savedAt: 'now', project: { kind: 'wrong' } }))).toBeNull();
+    expect(parseProjectAutosave(' '.repeat(AUTHORED_CAPACITY_LIMITS_V1.projectSourceCodeUnits + 1))).toBeNull();
   });
 });

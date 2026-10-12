@@ -1,20 +1,32 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
-import { Cloud, CloudOff, Download, LoaderCircle, Plus, Settings2, Upload } from 'lucide-react';
-import { clear, copy, cut, paste, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
-import { appendProjectEdit, materializeColorworkProject, redoProjectEdit, undoProjectEdit, type ColorworkProjectV1, type ProjectEdit } from '@kniterate-studio/project-contract';
-import { ChartToolbar, type ChartTool } from './ChartToolbar';
-import { ColorworkCanvas } from './ColorworkCanvas';
-import { PaletteRail } from './PaletteRail';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Wrench } from 'lucide-react';
+import { clear, copy, cut, paste, type MirrorAxes, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
+import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendProjectOperation, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
+import { BRUSH_SIZES, ChartToolbar, type ChartTool } from './ChartToolbar';
+import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './ColorworkCanvas';
+import { beanieFitEdits, withSizingFixes, type BeanieFitChange } from '../beanie';
+import { storyNotes, type ReadinessStory } from '../handoff';
+import type { ProjectPlan } from '../plan';
+import { movedPlacement, placedCells, placementBoxes, type PlacementConversion, type PlacementImage } from '../placements';
+import { reconvertMotifs } from '../trials';
+import { GarmentFitSection } from '../garment/GarmentFitSection';
+import { ImageIntakeDialog, MotifSection, placementPixels } from '../garment/MotifPanel';
+import { MeasureDialog } from '../garment/MeasureDialog';
+import { BeanieWornView } from '../garment/BeanieWornView';
+import { readKnitFile, type KnitFileCarriers } from '../sweater/knitFile';
+import { KnitFileView } from '../sweater/KnitFileView';
+import { RunSchematic } from '../workspace/RunSchematic';
+import { StatusPanel, type StatusNote, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
+import { revealSection } from '../workspace/panel';
+import type { SwatchFile } from '../useSwatchFile';
+import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
+import type { AuthoredVerdict } from '../engine';import { PaletteRail } from './PaletteRail';
+import { ChartSizeSection } from './ChartSizeSection';
 import { makeRowId, pixelMutationToProjectEdit } from './projectCanvasAdapter';
-import { openStudioProjectJson } from './projectFile';
 import { BlanketSetupRail } from '../blanket/BlanketSetupRail';
+import { projectBackingWords } from '../backing';
 import type { BlanketCompileState } from '../blanket/useBlanketCompiler';
-import type { AuthoredVerdict } from '../engine';
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
-import { AuthoredMachinePanel, programRegionForPass, type ProgramRegion } from './AuthoredMachinePanel';
-import { GeneratedSourceDock, type SourceFormat } from './GeneratedSourceDock';
-
-type MobilePanel = 'chart' | 'strategy' | 'machine';
 
 function entry(edit: ProjectEdit) { return { id: `edit_${crypto.randomUUID().replace(/-/g, '')}`, source: 'human' as const, edit }; }
 function searchChoice<T extends string>(key: string, choices: readonly T[], fallback: T): T {
@@ -27,121 +39,328 @@ function updateSearch(values: Record<string, string>) {
   window.history.replaceState(null, '', url);
 }
 
-export function ChartWorkspace({ project, onProject, onNewProject, onProjectSettings, autosaveState, isDarkMode, compile, kcode, outputStatus, outputError, authoredVerdict, focusedRowId, onFocusedRowId }: {
+/** What the right-hand panel needs from the app: the verdict, and the actions that download and print. */
+export interface ChartStatus {
+  verdict: AuthoredVerdict | null;
+  exportReady: boolean;
+  packaging: boolean;
+  /** Whether this design's file was downloaded since its last change. */
+  downloaded: boolean;
+  swatchFile: SwatchFile;
+  onPackage: () => void;
+  onPrint: () => void;
+  onDownloadKc: () => void;
+}
+
+const KIND_NAMES = { beanie: 'Beanie', panel: 'Scarf or blanket' } as const;
+
+/**
+ * A charted project (a colorwork scarf, blanket or beanie) in the shared
+ * workspace: what you are making on the left; the chart, its schematic or its
+ * machine file in the middle; status, files and export on the right.
+ */
+export function ChartWorkspace({ project, onProject, generation, plan, story, storyPending, candidateSha256, isDarkMode, compile, kcode, outputError, view, onView, status, stepThrough, measureRequest }: {
   project: ColorworkProjectV1;
   onProject: (project: ColorworkProjectV1) => void;
-  onNewProject: () => void;
-  onProjectSettings: () => void;
-  autosaveState: 'saving' | 'saved' | 'failed';
+  /** Counts opened files: a result started in an earlier document session must not reach this one. */
+  generation: number;
+  plan: ProjectPlan;
+  story: ReadinessStory | null;
+  storyPending: boolean;
+  /** KCode SHA-256 of the current exportable program, if any. */
+  candidateSha256: string | null;
   isDarkMode: boolean;
   compile: BlanketCompileState;
+  /** The machine file for this exact design, or null while it is written. */
   kcode: KCodeArtifact | null;
-  outputStatus: 'idle' | 'converting' | 'ready' | 'failed';
   outputError: string | null;
-  authoredVerdict: AuthoredVerdict | null;
-  focusedRowId: string | null;
-  onFocusedRowId: (rowId: string) => void;
+  view: WorkspaceView;
+  onView: (view: WorkspaceView) => void;
+  status: ChartStatus;
+  /** The machine stepped through pass by pass, with every check and the source: inside the Machine file view. */
+  stepThrough: ReactNode;
+  /** Incrementing this opens the form for a finished hat's measurements (File → Record a finished hat). */
+  measureRequest: number;
 }) {
   const [tool, setTool] = useState<ChartTool>('pen');
+  const [brush, setBrush] = useState(1);
+  const [mirror, setMirror] = useState<MirrorAxes>({ leftRight: false, topBottom: false });
   const [paletteIndex, setPaletteIndex] = useState(1);
   const [selection, setSelection] = useState<Rect | null>(null);
   const [clipboard, setClipboard] = useState<PixelClipboard | null>(null);
   const [zoom, setZoom] = useState(1);
+  const [fitRequest, setFitRequest] = useState(0);
   const [issue, setIssue] = useState<string | null>(null);
-  const [mobilePanel, setMobilePanel] = useState<MobilePanel>(() => searchChoice('panel', ['chart', 'strategy', 'machine'], 'chart'));
-  const [programRegion, setProgramRegion] = useState<ProgramRegion>(() => searchChoice('region', ['waste', 'draw', 'body', 'finish'], 'body'));
-  const [selectedPass, setSelectedPass] = useState<number | null>(null);
-  const [sourceFormat, setSourceFormat] = useState<SourceFormat>(() => searchChoice('source', ['knitout', 'kcode'], 'knitout'));
-  const [sourceCollapsed, setSourceCollapsed] = useState(() => searchChoice('dock', ['open', 'closed'], 'open') === 'closed');
-  const projectInput = useRef<HTMLInputElement>(null);
+  const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
+  const [fileMode, setFileMode] = useState<'read' | 'step'>('read');
+  /** A beanie's Design view: the whole hat as worn, or its chart to paint. */
+  const [wholeHat, setWholeHat] = useState(false);
+  const projectRef = useRef(project);
+  projectRef.current = project;
+  // Opening a file starts another document session, even when it has the same project id.
+  const generationRef = useRef(generation);
+  generationRef.current = generation;
+  const renderedGeneration = generation;
+  const latestMotifState = () => projectRef.current.id === project.id && generationRef.current === renderedGeneration ? materializeColorworkProject(projectRef.current).state : null;
+  const [selectedPlacement, setSelectedPlacement] = useState<string | null>(null);
+  const [intake, setIntake] = useState<{ replacing: ProjectPlacement | null; refresh?: { conversion: Partial<PlacementConversion>; label: string } } | null>(null);
+  const [showMeasure, setShowMeasure] = useState(false);
+  const seenMeasureRequest = useRef(measureRequest);
+  useEffect(() => {
+    if (measureRequest === seenMeasureRequest.current) return;
+    seenMeasureRequest.current = measureRequest;
+    if (materializeColorworkProject(projectRef.current).state.object?.kind === 'beanie') setShowMeasure(true);
+  }, [measureRequest]);
   const appliedUrlTechnique = useRef(false);
   const materialized = useMemo(() => materializeColorworkProject(project), [project]);
   const { chart, rowIds } = materialized.state;
+  const isGarment = materialized.state.object?.kind === 'beanie';
+  // A garment is fitted to the view whenever it opens or changes size, so the whole piece (and its motifs) can be seen.
+  useEffect(() => { if (isGarment) setFitRequest((request) => request + 1); }, [project.id, isGarment, chart.width, chart.height]);
+  // Each motif's source image, decoded, so a new gauge re-converts the motifs in the same change.
+  const [motifPixels, setMotifPixels] = useState<ReadonlyMap<string, PlacementImage['pixels']>>(() => new Map());
+  const motifSources = (materialized.state.placements ?? []).flatMap((placement) => (placement.source ? [`${placement.id}:${placement.source.sha256}`] : [])).join(' ');
+  useEffect(() => {
+    let active = true;
+    const placements = (materialized.state.placements ?? []).filter((placement) => placement.source);
+    void Promise.all(placements.map(async (placement) => [placement.id, await placementPixels(placement)] as const)).then((entries) => { if (active) setMotifPixels(new Map(entries)); }, () => {});
+    return () => { active = false; };
+  }, [motifSources]);
   const activePaletteIndex = Math.min(paletteIndex, chart.palette.length - 1);
+  // A newly opened file starts clean: no selection, clipboard or chosen motif from the last one.
+  useEffect(() => { setSelectedPlacement(null); setSelection(null); setClipboard(null); setPaletteIndex(Math.min(1, chart.palette.length - 1)); }, [generation]);
+  const paletteCarriers = useMemo(() => new Map(materialized.state.machine.yarnAssignments.map((item) => [item.paletteId, item.carrier])), [materialized.state.machine.yarnAssignments]);
   const focusedRow = focusedRowId === null ? null : rowIds.indexOf(focusedRowId);
-  const focusedProvenance = compile.artifact?.rowProvenance.find((row) => row.rowId === focusedRowId) ?? null;
-  const passCounts = useMemo(() => new Map((compile.artifact?.rowProvenance ?? []).map((row) => [row.chartRow, row.passIndices.length])), [compile.artifact]);
+  const noPassCounts = useMemo(() => new Map<number, number>(), []);
   const commit = (edit: ProjectEdit | null): boolean => {
     if (!edit) return false;
-    try { onProject(appendProjectEdit(project, entry(edit))); setIssue(null); return true; }
+    try { onProject(appendProjectEdit(projectRef.current, entry(edit))); setIssue(null); return true; }
     catch (error) { setIssue(error instanceof Error ? error.message : String(error)); return false; }
   };
-  const commitMutation = (mutation: Parameters<typeof pixelMutationToProjectEdit>[2]) => commit(pixelMutationToProjectEdit(project, rowIds, mutation));
+  /** Several edits as one undoable operation. */
+  const operate = (label: string, edits: readonly ProjectEdit[]): boolean => {
+    if (edits.length === 0) return false;
+    // Always against the latest project: an asynchronous result must never replay an older one over later edits.
+    try { onProject(appendProjectOperation(projectRef.current, { group: `op_${crypto.randomUUID().replace(/-/g, '')}`, source: 'human', label, edits })); setIssue(null); return true; }
+    catch (error) { setIssue(error instanceof Error ? error.message : String(error)); return false; }
+  };
+  const resolvedPlacements = materialized.placements;
+  const boxes = useMemo(() => placementBoxes(materialized.state, resolvedPlacements), [materialized]);
+  const lockedCells = useMemo(() => placedCells(materialized.state, resolvedPlacements), [materialized]);
+  const canvasPlacements = useMemo<CanvasPlacement[]>(() => resolvedPlacements.map((item, index) => {
+    const box = boxes[index]!;
+    const ghost: CanvasPlacement['ghost'][number][] = [];
+    if (item.status === 'conflict') item.placement.motif.cells.forEach((row, top) => row.forEach((color, offset) => {
+      const id = item.placement.colors[String(color)];
+      const hex = chart.palette.find((entry) => entry.id === id)?.hex;
+      if (hex) ghost.push({ row: box.top + top, column: box.left + offset, hex });
+    }));
+    return { box, ghost };
+  }), [resolvedPlacements, boxes, chart.palette]);
+  const stalePlacements = useMemo(() => new Set(plan.findings.filter((finding) => finding.rule === 'placement-size-off').map((finding) => finding.path.replace('placements/', ''))), [plan]);
+  // A beanie's bottom rows are rib in its main yarn (all of them without a cuff), and the machine shapes the crown above the chart.
+  const ribRows = isGarment && plan.sections ? (plan.sections.cuff?.rows ?? (plan.sections.body.fabric === 'rib' ? chart.height : 0)) : 0;
+  // A beanie mirrors within its body: the cuff below it is rib in one yarn.
+  const mirrorBox = useMemo<Rect | null>(() => (ribRows > 0 && ribRows < chart.height ? { left: 0, top: 0, right: chart.width - 1, bottom: chart.height - ribRows - 1 } : null), [ribRows, chart.width, chart.height]);
+  const piece = useMemo(() => (isGarment && plan.sections ? {
+    ribRows,
+    crown: plan.sections.crown?.needles ?? [],
+    hex: chart.palette[0]?.hex ?? '#D9CBB0',
+    labels: { top: 'Gathered top', crown: 'Crown', body: 'Body', rib: plan.sections.cuff ? (plan.sections.cuff.folds ? 'Cuff, folds up' : 'Cuff') : 'Rib' },
+  } : null), [isGarment, plan.sections, ribRows, chart.palette]);
+  const commitMutation = (mutation: Parameters<typeof pixelMutationToProjectEdit>[2]) => {
+    // The rib knits one yarn: keep colour out of it (the main yarn, palette 0, is allowed, so a stray colour can be erased).
+    if (ribRows > 0 && mutation.kind === 'paint') {
+      const ribStart = chart.height - ribRows;
+      const kept = mutation.cells.filter((cell) => cell.row < ribStart || cell.paletteIndex === 0);
+      if (kept.length < mutation.cells.length) {
+        if (kept.length === 0) { setIssue(ribRows === chart.height ? 'This beanie is all rib in one yarn. Add a cuff to paint a colour body.' : 'The cuff is rib in one yarn. Paint the body above it.'); return false; }
+        mutation = { ...mutation, cells: kept };
+      }
+    }
+    // A motif's stitches belong to its placement: painting them would be drawn over, so refuse and point at the motif.
+    const owner = mutation.kind === 'paint' ? mutation.cells.map((cell) => lockedCells.get(`${cell.row}:${cell.column}`)).find((id) => id !== undefined) : undefined;
+    if (owner !== undefined) {
+      setSelectedPlacement(owner);
+      setIssue(`Those stitches belong to the motif "${owner}". Change it under Motifs, or use Convert to stitches.`);
+      return false;
+    }
+    return commit(pixelMutationToProjectEdit(project, rowIds, mutation));
+  };
+  // A new colour gets its own yarn on a free pattern carrier (C2-C5): four is the most. A beanie all in rib knits one yarn.
+  // The next carrier along from those in use (a beanie's main yarn is on C3, its accent on C4), else the first free one.
+  const usedCarriers = materialized.state.machine.yarnAssignments.map((item) => item.carrier);
+  const freeCarriers = (['2', '3', '4', '5'] as const).filter((carrier) => !usedCarriers.includes(carrier));
+  const freeCarrier = freeCarriers.find((carrier) => usedCarriers.every((used) => used < carrier)) ?? freeCarriers[0];
+  const addLimit = ribRows === chart.height && isGarment ? 'This beanie is all rib in one yarn. Add a cuff to paint in colours.' : freeCarrier === undefined ? 'Four colours is the most: the machine has four carriers for them.' : null;
+  const canAddColour = addLimit === null;
+  const addColour = (colour: { name: string; hex: string }) => {
+    if (freeCarrier === undefined) return;
+    const id = `colour-${crypto.randomUUID().slice(0, 8)}`;
+    if (operate(`Add a colour: ${colour.name}`, [{ kind: 'add-palette-entry', entry: { id, ...colour } }, { kind: 'set-yarn-assignment', assignment: { paletteId: id, carrier: freeCarrier, yarnName: colour.name } }])) setPaletteIndex(chart.palette.length);
+  };
+  const fit = (change: BeanieFitChange, label: string) => {
+    try {
+      const edits = beanieFitEdits(project, change);
+      // A new body gauge resizes the motifs too, so they keep their size in cm.
+      const gauge = materialized.state.gauge;
+      if (change.bodyGauge && (change.bodyGauge.stitchesPer10cm !== gauge?.stitchesPer10cm || change.bodyGauge.rowsPer10cm !== gauge?.rowsPer10cm)) edits.push(...reconvertMotifs(materialized.state, change.bodyGauge, motifPixels).edits);
+      operate(label, edits);
+    } catch (error) { setIssue(error instanceof Error ? error.message : String(error)); }
+  };
+  const goTo = (target: string) => {
+    if (target === 'program') { onView('file'); return; }
+    if (target.startsWith('placement:')) { setSelectedPlacement(target.slice(10)); setWholeHat(false); onView('design'); }
+    else if (target.startsWith('rows/')) { setFocusedRowId(target.slice(5)); setWholeHat(false); onView('design'); }
+    // A folded section hides its fields: open the folded ones so the target can be shown.
+    if (!document.getElementById(target)) document.querySelectorAll<HTMLButtonElement>('.chart-design .design-section:not(.open) > .design-section-head').forEach((head) => head.click());
+    requestAnimationFrame(() => {
+      const element = document.getElementById(target);
+      element?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      (element?.matches('input, select, fieldset, section') ? element : element?.querySelector<HTMLElement>('input, select, button'))?.focus();
+    });
+  };
+
+  // The machine file, read back: what the machine knits, for the schematic and the Machine file view.
+  const carriers = useMemo<KnitFileCarriers | null>(() => {
+    const frame = compile.artifact?.frame;
+    const assignments = materialized.state.machine.yarnAssignments;
+    if (!frame || assignments.length === 0) return null;
+    const yarns = Object.fromEntries(assignments.map((item) => [item.carrier, { name: item.yarnName, hex: chart.palette.find((color) => color.id === item.paletteId)?.hex ?? '#888888' }]));
+    return { main: assignments[0]!.carrier, second: null, waste: frame.wasteCarrier ?? '6', draw: frame.frameCarriers[0] ?? '1', yarns };
+  }, [compile.artifact, materialized.state.machine.yarnAssignments, chart.palette]);
+  // Read only when a view shows it: a large chart's file is a lot of work for the main thread.
+  const knitFile = useMemo(() => (view !== 'design' && kcode && carriers ? readKnitFile(kcode, { zoneOfRow: (row) => (row < ribRows ? 'rib' : 'body'), carriers, kind: isGarment ? 'beanie' : 'panel' }) : null), [view === 'design', kcode, carriers, ribRows, isGarment]);
+  const gauge = materialized.state.gauge;
+  const ribGauge = materialized.state.object?.ribGauge;
+  const stitchCm = gauge ? 10 / gauge.stitchesPer10cm : null;
+  const rowCm = gauge ? { body: 10 / gauge.rowsPer10cm, rib: ribGauge ? 10 / ribGauge.rowsPer10cm : 10 / gauge.rowsPer10cm } : null;
+  const kindName = KIND_NAMES[isGarment ? 'beanie' : 'panel'];
+  const fileName = `${project.id}.kc`;
 
   useEffect(() => { if (paletteIndex >= chart.palette.length) setPaletteIndex(Math.max(0, chart.palette.length - 1)); }, [paletteIndex, chart.palette.length]);
-  useEffect(() => {
-    if (!compile.artifact || focusedRowId !== null) return;
-    const first = compile.artifact.rowProvenance.find((row) => row.passIndices.length > 0);
-    if (first) onFocusedRowId(first.rowId);
-  }, [compile.artifact, focusedRowId, onFocusedRowId]);
-  useEffect(() => {
-    if (!focusedProvenance?.passIndices.length) return;
-    setProgramRegion('body');
-    setSelectedPass(focusedProvenance.passIndices[0]!);
-  }, [focusedProvenance]);
   useEffect(() => {
     if (appliedUrlTechnique.current) return;
     appliedUrlTechnique.current = true;
     const technique = searchChoice('technique', ['fairisle', 'ladder-back', 'lined', 'birdseye', 'complement'] as const, materialized.state.strategy.technique);
     if (technique !== materialized.state.strategy.technique) commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } });
   }, [materialized.state.strategy]);
-  useEffect(() => updateSearch({ panel: mobilePanel, region: programRegion, source: sourceFormat, dock: sourceCollapsed ? 'closed' : 'open', technique: materialized.state.strategy.technique }), [mobilePanel, programRegion, sourceFormat, sourceCollapsed, materialized.state.strategy.technique]);
+  useEffect(() => updateSearch({ technique: materialized.state.strategy.technique }), [materialized.state.strategy.technique]);
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
+      if (event.defaultPrevented || view !== 'design') return;
       const target = event.target as HTMLElement | null; if (target?.closest('input, textarea, select')) return;
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); onProject(event.shiftKey ? redoProjectEdit(project) : undoProjectEdit(project)); return; }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c' && selection) { event.preventDefault(); setClipboard(copy(chart, selection)); return; }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'x' && selection) { event.preventDefault(); const result = cut(chart, selection); setClipboard(result.clipboard); commitMutation(result.mutation); return; }
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'v' && clipboard) { event.preventDefault(); commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 })); return; }
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key === 'Delete' && selection) { event.preventDefault(); commitMutation(clear(chart, selection)); return; }
-      const map: Record<string, ChartTool> = { p: 'pen', s: 'select', m: 'move', l: 'line', r: 'rectangle', e: 'erase', f: 'fill' };
+      if (event.key === '[' || event.key === ']') {
+        const index = BRUSH_SIZES.findIndex((size) => size >= brush);
+        setBrush(BRUSH_SIZES[Math.max(0, Math.min(BRUSH_SIZES.length - 1, (index < 0 ? BRUSH_SIZES.length - 1 : index) + (event.key === ']' ? 1 : -1)))]!);
+        return;
+      }
+      const map: Record<string, ChartTool> = { p: 'pen', s: 'select', m: 'move', l: 'line', r: 'rectangle', c: 'ellipse', e: 'erase', f: 'fill' };
       if (map[event.key.toLowerCase()]) setTool(map[event.key.toLowerCase()]!);
     };
     window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler);
-  }, [project, chart, selection, clipboard]);
+  }, [project, chart, selection, clipboard, view, brush]);
 
-  const saveProject = () => { const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${project.id}.kniterate-studio.json`; link.click(); URL.revokeObjectURL(link.href); };
-  const openProject = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.target.value = ''; if (!file) return; try { const opened = openStudioProjectJson(await file.text()); onProject(opened.project); setSelection(null); setClipboard(null); setPaletteIndex(Math.min(1, opened.project.base.chart.palette.length - 1)); setIssue(null); } catch (error) { setIssue(error instanceof Error ? error.message : String(error)); } };
-  const selectProgramRegion = (region: ProgramRegion) => {
-    setProgramRegion(region);
-    if (!compile.artifact) return;
-    if (region === 'body' && focusedProvenance?.passIndices[0] !== undefined) setSelectedPass(focusedProvenance.passIndices[0]);
-    else setSelectedPass(compile.artifact.passes.findIndex((_pass, index) => programRegionForPass(compile.artifact!, index) === region));
-  };
-  const selectPass = (index: number) => {
-    setSelectedPass(index);
-    if (!compile.artifact) return;
-    setProgramRegion(programRegionForPass(compile.artifact, index));
-    const row = compile.artifact.rowProvenance.find((item) => item.passIndices.includes(index));
-    if (row) onFocusedRowId(row.rowId);
-  };
-  const setPanel = (panel: MobilePanel) => setMobilePanel(panel);
+  // The status panel: whether it can be knitted, then the steps. A garment's gauge is its swatch step, not a design note.
+  const tone: StatusTone = story === null ? (storyPending ? 'checking' : 'blocked') : story.status === 'ready' ? 'ready' : story.status === 'blocked' ? 'blocked' : story.status === 'needs-measurements' ? 'next' : 'warn';
+  const cuffed = beanieObjectOf(materialized.state)?.construction === 'rib-cuff-jersey-body';
+  const backing = projectBackingWords(materialized.state);
+  const swatch: SwatchStep | undefined = isGarment ? {
+    gauges: [
+      { name: cuffed ? `Body (${backing?.fabric ?? 'fairisle fabric'})` : '2x2 rib', measured: gauge?.source === 'measured' },
+      ...(cuffed ? [{ name: 'Cuff (2x2 rib)', measured: ribGauge?.source === 'measured' }] : []),
+    ],
+    onEnter: () => { onView('design'); revealSection('swatch'); },
+    file: status.swatchFile,
+  } : gauge ? { gauges: [{ name: backing ? `Colourwork (${backing.fabric})` : 'Plain stockinette', measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); }, file: status.swatchFile } : undefined;
+  const notes: StatusNote[] = storyNotes(story?.items ?? []).filter((item) => !(swatch && (item.rule === 'gauge-assumed' || item.rule === 'size-needs-gauge'))).map((item) => ({
+    severity: item.severity === 'error' ? 'error' : item.severity === 'warning' ? 'warning' : 'info',
+    text: `${item.part}: ${item.action}`,
+    actions: item.target || item.fixes.length > 0 ? <>
+      {item.target && <button type="button" className="secondary-button" onClick={() => goTo(item.target!)}>Show</button>}
+      {item.fixes.map((fix) => <button type="button" className="primary-button" key={fix.label} onClick={() => operate(fix.label, fix.edits)}><Wrench size={13} /> {fix.label}</button>)}
+    </> : undefined,
+  }));
+  const fileState = status.exportReady && kcode ? 'ok' as const : tone === 'blocked' && !storyPending ? 'blocked' as const : 'checking' as const;
 
-  return <main className={`chart-workspace target-workspace${sourceCollapsed ? ' source-collapsed' : ''}`}>
-    <nav className="authored-mobile-tabs" aria-label="Workspace columns" role="tablist">
-      {(['chart', 'strategy', 'machine'] as MobilePanel[]).map((panel) => <button type="button" role="tab" aria-selected={mobilePanel === panel} className={mobilePanel === panel ? 'active' : ''} key={panel} onClick={() => setPanel(panel)}>{panel}</button>)}
-    </nav>
-    <div className="authored-columns">
-      <section className={`target-column authored-chart${mobilePanel === 'chart' ? ' mobile-active' : ''}`}>
-        <header className="target-column-head">
-          <div className="target-column-title"><span className="eyebrow">Design intent</span><strong>Chart</strong></div>
-          <div className="chart-column-actions"><span className="target-meta">{chart.width} needles / {chart.height} rows</span><span className={`autosave-state ${autosaveState}`} title={autosaveState === 'failed' ? 'Local recovery failed' : autosaveState === 'saving' ? 'Saving locally' : 'Saved locally'}>{autosaveState === 'failed' ? <CloudOff size={12} /> : autosaveState === 'saving' ? <LoaderCircle className="spin" size={12} /> : <Cloud size={12} />}</span><button type="button" onClick={onNewProject} title="New project" aria-label="New project"><Plus size={14} /></button><button type="button" onClick={onProjectSettings} title="Project settings" aria-label="Project settings"><Settings2 size={14} /></button><button type="button" onClick={() => projectInput.current?.click()} title="Open project" aria-label="Open project"><Upload size={14} /></button><button type="button" onClick={saveProject} title="Save project" aria-label="Save project"><Download size={14} /></button></div>
-        </header>
-        <input ref={projectInput} className="file-input" type="file" accept=".json,application/json" onChange={(event) => void openProject(event)} />
-        {issue && <div className="chart-issue" role="alert">{issue}<button type="button" onClick={() => setIssue(null)} aria-label="Dismiss chart issue">x</button></div>}
-        <ChartToolbar active={tool} onTool={setTool} onUndo={() => onProject(undoProjectEdit(project))} onRedo={() => onProject(redoProjectEdit(project))} onCopy={() => selection && setClipboard(copy(chart, selection))} onCut={() => { if (!selection) return; const result = cut(chart, selection); setClipboard(result.clipboard); commitMutation(result.mutation); }} onPaste={() => clipboard && commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 }))} onDelete={() => selection && commitMutation(clear(chart, selection))} onZoomIn={() => setZoom(Math.min(3, zoom * 1.2))} onZoomOut={() => setZoom(Math.max(.35, zoom / 1.2))} onZoomSelection={() => setZoom(selection ? Math.min(2.5, Math.max(.6, 400 / Math.max(selection.right - selection.left + 1, selection.bottom - selection.top + 1) / 16)) : 1)} canUndo={project.history.cursor > 0} canRedo={project.history.cursor < project.history.entries.length} />
-        <div className="target-chart-stage">
-          <PaletteRail chart={chart} active={activePaletteIndex} onSelect={setPaletteIndex} />
-          <div className="canvas-stack">
-            <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={passCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => onFocusedRowId(rowIds[row]!)} />
-            <div className="chart-caption"><span>{focusedProvenance ? `Row ${focusedProvenance.displayRow} / ${focusedProvenance.passIndices.length} physical passes` : 'Select a design row to inspect its passes'}</span><span>{compile.artifact?.messages.filter((message) => message.severity === 'warning').length ?? 0} compiler warnings</span></div>
-          </div>
+  const center: ReactNode = (() => {
+    if (view === 'schematic') {
+      if (!knitFile) return <p className="knitfile-waiting" role="status">{fileState === 'blocked' ? 'No schematic: this design cannot be knitted yet.' : 'Writing the machine file…'}</p>;
+      return <div className="schematic-stage"><RunSchematic file={knitFile} hex={chart.palette[0]?.hex ?? '#D9CBB0'} stitchCm={stitchCm} rowCm={rowCm} label={kindName} notes={plan.sections?.cuff?.folds && plan.sections.cuff.visibleCm ? { 'Cuff rib': `folds up to ${plan.sections.cuff.visibleCm.value} cm` } : undefined} widthNote={isGarment && plan.predicted ? `${plan.predicted.widthCm.value} cm around once seamed` : undefined} />{!gauge && <p className="design-hint">Not to scale: there is no gauge.</p>}</div>;
+    }
+    if (view === 'file') {
+      if (!knitFile || !kcode || !carriers) return <p className="knitfile-waiting" role="status">{fileState === 'blocked' ? story?.detail ?? 'This design cannot be knitted yet.' : 'Writing the machine file for this design…'}</p>;
+      return <div className="piece-wrap">
+        <div className="garment-view-toggle compact file-mode" role="tablist" aria-label="Machine file view">
+          <button type="button" role="tab" aria-selected={fileMode === 'read'} className={fileMode === 'read' ? 'active' : ''} onClick={() => setFileMode('read')}>Read the file</button>
+          <button type="button" role="tab" aria-selected={fileMode === 'step'} className={fileMode === 'step' ? 'active' : ''} onClick={() => setFileMode('step')}>Step through</button>
         </div>
-      </section>
-      <BlanketSetupRail state={materialized.state} compile={compile} outputStatus={outputStatus} outputError={outputError} authoredVerdict={authoredVerdict} mobileActive={mobilePanel === 'strategy'} onWidth={(width) => Number.isInteger(width) && width > 0 && width <= 252 && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })} onHeight={(height) => { if (!Number.isInteger(height) || height < 1 || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }} onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} onStrategy={(technique) => technique !== materialized.state.strategy.technique && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } })} onBirdseyeMode={(birdseyeMode) => birdseyeMode !== materialized.state.strategy.birdseyeMode && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, birdseyeMode } })} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} onFrame={(frame) => { if (JSON.stringify(frame) !== JSON.stringify(materialized.state.frame)) commit({ kind: 'set-frame', frame }); }} />
-      <AuthoredMachinePanel artifact={compile.artifact} focusedRowId={focusedRowId} selectedPass={selectedPass} region={programRegion} onRegion={selectProgramRegion} onPass={selectPass} mobileActive={mobilePanel === 'machine'} />
-    </div>
-    <GeneratedSourceDock artifact={compile.artifact} kcode={kcode} selectedPass={selectedPass} format={sourceFormat} collapsed={sourceCollapsed} onFormat={setSourceFormat} onCollapsed={setSourceCollapsed} />
+        {fileMode === 'step' && stepThrough ? <div className="step-through">{stepThrough}</div> : <KnitFileView key={project.id} file={knitFile} kcText={kcode.kcText} fileName={fileName} copies={1} hex={chart.palette[0]?.hex ?? '#D9CBB0'} carriers={carriers} stitchCm={stitchCm ?? 0.4} rowCm={rowCm ?? { rib: 0.3, body: 0.3 }} onDownload={status.onDownloadKc} />}
+      </div>;
+    }
+    if (wholeHat && isGarment && plan.sections && plan.predicted) {
+      return <BeanieWornView cells={chart.cells} palette={chart.palette} ribRows={ribRows} sections={plan.sections} circumferenceCm={plan.predicted.widthCm.value} onOpen={() => setWholeHat(false)} />;
+    }
+    return <div className="chart-design-stage">
+      <ChartToolbar active={tool} onTool={setTool} brush={brush} onBrush={setBrush} mirror={mirror} onMirror={setMirror} onCopy={() => selection && setClipboard(copy(chart, selection))} onCut={() => { if (!selection) return; const result = cut(chart, selection); setClipboard(result.clipboard); commitMutation(result.mutation); }} onPaste={() => clipboard && commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 }))} onDelete={() => selection && commitMutation(clear(chart, selection))} onZoomIn={() => setZoom(Math.min(3, zoom * 1.2))} onZoomOut={() => setZoom(Math.max(MIN_CHART_ZOOM, zoom / 1.2))} onZoomSelection={() => selection ? setZoom(Math.min(2.5, Math.max(.6, 400 / Math.max(selection.right - selection.left + 1, selection.bottom - selection.top + 1) / 16))) : setFitRequest((request) => request + 1)} hasSelection={selection !== null} canPaste={clipboard !== null} />
+      <div className="target-chart-stage">
+        <PaletteRail chart={chart} carriers={paletteCarriers} active={activePaletteIndex} onSelect={setPaletteIndex} onAdd={canAddColour ? addColour : undefined} addLimit={addLimit ?? undefined} />
+        <div className="canvas-stack">
+          <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} brush={brush} mirror={mirror} mirrorBox={mirrorBox} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} fitRequest={fitRequest} fitScope={project.id} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={noPassCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => setFocusedRowId(rowIds[row]!)} firstNeedle={materialized.state.machine.needleOffset} highlightedNeedles={null} rowAspect={gauge ? gauge.stitchesPer10cm / gauge.rowsPer10cm : 1} piece={piece} placements={canvasPlacements} selectedPlacement={selectedPlacement} onPlacementPick={setSelectedPlacement} onPlacementMove={(id, columns, rows) => { const placement = materialized.state.placements?.find((item) => item.id === id); if (placement) operate(`Move ${id}`, [{ kind: 'set-placement', placement: movedPlacement(materialized.state, placement, columns, rows) }]); }} />
+        </div>
+      </div>
+    </div>;
+  })();
+
+  return <main className="sweater-workspace chart-project">
+    <BlanketSetupRail state={materialized.state} compile={compile} outputError={outputError}
+      size={isGarment ? <>
+        <GarmentFitSection key={`fit-${project.id}`} state={materialized.state} plan={plan} onFit={fit} />
+        <MotifSection key={`motifs-${project.id}-${renderedGeneration}`} latestState={latestMotifState} state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={(id) => { setSelectedPlacement(id); if (id !== null) setWholeHat(false); }} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement, refresh) => setIntake({ replacing: placement, refresh })} />
+      </> : <ChartSizeSection key={`size-${project.id}`} state={materialized.state}
+        onSize={(change, label) => operate(label, withSizingFixes(project, [{ kind: 'set-target', target: { ...materialized.state.target, ...change } }]))}
+        onGauge={(next, label) => operate(label, withSizingFixes(project, [{ kind: 'set-gauge', gauge: { ...next } }]))}
+        onNeedles={(width) => Number.isInteger(width) && width > 0 && width <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })}
+        onRows={(height) => { if (!Number.isInteger(height) || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }}
+        onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} />}
+      onStrategy={(technique) => { if (technique === materialized.state.strategy.technique) return; if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`); else commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } }); }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
+    <section className="sweater-stage" aria-label={kindName}>
+      <header className="stage-head">
+        {isGarment
+          ? <nav className="stage-tabs" aria-label="Pieces">
+              <button type="button" className={wholeHat ? 'active' : ''} onClick={() => { setWholeHat(true); onView('design'); }}>Whole hat</button>
+              <button type="button" className={wholeHat ? '' : 'active'} onClick={() => setWholeHat(false)}>{kindName}</button>
+            </nav>
+          : <span className="stage-title">{kindName}</span>}
+        <ViewSwitch view={view} onView={onView} />
+      </header>
+      {issue && <p className="stage-error" role="alert">{issue}<button type="button" className="link-button" onClick={() => setIssue(null)}>Dismiss</button></p>}
+      <div className={`stage-body${view === 'design' ? ' chart-stage-body' : ''}`}>{center}</div>
+    </section>
+    <StatusPanel
+      tone={tone}
+      title={story?.headline ?? (storyPending ? 'Checking…' : "Can't knit yet")}
+      detail={story?.status === 'ready' ? '' : story?.detail ?? ''}
+      notes={notes}
+      files={[{ id: 'file', name: kindName, fileName, facts: `${chart.width} st · ${chart.height} rows${kcode ? ` · ${kcode.passCount.toLocaleString()} passes` : ''}`, state: fileState, error: fileState === 'blocked' ? story?.detail ?? null : null }]}
+      onOpenFile={() => onView('file')}
+      onDownloadFile={status.onDownloadKc}
+      onPackage={status.onPackage}
+      onPrint={status.onPrint}
+      packaging={status.packaging}
+      canPackage={status.exportReady}
+      canPrint={status.exportReady}
+      downloaded={status.downloaded}
+      swatch={swatch}
+      atTheMachine={story?.operatorChecks ?? []}
+      footer={story?.notices.map((notice) => <p className="design-hint" role="note" key={notice}>{notice}</p>)}
+    />
+    {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); setWholeHat(false); onView('design'); setFitRequest((request) => request + 1); } }} />}
+    {showMeasure && <MeasureDialog project={project} hasCuff={beanieObjectOf(materialized.state)?.construction === 'rib-cuff-jersey-body'} candidateSha256={candidateSha256} onClose={() => setShowMeasure(false)} onRecord={(label, edits) => { if (operate(label, edits)) setShowMeasure(false); }} />}
   </main>;
 }

@@ -1096,7 +1096,6 @@ export function generateNotesMd(
     .filter(m => m.severity === 'warning')
     .map(m => `- ${m.message}`)
     .join('\n') || '_None._'
-  const baseName = chart.name?.replace(/\s+/g, '_').toLowerCase() ?? 'mychart'
   // Cast-on instruction varies by carrier mode. Per Cameron's
   // 2025-09-20 reservation (see [[reference-cameron-kniterate-conventions]]):
   //   - default mode (1-4 pattern colors): C1 = draw thread, C6 = waste
@@ -1145,19 +1144,15 @@ ${warnings}
 
 ## Make the .kc (Kniterate-runnable file)
 
-The browser exports the \`.k\` (knitout text). Converting it to \`.kc\`
-(the Kniterate's executable format) runs out-of-browser:
+Use Kniterate Studio's **Export k-code** action. It lowers the generated
+\`.k\` in a browser Worker with Studio's hash-pinned local converter fork,
+then strictly parses and validates the exact \`.kc\` before enabling download.
 
-**In the knitlab2 monorepo:**
-
-\`\`\`
-pnpm tsx scripts/knitout-to-kcode.ts ${baseName}.k
-# → ${baseName}.kc
-\`\`\`
-
-**Or:** upload the \`.k\` to the [Textiles Lab Kniterate backend][backend]
-(stays on your machine; same vendored converter, web-hosted). Both
-paths produce the same \`.kc\` from the same \`.k\`.
+The [Textiles Lab Kniterate backend][backend] runs the upstream converter, not
+Studio's patched fork. It can be useful for compatibility investigation, but
+its output is not promised to be byte-identical and does not satisfy Studio's
+software-proof receipt. Do not substitute hosted output for the validated
+Studio export.
 
 [backend]: https://textiles-lab.github.io/knitout-backend-kniterate/
 
@@ -1168,7 +1163,7 @@ visualizer to inspect the stitch graph by eye. These tools are for
 **preview / inspection only** — they do not confirm correctness and
 make no claim about how the file will behave on the machine.
 
-Same upstream vendor regardless of which host you use:
+Related visualizers, with different hosts and potentially different revisions:
 
 - **Bundled with knitlab (preferred):** if your knitlab dev server is
   running, open \`/knitlab/visualizer/\` on the same origin (typically

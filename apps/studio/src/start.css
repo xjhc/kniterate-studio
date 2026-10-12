@@ -1,0 +1,33 @@
+/* The first screen for a new visitor. */
+.start-screen { position: fixed; z-index: 15; inset: 54px 0 0; overflow: auto; background: var(--paper); color: var(--ink); }
+.start-inner { display: grid; gap: 18px; justify-items: center; max-width: 900px; margin: 0 auto; padding: 56px 24px 40px; text-align: center; }
+.start-inner h1 { margin: 0; font-family: Georgia, serif; font-size: 34px; font-weight: 500; }
+.start-inner > p { max-width: 560px; margin: 0; color: var(--ink-2); font-size: 15px; line-height: 1.5; }
+.start-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; width: 100%; margin-top: 10px; }
+.start-cards button { display: grid; justify-items: center; align-content: start; gap: 8px; min-height: 210px; padding: 22px 16px; border: 1px solid var(--line-strong); border-radius: 14px; background: var(--panel); color: var(--ink-2); cursor: pointer; transition: border-color .12s, transform .12s; }
+.start-cards button:hover, .start-cards button:focus-visible { border-color: var(--accent); transform: translateY(-2px); }
+.start-cards svg { width: 84px; height: 78px; color: var(--ink); }
+.start-cards b { color: var(--ink); font-size: 18px; }
+.start-cards small { font-size: 13px; line-height: 1.45; }
+.start-secondary { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+.start-secondary .secondary-button { min-height: 36px; font-size: 13px; }
+.start-secondary .link-button { padding: 6px; border: 0; background: none; color: var(--accent); font-weight: 700; cursor: pointer; }
+@media (max-width: 760px) { .start-cards { grid-template-columns: 1fr; } .start-cards button { min-height: 0; } }
+
+/* Projects kept on this device: on the start screen and in File → Open recent. */
+.start-recent { display: grid; gap: 8px; width: 100%; max-width: 620px; text-align: left; }
+.start-recent h2 { margin: 0; color: var(--ink-2); font-size: 13px; font-weight: 750; }
+.recent-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.recent-list li { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.recent-open { display: grid; flex: 1; gap: 2px; min-width: 0; padding: 8px 12px; border: 0; background: none; color: var(--ink); text-align: left; cursor: pointer; }
+.recent-open b { overflow: hidden; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+.recent-open small { color: var(--ink-3); font-size: 12px; }
+.recent-open:hover:not(:disabled) b { color: var(--accent); }
+.recent-open:disabled { cursor: default; }
+.recent-remove { flex: none; height: 30px; margin-right: 6px; color: var(--ink-3); }
+.recent-confirm { display: flex; flex: none; gap: 10px; margin-right: 10px; font-size: 12px; }
+.recent-confirm button { padding: 0; border: 0; background: none; font-weight: 700; cursor: pointer; }
+.recent-confirm .danger-link { color: var(--blocked); }
+.recent-confirm .link-button { color: var(--ink-2); text-decoration: none; }
+.project-dialog .dialog-copy { margin: 0; padding: 12px 16px 0; color: var(--ink-2); font-size: 12px; line-height: 1.45; }
+.project-dialog .recent-list { max-height: min(420px, 60vh); overflow: auto; padding: 12px 16px 16px; }

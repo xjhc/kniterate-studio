@@ -1,0 +1,141 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`strict KCode adversarial rail > accepts and losslessly emits CRLF with a final newline 1`] = `"b7622d67331b2517a28d98def277e3af0b5a4d825050154de5c7c266277db758"`;
+
+exports[`strict KCode adversarial rail > accepts and losslessly emits LF with a final newline 1`] = `"94465d89f82a7171c72e86fd714a36c07848031acf2315f19d6f47a96d5612e0"`;
+
+exports[`strict KCode adversarial rail > accepts and losslessly emits a complete file with unverified extreme process settings 1`] = `"8370c6512769d2302dfefef9e980c86fa37e3a48a056bc2e632a8cbaee2acc0c"`;
+
+exports[`strict KCode adversarial rail > accepts and losslessly emits a missing final newline 1`] = `"0d2ee4c4fc4ebcf6a3ffdda26aafc88170f6fce0b2108380f69a05368a2fff11"`;
+
+exports[`strict KCode adversarial rail > caps independent diagnostics while preserving every materialized record 1`] = `"76034b0a37becb5990a6bf0d5e2be3d01bbee05bf35f2cbeccec017ffa03de6c"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 1`] = `"18f9c2e37c7de3811a0a81f49e2deb4566920e109500e581664d541b582f4590"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 2`] = `"95049e1edc1b6e15854b596fe6fa3b8da1df5b56c9ca1b02863e6909f333f53c"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 3`] = `"fb3be3e7d00ddf03bf2a3984d09c62d40a8b13a1679675dae5a7f6c791b0a8c4"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 4`] = `"1ae125be181522bea9b8a6f1a353d059ff4e616f1bab7869914c1865b156eb1d"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 5`] = `"d552ac27fa62a833625cb2f1b9cb6328fe27bb063abb2b728241318c8965adea"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 6`] = `"fd9baa0e0a2919e977c3bf92af170a2aa291569d753f8f2823223c87ebcaaf61"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 7`] = `"8f2935ea5dc1efa32baf3be7e65b36286be9acfd53583f2169683809b0245adb"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 8`] = `"ac86ff866571b13503f68a47472f1c29527ff18de858d409133409163fdf4228"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 9`] = `"53b771628f9fb4206998b31906f64fe3433f716b7f49fcfaa2139a7e97de96c3"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 10`] = `"c7d0ca0d6c502adf5fe98f212996d1840ae5e26dae0b2a0c5d6fd63103caa2a9"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 11`] = `"d0129b665bf6c796c527edf895da63e9b99d5f13e374d66030337bfc646829ff"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 12`] = `"5b9e72e6cc017b08f311aac081956247dc1842b11bedab872efb29fddf4946ec"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 13`] = `"ba380ddd01d308db08d256c454eff98c5485cc2f02db8685b2f57b6f71dcedab"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 14`] = `"f59e6e64a2e7bda55a881824d8e38f699955edcafa83d1995d73c15503493ff2"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 15`] = `"8a0dcc2f10bf9500a8bae5a709f4503656b403cd2c8dcd24ea153e597953900c"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 16`] = `"379ccb63456d11a0c78431b6dd2ebe3532c21d4fe448cb797142ebd72b6ab307"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 17`] = `"fd707c1edaa1f4ad2b4040decfbe598f3d78bfdb40dc687127864e6e365e00e6"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 18`] = `"1e44fe432482dc7af90e59b875b14b8d8a1144a10079665e7762a076739a7d3a"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 19`] = `"ce43dbfa082204155a4d51266d362769c5983b9003e48968cab09ddbc9f09d3d"`;
+
+exports[`strict KCode adversarial rail > locks scanner, prefix, numeric, blank, and incomplete-pass boundaries 20`] = `"c09e63478d8c3db35108475527e5141985a88882ad0570d19d78c7b4c568437c"`;
+
+exports[`strict KCode adversarial rail > locks the reserved legacy empty-move conjunction and padding spans 1`] = `"57e89dd0b11d0820e67e3ca62f4d30d3b4723a1434d93199a311000eb2639fe7"`;
+
+exports[`strict KCode adversarial rail > locks the reserved legacy empty-move conjunction and padding spans 2`] = `"e2cda9c1f5b1d902bdb6efe091964b4e90ba9010ea52a1dff5cea2d89b4d90b5"`;
+
+exports[`strict KCode adversarial rail > locks the reserved legacy empty-move conjunction and padding spans 3`] = `"4406a94984897c125db8b5238c8d1d25fd8279cdcbf71ef0edacc8cb1526727b"`;
+
+exports[`strict KCode adversarial rail > locks the reserved legacy empty-move conjunction and padding spans 4`] = `"995e0a1b84c22ad407238b7bf56e94658a049bb1bc14819108bfecbf401562ac"`;
+
+exports[`strict KCode adversarial rail > rejects 'FRNT and REAR marker positions differ' and still preserves the complete source 1`] = `"ad0c6cd6a3bea0737db6a97170be7c0c63696e4ee5ffbee7d039fcaf9faff34b"`;
+
+exports[`strict KCode adversarial rail > rejects 'HOME after RACK' and still preserves the complete source 1`] = `"fe9796ca2208fd4bd7b62cd0a3889a4d3affa57c01da88a927f1134316ea3173"`;
+
+exports[`strict KCode adversarial rail > rejects 'NUL in a comment' and still preserves the complete source 1`] = `"670411c9cf2fd4cbe83140a4dbc936f8eb806c1399ab3272f6b35da51dd31640"`;
+
+exports[`strict KCode adversarial rail > rejects 'RACK inside a pass block' and still preserves the complete source 1`] = `"1007c9b8254723f5414246eb00cc3ab333dc4ec7fbb788c0f71b78a9615abe43"`;
+
+exports[`strict KCode adversarial rail > rejects 'UTF-8 BOM code point before HOME' and still preserves the complete source 1`] = `"2ea7390a2e3a4927ce12476b1d1103e4637036026386b2016489614b14afbebb"`;
+
+exports[`strict KCode adversarial rail > rejects 'blank record interrupting a pass block' and still preserves the complete source 1`] = `"aca1f6fb8356f67fd50cb250e91994821e0078217b7125ad2b388d07ca449a85"`;
+
+exports[`strict KCode adversarial rail > rejects 'comment interrupting a pass block' and still preserves the complete source 1`] = `"673daa5e138b646ed9de26d4c1b58c00a3a5e31203ca6efaf9bb8bfcedbb71d2"`;
+
+exports[`strict KCode adversarial rail > rejects 'duplicate HOME' and still preserves the complete source 1`] = `"4879e14aa856d6b13d327c639b7ff5a66774214810b2faffb06287a8e1f22ed4"`;
+
+exports[`strict KCode adversarial rail > rejects 'duplicate STIF field' and still preserves the complete source 1`] = `"68cb00fe5da7a2b793b200501a6e557d3eb99bdac425614628d62c8d71bb3e28"`;
+
+exports[`strict KCode adversarial rail > rejects 'footer carrier inconsistent with bed …' and still preserves the complete source 1`] = `"ed443338f606fded0a5c84956b7bfb5d2c1cbfed32743e19cf5209bb4853b6ae"`;
+
+exports[`strict KCode adversarial rail > rejects 'footer with repeated whitespace' and still preserves the complete source 1`] = `"21c1ab4625315a84833970f0858bf29ea9104db517b79e868dd6ef67fd983492"`;
+
+exports[`strict KCode adversarial rail > rejects 'footer with too few tokens' and still preserves the complete source 1`] = `"8a8ed1310c596844cc5ea5607a32dd65de012fcd94a7afddc84cffea309140d9"`;
+
+exports[`strict KCode adversarial rail > rejects 'footer with too many tokens' and still preserves the complete source 1`] = `"01bd9c6af90f8738ce7628383991c907cb052954c9e7eee6ea6071329c9ca056"`;
+
+exports[`strict KCode adversarial rail > rejects 'illegal bed character' and still preserves the complete source 1`] = `"e8125bf9d3f2dc90351907eab3257355f4bca371f7727dc204ae890b6426d1e5"`;
+
+exports[`strict KCode adversarial rail > rejects 'illegal footer carrier' and still preserves the complete source 1`] = `"ac90019f6543a42f3b876068813bfab479f21ce31867b475ea76db2f682bad4e"`;
+
+exports[`strict KCode adversarial rail > rejects 'illegal stitch-selector character' and still preserves the complete source 1`] = `"796aaf82493006084f16da4b8a4443e3fd0a751e18706e99dded2f56844ff249"`;
+
+exports[`strict KCode adversarial rail > rejects 'invalid footer direction token' and still preserves the complete source 1`] = `"0b3cb66061ce7edac329f2091b6156f039ad30fc882514d17ee597fca93e3eb7"`;
+
+exports[`strict KCode adversarial rail > rejects 'mismatched REAR width' and still preserves the complete source 1`] = `"d94b8ea739428c08940aeac2d147b80a78fb94c1491a16e7e9bfb1cb335a2990"`;
+
+exports[`strict KCode adversarial rail > rejects 'missing HOME' and still preserves the complete source 1`] = `"0e98908bc287515c39d0eac2a9a963abc4671de75e13f4c54de32edf3749ac1f"`;
+
+exports[`strict KCode adversarial rail > rejects 'missing STIR field' and still preserves the complete source 1`] = `"e38a9fc538b2d8d1ac36dd1df3c8bfc1cfbd298721a3c3d0139742f529f1d25d"`;
+
+exports[`strict KCode adversarial rail > rejects 'missing carriage marker' and still preserves the complete source 1`] = `"7ef79b6b96bc507bf77e4e0e5d77996095ebf6fb3e47f1c2f4400084e72098b9"`;
+
+exports[`strict KCode adversarial rail > rejects 'missing initial RACK' and still preserves the complete source 1`] = `"745bff0615b75f5df3aa0e082fcb8c2a6693d0a82db2a6913d5bf266c74d9086"`;
+
+exports[`strict KCode adversarial rail > rejects 'non-ASCII source character' and still preserves the complete source 1`] = `"b92a5da206379c78a57e05ec12dc9185f333cb4bb70215c8d69ce4166ffe4da1"`;
+
+exports[`strict KCode adversarial rail > rejects 'non-decimal footer speed' and still preserves the complete source 1`] = `"3738297856d4dc5fd90377936daed9bcadbb1e5fdae0d4d9b4b782964ae2fcab"`;
+
+exports[`strict KCode adversarial rail > rejects 'non-dot bed padding' and still preserves the complete source 1`] = `"33a8a59cb7db84768c1865c6ed1e5bedb1c350abc50897e8be45b2f706638907"`;
+
+exports[`strict KCode adversarial rail > rejects 'non-finite footer roller' and still preserves the complete source 1`] = `"cab6de20829837142c57b31771aac27421a090a28a09b201e60613094d02d242"`;
+
+exports[`strict KCode adversarial rail > rejects 'non-numeric initial RACK' and still preserves the complete source 1`] = `"11200a7e8050b4ccfe551bdbaec9ab36c22f46d2cee3bf1ac42abea336af3042"`;
+
+exports[`strict KCode adversarial rail > rejects 'non-zero initial RACK' and still preserves the complete source 1`] = `"c738b3e60456224fe1cdfc7b132606b473d73856fae321b34c6e32aebfe85239"`;
+
+exports[`strict KCode adversarial rail > rejects 'out-of-envelope RACK' and still preserves the complete source 1`] = `"768aadb156104e37f3ad45321aab12efcb5d889019030f5e8a8f3f3012fad1ba"`;
+
+exports[`strict KCode adversarial rail > rejects 'quarter-pitch RACK outside the profile' and still preserves the complete source 1`] = `"82ba029110e43ac4642d26da08eb731f0c99d11f8303e69565633fc022ead9bb"`;
+
+exports[`strict KCode adversarial rail > rejects 'reordered STIF and REAR fields' and still preserves the complete source 1`] = `"cfa8f44ba4271f3c17f6b9cb38c24bbbfa93e07de150f6c2bdaffe90998256ee"`;
+
+exports[`strict KCode adversarial rail > rejects 'reversed carriage markers' and still preserves the complete source 1`] = `"ad3ffe5cabaeb27e3f09271785abb1adb689899c899d12e0a32e00ee489f0cd0"`;
+
+exports[`strict KCode adversarial rail > rejects 'selected needle changed to a dot insi…' and still preserves the complete source 1`] = `"ea8df4ee31f546ea357950f7dda596abfca23e4c675365d8c0133e1297256568"`;
+
+exports[`strict KCode adversarial rail > rejects 'selector G above the official KCode 1…' and still preserves the complete source 1`] = `"822ea2e5a4b9c5ae3fcd607cb5dd1e21abf6b3a3b47e01b66732535422f67ccb"`;
+
+exports[`strict KCode adversarial rail > rejects 'truncated STIF payload' and still preserves the complete source 1`] = `"31e417f1ec146e53473edcd2a91939784eb04bc75c372fbc25a068bcae3a4180"`;
+
+exports[`strict KCode adversarial rail > rejects 'unknown record before a valid pass' and still preserves the complete source 1`] = `"81dede3995c6b1ee0cb1d46d86f157ef24e426dc3434dd893ed79b8cfe04e995"`;
+
+exports[`strict KCode adversarial rail > rejects 'unsupported footer operation' and still preserves the complete source 1`] = `"6d57954adc50acf724932b0ea669cfcfda82e0aebc3fae7e82ca2f0185136683"`;
+
+exports[`strict KCode adversarial rail > rejects a leading BOM without cascading into a false missing-HOME error 1`] = `"2ea7390a2e3a4927ce12476b1d1103e4637036026386b2016489614b14afbebb"`;
+
+exports[`strict KCode adversarial rail > rejects the historical footer-only false positive 1`] = `"e0118b52c950ab9d192ad365b71dfbb58e726e105933213e36dc046821eea737"`;
+
+exports[`strict KCode adversarial rail > rejects the historical truncated-raster false positive 1`] = `"f4dffe54cf4c5bab63f3647f159e226944ef4c729055203ce84700daebab724d"`;
+
+exports[`strict KCode adversarial rail > summarizes omitted errors and warnings separately in non-strict intake 1`] = `"97c5c2f605622ed786002ce3a57b44aa520a43b1e72f409326a3b136771f03d4"`;

@@ -120,12 +120,12 @@ export const FAIRISLE_PARK_BINDOFF_DEFAULTS: FairisleParkConfig = Object.freeze(
   closingWasteCarrier: '6',
   closingWasteSpeed: 150,
   closingWasteRoller: 450,
-  // 16 rows: 8 at STIF=9, 8 at STIF=6. Matches the reference's
-  // down-ramp (rows 206-221). EVEN row count is load-bearing: with the
+  // 16 rows: 9 at STIF=9, 7 at STIF=6, matching the reference's
+  // down-ramp. EVEN row count is load-bearing: with the
   // closing-waste carrier brought in at 'left', 16 alternating passes
   // end with the carriage on the LEFT, so the park pass goes `>>` to
   // match the reference's `>> Kn-Kn 0 150 450` line.
-  closingWasteStitchRamp: [9, 9, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 6, 6],
+  closingWasteStitchRamp: [9, 9, 9, 9, 9, 9, 9, 9, 9, 6, 6, 6, 6, 6, 6, 6],
   parkSpeed: 150,
   parkRoller: 450,
   parkStitch: 4,
@@ -384,8 +384,9 @@ function emitWasteAndDrop(input: BindOffInput): BindOffResult {
   // Drop all live stitches on BOTH beds. Charts with purl cells leave
   // some loops on the back bed (back-bed knit for the purl override);
   // dropping front only would leave those stranded. `drop` on an empty
-  // needle is a safe no-op, so dropping the full range on both beds
-  // works regardless of which cells used overrides.
+  // needle does not change the compiler's modeled loop state; its operational
+  // machine consequence remains unverified. The full-range cleanup covers
+  // both front- and back-bed overrides.
   for (let n = needleStart; n <= needleEnd; n++) {
     sim.drop(f(n));
     sim.drop(backBed(n));
@@ -421,7 +422,8 @@ function emitDrop(input: BindOffInput): BindOffResult {
   const drain = () => ops.push(...sim.drainOps());
   // Drop both beds — handles purl overrides (back-bed live loops) and
   // any leftover back-bed waste that didn't get cleared in the cast-on
-  // prologue. `drop` on empty needles is a no-op.
+  // prologue. Empty targets do not change the compiler's modeled loop state;
+  // their operational machine consequence remains unverified.
   for (let n = needleStart; n <= needleEnd; n++) {
     sim.drop(f(n));
     sim.drop(backBed(n));
@@ -566,14 +568,17 @@ function emitFairisleParkBindoff(input: BindOffInput): {
     }
   }
 
-  // Park sequence. Speed/roller/stitch for the park pass; vendor binds
-  // the direction at emit time using runtime nextDirection — for an
+  // Release pass. Speed/roller/stitch for the carrier-less pass; vendor
+  // binds the direction at emit time using runtime nextDirection — for an
   // even-length closing-waste ramp the carriage is on the LEFT so the
-  // park pass goes `>>` (matches the reference).
+  // pass goes `>>`. Customist drops every front loop here so the piece
+  // comes off on the closing waste (reference/fairisle.kc pass 276,
+  // reference/dbj.kc pass 485); an empty park pass would leave the
+  // closing-waste loops on the needles.
   sim.setSpeed(config.parkSpeed);
   sim.setRoller(config.parkRoller);
   sim.setStitch(config.parkStitch);
-  sim.parkCarriage();
+  for (let n = needleStart; n <= needleEnd; n++) sim.drop(f(n));
 
   // Presser settings for the auto-move that the vendor inserts between
   // the park pass and the first carrier-out Tu-Tu. Reference: speed 600,

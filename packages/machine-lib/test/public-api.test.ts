@@ -5,11 +5,16 @@ import * as nodeApi from '../src/index';
 describe('machine-lib public boundaries', () => {
   it('keeps the browser surface explicit and free of Node-only adapters', () => {
     expect(Object.keys(browserApi).sort()).toEqual([
-      'compileToRunArtifact', 'diffKc', 'findKnitProvenKCodeMatch', 'findKnitProvenMatch', 'inspectKcDocument',
-      'inspectKnitoutPasses', 'kcToKnitout', 'knitProvenRegistryEntries',
-      'matchKnitProvenArtifact', 'matchKnitProvenKCode', 'parseKnitoutProgram', 'projectBackFaceFromArtifact',
-      'projectColorworkChartV1', 'renderKcPassWindow', 'resolveValidatorMessage',
-      'validateKnitoutProgram',
+      'BIRDSEYE_BODY_EXTRA_FRONT_ROWS', 'CUSTOMIST_MATCHED_PRESETS_V1', 'CUSTOMIST_RIB_CROWN_194_V1', 'CUSTOMIST_RIB_CROWN_WIDTH', 'DEFAULT_MACHINE_TOPOLOGY_LIMITS_V1', 'DEFAULT_MACHINE_TOPOLOGY_MESH_LIMITS_V1', 'DEFAULT_MAX_FLOAT_DISTANCE_V1', 'EIGHT_LINE_CROWN_V1', 'KCODE_RESOURCE_LIMITS_V1', 'KNITERATE_7GG_KCODE_PROFILE_V1', 'KNITERATE_7GG_KCODE_PROFILE_V2', 'KNITERATE_KCODE_OPERATION_CONTRACTS_V1', 'KNITOUT_RESOURCE_LIMITS_V1', 'MACHINE_EXECUTION_LIMITS_V1', 'MACHINE_TOPOLOGY_INSPECTION_LIMITS_V1', 'MACHINE_TOPOLOGY_WINDOW_LIMITS_V1', 'MACHINE_TRACE_ADVISORY_RULES_V1', 'MACHINE_TRACE_PASS_ROLES_V1', 'MachineTopologyProjectionErrorV1', 'PROGRAMMED_MOTION_CLAIM_BOUNDARY_V1', 'PROGRAMMED_MOTION_DISTANCE_ASSUMPTION_V1', 'PROGRAMMED_MOTION_SPEED_ASSUMPTION_V1', 'ShapedPanelError', 'basePayloadIndexToKCodeColumn', 'buildCustomistMatchedCompileInputV1', 'buildCustomistRibBeanie',
+      'checkKnitoutSourceResourceLimits', 'classifyMachineTracePassRoleV1', 'compareScheduledPassesToMachineTrace', 'compileToRunArtifact', 'computeInputHash',
+      'createAuthoredKCodeCoordinateBridgeV1', 'createMachineExecutionIndexV1', 'deriveEndpointPhysicalNeedleMappingV1', 'deriveMachineTraceAdvisoriesV1', 'deriveMachineTraceProgrammedMotionV1', 'diffKCodeMachineTrace', 'diffKc', 'diffTraceStitchesV1',
+      'emitKCodeDocument', 'emitKCodeDocumentBytes', 'emitShapedPanelV1', 'findKnitProvenKCodeMatch', 'findKnitProvenMatch',
+      'indexMachineTopologyWindowV1', 'inspectKcDocument', 'inspectKnitoutPasses', 'inspectMachineExecutionV1', 'inspectMachineTopologyLoopV1', 'isKCodeCommandLegalityExportEligible', 'isLoopFormingMachineTracePassV1', 'kcToKnitout',
+      'kcodeColumnToBasePayloadIndex', 'kcodeColumnToTraceCoordinate', 'kcodeOperationContractV1', 'knitProvenRegistryEntries', 'matchKnitProvenArtifact',
+      'matchKnitProvenKCode', 'parseKCodeBytes', 'parseKCodeDocument', 'parseKnitoutProgram', 'passStitchSignatureV1',
+      'physicalNeedleForTraceCoordinateV1', 'planEightLineCrown', 'projectBackFaceFromArtifact', 'projectColorworkChartV1', 'projectKCodeMachineTrace',
+      'projectMachineScene', 'projectMachineTopologyMeshV1', 'projectMachineTopologyV1', 'projectMachineTopologyWindowV1', 'renderKCodeMachineTraceWindow', 'renderKCodeMachineTraceWindowFromTraces', 'renderKcPassWindow',
+      'resolveValidatorMessage', 'summarizeMachineTracePassMetricsV1', 'summarizeMachineTracePassRolesV1', 'validateKCodeMachineTrace', 'validateKnitoutProgram', 'writeKnitoutProgram',
     ]);
     expect('nodeKCodeConverter' in browserApi).toBe(false);
     expect('knitoutToKCode' in browserApi).toBe(false);
@@ -17,6 +22,7 @@ describe('machine-lib public boundaries', () => {
 
   it('exposes the compiler and Node converter only from the full package entry', () => {
     expect(nodeApi).toMatchObject({
+      authoredKnitoutToKCodeWithTrace: expect.any(Function),
       compileChartToKnitout: expect.any(Function),
       compileToRunArtifact: expect.any(Function),
       knitoutToKCode: expect.any(Function),

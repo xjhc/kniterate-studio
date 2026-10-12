@@ -1,0 +1,84 @@
+{
+  "kind": "kniterate-design-language-eval",
+  "schemaVersion": 1,
+  "milestone": "M6",
+  "note": "Agent-legibility cases. Outcomes: ready | not-ready | needs-input | unsupported. A ready or not-ready answer is checked against the project itself: a false ready claim fails the whole run, a not-ready claim must be true and name the expected blockers, and the requested garment, construction and motif placement are checked either way. The bird cases read ~/pro/knitlab2/reference/arc.png, which is not committed here.",
+  "cases": [
+    {
+      "id": "scarf-stripes",
+      "request": "Make a scarf 25 cm wide and 180 cm long in 5 cm stripes of oat, rust and moss, repeating. My swatch measured 26 stitches and 34 rows per 10 cm.",
+      "expect": { "outcomes": ["ready"], "stitches": 65, "rows": 612, "colors": 3, "gauge": [26, 34] }
+    },
+    {
+      "id": "birdseye-panel",
+      "request": "A 30 × 30 cm birdseye jacquard panel in four colours (cream, red, gold, navy) as horizontal bands. Gauge 28 stitches and 30 rows per 10 cm, measured.",
+      "expect": { "outcomes": ["ready"], "stitches": 84, "rows": 90, "colors": 4, "technique": "birdseye", "gauge": [28, 30] }
+    },
+    {
+      "id": "motif-panel",
+      "request": "Put the motif in motif.png on a 40 cm wide, 40 cm tall panel, 20 cm tall and centred, dark motif on a light background. Gauge 26 stitches and 34 rows per 10 cm, measured.",
+      "setup": { "kind": "motif-png" },
+      "expect": { "outcomes": ["ready", "not-ready"], "stitches": 104, "rows": 136, "gauge": [26, 34] }
+    },
+    {
+      "id": "no-gauge",
+      "request": "Make me a plain 20 by 20 cm swatch-sized panel in navy.",
+      "expect": { "outcomes": ["needs-input", "not-ready"] }
+    },
+    {
+      "id": "narrow-tie",
+      "request": "A skinny 10 cm wide, 140 cm long tie in solid black. Gauge 26 stitches and 34 rows per 10 cm.",
+      "expect": { "outcomes": ["not-ready", "needs-input"] }
+    },
+    {
+      "id": "blanket-too-big",
+      "request": "An 80 × 100 cm baby blanket in a two-colour checkerboard of 10 cm squares. Gauge 28 stitches and 40 rows per 10 cm.",
+      "expect": { "outcomes": ["unsupported", "needs-input"] }
+    },
+    {
+      "id": "seven-colours",
+      "request": "A 30 × 30 cm fair isle panel using seven colours in every row. Gauge 26 and 34 per 10 cm.",
+      "expect": { "outcomes": ["unsupported", "needs-input"] }
+    },
+    {
+      "id": "beanie",
+      "request": "Make me a beanie for a 56 cm head with a folded rib cuff. Gauge 26 and 34 per 10 cm.",
+      "expect": { "outcomes": ["ready", "not-ready", "needs-input", "unsupported"] }
+    },
+    {
+      "id": "sweater",
+      "request": "A size M crew-neck drop-shoulder sweater with 2x2 rib hems.",
+      "expect": { "outcomes": ["unsupported"] }
+    },
+    {
+      "id": "arc-style-toque",
+      "request": "An Arc'teryx-style toque for a 56 cm head: black, a 7 cm folded-up 2x2 rib cuff, a 13 cm body with the bird in motif.png in white, 8 cm tall, centred just above the cuff. My body gauge is 26 stitches and 34 rows per 10 cm; my 2x2 rib gauge is 30 stitches and 32 rows per 10 cm. Both measured.",
+      "setup": { "kind": "image-file", "path": "~/pro/knitlab2/reference/arc.png" },
+      "expect": { "outcomes": ["ready", "not-ready"], "blockersIfNotReady": ["long-float"], "stitches": 134, "colors": 2, "gauge": [26, 34], "object": { "construction": "rib-cuff-jersey-body", "cuffFold": true, "cuffTargetCm": 7, "ribGauge": [30, 32] }, "placements": { "count": 1, "centred": true, "heightCm": 8, "maxRowsAboveCuff": 4, "fromSuppliedImage": true } }
+    },
+    {
+      "id": "toque-resize",
+      "request": "Make the toque in project.json for a 52 cm head with the same negative ease. Keep the bird centred above the cuff and everything else the same.",
+      "setup": { "kind": "toque-project", "path": "~/pro/knitlab2/reference/arc.png" },
+      "expect": { "outcomes": ["ready", "not-ready"], "blockersIfNotReady": ["long-float"], "stitches": 122, "rows": 89, "gauge": [26, 34], "object": { "construction": "rib-cuff-jersey-body", "cuffFold": true, "cuffTargetCm": 7, "ribGauge": [30, 32] }, "placements": { "count": 1, "centred": true, "heightCm": 8, "maxRowsAboveCuff": 3, "fromSuppliedImage": true } }
+    },
+    {
+      "id": "make-longer",
+      "request": "The scarf in project.json should be 2 cm longer. Keep everything else the same.",
+      "setup": { "kind": "scarf-project" },
+      "expect": { "outcomes": ["ready"], "stitches": 65, "rows": 619, "gauge": [26, 34] }
+    },
+    {
+      "id": "carrier-name",
+      "request": "Get project.json ready to knit.",
+      "setup": { "kind": "misnamed-yarn-project" },
+      "expect": { "outcomes": ["ready"], "noCarrierInNames": true }
+    },
+    {
+      "id": "is-it-ready",
+      "request": "Is project.json ready to knit? Do not change it.",
+      "setup": { "kind": "long-float-project" },
+      "expect": { "outcomes": ["not-ready"], "unchanged": true }
+    }
+  ]
+}
