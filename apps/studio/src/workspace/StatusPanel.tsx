@@ -35,7 +35,7 @@ export interface SwatchStep {
   file?: { onDownload: (() => void) | null; writing: boolean; problem: string | null };
 }
 
-/** After knitting, for a piece you can measure once it is off the machine (a beanie): part of the Knit step, done once real measurements are recorded. */
+/** What was recorded about finished pieces (a beanie's measurements, entered from File): shown under Knit, which is done once a real one is recorded. */
 export interface MeasureStep { done: boolean; content: ReactNode }
 
 type StepState = 'done' | 'current' | 'todo';
@@ -128,7 +128,7 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
       </Step>
       <Step number={number('knit')} title="Knit" state={state('knit')}>
         {atTheMachine.length > 0 && <ul className="status-notes operator">{atTheMachine.map((note, index) => <li key={index}>{note}</li>)}</ul>}
-        {measure && <div className="after-knitting">{measure.content}</div>}
+        {measure?.content && <div className="after-knitting">{measure.content}</div>}
       </Step>
     </ol>
     {footer}

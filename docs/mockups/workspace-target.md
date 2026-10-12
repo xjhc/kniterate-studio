@@ -18,7 +18,8 @@ runs, and the workspace shows exactly what those files knit.
   verdict badge. There are no icon ribbons; every project action is in a
   menu.
   - File: new, open, save, download the knitting package, download the
-    machine file(s), print the knitting sheet, check a machine file.
+    machine file(s), print the knitting sheet, record a finished hat (a
+    beanie), check a machine file.
   - Edit: undo, redo, name and colours.
   - View: Design, Schematic, Machine file, History, Dark mode.
 - **Left panel:** what you are making, as folding sections, each with a
@@ -82,10 +83,11 @@ runs, and the workspace shows exactly what those files knit.
      piece's shaping steps are shown under its file), Download knitting
      package and Print knitting sheet. Ticked once this design is
      downloaded.
-  4. Knit: what to do at the machine. For a beanie, then: once it is off
-     the machine, washed and dry, measure the finished hat (Enter
-     measurements); the design is corrected from it so the next one fits.
-     The knitted file is filled in with this design's, in a fold-out.
+  4. Knit: what to do at the machine, and any finished hats recorded.
+  The steps end there. Measuring a finished hat is not a step before
+  knitting: File → Record a finished hat (beanie) takes what it measures
+  after washing and corrects the design for the next one. The knitted
+  file is filled in with this design's, in a fold-out.
 - **The verdict badge** uses the same plain words: Blocked is "Can't knit
   yet", Surface-proven is "Ready to knit", Knit-proven is "Proven on the
   machine". Its popover keeps the ladder's names, what each means, and what

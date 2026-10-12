@@ -561,6 +561,8 @@ export function App() {
   // The project's controls show once there is a project to work on.
   const projectChrome = !document && !showStart;
   const [showProjectSettings, setShowProjectSettings] = useState(false);
+  /** Counts File → Record a finished hat, which the beanie workspace answers with the measurements form. */
+  const [measureRequest, setMeasureRequest] = useState(0);
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>('design');
   const projectInput = useRef<HTMLInputElement>(null);
   const [appError, setAppError] = useState<string | null>(null);
@@ -807,6 +809,8 @@ export function App() {
       { label: 'Download knitting package', onSelect: packageProject, disabled: !projectChrome || !canPackage || packaging },
       { label: isSweater ? 'Download machine files' : 'Download machine file', onSelect: isSweater ? downloadSweaterFiles : isPanel ? () => downloadSweaterPiece('panel') : downloadKCode, disabled: !projectChrome || !canPackage },
       { label: 'Print knitting sheet', onSelect: printSheet, disabled: document ? false : !projectChrome || !canPrint },
+      // After knitting, not a step before it: what the finished hat measures corrects the design for the next one.
+      ...(!document && authoredState.object?.kind === 'beanie' ? [{ label: 'Record a finished hat…', onSelect: () => setMeasureRequest((count) => count + 1), disabled: !projectChrome }] : []),
       'separator',
       { label: 'Check a machine file…', onSelect: () => fileInput.current?.click() },
     ] },
@@ -844,6 +848,7 @@ export function App() {
         : !document && isPanel && panelPlan ? <PanelWorkspace project={project} onProject={setProject} plan={panelPlan} run={sweaterRun} view={workspaceView} onView={setWorkspaceView} onPackage={packageProject} onPrint={printSheet} onDownloadPiece={downloadSweaterPiece} packaging={packaging} downloaded={downloaded} swatchFile={swatchFile} />
         : !document ? <ChartWorkspace project={project} onProject={setProject} generation={openGeneration} plan={plan} story={authoredStory?.story ?? null} storyPending={blanketCompile.status !== 'ready' || displayedOutputStatus === 'converting'} candidateSha256={authoredExportReady ? kcodeState.artifact?.kcHash ?? null : null} isDarkMode={theme === 'dark'} compile={blanketCompile} kcode={outputCurrent ? kcodeState.artifact : null} outputError={kcodeState.error} view={workspaceView} onView={setWorkspaceView}
             status={{ verdict: authoredVerdict, exportReady: authoredExportReady, packaging, downloaded, swatchFile, onPackage: packageProject, onPrint: printSheet, onDownloadKc: downloadKCode }}
+            measureRequest={measureRequest}
             stepThrough={blanketCompile.artifact?.ok ? <CompiledMachineWorkspace artifact={blanketCompile.artifact} kcode={outputCurrent ? kcodeState.artifact : null} outputStatus={displayedOutputStatus} outputError={kcodeState.error} focusedRowId={focusedRowId} onFocusedRowId={setFocusedRowId} /> : null} />
         : (
         <div className="workspace">

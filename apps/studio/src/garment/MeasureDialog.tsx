@@ -52,7 +52,7 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
   </div></fieldset>;
   return <div className="modal-backdrop project-dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
     <section className="project-dialog measure-dialog" role="dialog" aria-modal="true" aria-labelledby="measure-title">
-      <header><h2 id="measure-title">Enter measurements</h2><button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
+      <header><h2 id="measure-title">Record a finished hat</h2><button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
       <form onSubmit={submit}>
         <p className="garment-help">Measure the finished hat flat, after washing and drying. It is compared with the plan, and the design is corrected so the next one fits.</p>
         {/* Which exact file was knitted: filled in with this design's file, so it is only opened to change it. */}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Ruler, Wrench } from 'lucide-react';
+import { Wrench } from 'lucide-react';
 import { clear, copy, cut, paste, type MirrorAxes, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
 import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendProjectOperation, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
 import { BRUSH_SIZES, ChartToolbar, type ChartTool } from './ChartToolbar';
@@ -58,7 +58,7 @@ const KIND_NAMES = { beanie: 'Beanie', panel: 'Scarf or blanket' } as const;
  * workspace: what you are making on the left; the chart, its schematic or its
  * machine file in the middle; status, files and export on the right.
  */
-export function ChartWorkspace({ project, onProject, generation, plan, story, storyPending, candidateSha256, isDarkMode, compile, kcode, outputError, view, onView, status, stepThrough }: {
+export function ChartWorkspace({ project, onProject, generation, plan, story, storyPending, candidateSha256, isDarkMode, compile, kcode, outputError, view, onView, status, stepThrough, measureRequest }: {
   project: ColorworkProjectV1;
   onProject: (project: ColorworkProjectV1) => void;
   /** Counts opened files: a result started in an earlier document session must not reach this one. */
@@ -78,6 +78,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   status: ChartStatus;
   /** The machine stepped through pass by pass, with every check and the source: inside the Machine file view. */
   stepThrough: ReactNode;
+  /** Incrementing this opens the form for a finished hat's measurements (File → Record a finished hat). */
+  measureRequest: number;
 }) {
   const [tool, setTool] = useState<ChartTool>('pen');
   const [brush, setBrush] = useState(1);
@@ -100,6 +102,12 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const [selectedPlacement, setSelectedPlacement] = useState<string | null>(null);
   const [intake, setIntake] = useState<{ replacing: ProjectPlacement | null; refresh?: { conversion: Partial<PlacementConversion>; label: string } } | null>(null);
   const [showMeasure, setShowMeasure] = useState(false);
+  const seenMeasureRequest = useRef(measureRequest);
+  useEffect(() => {
+    if (measureRequest === seenMeasureRequest.current) return;
+    seenMeasureRequest.current = measureRequest;
+    if (materializeColorworkProject(projectRef.current).state.object?.kind === 'beanie') setShowMeasure(true);
+  }, [measureRequest]);
   const appliedUrlTechnique = useRef(false);
   const materialized = useMemo(() => materializeColorworkProject(project), [project]);
   const { chart, rowIds } = materialized.state;
@@ -339,11 +347,9 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       downloaded={status.downloaded}
       swatch={swatch}
       atTheMachine={story?.operatorChecks ?? []}
-      measure={isGarment ? { done: (materialized.state.trials ?? []).some((trial) => !trial.synthetic), content: <>
-        <p className="step-hint">Once it is off the machine, washed and dry, measure the finished hat. The design is corrected from it, so the next one fits.</p>
-        {(materialized.state.trials ?? []).length > 0 && <ul className="trial-list">{materialized.state.trials!.map((trial) => <li key={trial.id}>{trial.recordedAt.slice(0, 10)} · {trial.outcome}{trial.bodyGauge ? ` · ${trial.bodyGauge.stitchesPer10cm} st / ${trial.bodyGauge.rowsPer10cm} rows` : ''}{trial.synthetic ? ' (test data)' : ''}</li>)}</ul>}
-        <button type="button" className="secondary-button step-action" onClick={() => setShowMeasure(true)}><Ruler size={15} /> Enter measurements</button>
-      </> } : undefined}
+      measure={isGarment ? { done: (materialized.state.trials ?? []).some((trial) => !trial.synthetic), content: (materialized.state.trials ?? []).length > 0
+        ? <ul className="trial-list" aria-label="Finished hats">{materialized.state.trials!.map((trial) => <li key={trial.id}>{trial.recordedAt.slice(0, 10)} · {trial.outcome}{trial.bodyGauge ? ` · ${trial.bodyGauge.stitchesPer10cm} st / ${trial.bodyGauge.rowsPer10cm} rows` : ''}{trial.synthetic ? ' (test data)' : ''}</li>)}</ul>
+        : null } : undefined}
       footer={story?.notices.map((notice) => <p className="design-hint" role="note" key={notice}>{notice}</p>)}
     />
     {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); onView('design'); setFitRequest((request) => request + 1); } }} />}

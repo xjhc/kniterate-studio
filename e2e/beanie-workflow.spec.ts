@@ -168,8 +168,8 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   for (const name of ['project.kniterate-studio.json', 'program.kc', 'instructions.md', 'schematic.svg', 'measurement-form.md', 'measurements.json', 'manifest.json', 'chart.png']) expect(zip.includes(Buffer.from(name))).toBe(true);
 
   // Synthetic measurements revise the candidate in one labelled operation.
-  await page.getByRole('button', { name: 'Enter measurements' }).click();
-  const measure = page.getByRole('dialog', { name: 'Enter measurements' });
+  await menu(page, 'File', 'Record a finished hat…');
+  const measure = page.getByRole('dialog', { name: 'Record a finished hat' });
   await measure.getByLabel('Synthetic: made up to test the software').check();
   await measure.getByLabel('Outcome').selectOption('clean');
   await measure.locator('fieldset', { hasText: 'Body gauge' }).getByLabel('Stitches').fill('24');
@@ -393,8 +393,8 @@ test('a loaded form keeps its predictions only for its own candidate, and fit dr
   await expect(page.locator('#fit\\.head')).toHaveValue('60', { timeout: 30_000 });
   await expect(page.getByRole('alert').filter({ hasText: 'Not applied' })).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Enter measurements' }).click();
-  const measure = page.getByRole('dialog', { name: 'Enter measurements' });
+  await menu(page, 'File', 'Record a finished hat…');
+  const measure = page.getByRole('dialog', { name: 'Record a finished hat' });
   // The knitted file is filled in with this design's (the fold-out starts open while there is none); it is opened to load a form or name another file.
   const knittedFile = measure.locator('details.measure-file');
   if (await knittedFile.getAttribute('open') === null) await knittedFile.locator('summary').click();
