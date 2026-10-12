@@ -56,6 +56,19 @@ test('the whole hat is drawn as worn, flat: the motif on the front and the seam 
   await expect(page.locator('.chart-toolbar')).toBeVisible();
 });
 
+test('a measured gauge belongs to its backing: another keeps the numbers, not as measured', async ({ page }) => {
+  test.setTimeout(120_000);
+  await createBeanie(page);
+  // A new hat's body is one yarn: a double layer, or a single one.
+  await page.getByLabel('Body (double-layer fabric) measured').check();
+  await page.locator('#backing').getByRole('button', { name: /^Single layer/ }).click();
+  await expect(page.getByLabel('Body (single-layer fabric) measured')).not.toBeChecked();
+  await expect(page.getByLabel('Body (single-layer fabric) stitches per 10 cm')).toHaveValue('26');
+  await expect(page.locator('#swatch')).toContainText('Measured on double-layer fabric. Measure a swatch of single-layer fabric for true sizes.');
+  await page.locator('#backing').getByRole('button', { name: /^Double layer/ }).click();
+  await expect(page.getByLabel('Body (double-layer fabric) measured')).toBeChecked();
+});
+
 test('long floats are one thing to check, however many there are', async ({ page }) => {
   test.setTimeout(120_000);
   await createBeanie(page);

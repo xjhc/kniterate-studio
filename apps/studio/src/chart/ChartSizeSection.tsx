@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { AUTHORED_CAPACITY_LIMITS_V1, type ProjectGauge, type ProjectState } from '@kniterate-studio/project-contract';
-import { GaugeFields, MeasureRow, NumberField } from '../garment/GarmentFitSection';
+import { projectBackingWords } from '../backing';
+import { MeasureRow, NumberField } from '../garment/GarmentFitSection';
+import { GaugeFields, SwatchAside, swatchWords } from '../workspace/gauge';
 import { Section } from '../workspace/panel';
 
 /** A typical 7gg colourwork gauge, until a swatch is measured. */
@@ -25,6 +27,7 @@ export function ChartSizeSection({ state, onSize, onGauge, onNeedles, onRows, on
 }) {
   const [resizedFrom, setResizedFrom] = useState<{ needles: number; rows: number } | null>(null);
   const { chart, gauge, target } = state;
+  const swatch = gauge ? swatchWords([gauge], projectBackingWords(state)?.fabric ?? 'plain stockinette') : null;
   const counts = { needles: chart.width, rows: chart.height };
   const resized = resizedFrom && (resizedFrom.needles !== counts.needles || resizedFrom.rows !== counts.rows) ? resizedFrom : null;
   const knitted = gauge ? { widthCm: round1(chart.width / gauge.stitchesPer10cm * 10), heightCm: round1(chart.height / gauge.rowsPer10cm * 10) } : null;
@@ -45,8 +48,8 @@ export function ChartSizeSection({ state, onSize, onGauge, onNeedles, onRows, on
       </>}
       <label className="strategy-field" title="Where the chart sits on the machine bed."><span>First needle</span><input type="number" min="1" max={253 - chart.width} defaultValue={state.machine.needleOffset} key={`n${state.machine.needleOffset}`} onBlur={(event) => onNeedleOffset(Number(event.currentTarget.value))} /></label>
     </Section>
-    <Section id="swatch" title="Your swatch" aside={gauge?.source === 'measured' ? <em className="section-aside ok">measured</em> : <em className="section-aside warn">{gauge ? 'typical' : 'none'}</em>}>
-      <p className="garment-help">{gauge?.source === 'measured' ? 'From your swatch. The size in cm follows it.' : 'Enter what 10 cm of your swatch measures, and the chart is sized in cm from it.'}</p>
+    <Section id="swatch" title="Your swatch" aside={swatch ? <SwatchAside aside={swatch.aside} /> : <em className="section-aside warn">none</em>}>
+      <p className="garment-help">{swatch?.hint ?? 'Enter what 10 cm of your swatch measures, and the chart is sized in cm from it.'}</p>
       <GaugeFields id="gauge.body" label="Colourwork" gauge={gauge ?? TYPICAL_COLOURWORK_GAUGE} onCommit={(next) => { setResizedFrom(counts); onGauge(next, `Gauge ${next.stitchesPer10cm}/${next.rowsPer10cm} (${next.source})`); }} />
       {resized && <p className="garment-derived" role="status">Resized: {resized.needles} → {counts.needles} needles, {resized.rows} → {counts.rows} rows.</p>}
     </Section>

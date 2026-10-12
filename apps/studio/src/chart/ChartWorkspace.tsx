@@ -17,6 +17,7 @@ import { KnitFileView } from '../sweater/KnitFileView';
 import { RunSchematic } from '../workspace/RunSchematic';
 import { StatusPanel, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
 import { statusNotes } from '../workspace/statusNotes';
+import { regauge } from '../workspace/gauge';
 import { revealSection } from '../workspace/panel';
 import type { SwatchFile } from '../useSwatchFile';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
@@ -24,7 +25,7 @@ import type { AuthoredVerdict } from '../engine';import { PaletteRail } from './
 import { ChartSizeSection } from './ChartSizeSection';
 import { makeRowId, pixelMutationToProjectEdit } from './projectCanvasAdapter';
 import { BlanketSetupRail } from '../blanket/BlanketSetupRail';
-import { projectBackingWords } from '../backing';
+import { backingWords, colourworkColours, projectBackingWords } from '../backing';
 import type { BlanketCompileState } from '../blanket/useBlanketCompiler';
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
 
@@ -321,7 +322,16 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
         onNeedles={(width) => Number.isInteger(width) && width > 0 && width <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })}
         onRows={(height) => { if (!Number.isInteger(height) || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }}
         onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} />}
-      onStrategy={(technique) => { if (technique === materialized.state.strategy.technique) return; if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`); else commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } }); }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
+      onStrategy={(technique) => {
+        const { state } = materialized;
+        if (technique === state.strategy.technique) return;
+        // Another backing is another fabric: the gauge follows the same rule as a sweater's stitch.
+        const from = projectBackingWords(state)?.fabric;
+        const to = technique === 'fairisle' || technique === 'birdseye' ? backingWords(technique, colourworkColours(state) ?? 0, isGarment)?.fabric : undefined;
+        const gauge = state.gauge && from && to && from !== to ? regauge(state.gauge, from, { name: to }) : null;
+        if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique, ...(gauge ? { bodyGauge: gauge } : {}) }, `Backing: ${technique}`);
+        else operate(`Backing: ${technique}`, [{ kind: 'set-strategy', strategy: { ...state.strategy, technique } }, ...(gauge ? [{ kind: 'set-gauge' as const, gauge }] : [])]);
+      }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
     <section className="sweater-stage" aria-label={kindName}>
       <header className="stage-head">
         {isGarment
