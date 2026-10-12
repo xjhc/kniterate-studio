@@ -11,11 +11,11 @@ import { beanieObjectOf,
 } from '@kniterate-studio/project-contract';
 import { beanieFitEdits, createBeanieProject, type BeanieIntent } from './beanie';
 import { compileColorworkProject } from './blanket/compileProject';
-import { handoffFiles, readinessStory, schematicSvg, type MeasurementRecord } from './handoff';
+import { handoffFiles, readinessStory, schematicSvg, storyNotes, type MeasurementRecord } from './handoff';
 import { isSamePlacement, placementToStitchesEdits, unmappedColors } from './placements';
 import { planProject } from './plan';
 import { convertPlacementImage, defaultPlacementColors, nextPlacementId, refreshedPlacement, type PlacementImage } from './placements';
-import { collectFindings, resolveReadiness } from './readiness';
+import { collectFindings, resolveReadiness, type Finding } from './readiness';
 import { runAuthoredPipeline } from './authoredPipeline';
 import { trialRevision } from './trials';
 import { continuationFrom } from './garment/ChangesPanel';
@@ -187,6 +187,21 @@ describe('handoff', () => {
     expect(files['instructions.md']).toContain('**Ready to knit, sizes not confirmed.**');
     expect(files['instructions.md']).toContain('Fold the rib cuff up');
     expect(JSON.parse(files['manifest.json'] as string).identity.kcodeSha256).toBe(result.kcode!.kcHash);
+  });
+
+  it('tells a problem found in many places as one thing to check, keeping every place a finding', async () => {
+    const project = toque({});
+    const plan = planOf(project);
+    const result = await runAuthoredPipeline(project);
+    const float = (pass: number): Finding => ({ stage: 'kcode', rule: 'long-float', severity: 'warning', owner: 'design', path: null, title: 'long-float', message: `C3 floats 9 needles behind the work from pass ${pass} to pass ${pass + 1} (limit 7).`, passIndices: [pass], fixes: [] });
+    const resize = (label: string): Finding => ({ stage: 'plan', rule: 'size-off-target', severity: 'warning', owner: 'design', path: 'target.heightCm', title: 'size-off-target', message: 'The body is off its size.', fixes: [{ label, edits: [] }] });
+    const findings = [...collectFindings(plan, result), float(120), float(140), float(160), resize('Resize the chart to 44 rows'), resize('Resize the chart to 44 rows')];
+    const story = readinessStory(plan, findings, resolveReadiness({ verdict: result.verdict, findings }), result.verdict);
+    expect(story.items.filter((item) => item.rule === 'long-float')).toHaveLength(3);
+    expect(story.headline).toBe('2 things to check');
+    const notes = storyNotes(story.items);
+    expect(notes.map((note) => note.rule)).toEqual(['long-float', 'size-off-target']);
+    expect(notes[1]!.fixes.map((fix) => fix.label)).toEqual(['Resize the chart to 44 rows']);
   });
 
   it('turns returned measurements into a recorded trial and a revised candidate in one operation', async () => {

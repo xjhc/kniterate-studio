@@ -572,6 +572,10 @@ ship," trust this file and the working tree instead.
   - The Machine file view (`sweater/knitFile.ts`, `KnitFileView`) reads any
     emitted `.kc`. Its "Step through" mode holds the exact movement, pass
     grid, checks and source that used to be the separate machine workspace.
+  - A problem found in many places is one thing to check (2026-10-12,
+    `handoff.ts::storyNotes`): twenty long floats are one "Body colourwork"
+    note with one Show, and the headline counts kinds of problem. Each place
+    stays a finding of its own in the pattern's Unresolved list.
   - Words are plain: no "≈", no "machine truth" or "trials". Operator
     settings read like "Set carrier spacing to 2 on the machine".
   - Export stays hard-gated by the authored verdict.

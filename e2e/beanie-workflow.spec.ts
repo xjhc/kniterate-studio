@@ -56,6 +56,17 @@ test('the whole hat is drawn as worn, flat: the motif on the front and the seam 
   await expect(page.locator('.chart-toolbar')).toBeVisible();
 });
 
+test('long floats are one thing to check, however many there are', async ({ page }) => {
+  test.setTimeout(120_000);
+  await createBeanie(page);
+  // The ring's empty middle, on a fairisle back, floats the yarn behind it on many rows.
+  await placeImage(page, '6');
+  await page.locator('#backing').getByRole('button', { name: /^Fairisle/ }).click();
+  await expect(page.locator('#backing .section-aside')).toHaveText('Fairisle', { timeout: 30_000 });
+  await expect(page.locator('.status-notes:not(.operator) > li').filter({ hasText: 'Body colourwork' })).toHaveCount(1, { timeout: 30_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText(/^[12] things? to check$/);
+});
+
 test('the status panel walks the steps: the swatch is next, then the download, each ticked when done', async ({ page }) => {
   test.setTimeout(120_000);
   await createBeanie(page);

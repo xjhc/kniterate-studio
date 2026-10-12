@@ -132,6 +132,22 @@ const RULE_STORIES: Record<string, RuleStory> = {
   },
 };
 
+/**
+ * One note per kind of problem: a rule found in many places (every long
+ * float, every carried yarn) is one thing to do, shown once, with its fixes
+ * kept and none repeated. Each place is still a finding of its own.
+ */
+export function storyNotes(items: readonly StoryItem[]): StoryItem[] {
+  const byRule = new Map<string, StoryItem>();
+  for (const item of items) {
+    const first = byRule.get(item.rule);
+    if (!first) { byRule.set(item.rule, { ...item, fixes: [...item.fixes] }); continue; }
+    if (item.severity === 'error') first.severity = 'error';
+    for (const fix of item.fixes) if (!first.fixes.some((kept) => kept.label === fix.label)) first.fixes.push(fix);
+  }
+  return [...byRule.values()];
+}
+
 export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], readiness: Readiness, verdict: AuthoredPipelineResult['verdict'], trials: readonly ProjectTrial[] = []): ReadinessStory {
   const items: StoryItem[] = findings.filter((finding) => finding.severity !== 'info').map((finding) => {
     const story = RULE_STORIES[finding.rule];
@@ -171,7 +187,7 @@ export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], 
       : 'The gauge is a typical value until you measure a swatch.';
   } else {
     status = 'design-issues';
-    const design = items.filter((item) => !MEASUREMENT_RULES.has(item.rule));
+    const design = storyNotes(items).filter((item) => !MEASUREMENT_RULES.has(item.rule));
     headline = `${design.length} ${design.length === 1 ? 'thing' : 'things'} to check`;
     detail = design[0]!.consequence;
   }

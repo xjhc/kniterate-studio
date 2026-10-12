@@ -264,7 +264,7 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
         severity: 'warning',
         path: `target.${dimension}Cm`,
         message: `Target ${dimension} ${targetCm} cm needs ${count} ${unit} (${required.how}); ${dimension === 'height' && bodyExtraRows > 0 ? `the body knits ${actual} (${actual - bodyExtraRows} chart rows + ${bodyExtraRows} birdseye start/join rows)` : `the chart has ${actual}`} (${round1(actual / perCm(gauge, dimension))} cm).`,
-        fixes: [{ label: `Resize the chart to ${count} ${unit}${count > actual ? ', filling new cells with palette 0' : ''}`, edits }],
+        fixes: [{ label: `Resize the chart to ${count} ${unit}${count > actual ? `, the new ${dimension === 'width' ? 'stitches' : 'rows'} in ${state.chart.palette[0]?.name ?? 'the first colour'}` : ''}`, edits }],
       });
     }
   }

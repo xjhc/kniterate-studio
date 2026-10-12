@@ -5,7 +5,7 @@ import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendP
 import { BRUSH_SIZES, ChartToolbar, type ChartTool } from './ChartToolbar';
 import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './ColorworkCanvas';
 import { beanieFitEdits, withSizingFixes, type BeanieFitChange } from '../beanie';
-import type { ReadinessStory } from '../handoff';
+import { storyNotes, type ReadinessStory } from '../handoff';
 import type { ProjectPlan } from '../plan';
 import { movedPlacement, placedCells, placementBoxes, type PlacementConversion, type PlacementImage } from '../placements';
 import { reconvertMotifs } from '../trials';
@@ -278,7 +278,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     onEnter: () => { onView('design'); revealSection('swatch'); },
     file: status.swatchFile,
   } : gauge ? { gauges: [{ name: backing ? `Colourwork (${backing.fabric})` : 'Plain stockinette', measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); }, file: status.swatchFile } : undefined;
-  const notes: StatusNote[] = (story?.items ?? []).filter((item) => !(swatch && (item.rule === 'gauge-assumed' || item.rule === 'size-needs-gauge'))).map((item) => ({
+  const notes: StatusNote[] = storyNotes(story?.items ?? []).filter((item) => !(swatch && (item.rule === 'gauge-assumed' || item.rule === 'size-needs-gauge'))).map((item) => ({
     severity: item.severity === 'error' ? 'error' : item.severity === 'warning' ? 'warning' : 'info',
     text: `${item.part}: ${item.action}`,
     actions: item.target || item.fixes.length > 0 ? <>
