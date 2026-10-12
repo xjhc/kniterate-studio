@@ -13,6 +13,7 @@ import {
 } from '@kniterate-studio/project-contract';
 import {
   CUSTOMIST_MATCHED_PRESETS_V1,
+  customistWastePassesV1,
   CUSTOMIST_RIB_CROWN_WIDTH,
   buildCustomistMatchedCompileInputV1,
   buildCustomistRibBeanie,
@@ -232,6 +233,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     keyPalette: projected.palette,
     yarnBindings,
     needleOffset: state.machine.needleOffset,
+    ...(state.setup?.wasteRows !== undefined ? { wastePasses: customistWastePassesV1(technique, state.setup.wasteRows) } : {}),
     ...(technique === 'fairisle' ? { floatPolicy: { mode: 'warn-above' as const, threshold: state.strategy.floatLimit } } : {}),
   });
   const artifact = compileToRunArtifact(input);
@@ -423,6 +425,7 @@ function compileBeanieProject(
     drawCarrier: '1',
     ribRows: cuffRows,
     crown,
+    ...(state.setup?.wasteRows !== undefined ? { startWastePasses: customistWastePassesV1('flat', state.setup.wasteRows) } : {}),
     ...(withBody ? { jerseyBody: { rows: bodyCells.map((cells) => cells.map(carrierOf)), backing: backing === 'birdseye' ? 'birdseye' as const : 'fairisle' as const } } : {}),
   } as const;
   const built = buildCustomistRibBeanie(input);

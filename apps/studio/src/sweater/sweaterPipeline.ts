@@ -1,4 +1,5 @@
 import {
+  customistWastePassesV1,
   ShapedPanelError,
   computeInputHash,
   emitShapedPanelV1,
@@ -9,7 +10,7 @@ import {
   type PanelRowV1,
   type PredictedPass,
 } from '@kniterate-studio/machine-lib/browser';
-import { assessAuthoredCapacityV1, materializeColorworkProject, observeAuthoredCapacityV1, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { assessAuthoredCapacityV1, materializeColorworkProject, observeAuthoredCapacityV1, type ColorworkProjectV1, type MachineSetup } from '@kniterate-studio/project-contract';
 import { compileKCodeArtifact } from '../kcode/compileKCodeArtifact';
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
 import { resolveAuthoredVerdict, type AuthoredVerdict } from '../engine';
@@ -58,7 +59,7 @@ export interface SweaterPipelineResult {
 }
 
 /** One piece's Knitout program, from the plan. Throws ShapedPanelError when the shaping is not machine-knittable. */
-export function compileSweaterPiece(plan: PiecesPlan, piece: SweaterPiecePlan): CompiledPiece {
+export function compileSweaterPiece(plan: PiecesPlan, piece: SweaterPiecePlan, setup?: MachineSetup): CompiledPiece {
   const raster = piece.raster;
   if (raster === null) throw new Error(piece.error ?? `${piece.name} has no rows.`);
   const rows: PanelRowV1[] = raster.rows.map((row, index) => ({
@@ -76,6 +77,7 @@ export function compileSweaterPiece(plan: PiecesPlan, piece: SweaterPiecePlan): 
     drawCarrier: plan.carriers.draw as CarrierId,
     top: plan.object.top ?? 'bind-off',
     fashion: plan.object.fashion ?? 1,
+    ...(setup?.wasteRows !== undefined ? { startWastePasses: customistWastePassesV1('flat', setup.wasteRows) } : {}),
   } as const;
   const built = emitShapedPanelV1(input);
   const knitoutText = writeKnitoutProgram(built.program);
@@ -115,7 +117,7 @@ export async function runSweaterPipeline(project: ColorworkProjectV1): Promise<S
     if (pieceErrors.length > 0) compileError = pieceErrors.map((finding) => finding.message).join(' ');
     else {
       try {
-        compiled = compileSweaterPiece(plan, piece);
+        compiled = compileSweaterPiece(plan, piece, state.setup);
       } catch (error) {
         compileError = error instanceof ShapedPanelError ? `${piece.name}, ${error.message}` : error instanceof Error ? error.message : String(error);
       }

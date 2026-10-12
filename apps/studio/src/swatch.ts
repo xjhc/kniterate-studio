@@ -37,7 +37,14 @@ export function hasSwatch(state: ProjectState): boolean {
 }
 
 /** The swatch for `project`, or null when it has no gauge to measure (a chart sized in needles). */
+/** The swatch knits with the project's own machine setup too, so it tests the start the piece will have. */
 export function swatchProject(project: ColorworkProjectV1): ColorworkProjectV1 | null {
+  const swatch = swatchOf(project);
+  const setup = materializeColorworkProject(project).state.setup;
+  return swatch && setup ? appendProjectEdit(swatch, { id: `${group}-setup`, source: 'system', edit: { kind: 'set-machine-setup', setup } }) : swatch;
+}
+
+function swatchOf(project: ColorworkProjectV1): ColorworkProjectV1 | null {
   const { state } = materializeColorworkProject(project);
   const object = state.object;
   const id = `${project.id}-swatch`;

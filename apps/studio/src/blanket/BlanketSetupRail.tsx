@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
-import type { ProjectState } from '@kniterate-studio/project-contract';
+import type { MachineSetup, ProjectState } from '@kniterate-studio/project-contract';
 import type { BackFaceProjection } from '@kniterate-studio/machine-lib/browser';
 import type { BlanketCompileState } from './useBlanketCompiler';
 import { Section } from '../workspace/panel';
+import { MachineSetupSection } from '../workspace/MachineSetupSection';
 import { BACKINGS, backingWords, colourworkColours } from '../backing';
 
 function BackFaceMini({ projection, palette }: { projection: BackFaceProjection | null | undefined; palette: ProjectState['chart']['palette'] }) {
@@ -13,7 +14,7 @@ function BackFaceMini({ projection, palette }: { projection: BackFaceProjection 
   return <span className="back-mini" style={{ gridTemplateColumns: `repeat(${Math.min(8, Math.ceil(projection.width / columnStep))}, 1fr)` }}>{sampled.map((cell, index) => <i className={cell.kind} style={{ background: cell.paletteIndexes.length ? palette[cell.paletteIndexes[0]!]?.hex : 'transparent' }} key={index} />)}</span>;
 }
 
-export function BlanketSetupRail({ state, compile, outputError, size, onStrategy, onFloatLimit, onAssignment }: {
+export function BlanketSetupRail({ state, compile, outputError, size, onStrategy, onFloatLimit, onAssignment, onSetup }: {
   state: ProjectState;
   compile: BlanketCompileState;
   outputError: string | null;
@@ -22,6 +23,7 @@ export function BlanketSetupRail({ state, compile, outputError, size, onStrategy
   onAssignment: (paletteId: string, carrier: '2' | '3' | '4' | '5', yarnName: string) => void;
   /** What you are making: its size and swatch, and a garment's fit and motifs. */
   size: ReactNode;
+  onSetup: (setup: MachineSetup | null, label: string) => void;
 }) {
   const assignmentFor = (paletteId: string) => state.machine.yarnAssignments.find((item) => item.paletteId === paletteId);
   const error = outputError ?? compile.error ?? compile.artifact?.messages.find((message) => message.severity === 'error')?.message ?? null;
@@ -53,6 +55,7 @@ export function BlanketSetupRail({ state, compile, outputError, size, onStrategy
       return <div className="assignment-row" key={color.id}><i style={{ background: color.hex }} /><input aria-label={`${color.name} yarn name`} defaultValue={assignment.yarnName} key={`${color.id}-${assignment.yarnName}`} onBlur={(event) => onAssignment(color.id, assignment.carrier, event.currentTarget.value.trim() || color.name)} /><select aria-label={`${color.name} carrier`} value={assignment.carrier} onChange={(event) => onAssignment(color.id, event.currentTarget.value as '2' | '3' | '4' | '5', assignment.yarnName)}>{(['2', '3', '4', '5'] as const).map((carrier) => <option key={carrier} value={carrier} disabled={state.machine.yarnAssignments.some((item) => item.paletteId !== color.id && item.carrier === carrier)}>C{carrier}</option>)}</select></div>;
     })}</div></Section>
     {backing}
+    <MachineSetupSection state={state} onChange={onSetup} />
     {error && <p className="setup-error" role="alert">{error}</p>}
   </aside>;
 }

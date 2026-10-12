@@ -65,6 +65,8 @@ export interface ShapedPanelInputV1 {
   readonly secondCarrier?: CarrierId
   readonly wasteCarrier: CarrierId
   readonly drawCarrier: CarrierId
+  /** Waste interlock passes at the start (default the reference's 81). */
+  readonly startWastePasses?: number
   /** How the top is finished. `waste` knits `wasteRows` rows of waste yarn (default 8) over every live stitch, then releases them. */
   readonly top: 'bind-off' | 'waste'
   readonly wasteRows?: number
@@ -125,6 +127,7 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
     wasteCarrier: input.wasteCarrier,
     drawCarrier: input.drawCarrier,
     extraCarriers: splits ? [B!] : [],
+    ...(input.startWastePasses !== undefined ? { wastePasses: input.startWastePasses } : {}),
   })
   const drain = kit.drain
 

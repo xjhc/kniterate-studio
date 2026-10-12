@@ -15,6 +15,8 @@ import type { CompileChartInput } from '../compile/from-chart.js'
 import { buildCompileInputForExport, carrierModeForColorCount } from '../export-helpers.js'
 import type { FloatPolicy } from '../plan/bed-state.js'
 import type { YarnBinding } from '../types.js'
+import type { RecipeOverrides } from '../wizard-config.js'
+import { CUSTOMIST_RIB_BEANIE_SETTINGS_V1 } from '../passes/customist-flat-start.js'
 import { CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES } from './customist-studio-birdseye-7gg.js'
 import { CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE } from './customist-studio-fairisle-7gg.js'
 
@@ -39,6 +41,28 @@ export interface CustomistMatchedCompileRequestV1 {
   readonly needleOffset?: number
   /** Fairisle float warning threshold; does not change the program. */
   readonly floatPolicy?: FloatPolicy
+  /** Waste interlock passes at the start, in place of the reference's (fairisle 87, birdseye 80). */
+  readonly wastePasses?: number
+}
+
+/** The reference's waste interlock passes for each construction: what a project knits unless it sets its own. */
+export const CUSTOMIST_STANDARD_WASTE_PASSES_V1 = {
+  fairisle: CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE.sections.start.wastePasses,
+  birdseye: CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES.start!.wastePasses!,
+  /** Beanies, sweaters, scarves and blankets: the shared flat start. */
+  flat: CUSTOMIST_RIB_BEANIE_SETTINGS_V1.wastePasses,
+} as const
+
+/**
+ * The waste passes a construction knits for a requested count. The interlock
+ * alternates direction, so the count keeps the reference's parity: the waste
+ * yarn then ends on the side the next section expects. (Flipping it costs
+ * seven extra passes to move the yarn back.) A count of the other parity is
+ * rounded up, never down.
+ */
+export function customistWastePassesV1(construction: keyof typeof CUSTOMIST_STANDARD_WASTE_PASSES_V1, requested: number): number {
+  const standard = CUSTOMIST_STANDARD_WASTE_PASSES_V1[construction]
+  return requested + (Math.abs(standard - requested) % 2)
 }
 
 export function buildCustomistMatchedCompileInputV1(request: CustomistMatchedCompileRequestV1): CompileChartInput {
@@ -58,9 +82,13 @@ export function buildCustomistMatchedCompileInputV1(request: CustomistMatchedCom
     allocationMode: carrierModeForColorCount(request.yarnBindings.length),
     ...(request.needleOffset !== undefined ? { needleOffset: request.needleOffset } : {}),
     protectFirstBodyRow: true,
-    recipeOverrides: request.technique === 'birdseye' ? CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES : {},
+    recipeOverrides: withWastePasses(request.technique === 'birdseye' ? CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES : {}, request.wastePasses),
   }, {
     keyPalette: request.keyPalette,
     ...(request.floatPolicy ? { floatPolicy: request.floatPolicy } : {}),
   })
+}
+
+function withWastePasses(overrides: RecipeOverrides, wastePasses: number | undefined): RecipeOverrides {
+  return wastePasses === undefined ? overrides : { ...overrides, start: { ...overrides.start, wastePasses } }
 }

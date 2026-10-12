@@ -120,6 +120,13 @@ export interface CustomistFlatStartInput {
   drawCarrier: CarrierId
   /** Further yarns brought in after the body yarn, in order (each is carried up from the waste section to its first stitch). */
   extraCarriers: readonly CarrierId[]
+  /**
+   * Waste interlock passes before the inserts (default the reference's 81).
+   * Fewer save yarn and time; too few and the fabric may not reach the
+   * rollers before the piece starts. Speeds and rollers follow the same
+   * per-pass schedule whatever the count.
+   */
+  wastePasses?: number
 }
 
 /** Customist's waste, inserts, draw thread and 1×1 cast-on, ending with the body yarn parked on the left. */
@@ -144,7 +151,7 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
   // odd); leftward passes knit the interior with the parities swapped. The
   // start pass skips the outermost needles.
   sim.bringIn(waste, { side: 'left' })
-  for (let p = 0; p < s.wastePasses; p++) {
+  for (let p = 0; p < (input.wastePasses ?? s.wastePasses); p++) {
     settings(s.wasteSpeed(p), s.wasteRoller(p), s.wasteStitch)
     if (p === 0) {
       row(waste, '+', (o) => even(o) && o > 0, (o) => !even(o) && o < width - 1)

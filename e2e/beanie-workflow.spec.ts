@@ -69,6 +69,25 @@ test('a measured gauge belongs to its backing: another keeps the numbers, not as
   await expect(page.getByLabel('Body (double-layer fabric) measured')).toBeChecked();
 });
 
+test('the waste yarn at the start is your own: shorter knits fewer passes, and a short one warns', async ({ page }) => {
+  test.setTimeout(120_000);
+  await createBeanie(page);
+  const file = page.locator('.status-pieces .piece-facts');
+  await expect(file).toContainText(/\d+ passes/, { timeout: 30_000 });
+  // While the file is rewritten it has no pass count yet: wait for it.
+  const passes = async () => { const found = /([\d,]+) passes/.exec((await file.textContent()) ?? ''); return found ? Number(found[1]!.replace(/,/g, '')) : null; };
+  const standard = await passes();
+  await page.getByRole('button', { name: /^Machine settings/ }).click();
+  const machine = page.locator('#machine');
+  await expect(machine).toContainText('Standard: 81 rows');
+  await machine.getByLabel('Waste yarn rows').fill('41');
+  await machine.getByLabel('Waste yarn rows').press('Enter');
+  await expect(machine.getByRole('alert')).toContainText('may not reach the rollers');
+  await expect.poll(passes, { timeout: 30_000 }).toBe(standard - 40);
+  await machine.getByRole('button', { name: 'Use the standard 81' }).click();
+  await expect.poll(passes, { timeout: 30_000 }).toBe(standard);
+});
+
 test('long floats are one thing to check, however many there are', async ({ page }) => {
   test.setTimeout(120_000);
   await createBeanie(page);

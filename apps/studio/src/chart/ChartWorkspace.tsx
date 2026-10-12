@@ -313,6 +313,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
 
   return <main className="sweater-workspace chart-project">
     <BlanketSetupRail state={materialized.state} compile={compile} outputError={outputError}
+      onSetup={(setup, label) => { operate(label, [{ kind: 'set-machine-setup', setup }]); }}
       size={isGarment ? <>
         <GarmentFitSection key={`fit-${project.id}`} state={materialized.state} plan={plan} onFit={fit} />
         <MotifSection key={`motifs-${project.id}-${renderedGeneration}`} latestState={latestMotifState} state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={(id) => { setSelectedPlacement(id); if (id !== null) setWholeHat(false); }} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement, refresh) => setIntake({ replacing: placement, refresh })} />

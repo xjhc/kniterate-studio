@@ -5,6 +5,7 @@ import { SHAPE_MEASUREMENTS, SWEATER_CHOICES, sweaterEdit, withoutShapes, type S
 import { RIBS } from './textures';
 import { SilhouetteIcon } from './SilhouetteIcon';
 import { StitchSection, YarnGaugeSection } from './DesignSections';
+import { MachineSetupSection } from '../workspace/MachineSetupSection';
 
 /**
  * The design: style, size, measurements, stitch, trims, yarn and gauge.
@@ -100,5 +101,6 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
     </Section>
 
     <YarnGaugeSection yarn={yarn} carrier={plan.carriers.main} bodyName={object.body.name} gauge={gauge} ribGauge={plan.ribGauge} operate={operate} onRibGauge={setRibGauge} />
+    <MachineSetupSection state={state} onChange={(setup, label) => { operate(label, [{ kind: 'set-machine-setup', setup }]); }} />
   </aside>;
 }

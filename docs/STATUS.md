@@ -583,6 +583,25 @@ ship," trust this file and the working tree instead.
 
     A colour chart's stage and file row say "Colour chart", not "Scarf or
     blanket".
+  - Machine settings, one section for every kind
+    (`workspace/MachineSetupSection.tsx`, project `setup`,
+    `set-machine-setup` edit). Each setting is the construction's reference
+    until you set your own. A project with no setup knits byte for byte as
+    before.
+    - Waste yarn at the start (2026-10-12). The standard is the reference's
+      interlock: fairisle 87, birdseye 80, and 81 for beanies, sweaters and
+      scarves. Kniterate's own default is 80.
+    - The count keeps the reference's odd or even parity, rounding up
+      (`customistWastePassesV1`). A flipped parity costs seven extra passes
+      to move the waste yarn back.
+    - Below 70 rows it warns that the fabric may not reach the rollers. It
+      never refuses; the machine checks still do.
+    - The swatch file uses the project's setup.
+    - The old `frame` settings stay unread: every project stores their
+      defaults (`wasteRows: 20`), so reading them would shrink every
+      project's waste.
+    - Still to come: the draw thread, the finish, and speed, roller and
+      stitch size for each section.
   - One gauge editor for every kind (`workspace/gauge.tsx::GaugeFields`).
     It saves each gauge as one change, on Enter or when focus leaves it. The
     words for where gauges come from are shared too ("measured", "typical",

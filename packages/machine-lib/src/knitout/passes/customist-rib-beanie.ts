@@ -37,6 +37,8 @@ export interface CustomistRibBeanieInput {
   bodyCarrier: CarrierId
   wasteCarrier: CarrierId
   drawCarrier: CarrierId
+  /** Waste interlock passes at the start (default the reference's 81). */
+  startWastePasses?: number
   /** 2×2 rib rows after the set-up. */
   ribRows: number
   /**
@@ -97,7 +99,7 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
   const kit = flatPieceKit(sim, ops, lo, hi)
   const { offsets, settings, xfers, drain } = kit
   const all = () => true
-  emitCustomistFlatStart(sim, kit, { bodyCarrier: body, wasteCarrier: waste, drawCarrier: draw, extraCarriers })
+  emitCustomistFlatStart(sim, kit, { bodyCarrier: body, wasteCarrier: waste, drawCarrier: draw, extraCarriers, ...(input.startWastePasses !== undefined ? { wastePasses: input.startWastePasses } : {}) })
 
   // 1×1 → 2×2: front offsets ≡ 0 go to the rear, rear offsets ≡ 1 to the front.
   xfers([

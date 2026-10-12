@@ -80,6 +80,8 @@ export {
 } from './knitout/kcode/pass-metrics.js';
 export {
   CUSTOMIST_MATCHED_PRESETS_V1,
+  CUSTOMIST_STANDARD_WASTE_PASSES_V1,
+  customistWastePassesV1,
   buildCustomistMatchedCompileInputV1,
   type CustomistMatchedCompileRequestV1,
   type CustomistMatchedTechniqueV1,

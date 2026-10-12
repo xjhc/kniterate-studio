@@ -66,6 +66,18 @@ const FrameSchema = z.object({
   bindOff: z.enum(['machine-bindoff', 'waste-and-drop']).default('machine-bindoff'),
 });
 
+/**
+ * The machine's start and finish, where a project sets its own: anything left
+ * out knits as the construction's reference does, so a project with no setup
+ * knits exactly as one made before these settings existed. (`frame` above is
+ * older and read by no compiler: every project stores its default.)
+ */
+const MachineSetupSchema = z.object({
+  /** Waste interlock passes before the piece starts. Kniterate's own default is 80; much fewer and the fabric may not reach the rollers. */
+  wasteRows: z.number().int().min(4).max(200).optional(),
+});
+export type MachineSetup = z.infer<typeof MachineSetupSchema>;
+
 const StitchOverrideSchema = z.object({
   id: Id,
   kind: z.literal('stitch'),
@@ -356,6 +368,7 @@ const SetNeedleOffsetEditSchema = z.object({
 });
 const SetStrategyEditSchema = z.object({ kind: z.literal('set-strategy'), strategy: StrategySchema });
 const SetFrameEditSchema = z.object({ kind: z.literal('set-frame'), frame: FrameSchema });
+const SetMachineSetupEditSchema = z.object({ kind: z.literal('set-machine-setup'), setup: MachineSetupSchema.nullable() });
 const SetYarnEditSchema = z.object({ kind: z.literal('set-yarn-assignment'), assignment: YarnAssignmentSchema });
 const RemoveYarnEditSchema = z.object({ kind: z.literal('remove-yarn-assignment'), paletteId: Id });
 const SetPaletteEntryEditSchema = z.object({
@@ -389,6 +402,7 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   SetNeedleOffsetEditSchema,
   SetStrategyEditSchema,
   SetFrameEditSchema,
+  SetMachineSetupEditSchema,
   SetYarnEditSchema,
   RemoveYarnEditSchema,
   SetPaletteEntryEditSchema,
@@ -414,6 +428,7 @@ export interface ProjectState {
   };
   strategy: z.infer<typeof StrategySchema>;
   frame: z.infer<typeof FrameSchema>;
+  setup?: MachineSetup;
   overrides: ProjectOverride[];
   gauge?: ProjectGauge;
   target?: ProjectTarget;
@@ -828,6 +843,8 @@ export interface AuthoredCapacityProjectV1 {
   readonly technique: ProjectState['strategy']['technique'];
   readonly birdseyeMode: 'minimal' | 'full' | null;
   readonly wasteRows: number;
+  /** The project's own waste interlock passes (`setup.wasteRows`), when set. */
+  readonly setupWasteRows?: number;
 }
 
 interface AuthoredCapacityBaseV1 {
@@ -894,6 +911,7 @@ function currentCapacityProjectV1(project: ColorworkProjectV1): AuthoredCapacity
       ? state.strategy.birdseyeMode ?? 'minimal'
       : null,
     wasteRows: state.frame.wasteRows,
+    ...(state.setup?.wasteRows !== undefined ? { setupWasteRows: state.setup.wasteRows } : {}),
   };
 }
 
@@ -903,6 +921,7 @@ function currentCapacityProjectV1(project: ColorworkProjectV1): AuthoredCapacity
  * through: 87 interlock passes plus intro and closing sections.
  */
 const CUSTOMIST_FRAME_PASS_BOUND_V1 = 160;
+const CUSTOMIST_INTERLOCK_BOUND_V1 = 87;
 
 function capacityEstimateV1(project: AuthoredCapacityProjectV1): AuthoredCapacityEstimateV1 {
   // Conservative upper bounds for the fixed V1 rectangular compiler: every
@@ -913,6 +932,8 @@ function capacityEstimateV1(project: AuthoredCapacityProjectV1): AuthoredCapacit
   // output can become Surface-proven.
   const colors = Math.max(1, Math.min(4, project.activeColors));
   const recordMultiplier = colors * 2;
+  // A longer waste interlock than the references' adds its passes to the frame.
+  const framePasses = CUSTOMIST_FRAME_PASS_BOUND_V1 + Math.max(0, (project.setupWasteRows ?? 0) - CUSTOMIST_INTERLOCK_BOUND_V1);
   // Body/positioning passes per design row: Fairisle knits each active color
   // once per row (measured 1.25-2 per color including kickbacks), bounded here
   // at 2 per color plus 2; Birdseye keeps 16 (measured 10-12.5 at four
@@ -922,10 +943,10 @@ function capacityEstimateV1(project: AuthoredCapacityProjectV1): AuthoredCapacit
   const passesPerRow = project.technique === 'fairisle' ? 2 * colors + 2 : 16;
   const loweredPasses = project.height * passesPerRow
     + project.width * 4
-    + CUSTOMIST_FRAME_PASS_BOUND_V1 * 2;
+    + framePasses * 2;
   return {
     knitoutRecords: recordMultiplier * project.width * project.height
-      + 2 * project.width * CUSTOMIST_FRAME_PASS_BOUND_V1
+      + 2 * project.width * framePasses
       + 1_200,
     loweredPasses,
     // Measured body selections are 1.41-1.43 per design cell at two colors
@@ -1118,6 +1139,7 @@ const ProjectStateSchema: z.ZodType<ProjectState> = z.object({
   }),
   strategy: StrategySchema,
   frame: FrameSchema,
+  setup: MachineSetupSchema.optional(),
   overrides: z.array(ProjectOverrideSchema),
   gauge: GaugeSchema.optional(),
   target: TargetSchema.optional(),
@@ -1427,6 +1449,10 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       break;
     case 'set-strategy': state.strategy = edit.strategy; break;
     case 'set-frame': state.frame = edit.frame; break;
+    case 'set-machine-setup':
+      if (edit.setup === null || Object.keys(edit.setup).length === 0) delete state.setup;
+      else state.setup = edit.setup;
+      break;
     case 'set-yarn-assignment': {
       if (!state.chart.palette.some((entry) => entry.id === edit.assignment.paletteId)) throw new Error(`unknown palette id "${edit.assignment.paletteId}"`);
       state.machine.yarnAssignments = state.machine.yarnAssignments.filter((item) => item.paletteId !== edit.assignment.paletteId && item.carrier !== edit.assignment.carrier);

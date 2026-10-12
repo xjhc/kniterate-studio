@@ -11,6 +11,7 @@ import { Chips, NumberInput, Section } from '../workspace/panel';
 import { RunSchematic } from '../workspace/RunSchematic';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
 import { StitchSection, YarnGaugeSection } from './DesignSections';
+import { MachineSetupSection } from '../workspace/MachineSetupSection';
 import type { PieceId } from './draft';
 import { KnitFileView } from './KnitFileView';
 import { panelEdit, type PanelPlan } from './panel';
@@ -88,6 +89,7 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
         <p className="design-hint">0 cm: no rib ends.</p>
       </Section>
       <YarnGaugeSection yarn={yarn} carrier={plan.carriers.main} bodyName={object.body.name} gauge={plan.gauge} ribGauge={object.ends.cm > 0 ? plan.ribGauge : null} operate={operate} onRibGauge={(next, label) => change(label, { ...object, ribGauge: { ...next } })} />
+      <MachineSetupSection state={state} onChange={(setup, label) => { operate(label, [{ kind: 'set-machine-setup', setup }]); }} />
     </aside>
     <section className="sweater-stage" aria-label={piece.name}>
       <header className="stage-head">

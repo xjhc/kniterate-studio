@@ -20,7 +20,7 @@ export interface Operation {
 
 const EDIT_LABELS: Record<string, string> = {
   'paint-cells': 'Paint stitches', 'insert-row': 'Insert a row', 'delete-row': 'Delete a row', 'set-width': 'Change width', 'set-height': 'Change height',
-  'set-needle-offset': 'Move on the bed', 'set-strategy': 'Change backing', 'set-frame': 'Change frame', 'set-yarn-assignment': 'Change a yarn',
+  'set-needle-offset': 'Move on the bed', 'set-strategy': 'Change backing', 'set-frame': 'Change frame', 'set-machine-setup': 'Change machine settings', 'set-yarn-assignment': 'Change a yarn',
   'remove-yarn-assignment': 'Remove a yarn', 'set-palette-entry': 'Change a colour', 'add-palette-entry': 'Add a colour', 'add-override': 'Add an override', 'remove-override': 'Remove an override',
   'set-gauge': 'Change gauge', 'set-target': 'Change target size', 'set-object': 'Change the garment', 'set-placement': 'Change a motif',
   'remove-placement': 'Remove a motif', 'record-trial': 'Record a trial',
