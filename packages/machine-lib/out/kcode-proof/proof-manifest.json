@@ -30094,7 +30094,7 @@
     ]
   },
   "contract": {
-    "sha256": "a0955fc5c78305f7c056b79ffd6f157823d4bb3fce7839ecf2a67d3fa02da370",
+    "sha256": "611ed6b2bd02a261b005025e490ebbd4583820be540493b2f717efcd68badcab",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30128,8 +30128,8 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "20d8a48a46ee2434c0820f171a18ff9f524244925ac05f2b4c13bf00ecd7c1cc",
-        "bytes": 80397
+        "sha256": "f808943371fae7a4b15f2ecf6c34a0bfc7adc1159174326715cc74642b1975b7",
+        "bytes": 80578
       },
       {
         "path": "../../apps/studio/src/StartScreen.tsx",
@@ -30198,8 +30198,8 @@
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.tsx",
-        "sha256": "ec657d7de041b478cd3cbf965a8c9c3af13c116be5bd5cc90605d6aec83ff21b",
-        "bytes": 5576
+        "sha256": "ba9c286108e0d7d23083612e0ced1dd70533759dc194a6a1de9f4697694ea0eb",
+        "bytes": 5925
       },
       {
         "path": "../../apps/studio/src/blanket/birdseyeBody.test.ts",
@@ -30258,8 +30258,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "49c0fe982cff6e532aed6b0c2a555d7bab700ad29d4950653b2389146b62a3bc",
-        "bytes": 31813
+        "sha256": "a1df01494550c29c43a070549ead83a1f50ff96a62fe29a1a20f7f0b6649cbdc",
+        "bytes": 31796
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
@@ -30668,8 +30668,8 @@
       },
       {
         "path": "../../apps/studio/src/sweater/PanelWorkspace.tsx",
-        "sha256": "79b8700993ef717f2ac76dbbfae8011570ea55619e44b0bcbe342c4481d02ce4",
-        "bytes": 7323
+        "sha256": "50f781ab6303de12a418c977263bf6e8ffbc17b03c8ee5e0f30c41f332de0b8f",
+        "bytes": 7400
       },
       {
         "path": "../../apps/studio/src/sweater/PieceView.tsx",
@@ -30693,13 +30693,13 @@
       },
       {
         "path": "../../apps/studio/src/sweater/SweaterStatusPanel.tsx",
-        "sha256": "ce1decf1cbb2077760b11d3b5e16de1c85534b15ce71db49325a45e60b6b1cd2",
-        "bytes": 4282
+        "sha256": "bb8486ddaf0c93962e461cdd754000a6bcc40e936713cb0c8e7b7b66fbd6d9ab",
+        "bytes": 4351
       },
       {
         "path": "../../apps/studio/src/sweater/SweaterWorkspace.tsx",
-        "sha256": "d0a17dc4ee93e35a391072bc4679f76e673d34e1e45419833c760252ca697e4c",
-        "bytes": 9638
+        "sha256": "6c1ced22345b57bbc13b4f10f0da306019ed8259a2d2abad5a38180d3730f577",
+        "bytes": 9718
       },
       {
         "path": "../../apps/studio/src/sweater/TextureSwatch.tsx",
@@ -30827,6 +30827,16 @@
         "bytes": 757
       },
       {
+        "path": "../../apps/studio/src/workspace/fileNames.test.ts",
+        "sha256": "effaa8eaf93bf2ec85db37a38e5a9902a32ea851a1d9ff22f8a41c659c5496a6",
+        "bytes": 547
+      },
+      {
+        "path": "../../apps/studio/src/workspace/fileNames.ts",
+        "sha256": "27c79adf758269e6eff31c205f354fddac37d6311fc527d3eb92b29714472182",
+        "bytes": 756
+      },
+      {
         "path": "../../apps/studio/src/workspace/gauge.test.ts",
         "sha256": "4bae921310ba7ac3c9a00505b27d849e31845fa29f009b5672de6e01dc3b6e6a",
         "bytes": 2034
@@ -30848,8 +30858,8 @@
       },
       {
         "path": "../../apps/studio/src/workspace/workspace.css",
-        "sha256": "30206171349c58906b9abfa4f3dee6921624337c95248860e3fc8c5e9bfae60c",
-        "bytes": 9001
+        "sha256": "31eb880ba822c35fd012bb3ca58fe30e4c108964c99331fc3c5dd73a83179294",
+        "bytes": 9115
       },
       {
         "path": "../../apps/studio/src/zip.ts",
@@ -30908,7 +30918,7 @@
       },
       {
         "path": "../../e2e/panel-workflow.spec.ts",
-        "sha256": "74f8a0f39eed3c190d5341dd0f2cfe938608862ab701a17fd0a72eb824845742",
+        "sha256": "7fb94968874bb606aefa11266614f7334e77e57d46d74a4f5acbb680171415d1",
         "bytes": 3174
       },
       {
@@ -30918,8 +30928,8 @@
       },
       {
         "path": "../../e2e/states.spec.ts",
-        "sha256": "fa5cc5eed063acbf1920bdffdf444c88f5cd87614c0f755ab75b29e50396cb3f",
-        "bytes": 7711
+        "sha256": "81e3d0390b4fa1a21938d77dd8bea0e268f9ac625aec23e051c8de3a66ad3bf9",
+        "bytes": 7857
       },
       {
         "path": "../../e2e/sweater-workflow.spec.ts",
