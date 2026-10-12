@@ -58,10 +58,41 @@ export function edgeRhythm(events: readonly ShapingEvent[], edges: readonly Shap
   return steps;
 }
 
-/** The outer edge's and the neck edge's shaping of a piece (the right side mirrors the left). */
-export function pieceRhythm(raster: PanelPlan): { edge: RhythmStep[]; neck: RhythmStep[] } {
+export interface SidedStep extends RhythmStep {
+  /** 'both' when the two edges do the same on the same rows. */
+  side: 'both' | 'left' | 'right';
+}
+
+/**
+ * A pair of edges' shaping in row order. A run both edges share reads once;
+ * where they differ (a bind-off waits a row for the yarn on the right, and
+ * the shaping after it catches up differently), each edge's own steps.
+ */
+export function pairedRhythm(events: readonly ShapingEvent[], left: ShapingEvent['edge'], right: ShapingEvent['edge']): SidedStep[] {
+  const key = (step: RhythmStep) => `${step.from}|${step.to}|${step.text}`;
+  const lefts = edgeRhythm(events, [left]);
+  const rights = edgeRhythm(events, [right]);
+  const leftKeys = new Set(lefts.map(key));
+  const rightKeys = new Set(rights.map(key));
+  const order = { both: 0, left: 1, right: 2 } as const;
+  return [
+    ...lefts.map((step) => ({ ...step, side: rightKeys.has(key(step)) ? 'both' as const : 'left' as const })),
+    ...rights.filter((step) => !leftKeys.has(key(step))).map((step) => ({ ...step, side: 'right' as const })),
+  ].sort((a, b) => a.from - b.from || order[a.side] - order[b.side]);
+}
+
+/** A step's text naming its edge when only one edge does it: "Row 140, right: bind off 8". */
+export function sidedText(step: SidedStep): string {
+  return step.side === 'both' ? step.text : step.text.replace(': ', `, ${step.side}: `);
+}
+
+/** The outer edges' and the neck edges' shaping of a piece; the edges' runs stop at the neck, as the shoulders knit apart. */
+export function pieceRhythm(raster: PanelPlan): { edge: SidedStep[]; neck: SidedStep[] } {
+  const centre = edgeRhythm(raster.events, ['centre']).map((step) => ({ ...step, side: 'both' as const }));
+  const split = raster.events.find((event) => event.kind === 'neck-split');
+  const parts = split === undefined ? [raster.events] : [raster.events.filter((event) => event.row < split.row), raster.events.filter((event) => event.row >= split.row)];
   return {
-    edge: edgeRhythm(raster.events, ['left']),
-    neck: edgeRhythm(raster.events, ['centre', 'neck-left']),
+    edge: parts.flatMap((part) => pairedRhythm(part, 'left', 'right')),
+    neck: [...centre, ...pairedRhythm(raster.events, 'neck-left', 'neck-right')].sort((a, b) => a.from - b.from),
   };
 }

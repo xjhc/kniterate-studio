@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { appendProjectOperation, materializeColorworkProject, sweaterObjectOf, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { defaultMeasurements, draftSweater, edgeProblem, SIZES, type ShapePoint, type Silhouette } from './draft';
-import { edgeRhythm } from './rhythm';
+import { edgeRhythm, pairedRhythm, sidedText } from './rhythm';
 import { rasterizePiece, sliceOutline } from './rasterize';
 import { sweaterPlanOf, createSweaterProject, planSweater, sweaterEdit, type SweaterIntent } from './sweater';
 import { runSweaterPipeline } from './sweaterPipeline';
@@ -198,6 +198,41 @@ describe('hand-shaped edges', () => {
       'Row 41: bind off 6',
       'Rows 51–64: increase 1 every 6–7 rows, 3 times',
     ]);
+  });
+
+  it('reads a run both edges share once, and names the edge where they differ', () => {
+    const events = [
+      { row: 10, kind: 'bind-off' as const, edge: 'left' as const, stitches: 8 },
+      { row: 11, kind: 'bind-off' as const, edge: 'right' as const, stitches: 8 },
+      { row: 11, kind: 'decrease' as const, edge: 'left' as const, stitches: 2 },
+      { row: 20, kind: 'decrease' as const, edge: 'left' as const, stitches: 1 },
+      { row: 20, kind: 'decrease' as const, edge: 'right' as const, stitches: 1 },
+    ];
+    expect(pairedRhythm(events, 'left', 'right').map(sidedText)).toEqual([
+      'Row 11, left: bind off 8',
+      'Row 12, left: decrease 2',
+      'Row 12, right: bind off 8',
+      'Row 21: decrease 1',
+    ]);
+  });
+
+  it('writes each edge\'s own shaping, with stitch counts that match the plan', () => {
+    for (const silhouette of ['drop-shoulder', 'j-sleeve', 'set-in'] as Silhouette[]) {
+      const plan = planOf(create({ silhouette }));
+      for (const piece of plan.pieces) {
+        const raster = piece.raster!;
+        const width = (row: number) => raster.rows[row]!.segments.reduce((sum, segment) => sum + segment.hi - segment.lo + 1, 0);
+        for (const step of pieceSteps(piece, plan)) {
+          const counted = /^Rows? (?:\d+–)?(\d+) .*→ (\d+) stitches\.$/.exec(step);
+          if (counted) expect(Number(counted[2]), `${silhouette} ${piece.id}: ${step}`).toBe(width(Number(counted[1]) - 1));
+        }
+      }
+    }
+    // A set-in armhole binds off on the left a row before the right, and the right catches up its own way.
+    const setIn = planOf(create({ silhouette: 'set-in' }));
+    const back = pieceSteps(setIn.pieces[0]!, setIn);
+    expect(back).toContainEqual(expect.stringMatching(/^Row \d+ at the left edge: bind off \d+ → \d+ stitches\.$/));
+    expect(back).toContainEqual(expect.stringMatching(/^Row \d+ at the right edge: bind off \d+/));
   });
 });
 

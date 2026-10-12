@@ -1,6 +1,6 @@
 import { materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import type { PanelPlan } from './rasterize';
-import { edgeRhythm } from './rhythm';
+import { edgeRhythm, pairedRhythm, type RhythmStep } from './rhythm';
 import type { PiecesPlan, SweaterPiecePlan, SweaterPlan } from './sweater';
 import type { SweaterRunSummary } from './sweaterRun';
 import { sweaterSchematicSvg } from './schematic';
@@ -36,19 +36,29 @@ export function pieceSteps(piece: SweaterPiecePlan, plan: PiecesPlan): string[] 
     const top = raster.realized.ribRows.top;
     if (top > 0) steps.push(`Rows ${raster.rows.length - top + 1}–${raster.rows.length}: ${ribName(rib)} rib (${piece.id === 'panel' ? 'end' : 'neck edge'}).`);
   }
-  // Shaping in the machine knitter's rhythm, with the stitch count after each step.
+  // Shaping in the machine knitter's rhythm, naming the edge where the two
+  // sides differ, with the stitch count once every step up to that row is told.
   const split = raster.events.find((event) => event.kind === 'neck-split');
   const before = raster.events.filter((event) => split === undefined || event.row < split.row);
-  const after = split === undefined ? [] : raster.events.filter((event) => event.row > split.row);
-  // A bind-off on the right comes a row after its left one; count after both.
-  const settled = (row: number) => Math.max(row, ...before.filter((event) => event.kind === 'bind-off' && event.edge === 'right' && event.row >= row && event.row <= row + 1).map((event) => event.row));
-  for (const step of edgeRhythm(before, ['left'])) steps.push(`${step.text.replace(': ', ' at each side: ')} → ${width(raster, step.kind === 'bind-off' ? settled(step.to) : step.to)} stitches.`);
+  const after = split === undefined ? [] : raster.events.filter((event) => event.row >= split.row && event !== split);
+  const edges = pairedRhythm(before, 'left', 'right');
+  edges.forEach((step, index) => {
+    const told = Math.max(...edges.slice(0, index + 1).map((item) => item.to));
+    const next = edges[index + 1];
+    const count = told === step.to && (next === undefined || next.from > step.to) ? ` → ${width(raster, step.to)} stitches` : '';
+    steps.push(`${step.text.replace(': ', step.side === 'both' ? ' at each side: ' : ` at the ${step.side} edge: `)}${count}.`);
+  });
   if (split !== undefined) {
     steps.push(`Row ${split.row + 1}: neck. Bind off the centre ${split.stitches} stitches. From here the left shoulder knits on C${plan.carriers.main} and the right shoulder on C${plan.carriers.second}, at the same time.`);
-    const neck = edgeRhythm(after, ['neck-left']);
-    if (neck.length > 0) steps.push(`Each neck edge: ${neck.map((step) => step.text.replace(/^Rows? /, (match) => match.toLowerCase())).join('; ')}.`);
-    const shoulder = edgeRhythm(after, ['left']);
-    if (shoulder.length > 0) steps.push(`Each armhole edge: ${shoulder.map((step) => step.text.replace(/^Rows? /, (match) => match.toLowerCase())).join('; ')}; both shoulders on the same rows.`);
+    const lower = (list: readonly RhythmStep[]) => list.map((step) => step.text.replace(/^Rows? /, (match) => match.toLowerCase())).join('; ');
+    // Each shoulder's neck and armhole edges: once when both shoulders shape alike, else each its own.
+    for (const [name, left, right] of [['neck', 'neck-left', 'neck-right'], ['armhole', 'left', 'right']] as const) {
+      const lefts = edgeRhythm(after, [left]);
+      const rights = edgeRhythm(after, [right]);
+      if (lefts.length === 0 && rights.length === 0) continue;
+      if (lower(lefts) === lower(rights)) steps.push(`Each ${name} edge: ${lower(lefts)}${name === 'armhole' ? '; both shoulders on the same rows' : ''}.`);
+      else for (const [side, list] of [['Left', lefts], ['Right', rights]] as const) if (list.length > 0) steps.push(`${side} ${name} edge: ${lower(list)}.`);
+    }
   }
   const last = raster.rows.length - 1;
   const lastRow = raster.rows[last]!;
