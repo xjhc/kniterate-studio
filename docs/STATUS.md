@@ -509,6 +509,15 @@ ship," trust this file and the working tree instead.
     steps the compiler emits). The crown's straight rows at the end are named
     "Gathered top" in Design, the schematic and the machine file, and yarn
     that one pass carries across empty needles is drawn as a strand.
+  - **Whole hat (2026-10-11).** A beanie's stage has two tabs, like a
+    sweater's pieces: Whole hat and Beanie (the chart, where it opens).
+    - Whole hat's Design view draws the hat as worn, from the front or the
+      back (`garment/beanieWorn.ts`): the folded cuff, the chart as knitted
+      (motifs drawn in) wrapped round to the back seam, and the body and
+      crown's knitted length running up the side and over a rounded top.
+    - It shows the hat unstretched. How far it stretches on a head, and how
+      the gathered top bunches, are not modelled. Clicking it opens the
+      chart.
   - A beanie's swatch is its gauge ("Your swatch", left). A new gauge resizes
     the whole hat and re-converts its motifs in the same change
     (`trials.ts::reconvertMotifs`). Measuring a knitted hat (the trial record)

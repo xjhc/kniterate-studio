@@ -12,6 +12,7 @@ import { reconvertMotifs } from '../trials';
 import { GarmentFitSection } from '../garment/GarmentFitSection';
 import { ImageIntakeDialog, MotifSection, placementPixels } from '../garment/MotifPanel';
 import { MeasureDialog } from '../garment/MeasureDialog';
+import { BeanieWornView } from '../garment/BeanieWornView';
 import { readKnitFile, type KnitFileCarriers } from '../sweater/knitFile';
 import { KnitFileView } from '../sweater/KnitFileView';
 import { RunSchematic } from '../workspace/RunSchematic';
@@ -92,6 +93,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const [issue, setIssue] = useState<string | null>(null);
   const [focusedRowId, setFocusedRowId] = useState<string | null>(null);
   const [fileMode, setFileMode] = useState<'read' | 'step'>('read');
+  /** A beanie's Design view: the whole hat as worn, or its chart to paint. */
+  const [wholeHat, setWholeHat] = useState(false);
   const projectRef = useRef(project);
   projectRef.current = project;
   // Opening a file starts another document session, even when it has the same project id.
@@ -207,8 +210,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   };
   const goTo = (target: string) => {
     if (target === 'program') { onView('file'); return; }
-    if (target.startsWith('placement:')) { setSelectedPlacement(target.slice(10)); onView('design'); }
-    else if (target.startsWith('rows/')) { setFocusedRowId(target.slice(5)); onView('design'); }
+    if (target.startsWith('placement:')) { setSelectedPlacement(target.slice(10)); setWholeHat(false); onView('design'); }
+    else if (target.startsWith('rows/')) { setFocusedRowId(target.slice(5)); setWholeHat(false); onView('design'); }
     // A folded section hides its fields: open the folded ones so the target can be shown.
     if (!document.getElementById(target)) document.querySelectorAll<HTMLButtonElement>('.chart-design .design-section:not(.open) > .design-section-head').forEach((head) => head.click());
     requestAnimationFrame(() => {
@@ -300,6 +303,9 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
         {fileMode === 'step' && stepThrough ? <div className="step-through">{stepThrough}</div> : <KnitFileView key={project.id} file={knitFile} kcText={kcode.kcText} fileName={fileName} copies={1} hex={chart.palette[0]?.hex ?? '#D9CBB0'} carriers={carriers} stitchCm={stitchCm ?? 0.4} rowCm={rowCm ?? { rib: 0.3, body: 0.3 }} onDownload={status.onDownloadKc} />}
       </div>;
     }
+    if (wholeHat && isGarment && plan.sections && plan.predicted) {
+      return <BeanieWornView cells={chart.cells} palette={chart.palette} ribRows={ribRows} sections={plan.sections} circumferenceCm={plan.predicted.widthCm.value} onOpen={() => setWholeHat(false)} />;
+    }
     return <div className="chart-design-stage">
       <ChartToolbar active={tool} onTool={setTool} brush={brush} onBrush={setBrush} mirror={mirror} onMirror={setMirror} onCopy={() => selection && setClipboard(copy(chart, selection))} onCut={() => { if (!selection) return; const result = cut(chart, selection); setClipboard(result.clipboard); commitMutation(result.mutation); }} onPaste={() => clipboard && commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 }))} onDelete={() => selection && commitMutation(clear(chart, selection))} onZoomIn={() => setZoom(Math.min(3, zoom * 1.2))} onZoomOut={() => setZoom(Math.max(MIN_CHART_ZOOM, zoom / 1.2))} onZoomSelection={() => selection ? setZoom(Math.min(2.5, Math.max(.6, 400 / Math.max(selection.right - selection.left + 1, selection.bottom - selection.top + 1) / 16))) : setFitRequest((request) => request + 1)} hasSelection={selection !== null} canPaste={clipboard !== null} />
       <div className="target-chart-stage">
@@ -315,7 +321,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     <BlanketSetupRail state={materialized.state} compile={compile} outputError={outputError}
       size={isGarment ? <>
         <GarmentFitSection key={`fit-${project.id}`} state={materialized.state} plan={plan} onFit={fit} />
-        <MotifSection key={`motifs-${project.id}-${renderedGeneration}`} latestState={latestMotifState} state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={setSelectedPlacement} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement, refresh) => setIntake({ replacing: placement, refresh })} />
+        <MotifSection key={`motifs-${project.id}-${renderedGeneration}`} latestState={latestMotifState} state={materialized.state} placements={resolvedPlacements} selected={selectedPlacement} staleIds={stalePlacements} onSelect={(id) => { setSelectedPlacement(id); if (id !== null) setWholeHat(false); }} onOperation={operate} onAddImage={() => setIntake({ replacing: null })} onReplaceImage={(placement, refresh) => setIntake({ replacing: placement, refresh })} />
       </> : <ChartSizeSection key={`size-${project.id}`} state={materialized.state}
         onSize={(change, label) => operate(label, withSizingFixes(project, [{ kind: 'set-target', target: { ...materialized.state.target, ...change } }]))}
         onGauge={(next, label) => operate(label, withSizingFixes(project, [{ kind: 'set-gauge', gauge: { ...next } }]))}
@@ -325,7 +331,12 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       onStrategy={(technique) => { if (technique === materialized.state.strategy.technique) return; if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`); else commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } }); }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
     <section className="sweater-stage" aria-label={kindName}>
       <header className="stage-head">
-        <span className="stage-title">{kindName}</span>
+        {isGarment
+          ? <nav className="stage-tabs" aria-label="Pieces">
+              <button type="button" className={wholeHat ? 'active' : ''} onClick={() => { setWholeHat(true); onView('design'); }}>Whole hat</button>
+              <button type="button" className={wholeHat ? '' : 'active'} onClick={() => setWholeHat(false)}>{kindName}</button>
+            </nav>
+          : <span className="stage-title">{kindName}</span>}
         <ViewSwitch view={view} onView={onView} />
       </header>
       {issue && <p className="stage-error" role="alert">{issue}<button type="button" className="link-button" onClick={() => setIssue(null)}>Dismiss</button></p>}
@@ -349,7 +360,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       atTheMachine={story?.operatorChecks ?? []}
       footer={story?.notices.map((notice) => <p className="design-hint" role="note" key={notice}>{notice}</p>)}
     />
-    {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); onView('design'); setFitRequest((request) => request + 1); } }} />}
+    {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); setWholeHat(false); onView('design'); setFitRequest((request) => request + 1); } }} />}
     {showMeasure && <MeasureDialog project={project} hasCuff={beanieObjectOf(materialized.state)?.construction === 'rib-cuff-jersey-body'} candidateSha256={candidateSha256} onClose={() => setShowMeasure(false)} onRecord={(label, edits) => { if (operate(label, edits)) setShowMeasure(false); }} />}
   </main>;
 }

@@ -50,7 +50,9 @@ runs, and the workspace shows exactly what those files knit.
   - **Design:** what you edit. That is the chart, or a piece's stitches and
     shape, or the garment as worn. It is drawn to scale, like the schematic.
     A beanie shows its whole piece: the rib cuff, the body you paint, and
-    the crown the machine shapes. Drawing is freehand: pen, line,
+    the crown the machine shapes. Its Whole hat tab shows the hat as worn,
+    front or back: the cuff folded, the chart wrapped round to the back
+    seam, the crown over the top. Drawing is freehand: pen, line,
     rectangle, circle, eraser and fill, a round brush 1 to 9 stitches
     across (round on the fabric, so taller in rows than in stitches; `[`
     and `]` change it), and mirror left–right and top–bottom (a beanie

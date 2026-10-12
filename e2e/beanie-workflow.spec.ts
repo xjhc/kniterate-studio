@@ -39,6 +39,23 @@ async function placeImage(page: Page, heightCm: string) {
 const headRow = (page: Page) => page.getByRole('group', { name: 'Finished measurements' }).locator('.measure-row').filter({ hasText: /^Head/ });
 const needles = (page: Page, count: number) => headRow(page).locator('.count').filter({ hasText: new RegExp(`^${count} st$`) });
 
+test('the whole hat is drawn as worn, the motif on the front and the seam at the back; clicking it opens the chart', async ({ page }) => {
+  test.setTimeout(120_000);
+  await createBeanie(page);
+  await placeImage(page, '6');
+  const pieces = page.getByRole('navigation', { name: 'Pieces' });
+  await pieces.getByRole('button', { name: 'Whole hat' }).click();
+  const front = page.getByRole('img', { name: 'The hat as worn, from the front' });
+  await expect(front).toBeVisible();
+  // The ring is centred, so it faces front: its colour is drawn there.
+  await expect(front.locator('rect[fill="#F2F2F2"]').first()).toBeAttached();
+  await page.getByRole('tab', { name: 'Back' }).click();
+  await expect(page.getByRole('img', { name: 'The hat as worn, from the back' }).locator('.beanie-seam')).toBeAttached();
+  await page.getByRole('button', { name: 'Open the chart' }).click();
+  await expect(pieces.getByRole('button', { name: 'Beanie' })).toHaveClass(/active/);
+  await expect(page.locator('.chart-toolbar')).toBeVisible();
+});
+
 test('the status panel walks the steps: the swatch is next, then the download, each ticked when done', async ({ page }) => {
   test.setTimeout(120_000);
   await createBeanie(page);
