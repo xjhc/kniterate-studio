@@ -30094,7 +30094,7 @@
     ]
   },
   "contract": {
-    "sha256": "70ba036a8d5bbb33c7003d0f839d7c615df3b070e6e13b5578ecfae828cb9c63",
+    "sha256": "8a9d713b0e6c704c4890afcf535c400e6646be54c9b16cca3ff56faa57077caa",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30172,6 +30172,16 @@
         "bytes": 3118
       },
       {
+        "path": "../../apps/studio/src/backing.test.ts",
+        "sha256": "6bcf44f70892447a4e8af89fee48f41ee657e7ace2acc460cd29f7dfe9073d1a",
+        "bytes": 3700
+      },
+      {
+        "path": "../../apps/studio/src/backing.ts",
+        "sha256": "1bdeb5ee58a0dc179d28f41ac8e59367c3dd2133cb400cda0ed6d8b108812755",
+        "bytes": 2580
+      },
+      {
         "path": "../../apps/studio/src/beanie.ts",
         "sha256": "877a4ed7deafd97b15a9780d08e86c07d095a5f42fb5c42b3dd669b82c355ffe",
         "bytes": 10193
@@ -30183,13 +30193,13 @@
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.test.tsx",
-        "sha256": "41e86370f73bddd36425c80ca37b94e40fbbc7a1aed7dfe97f9a144012a7eb92",
-        "bytes": 3018
+        "sha256": "7f4cc596ade907b7ea796406a225b8762e78976e2db428a00bc5de5e5484ba2f",
+        "bytes": 4961
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.tsx",
-        "sha256": "9b0f4f80dac91ff3d389a84aa9d64153b894932bea6b92092fca43a56864e07d",
-        "bytes": 5101
+        "sha256": "a9ea8c0b44333071efc2dca315b674119bbb82e945ae5b85e69a9b94d814fd0d",
+        "bytes": 5756
       },
       {
         "path": "../../apps/studio/src/blanket/birdseyeBody.test.ts",
@@ -30203,13 +30213,13 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.test.ts",
-        "sha256": "f30853acb091f245941eda131261fd9c78d9bb8b97d3a053120c8e74aa461fc4",
-        "bytes": 21144
+        "sha256": "6b6b84bd090ecd7b86d596add8856226e4e2d64298f0fc6a74f4ccfe84e474fa",
+        "bytes": 21333
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.ts",
-        "sha256": "9b9a9e4e72e183f8a6e3f7295a68a7da88d7eb11da4719bf9195cb1259ff430c",
-        "bytes": 24999
+        "sha256": "120dba795c9512ad0d415e0cb37c074ed575d5856be19744184889f3f018e830",
+        "bytes": 25227
       },
       {
         "path": "../../apps/studio/src/blanket/useBlanketCompiler.ts",
@@ -30243,18 +30253,18 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartToolbar.tsx",
-        "sha256": "a654ca900a7c3f5b72c8692587bf7006cd0efaf70383d43aad9a3589d71d61fb",
-        "bytes": 2990
+        "sha256": "80df2c3beaa2d0f509ae861f48428e3a938afa7a71655ab8ab53564eae46b1e9",
+        "bytes": 4826
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "5f635d3ad7cf5219893406da7b9ad4e2bc8966cfd4e6dee137bfe21ef4241a1b",
-        "bytes": 28607
+        "sha256": "9a00d1b319555dc9e8db90251fbf11f42ed144001b9e3003f305ce0935fa4fc4",
+        "bytes": 29584
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
-        "sha256": "5008d8b77f24bf257821249548808eb5abfa467c0f65c84375cd547aefc1a901",
-        "bytes": 29529
+        "sha256": "6e823c8403817bfb64f9615b5352473fe42f52f1e0602f2e957d0110d6c8df33",
+        "bytes": 32560
       },
       {
         "path": "../../apps/studio/src/chart/PaletteRail.tsx",
@@ -30263,8 +30273,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/ProjectDialogs.tsx",
-        "sha256": "c7c75d73d04685b0d561e51270ecf504c20b14359242afbf597f88b1bfd1f0b0",
-        "bytes": 19531
+        "sha256": "5ded1a8c7dca162ea50f6c895b253bb1c4c582b6a4d79150211107311a8cc755",
+        "bytes": 19495
       },
       {
         "path": "../../apps/studio/src/chart/canvasCoordinates.test.ts",
@@ -30388,8 +30398,8 @@
       },
       {
         "path": "../../apps/studio/src/garment/GarmentFitSection.tsx",
-        "sha256": "c64f7970b6003dabfdd5e3cdeb148f4358036c6138c8a91ef3f41fd13caafa3b",
-        "bytes": 11307
+        "sha256": "2b5401bc395363291ce5a1a278b180f74b95f4f0b7d85590d264de1f9ffab3a6",
+        "bytes": 11340
       },
       {
         "path": "../../apps/studio/src/garment/GarmentSheet.tsx",
@@ -30408,8 +30418,8 @@
       },
       {
         "path": "../../apps/studio/src/handoff.ts",
-        "sha256": "526d75645c05ba40205255b5e2612e87252e9a859aad845610e06fd10192207d",
-        "bytes": 31475
+        "sha256": "a2e2d256a7d24ada71b44656cbd0a36f0e4b08f25deb19e7a7288a66da48c851",
+        "bytes": 31746
       },
       {
         "path": "../../apps/studio/src/imageChart.ts",
@@ -30568,8 +30578,8 @@
       },
       {
         "path": "../../apps/studio/src/readiness.ts",
-        "sha256": "fc745369d93db556368c82abcce643eac26085f726fb4f809d6dc14f944656bd",
-        "bytes": 8462
+        "sha256": "9c20b39917c7fc0aedc9b1baefb9966b103191d901ba456316d00d130aee964a",
+        "bytes": 8634
       },
       {
         "path": "../../apps/studio/src/sourceWindow.test.tsx",
@@ -30593,8 +30603,8 @@
       },
       {
         "path": "../../apps/studio/src/styles.css",
-        "sha256": "db5b83df48cb7ce18f9a7dd146492fd4f9ad1028671cdb3e65dae014b4a02ede",
-        "bytes": 59832
+        "sha256": "2fe0f114cb4ef315597b45a038c7d236c65f30cd725ab292e3be1ab115b8ff58",
+        "bytes": 59944
       },
       {
         "path": "../../apps/studio/src/swatch.test.ts",
@@ -30833,8 +30843,8 @@
       },
       {
         "path": "../../e2e/m3b.spec.ts",
-        "sha256": "8033aa36ab42aa2a2f95295a6743114e5660ccea6de50aa4fbffc53dae9e42c0",
-        "bytes": 6629
+        "sha256": "7b3979e1b872487ce37c683a730f0297f93272b05d0aac98d0a6a16d08ed0fc4",
+        "bytes": 8919
       },
       {
         "path": "../../e2e/m3c.spec.ts",
@@ -30998,8 +31008,8 @@
       },
       {
         "path": "../colorwork-core/src/tools.ts",
-        "sha256": "d0b5cc839e516b4232ec0cf7cbd191fef87ecfee8736ae0c5fa8503ffdaeee18",
-        "bytes": 3017
+        "sha256": "0070e7a4556e1e4ff368344192a9fae9db8a4864d7f95be422ac62e6a3c55194",
+        "bytes": 7196
       },
       {
         "path": "../colorwork-core/src/types.ts",
@@ -31108,7 +31118,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "cc345939a1953a130f1269c22460ecbbadcbcf947b5a7266f3e31d2636343843",
+        "sha256": "789470b7552fdf1733b237dd1e751615da3209dfd19d50d5f038b027ba98f852",
         "bytes": 179
       },
       {
