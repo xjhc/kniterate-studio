@@ -30094,7 +30094,7 @@
     ]
   },
   "contract": {
-    "sha256": "d3a5a7e6417ab0a66b73414cb125ed0af368c539edb14b41d850ec60319d1072",
+    "sha256": "3012ba2511849e007287a0afd476e7e1925cdfc4095363e648c20b30bad8ec9e",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30188,8 +30188,8 @@
       },
       {
         "path": "../../apps/studio/src/beanieWorkflow.test.ts",
-        "sha256": "062778e3875e91b24508f7a610eca89b2be70a3a07216ef64420687d6a8cd804",
-        "bytes": 26950
+        "sha256": "725b76f0fb04711deb0e408c023b7714949ea11399be10c5565ea654d6edf5ed",
+        "bytes": 28411
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.test.tsx",
@@ -30258,8 +30258,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "61823aaf50f253f2e848d271bd3a5badca62ba42f8f1fdaa7037580622096803",
-        "bytes": 31685
+        "sha256": "bdce9d7b8196e372ea458e2c766bd7576a2dc058c99852242531c9ae27810722",
+        "bytes": 31707
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
@@ -30448,8 +30448,8 @@
       },
       {
         "path": "../../apps/studio/src/handoff.ts",
-        "sha256": "44c3e20e52bc756cff6ec65b0c05c6999d3af5bb612f5e650952dec296997354",
-        "bytes": 31481
+        "sha256": "5cf52ed8a50a2648f0b0636554c07404d4f2e0f1fb8b7e7485c2e5e57d57192c",
+        "bytes": 32214
       },
       {
         "path": "../../apps/studio/src/imageChart.ts",
@@ -30603,8 +30603,8 @@
       },
       {
         "path": "../../apps/studio/src/plan.ts",
-        "sha256": "6d874d77888f8f2aaef114c0171285b449d3253dd48c5f73c764e01c4beba637",
-        "bytes": 24036
+        "sha256": "e9ff5dd8c6eb33d446cf2abd16ccfc488c2a56bcc4a8d3a9c4e6f4b6dac78d02",
+        "bytes": 24115
       },
       {
         "path": "../../apps/studio/src/readiness.ts",
@@ -30853,8 +30853,8 @@
       },
       {
         "path": "../../e2e/beanie-workflow.spec.ts",
-        "sha256": "45e65e70fe8c5325a63fd3cee38915a3314c3f86b8a4bc7c58ad61e149457741",
-        "bytes": 26884
+        "sha256": "3b51e92f31eaecc4254d991fabfcc8ce39096e459cc8d115550e8c6d1cac8799",
+        "bytes": 27577
       },
       {
         "path": "../../e2e/execution-inspector.spec.ts",
