@@ -375,7 +375,7 @@ describe('fourth review', () => {
     const from = continuationFrom(project, agent);
     expect(from).not.toBeNull();
     expect(agent.history.entries[from!]!.group).toBe('agent');
-  });
+  }, 30_000); // 257 edits, each re-materialized: over 5 s on a shared CI runner.
 
   it('1: an asynchronous result applies only to the placement it started from', () => {
     const project = place(toque(), 'bird');
