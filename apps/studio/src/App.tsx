@@ -53,8 +53,9 @@ import { useSwatchFile } from './useSwatchFile';
 import type { KCodeArtifact } from './kcode/kcodeProtocol';
 import { MachineMovementView, type MachineMovementViewProps } from './kcode/MachineMovementView';
 import { programRegionForPass } from './chart/AuthoredMachinePanel';
-import { NewProjectDialog, ProjectSettingsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
+import { NewProjectDialog, ProjectSettingsDialog, RecentProjectsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
 import { readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
+import { ACTIVE_SLOT_KEY, forgetProject, newRecentSlot, readRecentProject, readRecentProjects, recentKind, rememberProject, type RecentProject } from './chart/recentProjects';
 import { indexSourceLines, sourceWindow } from './sourceWindow';
 import { formatForeignRunSheetFindingAnchor, groupForeignRunSheetFindings } from './foreignRunSheetFindings';
 import { ForeignFabricView, MachineTopologyView } from './fabric/ForeignFabricView';
@@ -105,14 +106,23 @@ function defaultProject(): ColorworkProjectV1 {
   }, { id: 'studio-default', title: 'Untitled colourwork' });
 }
 
-function initialProject(): { project: ColorworkProjectV1; recoveredAt: string | null } {
+function initialProject(): { project: ColorworkProjectV1; recoveredAt: string | null; slot: string; recent: RecentProject[] } {
   let recovered: ReturnType<typeof readProjectAutosave> = null;
+  let slot: string | null = null;
+  let recent: RecentProject[] = [];
   try {
     recovered = readProjectAutosave(window.localStorage);
+    slot = window.localStorage.getItem(ACTIVE_SLOT_KEY);
+    recent = readRecentProjects(window.localStorage);
   } catch {
     // Storage can be disabled by the browser; the editor must still start.
   }
-  return recovered ? { project: recovered.project, recoveredAt: recovered.savedAt } : { project: defaultProject(), recoveredAt: null };
+  return { ...(recovered ? { project: recovered.project, recoveredAt: recovered.savedAt } : { project: defaultProject(), recoveredAt: null }), slot: recovered && slot ? slot : newRecentSlot(), recent };
+}
+
+/** The blank chart a first visit opens on, never edited: there is nothing in it to keep. */
+function untouchedDefault(project: ColorworkProjectV1): boolean {
+  return project.id === 'studio-default' && project.history.entries.length === defaultProject().history.entries.length;
 }
 
 /** The chart at knitted proportions (stitches are wider than rows are tall), as a PNG for the package. */
@@ -556,8 +566,11 @@ export function App() {
   const [newProjectKind, setNewProjectKind] = useState<'sweater' | 'beanie' | 'rectangle' | null>(null);
   // A first visit starts by choosing what to make, not on a blank machine chart; so does a return
   // visit that only ever saved the untouched blank chart.
-  const [showStart, setShowStart] = useState(() => initial.recoveredAt === null
-    || (initial.project.id === 'studio-default' && initial.project.history.entries.length === defaultProject().history.entries.length));
+  const [showStart, setShowStart] = useState(() => initial.recoveredAt === null || untouchedDefault(initial.project));
+  // Every project is kept on this device in its own slot; the open one is `slot`.
+  const [slot, setSlot] = useState(initial.slot);
+  const [recent, setRecent] = useState(initial.recent);
+  const [showRecent, setShowRecent] = useState(false);
   // The project's controls show once there is a project to work on.
   const projectChrome = !document && !showStart;
   const [showProjectSettings, setShowProjectSettings] = useState(false);
@@ -622,21 +635,52 @@ export function App() {
   }, [plan, blanketCompile.artifact, blanketCompile.error, kcodeState.artifact, kcodeState.error, outputCurrent, verdictKey, authoredExportReady]);
   useEffect(() => {
     setAutosaveState('saving');
+    const kind = recentKind(authoredState.object);
     const timeout = window.setTimeout(() => {
       try {
         window.localStorage.setItem(PROJECT_AUTOSAVE_KEY, serializeProjectAutosave(project));
+        window.localStorage.setItem(ACTIVE_SLOT_KEY, slot);
+        if (!untouchedDefault(project)) setRecent(rememberProject(window.localStorage, { slot, project, kind }));
         setAutosaveState('saved');
       } catch {
         setAutosaveState('failed');
       }
     }, 350);
     return () => window.clearTimeout(timeout);
-  }, [project]);
+  }, [project, slot]);
   useEffect(() => {
     const url = new URL(window.location.href);
     url.searchParams.set('theme', theme);
     window.history.replaceState(null, '', url);
   }, [theme]);
+  /**
+   * Another project takes the open one's place. The open one is kept on this
+   * device first, with its latest change; if it cannot be, nothing changes.
+   */
+  const switchProject = (next: ColorworkProjectV1, nextSlot = newRecentSlot()): boolean => {
+    if (!untouchedDefault(project)) {
+      try {
+        setRecent(rememberProject(window.localStorage, { slot, project, kind: recentKind(authoredState.object) }));
+      } catch {
+        setAppError(`“${project.title}” could not be kept on this device: the browser's storage is full. Save it as a file, or remove an old project under File → Open recent.`);
+        return false;
+      }
+    }
+    setProject(next);
+    setSlot(nextSlot);
+    return true;
+  };
+  const openRecent = (target: string) => {
+    let opened: ColorworkProjectV1 | null = null;
+    try { opened = readRecentProject(window.localStorage, target); } catch { /* reported below */ }
+    if (opened === null) { setAppError('That project could not be read from this device.'); return; }
+    if (!switchProject(opened, target)) return;
+    setOpenGeneration((value) => value + 1);
+    setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false); setShowRecent(false); setWorkspaceView('design');
+  };
+  const removeRecent = (target: string) => {
+    try { setRecent(forgetProject(window.localStorage, target)); } catch { setAppError('That project could not be removed from this device.'); }
+  };
   // A colour chart is sized in cm at a typical gauge, until a swatch is measured.
   const createProject = ({ title, widthCm, heightCm, colorCount }: NewProjectValues) => {
     const palette = DEFAULT_PROJECT_PALETTE.slice(0, colorCount).map((entry) => ({ ...entry }));
@@ -648,25 +692,26 @@ export function App() {
     }, { id: projectId(title), title });
     const group = `create_${crypto.randomUUID().replace(/-/g, '')}`;
     const edits = withSizingFixes(created, [{ kind: 'set-gauge', gauge: { ...TYPICAL_COLOURWORK_GAUGE } }, { kind: 'set-target', target: { widthCm, heightCm } }]);
-    setProject(edits.reduce((current, edit, index) => appendProjectEdit(current, { id: `${group}-${index}`, source: 'human', edit, group, ...(index === 0 ? { label: `Create ${title}` } : {}) }), created));
+    if (!switchProject(edits.reduce((current, edit, index) => appendProjectEdit(current, { id: `${group}-${index}`, source: 'human', edit, group, ...(index === 0 ? { label: `Create ${title}` } : {}) }), created))) return;
     setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setShowStart(false); setWorkspaceView('design');
   };
   const createBeanie = (intent: BeanieIntent) => {
-    setProject(createBeanieProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }));
+    if (!switchProject(createBeanieProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }))) return;
     setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false); setWorkspaceView('design');
   };
   const createPanel = (intent: PanelIntent) => {
-    setProject(createPanelProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }));
+    if (!switchProject(createPanelProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }))) return;
     setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false); setWorkspaceView('design');
   };
   const createSweater = (intent: SweaterIntent) => {
-    setProject(createSweaterProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }));
+    if (!switchProject(createSweaterProject(intent, { id: projectId(intent.title), source: 'human', group: `create_${crypto.randomUUID().replace(/-/g, '')}` }))) return;
     setDocument(null); setCompare(null); setView('chart'); setShowNewProject(false); setChangesFrom(null); setShowStart(false); setWorkspaceView('design');
   };
   /** An opened project that continues this one (same id, this history as its prefix) arrives as new changes to review. */
   const openProjectFile = (opened: ColorworkProjectV1) => {
     const from = continuationFrom(project, opened);
-    setProject(opened);
+    // A file that continues this project carries on in its slot; any other file gets its own.
+    if (!switchProject(opened, from !== null ? slot : newRecentSlot())) return;
     setOpenGeneration((value) => value + 1);
     setShowStart(false);
     setWorkspaceView('design');
@@ -803,6 +848,7 @@ export function App() {
     { label: 'File', items: [
       { label: 'New project…', onSelect: () => { setNewProjectKind(null); setShowNewProject(true); } },
       { label: 'Open project…', onSelect: () => projectInput.current?.click() },
+      { label: 'Open recent…', onSelect: () => setShowRecent(true), disabled: recent.every((item) => item.slot === slot) },
       { label: 'Save project', onSelect: saveProject, disabled: !projectChrome },
       ...(document ? [{ label: 'Back to your project', onSelect: () => { setDocument(null); setView('chart'); } }] : []),
       'separator',
@@ -887,7 +933,8 @@ export function App() {
       {!document && showRunSheet && isSweater && sweaterPlan && <GarmentSheet markdown={sweaterInstructions(project, sweaterPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={sweaterSchematicSvg(sweaterPlan, authoredState.chart.palette[0]!.hex)} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && authoredExportReady && authoredStory && authoredState.object?.kind === 'beanie' && <GarmentSheet markdown={instructionsMarkdown(project, plan, authoredStory.result, authoredStory.findings, authoredStory.readiness)} schematic={schematicSvg(project, plan)} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && !isPieces && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && authoredState.object?.kind !== 'beanie' && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
-      {showStart && !document && <StartScreen onNew={(kind) => { setNewProjectKind(kind); setShowNewProject(true); }} onOpenProject={openProjectFile} onOpenMachineFile={() => fileInput.current?.click()} onBlank={() => setShowStart(false)} />}
+      {showStart && !document && <StartScreen onNew={(kind) => { setNewProjectKind(kind); setShowNewProject(true); }} onOpenProject={openProjectFile} onOpenMachineFile={() => fileInput.current?.click()} onBlank={() => setShowStart(false)} recent={recent.filter((item) => item.slot !== slot)} onOpenRecent={openRecent} onRemoveRecent={removeRecent} />}
+      {showRecent && <RecentProjectsDialog recent={recent} current={slot} onOpen={openRecent} onRemove={removeRecent} onClose={() => setShowRecent(false)} />}
       {showNewProject && <NewProjectDialog onCreate={createProject} onCreateBeanie={createBeanie} onCreateSweater={createSweater} onCreatePanel={createPanel} initialKind={newProjectKind ?? (isSweater ? 'sweater' : 'rectangle')} onClose={() => { setShowNewProject(false); setNewProjectKind(null); }} />}
       {!document && !isPieces && showChanges && <ChangesPanel project={project} highlightFrom={changesFrom} onProject={setProject} onClose={() => { setShowChanges(false); setChangesFrom(null); }} />}
       {showProjectSettings && <ProjectSettingsDialog project={project} onSave={saveProjectSettings} onClose={() => setShowProjectSettings(false)} />}

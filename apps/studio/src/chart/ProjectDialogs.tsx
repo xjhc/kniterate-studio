@@ -15,6 +15,8 @@ import type { PanelIntent } from '../sweater/panel';
 import { TEXTURES } from '../sweater/textures';
 import { SilhouetteIcon } from '../sweater/SilhouetteIcon';
 import { TYPICAL_COLOURWORK_GAUGE } from './ChartSizeSection';
+import { RecentList } from './RecentList';
+import type { RecentProject } from './recentProjects';
 
 export const DEFAULT_PROJECT_PALETTE: readonly ColorworkChartPaletteEntry[] = [
   { id: 'natural', name: 'Natural', hex: '#F4F0E6' },
@@ -30,6 +32,14 @@ function DialogShell({ title, children, onClose }: { title: string; children: Re
       {children}
     </section>
   </div>;
+}
+
+/** File → Open recent: the projects kept on this device. */
+export function RecentProjectsDialog({ recent, current, onOpen, onRemove, onClose }: { recent: readonly RecentProject[]; current: string; onOpen: (slot: string) => void; onRemove: (slot: string) => void; onClose: () => void }) {
+  return <DialogShell title="Recent projects" onClose={onClose}>
+    <p className="dialog-copy">Kept in this browser on this device. Save a project file to keep a copy elsewhere.</p>
+    <RecentList recent={recent} current={current} onOpen={onOpen} onRemove={onRemove} />
+  </DialogShell>;
 }
 
 export interface NewProjectValues {

@@ -2,13 +2,15 @@ import { useRef, type ChangeEvent } from 'react';
 import { FileCode2, FolderOpen } from 'lucide-react';
 import type { ColorworkProjectV1 } from '@kniterate-studio/project-contract';
 import { openStudioProjectFile } from './chart/projectFile';
+import { RecentList } from './chart/RecentList';
+import type { RecentProject } from './chart/recentProjects';
 import { SilhouetteIcon } from './sweater/SilhouetteIcon';
 import './start.css';
 
 /**
  * The first thing a new visitor sees: what they can make, in their words.
- * Each choice opens the matching new-project form; a project file or a
- * machine file opens directly.
+ * Each choice opens the matching new-project form; a project kept on this
+ * device, a project file or a machine file opens directly.
  */
 
 function BeanieIcon() {
@@ -27,11 +29,15 @@ function ScarfIcon() {
   </svg>;
 }
 
-export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank }: {
+export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, recent, onOpenRecent, onRemoveRecent }: {
   onNew: (kind: 'sweater' | 'beanie' | 'rectangle') => void;
   onOpenProject: (project: ColorworkProjectV1) => void;
   onOpenMachineFile: () => void;
   onBlank: () => void;
+  /** The projects kept on this device. */
+  recent: readonly RecentProject[];
+  onOpenRecent: (slot: string) => void;
+  onRemoveRecent: (slot: string) => void;
 }) {
   const projectInput = useRef<HTMLInputElement>(null);
   const openProject = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -60,13 +66,17 @@ export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank }
           <small>One colour in any stitch, or a colour chart painted stitch by stitch.</small>
         </button>
       </div>
+      {recent.length > 0 && <section className="start-recent" aria-labelledby="start-recent-title">
+        <h2 id="start-recent-title">Your projects</h2>
+        <RecentList recent={recent} onOpen={onOpenRecent} onRemove={onRemoveRecent} />
+      </section>}
       <div className="start-secondary">
         <button type="button" className="secondary-button" onClick={() => projectInput.current?.click()}><FolderOpen size={16} />Open a project file</button>
         <button type="button" className="secondary-button" onClick={onOpenMachineFile}><FileCode2 size={16} />Check a machine file (.kc or .k)</button>
         <button type="button" className="link-button" onClick={onBlank}>Start with a blank chart</button>
         <input ref={projectInput} className="file-input" type="file" accept="application/json,.json" aria-label="Project file" onChange={(event) => void openProject(event)} />
       </div>
-      <p className="local-note">Everything stays on this device.</p>
+      <p className="local-note">Your projects stay in this browser on this device. Save a project file to keep a copy elsewhere.</p>
     </div>
   </section>;
 }

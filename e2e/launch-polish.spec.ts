@@ -40,3 +40,42 @@ test('creates, renames, recolors, autosaves, and recovers a customer project', a
   await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
   expect(errors).toEqual([]);
 });
+
+test('starting another project keeps the first one on this device, to open again or remove', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/?theme=light');
+  await page.getByRole('button', { name: /^Beanie/ }).click();
+  const create = page.getByRole('dialog', { name: 'New project' });
+  await create.getByLabel('Project name').fill('Ring toque');
+  await create.getByRole('button', { name: 'Create beanie' }).click();
+  await expect(page.locator('.brand-copy small')).toContainText('Ring toque');
+
+  // A scarf started straight away: the hat is kept with its latest change, without waiting for the autosave.
+  await menu(page, 'File', 'New project…');
+  await create.getByRole('tab', { name: 'Scarf or blanket' }).click();
+  await create.getByLabel('Project name').fill('Moss scarf');
+  await create.getByRole('button', { name: 'Create' }).click();
+  await expect(page.locator('.brand-copy small')).toContainText('Moss scarf');
+
+  await menu(page, 'File', 'Open recent…');
+  const recent = page.getByRole('dialog', { name: 'Recent projects' });
+  await expect(recent.getByRole('button', { name: /^Moss scarf/ })).toBeDisabled();
+  await expect(recent.getByRole('button', { name: /^Moss scarf/ })).toContainText('open now');
+  await recent.getByRole('button', { name: /^Ring toque/ }).click();
+  await expect(page.locator('.brand-copy small')).toContainText('Ring toque');
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
+
+  // Both survive a reload, and the open one comes back open.
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+  await page.reload();
+  await expect(page.locator('.brand-copy small')).toContainText('Ring toque');
+  await menu(page, 'File', 'Open recent…');
+  await expect(recent.getByRole('listitem')).toHaveCount(2);
+  // Removing asks twice.
+  await recent.getByRole('button', { name: 'Remove Moss scarf' }).click();
+  await recent.getByRole('button', { name: 'Remove for good' }).click();
+  await expect(recent.getByRole('listitem')).toHaveCount(1);
+  await expect(recent.getByRole('button', { name: /^Ring toque/ })).toContainText('open now');
+  expect(errors).toEqual([]);
+});

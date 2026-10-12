@@ -17,9 +17,10 @@ runs, and the workspace shows exactly what those files knit.
 - **Top bar:** the project name, one menu bar (File, Edit, View) and the
   verdict badge. There are no icon ribbons; every project action is in a
   menu.
-  - File: new, open, save, download the knitting package, download the
-    machine file(s), print the knitting sheet, record a finished hat (a
-    beanie), check a machine file.
+  - File: new, open, open recent (every project kept on this device;
+    starting another never replaces one), save, download the knitting
+    package, download the machine file(s), print the knitting sheet, record
+    a finished hat (a beanie), check a machine file.
   - Edit: undo, redo, name and colours.
   - View: Design, Schematic, Machine file, History, Dark mode.
 - **Left panel:** what you are making, as folding sections, each with a

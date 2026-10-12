@@ -304,10 +304,21 @@ ship," trust this file and the working tree instead.
     - A set-in or J sleeve cap refits itself to the drafted armhole, whatever
       its shape.
     - Shaping is shown and written as a knitter reads it: "Rows 21–129:
-      increase 1 every 3–4 rows, 33 times → 120 stitches".
+      increase 1 every 3–4 rows, 33 times → 120 stitches". A run both edges
+      share reads "at each side"; where they differ (a bind-off on the right
+      comes a row after the left), each edge's steps are named in row order,
+      and a stitch count is given once every step up to its row is told.
   - **First visit:** a start screen offers Sweater, Beanie or Scarf/blanket, a
     project file or a machine file, or a blank chart. It returns for a visitor
     whose only saved project is the untouched blank chart.
+  - **Projects kept on this device (2026-10-11).** Starting or opening another
+    project never replaces one (`chart/recentProjects.ts`).
+    - Each project autosaves in its own slot. A file opened twice gets two
+      slots, so an older file never overwrites newer work.
+    - Switching saves the open project first, with its latest change. If the
+      browser's storage is full, the switch stops and says so.
+    - File → Open recent and the start screen list them, newest first.
+      Removing one asks twice; nothing is dropped to make room.
   - **Machine file view (2026-10-11).** Each piece's mode "Machine file" shows
     what its `.kc` makes the machine do, read back from the emitted file's
     strict trace (`sweater/knitFile.ts`), never from the design.
