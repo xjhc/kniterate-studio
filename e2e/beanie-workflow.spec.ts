@@ -61,6 +61,41 @@ test('the status panel walks the steps: the swatch is next, then the download, e
   await expect(next).toHaveText('Knit');
 });
 
+test('a one-yarn beanie is one layer or two; adding a colour and painting it makes it colourwork', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/?theme=light');
+  await page.getByRole('button', { name: /^Beanie/ }).click();
+  const dialog = page.getByRole('dialog', { name: 'New project' });
+  await dialog.getByRole('button', { name: 'Remove' }).click();
+  // With one yarn the body is one layer or two.
+  await expect(dialog.getByRole('group', { name: 'Body fabric' })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: 'Double layer' })).toHaveAttribute('aria-pressed', 'true');
+  await dialog.getByRole('button', { name: 'Create beanie' }).click();
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
+  const backing = page.locator('#backing .section-aside');
+  await expect(backing).toHaveText('Double layer');
+
+  // A second colour, with its own yarn, then a stroke of it in the body.
+  await page.getByRole('button', { name: 'Add a colour' }).click();
+  await page.getByLabel('New colour name').fill('Snow');
+  await page.getByRole('form', { name: 'New colour' }).getByRole('button', { name: 'Add' }).click();
+  await expect(page.getByRole('button', { name: 'Use Snow' })).toHaveClass(/active/);
+  await expect(page.getByRole('combobox', { name: 'Snow carrier' })).toHaveValue('4');
+  await page.getByRole('button', { name: 'Brush size 5', exact: true }).click();
+  const canvas = page.locator('canvas.chart-canvas').first();
+  const cell = Number(await canvas.getAttribute('data-cell-size'));
+  const rowH = Number(await canvas.getAttribute('data-row-size'));
+  const box = (await canvas.boundingBox())!;
+  // The body's first rows sit just below the crown (30 rows at this size).
+  const y = box.y + 32 * rowH;
+  await page.mouse.move(box.x + 70 + 20 * cell, y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 70 + 60 * cell, y, { steps: 8 });
+  await page.mouse.up();
+  await expect(backing).toHaveText('Birdseye', { timeout: 30_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
+});
+
 test('a beanie is edited as a garment: fit, motifs, readiness, package and measurements', async ({ page }) => {
   test.setTimeout(180_000);
   await createBeanie(page);

@@ -341,6 +341,9 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
 .target-chart-stage .palette-rail button.active { border-color: var(--accent); color: var(--ink); background: var(--accent-soft); }
 .target-chart-stage .palette-rail i { width: 16px; height: 16px; border-color: color-mix(in srgb, var(--ink) 28%, transparent); }
 .target-chart-stage .palette-rail span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.target-chart-stage .palette-rail .palette-add-button { color: var(--ink-3); }.target-chart-stage .palette-rail .palette-add-button:disabled { opacity: .5; cursor: default; }
+.palette-add { display: grid; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 3px; background: var(--panel); }.palette-add input { width: 100%; min-width: 0; }.palette-add input[type="color"] { height: 26px; padding: 2px; }.palette-add input[type="text"] { padding: 3px 5px; font-size: 12px; }
+.palette-add span { display: flex; gap: 4px; }.target-chart-stage .palette-rail .palette-add button { display: inline-flex; flex: 1; justify-content: center; min-height: 0; padding: 3px 4px; font-size: 11px; }
 .canvas-stack { display: grid; grid-template-rows: minmax(0, 1fr) 26px; min-width: 0; min-height: 0; }
 .target-chart-stage .chart-canvas-shell { background: var(--paper-2); }
 .chart-canvas-frame { display: grid; grid-template-rows: 18px minmax(0, 1fr); min-width: 0; min-height: 0; }.chart-needle-ruler { display: block; width: 100%; height: 18px; }

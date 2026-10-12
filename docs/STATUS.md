@@ -520,6 +520,12 @@ ship," trust this file and the working tree instead.
     are pure `@knitlab/colorwork-core` tools (`brushOffsets`, `stamp`,
     `ellipse`, `mirror`); each stroke is still one paint edit
     (`e2e/m3b.spec.ts`).
+  - Add a colour: the project contract's `add-palette-entry` edit appends a
+    palette entry (stitches keep their indexes); the chart's Add button
+    applies it with a yarn on the next free carrier C2–C5 as one undoable
+    change. A one-yarn beanie can so become colourwork
+    (`e2e/beanie-workflow.spec.ts`). Files using the edit need this build
+    or later to open.
   - On screen the verdict reads "Can't knit yet", "Ready to knit" or "Proven
     on the machine" (`engine.ts::VERDICT_WORDS`). Files, the CLI and the docs
     keep Blocked, Surface-proven and Knit-proven.

@@ -176,6 +176,18 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     }
     return commit(pixelMutationToProjectEdit(project, rowIds, mutation));
   };
+  // A new colour gets its own yarn on a free pattern carrier (C2-C5): four is the most. A beanie all in rib knits one yarn.
+  // The next carrier along from those in use (a beanie's main yarn is on C3, its accent on C4), else the first free one.
+  const usedCarriers = materialized.state.machine.yarnAssignments.map((item) => item.carrier);
+  const freeCarriers = (['2', '3', '4', '5'] as const).filter((carrier) => !usedCarriers.includes(carrier));
+  const freeCarrier = freeCarriers.find((carrier) => usedCarriers.every((used) => used < carrier)) ?? freeCarriers[0];
+  const addLimit = ribRows === chart.height && isGarment ? 'This beanie is all rib in one yarn. Add a cuff to paint in colours.' : freeCarrier === undefined ? 'Four colours is the most: the machine has four carriers for them.' : null;
+  const canAddColour = addLimit === null;
+  const addColour = (colour: { name: string; hex: string }) => {
+    if (freeCarrier === undefined) return;
+    const id = `colour-${crypto.randomUUID().slice(0, 8)}`;
+    if (operate(`Add a colour: ${colour.name}`, [{ kind: 'add-palette-entry', entry: { id, ...colour } }, { kind: 'set-yarn-assignment', assignment: { paletteId: id, carrier: freeCarrier, yarnName: colour.name } }])) setPaletteIndex(chart.palette.length);
+  };
   const fit = (change: BeanieFitChange, label: string) => {
     try {
       const edits = beanieFitEdits(project, change);
@@ -283,7 +295,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     return <div className="chart-design-stage">
       <ChartToolbar active={tool} onTool={setTool} brush={brush} onBrush={setBrush} mirror={mirror} onMirror={setMirror} onCopy={() => selection && setClipboard(copy(chart, selection))} onCut={() => { if (!selection) return; const result = cut(chart, selection); setClipboard(result.clipboard); commitMutation(result.mutation); }} onPaste={() => clipboard && commitMutation(paste(chart, clipboard, selection ? { column: selection.left, row: selection.top } : { column: 0, row: 0 }))} onDelete={() => selection && commitMutation(clear(chart, selection))} onZoomIn={() => setZoom(Math.min(3, zoom * 1.2))} onZoomOut={() => setZoom(Math.max(MIN_CHART_ZOOM, zoom / 1.2))} onZoomSelection={() => selection ? setZoom(Math.min(2.5, Math.max(.6, 400 / Math.max(selection.right - selection.left + 1, selection.bottom - selection.top + 1) / 16))) : setFitRequest((request) => request + 1)} hasSelection={selection !== null} canPaste={clipboard !== null} />
       <div className="target-chart-stage">
-        <PaletteRail chart={chart} carriers={paletteCarriers} active={activePaletteIndex} onSelect={setPaletteIndex} />
+        <PaletteRail chart={chart} carriers={paletteCarriers} active={activePaletteIndex} onSelect={setPaletteIndex} onAdd={canAddColour ? addColour : undefined} addLimit={addLimit ?? undefined} />
         <div className="canvas-stack">
           <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} brush={brush} mirror={mirror} mirrorBox={mirrorBox} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} fitRequest={fitRequest} fitScope={project.id} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={noPassCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => setFocusedRowId(rowIds[row]!)} firstNeedle={materialized.state.machine.needleOffset} highlightedNeedles={null} rowAspect={gauge ? gauge.stitchesPer10cm / gauge.rowsPer10cm : 1} piece={piece} placements={canvasPlacements} selectedPlacement={selectedPlacement} onPlacementPick={setSelectedPlacement} onPlacementMove={(id, columns, rows) => { const placement = materialized.state.placements?.find((item) => item.id === id); if (placement) operate(`Move ${id}`, [{ kind: 'set-placement', placement: movedPlacement(materialized.state, placement, columns, rows) }]); }} />
         </div>

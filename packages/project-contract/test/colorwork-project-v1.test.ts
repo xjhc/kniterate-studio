@@ -108,6 +108,25 @@ describe('ColorworkProjectV1', () => {
     expect(parseColorworkProjectV1Json(JSON.stringify(project))).toEqual(project);
   });
 
+  it('adds a colour to the palette without moving any stitch, refusing a duplicate id', () => {
+    let project = createColorworkProjectV1(chart, { id: 'add-colour' });
+    const before = materializeColorworkProject(project).state;
+    project = appendProjectOperation(project, { group: 'add-gold', source: 'human', label: 'Add a colour: Gold', edits: [
+      { kind: 'add-palette-entry', entry: { id: 'gold', name: 'Gold', hex: '#d6a633' } },
+      { kind: 'set-yarn-assignment', assignment: { paletteId: 'gold', carrier: '4', yarnName: 'Gold' } },
+      { kind: 'paint-cells', cells: [{ rowId: 'row_0001', column: 0, paletteIndex: before.chart.palette.length }] },
+    ] });
+    const state = materializeColorworkProject(project).state;
+    expect(state.chart.palette.at(-1)).toEqual({ id: 'gold', name: 'Gold', hex: '#D6A633' });
+    expect(state.chart.palette.slice(0, -1)).toEqual(before.chart.palette);
+    expect(state.machine.yarnAssignments.find((item) => item.paletteId === 'gold')?.carrier).toBe('4');
+    expect(state.chart.cells[0]![0]).toBe(before.chart.palette.length);
+    expect(() => appendProjectEdit(project, { id: 'again', source: 'human', edit: { kind: 'add-palette-entry', entry: { id: 'gold', name: 'Gold', hex: '#d6a633' } } })).toThrow(/already exists/);
+    expect(parseColorworkProjectV1Json(JSON.stringify(project))).toEqual(project);
+    // Undo removes it again.
+    expect(materializeColorworkProject(undoProjectEdit(project)).state.chart.palette).toEqual(before.chart.palette);
+  });
+
   it('uses one history for human and assistant edits with deterministic undo/redo', () => {
     let project = createColorworkProjectV1(chart, { id: 'blanket-1' });
     project = appendProjectEdit(project, { id: 'human-paint', source: 'human', edit: { kind: 'paint-cells', cells: [{ rowId: 'row_0001', column: 0, paletteIndex: 1 }] } });

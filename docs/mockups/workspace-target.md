@@ -52,7 +52,9 @@ runs, and the workspace shows exactly what those files knit.
     rectangle, circle, eraser and fill, a round brush 1 to 9 stitches
     across (round on the fabric, so taller in rows than in stitches; `[`
     and `]` change it), and mirror left–right and top–bottom (a beanie
-    mirrors within its body, above the cuff).
+    mirrors within its body, above the cuff). Add, under the colours beside
+    the chart, adds a colour with its own yarn on the next free carrier
+    (four at most; none for a rib beanie).
   - **Schematic:** the measured flat drawing. For a charted project it is
     drawn from the machine file read back. It shows the whole run, from the
     waste yarn and draw thread through the piece to its finish.

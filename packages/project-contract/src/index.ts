@@ -364,6 +364,11 @@ const SetPaletteEntryEditSchema = z.object({
   name: z.string().min(1).max(100),
   hex: z.string().regex(/^#[0-9a-fA-F]{6}$/),
 });
+/** A new colour at the end of the palette; existing stitches keep their colour indexes. */
+const AddPaletteEntryEditSchema = z.object({
+  kind: z.literal('add-palette-entry'),
+  entry: z.object({ id: Id, name: z.string().min(1).max(100), hex: z.string().regex(/^#[0-9a-fA-F]{6}$/) }),
+});
 const AddOverrideEditSchema = z.object({ kind: z.literal('add-override'), override: ProjectOverrideSchema });
 const RemoveOverrideEditSchema = z.object({ kind: z.literal('remove-override'), overrideId: Id });
 const SetGaugeEditSchema = z.object({ kind: z.literal('set-gauge'), gauge: GaugeSchema.nullable() });
@@ -387,6 +392,7 @@ export const ProjectEditSchema = z.discriminatedUnion('kind', [
   SetYarnEditSchema,
   RemoveYarnEditSchema,
   SetPaletteEntryEditSchema,
+  AddPaletteEntryEditSchema,
   AddOverrideEditSchema,
   RemoveOverrideEditSchema,
   SetGaugeEditSchema,
@@ -1436,6 +1442,11 @@ function applyEditToState(stateValue: ProjectState, editValue: ProjectEdit): Pro
       paletteEntry.hex = edit.hex.toUpperCase();
       break;
     }
+    case 'add-palette-entry':
+      if (state.chart.palette.some((entry) => entry.id === edit.entry.id)) throw new Error(`palette id "${edit.entry.id}" already exists`);
+      if (state.chart.palette.length >= AUTHORED_CAPACITY_LIMITS_V1.palettePerState) throw new Error(`project supports at most ${AUTHORED_CAPACITY_LIMITS_V1.palettePerState} palette entries`);
+      state.chart.palette.push({ id: edit.entry.id, name: edit.entry.name, hex: edit.entry.hex.toUpperCase() });
+      break;
     case 'add-override':
       if (state.overrides.some((item) => item.id === edit.override.id)) throw new Error(`override id "${edit.override.id}" already exists`);
       if (state.overrides.length >= AUTHORED_CAPACITY_LIMITS_V1.overridesPerState) throw new Error(`project supports at most ${AUTHORED_CAPACITY_LIMITS_V1.overridesPerState.toLocaleString('en-US')} active overrides`);
