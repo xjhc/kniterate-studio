@@ -38,7 +38,7 @@ import { panelInstructions, panelPackageFiles } from './sweater/panelHandoff';
 import { StartScreen } from './StartScreen';
 import { handoffFiles, instructionsMarkdown, readinessStory, schematicSvg } from './handoff';
 import { planProject } from './plan';
-import { collectFindings, resolveReadiness } from './readiness';
+import { MEASUREMENT_RULES, collectFindings, resolveReadiness, type Finding } from './readiness';
 import { zipStore } from './zip';
 import { ChangesPanel, continuationFrom } from './garment/ChangesPanel';
 import { GarmentSheet } from './garment/GarmentSheet';
@@ -163,10 +163,17 @@ function Verdict({ document, onClick }: { document: MachineDocument; onClick: ()
   );
 }
 
-export function AuthoredVerdictBadge({ verdict, pending, onClick }: { verdict: AuthoredVerdict | null; pending: 'compiling' | 'checking'; onClick: () => void }) {
+/** The verdict in plain words; a file ready to knit says so while its sizes rest on a typical gauge, as the panel does. */
+function verdictWords(verdict: AuthoredVerdict, findings: readonly Finding[]): string {
+  const unconfirmed = verdict.state === 'surface' && findings.some((finding) => finding.severity !== 'info' && MEASUREMENT_RULES.has(finding.rule));
+  return `${VERDICT_WORDS[verdict.state].name}${unconfirmed ? ', sizes not confirmed' : ''}`;
+}
+
+export function AuthoredVerdictBadge({ verdict, findings = [], pending, onClick }: { verdict: AuthoredVerdict | null; findings?: readonly Finding[]; pending: 'compiling' | 'checking'; onClick: () => void }) {
   // A null verdict means lowering is still in progress; the badge is the top bar's single progress and verdict signal.
   if (!verdict) return <span className="verdict authored-verdict verdict-pending" role="status" aria-label={pending === 'compiling' ? 'Writing the machine file' : 'Checking the machine file'}><LoaderCircle size={12} className="spin" />{pending === 'compiling' ? 'Writing' : 'Checking'}</span>;
-  return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={`${verdict.label}: ${verdict.annotation}`} aria-label={`Verdict: ${VERDICT_WORDS[verdict.state].name}${verdict.evidenceId ? ' / Exact physical match' : ''}`} onClick={onClick}><span className="verdict-dot" />{VERDICT_WORDS[verdict.state].name}</button>;
+  const words = verdictWords(verdict, findings);
+  return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={`${verdict.label}: ${verdict.annotation}`} aria-label={`Verdict: ${words}${verdict.evidenceId ? ' / Exact physical match' : ''}`} onClick={onClick}><span className="verdict-dot" />{words}</button>;
 }
 
 function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = false }: {
@@ -425,10 +432,10 @@ function VerdictPanel({ document, onClose }: { document: MachineDocument; onClos
   );
 }
 
-function AuthoredVerdictPanel({ verdict, onClose }: { verdict: AuthoredVerdict; onClose: () => void }) {
+function AuthoredVerdictPanel({ verdict, findings, onClose }: { verdict: AuthoredVerdict; findings: readonly Finding[]; onClose: () => void }) {
   return <div className="popover verdict-panel">
     <div className="popover-head"><strong>Can it be knitted?</strong><button className="icon-button" type="button" onClick={onClose} aria-label="Close verdict"><X size={16} /></button></div>
-    <div className={`verdict-summary verdict-${verdict.state}`}><span className="verdict-dot" /><strong>{VERDICT_WORDS[verdict.state].name}</strong></div>
+    <div className={`verdict-summary verdict-${verdict.state}`}><span className="verdict-dot" /><strong>{verdictWords(verdict, findings)}</strong></div>
     <VerdictLadder state={verdict.state} />
     <details className="verdict-detail"><summary>What was checked</summary><p>{verdict.annotation}</p></details>
     <span className="profile-chip">7gg worsted / 252-needle bed</span>
@@ -909,8 +916,8 @@ export function App() {
         <MenuBar menus={menus} />
         <span className="topbar-spacer" />
         {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
-        {projectChrome && isPieces && <AuthoredVerdictBadge verdict={sweaterRun.current ? sweaterRun.summary?.verdict ?? null : null} pending="checking" onClick={() => setShowVerdict((value) => !value)} />}
-        {projectChrome && !isPieces && <AuthoredVerdictBadge verdict={authoredVerdict} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} onClick={() => setShowVerdict((value) => !value)} />}
+        {projectChrome && isPieces && <AuthoredVerdictBadge verdict={sweaterRun.current ? sweaterRun.summary?.verdict ?? null : null} findings={sweaterRun.summary?.findings} pending="checking" onClick={() => setShowVerdict((value) => !value)} />}
+        {projectChrome && !isPieces && <AuthoredVerdictBadge verdict={authoredVerdict} findings={authoredStory?.findings} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} onClick={() => setShowVerdict((value) => !value)} />}
       </header>
       {appError && <div className="machine-import-status" role="alert"><span>{appError}</span><button className="secondary-button" type="button" onClick={() => setAppError(null)}>Dismiss</button></div>}
       <input ref={projectInput} className="file-input" type="file" accept=".json,application/json" aria-label="Project file to open" onChange={(event) => void openProjectInput(event)} />
@@ -954,8 +961,8 @@ export function App() {
         </div>
       )}
       {document && showVerdict && <VerdictPanel document={document} onClose={() => setShowVerdict(false)} />}
-      {!document && showVerdict && !isPieces && authoredVerdict && <AuthoredVerdictPanel verdict={authoredVerdict} onClose={() => setShowVerdict(false)} />}
-      {!document && showVerdict && isPieces && sweaterRun.current && sweaterRun.summary && <AuthoredVerdictPanel verdict={sweaterRun.summary.verdict} onClose={() => setShowVerdict(false)} />}
+      {!document && showVerdict && !isPieces && authoredVerdict && <AuthoredVerdictPanel verdict={authoredVerdict} findings={authoredStory?.findings ?? []} onClose={() => setShowVerdict(false)} />}
+      {!document && showVerdict && isPieces && sweaterRun.current && sweaterRun.summary && <AuthoredVerdictPanel verdict={sweaterRun.summary.verdict} findings={sweaterRun.summary.findings} onClose={() => setShowVerdict(false)} />}
       {document && showRunSheet && <RunSheet document={document} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && isPanel && panelPlan && <GarmentSheet markdown={panelInstructions(project, panelPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={null} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && isSweater && sweaterPlan && <GarmentSheet markdown={sweaterInstructions(project, sweaterPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={sweaterSchematicSvg(sweaterPlan, authoredState.chart.palette[0]!.hex)} onClose={() => setShowRunSheet(false)} />}
