@@ -30094,7 +30094,7 @@
     ]
   },
   "contract": {
-    "sha256": "c4b91c65ddc034ef8ea29c05ff8f91cd9c46bacc683d5bb45dcabeb9e71caf47",
+    "sha256": "c73de5bef524dd4a94f451b8ccc5482272b2682e31b54f4182c0fbbdffe73a4a",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30848,8 +30848,8 @@
       },
       {
         "path": "../../apps/studio/vite.config.ts",
-        "sha256": "64e2e9168f8e833ac515093464923f4761cd0afe2958bc9996c3c5736acb6f98",
-        "bytes": 150
+        "sha256": "4d79d8aa0c02c80e15493001d9268058ea9380a4ec0df1aefcb215c81380c692",
+        "bytes": 323
       },
       {
         "path": "../../e2e/beanie-workflow.spec.ts",
@@ -30900,6 +30900,11 @@
         "path": "../../e2e/reference-patterns.spec.ts",
         "sha256": "c5385283b94e1e34046efdbe4937fc001b2f8b8958e5cf8a8f4db65b6953a172",
         "bytes": 4306
+      },
+      {
+        "path": "../../e2e/states.spec.ts",
+        "sha256": "94ad6c3845565526c164cc13b8fb958e75776cc345b725a87941bc58adf7e2c3",
+        "bytes": 7334
       },
       {
         "path": "../../e2e/sweater-workflow.spec.ts",
