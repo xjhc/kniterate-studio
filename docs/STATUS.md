@@ -375,12 +375,17 @@ ship," trust this file and the working tree instead.
   evidence record the compiled frame.
   Machine-safety invariant: every carrier a compiled program brings in must be
   an assigned pattern yarn, the waste carrier, or the preset's declared frame
-  yarn (C1); otherwise compilation blocks with `project-unassigned-carrier`.
-  This refuses the matched birdseye program for fewer than four colors, since
-  it is laid out for C2-C5; that case is reported as
-  `project-birdseye-color-count` ("Birdseye needs four colours"), with a
-  Use Fairisle fix. New projects default to Birdseye only for four-color
-  palettes, Fairisle otherwise.
+  yarn (C1); otherwise compilation blocks with `project-unassigned-carrier`
+  (`compileProject.ts::introducedCarriers`).
+  The captured DBJ introduction brings in all four pattern carriers; a chart
+  in two or three colours brings in only its own, in the captured order
+  (C3, C2, C4, C5) with each carrier's captured moves, the last one in
+  taking the captured seven settle rows, and its ground (C3, else the first
+  in) starting the back layer (`jacquard-dbj-full.ts`). Four-colour output
+  is byte-identical to before; `dbj-parity.test.ts` and
+  `birdseyeBody.test.ts` cover two and three colours, with and without C3.
+  New projects default to Birdseye only for four-color palettes, Fairisle
+  otherwise.
 - **Active overrides fail closed.** Stitch/pass overrides are schema-valid
   project intent, but the compiler does not consume them yet; any active
   override blocks compilation (`project-override-unsupported`) rather than

@@ -250,19 +250,10 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   // check yet knit with no yarn loaded.
   const carrierMessages: ValidationMessage[] = [];
   if (artifact.knitoutText !== null) {
-    const patternCarriers = new Set<string>(yarnBindings.map((binding) => binding.carrier));
-    const presetFrameCarriers = new Set<string>(CUSTOMIST_MATCHED_PRESETS_V1[technique].frameCarriers);
-    const introduced = new Set<string>();
-    for (const match of artifact.knitoutText.matchAll(/^in ([1-6](?: [1-6])*)$/gm)) {
-      for (const carrier of match[1]!.split(' ')) introduced.add(carrier);
-    }
-    const extra = [...introduced].filter((carrier) => !patternCarriers.has(carrier) && carrier !== frame.wasteCarrier).sort();
-    frame.frameCarriers = extra.filter((carrier) => presetFrameCarriers.has(carrier));
-    const unassigned = extra.filter((carrier) => !presetFrameCarriers.has(carrier));
-    if (unassigned.length > 0) {
-      // The matched birdseye program is laid out for four colours on C2-C5: with fewer, say so in the designer's terms.
-      if (technique === 'birdseye' && usedPalette.length < 4) carrierMessages.push(setupError('project-birdseye-color-count', `Birdseye needs four colours, and this chart uses ${usedPalette.length}. Use Fairisle, or paint with four colours.`));
-      else carrierMessages.push(setupError('project-unassigned-carrier', `The compiled ${technique} program uses ${unassigned.map((carrier) => `C${carrier}`).join(', ')}, which ${unassigned.length === 1 ? 'has' : 'have'} no yarn assigned.`));
+    const carriers = introducedCarriers(artifact.knitoutText, yarnBindings.map((binding) => binding.carrier), frame.wasteCarrier, CUSTOMIST_MATCHED_PRESETS_V1[technique].frameCarriers);
+    frame.frameCarriers = carriers.frame;
+    if (carriers.unassigned.length > 0) {
+      carrierMessages.push(setupError('project-unassigned-carrier', `The compiled ${technique} program uses ${carriers.unassigned.map((carrier) => `C${carrier}`).join(', ')}, which ${carriers.unassigned.length === 1 ? 'has' : 'have'} no yarn assigned.`));
     }
   }
   const exactCapacity = artifact.knitoutText === null
@@ -338,6 +329,21 @@ export function projectWithPreviewStrategy(project: ColorworkProjectV1, techniqu
   let id = `preview_strategy_${technique.replace(/-/g, '_')}`;
   while (project.history.entries.some((entry) => entry.id === id)) id += '_';
   return appendProjectEdit(project, { id, source: 'system', edit: { kind: 'set-strategy', strategy: { ...current, technique } } });
+}
+
+/**
+ * The carriers a program brings in (`in`) besides its pattern yarns and the
+ * waste yarn: the preset's frame yarns, and any other (`unassigned`), which
+ * would knit with no yarn loaded.
+ */
+export function introducedCarriers(knitoutText: string, patternCarriers: readonly string[], wasteCarrier: string | null, presetFrameCarriers: readonly string[]): { frame: string[]; unassigned: string[] } {
+  const pattern = new Set(patternCarriers);
+  const introduced = new Set<string>();
+  for (const match of knitoutText.matchAll(/^in ([1-6](?: [1-6])*)$/gm)) {
+    for (const carrier of match[1]!.split(' ')) introduced.add(carrier);
+  }
+  const extra = [...introduced].filter((carrier) => !pattern.has(carrier) && carrier !== wasteCarrier).sort();
+  return { frame: extra.filter((carrier) => presetFrameCarriers.includes(carrier)), unassigned: extra.filter((carrier) => !presetFrameCarriers.includes(carrier)) };
 }
 
 /** Width limits of the flat 2×2 rib beanie: the eight-line crown needs 60, the bed and carrier parking allow 244. */

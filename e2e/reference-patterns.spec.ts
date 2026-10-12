@@ -70,8 +70,8 @@ for (const name of ['fairisle', 'jacquard', 'dbj'] as const) {
       name: `${name}.colorwork.json`, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(chart)),
     });
     await expect(page.locator('.brand-copy small')).toContainText(`${name} reference pattern`);
-    // The Customist-matched birdseye program is laid out for four colors (dbj);
-    // two-color designs compile as fairisle.
+    // Each reference is exported with its own backing: dbj is birdseye; the
+    // others keep the default for their palette.
     if (name === 'dbj') {
       await page.getByRole('button', { name: /^Birdseye/ }).click();
     }

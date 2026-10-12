@@ -7,7 +7,7 @@ import {
   createColorworkProjectV1,
   materializeColorworkProject,
 } from '@kniterate-studio/project-contract';
-import { compileColorworkProject } from './compileProject';
+import { compileColorworkProject, introducedCarriers } from './compileProject';
 import { compileKCodeArtifact } from '../kcode/compileKCodeArtifact';
 import { authoredKnitoutNeedleRange } from '../kcode/kcodeProtocol';
 import { openMachineDocument } from '../engine';
@@ -127,15 +127,27 @@ describe('blanket project compiler', () => {
   });
 
   it('refuses a program that would knit a carrier with no assigned yarn', () => {
-    // The matched birdseye program is laid out for four colors on C2-C5; with
-    // two colors it would bring in C4/C5 with no yarn loaded. The refusal says
-    // so in the designer's terms: birdseye needs four colours.
-    let project = createColorworkProjectV1(chart, { id: 'birdseye-two-colors', needleOffset: 40 });
-    project = appendProjectEdit(project, { id: 'strategy', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'birdseye', floatLimit: 5 } } });
-    const artifact = compileColorworkProject(project);
-    expect(artifact.ok).toBe(false);
-    expect(artifact.knitoutText).toBeNull();
-    expect(artifact.messages).toContainEqual(expect.objectContaining({ rule: 'project-birdseye-color-count', severity: 'error', message: 'Birdseye needs four colours, and this chart uses 2. Use Fairisle, or paint with four colours.' }));
+    // Every carrier brought in must carry a yarn: a pattern yarn, the waste, or the preset's frame yarn.
+    const program = ['in 6', 'in 3', 'in 2', 'in 4 5', 'in 1'].join('\n');
+    expect(introducedCarriers(program, ['2', '3'], '6', ['1'])).toEqual({ frame: ['1'], unassigned: ['4', '5'] });
+    expect(introducedCarriers(program, ['2', '3', '4', '5'], '6', ['1'])).toEqual({ frame: ['1'], unassigned: [] });
+  });
+
+  it('compiles birdseye in two or three colours, bringing in only their yarns', () => {
+    for (const colors of [2, 3]) {
+      let project = createColorworkProjectV1(fourColorChart(24, 12, `${colors}-color birdseye`), { id: `birdseye-${colors}`, needleOffset: 40 });
+      const { state } = materializeColorworkProject(project);
+      // Repaint with the first `colors` colours only.
+      project = appendProjectEdit(project, { id: 'repaint', source: 'human', edit: { kind: 'paint-cells', cells: state.rowIds.flatMap((rowId, row) => Array.from({ length: 24 }, (_, column) => ({ rowId, column, paletteIndex: (row + column) % colors }))) } });
+      project = appendProjectEdit(project, { id: 'strategy', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'birdseye', floatLimit: 5 } } });
+      const artifact = compileColorworkProject(project);
+      expect(artifact.ok, `${colors} colours`).toBe(true);
+      expect(artifact.technique).toBe('birdseye');
+      expect(artifact.messages.filter((message) => message.severity === 'error')).toEqual([]);
+      expect(artifact.frame?.frameCarriers).toEqual(['1']);
+      const broughtIn = [...artifact.knitoutText!.matchAll(/^in ([1-6])$/gm)].map((match) => match[1]).sort();
+      expect(broughtIn).toEqual([...['2', '3', '4', '5'].slice(0, colors), '1', '6'].sort());
+    }
   });
 
   it('keeps row provenance and declares only the preset frame yarn for four-color birdseye', () => {

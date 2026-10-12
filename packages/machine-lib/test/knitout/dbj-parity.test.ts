@@ -168,4 +168,22 @@ describe('dbj.kc frame comparison and explicit body divergence', () => {
     expect(studioDiff.deltas.every((delta) => delta.field === 'speed')).toBe(true);
     expect(studioDiff.deltaCount).toBeGreaterThan(0);
   });
+
+  it('a chart in two or three colours brings in only its own carriers, in the captured order', () => {
+    // The capture brings in C3, C2, C4, C5; fewer colours keep that order and leave the rest out,
+    // so no carrier knits without a yarn. The ground that starts the back layer is C3, else the first in.
+    for (const bindings of [BINDINGS.slice(0, 2), BINDINGS.slice(0, 3), [BINDINGS[0]!, BINDINGS[2]!], [BINDINGS[3]!, BINDINGS[1]!]]) {
+      const keys = bindings.map((binding) => binding.keyId);
+      const cells = Array.from({ length: 6 }, (_, row) => Array.from({ length: 12 }, (_, column) => keys[(row + column) % keys.length]!));
+      const subset = buildPunchcardChart({ name: 'dbj-subset', cols: 12, rows: 6, tile: { cols: 12, rows: 6, cells } });
+      const result = compileChartToKnitout(buildCustomistMatchedCompileInputV1({ technique: 'birdseye', chart: subset, keyPalette: PALETTE, yarnBindings: bindings, needleOffset: 40 }));
+      const carriers = bindings.map((binding) => binding.carrier as string);
+      expect(result.ok, carriers.join('+')).toBe(true);
+      const text = writeKnitoutProgram(result.program!);
+      expect([...text.matchAll(/^in ([1-6])$/gm)].map((match) => match[1])).toEqual(['6', ...['3', '2', '4', '5'].filter((carrier) => carriers.includes(carrier)), '1']);
+      const knitting = new Set([...text.matchAll(/^(?:knit|tuck|split) [+-] .* ([1-6])$/gm)].map((match) => match[1]));
+      expect([...knitting].sort()).toEqual([...carriers, '1', '6'].sort());
+      expect(toKc(result)).toContain('FRNT:');
+    }
+  });
 });

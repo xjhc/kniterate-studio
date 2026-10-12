@@ -118,12 +118,6 @@ const RULE_STORIES: Record<string, RuleStory> = {
     action: 'Choose fairisle or birdseye.',
     target: () => 'backing',
   },
-  'project-birdseye-color-count': {
-    part: 'Backing',
-    consequence: 'Birdseye knits four yarns; with fewer, a carrier would knit with no yarn on it, so nothing is knitted.',
-    action: 'Use Fairisle, or paint with four colours.',
-    target: () => 'backing',
-  },
   'project-beanie-colorwork-unsupported': {
     part: 'Cuff',
     consequence: 'The rib cuff knits one yarn; coloured stitches in it cannot be knitted.',

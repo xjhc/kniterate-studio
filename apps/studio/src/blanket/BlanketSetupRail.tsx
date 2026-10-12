@@ -39,9 +39,7 @@ export function BlanketSetupRail({ state, compile, outputError, size, onStrategy
         const selected = technique === id;
         const minutes = selected ? compile.artifact?.stats.estimatedKnitTimeSeconds ?? comparison?.estimatedKnitTimeSeconds : comparison?.estimatedKnitTimeSeconds;
         const blocked = selected ? compile.status === 'failed' || compile.artifact?.compileVerdict === 'blocked' : comparison?.compileVerdict === 'blocked';
-        // The chart's birdseye program is laid out for exactly four colours on C2-C5.
-        const why = !beanie && id === 'birdseye' && colours !== 4 ? 'Needs 4 colours' : 'Cannot knit';
-        return <button type="button" className={selected ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{words(id)!.name}</b><small>{blocked ? why : minutes == null ? '…' : `${Math.ceil(minutes / 60)} min`}</small></span></button>;
+        return <button type="button" className={selected ? 'active' : ''} key={id} onClick={() => onStrategy(id)}><BackFaceMini projection={comparison?.backFace} palette={state.chart.palette} /><span><b>{words(id)!.name}</b><small>{blocked ? 'Cannot knit' : minutes == null ? '…' : `${Math.ceil(minutes / 60)} min`}</small></span></button>;
       })}</div>{current && <p className="garment-help">{current.help}</p>}{technique === 'fairisle' && colours >= 2 && <label className="strategy-field"><span>Longest float</span><input type="number" min="1" max="30" defaultValue={state.strategy.floatLimit} key={`float-${state.strategy.floatLimit}`} onBlur={(event) => onFloatLimit(Number(event.currentTarget.value))} /></label>}</Section>;
   return <aside className="sweater-design chart-design" aria-label="Design">
     {size}
