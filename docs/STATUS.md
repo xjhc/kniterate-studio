@@ -559,7 +559,13 @@ ship," trust this file and the working tree instead.
     or later to open.
   - On screen the verdict reads "Can't knit yet", "Ready to knit" or "Proven
     on the machine" (`engine.ts::VERDICT_WORDS`). Files, the CLI and the docs
-    keep Blocked, Surface-proven and Knit-proven.
+    keep Blocked, Surface-proven and Knit-proven. While sizes rest on a
+    typical gauge, the top badge and the panel both read "Ready to knit,
+    sizes not confirmed" (2026-10-12); `readiness.ready` stays false then.
+  - A measured gauge belongs to its stitch (2026-10-12). Choosing another
+    stitch keeps the numbers but not as measured ("Measured on Seed stitch.
+    Measure a swatch of 1×1 rib…"); going back counts them as measured
+    again. A beanie's backing change does not do this yet.
   - The Machine file view (`sweater/knitFile.ts`, `KnitFileView`) reads any
     emitted `.kc`. Its "Step through" mode holds the exact movement, pass
     grid, checks and source that used to be the separate machine workspace.

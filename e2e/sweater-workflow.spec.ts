@@ -80,7 +80,22 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
 
   // Measured gauges make every size real: ready to knit.
   for (const label of ['Seed stitch gauge', 'Rib gauge']) await page.getByRole('group', { name: label }).getByLabel('measured').check();
-  await expect(status(page)).toContainText('Ready to knit', { timeout: 90_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit', { timeout: 90_000 });
+  await expect(page.getByLabel('Verdict: Ready to knit', { exact: true })).toBeVisible();
+
+  // A swatch measures one stitch: another keeps its numbers, but not as measured.
+  const swatch = page.locator('#swatch');
+  await page.getByRole('radio', { name: /1×1 rib/ }).click();
+  await expect(page.getByRole('group', { name: '1×1 rib gauge' }).getByLabel('measured')).not.toBeChecked();
+  await expect(page.getByLabel('1×1 rib gauge stitches per 10 cm')).toHaveValue('25');
+  await expect(swatch).toContainText('Measured on Seed stitch. Measure a swatch of 1×1 rib for true sizes.');
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
+  await expect(page.getByLabel('Verdict: Ready to knit, sizes not confirmed')).toBeVisible();
+  // Back on the stitch it was measured on, it is measured again.
+  await page.getByRole('radio', { name: /Seed stitch/ }).click();
+  await expect(page.getByRole('group', { name: 'Seed stitch gauge' }).getByLabel('measured')).toBeChecked();
+  await expect(swatch).toContainText('From your swatch.');
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit', { timeout: 90_000 });
 
   // The package holds every piece's program.
   const download = page.waitForEvent('download');

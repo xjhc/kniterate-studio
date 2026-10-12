@@ -76,7 +76,7 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
           <label className="measure-row"><span>Length</span><NumberInput label="Length" value={object.lengthCm} min={5} max={400} suffix="cm" onCommit={(lengthCm) => change(`Length ${lengthCm} cm`, { ...object, lengthCm })} /><span className="knitted">{plan.knitted?.lengthCm ?? '—'}</span></label>
         </div>
       </Section>
-      <StitchSection body={object.body} hex={yarn.hex} gaugeAssumed={plan.gauge.source === 'assumed'} onChange={(label, nextBody, edits) => change(label, { ...object, body: nextBody }, edits)} />
+      <StitchSection body={object.body} hex={yarn.hex} gauge={plan.gauge} onChange={(label, nextBody, edits) => change(label, { ...object, body: nextBody }, edits)} />
       <Section title="Ends">
         <div className="trim-row">
           <span>Rib</span>

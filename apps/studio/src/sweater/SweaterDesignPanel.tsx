@@ -87,7 +87,7 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
       <p className="design-hint">Finished sizes, not body sizes. Knitted: what your gauge makes.</p>
     </Section>
 
-    <StitchSection body={object.body} hex={yarn.hex} gaugeAssumed={gauge.source === 'assumed'} onChange={(label, body, edits) => change(label, { ...object, body }, edits)} />
+    <StitchSection body={object.body} hex={yarn.hex} gauge={gauge} onChange={(label, body, edits) => change(label, { ...object, body }, edits)} />
 
     <Section title="Edges">
       {([['hem', 'Hem'], ['cuff', 'Cuffs'], ['neck', object.neckline === 'boat' ? 'Neck edge' : 'Neckband']] as const).map(([key, label]) => <div key={key} className="trim-row">
