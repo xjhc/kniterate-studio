@@ -30094,7 +30094,7 @@
     ]
   },
   "contract": {
-    "sha256": "3012ba2511849e007287a0afd476e7e1925cdfc4095363e648c20b30bad8ec9e",
+    "sha256": "c4b91c65ddc034ef8ea29c05ff8f91cd9c46bacc683d5bb45dcabeb9e71caf47",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30188,8 +30188,8 @@
       },
       {
         "path": "../../apps/studio/src/beanieWorkflow.test.ts",
-        "sha256": "725b76f0fb04711deb0e408c023b7714949ea11399be10c5565ea654d6edf5ed",
-        "bytes": 28411
+        "sha256": "0b6751df84ef7561a7021a80982d093607a70f94b89cf990bf82ee4fe404c570",
+        "bytes": 28487
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.test.tsx",
@@ -30263,8 +30263,8 @@
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
-        "sha256": "6e823c8403817bfb64f9615b5352473fe42f52f1e0602f2e957d0110d6c8df33",
-        "bytes": 32560
+        "sha256": "4cf48cc314a3ae3a60b50b509a2f56eb7203915e84dc013809283dc7f6ad80fc",
+        "bytes": 32892
       },
       {
         "path": "../../apps/studio/src/chart/PaletteRail.tsx",
@@ -30873,8 +30873,8 @@
       },
       {
         "path": "../../e2e/m3b.spec.ts",
-        "sha256": "7b3979e1b872487ce37c683a730f0297f93272b05d0aac98d0a6a16d08ed0fc4",
-        "bytes": 8919
+        "sha256": "6a0be00c0d3f412ac06317be6ff33eae7292c13fc72cee141039dbc3eb2f84ac",
+        "bytes": 10438
       },
       {
         "path": "../../e2e/m3c.spec.ts",
