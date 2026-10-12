@@ -3,10 +3,9 @@ import { AlertTriangle, Check, CheckCircle2, CircleAlert, Download, Info, Loader
 
 /**
  * The right-hand panel of every project: whether it can be knitted, then the
- * steps from design to knitted piece, in order. Each step holds what belongs
- * to it: what to fix, the swatch, the machine files and downloads, what to do
- * at the machine, and measuring the knitted piece. The next step to take is
- * marked.
+ * steps to a file you can knit, in order. Each step holds what belongs to it:
+ * what to fix, the swatch, and the machine files with what to set at the
+ * machine. The next step to take is marked.
  */
 
 export type StatusTone = 'checking' | 'ready' | 'next' | 'warn' | 'blocked';
@@ -35,9 +34,6 @@ export interface SwatchStep {
   file?: { onDownload: (() => void) | null; writing: boolean; problem: string | null };
 }
 
-/** What was recorded about finished pieces (a beanie's measurements, entered from File): shown under Knit, which is done once a real one is recorded. */
-export interface MeasureStep { done: boolean; content: ReactNode }
-
 type StepState = 'done' | 'current' | 'todo';
 
 function Step({ number, title, state, children }: { number: number; title: string; state: StepState; children?: ReactNode }) {
@@ -55,7 +51,7 @@ function Notes({ notes }: { notes: StatusNote[] }) {
   return <ul className="status-notes">{notes.map((note, index) => <li key={index} className={`note-${note.severity}`}>{note.text}{note.actions && <span className="note-actions">{note.actions}</span>}</li>)}</ul>;
 }
 
-export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onDownloadFile, onPackage, onPrint, packaging, canPackage, canPrint, downloaded, swatch, atTheMachine, measure, footer, fileDetail }: {
+export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onDownloadFile, onPackage, onPrint, packaging, canPackage, canPrint, downloaded, swatch, atTheMachine, footer, fileDetail }: {
   tone: StatusTone;
   title: string;
   detail: string;
@@ -72,8 +68,8 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
   downloaded: boolean;
   /** Present when the sizes come from a gauge. */
   swatch?: SwatchStep;
+  /** Settings the file cannot make, to set on the machine before knitting it. */
   atTheMachine: string[];
-  measure?: MeasureStep;
   footer?: ReactNode;
   /** More about the open file's piece (its shaping), shown under it. */
   fileDetail?: { id: string; content: ReactNode };
@@ -84,9 +80,8 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
     design: tone === 'ready' || tone === 'next',
     swatch: swatch?.gauges.every((gauge) => gauge.measured) ?? true,
     download: downloaded,
-    knit: measure?.done ?? false,
   };
-  const order = ['design', ...(swatch ? ['swatch'] : []), 'download', 'knit'] as (keyof typeof done)[];
+  const order = ['design', ...(swatch ? ['swatch'] : []), 'download'] as (keyof typeof done)[];
   const current = tone === 'checking' ? null : order.find((step) => !done[step]) ?? null;
   const state = (step: keyof typeof done): StepState => (done[step] ? 'done' : current === step ? 'current' : 'todo');
   const number = (step: keyof typeof done) => order.indexOf(step) + 1;
@@ -125,10 +120,10 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
           <button type="button" className="primary-button" disabled={!canPackage || packaging} onClick={onPackage}>{packaging ? <LoaderCircle size={16} className="spin" /> : <Package size={16} />}Download knitting package</button>
           <button type="button" className="secondary-button" disabled={!canPrint} onClick={onPrint}><Printer size={16} />Print knitting sheet</button>
         </div>
-      </Step>
-      <Step number={number('knit')} title="Knit" state={state('knit')}>
-        {atTheMachine.length > 0 && <ul className="status-notes operator">{atTheMachine.map((note, index) => <li key={index}>{note}</li>)}</ul>}
-        {measure?.content && <div className="after-knitting">{measure.content}</div>}
+        {atTheMachine.length > 0 && <section className="at-the-machine" aria-label="At the machine">
+          <p className="step-hint">At the machine, before knitting:</p>
+          <ul className="status-notes operator">{atTheMachine.map((note, index) => <li key={index}>{note}</li>)}</ul>
+        </section>}
       </Step>
     </ol>
     {footer}

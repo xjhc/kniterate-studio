@@ -83,11 +83,12 @@ runs, and the workspace shows exactly what those files knit.
      piece's shaping steps are shown under its file), Download knitting
      package and Print knitting sheet. Ticked once this design is
      downloaded.
-  4. Knit: what to do at the machine, and any finished hats recorded.
-  The steps end there. Measuring a finished hat is not a step before
-  knitting: File → Record a finished hat (beanie) takes what it measures
-  after washing and corrects the design for the next one. The knitted
-  file is filled in with this design's, in a fold-out.
+  The steps end with the download; what to set at the machine before
+  knitting (settings the file cannot make) is listed under Download.
+  Measuring a finished hat is not a step: File → Record a finished hat
+  (beanie) takes what it measures after washing, lists the hats recorded
+  before, and corrects the design for the next one. The knitted file is
+  filled in with this design's, in a fold-out.
 - **The verdict badge** uses the same plain words: Blocked is "Can't knit
   yet", Surface-proven is "Ready to knit", Knit-proven is "Proven on the
   machine". Its popover keeps the ladder's names, what each means, and what

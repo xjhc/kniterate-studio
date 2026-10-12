@@ -347,9 +347,6 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       downloaded={status.downloaded}
       swatch={swatch}
       atTheMachine={story?.operatorChecks ?? []}
-      measure={isGarment ? { done: (materialized.state.trials ?? []).some((trial) => !trial.synthetic), content: (materialized.state.trials ?? []).length > 0
-        ? <ul className="trial-list" aria-label="Finished hats">{materialized.state.trials!.map((trial) => <li key={trial.id}>{trial.recordedAt.slice(0, 10)} · {trial.outcome}{trial.bodyGauge ? ` · ${trial.bodyGauge.stitchesPer10cm} st / ${trial.bodyGauge.rowsPer10cm} rows` : ''}{trial.synthetic ? ' (test data)' : ''}</li>)}</ul>
-        : null } : undefined}
       footer={story?.notices.map((notice) => <p className="design-hint" role="note" key={notice}>{notice}</p>)}
     />
     {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); onView('design'); setFitRequest((request) => request + 1); } }} />}

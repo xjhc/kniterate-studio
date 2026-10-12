@@ -33,6 +33,8 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
     void Promise.all(placements.map(async (placement) => [placement.id, await placementPixels(placement)] as const)).then((entries) => { if (active) setPixels(new Map(entries)); }, () => { if (active) setPixels(new Map()); });
     return () => { active = false; };
   }, [project]);
+  // Hats recorded before, newest last.
+  const trials = useMemo(() => materializeColorworkProject(project).state.trials ?? [], [project]);
   const set = (path: (draft: MeasurementRecord) => void) => setRecord((current) => { const next = structuredClone(current); path(next); return next; });
   const num = (value: string) => (value === '' ? null : Number(value));
   const preview = useMemo(() => {
@@ -55,6 +57,7 @@ export function MeasureDialog({ project, hasCuff, candidateSha256, onRecord, onC
       <header><h2 id="measure-title">Record a finished hat</h2><button className="icon-button" type="button" onClick={onClose} aria-label="Close"><X size={16} /></button></header>
       <form onSubmit={submit}>
         <p className="garment-help">Measure the finished hat flat, after washing and drying. It is compared with the plan, and the design is corrected so the next one fits.</p>
+        {trials.length > 0 && <ul className="trial-list" aria-label="Recorded hats">{trials.map((trial) => <li key={trial.id}>{trial.recordedAt.slice(0, 10)} · {trial.outcome}{trial.bodyGauge ? ` · ${trial.bodyGauge.stitchesPer10cm} st / ${trial.bodyGauge.rowsPer10cm} rows` : ''}{trial.synthetic ? ' (test data)' : ''}</li>)}</ul>}
         {/* Which exact file was knitted: filled in with this design's file, so it is only opened to change it. */}
         <details className="measure-file" open={showFile || loadError !== null} onToggle={(event) => setShowFile(event.currentTarget.open)}>
           <summary>Knitted file <code>{record.candidate.kcodeSha256.slice(0, 12) || 'not set'}</code></summary>

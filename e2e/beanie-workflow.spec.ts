@@ -58,7 +58,10 @@ test('the status panel walks the steps: the swatch is next, then the download, e
   const download = page.waitForEvent('download');
   await steps.getByRole('button', { name: 'Download knitting package' }).click();
   await download;
-  await expect(next).toHaveText('Knit');
+  // The steps end with the download: nothing is left to do but knit it.
+  await expect(steps.locator('.step-done h3', { hasText: 'Download' })).toBeVisible();
+  await expect(steps.locator('[aria-current="step"]')).toHaveCount(0);
+  await expect(steps.locator('h3', { hasText: /^Knit/ })).toHaveCount(0);
 });
 
 test('a one-yarn beanie is one layer or two; adding a colour and painting it makes it colourwork', async ({ page }) => {
@@ -176,7 +179,11 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   await measure.locator('fieldset', { hasText: 'Body gauge' }).getByLabel('Rows').fill('30');
   await expect(measure.getByText(/Body gauge 30\/34 \(measured\) → 24\/30 \(synthetic, counted as assumed\)/)).toBeVisible();
   await measure.getByRole('button', { name: 'Record and revise' }).click();
-  await expect(page.getByText(/clean .*\(test data\)/)).toBeVisible();
+  await expect(measure).toBeHidden();
+  // The form lists the hats recorded before.
+  await menu(page, 'File', 'Record a finished hat…');
+  await expect(measure.getByRole('list', { name: 'Recorded hats' })).toContainText(/clean .*\(test data\)/);
+  await measure.getByRole('button', { name: 'Cancel' }).click();
   // Synthetic values never satisfy the real-measurement requirement, and readiness says why.
   await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
   await expect(page.getByRole('note').filter({ hasText: 'test data' })).toBeVisible();
