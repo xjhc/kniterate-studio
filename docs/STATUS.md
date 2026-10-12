@@ -575,6 +575,14 @@ ship," trust this file and the working tree instead.
     the program gives them (2026-10-12). A beanie's construction has
     neither, so its cards no longer wait on "…" forever. The states spec
     fails on any "…" left once a state has settled.
+  - Machine files are named the same way for every kind (2026-10-12,
+    `workspace/fileNames.ts`):
+    - each file for its piece, as the panel lists it: `back.kc`,
+      `scarf.kc`, `beanie.kc`, `colour-chart.kc`;
+    - each download with the project first: `ring-toque-1d791146-beanie.kc`.
+
+    A colour chart's stage and file row say "Colour chart", not "Scarf or
+    blanket".
   - One gauge editor for every kind (`workspace/gauge.tsx::GaugeFields`).
     It saves each gauge as one change, on Enter or when focus leaves it. The
     words for where gauges come from are shared too ("measured", "typical",

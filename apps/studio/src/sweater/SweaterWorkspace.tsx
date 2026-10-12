@@ -20,6 +20,7 @@ import { SweaterDesignPanel } from './SweaterDesignPanel';
 import type { SweaterRunState } from './sweaterRun';
 import { SweaterStatusPanel } from './SweaterStatusPanel';
 import type { SwatchFile } from '../useSwatchFile';
+import { machineFileName } from '../workspace/fileNames';
 import './sweater.css';
 
 /** The sweater workspace: what you are making on the left, the views in the middle, status and files on the right. */
@@ -92,14 +93,14 @@ export function SweaterWorkspace({ project, onProject, plan, run, view, onView, 
       if (view === 'schematic') return <div className="garment-wrap"><GarmentView plan={plan} hex={yarn.hex} statuses={statuses} onOpen={setPiece} runs={runs} /><p className="stage-caption">Each piece flat, as knitted, with its sizes, on the waste yarn (grey) and draw thread (red) it starts from. Click a piece to open it.</p></div>;
       return <FilesOverview files={plan.pieces.map((item) => {
         const result = fileOf(item.id);
-        return { id: item.id, name: item.name, fileName: `${item.id}.kc`, copies: item.copies, file: result?.file ?? null, waiting: result?.file ? null : waiting(item.id, item.name) };
+        return { id: item.id, name: item.name, fileName: machineFileName(item.name), copies: item.copies, file: result?.file ?? null, waiting: result?.file ? null : waiting(item.id, item.name) };
       })} onOpen={(id) => openFile(id as PieceId)} />;
     }
     if (!selected.raster) return <p className="stage-error">{selected.error}</p>;
     if (view === 'file') {
       // Only the file for this exact design: while it is rewritten after a change, say so rather than show the old one.
       const result = fileOf(selected.id);
-      if (result?.file && result.kcText) return <div className="piece-wrap"><KnitFileView key={selected.id} file={result.file} kcText={result.kcText} fileName={`${selected.id}.kc`} copies={selected.copies} hex={yarn.hex} carriers={plan.carriers} stitchCm={selected.raster.stitchCm} rowCm={selected.raster.rowCm} onDownload={() => onDownloadPiece(selected.id)} /></div>;
+      if (result?.file && result.kcText) return <div className="piece-wrap"><KnitFileView key={selected.id} file={result.file} kcText={result.kcText} fileName={machineFileName(selected.name)} copies={selected.copies} hex={yarn.hex} carriers={plan.carriers} stitchCm={selected.raster.stitchCm} rowCm={selected.raster.rowCm} onDownload={() => onDownloadPiece(selected.id)} /></div>;
       return <p className="knitfile-waiting" role="status">{waiting(selected.id, selected.name)}</p>;
     }
     if (view === 'schematic') {

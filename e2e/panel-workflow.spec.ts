@@ -18,7 +18,7 @@ test('a one-colour scarf in any stitch: sized in cm, rib ends, the whole run in 
   const status = page.locator('.status-card');
   await expect(status).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
   await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(1);
-  await expect(page.locator('.status-pieces')).toContainText('panel.kc');
+  await expect(page.locator('.status-pieces')).toContainText('scarf.kc');
 
   // Size in cm, wanted and knitted; a change is one undoable step.
   const width = page.getByLabel('Width', { exact: true });
@@ -39,7 +39,7 @@ test('a one-colour scarf in any stitch: sized in cm, rib ends, the whole run in 
   for (const label of ['Waste yarn', 'Draw thread', 'Cast-on', 'Pattern', 'Bind-off']) await expect(schematic).toContainText(label);
   await expect(schematic).not.toContainText('Rib ·');
   await page.getByRole('tab', { name: 'Machine file', exact: true }).click();
-  await expect(page.locator('.knitfile-head')).toContainText('panel.kc');
+  await expect(page.locator('.knitfile-head')).toContainText('scarf.kc');
   await expect(page.locator('.knitfile-sections li').filter({ hasText: 'Pattern' })).toContainText('C3');
 
   // The knitting sheet and the package.

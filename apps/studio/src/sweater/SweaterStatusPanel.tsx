@@ -4,6 +4,7 @@ import { revealSection } from '../workspace/panel';
 import { readinessStory, storyItems } from '../handoff';
 import type { SwatchFile } from '../useSwatchFile';
 import { statusNotes } from '../workspace/statusNotes';
+import { machineFileName } from '../workspace/fileNames';
 import type { PieceId } from './draft';
 import type { PiecesPlan } from './sweater';
 import type { SweaterRunState } from './sweaterRun';
@@ -53,7 +54,7 @@ export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile,
       return {
         id: piece.id,
         name: piece.name,
-        fileName: `${piece.id}.kc`,
+        fileName: machineFileName(piece.name),
         copies: piece.copies,
         facts: `${raster ? `${raster.realized.castOnStitches} st · ${raster.rows.length} rows` : 'not planned'}${result?.passCount && !checking ? ` · ${result.passCount.toLocaleString()} passes` : ''}`,
         state,

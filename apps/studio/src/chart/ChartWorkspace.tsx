@@ -18,6 +18,7 @@ import { RunSchematic } from '../workspace/RunSchematic';
 import { StatusPanel, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
 import { statusNotes } from '../workspace/statusNotes';
 import { regauge } from '../workspace/gauge';
+import { machineFileName, onePieceName } from '../workspace/fileNames';
 import { revealSection } from '../workspace/panel';
 import type { SwatchFile } from '../useSwatchFile';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
@@ -53,7 +54,6 @@ export interface ChartStatus {
   onDownloadKc: () => void;
 }
 
-const KIND_NAMES = { beanie: 'Beanie', panel: 'Scarf or blanket' } as const;
 
 /**
  * A charted project (a colorwork scarf, blanket or beanie) in the shared
@@ -236,8 +236,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const ribGauge = materialized.state.object?.ribGauge;
   const stitchCm = gauge ? 10 / gauge.stitchesPer10cm : null;
   const rowCm = gauge ? { body: 10 / gauge.rowsPer10cm, rib: ribGauge ? 10 / ribGauge.rowsPer10cm : 10 / gauge.rowsPer10cm } : null;
-  const kindName = KIND_NAMES[isGarment ? 'beanie' : 'panel'];
-  const fileName = `${project.id}.kc`;
+  const kindName = onePieceName(isGarment);
+  const fileName = machineFileName(kindName);
 
   useEffect(() => { if (paletteIndex >= chart.palette.length) setPaletteIndex(Math.max(0, chart.palette.length - 1)); }, [paletteIndex, chart.palette.length]);
   useEffect(() => {
