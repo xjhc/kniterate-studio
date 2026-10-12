@@ -13,6 +13,8 @@ export type StatusTone = 'checking' | 'ready' | 'next' | 'warn' | 'blocked';
 export interface StatusNote {
   severity: 'error' | 'warning' | 'info';
   text: string;
+  /** What it leads to, on hover. */
+  why?: string | null;
   /** Buttons that go to the problem or fix it. */
   actions?: ReactNode;
 }
@@ -48,7 +50,7 @@ function Step({ number, title, state, children }: { number: number; title: strin
 
 function Notes({ notes }: { notes: StatusNote[] }) {
   if (notes.length === 0) return null;
-  return <ul className="status-notes">{notes.map((note, index) => <li key={index} className={`note-${note.severity}`}>{note.text}{note.actions && <span className="note-actions">{note.actions}</span>}</li>)}</ul>;
+  return <ul className="status-notes">{notes.map((note, index) => <li key={index} className={`note-${note.severity}`} title={note.why ?? undefined}>{note.text}{note.actions && <span className="note-actions">{note.actions}</span>}</li>)}</ul>;
 }
 
 export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onDownloadFile, onPackage, onPrint, packaging, canPackage, canPrint, downloaded, swatch, atTheMachine, footer, fileDetail }: {
@@ -111,7 +113,7 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
                 <span className="piece-facts">{file.facts}</span>
               </button>
               <button type="button" className="icon-button" disabled={file.state !== 'ok'} onClick={() => onDownloadFile(file.id)} title={`Download ${file.fileName}`} aria-label={`Download ${file.fileName}`}><Download size={15} /></button>
-              {file.state === 'blocked' && file.error && <p className="piece-error">{file.error}</p>}
+              {file.state === 'blocked' && file.error && !notes.some((note) => note.text === file.error) && <p className="piece-error">{file.error}</p>}
               {fileDetail?.id === file.id && <div className="file-detail">{fileDetail.content}</div>}
             </li>)}
           </ul>

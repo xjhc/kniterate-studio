@@ -576,6 +576,21 @@ ship," trust this file and the working tree instead.
     `handoff.ts::storyNotes`): twenty long floats are one "Body colourwork"
     note with one Show, and the headline counts kinds of problem. Each place
     stays a finding of its own in the pattern's Unresolved list.
+  - One readiness story for every kind of project (2026-10-12):
+    - Sweaters and scarves now use `handoff.ts::readinessStory`, as beanies
+      and charts do; the separate `piecesStory` is gone.
+    - The panels share one notes builder (`workspace/statusNotes.tsx`).
+      A known problem reads "Part: next step", with what it leads to on
+      hover; any other note shows its own message.
+    - Notes that say the same are shown once. A file in the Download step
+      no longer repeats a note under itself.
+    - One detail line per state, on screen and in every pattern:
+      - can't knit: "Fix these first.";
+      - things to check: "It can be knitted. Check these first.";
+      - typical gauge: "Sizes use a typical gauge until you measure a
+        swatch.";
+      - ready: "Every software check passed."
+    - `e2e/states.spec.ts` checks every kind against this at 1280 × 800.
   - Words are plain: no "≈", no "machine truth" or "trials". Operator
     settings read like "Set carrier spacing to 2 on the machine".
   - Export stays hard-gated by the authored verdict.

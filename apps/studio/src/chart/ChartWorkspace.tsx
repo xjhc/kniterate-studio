@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Wrench } from 'lucide-react';
 import { clear, copy, cut, paste, type MirrorAxes, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
 import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendProjectOperation, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
 import { BRUSH_SIZES, ChartToolbar, type ChartTool } from './ChartToolbar';
 import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './ColorworkCanvas';
 import { beanieFitEdits, withSizingFixes, type BeanieFitChange } from '../beanie';
-import { storyNotes, type ReadinessStory } from '../handoff';
+import type { ReadinessStory } from '../handoff';
 import type { ProjectPlan } from '../plan';
 import { movedPlacement, placedCells, placementBoxes, type PlacementConversion, type PlacementImage } from '../placements';
 import { reconvertMotifs } from '../trials';
@@ -16,7 +15,8 @@ import { BeanieWornView } from '../garment/BeanieWornView';
 import { readKnitFile, type KnitFileCarriers } from '../sweater/knitFile';
 import { KnitFileView } from '../sweater/KnitFileView';
 import { RunSchematic } from '../workspace/RunSchematic';
-import { StatusPanel, type StatusNote, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
+import { StatusPanel, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
+import { statusNotes } from '../workspace/statusNotes';
 import { revealSection } from '../workspace/panel';
 import type { SwatchFile } from '../useSwatchFile';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
@@ -278,14 +278,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     onEnter: () => { onView('design'); revealSection('swatch'); },
     file: status.swatchFile,
   } : gauge ? { gauges: [{ name: backing ? `Colourwork (${backing.fabric})` : 'Plain stockinette', measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); }, file: status.swatchFile } : undefined;
-  const notes: StatusNote[] = storyNotes(story?.items ?? []).filter((item) => !(swatch && (item.rule === 'gauge-assumed' || item.rule === 'size-needs-gauge'))).map((item) => ({
-    severity: item.severity === 'error' ? 'error' : item.severity === 'warning' ? 'warning' : 'info',
-    text: `${item.part}: ${item.action}`,
-    actions: item.target || item.fixes.length > 0 ? <>
-      {item.target && <button type="button" className="secondary-button" onClick={() => goTo(item.target!)}>Show</button>}
-      {item.fixes.map((fix) => <button type="button" className="primary-button" key={fix.label} onClick={() => operate(fix.label, fix.edits)}><Wrench size={13} /> {fix.label}</button>)}
-    </> : undefined,
-  }));
+  const notes = statusNotes(story?.items ?? [], { swatchStep: swatch !== undefined, goTo, operate: (label, edits) => { operate(label, edits); } });
   const fileState = status.exportReady && kcode ? 'ok' as const : tone === 'blocked' && !storyPending ? 'blocked' as const : 'checking' as const;
 
   const center: ReactNode = (() => {

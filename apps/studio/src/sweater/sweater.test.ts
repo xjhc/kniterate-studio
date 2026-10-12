@@ -6,7 +6,8 @@ import { rasterizePiece, sliceOutline } from './rasterize';
 import { sweaterPlanOf, createSweaterProject, planSweater, sweaterEdit, type SweaterIntent } from './sweater';
 import { runSweaterPipeline } from './sweaterPipeline';
 import { pieceSteps, sweaterInstructions, sweaterPackageFiles } from './sweaterHandoff';
-import { piecesStory, summarizeSweaterRun } from './sweaterRun';
+import { summarizeSweaterRun } from './sweaterRun';
+import { readinessStory } from '../handoff';
 import { TEXTURES, textureProblem } from './textures';
 import { assembledLayout, schematicLayout, sweaterSchematicSvg } from './schematic';
 
@@ -303,7 +304,7 @@ describe('sweater pipeline', () => {
     expect(manifest.pieces.find((piece: { id: string }) => piece.id === 'sleeve')).toMatchObject({ copies: 2, file: 'sleeve.kc', verdict: 'Surface-proven' });
     const pattern = sweaterInstructions(project, plan, summary);
     // The panel's headline: a typical gauge leaves the sizes unconfirmed, not the sweater unknittable.
-    expect(piecesStory(summary).headline).toBe('Ready to knit, sizes not confirmed');
+    expect(readinessStory({ findings: summary.findings, readiness: summary.readiness, verdict: summary.verdict, exportReady: summary.exportReady }).headline).toBe('Ready to knit, sizes not confirmed');
     expect(pattern).toContain('**Ready to knit, sizes not confirmed.** Sizes use a typical gauge until you measure a swatch.');
     expect(pattern).not.toContain('Not ready');
     expect(pattern).toMatch(/### Sleeve — knit 2/);

@@ -638,7 +638,7 @@ export function App() {
     const result: AuthoredPipelineResult = { compiled: blanketCompile.artifact, compileError: blanketCompile.error, kcode: outputCurrent ? kcodeState.artifact : null, outputError: kcodeState.error, verdict: authoredVerdict, exportReady: authoredExportReady };
     const findings = collectFindings(plan, result);
     const readiness = resolveReadiness({ verdict: authoredVerdict, findings });
-    return { result, findings, readiness, story: readinessStory(plan, findings, readiness, authoredVerdict, materializedProject.state.trials ?? []) };
+    return { result, findings, readiness, story: readinessStory({ findings, readiness, verdict: authoredVerdict, trials: materializedProject.state.trials ?? [] }) };
   }, [plan, blanketCompile.artifact, blanketCompile.error, kcodeState.artifact, kcodeState.error, outputCurrent, verdictKey, authoredExportReady]);
   // What this tab last saved, or took up from another tab. Until the project changes, there is nothing new to save.
   const saved = useRef<{ project: ColorworkProjectV1; slot: string } | null>(null);
