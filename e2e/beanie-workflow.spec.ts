@@ -39,7 +39,7 @@ async function placeImage(page: Page, heightCm: string) {
 const headRow = (page: Page) => page.getByRole('group', { name: 'Finished measurements' }).locator('.measure-row').filter({ hasText: /^Head/ });
 const needles = (page: Page, count: number) => headRow(page).locator('.count').filter({ hasText: new RegExp(`^${count} st$`) });
 
-test('the whole hat is drawn as worn, the motif on the front and the seam at the back; clicking it opens the chart', async ({ page }) => {
+test('the whole hat is drawn as worn, flat: the motif on the front and the seam at the back; clicking it opens the chart', async ({ page }) => {
   test.setTimeout(120_000);
   await createBeanie(page);
   await placeImage(page, '6');

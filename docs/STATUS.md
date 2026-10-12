@@ -515,9 +515,12 @@ ship," trust this file and the working tree instead.
   - **Whole hat (2026-10-11).** A beanie's stage has two tabs, like a
     sweater's pieces: Whole hat and Beanie (the chart, where it opens).
     - Whole hat's Design view draws the hat as worn, from the front or the
-      back (`garment/beanieWorn.ts`): the folded cuff, the chart as knitted
-      (motifs drawn in) wrapped round to the back seam, and the body and
-      crown's knitted length running up the side and over a rounded top.
+      back (`garment/beanieWorn.ts`). It is flat and to scale like the
+      sweater's (2026-10-12; no shading): half the knitted circumference
+      wide, and as tall as the Height row, the crown rounding to the top.
+      The chart as knitted (motifs drawn in) has its middle at the front and
+      its edges at the back seam. A cuff is a shade darker, as the
+      sweater's rib is.
     - It shows the hat unstretched. How far it stretches on a head, and how
       the gathered top bunches, are not modelled. Clicking it opens the
       chart.

@@ -19,17 +19,18 @@ function hat(paint: (rowIds: readonly string[], width: number) => { rowId: strin
 }
 
 describe('the beanie as worn', () => {
-  it('stands on the folded cuff, runs up the side and closes over the top', () => {
+  it('is drawn flat, as wide as it lies and as tall as its cuff, body and crown', () => {
     const { plan, layout } = hat();
     const front = layout('front');
-    expect(front.radius).toBeCloseTo(plan.predicted!.widthCm.value / (2 * Math.PI), 6);
-    expect(front.cuff).toMatchObject({ top: plan.sections!.cuff!.visibleCm!.value });
-    expect(front.cuff!.halfWidth).toBeGreaterThan(front.radius);
-    expect(front.outline[0]).toEqual({ x: front.radius, y: front.cuff!.top });
-    expect(front.outline.at(-1)!.x).toBe(0);
-    // Above the cuff it is the body and crown's knitted length, over a rounded top as wide as the hat.
-    const length = plan.sections!.body.cm!.value + plan.sections!.crown!.cm!.value;
-    expect(front.height).toBeCloseTo(front.cuff!.top + length - (Math.PI / 2) * front.radius + front.radius, 6);
+    const sections = plan.sections!;
+    expect(front.halfWidth).toBeCloseTo(plan.predicted!.widthCm.value / 4, 6);
+    expect(front.height).toBeCloseTo(sections.finishedHeightCm!.value, 0);
+    expect(front.outline[0]).toEqual({ x: front.halfWidth, y: 0 });
+    // Straight sides up to the crown, which rounds to the centre of the top.
+    expect(front.outline[1]).toEqual({ x: front.halfWidth, y: sections.cuff!.visibleCm!.value + sections.body.cm!.value });
+    expect(front.outline.at(-1)).toEqual({ x: 0, y: front.height });
+    // The folded cuff is the rib, a shade darker.
+    expect(front.rib).toEqual({ y0: 0, y1: sections.cuff!.visibleCm!.value });
     // A plain body shows only its ground colour.
     expect(front.body).toEqual([]);
     expect(front.seam).toBeNull();

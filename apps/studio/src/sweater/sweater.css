@@ -104,7 +104,7 @@
 .garment-dimension line { stroke: var(--ink-2); stroke-width: 0.12; }
 .garment-dimension text { fill: var(--ink-2); font-size: 2.9px; font-variant-numeric: tabular-nums; }
 .garment-label { fill: var(--ink); font-size: 3.6px; font-weight: 750; }
-.assembled-front, .assembled-sleeve { stroke: var(--ink-3); stroke-width: 0.12; paint-order: stroke; }
+.assembled-front, .assembled-sleeve, .beanie-hat { stroke: var(--ink-3); stroke-width: 0.12; paint-order: stroke; }
 .assembled-band { fill: none; stroke-linejoin: round; stroke-linecap: round; }
 .assembled-back { filter: brightness(.78); }
 .assembled-band.back { filter: brightness(.7); }
@@ -284,6 +284,6 @@ ul.status-notes li.note-error { color: var(--blocked); }
 .garment-waste { fill: #A9B0B8; opacity: .85; }
 .garment-draw { stroke: #C2413A; stroke-width: .5; }
 
-/* A beanie as worn. */
+/* A beanie as worn, flat like the sweater. */
 .beanie-worn .garment-view { max-height: 640px; }
 .beanie-seam { stroke: #0006; stroke-width: .12; stroke-dasharray: .6 .4; }
