@@ -64,7 +64,8 @@ export interface ShapedPanelInputV1 {
   /** The second yarn of the same colour that knits the right part after a neck split. */
   readonly secondCarrier?: CarrierId
   readonly wasteCarrier: CarrierId
-  readonly drawCarrier: CarrierId
+  /** The draw thread; null for none (the waste is then unravelled or cut away). */
+  readonly drawCarrier: CarrierId | null
   /** Waste interlock passes at the start (default the reference's 81). */
   readonly startWastePasses?: number
   /** How the top is finished. `waste` knits `wasteRows` rows of waste yarn (default 8) over every live stitch, then releases them. */
@@ -116,7 +117,7 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
   const A = input.mainCarrier
   const B = input.secondCarrier
   if (splits && B === undefined) throw new ShapedPanelError(null, 'a neck split needs a second carrier for the right part')
-  const used = [A, ...(B && splits ? [B] : []), input.wasteCarrier, input.drawCarrier]
+  const used = [A, ...(B && splits ? [B] : []), input.wasteCarrier, ...(input.drawCarrier !== null ? [input.drawCarrier] : [])]
   if (new Set(used).size !== used.length) throw new ShapedPanelError(null, 'the main, second, waste and draw yarns need four different carriers')
 
   const sim = new CarriageSimulator({ carriers: ['1', '2', '3', '4', '5', '6'] })
@@ -391,7 +392,7 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
     drain()
   }
   // Carriers out: draw, body yarns, waste (the rib beanie's order).
-  for (const carrier of [input.drawCarrier, A, ...(splits ? [B!] : []), input.wasteCarrier]) sim.out(carrier)
+  for (const carrier of [...(input.drawCarrier !== null ? [input.drawCarrier] : []), A, ...(splits ? [B!] : []), input.wasteCarrier]) sim.out(carrier)
   drain()
 
   const program: KnitoutProgram = {
@@ -404,7 +405,7 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
       [A]: 'main',
       ...(splits ? { [B!]: 'main (right shoulder)' } : {}),
       [input.wasteCarrier]: 'waste',
-      [input.drawCarrier]: 'draw thread',
+      ...(input.drawCarrier !== null ? { [input.drawCarrier]: 'draw thread' } : {}),
     },
     kniterate: { xferStyle: 'four-pass' },
     ops,

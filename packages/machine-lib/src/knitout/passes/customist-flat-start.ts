@@ -117,7 +117,12 @@ export function flatPieceKit(sim: CarriageSimulator, ops: KnitoutOp[], lo: numbe
 export interface CustomistFlatStartInput {
   bodyCarrier: CarrierId
   wasteCarrier: CarrierId
-  drawCarrier: CarrierId
+  /**
+   * The draw thread, pulled out afterwards to free the piece from the waste
+   * yarn; null for none. Without it the waste is joined to the cast-on and is
+   * unravelled or cut away, and the waste sections around it are unchanged.
+   */
+  drawCarrier: CarrierId | null
   /** Further yarns brought in after the body yarn, in order (each is carried up from the waste section to its first stitch). */
   extraCarriers: readonly CarrierId[]
   /**
@@ -177,9 +182,11 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
     tube(2, '-')
   })
   // Draw yarn insert (front even, rear odd), then a six-row waste tube.
-  sim.bringIn(draw, { side: 'left' })
-  settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
-  row(draw, '+', even, (o) => !even(o))
+  if (draw !== null) {
+    sim.bringIn(draw, { side: 'left' })
+    settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
+    row(draw, '+', even, (o) => !even(o))
+  }
   tube(6, '+')
   drain()
 
@@ -200,9 +207,11 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
   // Drop every rear waste loop, then the draw yarn's final front row.
   settings(s.castOnSpeed, s.castOnRoller)
   for (const o of offsets('+', (x) => !even(x))) sim.drop(backBed(lo + o))
-  settings(s.tubeSpeed, s.tubeRoller, s.drawFinalStitch)
-  row(draw, '-', even, none)
-  sim.miss(draw, '-', f(lo - DRAW_PARK_BEYOND_EDGE))
+  if (draw !== null) {
+    settings(s.tubeSpeed, s.tubeRoller, s.drawFinalStitch)
+    row(draw, '-', even, none)
+    sim.miss(draw, '-', f(lo - DRAW_PARK_BEYOND_EDGE))
+  }
   drain()
 
   // Cast on 1×1 on both beds, then one tubular front and one rear row.

@@ -81,7 +81,8 @@ export interface KnitFileCarriers {
   /** A second cone of the main yarn (a sweater's right shoulder). */
   second: string | null;
   waste: string;
-  draw: string;
+  /** Null when the piece knits without a draw thread. */
+  draw: string | null;
   /** Colourwork: every pattern carrier's yarn. */
   yarns?: Record<string, { name: string; hex: string }>;
 }
@@ -114,9 +115,10 @@ export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: n
   let lastRole: KnitSectionKind = 'waste';
   let lastWork = -1;
   trace.passes.forEach((pass, index) => { if (pass.actions.some((action) => action.kind !== 'move')) lastWork = index; });
-  // The cast-on is the yarn's knitting after the last draw-thread pass; before it, a yarn is only being brought in.
+  // The cast-on is the yarn's knitting after the last draw-thread pass (with none, the last waste pass); before it, a yarn is only being brought in.
+  const separator = carriers.draw ?? carriers.waste;
   let lastDraw = -1;
-  trace.passes.forEach((pass, index) => { if ((firstBody === -1 || index < firstBody) && pass.carrier === carriers.draw && pass.actions.some((action) => action.kind === 'knit')) lastDraw = index; });
+  trace.passes.forEach((pass, index) => { if ((firstBody === -1 || index < firstBody) && pass.carrier === separator && pass.actions.some((action) => action.kind === 'knit')) lastDraw = index; });
   const knits = (index: number) => trace.passes[index]!.actions.some((action) => action.kind === 'knit' || action.kind === 'tuck');
   const frontKnits = (index: number) => trace.passes[index]!.actions.flatMap((action) => (action.kind === 'knit' && action.at.bed === 'front' ? [action.at.traceCoordinate] : [])).sort((a, b) => a - b).join(' ');
   // A beanie's body runs to its first crown decrease: rows after the design's

@@ -75,6 +75,8 @@ const FrameSchema = z.object({
 const MachineSetupSchema = z.object({
   /** Waste interlock passes before the piece starts. Kniterate's own default is 80; much fewer and the fabric may not reach the rollers. */
   wasteRows: z.number().int().min(4).max(200).optional(),
+  /** A draw thread (C1) between the waste yarn and the piece, pulled out to free it. False for none: the waste is unravelled or cut away. */
+  drawThread: z.boolean().optional(),
 });
 export type MachineSetup = z.infer<typeof MachineSetupSchema>;
 

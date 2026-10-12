@@ -59,8 +59,25 @@ describe('the waste yarn at the start', () => {
 
 describe('the machine settings section', () => {
   it('shows the standard until you set your own, and warns when the waste is short', () => {
-    expect(machineSetupWords(undefined, 'flat')).toEqual({ wasteRows: 81, standard: 81, own: false, warning: null });
+    expect(machineSetupWords(undefined, 'flat')).toEqual({ wasteRows: 81, standard: 81, drawThread: true, own: false, warning: null });
+    expect(machineSetupWords(undefined, 'fairisle')).toMatchObject({ wasteRows: 87, drawThread: null });
+    expect(machineSetupWords({ drawThread: false }, 'flat')).toMatchObject({ drawThread: false, own: true });
     expect(machineSetupWords({ wasteRows: 71 }, 'flat')).toMatchObject({ wasteRows: 71, own: true, warning: null });
     expect(machineSetupWords({ wasteRows: 40 }, 'flat')).toMatchObject({ wasteRows: 41, own: true, warning: 'Below about 70 rows the fabric may not reach the rollers before your piece starts.' });
+  });
+});
+
+describe('the draw thread', () => {
+  it('can be left out of every flat piece: the file has no C1 and still passes the strict checks', async () => {
+    const off = (project: ColorworkProjectV1) => appendProjectEdit(project, { id: 'no-draw', source: 'human', edit: { kind: 'set-machine-setup', setup: { drawThread: false } } });
+    const hat = createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' }, main: { name: 'Black', hex: '#111111' } }, { id: 'hat', source: 'human', group: 'create' });
+    const scarf = createPanelProject({ title: 'Scarf', widthCm: 20, lengthCm: 30, textureId: 'stockinette', yarn: { name: 'Oat', hex: '#D9CBB0' } }, { id: 'scarf', source: 'human', group: 'create' });
+    const beanie = await runAuthoredPipeline(off(hat));
+    expect(beanie.verdict.state).toBe('surface');
+    expect(beanie.compiled!.knitoutText).not.toMatch(/^in 1$/m);
+    expect(compileColorworkProject(hat).knitoutText).toMatch(/^in 1$/m);
+    const piece = (await runSweaterPipeline(off(scarf))).pieces[0]!;
+    expect(piece.verdict.state).toBe('surface');
+    expect(piece.compiled!.knitoutText).not.toMatch(/^in 1$/m);
   });
 });

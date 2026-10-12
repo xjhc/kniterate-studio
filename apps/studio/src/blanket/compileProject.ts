@@ -400,9 +400,9 @@ function compileBeanieProject(
     reference: 'reference/2x2-rib-beanie.kc',
     wastePasses: 81,
     wasteCarrier: '6',
-    drawCarrier: '1',
+    drawCarrier: state.setup?.drawThread === false ? null : '1',
     bindOff: 'knit-off',
-    frameCarriers: ['1'],
+    frameCarriers: state.setup?.drawThread === false ? [] : ['1'],
   };
   const base = {
     revision: projectRevision(project),
@@ -422,7 +422,7 @@ function compileBeanieProject(
     needleEnd: state.machine.needleOffset + width - 1,
     bodyCarrier: assignment!.carrier,
     wasteCarrier: '6',
-    drawCarrier: '1',
+    drawCarrier: state.setup?.drawThread === false ? null : '1',
     ribRows: cuffRows,
     crown,
     ...(state.setup?.wasteRows !== undefined ? { startWastePasses: customistWastePassesV1('flat', state.setup.wasteRows) } : {}),

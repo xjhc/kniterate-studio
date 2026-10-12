@@ -11,7 +11,7 @@ import {
 } from '@kniterate-studio/project-contract';
 import type { DraftPiece } from './draft';
 import { rasterizePiece } from './rasterize';
-import { BED_CENTRE, DEFAULT_RIB_GAUGE, SWEATER_DRAW_CARRIER, SWEATER_MAX_NEEDLES, SWEATER_WASTE_CARRIER, yarnEstimate, type PiecesPlan, type SweaterPieceFinding, type SweaterPiecePlan } from './sweater';
+import { BED_CENTRE, DEFAULT_RIB_GAUGE, SWEATER_MAX_NEEDLES, drawCarrierOf, SWEATER_WASTE_CARRIER, yarnEstimate, type PiecesPlan, type SweaterPieceFinding, type SweaterPiecePlan } from './sweater';
 import { TEXTURES, textureById, textureMatching, textureProblem } from './textures';
 
 /**
@@ -114,7 +114,7 @@ export function planPanel(state: ProjectState): PanelPlan {
     gauge,
     ribGauge,
     pieces: [piece],
-    carriers: { main: state.machine.yarnAssignments.find((item) => item.paletteId === state.chart.palette[0]?.id)?.carrier ?? '3', second: null, waste: SWEATER_WASTE_CARRIER, draw: SWEATER_DRAW_CARRIER },
+    carriers: { main: state.machine.yarnAssignments.find((item) => item.paletteId === state.chart.palette[0]?.id)?.carrier ?? '3', second: null, waste: SWEATER_WASTE_CARRIER, draw: drawCarrierOf(state) },
     findings,
     yarn: yarnEstimate([piece]),
     knitted: raster ? { widthCm: raster.realized.widthCm, lengthCm: raster.realized.heightCm, stitches: raster.realized.castOnStitches, rows: raster.rows.length } : null,

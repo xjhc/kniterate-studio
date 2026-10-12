@@ -36,7 +36,8 @@ export interface CustomistRibBeanieInput {
   needleEnd: number
   bodyCarrier: CarrierId
   wasteCarrier: CarrierId
-  drawCarrier: CarrierId
+  /** The draw thread; null for none (the waste is then unravelled or cut away). */
+  drawCarrier: CarrierId | null
   /** Waste interlock passes at the start (default the reference's 81). */
   startWastePasses?: number
   /** 2×2 rib rows after the set-up. */
@@ -229,7 +230,7 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
   }
 
   // Carriers out in the reference order: draw, body, waste.
-  for (const carrier of [draw, body, ...extraCarriers, waste]) sim.out(carrier)
+  for (const carrier of [...(draw !== null ? [draw] : []), body, ...extraCarriers, waste]) sim.out(carrier)
   drain()
 
   return { ops, predictedPasses: sim.predictedPasses(), finalNextDirection: sim.finalNextDirection() }
@@ -255,7 +256,7 @@ function beanieProgram(input: CustomistRibBeanieInput, ops: KnitoutOp[]): Knitou
     position: 'Keep',
     yarns: {
       ...Object.fromEntries([...new Set((input.jerseyBody?.rows ?? []).flat())].map((carrier) => [carrier, `colour ${carrier}`])),
-      [input.bodyCarrier]: 'main', [input.wasteCarrier]: 'waste', [input.drawCarrier]: 'draw thread',
+      [input.bodyCarrier]: 'main', [input.wasteCarrier]: 'waste', ...(input.drawCarrier !== null ? { [input.drawCarrier]: 'draw thread' } : {}),
     },
     kniterate: { xferStyle: 'four-pass' },
     ops,

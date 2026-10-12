@@ -600,8 +600,15 @@ ship," trust this file and the working tree instead.
     - The old `frame` settings stay unread: every project stores their
       defaults (`wasteRows: 20`), so reading them would shrink every
       project's waste.
-    - Still to come: the draw thread, the finish, and speed, roller and
-      stitch size for each section.
+    - Draw thread on or off (2026-10-12), for beanies, sweaters and scarves.
+      The chart references knit without one.
+      - Off, the start skips the draw yarn's insert and final rows and C1
+        is never brought in. The waste sections around it are unchanged.
+      - The pattern says to unravel or cut the waste away, and the operator
+        note says "no draw thread".
+      - The Machine file reader finds the cast-on after the last waste pass.
+    - Still to come: the finish, and speed, roller and stitch size for each
+      section.
   - One gauge editor for every kind (`workspace/gauge.tsx::GaugeFields`).
     It saves each gauge as one change, on Enter or when focus leaves it. The
     words for where gauges come from are shared too ("measured", "typical",

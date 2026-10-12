@@ -74,7 +74,7 @@ export function compileSweaterPiece(plan: PiecesPlan, piece: SweaterPiecePlan, s
     mainCarrier: plan.carriers.main as CarrierId,
     ...(splits && plan.carriers.second !== null ? { secondCarrier: plan.carriers.second as CarrierId } : {}),
     wasteCarrier: plan.carriers.waste as CarrierId,
-    drawCarrier: plan.carriers.draw as CarrierId,
+    drawCarrier: plan.carriers.draw as CarrierId | null,
     top: plan.object.top ?? 'bind-off',
     fashion: plan.object.fashion ?? 1,
     ...(setup?.wasteRows !== undefined ? { startWastePasses: customistWastePassesV1('flat', setup.wasteRows) } : {}),
@@ -225,7 +225,7 @@ export function sweaterFindings(plan: PiecesPlan, pieces: readonly SweaterPieceR
     }
   }
   // What the operator loads and watches; never marked complete by software.
-  findings.push({ stage: 'plan', rule: 'operator-yarns', severity: 'info', owner: 'operator', path: 'yarns', title: 'operator-yarns', message: `Yarn on C${plan.carriers.main}${plan.carriers.second ? `, a second cone of the same yarn on C${plan.carriers.second} (right shoulder)` : ''}, waste yarn on C${plan.carriers.waste}, draw thread on C${plan.carriers.draw}.`, fixes: [] });
+  findings.push({ stage: 'plan', rule: 'operator-yarns', severity: 'info', owner: 'operator', path: 'yarns', title: 'operator-yarns', message: `Yarn on C${plan.carriers.main}${plan.carriers.second ? `, a second cone of the same yarn on C${plan.carriers.second} (right shoulder)` : ''}, waste yarn on C${plan.carriers.waste}${plan.carriers.draw ? `, draw thread on C${plan.carriers.draw}` : ', no draw thread'}.`, fixes: [] });
   if (plan.carriers.second) findings.push({ stage: 'plan', rule: 'carried-yarn', severity: 'info', owner: 'operator', path: 'yarns', title: 'carried-yarn', message: `On the front${plan.pieces.find((piece) => piece.id === 'back')?.raster?.events.some((event) => event.kind === 'neck-split') ? ' and back' : ''}, C${plan.carriers.second} runs up the right edge to the neck: keep it slack, trim it after.`, fixes: [] });
   return findings;
 }
