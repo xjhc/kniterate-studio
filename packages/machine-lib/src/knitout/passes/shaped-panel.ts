@@ -57,6 +57,9 @@ export interface PanelRowV1 {
   readonly sourceRow?: number
 }
 
+/** Rows of waste yarn a shaped piece finishes on, when its top is waste. */
+export const SHAPED_PANEL_TOP_WASTE_ROWS = 8
+
 export interface ShapedPanelInputV1 {
   /** Rows in knitting order. The first row's single segment is the cast-on; its width must be even. */
   readonly rows: readonly PanelRowV1[]
@@ -68,7 +71,7 @@ export interface ShapedPanelInputV1 {
   readonly drawCarrier: CarrierId | null
   /** Waste interlock passes at the start (default the reference's 81). */
   readonly startWastePasses?: number
-  /** How the top is finished. `waste` knits `wasteRows` rows of waste yarn (default 8) over every live stitch, then releases them. */
+  /** How the top is finished. `waste` knits `wasteRows` rows of waste yarn (default `SHAPED_PANEL_TOP_WASTE_ROWS`) over every live stitch, then releases them. */
   readonly top: 'bind-off' | 'waste'
   readonly wasteRows?: number
   /** Edge stitches moved by a decrease or increase (default 1: the edge stitch). 2 or 3 sets the fashioning line further in. */
@@ -381,7 +384,7 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
     sim.setStitch(RIB.wasteStitch)
     const lo = previous[0]!.lo
     const hi = previous.at(-1)!.hi
-    for (let k = 0; k < (input.wasteRows ?? 8); k++) {
+    for (let k = 0; k < (input.wasteRows ?? SHAPED_PANEL_TOP_WASTE_ROWS); k++) {
       const dir: Direction = sideOf(input.wasteCarrier) === 'left' ? '+' : '-'
       const order = dir === '+' ? range(lo, hi) : range(lo, hi).reverse()
       // The first row skips the gap between segments; later rows knit across it so the waste holds together.

@@ -234,6 +234,8 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     yarnBindings,
     needleOffset: state.machine.needleOffset,
     ...(state.setup?.wasteRows !== undefined ? { wastePasses: customistWastePassesV1(technique, state.setup.wasteRows) } : {}),
+    ...(state.setup?.top !== undefined ? { top: state.setup.top } : {}),
+    ...(state.setup?.topWasteRows !== undefined ? { topWasteRows: state.setup.topWasteRows } : {}),
     ...(technique === 'fairisle' ? { floatPolicy: { mode: 'warn-above' as const, threshold: state.strategy.floatLimit } } : {}),
   });
   const artifact = compileToRunArtifact(input);

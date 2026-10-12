@@ -77,6 +77,10 @@ const MachineSetupSchema = z.object({
   wasteRows: z.number().int().min(4).max(200).optional(),
   /** A draw thread (C1) between the waste yarn and the piece, pulled out to free it. False for none: the waste is unravelled or cut away. */
   drawThread: z.boolean().optional(),
+  /** A colour chart's top: the reference's closing waste, or a machine chain bind-off. (A sweater's or scarf's top is its object's `top`.) */
+  top: z.enum(['waste', 'bind-off']).optional(),
+  /** Rows of waste yarn on top, when the top is waste. */
+  topWasteRows: z.number().int().min(2).max(100).optional(),
 });
 export type MachineSetup = z.infer<typeof MachineSetupSchema>;
 

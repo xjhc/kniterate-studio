@@ -96,11 +96,11 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
         <Chips label={`${label} rib`} value={object.trims[key].rib} options={RIBS.map((rib) => ({ id: rib.rib, name: rib.name }))} onPick={(rib) => change(`${label}: ${RIBS.find((item) => item.rib === rib)?.name} rib`, { ...object, trims: { ...object.trims, [key]: { ...object.trims[key], rib } } })} />
         <NumberInput label={`${label} height`} value={object.trims[key].cm} min={key === 'hem' ? 0 : 1} max={20} suffix="cm" onCommit={(cm) => change(`${label} ${cm} cm`, { ...object, trims: { ...object.trims, [key]: { ...object.trims[key], cm } } })} />
       </div>)}
-      <div className="field-row"><span>Top</span><Chips label="Top edge" value={object.top ?? 'bind-off'} options={[{ id: 'bind-off', name: 'Bind off', note: 'The machine binds off each piece.' }, { id: 'waste', name: 'Waste yarn', note: 'Live stitches on waste yarn, to graft or bind off by hand.' }]} onPick={(top) => change(top === 'waste' ? 'Finish on waste yarn' : 'Bind off the tops', { ...object, top })} /></div>
       <div className="field-row"><span>Shaping</span><Chips label="Shaping line" value={String(object.fashion ?? 1) as '1' | '2' | '3'} options={[{ id: '1', name: 'At the edge', note: 'Decreases and increases at the very edge.' }, { id: '2', name: '2 in', note: 'A fashioning line 2 stitches in from the edge.' }, { id: '3', name: '3 in', note: 'A fashioning line 3 stitches in.' }]} onPick={(fashion) => change(fashion === '1' ? 'Shape at the edge' : `Fashion ${fashion} stitches in`, { ...object, fashion: Number(fashion) })} /></div>
     </Section>
 
     <YarnGaugeSection yarn={yarn} carrier={plan.carriers.main} bodyName={object.body.name} gauge={gauge} ribGauge={plan.ribGauge} operate={operate} onRibGauge={setRibGauge} />
-    <MachineSetupSection state={state} onChange={(setup, label) => { operate(label, [{ kind: 'set-machine-setup', setup }]); }} />
+    <MachineSetupSection state={state} onChange={(setup, label) => { operate(label, [{ kind: 'set-machine-setup', setup }]); }}
+      objectTop={{ value: object.top ?? 'bind-off', onChange: (top) => change(top === 'waste' ? 'Finish on waste yarn' : 'Bind off the tops', { ...object, top }) }} />
   </aside>;
 }

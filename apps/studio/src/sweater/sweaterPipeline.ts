@@ -78,6 +78,7 @@ export function compileSweaterPiece(plan: PiecesPlan, piece: SweaterPiecePlan, s
     top: plan.object.top ?? 'bind-off',
     fashion: plan.object.fashion ?? 1,
     ...(setup?.wasteRows !== undefined ? { startWastePasses: customistWastePassesV1('flat', setup.wasteRows) } : {}),
+    ...(setup?.topWasteRows !== undefined ? { wasteRows: setup.topWasteRows } : {}),
   } as const;
   const built = emitShapedPanelV1(input);
   const knitoutText = writeKnitoutProgram(built.program);

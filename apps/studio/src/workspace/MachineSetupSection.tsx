@@ -1,6 +1,6 @@
 import type { MachineSetup, ProjectState } from '@kniterate-studio/project-contract';
-import { CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
-import { NumberInput, Section } from './panel';
+import { CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistTopWasteRowsV1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
+import { Chips, NumberInput, Section } from './panel';
 
 /**
  * The machine's start and finish, the same section for every kind of
@@ -35,9 +35,25 @@ export function machineSetupWords(setup: MachineSetup | undefined, construction:
   };
 }
 
-export function MachineSetupSection({ state, onChange }: { state: ProjectState; onChange: (setup: MachineSetup | null, label: string) => void }) {
+type Top = 'bind-off' | 'waste';
+
+/**
+ * `objectTop`: a sweater's or scarf's top, which is part of its design (the
+ * object), set here beside the start. A chart's top is its setup's; a
+ * beanie's crown gathers it closed.
+ */
+export function MachineSetupSection({ state, onChange, objectTop }: {
+  state: ProjectState;
+  onChange: (setup: MachineSetup | null, label: string) => void;
+  objectTop?: { value: Top; onChange: (top: Top) => void };
+}) {
   const construction = wasteConstruction(state);
   const words = machineSetupWords(state.setup, construction);
+  const beanie = state.object?.kind === 'beanie';
+  // A chart's reference ends on closing waste; a sweater's or scarf's top is bound off unless set.
+  const top: Top = objectTop?.value ?? state.setup?.top ?? 'waste';
+  const topStandard = CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1[construction];
+  const topRows = state.setup?.topWasteRows === undefined ? topStandard : construction === 'flat' ? state.setup.topWasteRows : customistTopWasteRowsV1(state.setup.topWasteRows);
   const save = (next: MachineSetup, label: string) => onChange(Object.keys(next).length === 0 ? null : next, label);
   const setWaste = (rows: number | null) => {
     const { wasteRows: _drop, ...rest } = state.setup ?? {};
@@ -46,6 +62,15 @@ export function MachineSetupSection({ state, onChange }: { state: ProjectState; 
   const setDraw = (on: boolean) => {
     const { drawThread: _drop, ...rest } = state.setup ?? {};
     save(on ? rest : { ...rest, drawThread: false }, on ? 'Draw thread' : 'No draw thread');
+  };
+  const setTop = (next: Top) => {
+    if (objectTop) { objectTop.onChange(next); return; }
+    const { top: _drop, ...rest } = state.setup ?? {};
+    save(next === 'waste' ? rest : { ...rest, top: next }, next === 'waste' ? 'Finish on waste yarn' : 'Bind off the top');
+  };
+  const setTopRows = (rows: number | null) => {
+    const { topWasteRows: _drop, ...rest } = state.setup ?? {};
+    save(rows === null || rows === topStandard ? rest : { ...rest, topWasteRows: rows }, rows === null ? 'Standard waste on top' : `Waste on top ${rows} rows`);
   };
   return <Section id="machine" title="Machine settings" defaultOpen={false} aside={<em className={`section-aside${words.warning ? ' warn' : ''}`}>{words.own ? 'your own' : 'standard'}</em>}>
     <div className="field-row">
@@ -60,5 +85,17 @@ export function MachineSetupSection({ state, onChange }: { state: ProjectState; 
       <label className="check-label"><input type="checkbox" checked={words.drawThread} onChange={(event) => setDraw(event.currentTarget.checked)} />Draw thread (C1)</label>
       <p className="design-hint">{words.drawThread ? 'Pulled out after knitting to free your piece from the waste yarn.' : 'Without one, unravel or cut the waste yarn away after knitting.'}</p>
     </>}
+    {beanie
+      ? <p className="design-hint">The top: the crown gathers it closed.</p>
+      : <>
+        <div className="field-row"><span>Top</span><Chips label="Top edge" value={top} options={[
+          { id: 'bind-off', name: 'Bind off', note: objectTop ? 'The machine binds off the top.' : 'A machine chain bind-off. Kniterate\'s own chart files end on waste yarn.' },
+          { id: 'waste', name: 'Waste yarn', note: 'Live stitches on waste yarn, to bind off or graft by hand.' },
+        ]} onPick={setTop} /></div>
+        {top === 'waste' && <>
+          <div className="field-row"><span>Waste on top</span><NumberInput label="Waste rows on top" value={topRows} min={2} max={100} step={construction === 'flat' ? 1 : 2} suffix="rows" onCommit={(rows) => setTopRows(Math.round(rows))} /></div>
+          <p className="design-hint">Standard: {topStandard} rows.{state.setup?.topWasteRows !== undefined && <> <button type="button" className="link-button" onClick={() => setTopRows(null)}>Use the standard {topStandard}</button></>}</p>
+        </>}
+      </>}
   </Section>;
 }

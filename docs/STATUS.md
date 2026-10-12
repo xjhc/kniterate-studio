@@ -607,8 +607,18 @@ ship," trust this file and the working tree instead.
       - The pattern says to unravel or cut the waste away, and the operator
         note says "no draw thread".
       - The Machine file reader finds the cast-on after the last waste pass.
-    - Still to come: the finish, and speed, roller and stitch size for each
-      section.
+    - The top, beside the start (2026-10-12): bind off or waste yarn, and
+      how many rows of waste on top.
+      - Sweaters and scarves: their Top choice moved here from Edges and
+        Ends (it stays the object's `top`). The standard waste on top is
+        8 rows.
+      - Colour charts: the reference ends on closing waste (fairisle 16,
+        birdseye 20 rows; kept even so the carriage parks left). The ramp
+        of stitch sizes is resized to the count. A machine chain bind-off
+        is offered and passes the checks, but Kniterate's own chart files
+        don't use one.
+      - A beanie's crown gathers its top; nothing to set.
+    - Still to come: speed, roller and stitch size for each section.
   - One gauge editor for every kind (`workspace/gauge.tsx::GaugeFields`).
     It saves each gauge as one change, on Enter or when focus leaves it. The
     words for where gauges come from are shared too ("measured", "typical",

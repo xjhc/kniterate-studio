@@ -81,6 +81,8 @@ export {
 export {
   CUSTOMIST_MATCHED_PRESETS_V1,
   CUSTOMIST_STANDARD_WASTE_PASSES_V1,
+  CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1,
+  customistTopWasteRowsV1,
   customistWastePassesV1,
   buildCustomistMatchedCompileInputV1,
   type CustomistMatchedCompileRequestV1,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { appendProjectEdit, createColorworkProjectV1, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
+import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
 import { runAuthoredPipeline } from './authoredPipeline';
 import { createBeanieProject } from './beanie';
 import { compileColorworkProject } from './blanket/compileProject';
@@ -79,5 +79,31 @@ describe('the draw thread', () => {
     const piece = (await runSweaterPipeline(off(scarf))).pieces[0]!;
     expect(piece.verdict.state).toBe('surface');
     expect(piece.compiled!.knitoutText).not.toMatch(/^in 1$/m);
+  });
+});
+
+describe('the top', () => {
+  it.each(['fairisle', 'birdseye'] as const)('of a %s chart is the reference’s closing waste, of any even length, or a chain bind-off', async (technique) => {
+    const setup = (value: Record<string, unknown>) => appendProjectEdit(chart(technique), { id: 'top', source: 'human', edit: { kind: 'set-machine-setup', setup: value } });
+    const standard = await runAuthoredPipeline(chart(technique));
+    const shorter = await runAuthoredPipeline(setup({ topWasteRows: 8 }));
+    expect(shorter.verdict.state).toBe('surface');
+    expect(standard.kcode!.passCount - shorter.kcode!.passCount).toBe(CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1[technique] - 8);
+    const bound = await runAuthoredPipeline(setup({ top: 'bind-off' }));
+    expect(bound.verdict.state).toBe('surface');
+    expect(bound.compiled!.knitoutText).not.toBe(standard.compiled!.knitoutText);
+  });
+
+  it('of a scarf on waste yarn is as many rows as you set', async () => {
+    const scarf = (setup?: Record<string, unknown>) => {
+      const created = createPanelProject({ title: 'Scarf', widthCm: 20, lengthCm: 30, textureId: 'stockinette', yarn: { name: 'Oat', hex: '#D9CBB0' } }, { id: 'scarf', source: 'human', group: 'create' });
+      const state = materializeColorworkProject(created).state;
+      const onWaste = appendProjectEdit(created, { id: 'top', source: 'human', edit: { kind: 'set-object', object: { ...state.object!, top: 'waste' } as never } });
+      return setup ? appendProjectEdit(onWaste, { id: 'setup', source: 'human', edit: { kind: 'set-machine-setup', setup } }) : onWaste;
+    };
+    const standard = (await runSweaterPipeline(scarf())).pieces[0]!;
+    const longer = (await runSweaterPipeline(scarf({ topWasteRows: 20 }))).pieces[0]!;
+    expect(longer.verdict.state).toBe('surface');
+    expect(longer.kcode!.passCount - standard.kcode!.passCount).toBe(20 - CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1.flat);
   });
 });
