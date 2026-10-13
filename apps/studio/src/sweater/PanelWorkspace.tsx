@@ -19,6 +19,7 @@ import type { SweaterRunState } from './sweaterRun';
 import { SweaterStatusPanel } from './SweaterStatusPanel';
 import type { SwatchFile } from '../useSwatchFile';
 import { RIBS } from './textures';
+import { machineFileName } from '../workspace/fileNames';
 import './sweater.css';
 
 /** A one-yarn scarf or blanket in the shared workspace: its size, stitch and ends on the left; the piece in the middle; status and file on the right. */
@@ -60,7 +61,7 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
   const body = (() => {
     if (!piece.raster) return <p className="stage-error">{piece.error}</p>;
     if (view === 'schematic') return result?.file ? <div className="schematic-stage"><RunSchematic file={result.file} hex={yarn.hex} stitchCm={piece.raster.stitchCm} rowCm={piece.raster.rowCm} label={piece.name} /></div> : <p className="knitfile-waiting" role="status">{waiting}</p>;
-    if (view === 'file') return result?.file && result.kcText ? <div className="piece-wrap"><KnitFileView key={project.id} file={result.file} kcText={result.kcText} fileName="panel.kc" copies={1} hex={yarn.hex} carriers={plan.carriers} stitchCm={piece.raster.stitchCm} rowCm={piece.raster.rowCm} onDownload={() => onDownloadPiece('panel')} /></div> : <p className="knitfile-waiting" role="status">{waiting}</p>;
+    if (view === 'file') return result?.file && result.kcText ? <div className="piece-wrap"><KnitFileView key={project.id} file={result.file} kcText={result.kcText} fileName={machineFileName(piece.name)} copies={1} hex={yarn.hex} carriers={plan.carriers} stitchCm={piece.raster.stitchCm} rowCm={piece.raster.rowCm} onDownload={() => onDownloadPiece('panel')} /></div> : <p className="knitfile-waiting" role="status">{waiting}</p>;
     return <div className="piece-wrap">
       <div className="piece-summary"><h2>{piece.name}</h2><p>{piece.raster.realized.castOnStitches} stitches · {piece.raster.rows.length} rows · {piece.raster.realized.widthCm} × {piece.raster.realized.heightCm} cm</p></div>
       <PieceView raster={piece.raster} hex={yarn.hex} label={piece.name} mode={mode} onMode={setMode} />

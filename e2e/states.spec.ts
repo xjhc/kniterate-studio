@@ -34,14 +34,21 @@ async function check(page: Page, name: string, expected: string | RegExp) {
   else expect(badge).toBe(title);
 
   // One note per thing to check, and as many as the headline counts.
-  const notes = (await page.locator('.status-notes:not(.operator) > li').allTextContents()).map((note) => note.trim());
+  // A note's own words, without its buttons.
+  const notes = await page.locator('.status-notes:not(.operator) > li').evaluateAll((items) => items.map((item) => item.firstChild?.textContent?.trim() ?? ''));
   expect(new Set(notes).size, `repeated notes: ${notes.join(' | ')}`).toBe(notes.length);
   const counted = /^(\d+) things? to check$/.exec(title);
   if (counted) expect(notes).toHaveLength(Number(counted[1]));
+  // Nor is a note repeated elsewhere in the panel, under the files or as the headline's detail.
+  const panel = await page.getByRole('complementary', { name: 'Status' }).innerText();
+  for (const note of notes) expect(panel.split(note).length - 1, `said more than once: ${note}`).toBe(1);
 
   // Nothing scrolls sideways, and the views are all in reach.
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
   await expect(page.getByRole('tab', { name: 'Machine file' })).toBeInViewport();
+
+  // Nothing still loading once the state has settled.
+  await expect(page.locator('.app-shell')).not.toContainText('…', { timeout: 60_000 });
 
   // Plain words.
   const text = await page.locator('.app-shell').innerText();

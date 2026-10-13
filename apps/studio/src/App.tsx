@@ -55,6 +55,7 @@ import { MachineMovementView, type MachineMovementViewProps } from './kcode/Mach
 import { programRegionForPass } from './chart/AuthoredMachinePanel';
 import { NewProjectDialog, ProjectSettingsDialog, RecentProjectsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
 import { parseProjectAutosave, readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
+import { downloadFileName, machineFileName, onePieceName } from './workspace/fileNames';
 import { ACTIVE_SLOT_KEY, RECENT_INDEX_KEY, forgetProject, newRecentSlot, readRecentProject, readRecentProjects, recentKind, recentSlotOf, rememberProject, type RecentProject } from './chart/recentProjects';
 import { indexSourceLines, sourceWindow } from './sourceWindow';
 import { formatForeignRunSheetFindingAnchor, groupForeignRunSheetFindings } from './foreignRunSheetFindings';
@@ -638,7 +639,7 @@ export function App() {
     const result: AuthoredPipelineResult = { compiled: blanketCompile.artifact, compileError: blanketCompile.error, kcode: outputCurrent ? kcodeState.artifact : null, outputError: kcodeState.error, verdict: authoredVerdict, exportReady: authoredExportReady };
     const findings = collectFindings(plan, result);
     const readiness = resolveReadiness({ verdict: authoredVerdict, findings });
-    return { result, findings, readiness, story: readinessStory(plan, findings, readiness, authoredVerdict, materializedProject.state.trials ?? []) };
+    return { result, findings, readiness, story: readinessStory({ findings, readiness, verdict: authoredVerdict, trials: materializedProject.state.trials ?? [] }) };
   }, [plan, blanketCompile.artifact, blanketCompile.error, kcodeState.artifact, kcodeState.error, outputCurrent, verdictKey, authoredExportReady]);
   // What this tab last saved, or took up from another tab. Until the project changes, there is nothing new to save.
   const saved = useRef<{ project: ColorworkProjectV1; slot: string } | null>(null);
@@ -777,7 +778,7 @@ export function App() {
   };
   const downloadKCode = () => {
     if (!authoredExportReady || !kcodeState.artifact) return;
-    download(`${project.id}.kc`, new Blob([kcodeState.artifact.kcText], { type: 'text/plain' }));
+    download(downloadFileName(project.id, onePieceName(authoredState.object?.kind === 'beanie')), new Blob([kcodeState.artifact.kcText], { type: 'text/plain' }));
     setDownloadedRevision(revision);
   };
 
@@ -807,14 +808,14 @@ export function App() {
   const downloadSweaterPiece = (id: PieceId) => {
     // Only a file compiled from the design as it is now.
     const piece = sweaterRun.current ? sweaterRun.summary?.pieces.find((item) => item.id === id) : undefined;
-    if (piece?.kcText) download(`${project.id}-${id}.kc`, new Blob([piece.kcText], { type: 'text/plain' }));
+    if (piece?.kcText) download(downloadFileName(project.id, piece.name), new Blob([piece.kcText], { type: 'text/plain' }));
     // A one-piece project's file is all of it.
     if (piece?.kcText && sweaterRun.summary?.pieces.length === 1) setDownloadedRevision(revision);
   };
   const downloadSweaterFiles = () => {
     const pieces = sweaterRun.current && sweaterRun.summary?.exportReady ? sweaterRun.summary.pieces.filter((piece) => piece.kcText) : [];
     if (pieces.length === 0) return;
-    download(`${project.id}-machine-files.zip`, new Blob([zipStore(Object.fromEntries(pieces.map((piece) => [`${piece.id}.kc`, piece.kcText!])))], { type: 'application/zip' }));
+    download(`${project.id}-machine-files.zip`, new Blob([zipStore(Object.fromEntries(pieces.map((piece) => [machineFileName(piece.name), piece.kcText!])))], { type: 'application/zip' }));
     setDownloadedRevision(revision);
   };
   const canPackage = isPieces ? Boolean(sweaterReady && sweaterRun.summary?.exportReady) : authoredExportReady;

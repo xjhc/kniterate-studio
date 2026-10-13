@@ -565,10 +565,28 @@ ship," trust this file and the working tree instead.
     keep Blocked, Surface-proven and Knit-proven. While sizes rest on a
     typical gauge, the top badge and the panel both read "Ready to knit,
     sizes not confirmed" (2026-10-12); `readiness.ready` stays false then.
-  - A measured gauge belongs to its stitch (2026-10-12). Choosing another
-    stitch keeps the numbers but not as measured ("Measured on Seed stitch.
-    Measure a swatch of 1×1 rib…"); going back counts them as measured
-    again. A beanie's backing change does not do this yet.
+  - A measured gauge belongs to its fabric (2026-10-12,
+    `workspace/gauge.tsx::regauge`):
+    - Choosing another stitch, or another backing for a beanie or a chart,
+      keeps the numbers but not as measured ("Measured on Seed stitch.
+      Measure a swatch of 1×1 rib…").
+    - Going back to that fabric counts them as measured again.
+  - A backing card shows its fabric-back preview and knit time only when
+    the program gives them (2026-10-12). A beanie's construction has
+    neither, so its cards no longer wait on "…" forever. The states spec
+    fails on any "…" left once a state has settled.
+  - Machine files are named the same way for every kind (2026-10-12,
+    `workspace/fileNames.ts`):
+    - each file for its piece, as the panel lists it: `back.kc`,
+      `scarf.kc`, `beanie.kc`, `colour-chart.kc`;
+    - each download with the project first: `ring-toque-1d791146-beanie.kc`.
+
+    A colour chart's stage and file row say "Colour chart", not "Scarf or
+    blanket".
+  - One gauge editor for every kind (`workspace/gauge.tsx::GaugeFields`).
+    It saves each gauge as one change, on Enter or when focus leaves it. The
+    words for where gauges come from are shared too ("measured", "typical",
+    "measure again").
   - The Machine file view (`sweater/knitFile.ts`, `KnitFileView`) reads any
     emitted `.kc`. Its "Step through" mode holds the exact movement, pass
     grid, checks and source that used to be the separate machine workspace.
@@ -576,6 +594,21 @@ ship," trust this file and the working tree instead.
     `handoff.ts::storyNotes`): twenty long floats are one "Body colourwork"
     note with one Show, and the headline counts kinds of problem. Each place
     stays a finding of its own in the pattern's Unresolved list.
+  - One readiness story for every kind of project (2026-10-12):
+    - Sweaters and scarves now use `handoff.ts::readinessStory`, as beanies
+      and charts do; the separate `piecesStory` is gone.
+    - The panels share one notes builder (`workspace/statusNotes.tsx`).
+      A known problem reads "Part: next step", with what it leads to on
+      hover; any other note shows its own message.
+    - Notes that say the same are shown once. A file in the Download step
+      no longer repeats a note under itself.
+    - One detail line per state, on screen and in every pattern:
+      - can't knit: "Fix these first.";
+      - things to check: "It can be knitted. Check these first.";
+      - typical gauge: "Sizes use a typical gauge until you measure a
+        swatch.";
+      - ready: "Every software check passed."
+    - `e2e/states.spec.ts` checks every kind against this at 1280 × 800.
   - Words are plain: no "≈", no "machine truth" or "trials". Operator
     settings read like "Set carrier spacing to 2 on the machine".
   - Export stays hard-gated by the authored verdict.

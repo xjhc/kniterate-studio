@@ -284,7 +284,7 @@ function summary(project: ColorworkProjectV1, evaluated: Evaluated): string[] {
   }
   lines.push(`Yarns: ${plan.yarns.map((yarn) => `${yarn.paletteId} ${yarn.hex} "${yarn.yarnName ?? yarn.name}" → ${yarn.carrier === null ? 'UNASSIGNED' : `C${yarn.carrier}`}`).join('; ')}`);
   lines.push(`Verdict: ${result.verdict.label}${result.kcode ? `; ${result.kcode.passCount} passes` : ''}; estimated knit time ${formatMinutes(result.compiled?.stats.estimatedKnitTimeSeconds)}`);
-  const story = readinessStory(plan, evaluated.findings, readiness, result.verdict, materializeColorworkProject(project).state.trials ?? []);
+  const story = readinessStory({ findings: evaluated.findings, readiness, verdict: result.verdict, trials: materializeColorworkProject(project).state.trials ?? [] });
   lines.push(`Status: ${story.headline}. ${story.detail}`, `Evidence: ${story.evidence}`);
   for (const item of story.items) lines.push(`  ${item.part}: ${item.consequence} Next: ${item.action}`);
   for (const notice of story.notices) lines.push(`Notice: ${notice}`);
@@ -607,7 +607,7 @@ async function main(): Promise<number> {
       });
       await mkdir(parsed.out, { recursive: true });
       for (const [name, bytes] of Object.entries(files)) await writeFile(resolvePath(parsed.out, name), bytes);
-      print({ packaged: parsed.out, files: Object.keys(files), kcodeSha256: result.kcode!.kcHash, readiness: { ready: readiness.ready, headline: readinessStory(plan, findings, readiness, result.verdict, state.trials ?? []).headline } });
+      print({ packaged: parsed.out, files: Object.keys(files), kcodeSha256: result.kcode!.kcHash, readiness: { ready: readiness.ready, headline: readinessStory({ findings, readiness, verdict: result.verdict, trials: state.trials ?? [] }).headline } });
       return 0;
     }
     case 'measure': {

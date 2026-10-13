@@ -1,11 +1,13 @@
 import type { ReactNode } from 'react';
 import { StatusPanel, type StatusTone } from '../workspace/StatusPanel';
 import { revealSection } from '../workspace/panel';
-import { MEASUREMENT_RULES } from '../readiness';
+import { readinessStory, storyItems } from '../handoff';
 import type { SwatchFile } from '../useSwatchFile';
+import { statusNotes } from '../workspace/statusNotes';
+import { machineFileName } from '../workspace/fileNames';
 import type { PieceId } from './draft';
 import type { PiecesPlan } from './sweater';
-import { piecesStory, type SweaterRunState } from './sweaterRun';
+import type { SweaterRunState } from './sweaterRun';
 
 /** Whether a flat-piece project (a sweater, a scarf or blanket) can be knitted, the steps to knit it, and its machine files. */
 export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile, onOpenFile, onDownloadPiece, onPackage, onPrint, packaging, fileDetail }: {
@@ -26,29 +28,25 @@ export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile,
   const summary = run.summary;
   const checking = run.status === 'checking' || !run.current;
   const designErrors = plan.findings.filter((finding) => finding.severity === 'error');
-  const findings = (summary && !checking ? summary.findings : plan.findings.map((finding) => ({ ...finding, owner: 'design' as const }))).filter((finding) => finding.severity !== 'info');
-  // The gauge is the swatch step's; everything else is the design's.
-  const designNotes = findings.filter((finding) => !MEASUREMENT_RULES.has(finding.rule));
+  // The same story, in the same words, as every project and the written pattern; while checking, the plan's own findings.
+  const story = summary && !checking ? readinessStory({ findings: summary.findings, readiness: summary.readiness, verdict: summary.verdict, exportReady: summary.exportReady }) : null;
+  const items = story?.items ?? storyItems(plan.findings.map((finding) => ({ ...finding, stage: 'plan' as const, owner: 'design' as const, title: finding.rule, fixes: [] })));
   let tone: StatusTone = 'checking';
   let title = 'Checking every piece…';
   let detail = '';
   if (run.status === 'failed') { tone = 'blocked'; title = 'The check stopped'; detail = run.error ?? 'Unknown error.'; }
-  else if (summary && !checking) {
-    // The same headline as the written pattern.
-    const story = piecesStory(summary);
+  else if (story) {
     title = story.headline;
-    if (story.status === 'blocked') { tone = 'blocked'; detail = 'Fix what is listed under Design.'; }
-    else if (story.status === 'ready') tone = 'ready';
-    else if (story.status === 'design-issues') { tone = 'warn'; detail = 'It can be knitted. See Design below.'; }
-    else { tone = 'next'; detail = 'Sizes use a typical gauge until you measure a swatch.'; }
-  } else if (designErrors.length > 0) { tone = 'blocked'; title = "Can't knit yet"; detail = designErrors[0]!.message; }
+    detail = story.status === 'ready' ? '' : story.detail;
+    tone = story.status === 'blocked' ? 'blocked' : story.status === 'ready' ? 'ready' : story.status === 'design-issues' ? 'warn' : 'next';
+  } else if (designErrors.length > 0) { tone = 'blocked'; title = "Can't knit yet"; detail = 'Fix these first.'; }
   const operator = summary && !checking ? summary.findings.filter((finding) => finding.severity === 'info' && finding.owner === 'operator') : [];
   const gauges = [{ name: plan.object.body.name, measured: plan.gauge.source === 'measured' }, ...(ribUsed ? [{ name: 'Rib', measured: plan.ribGauge.source === 'measured' }] : [])];
   return <StatusPanel
     tone={tone}
     title={title}
     detail={detail}
-    notes={designNotes.map((note) => ({ severity: note.severity, text: note.message }))}
+    notes={statusNotes(items, { swatchStep: true })}
     files={plan.pieces.map((piece) => {
       const result = summary?.pieces.find((item) => item.id === piece.id);
       const state = checking || !result ? 'checking' as const : result.verdict.state === 'blocked' ? 'blocked' as const : result.kcText ? 'ok' as const : 'checking' as const;
@@ -56,7 +54,7 @@ export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile,
       return {
         id: piece.id,
         name: piece.name,
-        fileName: `${piece.id}.kc`,
+        fileName: machineFileName(piece.name),
         copies: piece.copies,
         facts: `${raster ? `${raster.realized.castOnStitches} st · ${raster.rows.length} rows` : 'not planned'}${result?.passCount && !checking ? ` · ${result.passCount.toLocaleString()} passes` : ''}`,
         state,

@@ -132,24 +132,9 @@ const RULE_STORIES: Record<string, RuleStory> = {
   },
 };
 
-/**
- * One note per kind of problem: a rule found in many places (every long
- * float, every carried yarn) is one thing to do, shown once, with its fixes
- * kept and none repeated. Each place is still a finding of its own.
- */
-export function storyNotes(items: readonly StoryItem[]): StoryItem[] {
-  const byRule = new Map<string, StoryItem>();
-  for (const item of items) {
-    const first = byRule.get(item.rule);
-    if (!first) { byRule.set(item.rule, { ...item, fixes: [...item.fixes] }); continue; }
-    if (item.severity === 'error') first.severity = 'error';
-    for (const fix of item.fixes) if (!first.fixes.some((kept) => kept.label === fix.label)) first.fixes.push(fix);
-  }
-  return [...byRule.values()];
-}
-
-export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], readiness: Readiness, verdict: AuthoredPipelineResult['verdict'], trials: readonly ProjectTrial[] = []): ReadinessStory {
-  const items: StoryItem[] = findings.filter((finding) => finding.severity !== 'info').map((finding) => {
+/** Each finding as a person reads it: which part, what it leads to, what to do next, and where. */
+export function storyItems(findings: readonly Finding[]): StoryItem[] {
+  return findings.filter((finding) => finding.severity !== 'info').map((finding) => {
     const story = RULE_STORIES[finding.rule];
     return {
       part: finding.path === 'object.ribGauge' ? 'Cuff fit' : story?.part ?? (finding.owner === 'compiler' ? 'Machine program' : 'Design'),
@@ -163,39 +148,81 @@ export function readinessStory(plan: ProjectPlan, findings: readonly Finding[], 
       fixes: finding.fixes,
     };
   });
+}
+
+/** A note's words on screen and in a pattern: a known problem as its part and next step, with what it leads to; any other as its own message. */
+export function noteWords(item: StoryItem): { text: string; why: string | null } {
+  return RULE_STORIES[item.rule] ? { text: `${item.part}: ${item.action}`, why: item.consequence } : { text: item.message, why: null };
+}
+
+/**
+ * One note per thing to check: notes that say the same (every long float,
+ * one stitch problem in every piece) are shown once, with their fixes kept
+ * and none repeated. Each place is still a finding of its own.
+ */
+export function storyNotes(items: readonly StoryItem[]): StoryItem[] {
+  const byWords = new Map<string, StoryItem>();
+  for (const item of items) {
+    const key = noteWords(item).text;
+    const first = byWords.get(key);
+    if (!first) { byWords.set(key, { ...item, fixes: [...item.fixes] }); continue; }
+    if (item.severity === 'error') first.severity = 'error';
+    for (const fix of item.fixes) if (!first.fixes.some((kept) => kept.label === fix.label)) first.fixes.push(fix);
+  }
+  return [...byWords.values()];
+}
+
+/**
+ * Whether it can be knitted, in the words every project and every surface
+ * uses: the status panel, the badge, the written pattern and the CLI. A
+ * typical gauge does not stop the knitting; it leaves the sizes unconfirmed.
+ * `exportReady` is false when a program is missing though no verdict blocks
+ * (a piece that did not compile).
+ */
+export function readinessStory({ findings, readiness, verdict, exportReady = true, trials = [] }: {
+  findings: readonly Finding[];
+  readiness: Readiness;
+  verdict: AuthoredPipelineResult['verdict'];
+  exportReady?: boolean;
+  trials?: readonly ProjectTrial[];
+}): ReadinessStory {
+  const items = storyItems(findings);
   const physical = verdict.state === 'knit' ? 'physically proven by a registered knit of this exact file' : 'physical knit pending';
   const evidence = verdict.state === 'blocked'
     ? `Blocked · no machine program can be exported · ${physical}`
     : `Software checks passed · ${verdict.label} · ${physical}`;
+  // The gauge is the swatch's to settle, not a thing to check.
+  const notes = storyNotes(items.filter((item) => !MEASUREMENT_RULES.has(item.rule)));
   let status: StoryStatus;
   let headline: string;
   let detail: string;
-  if (verdict.state === 'blocked') {
+  if (verdict.state === 'blocked' || !exportReady) {
     status = 'blocked';
     headline = "Can't knit yet";
-    detail = items.find((item) => item.severity === 'error')?.message ?? verdict.annotation;
+    detail = 'Fix these first.';
   } else if (readiness.ready) {
     status = 'ready';
     headline = 'Ready to knit';
-    detail = plan.piece === 'beanie' ? 'Every software check passed and every measurement is recorded as measured.' : 'Every software check passed.';
-  } else if (items.every((item) => MEASUREMENT_RULES.has(item.rule))) {
+    detail = 'Every software check passed.';
+  } else if (notes.length === 0) {
     status = 'needs-measurements';
     headline = 'Ready to knit, sizes not confirmed';
-    const parts = [...new Set(items.map((item) => (item.target === 'gauge.rib' ? 'rib' : 'body')))];
-    detail = plan.piece === 'beanie'
-      ? `The ${parts.join(' and ')} gauge${parts.length === 1 ? ' is a typical value' : 's are typical values'} until you measure a swatch.`
-      : 'The gauge is a typical value until you measure a swatch.';
+    detail = 'Sizes use a typical gauge until you measure a swatch.';
   } else {
     status = 'design-issues';
-    const design = storyNotes(items).filter((item) => !MEASUREMENT_RULES.has(item.rule));
-    headline = `${design.length} ${design.length === 1 ? 'thing' : 'things'} to check`;
-    detail = design[0]!.consequence;
+    headline = `${notes.length} ${notes.length === 1 ? 'thing' : 'things'} to check`;
+    detail = 'It can be knitted. Check these first.';
   }
   const synthetic = trials.filter((trial) => trial.synthetic);
   const notices = synthetic.length
     ? [`${synthetic.length} saved measurement${synthetic.length === 1 ? ' is' : 's are'} test data, so the gauge still counts as a guess.`]
     : [];
   return { status, headline, detail, evidence, items, operatorChecks: readiness.operatorChecks, notices };
+}
+
+/** A pattern's opening: the headline and what it means, then each thing to check. */
+export function storyLines(story: ReadinessStory): string[] {
+  return [`**${story.headline}.** ${story.detail}`, ...storyNotes(story.items.filter((item) => !MEASUREMENT_RULES.has(item.rule))).map((item) => `- ${noteWords(item).text}`)];
 }
 
 // ---------------------------------------------------------------------------
@@ -239,7 +266,7 @@ function valued(value: Valued<number> | null | undefined): string {
 
 export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectPlan, result: AuthoredPipelineResult, findings: readonly Finding[], readiness: Readiness): string {
   const { state, placements } = materializeColorworkProject(project);
-  const story = readinessStory(plan, findings, readiness, result.verdict, state.trials ?? []);
+  const story = readinessStory({ findings, readiness, verdict: result.verdict, trials: state.trials ?? [] });
   const sections = plan.sections;
   const head = beanieObjectOf(state)?.headCircumferenceCm;
   const lines = [
@@ -508,7 +535,7 @@ export async function handoffFiles(input: {
   const { project, plan, result, findings, readiness } = input;
   if (!result.exportReady || result.kcode === null || result.compiled?.knitoutText == null) throw new Error('Only a project with an exportable program can be packaged.');
   const { state } = materializeColorworkProject(project);
-  const story = readinessStory(plan, findings, readiness, result.verdict, state.trials ?? []);
+  const story = readinessStory({ findings, readiness, verdict: result.verdict, trials: state.trials ?? [] });
   const svg = schematicSvg(project, plan);
   const files: Record<string, string | Uint8Array> = {
     'project.kniterate-studio.json': input.serializedProject,

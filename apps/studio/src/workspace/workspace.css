@@ -52,6 +52,7 @@
 .chart-design .assignment-row input, .chart-design .assignment-row select { height: 30px; padding: 3px 7px; border: 1px solid var(--line-strong); border-radius: 5px; background: var(--paper); color: var(--ink); font-size: 13px; }
 .chart-design .strategy-segments { display: grid; gap: 6px; }
 .chart-design .strategy-segments button { display: grid; grid-template-columns: 54px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 48px; padding: 5px 8px 5px 5px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--paper); color: var(--ink); font-size: 13px; text-align: left; cursor: pointer; }
+.chart-design .strategy-segments button.no-preview { grid-template-columns: minmax(0, 1fr); padding-left: 10px; }
 .chart-design .strategy-segments button.active { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
 .chart-design .strategy-segments button small { display: block; color: var(--ink-3); font: 12px inherit; }
 .chart-design .garment-help, .chart-design .garment-derived, .chart-design .garment-note { margin: 0; color: var(--ink-3); font-size: 12px; line-height: 1.45; }

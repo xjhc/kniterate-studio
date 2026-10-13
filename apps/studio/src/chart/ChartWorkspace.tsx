@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Wrench } from 'lucide-react';
 import { clear, copy, cut, paste, type MirrorAxes, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
 import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendProjectOperation, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
 import { BRUSH_SIZES, ChartToolbar, type ChartTool } from './ChartToolbar';
 import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './ColorworkCanvas';
 import { beanieFitEdits, withSizingFixes, type BeanieFitChange } from '../beanie';
-import { storyNotes, type ReadinessStory } from '../handoff';
+import type { ReadinessStory } from '../handoff';
 import type { ProjectPlan } from '../plan';
 import { movedPlacement, placedCells, placementBoxes, type PlacementConversion, type PlacementImage } from '../placements';
 import { reconvertMotifs } from '../trials';
@@ -16,7 +15,10 @@ import { BeanieWornView } from '../garment/BeanieWornView';
 import { readKnitFile, type KnitFileCarriers } from '../sweater/knitFile';
 import { KnitFileView } from '../sweater/KnitFileView';
 import { RunSchematic } from '../workspace/RunSchematic';
-import { StatusPanel, type StatusNote, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
+import { StatusPanel, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
+import { statusNotes } from '../workspace/statusNotes';
+import { regauge } from '../workspace/gauge';
+import { machineFileName, onePieceName } from '../workspace/fileNames';
 import { revealSection } from '../workspace/panel';
 import type { SwatchFile } from '../useSwatchFile';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
@@ -24,7 +26,7 @@ import type { AuthoredVerdict } from '../engine';import { PaletteRail } from './
 import { ChartSizeSection } from './ChartSizeSection';
 import { makeRowId, pixelMutationToProjectEdit } from './projectCanvasAdapter';
 import { BlanketSetupRail } from '../blanket/BlanketSetupRail';
-import { projectBackingWords } from '../backing';
+import { backingWords, colourworkColours, projectBackingWords } from '../backing';
 import type { BlanketCompileState } from '../blanket/useBlanketCompiler';
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
 
@@ -52,7 +54,6 @@ export interface ChartStatus {
   onDownloadKc: () => void;
 }
 
-const KIND_NAMES = { beanie: 'Beanie', panel: 'Scarf or blanket' } as const;
 
 /**
  * A charted project (a colorwork scarf, blanket or beanie) in the shared
@@ -235,8 +236,8 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const ribGauge = materialized.state.object?.ribGauge;
   const stitchCm = gauge ? 10 / gauge.stitchesPer10cm : null;
   const rowCm = gauge ? { body: 10 / gauge.rowsPer10cm, rib: ribGauge ? 10 / ribGauge.rowsPer10cm : 10 / gauge.rowsPer10cm } : null;
-  const kindName = KIND_NAMES[isGarment ? 'beanie' : 'panel'];
-  const fileName = `${project.id}.kc`;
+  const kindName = onePieceName(isGarment);
+  const fileName = machineFileName(kindName);
 
   useEffect(() => { if (paletteIndex >= chart.palette.length) setPaletteIndex(Math.max(0, chart.palette.length - 1)); }, [paletteIndex, chart.palette.length]);
   useEffect(() => {
@@ -278,14 +279,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     onEnter: () => { onView('design'); revealSection('swatch'); },
     file: status.swatchFile,
   } : gauge ? { gauges: [{ name: backing ? `Colourwork (${backing.fabric})` : 'Plain stockinette', measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); }, file: status.swatchFile } : undefined;
-  const notes: StatusNote[] = storyNotes(story?.items ?? []).filter((item) => !(swatch && (item.rule === 'gauge-assumed' || item.rule === 'size-needs-gauge'))).map((item) => ({
-    severity: item.severity === 'error' ? 'error' : item.severity === 'warning' ? 'warning' : 'info',
-    text: `${item.part}: ${item.action}`,
-    actions: item.target || item.fixes.length > 0 ? <>
-      {item.target && <button type="button" className="secondary-button" onClick={() => goTo(item.target!)}>Show</button>}
-      {item.fixes.map((fix) => <button type="button" className="primary-button" key={fix.label} onClick={() => operate(fix.label, fix.edits)}><Wrench size={13} /> {fix.label}</button>)}
-    </> : undefined,
-  }));
+  const notes = statusNotes(story?.items ?? [], { swatchStep: swatch !== undefined, goTo, operate: (label, edits) => { operate(label, edits); } });
   const fileState = status.exportReady && kcode ? 'ok' as const : tone === 'blocked' && !storyPending ? 'blocked' as const : 'checking' as const;
 
   const center: ReactNode = (() => {
@@ -328,7 +322,16 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
         onNeedles={(width) => Number.isInteger(width) && width > 0 && width <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })}
         onRows={(height) => { if (!Number.isInteger(height) || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }}
         onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} />}
-      onStrategy={(technique) => { if (technique === materialized.state.strategy.technique) return; if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`); else commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, technique } }); }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
+      onStrategy={(technique) => {
+        const { state } = materialized;
+        if (technique === state.strategy.technique) return;
+        // Another backing is another fabric: the gauge follows the same rule as a sweater's stitch.
+        const from = projectBackingWords(state)?.fabric;
+        const to = technique === 'fairisle' || technique === 'birdseye' ? backingWords(technique, colourworkColours(state) ?? 0, isGarment)?.fabric : undefined;
+        const gauge = state.gauge && from && to && from !== to ? regauge(state.gauge, from, { name: to }) : null;
+        if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique, ...(gauge ? { bodyGauge: gauge } : {}) }, `Backing: ${technique}`);
+        else operate(`Backing: ${technique}`, [{ kind: 'set-strategy', strategy: { ...state.strategy, technique } }, ...(gauge ? [{ kind: 'set-gauge' as const, gauge }] : [])]);
+      }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
     <section className="sweater-stage" aria-label={kindName}>
       <header className="stage-head">
         {isGarment

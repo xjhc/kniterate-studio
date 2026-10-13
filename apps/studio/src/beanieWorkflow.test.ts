@@ -177,8 +177,8 @@ describe('handoff', () => {
     const result = await runAuthoredPipeline(project);
     const findings = collectFindings(plan, result);
     const readiness = resolveReadiness({ verdict: result.verdict, findings });
-    const story = readinessStory(plan, findings, readiness, result.verdict);
-    expect(story).toMatchObject({ status: 'needs-measurements', headline: 'Ready to knit, sizes not confirmed', detail: 'The body and rib gauges are typical values until you measure a swatch.' });
+    const story = readinessStory({ findings, readiness, verdict: result.verdict });
+    expect(story).toMatchObject({ status: 'needs-measurements', headline: 'Ready to knit, sizes not confirmed', detail: 'Sizes use a typical gauge until you measure a swatch.' });
     expect(story.evidence).toBe('Software checks passed · Surface-proven · physical knit pending');
     expect(story.items.map((item) => item.target).sort()).toEqual(['gauge.body', 'gauge.rib']);
     expect(schematicSvg(project, plan)).toContain('fold line');
@@ -196,7 +196,7 @@ describe('handoff', () => {
     const float = (pass: number): Finding => ({ stage: 'kcode', rule: 'long-float', severity: 'warning', owner: 'design', path: null, title: 'long-float', message: `C3 floats 9 needles behind the work from pass ${pass} to pass ${pass + 1} (limit 7).`, passIndices: [pass], fixes: [] });
     const resize = (label: string): Finding => ({ stage: 'plan', rule: 'size-off-target', severity: 'warning', owner: 'design', path: 'target.heightCm', title: 'size-off-target', message: 'The body is off its size.', fixes: [{ label, edits: [] }] });
     const findings = [...collectFindings(plan, result), float(120), float(140), float(160), resize('Resize the chart to 44 rows'), resize('Resize the chart to 44 rows')];
-    const story = readinessStory(plan, findings, resolveReadiness({ verdict: result.verdict, findings }), result.verdict);
+    const story = readinessStory({ findings, readiness: resolveReadiness({ verdict: result.verdict, findings }), verdict: result.verdict });
     expect(story.items.filter((item) => item.rule === 'long-float')).toHaveLength(3);
     expect(story.headline).toBe('2 things to check');
     const notes = storyNotes(story.items);
@@ -257,7 +257,7 @@ describe('third review', () => {
     const findings = collectFindings(plan, result);
     const readiness = resolveReadiness({ verdict: result.verdict, findings });
     expect(readiness.ready).toBe(false);
-    const story = readinessStory(plan, findings, readiness, result.verdict, materializeColorworkProject(revised).state.trials);
+    const story = readinessStory({ findings, readiness, verdict: result.verdict, trials: materializeColorworkProject(revised).state.trials });
     expect(story.headline).toBe('Ready to knit, sizes not confirmed');
     expect(story.notices[0]).toContain('test data');
     const files = await handoffFiles({ project: revised, serializedProject: JSON.stringify(revised), plan, result, findings, readiness, sha256: async () => 'h' });
