@@ -24,6 +24,7 @@ export {
   type KnitoutToKCodeResult,
   type KnitoutToScheduledKCodeResult,
 } from './knitout/kniterate/to-kcode.js';
+export type { FlatSectionSettingsV1, SectionSettingsV1 } from './knitout/passes/customist-flat-start.js';
 export type {
   VendorLoweringSettings,
   VendorLoweringResourceLimits,
@@ -80,6 +81,12 @@ export {
 } from './knitout/kcode/pass-metrics.js';
 export {
   CUSTOMIST_MATCHED_PRESETS_V1,
+  CUSTOMIST_STANDARD_WASTE_PASSES_V1,
+  CUSTOMIST_STANDARD_BODY_SETTINGS_V1,
+  CUSTOMIST_STANDARD_SECTION_SETTINGS_V1,
+  CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1,
+  customistTopWasteRowsV1,
+  customistWastePassesV1,
   buildCustomistMatchedCompileInputV1,
   type CustomistMatchedCompileRequestV1,
   type CustomistMatchedTechniqueV1,

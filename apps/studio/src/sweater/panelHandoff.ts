@@ -3,6 +3,7 @@ import type { PanelPlan } from './panel';
 import { pieceSteps } from './sweaterHandoff';
 import { readinessStory, storyLines } from '../handoff';
 import type { SweaterRunSummary } from './sweaterRun';
+import { machineFileName } from '../workspace/fileNames';
 import { ribName, textureMatching } from './textures';
 
 /** A one-yarn scarf or blanket's written pattern and its download package. */
@@ -25,15 +26,15 @@ export function panelInstructions(project: ColorworkProjectV1, plan: PanelPlan, 
     `Yarn: ${yarn.name} (${yarn.hex}), about ${plan.yarn.metres.toLocaleString('en')} m. Gauge ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}).`,
     '',
     '## At the machine',
-    ...(summary ? summary.readiness.operatorChecks : [`Yarn on C${plan.carriers.main}, waste yarn on C${plan.carriers.waste}, draw thread on C${plan.carriers.draw}.`]).map((check) => `- ${check}`),
+    ...(summary ? summary.readiness.operatorChecks : [`Yarn on C${plan.carriers.main}, waste yarn on C${plan.carriers.waste}${plan.carriers.draw ? `, draw thread on C${plan.carriers.draw}` : ', no draw thread'}.`]).map((check) => `- ${check}`),
     '',
     '## Knitting',
-    `File: \`panel.kc\`${run?.passCount ? ` · ${run.passCount.toLocaleString()} passes` : ''}${run ? ` · ${run.verdict.label}` : ''}`,
+    `File: \`${machineFileName(piece.name)}\`${run?.passCount ? ` · ${run.passCount.toLocaleString()} passes` : ''}${run ? ` · ${run.verdict.label}` : ''}`,
     '',
     ...pieceSteps(piece, plan).map((step) => `- ${step}`),
     '',
     '## Finishing',
-    '- Pull the draw thread (C1) to free the piece from the waste yarn.',
+    plan.carriers.draw ? `- Pull the draw thread (C${plan.carriers.draw}) to free the piece from the waste yarn.` : '- Unravel or cut away the waste yarn below the cast-on.',
     '- Weave in the ends.',
   );
   return `${lines.filter((line, index, all) => line !== '' || all[index - 1] !== '').join('\n')}\n`;

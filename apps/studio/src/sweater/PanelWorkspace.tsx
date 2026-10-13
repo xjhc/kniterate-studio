@@ -11,6 +11,7 @@ import { Chips, NumberInput, Section } from '../workspace/panel';
 import { RunSchematic } from '../workspace/RunSchematic';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
 import { StitchSection, YarnGaugeSection } from './DesignSections';
+import { MachineSetupSection } from '../workspace/MachineSetupSection';
 import type { PieceId } from './draft';
 import { KnitFileView } from './KnitFileView';
 import { panelEdit, type PanelPlan } from './panel';
@@ -84,10 +85,11 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
           <Chips label="End rib" value={object.ends.rib} options={RIBS.map((rib) => ({ id: rib.rib, name: rib.name }))} onPick={(rib) => change(`Ends: ${RIBS.find((item) => item.rib === rib)?.name} rib`, { ...object, ends: { ...object.ends, rib } })} />
           <NumberInput label="End rib height" value={object.ends.cm} min={0} max={30} suffix="cm" onCommit={(cm) => change(cm === 0 ? 'No rib ends' : `Rib ends ${cm} cm`, { ...object, ends: { ...object.ends, cm } })} />
         </div>
-        <div className="field-row"><span>Top</span><Chips label="Top edge" value={object.top ?? 'bind-off'} options={[{ id: 'bind-off', name: 'Bind off', note: 'The machine binds off the top.' }, { id: 'waste', name: 'Waste yarn', note: 'Live stitches on waste yarn, to bind off or graft by hand.' }]} onPick={(top) => change(top === 'waste' ? 'Finish on waste yarn' : 'Bind off the top', { ...object, top })} /></div>
         <p className="design-hint">0 cm: no rib ends.</p>
       </Section>
       <YarnGaugeSection yarn={yarn} carrier={plan.carriers.main} bodyName={object.body.name} gauge={plan.gauge} ribGauge={object.ends.cm > 0 ? plan.ribGauge : null} operate={operate} onRibGauge={(next, label) => change(label, { ...object, ribGauge: { ...next } })} />
+      <MachineSetupSection state={state} onChange={(setup, label) => { operate(label, [{ kind: 'set-machine-setup', setup }]); }}
+        objectTop={{ value: object.top ?? 'bind-off', onChange: (top) => change(top === 'waste' ? 'Finish on waste yarn' : 'Bind off the top', { ...object, top }) }} />
     </aside>
     <section className="sweater-stage" aria-label={piece.name}>
       <header className="stage-head">

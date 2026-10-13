@@ -120,7 +120,8 @@ export interface PiecesPlan {
   gauge: Gauge & { source: 'measured' | 'assumed' };
   ribGauge: Gauge & { source: 'measured' | 'assumed' };
   pieces: SweaterPiecePlan[];
-  carriers: { main: string; second: string | null; waste: string; draw: string };
+  /** `draw` is null when the project knits without a draw thread. */
+  carriers: { main: string; second: string | null; waste: string; draw: string | null };
   findings: SweaterPieceFinding[];
   yarn: { metres: number; stitches: number; how: string };
 }
@@ -138,7 +139,8 @@ export interface SweaterPlan extends PiecesPlan {
   ribGauge: Gauge & { source: 'measured' | 'assumed' };
   pieces: SweaterPiecePlan[];
   /** Main yarn carrier, and the second carrier (same yarn) that knits the right shoulder after a crew neck's split. */
-  carriers: { main: string; second: string | null; waste: string; draw: string };
+  /** `draw` is null when the project knits without a draw thread. */
+  carriers: { main: string; second: string | null; waste: string; draw: string | null };
   findings: SweaterPieceFinding[];
   /** Realized measurements of the finished garment, from the knitted counts. */
   realized: { label: string; target: number | null; cm: number; how: string }[];
@@ -152,11 +154,16 @@ export interface SweaterPlan extends PiecesPlan {
 
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
+/** The draw thread's carrier, unless the project knits without one. */
+export function drawCarrierOf(state: ProjectState): string | null {
+  return state.setup?.drawThread === false ? null : SWEATER_DRAW_CARRIER;
+}
+
 /** The yarn's carrier and a free one for the second neck yarn. */
 function carriersOf(state: ProjectState, needsSecond: boolean): SweaterPlan['carriers'] {
   const main = state.machine.yarnAssignments.find((item) => item.paletteId === state.chart.palette[0]?.id)?.carrier ?? '3';
   const second = needsSecond ? (['4', '5', '2', '3'] as const).find((carrier) => carrier !== main) ?? null : null;
-  return { main, second, waste: SWEATER_WASTE_CARRIER, draw: SWEATER_DRAW_CARRIER };
+  return { main, second, waste: SWEATER_WASTE_CARRIER, draw: drawCarrierOf(state) };
 }
 
 export function planSweater(state: ProjectState): SweaterPlan {

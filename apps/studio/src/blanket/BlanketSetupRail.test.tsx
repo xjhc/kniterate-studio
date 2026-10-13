@@ -43,7 +43,7 @@ describe('BlanketSetupRail', () => {
       size={<ChartSizeSection state={state} onSize={() => {}} onGauge={() => {}} onNeedles={() => {}} onRows={() => {}} onNeedleOffset={() => {}} />}
       onStrategy={() => {}}
       onFloatLimit={() => {}}
-      onAssignment={() => {}}
+      onAssignment={() => {}} onSetup={() => {}}
     />);
     expect(markup).not.toContain('proven');
     expect(markup).toMatch(/<span>Size<\/span>[^]*<span>Colours<\/span>[^]*<span>Backing<\/span>/);
@@ -58,7 +58,7 @@ describe('BlanketSetupRail', () => {
   it('with one colour there is no backing to choose: a chart knits plain, a beanie body is one layer or two', () => {
     const rail = (project: Parameters<typeof compileColorworkProject>[0]) => {
       const state = materializeColorworkProject(project).state;
-      return renderToStaticMarkup(<BlanketSetupRail state={state} compile={{ status: 'ready', artifact: null, error: null, comparisons: [] }} outputError={null} size={null} onStrategy={() => {}} onFloatLimit={() => {}} onAssignment={() => {}} />);
+      return renderToStaticMarkup(<BlanketSetupRail state={state} compile={{ status: 'ready', artifact: null, error: null, comparisons: [] }} outputError={null} size={null} onStrategy={() => {}} onFloatLimit={() => {}} onAssignment={() => {}} onSetup={() => {}} />);
     };
     const plain = rail(createColorworkProjectV1({
       kind: 'knitlab-colorwork-chart', version: 1, title: 'plain', width: 12, height: 8, rowNumbering: 'bottom-up',

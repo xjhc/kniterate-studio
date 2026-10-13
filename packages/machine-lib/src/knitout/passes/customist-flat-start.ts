@@ -20,6 +20,13 @@
 import { b as backBed, f, type CarrierId, type Direction, type KnitoutOp } from '../types.js'
 import type { CarriageSimulator } from '../sim/carriage-simulator.js'
 
+/** A section's machine settings where a piece sets its own; anything left out is the reference's. */
+export interface SectionSettingsV1 {
+  readonly speed?: number
+  readonly roller?: number
+  readonly stitch?: number
+}
+
 /** Machine settings of the reference frame, per section. */
 export const CUSTOMIST_RIB_BEANIE_SETTINGS_V1 = Object.freeze({
   wastePasses: 81,
@@ -50,6 +57,47 @@ export const CUSTOMIST_RIB_BEANIE_SETTINGS_V1 = Object.freeze({
   autoMovePresserRoller: 0,
 })
 
+/** The flat start's settings: the reference's shape, any numbers. */
+export type FlatStartSettingsV1 = { readonly [K in keyof typeof CUSTOMIST_RIB_BEANIE_SETTINGS_V1]: (typeof CUSTOMIST_RIB_BEANIE_SETTINGS_V1)[K] extends number ? number : (typeof CUSTOMIST_RIB_BEANIE_SETTINGS_V1)[K] }
+
+/** A piece's own settings for the sections of the flat start and its rib, over the reference's. */
+export interface FlatSectionSettingsV1 {
+  readonly waste?: SectionSettingsV1
+  readonly castOn?: SectionSettingsV1
+  readonly rib?: SectionSettingsV1
+  readonly transfers?: SectionSettingsV1
+}
+
+/**
+ * The reference settings with a piece's own sections over them; with none,
+ * the reference itself, so the program is unchanged. The waste keeps its
+ * schedule: the first passes still ramp up to the speed (never above it), and
+ * the roller still pulls on the same passes. A rib keeps the reference's
+ * one-step difference between its front and rear stitch sizes.
+ */
+export function flatStartSettingsV1(own: FlatSectionSettingsV1 = {}): FlatStartSettingsV1 {
+  const base = CUSTOMIST_RIB_BEANIE_SETTINGS_V1
+  if (!own.waste && !own.castOn && !own.rib && !own.transfers) return base
+  const { waste = {}, castOn = {}, rib = {}, transfers = {} } = own
+  const ribStep = base.ribStitchFront - base.ribStitchRear
+  return Object.freeze({
+    ...base,
+    wasteStitch: waste.stitch ?? base.wasteStitch,
+    wasteSpeed: waste.speed === undefined ? base.wasteSpeed : (p: number) => (p <= 18 ? Math.min(base.wasteSpeed(p), waste.speed!) : waste.speed!),
+    wasteRoller: waste.roller === undefined ? base.wasteRoller : (p: number) => (base.wasteRoller(p) === 0 ? 0 : waste.roller!),
+    castOnSpeed: castOn.speed ?? base.castOnSpeed,
+    castOnRoller: castOn.roller ?? base.castOnRoller,
+    castOnStitch: castOn.stitch ?? base.castOnStitch,
+    ribSpeed: rib.speed ?? base.ribSpeed,
+    ribRoller: rib.roller ?? base.ribRoller,
+    ribStitchFront: rib.stitch ?? base.ribStitchFront,
+    ribStitchRear: rib.stitch === undefined ? base.ribStitchRear : Math.max(0, rib.stitch - ribStep),
+    xferSpeed: transfers.speed ?? base.xferSpeed,
+    xferRoller: transfers.roller ?? base.xferRoller,
+    xferStitch: transfers.stitch ?? base.xferStitch,
+  })
+}
+
 /**
  * Carrier parking, in needles beyond the piece's edge, matched to the
  * reference's encoded carrier stops. They only place yarns clear of the
@@ -75,9 +123,8 @@ export interface FlatPieceKit {
   drain(): void
 }
 
-export function flatPieceKit(sim: CarriageSimulator, ops: KnitoutOp[], lo: number, hi: number): FlatPieceKit {
+export function flatPieceKit(sim: CarriageSimulator, ops: KnitoutOp[], lo: number, hi: number, s: FlatStartSettingsV1 = CUSTOMIST_RIB_BEANIE_SETTINGS_V1): FlatPieceKit {
   const width = hi - lo + 1
-  const s = CUSTOMIST_RIB_BEANIE_SETTINGS_V1
   const offsets = (dir: Direction, keep: (o: number) => boolean): number[] => {
     const out: number[] = []
     if (dir === '+') { for (let o = 0; o < width; o++) if (keep(o)) out.push(o) }
@@ -117,16 +164,30 @@ export function flatPieceKit(sim: CarriageSimulator, ops: KnitoutOp[], lo: numbe
 export interface CustomistFlatStartInput {
   bodyCarrier: CarrierId
   wasteCarrier: CarrierId
-  drawCarrier: CarrierId
+  /**
+   * The draw thread, pulled out afterwards to free the piece from the waste
+   * yarn; null for none. Without it the waste is joined to the cast-on and is
+   * unravelled or cut away, and the waste sections around it are unchanged.
+   */
+  drawCarrier: CarrierId | null
   /** Further yarns brought in after the body yarn, in order (each is carried up from the waste section to its first stitch). */
   extraCarriers: readonly CarrierId[]
+  /**
+   * Waste interlock passes before the inserts (default the reference's 81).
+   * Fewer save yarn and time; too few and the fabric may not reach the
+   * rollers before the piece starts. Speeds and rollers follow the same
+   * per-pass schedule whatever the count.
+   */
+  wastePasses?: number
+  /** The piece's settings for the start, over the reference's (`flatStartSettingsV1`). */
+  settings?: FlatStartSettingsV1
 }
 
 /** Customist's waste, inserts, draw thread and 1×1 cast-on, ending with the body yarn parked on the left. */
 export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit, input: CustomistFlatStartInput): void {
   const { lo, hi, width, offsets, row, settings, xfers, drain } = kit
   const { bodyCarrier: body, wasteCarrier: waste, drawCarrier: draw } = input
-  const s = CUSTOMIST_RIB_BEANIE_SETTINGS_V1
+  const s = input.settings ?? CUSTOMIST_RIB_BEANIE_SETTINGS_V1
   const even = (o: number) => o % 2 === 0
   const none = () => false
   const all = () => true
@@ -144,7 +205,7 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
   // odd); leftward passes knit the interior with the parities swapped. The
   // start pass skips the outermost needles.
   sim.bringIn(waste, { side: 'left' })
-  for (let p = 0; p < s.wastePasses; p++) {
+  for (let p = 0; p < (input.wastePasses ?? s.wastePasses); p++) {
     settings(s.wasteSpeed(p), s.wasteRoller(p), s.wasteStitch)
     if (p === 0) {
       row(waste, '+', (o) => even(o) && o > 0, (o) => !even(o) && o < width - 1)
@@ -170,9 +231,11 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
     tube(2, '-')
   })
   // Draw yarn insert (front even, rear odd), then a six-row waste tube.
-  sim.bringIn(draw, { side: 'left' })
-  settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
-  row(draw, '+', even, (o) => !even(o))
+  if (draw !== null) {
+    sim.bringIn(draw, { side: 'left' })
+    settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
+    row(draw, '+', even, (o) => !even(o))
+  }
   tube(6, '+')
   drain()
 
@@ -193,9 +256,11 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
   // Drop every rear waste loop, then the draw yarn's final front row.
   settings(s.castOnSpeed, s.castOnRoller)
   for (const o of offsets('+', (x) => !even(x))) sim.drop(backBed(lo + o))
-  settings(s.tubeSpeed, s.tubeRoller, s.drawFinalStitch)
-  row(draw, '-', even, none)
-  sim.miss(draw, '-', f(lo - DRAW_PARK_BEYOND_EDGE))
+  if (draw !== null) {
+    settings(s.tubeSpeed, s.tubeRoller, s.drawFinalStitch)
+    row(draw, '-', even, none)
+    sim.miss(draw, '-', f(lo - DRAW_PARK_BEYOND_EDGE))
+  }
   drain()
 
   // Cast on 1×1 on both beds, then one tubular front and one rear row.

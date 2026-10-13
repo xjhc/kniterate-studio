@@ -583,6 +583,54 @@ ship," trust this file and the working tree instead.
 
     A colour chart's stage and file row say "Colour chart", not "Scarf or
     blanket".
+  - Machine settings, one section for every kind
+    (`workspace/MachineSetupSection.tsx`, project `setup`,
+    `set-machine-setup` edit). Each setting is the construction's reference
+    until you set your own. A project with no setup knits byte for byte as
+    before.
+    - Waste yarn at the start (2026-10-12). The standard is the reference's
+      interlock: fairisle 87, birdseye 80, and 81 for beanies, sweaters and
+      scarves. Kniterate's own default is 80.
+    - The count keeps the reference's odd or even parity, rounding up
+      (`customistWastePassesV1`). A flipped parity costs seven extra passes
+      to move the waste yarn back.
+    - Below 70 rows it warns that the fabric may not reach the rollers. It
+      never refuses; the machine checks still do.
+    - The swatch file uses the project's setup.
+    - The old `frame` settings stay unread: every project stores their
+      defaults (`wasteRows: 20`), so reading them would shrink every
+      project's waste.
+    - Draw thread on or off (2026-10-12), for beanies, sweaters and scarves.
+      The chart references knit without one.
+      - Off, the start skips the draw yarn's insert and final rows and C1
+        is never brought in. The waste sections around it are unchanged.
+      - The pattern says to unravel or cut the waste away, and the operator
+        note says "no draw thread".
+      - The Machine file reader finds the cast-on after the last waste pass.
+    - The top, beside the start (2026-10-12): bind off or waste yarn, and
+      how many rows of waste on top.
+      - Sweaters and scarves: their Top choice moved here from Edges and
+        Ends (it stays the object's `top`). The standard waste on top is
+        8 rows.
+      - Colour charts: the reference ends on closing waste (fairisle 16,
+        birdseye 20 rows; kept even so the carriage parks left). The ramp
+        of stitch sizes is resized to the count. A machine chain bind-off
+        is offered and passes the checks, but Kniterate's own chart files
+        don't use one.
+      - A beanie's crown gathers its top; nothing to set.
+    - Speed, roller and stitch size for each section (2026-10-12), in a
+      fold-out (`sectionStandards`). Each starts at the reference's value.
+      - Charts: waste and body.
+      - Beanies, sweaters and scarves: waste, cast-on, rib (when the piece
+        has one), body and transfers (`flatStartSettingsV1`).
+      - The waste keeps its schedule: the speed ramps up to the setting and
+        the roller pulls on the same passes. A rib keeps the reference's
+        one-step difference between its front and rear stitch sizes.
+      - Stitch sizes are the KCode selectors 0–15 (10–15 are written as
+        A–F). Speed and roller stay in the editor's range (up to 800;
+        −500 to 999), with a warning outside what Kniterate's own files use
+        (speed 60–700, roller 0–600).
+      - A project that sets none knits byte for byte as before.
   - One gauge editor for every kind (`workspace/gauge.tsx::GaugeFields`).
     It saves each gauge as one change, on Enter or when focus leaves it. The
     words for where gauges come from are shared too ("measured", "typical",

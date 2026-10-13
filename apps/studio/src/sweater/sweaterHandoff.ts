@@ -28,7 +28,7 @@ export function pieceSteps(piece: SweaterPiecePlan, plan: PiecesPlan): string[] 
     : 'ends' in object ? (object as { ends: { rib: string } }).ends.rib : 'kkpp';
   const steps: string[] = [];
   const bottom = raster.realized.ribRows.bottom;
-  steps.push(`Cast on ${raster.realized.castOnStitches} stitches over waste yarn and the draw thread.`);
+  steps.push(`Cast on ${raster.realized.castOnStitches} stitches over waste yarn${plan.carriers.draw ? ' and the draw thread' : ''}.`);
   if (piece.id === 'neckband') {
     steps.push(`Rows 1–${raster.rows.length}: ${ribName(rib)} rib.`);
   } else {
