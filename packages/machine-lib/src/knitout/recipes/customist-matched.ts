@@ -16,7 +16,7 @@ import { buildCompileInputForExport, carrierModeForColorCount } from '../export-
 import type { FloatPolicy } from '../plan/bed-state.js'
 import type { YarnBinding } from '../types.js'
 import type { RecipeOverrides } from '../wizard-config.js'
-import { CUSTOMIST_RIB_BEANIE_SETTINGS_V1 } from '../passes/customist-flat-start.js'
+import { CUSTOMIST_RIB_BEANIE_SETTINGS_V1, type SectionSettingsV1 } from '../passes/customist-flat-start.js'
 import { SHAPED_PANEL_TOP_WASTE_ROWS } from '../passes/shaped-panel.js'
 import { CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES } from './customist-studio-birdseye-7gg.js'
 import { CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE } from './customist-studio-fairisle-7gg.js'
@@ -48,7 +48,57 @@ export interface CustomistMatchedCompileRequestV1 {
   readonly top?: 'waste' | 'bind-off'
   /** Closing waste rows, in place of the reference's (fairisle 16, birdseye 20); kept even, rounding up. */
   readonly topWasteRows?: number
+  /** The body's settings, over the backing's reference. */
+  readonly body?: SectionSettingsV1
+  /** The waste section's stitch size, steady speed and pulling roller, over the reference's. */
+  readonly waste?: SectionSettingsV1
 }
+
+/** The reference's waste section for each chart backing. */
+function referenceWaste(technique: CustomistMatchedTechniqueV1) {
+  return technique === 'fairisle'
+    ? CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE.sections.start.wasteMachine!
+    : CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES.start!.wasteMachineConfig!
+}
+
+const FLAT = CUSTOMIST_RIB_BEANIE_SETTINGS_V1
+/** The waste pass after the flat start's speed ramp: its steady speed. */
+const FLAT_STEADY_WASTE_PASS = 19
+
+/**
+ * The reference's settings for each section a project can set, per
+ * construction: what it knits with unless it sets its own. A chart sets its
+ * waste section; the flat start (beanies, sweaters, scarves) its waste,
+ * cast-on, rib and transfers. A rib's stitch size is its front bed's.
+ */
+export const CUSTOMIST_STANDARD_SECTION_SETTINGS_V1 = {
+  fairisle: { waste: { stitch: referenceWaste('fairisle').stitchNumber!, speed: referenceWaste('fairisle').wasteSpeed!, roller: referenceWaste('fairisle').rampRollerLeft! } },
+  birdseye: { waste: { stitch: referenceWaste('birdseye').stitchNumber!, speed: referenceWaste('birdseye').wasteSpeed!, roller: referenceWaste('birdseye').rampRollerLeft! } },
+  flat: {
+    waste: { stitch: FLAT.wasteStitch, speed: FLAT.wasteSpeed(FLAT_STEADY_WASTE_PASS), roller: FLAT.wasteRoller(FLAT_STEADY_WASTE_PASS) },
+    castOn: { stitch: FLAT.castOnStitch, speed: FLAT.castOnSpeed, roller: FLAT.castOnRoller },
+    rib: { stitch: FLAT.ribStitchFront, speed: FLAT.ribSpeed, roller: FLAT.ribRoller },
+    transfers: { stitch: FLAT.xferStitch, speed: FLAT.xferSpeed, roller: FLAT.xferRoller },
+  },
+} as const
+
+/**
+ * The reference's body settings for each backing: what a project knits with
+ * unless it sets its own. Fairisle's is also the jersey body of every flat
+ * piece and of a beanie with a fairisle back.
+ */
+export const CUSTOMIST_STANDARD_BODY_SETTINGS_V1 = {
+  fairisle: {
+    speed: CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE.sections.body.speedNumber,
+    roller: CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE.sections.body.rollerAdvance,
+    stitch: CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE.sections.body.stitchNumber,
+  },
+  birdseye: {
+    speed: CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES.body!.speedNumber!,
+    roller: CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES.body!.rollerAdvance!,
+    stitch: CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES.body!.stitchNumber!,
+  },
+} as const
 
 /** The reference's closing waste and park-out for each chart backing. */
 function referencePark(technique: CustomistMatchedTechniqueV1) {
@@ -110,7 +160,7 @@ export function buildCustomistMatchedCompileInputV1(request: CustomistMatchedCom
     allocationMode: carrierModeForColorCount(request.yarnBindings.length),
     ...(request.needleOffset !== undefined ? { needleOffset: request.needleOffset } : {}),
     protectFirstBodyRow: true,
-    recipeOverrides: withFinish(withWastePasses(request.technique === 'birdseye' ? CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES : {}, request.wastePasses), request),
+    recipeOverrides: withWaste(withBody(withFinish(withWastePasses(request.technique === 'birdseye' ? CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES : {}, request.wastePasses), request), request.body), request),
   }, {
     keyPalette: request.keyPalette,
     ...(request.floatPolicy ? { floatPolicy: request.floatPolicy } : {}),
@@ -131,4 +181,34 @@ function withFinish(overrides: RecipeOverrides, request: CustomistMatchedCompile
   if (request.topWasteRows === undefined) return overrides
   const park = referencePark(request.technique)
   return { ...overrides, finish: { ...overrides.finish, bindOff: 'fairisle-park-bindoff', fairisleParkConfig: { ...park, closingWasteStitchRamp: rampOf(park.closingWasteStitchRamp!, customistTopWasteRowsV1(request.topWasteRows)) } } }
+}
+
+function withBody(overrides: RecipeOverrides, body: SectionSettingsV1 | undefined): RecipeOverrides {
+  if (!body || Object.keys(body).length === 0) return overrides
+  return {
+    ...overrides,
+    body: {
+      ...overrides.body,
+      ...(body.stitch !== undefined ? { stitchNumber: body.stitch } : {}),
+      ...(body.speed !== undefined ? { speedNumber: body.speed } : {}),
+      ...(body.roller !== undefined ? { rollerAdvance: body.roller } : {}),
+    },
+  }
+}
+
+function withWaste(overrides: RecipeOverrides, request: CustomistMatchedCompileRequestV1): RecipeOverrides {
+  const waste = request.waste
+  if (!waste || Object.keys(waste).length === 0) return overrides
+  return {
+    ...overrides,
+    start: {
+      ...overrides.start,
+      wasteMachineConfig: {
+        ...referenceWaste(request.technique),
+        ...(waste.stitch !== undefined ? { stitchNumber: waste.stitch } : {}),
+        ...(waste.speed !== undefined ? { wasteSpeed: waste.speed } : {}),
+        ...(waste.roller !== undefined ? { rampRollerLeft: waste.roller } : {}),
+      },
+    },
+  }
 }

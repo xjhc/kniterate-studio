@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
+import { CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
 import { runAuthoredPipeline } from './authoredPipeline';
 import { createBeanieProject } from './beanie';
 import { compileColorworkProject } from './blanket/compileProject';
 import { createPanelProject } from './sweater/panel';
-import { machineSetupWords } from './workspace/MachineSetupSection';
+import { bodyStandard, machineSetupWords, sectionStandards, settingsWarning } from './workspace/MachineSetupSection';
 import { runSweaterPipeline } from './sweater/sweaterPipeline';
 
 /** A project's own waste section: shorter than the reference saves exactly those passes, and the file still passes the strict checks. */
@@ -105,5 +105,73 @@ describe('the top', () => {
     const longer = (await runSweaterPipeline(scarf({ topWasteRows: 20 }))).pieces[0]!;
     expect(longer.verdict.state).toBe('surface');
     expect(longer.kcode!.passCount - standard.kcode!.passCount).toBe(20 - CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1.flat);
+  });
+});
+
+describe('the body’s speed, roller and stitch size', () => {
+  const OWN = { speed: 333, roller: 444, stitch: 11 };
+  const own = (project: ColorworkProjectV1) => appendProjectEdit(project, { id: 'body', source: 'human', edit: { kind: 'set-machine-setup', setup: { body: OWN } } });
+  // Values no reference program uses, so seeing them proves the body knits with them. Stitch sizes from 10 are written as letters: 11 is B.
+  const uses = (knitout: string) => [/^x-speed-number 333$/m, /^x-roller-advance 444$/m, /^x-stitch-number B$/m].map((pattern) => pattern.test(knitout));
+
+  it.each(['fairisle', 'birdseye'] as const)('are the project’s own on a %s chart', async (technique) => {
+    expect(uses(compileColorworkProject(chart(technique)).knitoutText!)).toEqual([false, false, false]);
+    const result = await runAuthoredPipeline(own(chart(technique)));
+    expect(result.verdict.state).toBe('surface');
+    expect(uses(result.compiled!.knitoutText!)).toEqual([true, true, true]);
+  });
+
+  it.each(['birdseye', 'fairisle'] as const)('are the project’s own on a beanie with a %s back', async (backing) => {
+    const hat = createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' }, cuffCm: 7, ribGauge: { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'measured' }, fold: true, backing, main: { name: 'Black', hex: '#111111' }, accent: { name: 'White', hex: '#F2F2F2' } }, { id: `hat-${backing}`, source: 'human', group: 'create' });
+    expect(bodyStandard(materializeColorworkProject(hat).state)).toEqual(CUSTOMIST_STANDARD_BODY_SETTINGS_V1[backing]);
+    expect(uses(compileColorworkProject(hat).knitoutText!)).toEqual([false, false, false]);
+    const result = await runAuthoredPipeline(own(hat));
+    expect(result.verdict.state).toBe('surface');
+    expect(uses(result.compiled!.knitoutText!)).toEqual([true, true, true]);
+  });
+
+  it('are the project’s own on a scarf, as on every flat piece', async () => {
+    const scarf = createPanelProject({ title: 'Scarf', widthCm: 20, lengthCm: 30, textureId: 'stockinette', yarn: { name: 'Oat', hex: '#D9CBB0' } }, { id: 'scarf', source: 'human', group: 'create' });
+    const piece = (await runSweaterPipeline(own(scarf))).pieces[0]!;
+    expect(piece.verdict.state).toBe('surface');
+    expect(uses(piece.compiled!.knitoutText)).toEqual([true, true, true]);
+  });
+
+  it('warns outside what Kniterate’s own files use', () => {
+    expect(settingsWarning({ speed: 650, roller: 500 })).toBeNull();
+    expect(settingsWarning({ speed: 750 })).toContain('speed');
+    expect(settingsWarning({ roller: -20 })).toContain('roller');
+  });
+});
+
+describe('every section’s speed, roller and stitch size', () => {
+  const OWN = { speed: 333, roller: 444, stitch: 11 };
+  const own = (project: ColorworkProjectV1, section: string) => appendProjectEdit(project, { id: `own-${section}`, source: 'human', edit: { kind: 'set-machine-setup', setup: { [section]: OWN } } });
+  const uses = (knitout: string) => [/^x-speed-number 333$/m, /^x-roller-advance 444$/m, /^x-stitch-number B$/m].map((pattern) => pattern.test(knitout));
+  const hat = () => createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' }, cuffCm: 7, ribGauge: { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'measured' }, fold: true, main: { name: 'Black', hex: '#111111' }, accent: { name: 'White', hex: '#F2F2F2' } }, { id: 'hat', source: 'human', group: 'create' });
+
+  it.each(['fairisle', 'birdseye'] as const)('of a %s chart: its waste', async (technique) => {
+    expect(sectionStandards(materializeColorworkProject(chart(technique)).state).map((section) => section.key)).toEqual(['waste', 'body']);
+    const result = await runAuthoredPipeline(own(chart(technique), 'waste'));
+    expect(result.verdict.state).toBe('surface');
+    expect(uses(result.compiled!.knitoutText!)).toEqual([true, true, true]);
+  });
+
+  it.each(['waste', 'castOn', 'rib', 'transfers'])('of a beanie: its %s', async (section) => {
+    expect(sectionStandards(materializeColorworkProject(hat()).state).map((item) => item.key)).toEqual(['waste', 'castOn', 'rib', 'body', 'transfers']);
+    const result = await runAuthoredPipeline(own(hat(), section));
+    expect(result.verdict.state).toBe('surface');
+    // Transfers carry their own stitch size (x-xfer-stitch-number), not the knitting one.
+    expect(uses(result.compiled!.knitoutText!)).toEqual(section === 'transfers' ? [true, true, false] : [true, true, true]);
+    if (section === 'transfers') expect(result.compiled!.knitoutText).toMatch(/^x-xfer-stitch-number B$/m);
+  });
+
+  it('of a scarf: its sections, the rib only when it has rib ends', async () => {
+    const scarf = (ends: number) => createPanelProject({ title: 'Scarf', widthCm: 20, lengthCm: 30, textureId: 'stockinette', ends: { rib: 'kkpp', cm: ends }, yarn: { name: 'Oat', hex: '#D9CBB0' } }, { id: `scarf-${ends}`, source: 'human', group: 'create' });
+    expect(sectionStandards(materializeColorworkProject(scarf(0)).state).map((section) => section.key)).not.toContain('rib');
+    expect(sectionStandards(materializeColorworkProject(scarf(4)).state).map((section) => section.key)).toContain('rib');
+    const piece = (await runSweaterPipeline(own(scarf(4), 'rib'))).pieces[0]!;
+    expect(piece.verdict.state).toBe('surface');
+    expect(uses(piece.compiled!.knitoutText)).toEqual([true, true, true]);
   });
 });

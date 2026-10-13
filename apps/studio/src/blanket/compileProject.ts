@@ -11,6 +11,7 @@ import {
   type ResolvedProjectPlacement,
   type ProjectState,
 } from '@kniterate-studio/project-contract';
+import { flatSections } from '../machineSetup';
 import {
   CUSTOMIST_MATCHED_PRESETS_V1,
   customistWastePassesV1,
@@ -236,6 +237,8 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     ...(state.setup?.wasteRows !== undefined ? { wastePasses: customistWastePassesV1(technique, state.setup.wasteRows) } : {}),
     ...(state.setup?.top !== undefined ? { top: state.setup.top } : {}),
     ...(state.setup?.topWasteRows !== undefined ? { topWasteRows: state.setup.topWasteRows } : {}),
+    ...(state.setup?.body !== undefined ? { body: state.setup.body } : {}),
+    ...(state.setup?.waste !== undefined ? { waste: state.setup.waste } : {}),
     ...(technique === 'fairisle' ? { floatPolicy: { mode: 'warn-above' as const, threshold: state.strategy.floatLimit } } : {}),
   });
   const artifact = compileToRunArtifact(input);
@@ -428,6 +431,8 @@ function compileBeanieProject(
     ribRows: cuffRows,
     crown,
     ...(state.setup?.wasteRows !== undefined ? { startWastePasses: customistWastePassesV1('flat', state.setup.wasteRows) } : {}),
+    ...(state.setup?.body !== undefined ? { bodySettings: state.setup.body } : {}),
+    ...(flatSections(state.setup) ?? {}),
     ...(withBody ? { jerseyBody: { rows: bodyCells.map((cells) => cells.map(carrierOf)), backing: backing === 'birdseye' ? 'birdseye' as const : 'fairisle' as const } } : {}),
   } as const;
   const built = buildCustomistRibBeanie(input);

@@ -72,6 +72,19 @@ const FrameSchema = z.object({
  * knits exactly as one made before these settings existed. (`frame` above is
  * older and read by no compiler: every project stores its default.)
  */
+/**
+ * A section's machine settings where a project sets its own. Stitch sizes are
+ * the KCode selectors 0–15; speed and roller stay within the editor's
+ * documented range (speed up to 800 mm/s, roller −500 to 999). The machine
+ * checks still refuse a program the machine cannot knit.
+ */
+const SectionSettingsSchema = z.object({
+  speed: z.number().min(0).max(800).optional(),
+  roller: z.number().min(-500).max(999).optional(),
+  stitch: z.number().int().min(0).max(15).optional(),
+});
+export type SectionSettings = z.infer<typeof SectionSettingsSchema>;
+
 const MachineSetupSchema = z.object({
   /** Waste interlock passes before the piece starts. Kniterate's own default is 80; much fewer and the fabric may not reach the rollers. */
   wasteRows: z.number().int().min(4).max(200).optional(),
@@ -81,6 +94,16 @@ const MachineSetupSchema = z.object({
   top: z.enum(['waste', 'bind-off']).optional(),
   /** Rows of waste yarn on top, when the top is waste. */
   topWasteRows: z.number().int().min(2).max(100).optional(),
+  /** The body's speed, roller and stitch size, over the construction's reference. */
+  body: SectionSettingsSchema.optional(),
+  /** The waste section's stitch size, steady speed and pulling roller. */
+  waste: SectionSettingsSchema.optional(),
+  /** The cast-on's (beanies, sweaters and scarves). */
+  castOn: SectionSettingsSchema.optional(),
+  /** The rib's: its front stitch size, the rear keeping the reference's step below. */
+  rib: SectionSettingsSchema.optional(),
+  /** The transfers'. */
+  transfers: SectionSettingsSchema.optional(),
 });
 export type MachineSetup = z.infer<typeof MachineSetupSchema>;
 

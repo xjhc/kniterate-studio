@@ -36,7 +36,7 @@ import { CarriageSimulator } from '../sim/carriage-simulator.js'
 import type { PredictedPass } from '../sim/types.js'
 import { FAIRISLE_BODY_DEFAULTS, KNITERATE_MAX_RACK as MAX_RACK } from '../kniterate/constants.js'
 import { CHAIN_BINDOFF_DEFAULTS } from './bind-off.js'
-import { CUSTOMIST_RIB_BEANIE_SETTINGS_V1, emitCustomistFlatStart, flatPieceKit } from './customist-flat-start.js'
+import { emitCustomistFlatStart, flatPieceKit, flatStartSettingsV1, type FlatSectionSettingsV1, type SectionSettingsV1 } from './customist-flat-start.js'
 
 export type PanelStitchV1 = 'k' | 'p' | 't' | 'u' | 's'
 
@@ -71,6 +71,10 @@ export interface ShapedPanelInputV1 {
   readonly drawCarrier: CarrierId | null
   /** Waste interlock passes at the start (default the reference's 81). */
   readonly startWastePasses?: number
+  /** The body rows' settings, over the reference's jersey body. */
+  readonly bodySettings?: SectionSettingsV1
+  /** Waste, cast-on, rib and transfer settings, over the reference's. */
+  readonly sections?: FlatSectionSettingsV1
   /** How the top is finished. `waste` knits `wasteRows` rows of waste yarn (default `SHAPED_PANEL_TOP_WASTE_ROWS`) over every live stitch, then releases them. */
   readonly top: 'bind-off' | 'waste'
   readonly wasteRows?: number
@@ -91,9 +95,7 @@ export class ShapedPanelError extends Error {
   }
 }
 
-const RIB = CUSTOMIST_RIB_BEANIE_SETTINGS_V1
 const BODY = { speed: FAIRISLE_BODY_DEFAULTS.speedNumber, roller: FAIRISLE_BODY_DEFAULTS.rollerAdvance, stitch: FAIRISLE_BODY_DEFAULTS.stitchNumber }
-const XFER = { speed: RIB.xferSpeed, roller: RIB.xferRoller, stitch: RIB.xferStitch }
 const BIND = CHAIN_BINDOFF_DEFAULTS
 
 type Bed = 'f' | 'b'
@@ -105,6 +107,9 @@ function bedFor(stitch: PanelStitchV1, current: Bed | null): Bed {
 }
 
 export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV1 {
+  // The reference's start, rib and transfer settings, with the piece's own over them.
+  const RIB = flatStartSettingsV1(input.sections)
+  const XFER = { speed: RIB.xferSpeed, roller: RIB.xferRoller, stitch: RIB.xferStitch }
   const rows = input.rows
   if (rows.length === 0) throw new ShapedPanelError(null, 'a panel needs at least one row')
   const first = rows[0]!.segments
@@ -125,12 +130,13 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
 
   const sim = new CarriageSimulator({ carriers: ['1', '2', '3', '4', '5', '6'] })
   const ops: KnitoutOp[] = [comment('--- SHAPED PANEL: CUSTOMIST WASTE & CAST-ON ---')]
-  const kit = flatPieceKit(sim, ops, castOn.lo, castOn.hi)
+  const kit = flatPieceKit(sim, ops, castOn.lo, castOn.hi, RIB)
   emitCustomistFlatStart(sim, kit, {
     bodyCarrier: A,
     wasteCarrier: input.wasteCarrier,
     drawCarrier: input.drawCarrier,
     extraCarriers: splits ? [B!] : [],
+    settings: RIB,
     ...(input.startWastePasses !== undefined ? { wastePasses: input.startWastePasses } : {}),
   })
   const drain = kit.drain
@@ -276,11 +282,12 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
   }
 
   /** One pass knitting `segment` by `plan` with `carrier`, from the side it is on. */
+  const body = { speed: input.bodySettings?.speed ?? BODY.speed, roller: input.bodySettings?.roller ?? BODY.roller, stitch: input.bodySettings?.stitch ?? BODY.stitch }
   const knitSegment = (carrier: CarrierId, segment: PanelSegmentV1, row: PanelRowV1, plan: Map<number, PanelStitchV1>) => {
     const dir: Direction = sideOf(carrier) === 'left' ? '+' : '-'
     const needles = dir === '+' ? range(segment.lo, segment.hi) : range(segment.lo, segment.hi).reverse()
     if (row.settings === 'rib') { sim.setSpeed(RIB.ribSpeed); sim.setRoller(RIB.ribRoller) }
-    else { sim.setSpeed(BODY.speed); sim.setRoller(BODY.roller) }
+    else { sim.setSpeed(body.speed); sim.setRoller(body.roller) }
     for (const n of needles) {
       const stitch = plan.get(n)!
       if (stitch === 's') continue
@@ -288,7 +295,7 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
       const bed = bedFor(stitch, current)
       if (current !== null && current !== bed) fail(`needle ${n} is on the ${current === 'f' ? 'front' : 'rear'} bed but its stitch needs the other`)
       const tuck = stitch === 't' || stitch === 'u'
-      sim.setStitch(row.settings === 'rib' ? (bed === 'f' ? RIB.ribStitchFront : RIB.ribStitchRear) : BODY.stitch)
+      sim.setStitch(row.settings === 'rib' ? (bed === 'f' ? RIB.ribStitchFront : RIB.ribStitchRear) : body.stitch)
       if (tuck) sim.tuck(carrier, dir, needle(bed, n))
       else sim.knit(carrier, dir, needle(bed, n))
       // A knit leaves one new loop; a tuck adds one to those held.

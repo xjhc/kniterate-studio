@@ -85,3 +85,7 @@
 .garment-measure .number-input i { color: var(--ink-3); font-size: 12px; font-style: normal; }
 .chart-design .fold-check { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 12px; cursor: pointer; }
 .chart-design .fold-check input { width: 16px; height: 16px; margin: 0; }
+/* Machine settings: each section's speed, roller and stitch size, folded away until wanted. */
+.machine-sections { margin-top: 10px; }
+.machine-sections > summary { cursor: pointer; padding: 4px 0; color: var(--ink-2); font-size: 13px; font-weight: 600; }
+.machine-sections .section-settings { margin-top: 8px; }

@@ -618,7 +618,19 @@ ship," trust this file and the working tree instead.
         is offered and passes the checks, but Kniterate's own chart files
         don't use one.
       - A beanie's crown gathers its top; nothing to set.
-    - Still to come: speed, roller and stitch size for each section.
+    - Speed, roller and stitch size for each section (2026-10-12), in a
+      fold-out (`sectionStandards`). Each starts at the reference's value.
+      - Charts: waste and body.
+      - Beanies, sweaters and scarves: waste, cast-on, rib (when the piece
+        has one), body and transfers (`flatStartSettingsV1`).
+      - The waste keeps its schedule: the speed ramps up to the setting and
+        the roller pulls on the same passes. A rib keeps the reference's
+        one-step difference between its front and rear stitch sizes.
+      - Stitch sizes are the KCode selectors 0–15 (10–15 are written as
+        A–F). Speed and roller stay in the editor's range (up to 800;
+        −500 to 999), with a warning outside what Kniterate's own files use
+        (speed 60–700, roller 0–600).
+      - A project that sets none knits byte for byte as before.
   - One gauge editor for every kind (`workspace/gauge.tsx::GaugeFields`).
     It saves each gauge as one change, on Enter or when focus leaves it. The
     words for where gauges come from are shared too ("measured", "typical",

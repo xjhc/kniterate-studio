@@ -1,5 +1,5 @@
-import type { MachineSetup, ProjectState } from '@kniterate-studio/project-contract';
-import { CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistTopWasteRowsV1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
+import { beanieObjectOf, type MachineSetup, type ProjectState, type SectionSettings } from '@kniterate-studio/project-contract';
+import { CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_SECTION_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistTopWasteRowsV1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
 import { Chips, NumberInput, Section } from './panel';
 
 /**
@@ -36,6 +36,63 @@ export function machineSetupWords(setup: MachineSetup | undefined, construction:
 }
 
 type Top = 'bind-off' | 'waste';
+type Standard = Required<SectionSettings>;
+
+/** The reference's body settings for this project, or null when it has no body to set (a beanie all in rib). */
+export function bodyStandard(state: ProjectState): Standard | null {
+  if (state.object?.kind === 'beanie' && beanieObjectOf(state)?.construction !== 'rib-cuff-jersey-body') return null;
+  const birdseye = state.object?.kind === 'beanie' ? state.strategy.technique === 'birdseye' : wasteConstruction(state) === 'birdseye';
+  return CUSTOMIST_STANDARD_BODY_SETTINGS_V1[birdseye ? 'birdseye' : 'fairisle'];
+}
+
+type SectionKey = 'waste' | 'castOn' | 'rib' | 'body' | 'transfers';
+
+/** Each section a project can set, in knitting order, with its reference: a chart its waste and body; a flat piece its waste, cast-on, rib (when it has one), body and transfers. */
+export function sectionStandards(state: ProjectState): { key: SectionKey; label: string; standard: Standard }[] {
+  const construction = wasteConstruction(state);
+  const body = bodyStandard(state);
+  if (construction !== 'flat') return [{ key: 'waste', label: 'Waste', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1[construction].waste }, ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : [])];
+  const flat = CUSTOMIST_STANDARD_SECTION_SETTINGS_V1.flat;
+  const object = state.object;
+  const rib = object?.kind !== 'panel' || object.ends.cm > 0;
+  return [
+    { key: 'waste', label: 'Waste', standard: flat.waste },
+    { key: 'castOn', label: 'Cast-on', standard: flat.castOn },
+    ...(rib ? [{ key: 'rib' as const, label: 'Rib', standard: flat.rib }] : []),
+    ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : []),
+    { key: 'transfers', label: 'Transfers', standard: flat.transfers },
+  ];
+}
+
+/** Outside what Kniterate's own files use, a setting warns; the machine checks refuse only what cannot be knitted. */
+export function settingsWarning(value: SectionSettings | undefined): string | null {
+  if (value?.speed !== undefined && (value.speed < 60 || value.speed > 700)) return "Kniterate's own files keep the speed between 60 and 700.";
+  if (value?.roller !== undefined && (value.roller < 0 || value.roller > 600)) return "Kniterate's own files keep the roller between 0 and 600.";
+  return null;
+}
+
+/** One section's stitch size, speed and roller, each the standard until you set it. */
+function SectionSettingsFields({ id, label, value, standard, onChange }: { id: string; label: string; value: SectionSettings | undefined; standard: Standard; onChange: (next: SectionSettings | undefined, what: string) => void }) {
+  const set = (key: keyof SectionSettings, name: string, raw: number) => {
+    const next = key === 'stitch' ? Math.round(raw) : raw;
+    const { [key]: _drop, ...rest } = value ?? {};
+    const merged = next === standard[key] ? rest : { ...rest, [key]: next };
+    onChange(Object.keys(merged).length > 0 ? merged : undefined, `${label} ${name} ${next}`);
+  };
+  const field = (key: keyof SectionSettings, name: string, min: number, max: number, step: number) => <label>
+    <span>{name}</span>
+    <NumberInput label={`${label} ${name.toLowerCase()}`} value={value?.[key] ?? standard[key]} min={min} max={max} step={step} onCommit={(next) => set(key, name.toLowerCase(), next)} />
+  </label>;
+  const warning = settingsWarning(value);
+  return <fieldset className="gauge-fields section-settings" id={id}>
+    <legend>{label}</legend>
+    <div className="gauge-row">{field('stitch', 'Stitch', 0, 15, 1)}{field('speed', 'Speed', 0, 800, 10)}{field('roller', 'Roller', -500, 999, 10)}</div>
+    <p className={`design-hint${warning ? ' warn' : ''}`} role={warning ? 'alert' : undefined}>
+      {warning ?? `Standard: stitch ${standard.stitch}, speed ${standard.speed}, roller ${standard.roller}.`}
+      {value && <> <button type="button" className="link-button" onClick={() => onChange(undefined, `Standard ${label.toLowerCase()} settings`)}>Use the standard</button></>}
+    </p>
+  </fieldset>;
+}
 
 /**
  * `objectTop`: a sweater's or scarf's top, which is part of its design (the
@@ -68,6 +125,12 @@ export function MachineSetupSection({ state, onChange, objectTop }: {
     const { top: _drop, ...rest } = state.setup ?? {};
     save(next === 'waste' ? rest : { ...rest, top: next }, next === 'waste' ? 'Finish on waste yarn' : 'Bind off the top');
   };
+  const sections = sectionStandards(state);
+  const ownSections = sections.some((section) => state.setup?.[section.key] !== undefined);
+  const setSection = (key: SectionKey, next: SectionSettings | undefined, label: string) => {
+    const { [key]: _drop, ...rest } = state.setup ?? {};
+    save(next ? { ...rest, [key]: next } : rest, label);
+  };
   const setTopRows = (rows: number | null) => {
     const { topWasteRows: _drop, ...rest } = state.setup ?? {};
     save(rows === null || rows === topStandard ? rest : { ...rest, topWasteRows: rows }, rows === null ? 'Standard waste on top' : `Waste on top ${rows} rows`);
@@ -97,5 +160,9 @@ export function MachineSetupSection({ state, onChange, objectTop }: {
           <p className="design-hint">Standard: {topStandard} rows.{state.setup?.topWasteRows !== undefined && <> <button type="button" className="link-button" onClick={() => setTopRows(null)}>Use the standard {topStandard}</button></>}</p>
         </>}
       </>}
+    <details className="machine-sections" open={ownSections}>
+      <summary>Speed, roller and stitch size</summary>
+      {sections.map((section) => <SectionSettingsFields key={section.key} id={`machine.${section.key}`} label={section.label} value={state.setup?.[section.key]} standard={section.standard} onChange={(next, label) => setSection(section.key, next, label)} />)}
+    </details>
   </Section>;
 }

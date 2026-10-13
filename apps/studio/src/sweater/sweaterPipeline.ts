@@ -18,6 +18,7 @@ import { resolveReadiness, settingName, type Finding, type Readiness } from '../
 import type { PieceId } from './draft';
 import { planSweater, type PiecesPlan, type SweaterPiecePlan } from './sweater';
 import { planPanel } from './panel';
+import { flatSections } from '../machineSetup';
 import { textureTransfersPerRepeat } from './textures';
 
 /**
@@ -79,6 +80,8 @@ export function compileSweaterPiece(plan: PiecesPlan, piece: SweaterPiecePlan, s
     fashion: plan.object.fashion ?? 1,
     ...(setup?.wasteRows !== undefined ? { startWastePasses: customistWastePassesV1('flat', setup.wasteRows) } : {}),
     ...(setup?.topWasteRows !== undefined ? { wasteRows: setup.topWasteRows } : {}),
+    ...(setup?.body !== undefined ? { bodySettings: setup.body } : {}),
+    ...(flatSections(setup) ?? {}),
   } as const;
   const built = emitShapedPanelV1(input);
   const knitoutText = writeKnitoutProgram(built.program);

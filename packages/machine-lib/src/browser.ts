@@ -47,6 +47,7 @@ export {
 } from './colorwork/from-colorwork-chart.js';
 export type { CarrierId, YarnBinding } from './knitout/types.js';
 export type { PredictedPass } from './knitout/sim/types.js';
+export type { FlatSectionSettingsV1, SectionSettingsV1 } from './knitout/passes/customist-flat-start.js';
 export {
   projectBackFaceFromArtifact,
   type BackFaceCell,
@@ -98,6 +99,8 @@ export {
 export {
   CUSTOMIST_MATCHED_PRESETS_V1,
   CUSTOMIST_STANDARD_WASTE_PASSES_V1,
+  CUSTOMIST_STANDARD_BODY_SETTINGS_V1,
+  CUSTOMIST_STANDARD_SECTION_SETTINGS_V1,
   CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1,
   customistTopWasteRowsV1,
   customistWastePassesV1,
