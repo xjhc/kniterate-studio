@@ -42,7 +42,7 @@ export interface CustomistRibBeanieInput {
   startWastePasses?: number
   /** The colourwork body's settings, over the backing's reference. */
   bodySettings?: SectionSettingsV1
-  /** Waste, cast-on, rib and transfer settings, over the reference's. */
+  /** Waste, cast-on, rib and transfer settings, over the reference's; the transfers are every transfer's, the crown's too. */
   sections?: FlatSectionSettingsV1
   /** 2×2 rib rows after the set-up. */
   ribRows: number
@@ -199,9 +199,14 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
       crown = planEightLineCrown(width, sim.finalNextDirection(), input.jerseyBody ? 'jersey' : 'rib').steps
     }
     ops.push(comment(`--- 2x2 RIB CROWN (${input.crown}) ---`))
+    // Your transfer settings are every transfer's, the crown's too; without them the crown keeps its reference's.
+    const transfers = input.sections?.transfers
     for (const step of crown) {
       if (step[0] === 'x') {
-        const [, rack, from, speed, roller, xferStitch, sources] = step
+        const [, rack, from, referenceSpeed, referenceRoller, referenceStitch, sources] = step
+        const speed = transfers?.speed ?? referenceSpeed
+        const roller = transfers?.roller ?? referenceRoller
+        const xferStitch = transfers?.stitch ?? referenceStitch
         settings(speed, roller)
         sim.setXferStitch(xferStitch)
         sim.setRacking(rack)

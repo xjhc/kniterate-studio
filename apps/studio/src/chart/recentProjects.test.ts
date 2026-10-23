@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { createColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { forgetProject, readRecentProject, readRecentProjects, rememberProject } from './recentProjects';
+import { appendProjectEdit, createColorworkProjectV1, undoProjectEdit, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
+import { builtOn, forgetProject, readRecentProject, readRecentProjects, rememberProject } from './recentProjects';
 
 const chart = (id: string, title: string) => createColorworkProjectV1({
   kind: 'knitlab-colorwork-chart', version: 1, title, width: 2, height: 2,
@@ -52,5 +52,24 @@ describe('recent projects on this device', () => {
     expect(readRecentProjects(storage)).toEqual([]);
     storage.setItem('kniterate-studio:recent-projects:v1', JSON.stringify([{ slot: 'a' }, { slot: 'b', id: 'b', title: 'B', kind: 'chart', savedAt: 'now' }]));
     expect(readRecentProjects(storage).map((item) => item.slot)).toEqual(['b']);
+  });
+});
+
+describe('the same project changed in two tabs', () => {
+  const edit = (project: ColorworkProjectV1, id: string, width: number) => appendProjectEdit(project, { id, source: 'human', edit: { kind: 'set-width', width, fillPaletteIndex: 0 } });
+  const start = edit(chart('hat-1', 'Hat'), 'first', 3);
+
+  it('takes up a save made on top of this tab’s latest edit, undone there or not', () => {
+    const theirs = edit(start, 'theirs', 4);
+    expect(builtOn(theirs, start)).toBe(true);
+    expect(builtOn(undoProjectEdit(theirs), start)).toBe(true);
+    expect(builtOn(undoProjectEdit(start), start)).toBe(true);
+  });
+
+  it('does not take up one made at the same time, whichever saved first', () => {
+    const mine = edit(start, 'mine', 5);
+    const theirs = edit(start, 'theirs', 4);
+    expect(builtOn(theirs, mine)).toBe(false);
+    expect(builtOn(mine, theirs)).toBe(false);
   });
 });

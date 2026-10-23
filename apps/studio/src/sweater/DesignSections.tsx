@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Pencil } from 'lucide-react';
 import type { ProjectEdit } from '@kniterate-studio/project-contract';
-import { GaugeFields, regauge, SwatchAside, swatchWords, type GaugeValue } from '../workspace/gauge';
+import type { gaugeFabrics } from '../fabric';
+import { GaugeFields, SwatchAside, swatchWords, type GaugeValue } from '../workspace/gauge';
 import { Section } from '../workspace/panel';
 import { TEXTURES, textureMatching } from './textures';
 import { TextureEditor, TextureSwatch } from './TextureSwatch';
@@ -11,20 +12,15 @@ import { TextureEditor, TextureSwatch } from './TextureSwatch';
 export type Operate = (label: string, edits: ProjectEdit[]) => boolean;
 type Body = { name: string; texture: string[] };
 
-/** The stitch: the library, or one of your own. The gauge follows the stitch by the one rule for a change of fabric (`regauge`). */
-export function StitchSection({ body, hex, gauge, onChange }: { body: { name: string; texture: readonly string[] }; hex: string; gauge: GaugeValue; onChange: (label: string, body: Body, edits: ProjectEdit[]) => void }) {
+/** The stitch: the library, or one of your own. The gauge follows the stitch by the rule for a change of fabric (`fabric.ts`). */
+export function StitchSection({ body, hex, onChange }: { body: { name: string; texture: readonly string[] }; hex: string; onChange: (label: string, body: Body) => void }) {
   const [editingTexture, setEditingTexture] = useState(false);
   const library = textureMatching(body.texture);
-  // A stitch of your own is never the one a swatch was measured on.
-  const gaugeEdits = (next: (typeof TEXTURES)[number] | null): ProjectEdit[] => {
-    const changed = regauge(gauge, body.name, next && { name: next.name, typical: next.gauge });
-    return changed ? [{ kind: 'set-gauge', gauge: changed }] : [];
-  };
   return <Section title="Stitch" aside={<em className="section-aside">{body.name}</em>}>
       <div className="texture-grid" role="radiogroup" aria-label="Body stitch">
         {TEXTURES.map((texture) => <button key={texture.id} type="button" role="radio" aria-checked={library?.id === texture.id} className={library?.id === texture.id ? 'active' : ''} title={texture.note} onClick={() => {
           if (library?.id === texture.id) return;
-          onChange(`${texture.name}`, { name: texture.name, texture: [...texture.rows] }, gaugeEdits(texture));
+          onChange(`${texture.name}`, { name: texture.name, texture: [...texture.rows] });
         }}>
           <TextureSwatch rows={texture.rows} hex={hex} size={8} columns={8} rowsShown={6} />
           <span>{texture.name}</span>
@@ -36,17 +32,19 @@ export function StitchSection({ body, hex, gauge, onChange }: { body: { name: st
       </div>
       {library && <p className="design-hint">{library.note}</p>}
       {(editingTexture || library === undefined) && <div className="texture-editor-wrap">
-        <TextureEditor rows={body.texture} hex={hex} onChange={(rows) => { onChange('Edit the stitch', { name: textureMatching(rows)?.name ?? 'Custom stitch', texture: rows }, gaugeEdits(null)); }} />
+        <TextureEditor rows={body.texture} hex={hex} onChange={(rows) => { onChange('Edit the stitch', { name: textureMatching(rows)?.name ?? 'Custom stitch', texture: rows }); }} />
         {editingTexture && <button type="button" className="link-button" onClick={() => setEditingTexture(false)}>Done</button>}
       </div>}
     </Section>;
 }
 
 /** The yarn (colour and name) and the gauges, with whether each was measured. */
-export function YarnGaugeSection({ yarn, carrier, bodyName, gauge, ribGauge, operate, onRibGauge }: {
+export function YarnGaugeSection({ yarn, carrier, bodyName, fabrics, gauge, ribGauge, operate, onRibGauge }: {
   yarn: { id: string; name: string; hex: string };
   carrier: string;
   bodyName: string;
+  /** What each gauge is measured on, for the words. */
+  fabrics: ReturnType<typeof gaugeFabrics>;
   gauge: GaugeValue;
   /** Null when the project has no rib. */
   ribGauge: GaugeValue | null;
@@ -54,7 +52,7 @@ export function YarnGaugeSection({ yarn, carrier, bodyName, gauge, ribGauge, ope
   onRibGauge: (next: GaugeValue, label: string) => void;
 }) {
   const setGauge = (next: GaugeValue, label: string) => operate(label, [{ kind: 'set-gauge', gauge: { ...next } }]);
-  const swatch = swatchWords([gauge, ...(ribGauge ? [ribGauge] : [])], bodyName);
+  const swatch = swatchWords([{ gauge, fabric: fabrics.body?.name ?? 'your stitch' }, ...(ribGauge ? [{ gauge: ribGauge, fabric: fabrics.rib?.name ?? 'rib' }] : [])]);
   return <Section id="swatch" title="Yarn & swatch" aside={<SwatchAside aside={swatch.aside} />}>
     <label className="yarn-row"><input type="color" value={yarn.hex} aria-label="Yarn colour" onChange={(event) => operate('Yarn colour', [{ kind: 'set-palette-entry', paletteId: yarn.id, name: yarn.name, hex: event.currentTarget.value.toUpperCase() }])} />
       <input type="text" defaultValue={yarn.name} key={yarn.name} aria-label="Yarn name" onBlur={(event) => { const name = event.currentTarget.value.trim(); if (name && name !== yarn.name) operate(`Yarn: ${name}`, [{ kind: 'set-palette-entry', paletteId: yarn.id, name, hex: yarn.hex }, { kind: 'set-yarn-assignment', assignment: { paletteId: yarn.id, carrier: carrier as '2' | '3' | '4' | '5', yarnName: name } }]); }} />

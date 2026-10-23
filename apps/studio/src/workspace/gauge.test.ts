@@ -21,9 +21,12 @@ describe('a gauge and a change of fabric', () => {
   });
 
   it('says where the gauges come from', () => {
-    expect(swatchWords([measured, measured], 'Seed stitch')).toEqual({ aside: 'measured', hint: 'From your swatch.' });
-    expect(swatchWords([{ ...measured, source: 'assumed', note: 'Measured on Seed stitch' }, measured], '1×1 rib'))
+    expect(swatchWords([{ gauge: measured, fabric: 'Seed stitch' }, { gauge: measured, fabric: '2×2 rib' }])).toEqual({ aside: 'measured', hint: 'From your swatch.' });
+    expect(swatchWords([{ gauge: { ...measured, source: 'assumed', note: 'Measured on Seed stitch' }, fabric: '1×1 rib' }, { gauge: measured, fabric: '2×2 rib' }]))
       .toEqual({ aside: 'measure again', hint: 'Measured on Seed stitch. Measure a swatch of 1×1 rib for true sizes.' });
-    expect(swatchWords([{ ...measured, source: 'assumed' }], 'fairisle fabric').aside).toBe('typical');
+    // Each gauge names its own fabric: a rib to measure again is a rib swatch.
+    expect(swatchWords([{ gauge: measured, fabric: 'Stockinette' }, { gauge: { ...measured, source: 'assumed', note: 'Measured on 2×2 rib' }, fabric: '1×1 rib' }]).hint)
+      .toBe('Measured on 2×2 rib. Measure a swatch of 1×1 rib for true sizes.');
+    expect(swatchWords([{ gauge: { ...measured, source: 'assumed' }, fabric: 'fairisle fabric' }]).aside).toBe('typical');
   });
 });

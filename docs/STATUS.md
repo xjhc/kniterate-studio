@@ -322,6 +322,15 @@ ship," trust this file and the working tree instead.
     - The same project open in two tabs (2026-10-12): a change saved in one
       is taken up by the other, so neither saves over it. If both changed at
       once, the second tab's version goes on as a copy and says so.
+      - Since 2026-10-22 a tab takes up another's save only when it was made
+        on top of its own latest edit (`recentProjects.ts::builtOn`). Two
+        saves can cross on the way, so each tab checks what it receives
+        rather than which saved first. A crossed save is kept as a copy,
+        written before the tab says so; its waiting save is cancelled, so
+        it never lands over the other version (`e2e/launch-polish.spec.ts`).
+    - A file that is not a project, on the start screen or from File →
+      Open project, says why in plain words, with "Choose another file" on
+      the start screen (2026-10-22, `projectFile.ts::projectFileProblem`).
   - **Machine file view (2026-10-11).** Each piece's mode "Machine file" shows
     what its `.kc` makes the machine do, read back from the emitted file's
     strict trace (`sweater/knitFile.ts`), never from the design.
@@ -571,6 +580,14 @@ ship," trust this file and the working tree instead.
       keeps the numbers but not as measured ("Measured on Seed stitch.
       Measure a swatch of 1×1 rib…").
     - Going back to that fabric counts them as measured again.
+    - Since 2026-10-22 the fabric also includes the stitch size you set
+      under Machine settings, and the rib gauge has one: a sweater's hem rib
+      (what its swatch knits), a scarf's ends, a beanie's 2×2 cuff
+      (`fabric.ts::gaugeFabrics`).
+    - One rule for every control: each design operation compares the
+      fabrics before and after and adds the gauge change to the same
+      operation, so undo takes both back (`fabric.ts::appendDesignOperation`).
+      A gauge the operation sets itself is left as set.
   - A backing card shows its fabric-back preview and knit time only when
     the program gives them (2026-10-12). A beanie's construction has
     neither, so its cards no longer wait on "…" forever. The states spec
@@ -605,7 +622,8 @@ ship," trust this file and the working tree instead.
       - Off, the start skips the draw yarn's insert and final rows and C1
         is never brought in. The waste sections around it are unchanged.
       - The pattern says to unravel or cut the waste away, and the operator
-        note says "no draw thread".
+        note says "no draw thread". So does a sweater's assembly, since
+        2026-10-22.
       - The Machine file reader finds the cast-on after the last waste pass.
     - The top, beside the start (2026-10-12): bind off or waste yarn, and
       how many rows of waste on top.
@@ -623,6 +641,9 @@ ship," trust this file and the working tree instead.
       - Charts: waste and body.
       - Beanies, sweaters and scarves: waste, cast-on, rib (when the piece
         has one), body and transfers (`flatStartSettingsV1`).
+      - Transfers are every transfer's: a beanie's crown too, since
+        2026-10-22. Until you set yours, the crown keeps its reference's
+        (speed 150), and the panel says so.
       - The waste keeps its schedule: the speed ramps up to the setting and
         the roller pulls on the same passes. A rib keeps the reference's
         one-step difference between its front and rear stitch sizes.

@@ -71,7 +71,7 @@ export function pieceSteps(piece: SweaterPiecePlan, plan: PiecesPlan): string[] 
 export function assemblySteps(plan: SweaterPlan): string[] {
   const { silhouette, neckline } = plan.object;
   const steps = [
-    'Take each piece off the machine and pull the draw thread (C1) to release it from the waste yarn. Trim the strand of the second shoulder yarn that runs up the right edge of the front' + (plan.pieces.find((piece) => piece.id === 'back')?.raster?.events.some((event) => event.kind === 'neck-split') ? ' and back.' : '.'),
+    `Take each piece off the machine and ${plan.carriers.draw ? `pull the draw thread (C${plan.carriers.draw}) to release it from the waste yarn` : 'unravel or cut away the waste yarn below the cast-on'}. Trim the strand of the second shoulder yarn that runs up the right edge of the front` + (plan.pieces.find((piece) => piece.id === 'back')?.raster?.events.some((event) => event.kind === 'neck-split') ? ' and back.' : '.'),
     'Wash and block every piece to the schematic measurements; let them dry flat.',
     neckline === 'boat'
       ? `Sew the shoulder seams from each armhole edge toward the centre, leaving the middle ${plan.object.measurements.neckWidth} cm open for the neck.`
@@ -112,7 +112,7 @@ export function sweaterInstructions(project: ColorworkProjectV1, plan: SweaterPl
     `- **Yarn:** about ${plan.yarn.metres.toLocaleString('en')} m of the main yarn (${plan.yarn.how}).`,
     '',
     '## At the machine',
-    ...(summary ? summary.readiness.operatorChecks : [`Main yarn on C${plan.carriers.main}${plan.carriers.second ? `; a second cone of the same yarn on C${plan.carriers.second} for the right shoulder` : ''}. Waste yarn on C${plan.carriers.waste}, draw thread on C${plan.carriers.draw}.`]).map((check) => `- ${check}`),
+    ...(summary ? summary.readiness.operatorChecks : [`Main yarn on C${plan.carriers.main}${plan.carriers.second ? `; a second cone of the same yarn on C${plan.carriers.second} for the right shoulder` : ''}. Waste yarn on C${plan.carriers.waste}${plan.carriers.draw ? `, draw thread on C${plan.carriers.draw}` : ', no draw thread'}.`]).map((check) => `- ${check}`),
     '',
     '## Pieces',
   );

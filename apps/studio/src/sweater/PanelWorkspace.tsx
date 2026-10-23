@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   InvalidColorworkProjectError,
-  appendProjectOperation,
   materializeColorworkProject,
   type ColorworkProjectV1,
   type PanelObject,
@@ -10,6 +9,7 @@ import {
 import { Chips, NumberInput, Section } from '../workspace/panel';
 import { RunSchematic } from '../workspace/RunSchematic';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
+import { appendDesignOperation, gaugeFabrics } from '../fabric';
 import { StitchSection, YarnGaugeSection } from './DesignSections';
 import { MachineSetupSection } from '../workspace/MachineSetupSection';
 import type { PieceId } from './draft';
@@ -47,7 +47,7 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
   const piece = plan.pieces[0]!;
   const operate = (label: string, edits: ProjectEdit[]): boolean => {
     try {
-      onProject(appendProjectOperation(project, { group: `op_${crypto.randomUUID().replace(/-/g, '')}`, source: 'human', label, edits }));
+      onProject(appendDesignOperation(project, label, edits));
       setError(null);
       return true;
     } catch (caught) {
@@ -57,7 +57,7 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
   };
   const change = (label: string, next: PanelObject, extra: ProjectEdit[] = []) => operate(label, [panelEdit(next), ...extra]);
   const result = run.current ? run.summary?.pieces[0] : undefined;
-  const waiting = !run.current || run.status === 'checking' ? 'Writing panel.kc for this design…' : result?.error ?? 'This design has no machine file yet: it did not pass the machine checks.';
+  const waiting = !run.current || run.status === 'checking' ? `Writing ${machineFileName(piece.name)} for this design…` : result?.error ?? 'This design has no machine file yet: it did not pass the machine checks.';
 
   const body = (() => {
     if (!piece.raster) return <p className="stage-error">{piece.error}</p>;
@@ -78,7 +78,7 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
           <label className="measure-row"><span>Length</span><NumberInput label="Length" value={object.lengthCm} min={5} max={400} suffix="cm" onCommit={(lengthCm) => change(`Length ${lengthCm} cm`, { ...object, lengthCm })} /><span className="knitted">{plan.knitted?.lengthCm ?? '—'}</span></label>
         </div>
       </Section>
-      <StitchSection body={object.body} hex={yarn.hex} gauge={plan.gauge} onChange={(label, nextBody, edits) => change(label, { ...object, body: nextBody }, edits)} />
+      <StitchSection body={object.body} hex={yarn.hex} onChange={(label, nextBody) => change(label, { ...object, body: nextBody })} />
       <Section title="Ends">
         <div className="trim-row">
           <span>Rib</span>
@@ -87,7 +87,7 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
         </div>
         <p className="design-hint">0 cm: no rib ends.</p>
       </Section>
-      <YarnGaugeSection yarn={yarn} carrier={plan.carriers.main} bodyName={object.body.name} gauge={plan.gauge} ribGauge={object.ends.cm > 0 ? plan.ribGauge : null} operate={operate} onRibGauge={(next, label) => change(label, { ...object, ribGauge: { ...next } })} />
+      <YarnGaugeSection yarn={yarn} carrier={plan.carriers.main} bodyName={object.body.name} fabrics={gaugeFabrics(state)} gauge={plan.gauge} ribGauge={object.ends.cm > 0 ? plan.ribGauge : null} operate={operate} onRibGauge={(next, label) => change(label, { ...object, ribGauge: { ...next } })} />
       <MachineSetupSection state={state} onChange={(setup, label) => { operate(label, [{ kind: 'set-machine-setup', setup }]); }}
         objectTop={{ value: object.top ?? 'bind-off', onChange: (top) => change(top === 'waste' ? 'Finish on waste yarn' : 'Bind off the top', { ...object, top }) }} />
     </aside>

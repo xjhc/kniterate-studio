@@ -74,6 +74,16 @@ export function rememberProject(storage: Pick<Storage, 'getItem' | 'setItem' | '
   return list;
 }
 
+/**
+ * Whether `theirs` was made on top of `mine`: it holds mine's latest edit,
+ * applied or undone there. Taking up another tab's save built on this
+ * tab's loses nothing; one that is not was made at the same time.
+ */
+export function builtOn(theirs: ColorworkProjectV1, mine: ColorworkProjectV1): boolean {
+  const latest = mine.history.entries[mine.history.cursor - 1]?.id;
+  return latest === undefined || theirs.history.entries.some((entry) => entry.id === latest);
+}
+
 /** Removes a project from this device for good. */
 export function forgetProject(storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>, slot: string): RecentProject[] {
   const list = readRecentProjects(storage).filter((item) => item.slot !== slot);

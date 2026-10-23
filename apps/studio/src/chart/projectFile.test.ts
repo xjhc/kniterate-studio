@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, materializeColorworkProject } from '@kniterate-studio/project-contract';
-import { MAX_STUDIO_PROJECT_FILE_BYTES_V1, openStudioProjectFile, openStudioProjectJson } from './projectFile';
+import { MAX_STUDIO_PROJECT_FILE_BYTES_V1, openStudioProjectFile, openStudioProjectJson, projectFileProblem } from './projectFile';
 
 const chart = JSON.stringify({
   kind: 'knitlab-colorwork-chart', version: 1, title: 'Shared checker', width: 2, height: 2,
@@ -60,5 +60,17 @@ describe('Studio chart/project intake', () => {
       },
     })).rejects.toThrow(/Project file exceeds.*byte authored V1 limit/);
     expect(textRequested).toBe(false);
+  });
+});
+
+describe('a file that does not open', () => {
+  const problem = (json: string) => { try { openStudioProjectJson(json); return null; } catch (error) { return projectFileProblem('notes.json', error); } };
+
+  it('says in plain words why, and what to choose instead', () => {
+    expect(problem('{"name": "package", "version": "1.0.0"}')).toBe('“notes.json” isn\'t a Studio project. Choose a file saved with File → Save project, or a KnitLab chart.');
+    expect(problem('not json')).toContain('isn\'t a Studio project');
+    expect(problem(JSON.stringify({ kind: 'kniterate-studio-project', version: 1, id: 'x' }))).toBe('“notes.json” could not be opened: it may be damaged, or saved by a newer version of Studio.');
+    expect(problem('x'.repeat(AUTHORED_CAPACITY_LIMITS_V1.projectSourceCodeUnits + 1))).toBe('“notes.json” is too large to open as a project.');
+    expect(problem(chart)).toBeNull();
   });
 });

@@ -24,11 +24,11 @@ export function regauge(gauge: GaugeValue, from: string, to: { name: string; typ
   return null;
 }
 
-/** How a swatch section says where its gauges come from. `fabric` names what to knit the swatch in. */
-export function swatchWords(gauges: readonly (GaugeValue | undefined)[], fabric: string): { aside: 'measured' | 'typical' | 'measure again'; hint: string } {
-  const noted = gauges.find((gauge) => gauge?.source !== 'measured' && gauge?.note);
-  if (gauges.every((gauge) => gauge?.source === 'measured')) return { aside: 'measured', hint: 'From your swatch.' };
-  if (noted) return { aside: 'measure again', hint: `${noted.note}. Measure a swatch of ${fabric} for true sizes.` };
+/** How a swatch section says where its gauges come from: each gauge with the fabric it is for, which names what to knit the swatch in. */
+export function swatchWords(gauges: readonly { gauge: GaugeValue | undefined; fabric: string }[]): { aside: 'measured' | 'typical' | 'measure again'; hint: string } {
+  const noted = gauges.find(({ gauge }) => gauge?.source !== 'measured' && gauge?.note);
+  if (gauges.every(({ gauge }) => gauge?.source === 'measured')) return { aside: 'measured', hint: 'From your swatch.' };
+  if (noted) return { aside: 'measure again', hint: `${noted.gauge!.note}. Measure a swatch of ${noted.fabric} for true sizes.` };
   return { aside: 'typical', hint: 'Typical values. Measure 10 cm of a swatch for true sizes.' };
 }
 

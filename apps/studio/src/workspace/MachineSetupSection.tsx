@@ -1,5 +1,5 @@
 import { beanieObjectOf, type MachineSetup, type ProjectState, type SectionSettings } from '@kniterate-studio/project-contract';
-import { CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_SECTION_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistTopWasteRowsV1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
+import { CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_SECTION_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, EIGHT_LINE_CROWN_V1, customistTopWasteRowsV1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
 import { Chips, NumberInput, Section } from './panel';
 
 /**
@@ -48,7 +48,7 @@ export function bodyStandard(state: ProjectState): Standard | null {
 type SectionKey = 'waste' | 'castOn' | 'rib' | 'body' | 'transfers';
 
 /** Each section a project can set, in knitting order, with its reference: a chart its waste and body; a flat piece its waste, cast-on, rib (when it has one), body and transfers. */
-export function sectionStandards(state: ProjectState): { key: SectionKey; label: string; standard: Standard }[] {
+export function sectionStandards(state: ProjectState): { key: SectionKey; label: string; standard: Standard; note?: string }[] {
   const construction = wasteConstruction(state);
   const body = bodyStandard(state);
   if (construction !== 'flat') return [{ key: 'waste', label: 'Waste', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1[construction].waste }, ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : [])];
@@ -60,7 +60,8 @@ export function sectionStandards(state: ProjectState): { key: SectionKey; label:
     { key: 'castOn', label: 'Cast-on', standard: flat.castOn },
     ...(rib ? [{ key: 'rib' as const, label: 'Rib', standard: flat.rib }] : []),
     ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : []),
-    { key: 'transfers', label: 'Transfers', standard: flat.transfers },
+    // A beanie's crown transfers too: at its own reference settings until you set yours.
+    { key: 'transfers', label: 'Transfers', standard: flat.transfers, ...(object?.kind === 'beanie' ? { note: `Until you set your own, the crown keeps Kniterate's transfer settings (speed ${EIGHT_LINE_CROWN_V1.xferSpeed}).` } : {}) },
   ];
 }
 
@@ -72,23 +73,24 @@ export function settingsWarning(value: SectionSettings | undefined): string | nu
 }
 
 /** One section's stitch size, speed and roller, each the standard until you set it. */
-function SectionSettingsFields({ id, label, value, standard, onChange }: { id: string; label: string; value: SectionSettings | undefined; standard: Standard; onChange: (next: SectionSettings | undefined, what: string) => void }) {
+function SectionSettingsFields({ id, label, value, standard, note, onChange }: { id: string; label: string; value: SectionSettings | undefined; standard: Standard; note?: string; onChange: (next: SectionSettings | undefined, what: string) => void }) {
   const set = (key: keyof SectionSettings, name: string, raw: number) => {
     const next = key === 'stitch' ? Math.round(raw) : raw;
     const { [key]: _drop, ...rest } = value ?? {};
     const merged = next === standard[key] ? rest : { ...rest, [key]: next };
     onChange(Object.keys(merged).length > 0 ? merged : undefined, `${label} ${name} ${next}`);
   };
+  // Spoken in full ("Body stitch size"): "Body stitch" is the stitch you knit.
   const field = (key: keyof SectionSettings, name: string, min: number, max: number, step: number) => <label>
     <span>{name}</span>
-    <NumberInput label={`${label} ${name.toLowerCase()}`} value={value?.[key] ?? standard[key]} min={min} max={max} step={step} onCommit={(next) => set(key, name.toLowerCase(), next)} />
+    <NumberInput label={`${label} ${key === 'stitch' ? 'stitch size' : name.toLowerCase()}`} value={value?.[key] ?? standard[key]} min={min} max={max} step={step} onCommit={(next) => set(key, key === 'stitch' ? 'stitch size' : name.toLowerCase(), next)} />
   </label>;
   const warning = settingsWarning(value);
   return <fieldset className="gauge-fields section-settings" id={id}>
     <legend>{label}</legend>
     <div className="gauge-row">{field('stitch', 'Stitch', 0, 15, 1)}{field('speed', 'Speed', 0, 800, 10)}{field('roller', 'Roller', -500, 999, 10)}</div>
     <p className={`design-hint${warning ? ' warn' : ''}`} role={warning ? 'alert' : undefined}>
-      {warning ?? `Standard: stitch ${standard.stitch}, speed ${standard.speed}, roller ${standard.roller}.`}
+      {warning ?? `Standard: stitch ${standard.stitch}, speed ${standard.speed}, roller ${standard.roller}.${note && !value ? ` ${note}` : ''}`}
       {value && <> <button type="button" className="link-button" onClick={() => onChange(undefined, `Standard ${label.toLowerCase()} settings`)}>Use the standard</button></>}
     </p>
   </fieldset>;
@@ -162,7 +164,7 @@ export function MachineSetupSection({ state, onChange, objectTop }: {
       </>}
     <details className="machine-sections" open={ownSections}>
       <summary>Speed, roller and stitch size</summary>
-      {sections.map((section) => <SectionSettingsFields key={section.key} id={`machine.${section.key}`} label={section.label} value={state.setup?.[section.key]} standard={section.standard} onChange={(next, label) => setSection(section.key, next, label)} />)}
+      {sections.map((section) => <SectionSettingsFields key={section.key} id={`machine.${section.key}`} label={section.label} value={state.setup?.[section.key]} standard={section.standard} {...(section.note ? { note: section.note } : {})} onChange={(next, label) => setSection(section.key, next, label)} />)}
     </details>
   </Section>;
 }

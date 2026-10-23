@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   InvalidColorworkProjectError,
-  appendProjectOperation,
   materializeColorworkProject,
   type ColorworkProjectV1,
   type ProjectEdit,
 } from '@kniterate-studio/project-contract';
 import { FilesOverview } from '../workspace/FilesOverview';
 import { ViewSwitch, type WorkspaceView } from '../workspace/ViewSwitch';
+import { appendDesignOperation } from '../fabric';
 import type { PieceId } from './draft';
 import { AssembledView, GarmentView, type PieceRun } from './GarmentView';
 import { RunSchematic } from '../workspace/RunSchematic';
@@ -48,7 +48,7 @@ export function SweaterWorkspace({ project, onProject, plan, run, view, onView, 
 
   const operate = (label: string, edits: ProjectEdit[]): boolean => {
     try {
-      onProject(appendProjectOperation(project, { group: `op_${crypto.randomUUID().replace(/-/g, '')}`, source: 'human', label, edits }));
+      onProject(appendDesignOperation(project, label, edits));
       setError(null);
       return true;
     } catch (caught) {
@@ -90,7 +90,7 @@ export function SweaterWorkspace({ project, onProject, plan, run, view, onView, 
   const body = (() => {
     if (selected === null) {
       if (view === 'design') return <div className="garment-wrap"><AssembledView plan={plan} hex={yarn.hex} onOpen={setPiece} /><p className="stage-caption">As worn. Click a piece to open it.</p></div>;
-      if (view === 'schematic') return <div className="garment-wrap"><GarmentView plan={plan} hex={yarn.hex} statuses={statuses} onOpen={setPiece} runs={runs} /><p className="stage-caption">Each piece flat, as knitted, with its sizes, on the waste yarn (grey) and draw thread (red) it starts from. Click a piece to open it.</p></div>;
+      if (view === 'schematic') return <div className="garment-wrap"><GarmentView plan={plan} hex={yarn.hex} statuses={statuses} onOpen={setPiece} runs={runs} /><p className="stage-caption">Each piece flat, as knitted, with its sizes, on the waste yarn (grey){plan.carriers.draw ? ' and draw thread (red)' : ''} it starts from. Click a piece to open it.</p></div>;
       return <FilesOverview files={plan.pieces.map((item) => {
         const result = fileOf(item.id);
         return { id: item.id, name: item.name, fileName: machineFileName(item.name), copies: item.copies, file: result?.file ?? null, waiting: result?.file ? null : waiting(item.id, item.name) };
