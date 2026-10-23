@@ -46,6 +46,14 @@ describe('recent projects on this device', () => {
     expect(readRecentProject(storage, 'a')).toBeNull();
   });
 
+  it('removes a project before its place in the list, so a tab that has it open sees it removed, not left out', () => {
+    const storage = memoryStorage();
+    rememberProject(storage, { slot: 'a', project: chart('one', 'One'), kind: 'chart' });
+    const listed: (string | null)[] = [];
+    forgetProject({ ...storage, setItem: (key, value) => { listed.push(readRecentProject(storage, 'a')?.title ?? null); storage.setItem(key, value); } }, 'a');
+    expect(listed).toEqual([null]);
+  });
+
   it('ignores a damaged list', () => {
     const storage = memoryStorage();
     storage.setItem('kniterate-studio:recent-projects:v1', '{');

@@ -328,6 +328,11 @@ ship," trust this file and the working tree instead.
         rather than which saved first. A crossed save is kept as a copy,
         written before the tab says so; its waiting save is cancelled, so
         it never lands over the other version (`e2e/launch-polish.spec.ts`).
+      - Since 2026-10-23, when both tabs keep copies at once, each writes
+        the Open recent list from its own read, which can leave out the
+        other's copy. A tab that sees its project left out of the list
+        puts it back, unless it was removed for good; removing deletes the
+        project before its list entry so the two cases are told apart.
     - A file that is not a project, on the start screen or from File →
       Open project, says why in plain words, with "Choose another file" on
       the start screen (2026-10-22, `projectFile.ts::projectFileProblem`).
