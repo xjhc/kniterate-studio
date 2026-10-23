@@ -97,6 +97,24 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   await expect(swatch).toContainText('From your swatch.');
   await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit', { timeout: 90_000 });
 
+  // So with the hem rib the rib gauge was measured on, and the stitch size: each is part of the fabric.
+  await page.getByRole('radiogroup', { name: 'Hem rib' }).getByRole('radio', { name: '1×1' }).click();
+  await expect(page.getByRole('group', { name: 'Rib gauge' }).getByLabel('measured')).not.toBeChecked();
+  await expect(swatch).toContainText('Measured on 2×2 rib. Measure a swatch of 1×1 rib for true sizes.');
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
+  await page.getByRole('radiogroup', { name: 'Hem rib' }).getByRole('radio', { name: '2×2' }).click();
+  await expect(page.getByRole('group', { name: 'Rib gauge' }).getByLabel('measured')).toBeChecked();
+  await page.getByRole('button', { name: /^Machine settings/ }).click();
+  await page.getByText('Speed, roller and stitch size').click();
+  await page.getByLabel('Body stitch size').fill('11');
+  await page.getByLabel('Body stitch size').press('Enter');
+  await expect(page.getByRole('group', { name: 'Seed stitch gauge' }).getByLabel('measured')).not.toBeChecked();
+  await expect(swatch).toContainText('Measured on Seed stitch. Measure a swatch of Seed stitch at stitch size 11 for true sizes.');
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
+  await page.locator('#machine\\.body').getByRole('button', { name: 'Use the standard' }).click();
+  await expect(page.getByRole('group', { name: 'Seed stitch gauge' }).getByLabel('measured')).toBeChecked();
+  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit', { timeout: 90_000 });
+
   // The package holds every piece's program.
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download knitting package' }).click();

@@ -6,6 +6,7 @@ import { RIBS } from './textures';
 import { SilhouetteIcon } from './SilhouetteIcon';
 import { StitchSection, YarnGaugeSection } from './DesignSections';
 import { MachineSetupSection } from '../workspace/MachineSetupSection';
+import { gaugeFabrics } from '../fabric';
 
 /**
  * The design: style, size, measurements, stitch, trims, yarn and gauge.
@@ -88,7 +89,7 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
       <p className="design-hint">Finished sizes, not body sizes. Knitted: what your gauge makes.</p>
     </Section>
 
-    <StitchSection body={object.body} hex={yarn.hex} gauge={gauge} onChange={(label, body, edits) => change(label, { ...object, body }, edits)} />
+    <StitchSection body={object.body} hex={yarn.hex} onChange={(label, body) => change(label, { ...object, body })} />
 
     <Section title="Edges">
       {([['hem', 'Hem'], ['cuff', 'Cuffs'], ['neck', object.neckline === 'boat' ? 'Neck edge' : 'Neckband']] as const).map(([key, label]) => <div key={key} className="trim-row">
@@ -99,7 +100,7 @@ export function SweaterDesignPanel({ state, plan, operate }: { state: ProjectSta
       <div className="field-row"><span>Shaping</span><Chips label="Shaping line" value={String(object.fashion ?? 1) as '1' | '2' | '3'} options={[{ id: '1', name: 'At the edge', note: 'Decreases and increases at the very edge.' }, { id: '2', name: '2 in', note: 'A fashioning line 2 stitches in from the edge.' }, { id: '3', name: '3 in', note: 'A fashioning line 3 stitches in.' }]} onPick={(fashion) => change(fashion === '1' ? 'Shape at the edge' : `Fashion ${fashion} stitches in`, { ...object, fashion: Number(fashion) })} /></div>
     </Section>
 
-    <YarnGaugeSection yarn={yarn} carrier={plan.carriers.main} bodyName={object.body.name} gauge={gauge} ribGauge={plan.ribGauge} operate={operate} onRibGauge={setRibGauge} />
+    <YarnGaugeSection yarn={yarn} carrier={plan.carriers.main} bodyName={object.body.name} fabrics={gaugeFabrics(state)} gauge={gauge} ribGauge={plan.ribGauge} operate={operate} onRibGauge={setRibGauge} />
     <MachineSetupSection state={state} onChange={(setup, label) => { operate(label, [{ kind: 'set-machine-setup', setup }]); }}
       objectTop={{ value: object.top ?? 'bind-off', onChange: (top) => change(top === 'waste' ? 'Finish on waste yarn' : 'Bind off the tops', { ...object, top }) }} />
   </aside>;

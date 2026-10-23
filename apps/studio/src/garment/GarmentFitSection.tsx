@@ -3,6 +3,7 @@ import type { ProjectState } from '@kniterate-studio/project-contract';
 import type { BeanieFitChange } from '../beanie';
 import { BEANIE_FITS, beanieIntentOf } from '../beanie';
 import { projectBackingWords } from '../backing';
+import { gaugeFabrics } from '../fabric';
 import type { ProjectPlan, Valued } from '../plan';
 import { GaugeFields, SwatchAside, swatchWords } from '../workspace/gauge';
 import { Chips, Section } from '../workspace/panel';
@@ -69,7 +70,8 @@ export function GarmentFitSection({ state, plan, onFit }: { state: ProjectState;
   const setGauge = (change: BeanieFitChange, label: string) => { setResizedFrom(counts); onFit(change, label); };
   const resized = resizedFrom && (resizedFrom.needles !== counts.needles || resizedFrom.rows !== counts.rows) ? resizedFrom : null;
   const fabric = cuff ? projectBackingWords(state)?.fabric ?? 'fairisle fabric' : '2x2 rib';
-  const swatch = swatchWords([state.gauge, ...(cuff ? [state.object?.ribGauge] : [])], fabric);
+  const fabrics = gaugeFabrics(state);
+  const swatch = swatchWords([{ gauge: state.gauge, fabric: fabrics.body?.name ?? 'fairisle fabric' }, ...(cuff ? [{ gauge: state.object?.ribGauge, fabric: fabrics.rib?.name ?? '2×2 rib' }] : [])]);
   const off = (wanted: number | undefined, knitted: Valued<number> | null | undefined) => wanted !== undefined && knitted != null && Math.abs(knitted.value - wanted) >= 1;
   const fitName = fit ? fit.name.toLowerCase() : `${easePercent}%`;
   return <>

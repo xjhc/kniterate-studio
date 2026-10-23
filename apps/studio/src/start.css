@@ -12,6 +12,8 @@
 .start-secondary { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
 .start-secondary .secondary-button { min-height: 36px; font-size: 13px; }
 .start-secondary .link-button { padding: 6px; border: 0; background: none; color: var(--accent); font-weight: 700; cursor: pointer; }
+.start-problem { max-width: 560px; margin: 0; padding: 10px 14px; border-radius: 8px; background: var(--warning-soft); color: var(--ink); font-size: 14px; line-height: 1.5; }
+.start-problem .link-button { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }
 @media (max-width: 760px) { .start-cards { grid-template-columns: 1fr; } .start-cards button { min-height: 0; } }
 
 /* Projects kept on this device: on the start screen and in File → Open recent. */

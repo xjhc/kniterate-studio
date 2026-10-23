@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { clear, copy, cut, paste, type MirrorAxes, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
-import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, appendProjectOperation, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
+import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
 import { BRUSH_SIZES, ChartToolbar, type ChartTool } from './ChartToolbar';
 import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './ColorworkCanvas';
 import { beanieFitEdits, withSizingFixes, type BeanieFitChange } from '../beanie';
@@ -17,7 +17,6 @@ import { KnitFileView } from '../sweater/KnitFileView';
 import { RunSchematic } from '../workspace/RunSchematic';
 import { StatusPanel, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
 import { statusNotes } from '../workspace/statusNotes';
-import { regauge } from '../workspace/gauge';
 import { machineFileName, onePieceName } from '../workspace/fileNames';
 import { revealSection } from '../workspace/panel';
 import type { SwatchFile } from '../useSwatchFile';
@@ -26,7 +25,8 @@ import type { AuthoredVerdict } from '../engine';import { PaletteRail } from './
 import { ChartSizeSection } from './ChartSizeSection';
 import { makeRowId, pixelMutationToProjectEdit } from './projectCanvasAdapter';
 import { BlanketSetupRail } from '../blanket/BlanketSetupRail';
-import { backingWords, colourworkColours, projectBackingWords } from '../backing';
+import { projectBackingWords } from '../backing';
+import { appendDesignOperation } from '../fabric';
 import type { BlanketCompileState } from '../blanket/useBlanketCompiler';
 import type { KCodeArtifact } from '../kcode/kcodeProtocol';
 
@@ -142,7 +142,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const operate = (label: string, edits: readonly ProjectEdit[]): boolean => {
     if (edits.length === 0) return false;
     // Always against the latest project: an asynchronous result must never replay an older one over later edits.
-    try { onProject(appendProjectOperation(projectRef.current, { group: `op_${crypto.randomUUID().replace(/-/g, '')}`, source: 'human', label, edits })); setIssue(null); return true; }
+    try { onProject(appendDesignOperation(projectRef.current, label, edits)); setIssue(null); return true; }
     catch (error) { setIssue(error instanceof Error ? error.message : String(error)); return false; }
   };
   const resolvedPlacements = materialized.placements;
@@ -326,12 +326,9 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       onStrategy={(technique) => {
         const { state } = materialized;
         if (technique === state.strategy.technique) return;
-        // Another backing is another fabric: the gauge follows the same rule as a sweater's stitch.
-        const from = projectBackingWords(state)?.fabric;
-        const to = technique === 'fairisle' || technique === 'birdseye' ? backingWords(technique, colourworkColours(state) ?? 0, isGarment)?.fabric : undefined;
-        const gauge = state.gauge && from && to && from !== to ? regauge(state.gauge, from, { name: to }) : null;
-        if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique, ...(gauge ? { bodyGauge: gauge } : {}) }, `Backing: ${technique}`);
-        else operate(`Backing: ${technique}`, [{ kind: 'set-strategy', strategy: { ...state.strategy, technique } }, ...(gauge ? [{ kind: 'set-gauge' as const, gauge }] : [])]);
+        // Another backing is another fabric: the gauge follows it in the same operation (appendDesignOperation).
+        if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`);
+        else operate(`Backing: ${technique}`, [{ kind: 'set-strategy', strategy: { ...state.strategy, technique } }]);
       }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
     <section className="sweater-stage" aria-label={kindName}>
       <header className="stage-head">

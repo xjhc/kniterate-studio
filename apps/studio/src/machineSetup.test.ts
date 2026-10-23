@@ -4,7 +4,11 @@ import { CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_
 import { runAuthoredPipeline } from './authoredPipeline';
 import { createBeanieProject } from './beanie';
 import { compileColorworkProject } from './blanket/compileProject';
-import { createPanelProject } from './sweater/panel';
+import { createPanelProject, planPanel } from './sweater/panel';
+import { panelInstructions } from './sweater/panelHandoff';
+import { createSweaterProject, planSweater } from './sweater/sweater';
+import { sweaterInstructions } from './sweater/sweaterHandoff';
+import { planProject } from './plan';
 import { bodyStandard, machineSetupWords, sectionStandards, settingsWarning } from './workspace/MachineSetupSection';
 import { runSweaterPipeline } from './sweater/sweaterPipeline';
 
@@ -79,6 +83,22 @@ describe('the draw thread', () => {
     const piece = (await runSweaterPipeline(off(scarf))).pieces[0]!;
     expect(piece.verdict.state).toBe('surface');
     expect(piece.compiled!.knitoutText).not.toMatch(/^in 1$/m);
+  });
+
+  it('is left out of every written instruction too', () => {
+    const off = (project: ColorworkProjectV1) => appendProjectEdit(project, { id: 'no-draw', source: 'human', edit: { kind: 'set-machine-setup', setup: { drawThread: false } } });
+    const sweater = off(createSweaterProject({ title: 'Jumper', silhouette: 'set-in', neckline: 'crew', size: 'M', fit: 'classic', textureId: 'stockinette', yarn: { name: 'Oat', hex: '#D9CBB0' } }, { id: 'jumper', source: 'human', group: 'create' }));
+    const scarf = off(createPanelProject({ title: 'Scarf', widthCm: 20, lengthCm: 30, textureId: 'stockinette', yarn: { name: 'Oat', hex: '#D9CBB0' } }, { id: 'scarf', source: 'human', group: 'create' }));
+    const hat = off(createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' }, main: { name: 'Black', hex: '#111111' } }, { id: 'hat', source: 'human', group: 'create' }));
+    const texts = [
+      sweaterInstructions(sweater, planSweater(materializeColorworkProject(sweater).state), null),
+      panelInstructions(scarf, planPanel(materializeColorworkProject(scarf).state), null),
+      planProject(materializeColorworkProject(hat).state).finishing.join('\n'),
+    ];
+    for (const text of texts) {
+      expect(text).not.toMatch(/pull the draw thread|draw thread on C|draw thread \(C/i);
+      expect(text).toMatch(/unravel or cut away the waste yarn|no draw thread/i);
+    }
   });
 });
 
@@ -164,6 +184,20 @@ describe('every section’s speed, roller and stitch size', () => {
     // Transfers carry their own stitch size (x-xfer-stitch-number), not the knitting one.
     expect(uses(result.compiled!.knitoutText!)).toEqual(section === 'transfers' ? [true, true, false] : [true, true, true]);
     if (section === 'transfers') expect(result.compiled!.knitoutText).toMatch(/^x-xfer-stitch-number B$/m);
+  });
+
+  it('of a beanie: its transfers are every transfer’s, the crown’s too', async () => {
+    const crownOf = (knitout: string) => knitout.slice(knitout.indexOf('RIB CROWN'));
+    const standard = crownOf(compileColorworkProject(hat()).knitoutText!);
+    // Without your own, the crown keeps its reference's transfer speed.
+    expect(standard).toMatch(/^x-speed-number 150$/m);
+    const result = await runAuthoredPipeline(own(hat(), 'transfers'));
+    expect(result.verdict.state).toBe('surface');
+    const crown = crownOf(result.compiled!.knitoutText!);
+    expect(crown).not.toMatch(/^x-speed-number 150$/m);
+    expect(crown).toMatch(/^x-speed-number 333$/m);
+    // The transfer stitch size is set once and never changes back, the crown included.
+    expect(new Set(result.compiled!.knitoutText!.match(/^x-xfer-stitch-number .+$/gm))).toEqual(new Set(['x-xfer-stitch-number B']));
   });
 
   it('of a scarf: its sections, the rib only when it has rib ends', async () => {

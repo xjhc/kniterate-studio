@@ -80,6 +80,18 @@ test('starting another project keeps the first one on this device, to open again
   expect(errors).toEqual([]);
 });
 
+test('a file that is not a project says so on the start screen, with another try one click away', async ({ page }) => {
+  await page.goto('/?theme=light');
+  await page.getByLabel('Project file', { exact: true }).setInputFiles({ name: 'package.json', mimeType: 'application/json', buffer: Buffer.from('{"name": "package"}') });
+  const alert = page.locator('.start-screen').getByRole('alert');
+  await expect(alert).toContainText('“package.json” isn\'t a Studio project.');
+  const chooser = page.waitForEvent('filechooser');
+  await alert.getByRole('button', { name: 'Choose another file' }).click();
+  await (await chooser).setFiles({ name: 'chart.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ kind: 'knitlab-colorwork-chart', version: 1, title: 'Opened chart', width: 4, height: 4, rowNumbering: 'bottom-up', palette: [{ id: 'a', name: 'A', hex: '#FFFFFF' }, { id: 'b', name: 'B', hex: '#000000' }], cells: Array.from({ length: 4 }, (_, row) => Array.from({ length: 4 }, (_, column) => (row + column) % 2)) })) });
+  await expect(page.locator('.start-screen')).toHaveCount(0);
+  await expect(page.locator('.brand-copy small')).toContainText('Opened chart');
+});
+
 test('the same project open in two tabs: a change in either is taken up by the other, so neither saves over it', async ({ page, context }) => {
   test.setTimeout(120_000);
   const errors: string[] = [];
@@ -111,5 +123,45 @@ test('the same project open in two tabs: a change in either is taken up by the o
   await expect(page.getByLabel('Cuff height')).toHaveValue('9');
   await page.getByRole('navigation', { name: 'Menu' }).getByRole('button', { name: 'File', exact: true }).click();
   await expect(page.getByRole('menu', { name: 'File' }).getByRole('menuitem', { name: 'Open recent…' })).toBeDisabled();
+  expect(errors).toEqual([]);
+});
+
+test('the same project changed in two tabs at once: both versions are kept, each as it was made', async ({ page, context }) => {
+  test.setTimeout(120_000);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/?theme=light');
+  await page.getByRole('button', { name: /^Beanie/ }).click();
+  const create = page.getByRole('dialog', { name: 'New project' });
+  await create.getByLabel('Project name').fill('Crossed toque');
+  await create.getByRole('button', { name: 'Create beanie' }).click();
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+  const other = await context.newPage();
+  other.on('pageerror', (error) => errors.push(error.message));
+  await other.goto('/?theme=light');
+  await expect(other.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+  const head = await page.getByLabel('Head circumference').inputValue();
+  const cuff = await page.getByLabel('Cuff height').inputValue();
+
+  // Both edits within the same moment: their saves cross on the way.
+  await Promise.all([page.getByLabel('Head circumference').fill('64'), other.getByLabel('Cuff height').fill('10')]);
+  await Promise.all([page.getByLabel('Head circumference').press('Enter'), other.getByLabel('Cuff height').press('Enter')]);
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+  await expect(other.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+  // A tab that kept its version as a copy says so.
+  const copies = async () => (await page.getByRole('alert').filter({ hasText: 'kept as a copy' }).count()) + (await other.getByRole('alert').filter({ hasText: 'kept as a copy' }).count());
+  await expect.poll(copies).toBeGreaterThan(0);
+
+  // Every version on this device, as its latest beanie edit left it: each tab's own change is in one of them.
+  const kept = await page.evaluate(() => {
+    const index = JSON.parse(localStorage.getItem('kniterate-studio:recent-projects:v1') ?? '[]') as { slot: string; title: string }[];
+    return index.filter((item) => item.title === 'Crossed toque').map((item) => {
+      const { project } = JSON.parse(localStorage.getItem(`kniterate-studio:recent-project:v1:${item.slot}`)!) as { project: { history: { cursor: number; entries: { edit: { kind: string; object?: { headCircumferenceCm: number; cuffTargetCm: number } } }[] } } };
+      const object = project.history.entries.slice(0, project.history.cursor).filter((entry) => entry.edit.kind === 'set-object').at(-1)!.edit.object!;
+      return `${object.headCircumferenceCm}/${object.cuffTargetCm}`;
+    });
+  });
+  expect(kept).toContain(`64/${cuff}`);
+  expect(kept).toContain(`${head}/10`);
   expect(errors).toEqual([]);
 });

@@ -1,7 +1,7 @@
-import { useRef, type ChangeEvent } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { FileCode2, FolderOpen } from 'lucide-react';
 import type { ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { openStudioProjectFile } from './chart/projectFile';
+import { openStudioProjectFile, projectFileProblem } from './chart/projectFile';
 import { RecentList } from './chart/RecentList';
 import type { RecentProject } from './chart/recentProjects';
 import { SilhouetteIcon } from './sweater/SilhouetteIcon';
@@ -40,10 +40,16 @@ export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, 
   onRemoveRecent: (slot: string) => void;
 }) {
   const projectInput = useRef<HTMLInputElement>(null);
+  // A file that does not open says why here, where it was chosen, with another try one click away.
+  const [problem, setProblem] = useState<string | null>(null);
   const openProject = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
-    if (file) onOpenProject((await openStudioProjectFile(file)).project);
+    if (!file) return;
+    let project: ColorworkProjectV1;
+    try { project = (await openStudioProjectFile(file)).project; } catch (error) { setProblem(projectFileProblem(file.name, error)); return; }
+    setProblem(null);
+    onOpenProject(project);
   };
   return <section className="start-screen" aria-labelledby="start-title">
     <div className="start-inner">
@@ -76,6 +82,7 @@ export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, 
         <button type="button" className="link-button" onClick={onBlank}>Start with a blank chart</button>
         <input ref={projectInput} className="file-input" type="file" accept="application/json,.json" aria-label="Project file" onChange={(event) => void openProject(event)} />
       </div>
+      {problem && <p className="start-problem" role="alert">{problem} <button type="button" className="link-button" onClick={() => projectInput.current?.click()}>Choose another file</button></p>}
       <p className="local-note">Your projects stay in this browser on this device. Save a project file to keep a copy elsewhere.</p>
     </div>
   </section>;

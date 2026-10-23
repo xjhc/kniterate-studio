@@ -28,7 +28,7 @@ import { sweaterInstructions, sweaterPackageFiles } from './sweater/sweaterHando
 import { sweaterSchematicSvg } from './sweater/schematic';
 import { MenuBar, type Menu } from './workspace/MenuBar';
 import type { WorkspaceView } from './workspace/ViewSwitch';
-import { openStudioProjectFile } from './chart/projectFile';
+import { openStudioProjectFile, projectFileProblem } from './chart/projectFile';
 import './workspace/workspace.css';
 import { useSweaterRun } from './sweater/sweaterRun';
 import { SweaterWorkspace } from './sweater/SweaterWorkspace';
@@ -56,7 +56,7 @@ import { programRegionForPass } from './chart/AuthoredMachinePanel';
 import { NewProjectDialog, ProjectSettingsDialog, RecentProjectsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
 import { parseProjectAutosave, readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
 import { downloadFileName, machineFileName, onePieceName } from './workspace/fileNames';
-import { ACTIVE_SLOT_KEY, RECENT_INDEX_KEY, forgetProject, newRecentSlot, readRecentProject, readRecentProjects, recentKind, recentSlotOf, rememberProject, type RecentProject } from './chart/recentProjects';
+import { ACTIVE_SLOT_KEY, RECENT_INDEX_KEY, builtOn, forgetProject, newRecentSlot, readRecentProject, readRecentProjects, recentKind, recentSlotOf, rememberProject, type RecentProject } from './chart/recentProjects';
 import { indexSourceLines, sourceWindow } from './sourceWindow';
 import { formatForeignRunSheetFindingAnchor, groupForeignRunSheetFindings } from './foreignRunSheetFindings';
 import { ForeignFabricView, MachineTopologyView } from './fabric/ForeignFabricView';
@@ -644,11 +644,14 @@ export function App() {
   // What this tab last saved, or took up from another tab. Until the project changes, there is nothing new to save.
   const saved = useRef<{ project: ColorworkProjectV1; slot: string } | null>(null);
   const unchanged = () => saved.current?.project === project && saved.current.slot === slot;
+  // The save waiting to be written, so a change from another tab can cancel it before it lands in the shared slot.
+  const pendingSave = useRef<number | undefined>(undefined);
   useEffect(() => {
     if (unchanged()) return;
     setAutosaveState('saving');
     const kind = recentKind(authoredState.object);
-    const timeout = window.setTimeout(() => {
+    pendingSave.current = window.setTimeout(() => {
+      pendingSave.current = undefined;
       try {
         window.localStorage.setItem(PROJECT_AUTOSAVE_KEY, serializeProjectAutosave(project));
         window.localStorage.setItem(ACTIVE_SLOT_KEY, slot);
@@ -659,12 +662,15 @@ export function App() {
         setAutosaveState('failed');
       }
     }, 350);
-    return () => window.clearTimeout(timeout);
+    return () => window.clearTimeout(pendingSave.current);
   }, [project, slot]);
   /**
-   * The same project open in another tab: a change saved there is taken up
-   * here, so neither tab saves over the other. If this tab had a change of its
-   * own not yet saved, both are kept: this tab's goes on as a copy.
+   * The same project open in another tab. A change saved there is taken up
+   * here when it was made on top of this tab's latest edit, so neither tab
+   * saves over the other. Otherwise the two tabs changed it at once, and both
+   * versions are kept: this tab's is saved as a copy before it says so. Two
+   * saves can cross on the way, so each tab checks what it receives rather
+   * than trusting which saved first.
    */
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -673,12 +679,26 @@ export function App() {
       if (recentSlotOf(event.key) !== slot) return;
       const theirs = parseProjectAutosave(event.newValue)?.project;
       if (!theirs) return;
-      if (unchanged()) {
+      if (unchanged() && builtOn(theirs, project)) {
         saved.current = { project: theirs, slot };
         setProject(theirs);
         return;
       }
-      setSlot(newRecentSlot());
+      // From here on this tab saves to its own slot, never over the other tab's version.
+      window.clearTimeout(pendingSave.current);
+      const copy = newRecentSlot();
+      setSlot(copy);
+      try {
+        setRecent(rememberProject(window.localStorage, { slot: copy, project, kind: recentKind(authoredState.object) }));
+        window.localStorage.setItem(PROJECT_AUTOSAVE_KEY, serializeProjectAutosave(project));
+        window.localStorage.setItem(ACTIVE_SLOT_KEY, copy);
+      } catch {
+        setAutosaveState('failed');
+        setAppError(`“${project.title}” was also changed in another tab, and this tab's version could not be kept on this device: the browser's storage is full. Save it as a file now.`);
+        return;
+      }
+      saved.current = { project, slot: copy };
+      setAutosaveState('saved');
       setAppError(`“${project.title}” was also changed in another tab, so this tab's version is kept as a copy. Both are under File → Open recent.`);
     };
     window.addEventListener('storage', onStorage);
@@ -792,7 +812,7 @@ export function App() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    try { openProjectFile((await openStudioProjectFile(file)).project); setDocument(null); setAppError(null); } catch (error) { setAppError(error instanceof Error ? error.message : String(error)); }
+    try { openProjectFile((await openStudioProjectFile(file)).project); setDocument(null); setAppError(null); } catch (error) { setAppError(projectFileProblem(file.name, error)); }
   };
   const sweaterReady = isPieces && sweaterRun.current && sweaterRun.summary !== null;
   const downloadSweaterPackage = async () => {

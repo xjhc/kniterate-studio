@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AUTHORED_CAPACITY_LIMITS_V1, type ProjectGauge, type ProjectState } from '@kniterate-studio/project-contract';
-import { projectBackingWords } from '../backing';
+import { gaugeFabrics } from '../fabric';
 import { MeasureRow, NumberField } from '../garment/GarmentFitSection';
 import { GaugeFields, SwatchAside, swatchWords } from '../workspace/gauge';
 import { Section } from '../workspace/panel';
@@ -27,7 +27,7 @@ export function ChartSizeSection({ state, onSize, onGauge, onNeedles, onRows, on
 }) {
   const [resizedFrom, setResizedFrom] = useState<{ needles: number; rows: number } | null>(null);
   const { chart, gauge, target } = state;
-  const swatch = gauge ? swatchWords([gauge], projectBackingWords(state)?.fabric ?? 'plain stockinette') : null;
+  const swatch = gauge ? swatchWords([{ gauge, fabric: gaugeFabrics(state).body?.name ?? 'plain stockinette' }]) : null;
   const counts = { needles: chart.width, rows: chart.height };
   const resized = resizedFrom && (resizedFrom.needles !== counts.needles || resizedFrom.rows !== counts.rows) ? resizedFrom : null;
   const knitted = gauge ? { widthCm: round1(chart.width / gauge.stitchesPer10cm * 10), heightCm: round1(chart.height / gauge.rowsPer10cm * 10) } : null;
