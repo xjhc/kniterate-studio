@@ -84,10 +84,10 @@ export function builtOn(theirs: ColorworkProjectV1, mine: ColorworkProjectV1): b
   return latest === undefined || theirs.history.entries.some((entry) => entry.id === latest);
 }
 
-/** Removes a project from this device for good. */
+/** Removes a project from this device for good. The project goes first, so a tab that has it open sees it removed, not left out of the list. */
 export function forgetProject(storage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>, slot: string): RecentProject[] {
   const list = readRecentProjects(storage).filter((item) => item.slot !== slot);
-  storage.setItem(RECENT_INDEX_KEY, JSON.stringify(list));
   storage.removeItem(SLOT_PREFIX + slot);
+  storage.setItem(RECENT_INDEX_KEY, JSON.stringify(list));
   return list;
 }

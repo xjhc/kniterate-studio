@@ -675,7 +675,16 @@ export function App() {
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
       if (event.storageArea !== window.localStorage) return;
-      if (event.key === RECENT_INDEX_KEY) { setRecent(readRecentProjects(window.localStorage)); return; }
+      if (event.key === RECENT_INDEX_KEY) {
+        const list = readRecentProjects(window.localStorage);
+        // Two tabs that list a project at once can each write the list without the other's: put this tab's back, unless it was removed for good.
+        const mine = saved.current;
+        if (mine?.slot === slot && !untouchedDefault(mine.project) && !list.some((item) => item.slot === slot) && readRecentProject(window.localStorage, slot) !== null) {
+          try { setRecent(rememberProject(window.localStorage, { slot, project: mine.project, kind: recentKind(authoredState.object) })); return; } catch { /* the list as it is */ }
+        }
+        setRecent(list);
+        return;
+      }
       if (recentSlotOf(event.key) !== slot) return;
       const theirs = parseProjectAutosave(event.newValue)?.project;
       if (!theirs) return;

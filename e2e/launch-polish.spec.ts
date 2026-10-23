@@ -152,8 +152,8 @@ test('the same project changed in two tabs at once: both versions are kept, each
   const copies = async () => (await page.getByRole('alert').filter({ hasText: 'kept as a copy' }).count()) + (await other.getByRole('alert').filter({ hasText: 'kept as a copy' }).count());
   await expect.poll(copies).toBeGreaterThan(0);
 
-  // Every version on this device, as its latest beanie edit left it: each tab's own change is in one of them.
-  const kept = await page.evaluate(() => {
+  // Every version under File → Open recent, as its latest beanie edit left it: each tab's own change is in one of them.
+  const kept = () => page.evaluate(() => {
     const index = JSON.parse(localStorage.getItem('kniterate-studio:recent-projects:v1') ?? '[]') as { slot: string; title: string }[];
     return index.filter((item) => item.title === 'Crossed toque').map((item) => {
       const { project } = JSON.parse(localStorage.getItem(`kniterate-studio:recent-project:v1:${item.slot}`)!) as { project: { history: { cursor: number; entries: { edit: { kind: string; object?: { headCircumferenceCm: number; cuffTargetCm: number } } }[] } } };
@@ -161,7 +161,11 @@ test('the same project changed in two tabs at once: both versions are kept, each
       return `${object.headCircumferenceCm}/${object.cuffTargetCm}`;
     });
   });
-  expect(kept).toContain(`64/${cuff}`);
-  expect(kept).toContain(`${head}/10`);
+  const both = expect.arrayContaining([`64/${cuff}`, `${head}/10`]);
+  await expect.poll(kept).toEqual(both);
+
+  // Two tabs that list their copies at once can each write the list without the other's: each tab puts its own back.
+  await page.evaluate(() => localStorage.setItem('kniterate-studio:recent-projects:v1', '[]'));
+  await expect.poll(kept).toEqual(both);
   expect(errors).toEqual([]);
 });
