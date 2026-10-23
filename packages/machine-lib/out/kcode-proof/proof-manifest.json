@@ -30094,7 +30094,7 @@
     ]
   },
   "contract": {
-    "sha256": "245a40c64748dd236c0af13a0b3363fd8194a23f9172167c643234d751672614",
+    "sha256": "f40639bc4c1fa6e34b303de60367833199220a1e51223cc50c99f291dc668e6e",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30128,8 +30128,8 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "92e9a9c6328b22908a20a18488117ccbb31bde9378851288a447510062441ab0",
-        "bytes": 81846
+        "sha256": "7cf6517a379f45cb773f7fa05a8112c67c3bd908136d3aeae2426435fa91f933",
+        "bytes": 82440
       },
       {
         "path": "../../apps/studio/src/StartScreen.tsx",
@@ -30323,13 +30323,13 @@
       },
       {
         "path": "../../apps/studio/src/chart/recentProjects.test.ts",
-        "sha256": "a2019582bd6fa499c6716959bebe501e6be3a8f06d42004b7055f63a97a0a39b",
-        "bytes": 4105
+        "sha256": "e077801bc6ff2647f2efeae87e672771103d816fc21276a3fb0aa10da6fcdd67",
+        "bytes": 4597
       },
       {
         "path": "../../apps/studio/src/chart/recentProjects.ts",
-        "sha256": "94b947c9eb9545c84c5381778bbab12957b00231149a5ed0ed5ff432d1d814d0",
-        "bytes": 4136
+        "sha256": "b46fe06db880d0c71c2b5644e9c492307f29d181ae6a0de9a33c932596c2fdab",
+        "bytes": 4229
       },
       {
         "path": "../../apps/studio/src/chartViewModel.test.ts",
@@ -30913,8 +30913,8 @@
       },
       {
         "path": "../../e2e/launch-polish.spec.ts",
-        "sha256": "c9bf61ebd2ca350bd3a13b76ea48a067c89c020a94b6812227b30e85b7344887",
-        "bytes": 10830
+        "sha256": "57522123a274bdb663802034d88aceba2a80c8cbb5a57ad19aeb4ce165d4159d",
+        "bytes": 11128
       },
       {
         "path": "../../e2e/m2.spec.ts",
