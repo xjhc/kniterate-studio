@@ -21,12 +21,16 @@
       "sha256": "dae44550a85ef78e1be847bc729f0cc7ab0fd756e731b05237a37fd2b284c5f9"
     },
     {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "sha256": "dc9e5037a91bc0806b83228a9ef35be556e604d5d2209378a57cde071fd8f442"
+    },
+    {
       "path": "src/knitout/kcode/scheduled-trace-diff.ts",
       "sha256": "976c0cc54823b2568a47e444dbf88a0732d8be10453d077a7e6204fe7a196546"
     }
   ],
-  "configSha256": "4bfb6e5a02b74a91a402579e771e300fe659587b5d2bfe1a95e752306dcb9221",
-  "testConfigSha256": "c95269a297475b87d7a05749b9fc5e2f91cf383d04e9455981677d8ae70f9138",
+  "configSha256": "3e18618ff990dcaf48e7e8ea5aa973ef56c303ca005c2d13f35e710c90f88a05",
+  "testConfigSha256": "9915198485b45987c5753b9eab075707c842d306f562144d84e18fa397200dc0",
   "globallyExcludedMutations": [],
   "diagnosticProseDirectiveAudit": [
     {
@@ -160,9 +164,23 @@
       "startLine": 1435,
       "endLine": 1435,
       "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "startLine": 413,
+      "endLine": 413,
+      "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
     }
   ],
   "diagnosticProseExclusions": [
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 413,
+      "column": 16,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
+    },
     {
       "path": "src/knitout/kcode/machine-trace.ts",
       "line": 254,
@@ -380,7 +398,7 @@
       "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
     }
   ],
-  "diagnosticProseExclusionsSha256": "35d33a97046f8a21867db327cd05b16695e34b923cb6bb843c10f9ff5331c3ea",
+  "diagnosticProseExclusionsSha256": "d07b29b7105108b13e522c03bc324582b7c3dd91c1f6b76541e261293b5373b0",
   "equivalentMutantSuppressions": [
     {
       "path": "src/knitout/kcode/machine-trace.ts",
@@ -651,13 +669,13 @@
   "unreviewedIgnoredMutants": [],
   "misScopedDiagnosticProseExclusions": [],
   "counts": {
-    "Killed": 2440,
+    "Killed": 2898,
     "Survived": 0,
     "Timeout": 0,
     "NoCoverage": 0,
     "CompileError": 0,
     "RuntimeError": 0,
-    "Ignored": 60,
+    "Ignored": 61,
     "Pending": 0
   },
   "mutationScore": 100
