@@ -43,7 +43,7 @@
     "directions": 2,
     "carrierTokens": 7,
     "rackValues": 17,
-    "kcodeNativeRefusalCases": 24,
+    "kcodeNativeRefusalCases": 27,
     "oracle": "test/knitout/kcode-legality-spec.ts",
     "contractSha256": "20bbc9b3930fc470dd44cae542e6a827fae5aa48cd6d5115b23bd8ac7e601d67",
     "oracleSha256": "eae502e4a399eea38e2fa82299fe68bea0e11912b5f9e10087941ca2d71a9532",
@@ -53,11 +53,11 @@
       "ok": true,
       "parserRuleCount": 30,
       "validatorRuleCount": 43,
-      "machineSafetyRuleCount": 14,
-      "runtimeWitnessedRuleCount": 87,
-      "blockingRuleCount": 84,
+      "machineSafetyRuleCount": 17,
+      "runtimeWitnessedRuleCount": 90,
+      "blockingRuleCount": 87,
       "advisoryOnlyRuleCount": 3,
-      "blockingRuleTargetedWitnessCount": 84,
+      "blockingRuleTargetedWitnessCount": 87,
       "runtimeGate": {
         "command": "pnpm exec vitest run test/knitout/kcode-document-adversarial.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-safety.test.ts --maxWorkers=1",
         "exitCode": 0,
@@ -67,7 +67,7 @@
         "kind": "kniterate-kcode-command-refusal-report",
         "schemaVersion": 3,
         "ok": true,
-        "caseCount": 24,
+        "caseCount": 27,
         "noInvalidReachedExport": true,
         "cleanBaselineExportEligible": true,
         "results": [
@@ -364,6 +364,45 @@
             ],
             "blockingRules": [
               "machine-safety.stitch-too-small"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "machine-safety",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "neighbouring-transfers-in-one-pass",
+            "expectedBlockingRules": [
+              "machine-safety.adjacent-transfers"
+            ],
+            "blockingRules": [
+              "machine-safety.adjacent-transfers"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "machine-safety",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "central-short-rows",
+            "expectedBlockingRules": [
+              "machine-safety.central-short-rows"
+            ],
+            "blockingRules": [
+              "machine-safety.central-short-rows"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "machine-safety",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "three-tucks-on-a-needle",
+            "expectedBlockingRules": [
+              "machine-safety.tuck-stack"
+            ],
+            "blockingRules": [
+              "machine-safety.tuck-stack"
             ],
             "exportEligible": false,
             "rejectionStage": "machine-safety",
@@ -30024,6 +30063,36 @@
           ]
         },
         {
+          "rule": "machine-safety.adjacent-transfers",
+          "classification": "blocking",
+          "severities": [
+            "error"
+          ],
+          "observations": [
+            {
+              "rail": "machine-safety",
+              "severity": "error",
+              "path": "test/knitout/kcode-machine-safety.test.ts",
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
+            }
+          ],
+          "targetedWitnesses": [
+            {
+              "rail": "machine-safety",
+              "caseId": "neighbouring-transfers",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "rule": "machine-safety.adjacent-transfers",
+                  "severity": "error"
+                }
+              ],
+              "path": "test/knitout/kcode-machine-safety.test.ts",
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
+            }
+          ]
+        },
+        {
           "rule": "machine-safety.carrier-behind-home",
           "classification": "blocking",
           "severities": [
@@ -30034,7 +30103,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30053,7 +30122,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30068,7 +30137,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30083,7 +30152,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30098,7 +30167,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30113,7 +30182,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30128,7 +30197,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30143,7 +30212,37 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
+            }
+          ]
+        },
+        {
+          "rule": "machine-safety.central-short-rows",
+          "classification": "blocking",
+          "severities": [
+            "error"
+          ],
+          "observations": [
+            {
+              "rail": "machine-safety",
+              "severity": "error",
+              "path": "test/knitout/kcode-machine-safety.test.ts",
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
+            }
+          ],
+          "targetedWitnesses": [
+            {
+              "rail": "machine-safety",
+              "caseId": "central-short-rows",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "rule": "machine-safety.central-short-rows",
+                  "severity": "error"
+                }
+              ],
+              "path": "test/knitout/kcode-machine-safety.test.ts",
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30158,7 +30257,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30173,7 +30272,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30188,7 +30287,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30207,7 +30306,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30222,7 +30321,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30237,7 +30336,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30252,7 +30351,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30267,7 +30366,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30282,7 +30381,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30297,7 +30396,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30312,7 +30411,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30339,7 +30438,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30354,7 +30453,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30369,7 +30468,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30384,7 +30483,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30399,7 +30498,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30414,7 +30513,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30429,7 +30528,37 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
+            }
+          ]
+        },
+        {
+          "rule": "machine-safety.tuck-stack",
+          "classification": "blocking",
+          "severities": [
+            "error"
+          ],
+          "observations": [
+            {
+              "rail": "machine-safety",
+              "severity": "error",
+              "path": "test/knitout/kcode-machine-safety.test.ts",
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
+            }
+          ],
+          "targetedWitnesses": [
+            {
+              "rail": "machine-safety",
+              "caseId": "tuck-stack",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "rule": "machine-safety.tuck-stack",
+                  "severity": "error"
+                }
+              ],
+              "path": "test/knitout/kcode-machine-safety.test.ts",
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         },
@@ -30444,7 +30573,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ],
           "targetedWitnesses": [
@@ -30459,7 +30588,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0"
+              "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56"
             }
           ]
         }
@@ -30469,7 +30598,7 @@
   },
   "machineSafety": {
     "envelope": "kniterate-7gg-machine-safety@1",
-    "envelopeSha256": "429b39953cebb357340e5bdab186fc5eb3a7a7d6a75011bb33c9d8f7feb530eb",
+    "envelopeSha256": "75a1745f36da80d16128134df5383cf545b8bd475edaef4e9da344a9519c914d",
     "rules": [
       "machine-safety.facing-needles",
       "machine-safety.unsafe-bed-range",
@@ -30483,8 +30612,11 @@
       "machine-safety.speed-range",
       "machine-safety.roller-range",
       "machine-safety.takedown-gap",
+      "machine-safety.central-short-rows",
+      "machine-safety.tuck-stack",
       "machine-safety.stitch-too-small",
-      "machine-safety.transfer-settings"
+      "machine-safety.transfer-settings",
+      "machine-safety.adjacent-transfers"
     ],
     "referenceCorpusFindings": 0
   },
@@ -30504,6 +30636,7 @@
     "test/knitout/kcode-machine-validator.test.ts",
     "test/knitout/kcode-machine-safety.test.ts",
     "test/knitout/kcode-machine-safety-corpus.test.ts",
+    "test/knitout/kcode-machine-safety-oracle.test.ts",
     "test/knitout/kcode-command-legality.test.ts",
     "test/knitout/kcode-machine-scene.test.ts",
     "test/knitout/kcode-machine-topology.test.ts",
@@ -30567,7 +30700,7 @@
     },
     {
       "id": "deterministic-kcode-proof-tests",
-      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/proof-fingerprint.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/kcode-mutation-policy.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-safety.test.ts test/knitout/kcode-machine-safety-corpus.test.ts test/knitout/kcode-command-legality.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-machine-topology.test.ts test/knitout/kcode-machine-topology-window.test.ts test/knitout/kcode-machine-execution.test.ts test/knitout/kcode-coordinate-bridge.test.ts test/knitout/kcode-pass-metrics.test.ts test/knitout/kcode-machine-advisories.test.ts test/knitout/kcode-knitted-faces.test.ts test/knitout/kcode-programmed-motion.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts test/knitout/dbj-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
+      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/proof-fingerprint.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/kcode-mutation-policy.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-safety.test.ts test/knitout/kcode-machine-safety-corpus.test.ts test/knitout/kcode-machine-safety-oracle.test.ts test/knitout/kcode-command-legality.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-machine-topology.test.ts test/knitout/kcode-machine-topology-window.test.ts test/knitout/kcode-machine-execution.test.ts test/knitout/kcode-coordinate-bridge.test.ts test/knitout/kcode-pass-metrics.test.ts test/knitout/kcode-machine-advisories.test.ts test/knitout/kcode-knitted-faces.test.ts test/knitout/kcode-programmed-motion.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts test/knitout/dbj-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
       "status": "pass",
       "exitCode": 0
     },
@@ -30755,7 +30888,7 @@
     ]
   },
   "contract": {
-    "sha256": "44870f47ef0ef53163fbe1dacc6ba84d8731ebe25c9d74898cec2d8f0c9c7489",
+    "sha256": "30d554bc01b11ac76bc3fae4f5c33220c502d25de734f8382b247db2dcbe5add",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31004,8 +31137,8 @@
       },
       {
         "path": "../../apps/studio/src/engine.test.ts",
-        "sha256": "ffad6bee28892327bccbe88a769635dd057cbc65b831fe21fdd8eb4b2b4e659c",
-        "bytes": 43927
+        "sha256": "b6f64500f86cbdb55aa6ccfeab1b4c6d9b88719d04ec374f313b404e0d39f10b",
+        "bytes": 45246
       },
       {
         "path": "../../apps/studio/src/engine.ts",
@@ -31014,8 +31147,8 @@
       },
       {
         "path": "../../apps/studio/src/explain.ts",
-        "sha256": "be46fe0fb913c968d10df374d64b45a074ade300769c86cdaaa00088d76a7e28",
-        "bytes": 6437
+        "sha256": "240159c9c2d508f74f986c58baa75c772bb5f8e03f3ea528e5f86732d3f87edd",
+        "bytes": 6660
       },
       {
         "path": "../../apps/studio/src/fabric.test.ts",
@@ -31244,18 +31377,18 @@
       },
       {
         "path": "../../apps/studio/src/machineCheckContract.ts",
-        "sha256": "8a82a90c6dd21004771d36f7b9235d9a80b684013abba0833dfb953febfe3f0c",
-        "bytes": 8928
+        "sha256": "a69eb7c9daaa9e95dce7192a82a2819671421b36720f8e2eae4c105cb4a6e6a7",
+        "bytes": 9106
       },
       {
         "path": "../../apps/studio/src/machineSetup.test.ts",
-        "sha256": "0fbe7c06e508070a7bfd715af4db9da8488ab65b8c61a86dad8d1ecd3c633d68",
-        "bytes": 22143
+        "sha256": "fc3aaca374457afca1b902e8dbf72fd38af7caba4d5a3573803fd360552ea50c",
+        "bytes": 22313
       },
       {
         "path": "../../apps/studio/src/machineSetup.ts",
-        "sha256": "e5d1d6d7b0ce842301971d5c06d24b0e47e10be6e3c00324cb3eb848012349a2",
-        "bytes": 3490
+        "sha256": "9cf5dc576fc5d6b9e0186531fa45b16b32b7855f69aa3d478ffd6184c5cc181c",
+        "bytes": 3687
       },
       {
         "path": "../../apps/studio/src/main.tsx",
@@ -31279,8 +31412,8 @@
       },
       {
         "path": "../../apps/studio/src/plan.test.ts",
-        "sha256": "a8495baaf8abd2f2f8346d1c264df8c076198bb360c9cb66a65ce237e55a510d",
-        "bytes": 14934
+        "sha256": "b1499e5baf272fbe0548676a831da8b2b03510d52d8261725c98e4060f6dd51f",
+        "bytes": 15141
       },
       {
         "path": "../../apps/studio/src/plan.ts",
@@ -31289,8 +31422,8 @@
       },
       {
         "path": "../../apps/studio/src/readiness.ts",
-        "sha256": "07c4701eb518afa33bc49f6a59a2981dead04045f476de7d246a51f5a02e1d61",
-        "bytes": 8672
+        "sha256": "56bc604f792d5f2c6a63dcc924a3e13c5f4deccd38de907906d4f80030038111",
+        "bytes": 9412
       },
       {
         "path": "../../apps/studio/src/sourceWindow.test.tsx",
@@ -31784,8 +31917,8 @@
       },
       {
         "path": "package.json",
-        "sha256": "a301e033f8339823d87962408f7cc32da7457ac99601844f8ee1aad2a6259a7e",
-        "bytes": 4312
+        "sha256": "8bfa1897a522f0b97a67f60af1944fd2c9c7bec71fecfd1d34aa1ad08174392c",
+        "bytes": 4361
       },
       {
         "path": "reference/2x2-rib-beanie.kc",
@@ -31864,7 +31997,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "1352ec61bac9d0639ee496359098b266390815256fd942fddc34434776ac11e3",
+        "sha256": "54a28431fcdf9c634be5049f8797ddf418d06ca297d371bfbb9a749e0c3ce993",
         "bytes": 179
       },
       {
@@ -31944,8 +32077,8 @@
       },
       {
         "path": "scripts/kcode-command-refusal-corpus.ts",
-        "sha256": "ea8e56e0b6705abeae2d5c394d4a8edc8a9dcbd783d478e01d673ad09557e0a2",
-        "bytes": 14932
+        "sha256": "25e147b39a334562f17633a9cc942dfaed09d95916599bffa097685569223013",
+        "bytes": 16165
       },
       {
         "path": "scripts/kcode-mutation.ts",
@@ -31959,8 +32092,8 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "20f2e1d5abf95c5ad650107c481ce385694d3e0327b2d8a1f5fb98dfb149f5f0",
-        "bytes": 23667
+        "sha256": "5848171973aa4482c9cdea593781d88486229a6c3f0afbe938a1ce1d96f01279",
+        "bytes": 23721
       },
       {
         "path": "scripts/kcode-rule-coverage.ts",
@@ -32239,8 +32372,8 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "sha256": "90fb0de5db402d65bdd8f0fd56a07b9cfdfd16b475711d9a63b62d414b867d13",
-        "bytes": 22407
+        "sha256": "c31155a58a82711f95d8177ea68b42c9b3a7f116c332ab1d441b9f872216c5a2",
+        "bytes": 30382
       },
       {
         "path": "src/knitout/kcode/machine-scene.ts",
@@ -32714,8 +32847,8 @@
       },
       {
         "path": "src/validators/messages.ts",
-        "sha256": "05bc5e4696ae252c5215991413e40cdbbb2e3ea2bb7e002dcf127cd5b229bea5",
-        "bytes": 44769
+        "sha256": "eea9eb2adf823bfbd7e3150af56f8a3da6f0f2e7cdd5533b39ad8932fd2127b6",
+        "bytes": 45990
       },
       {
         "path": "src/validators/tile-conservation.ts",
@@ -32893,9 +33026,14 @@
         "bytes": 1512
       },
       {
+        "path": "test/knitout/kcode-machine-safety-oracle.test.ts",
+        "sha256": "9ecb26a3220a3a5590a9a235a86f5659a69bcb29db7c63e9e8c191354e09c873",
+        "bytes": 11038
+      },
+      {
         "path": "test/knitout/kcode-machine-safety.test.ts",
-        "sha256": "3485b9b9ae5131fc743a540aecf084dbb0efd5fbc743c350b87ff8a5f75bdde0",
-        "bytes": 37612
+        "sha256": "ca43dced7ae9bbb361e946724fa2f8f24495f89ef2264c2f51b18ab8eeaede56",
+        "bytes": 50481
       },
       {
         "path": "test/knitout/kcode-machine-scene.test.ts",
@@ -33039,8 +33177,8 @@
       },
       {
         "path": "vitest.stryker.config.ts",
-        "sha256": "9915198485b45987c5753b9eab075707c842d306f562144d84e18fa397200dc0",
-        "bytes": 759
+        "sha256": "ac89d7e0eb7767d7ce0d779824d1e1db1692d864ff63e806f5dfe983c0653631",
+        "bytes": 817
       }
     ]
   },
@@ -33067,15 +33205,15 @@
   "mutationEvidence": {
     "inputGrammarAndDiffMutations": true,
     "implementationSourceMutationScoring": true,
-    "receiptSha256": "af10f78d67b2c1e1105c137b934c80c727f722faeaec46b3b6aab6586f0fce77",
+    "receiptSha256": "3daa58de5dd4e13720dddaa5222f472289ca594b0cc8ac8228909b3693ed3496",
     "counts": {
-      "Killed": 2903,
+      "Killed": 3079,
       "Survived": 0,
       "Timeout": 0,
       "NoCoverage": 0,
       "CompileError": 0,
       "RuntimeError": 0,
-      "Ignored": 61,
+      "Ignored": 66,
       "Pending": 0
     },
     "mutationScore": 100,
@@ -33094,7 +33232,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "sha256": "90fb0de5db402d65bdd8f0fd56a07b9cfdfd16b475711d9a63b62d414b867d13"
+        "sha256": "c31155a58a82711f95d8177ea68b42c9b3a7f116c332ab1d441b9f872216c5a2"
       },
       {
         "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -33104,7 +33242,7 @@
     "diagnosticProseExclusions": [
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "line": 420,
+        "line": 550,
         "column": 16,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -33327,8 +33465,48 @@
         "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
       }
     ],
-    "diagnosticProseExclusionsSha256": "617e84a333ab21ae8bbe47b84b188ff787438ea02265cdc29737bb09d5583cd4",
+    "diagnosticProseExclusionsSha256": "7d5e31a2da1a7e75948c5dc684a02190723f56bc91330af370389961c957105e",
     "equivalentMutantSuppressions": [
+      {
+        "path": "src/knitout/kcode/machine-safety.ts",
+        "line": 338,
+        "column": 58,
+        "mutator": "MethodExpression",
+        "replacement": "[...formed, passIndex]",
+        "reason": "Equivalent mutant: the slice only bounds memory; no more than maxKnits earlier loops can change whether a needle exceeds maxKnits."
+      },
+      {
+        "path": "src/knitout/kcode/machine-safety.ts",
+        "line": 444,
+        "column": 13,
+        "mutator": "ConditionalExpression",
+        "replacement": "false",
+        "reason": "Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate."
+      },
+      {
+        "path": "src/knitout/kcode/machine-safety.ts",
+        "line": 444,
+        "column": 13,
+        "mutator": "ConditionalExpression",
+        "replacement": "true",
+        "reason": "Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate."
+      },
+      {
+        "path": "src/knitout/kcode/machine-safety.ts",
+        "line": 444,
+        "column": 13,
+        "mutator": "EqualityOperator",
+        "replacement": "loop.coordinate <= action.at.traceCoordinate",
+        "reason": "Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate."
+      },
+      {
+        "path": "src/knitout/kcode/machine-safety.ts",
+        "line": 444,
+        "column": 13,
+        "mutator": "EqualityOperator",
+        "replacement": "loop.coordinate >= action.at.traceCoordinate",
+        "reason": "Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate."
+      },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
         "line": 359,
@@ -33594,7 +33772,7 @@
         "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
       }
     ],
-    "equivalentMutantSuppressionsSha256": "aeb6f7bec4dbab88f2a8a6f1956b9827855cd08511f547b4ce0c9ccc7c0ea5bf",
+    "equivalentMutantSuppressionsSha256": "529ecb7b10dcedced2c3f9e5373ddc1d1e998bc6ae9239417cb328d0f4e6b1f3",
     "globallyExcludedMutations": [],
     "diagnosticProseDirectiveAudit": [
       {
@@ -33731,8 +33909,8 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "startLine": 420,
-        "endLine": 420,
+        "startLine": 550,
+        "endLine": 550,
         "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
       }
     ],

@@ -22,7 +22,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "sha256": "90fb0de5db402d65bdd8f0fd56a07b9cfdfd16b475711d9a63b62d414b867d13"
+      "sha256": "c31155a58a82711f95d8177ea68b42c9b3a7f116c332ab1d441b9f872216c5a2"
     },
     {
       "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -30,7 +30,7 @@
     }
   ],
   "configSha256": "3e18618ff990dcaf48e7e8ea5aa973ef56c303ca005c2d13f35e710c90f88a05",
-  "testConfigSha256": "9915198485b45987c5753b9eab075707c842d306f562144d84e18fa397200dc0",
+  "testConfigSha256": "ac89d7e0eb7767d7ce0d779824d1e1db1692d864ff63e806f5dfe983c0653631",
   "globallyExcludedMutations": [],
   "diagnosticProseDirectiveAudit": [
     {
@@ -167,15 +167,15 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "startLine": 420,
-      "endLine": 420,
+      "startLine": 550,
+      "endLine": 550,
       "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
     }
   ],
   "diagnosticProseExclusions": [
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "line": 420,
+      "line": 550,
       "column": 16,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -398,8 +398,48 @@
       "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
     }
   ],
-  "diagnosticProseExclusionsSha256": "617e84a333ab21ae8bbe47b84b188ff787438ea02265cdc29737bb09d5583cd4",
+  "diagnosticProseExclusionsSha256": "7d5e31a2da1a7e75948c5dc684a02190723f56bc91330af370389961c957105e",
   "equivalentMutantSuppressions": [
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 338,
+      "column": 58,
+      "mutator": "MethodExpression",
+      "replacement": "[...formed, passIndex]",
+      "reason": "Equivalent mutant: the slice only bounds memory; no more than maxKnits earlier loops can change whether a needle exceeds maxKnits."
+    },
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 444,
+      "column": 13,
+      "mutator": "ConditionalExpression",
+      "replacement": "false",
+      "reason": "Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate."
+    },
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 444,
+      "column": 13,
+      "mutator": "ConditionalExpression",
+      "replacement": "true",
+      "reason": "Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate."
+    },
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 444,
+      "column": 13,
+      "mutator": "EqualityOperator",
+      "replacement": "loop.coordinate <= action.at.traceCoordinate",
+      "reason": "Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate."
+    },
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 444,
+      "column": 13,
+      "mutator": "EqualityOperator",
+      "replacement": "loop.coordinate >= action.at.traceCoordinate",
+      "reason": "Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate."
+    },
     {
       "path": "src/knitout/kcode/machine-trace.ts",
       "line": 359,
@@ -665,17 +705,17 @@
       "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
     }
   ],
-  "equivalentMutantSuppressionsSha256": "aeb6f7bec4dbab88f2a8a6f1956b9827855cd08511f547b4ce0c9ccc7c0ea5bf",
+  "equivalentMutantSuppressionsSha256": "529ecb7b10dcedced2c3f9e5373ddc1d1e998bc6ae9239417cb328d0f4e6b1f3",
   "unreviewedIgnoredMutants": [],
   "misScopedDiagnosticProseExclusions": [],
   "counts": {
-    "Killed": 2903,
+    "Killed": 3079,
     "Survived": 0,
     "Timeout": 0,
     "NoCoverage": 0,
     "CompileError": 0,
     "RuntimeError": 0,
-    "Ignored": 61,
+    "Ignored": 66,
     "Pending": 0
   },
   "mutationScore": 100
