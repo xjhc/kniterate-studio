@@ -81,6 +81,8 @@ const drop = (bed: MachineTraceBedV1, coordinate: number, selector?: number): Ma
   ({ kind: 'drop', at: at(bed, coordinate, selector) })
 const xfer = (source: number, target: number): MachineTraceActionV1 =>
   ({ kind: 'xfer', source: at('front', source, 0), target: at('rear', target, 0) })
+const xferToFront = (source: number, target: number): MachineTraceActionV1 =>
+  ({ kind: 'xfer', source: at('rear', source, 0), target: at('front', target, 0) })
 const split = (source: number, target: number, carrier: Exclude<KCodeCarrierToken, '0'>): MachineTraceActionV1 =>
   ({ kind: 'split', source: at('front', source), target: at('rear', target), carrier })
 
@@ -316,6 +318,8 @@ describe('KCode machine-safety envelope', () => {
       expect(overruns({ actions: [] })).toBe(0)
       // Transfers use the source column; rear stitches use rear + floor(rack).
       expect(overruns({ actions: [xfer(100, 100), xfer(103, 103)] })).toBe(0)
+      // Carriage reach follows the source column, as the command validator does.
+      expect(overruns({ rack: 4, operation: 'Rl-Tr', actions: [xferToFront(100, 104), xferToFront(103, 107)] })).toBe(0)
       expect(overruns({ rack: 1.5, actions: [knit('rear', 99), knit('rear', 102)] })).toBe(0)
       expect(overruns({ rack: 1.5, actions: [knit('rear', 99), knit('rear', 103)] })).toBe(1)
       // Every kind of needle action counts as operated.
@@ -368,6 +372,19 @@ describe('KCode machine-safety envelope', () => {
       expect(clearance(101.5, [tuck('front', 100)])).toHaveLength(1)
       expect(clearance(101.5, [drop('front', 100)])).toHaveLength(1)
       expect(clearance(101.5, [xfer(100, 100)])).toHaveLength(1)
+      // A racked transfer meets the feeders at its front-bed needle, not at the rear raster column.
+      const racked = (rest: number, action: MachineTraceActionV1) => safety(job(
+        { direction: '>>', carrier: '4', carriage: { left: -7.5, right: rest }, carrierStops: { left: -7.5, right: rest }, actions: [] },
+        { direction: '<<', carrier: '0', operation: 'Rl-Tr', rack: 4, carriage: { left: 80.5, right: rest }, actions: [action] },
+      )).diagnostics.filter((diagnostic) => diagnostic.rule === 'machine-safety.feeder-clearance')
+      expect(racked(103.5, xferToFront(100, 104))).toEqual([expect.objectContaining({
+        actionIndex: 0,
+        sourceSpan: at('front', 104, 0).sourceSpan,
+        message: 'Pass 2 operates needle 104 while carrier 4 rests at 103.5, closer than 2.5; a feeder over the needles collides with them.',
+      })])
+      expect(racked(97.5, xferToFront(100, 104))).toEqual([])
+      expect(racked(106.5, xferToFront(100, 104))).toEqual([])
+      expect(racked(105.5, xfer(104, 100))).toHaveLength(1)
       // The pass's own carrier travels with the carriage.
       const own = safety(job({ direction: '>>', carrier: '4', carriage: { left: -7.5, right: 102.5 }, actions: front(100) }))
       expect(own.counts['machine-safety.feeder-clearance']).toBe(0)
@@ -383,7 +400,7 @@ describe('KCode machine-safety envelope', () => {
       ))
       expectTargeted('transfer-with-carrier', 'machine-safety.transfer-with-carrier', report)
       expect(messages(report)).toEqual([
-        'Pass 2 transfers with carrier 3; the machine transfers only on rows with no yarn carrier.',
+        'Pass 2 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified.',
       ])
       expect(report.diagnostics[0]).toMatchObject({ passIndex: 1, sourceSpan: span(17) })
     })
@@ -529,7 +546,7 @@ describe('KCode machine-safety envelope', () => {
       const five = rows([0, 0, 0, 0, 0])
       expectTargeted('takedown-gap', 'machine-safety.takedown-gap', five)
       expect(messages(five)).toEqual([
-        'Pass 5 makes 5 knitting passes in a row with the roller at 0 or below; with no pull-down the loops cannot clear the needles (at most 4).',
+        'Pass 5 makes 5 knitting passes since the roller last pulled the fabric down; without pull-down the loops cannot clear the needles (at most 4).',
       ])
       expect(five.diagnostics[0]).toMatchObject({ passIndex: 4, sourceSpan: span(47) })
       expect(rows([0, 0, 0, 0, 0, 0, 0]).counts['machine-safety.takedown-gap']).toBe(1)
@@ -540,14 +557,17 @@ describe('KCode machine-safety envelope', () => {
       const tucks = [tuck('front', 100), tuck('front', 103)]
       const tucked = safety(job(...[0, 1, 2, 3, 4].map((index) => row(index, 0, tucks)), { ...HOME, carriage: { left: -9.5, right: 105.5 } }))
       expect(tucked.counts['machine-safety.takedown-gap']).toBe(1)
-      // A transfer with the roller on does not end the run...
-      const pulledTransfer = safety(job(
+      // Any pass that advances the roller pulls the fabric down and ends the run...
+      const pulledBy = (between: PassSpec) => safety(job(
         ...[0, 1, 2, 3].map((index) => row(index, 0)),
-        { direction: '<<', carrier: '0', operation: 'Tr-Rl', roller: 100, carriage: { left: 97.5, right: 105.5 }, actions: [xfer(100, 100)] },
+        between,
         { ...row(4, 0), carriage: { left: 97.5, right: 105.5 } },
         { ...HOME, carriage: { left: -9.5, right: 105.5 } },
-      ))
-      expect(pulledTransfer.diagnostics).toEqual([expect.objectContaining({ rule: 'machine-safety.takedown-gap', passIndex: 5 })])
+      )).counts['machine-safety.takedown-gap']
+      expect(pulledBy({ direction: '<<', carrier: '0', operation: 'Tr-Rl', roller: 100, carriage: { left: 97.5, right: 105.5 }, actions: [xfer(100, 100)] })).toBe(0)
+      expect(pulledBy({ direction: '<<', carrier: '0', roller: 100, carriage: { left: 97.5, right: 105.5 }, actions: [drop('front', 103)] })).toBe(0)
+      expect(pulledBy({ direction: '<<', carrier: '0', roller: 100, carriage: { left: 97.5, right: 105.5 }, actions: [] })).toBe(0)
+      expect(pulledBy({ direction: '<<', carrier: '0', roller: 0, carriage: { left: 97.5, right: 105.5 }, actions: [] })).toBe(1)
       // ...and drops and moves without the roller do not lengthen it.
       const idle = safety(job(
         ...[0, 1, 2].map((index) => row(index, 0)),
@@ -638,6 +658,7 @@ describe('KCode machine-safety envelope', () => {
     const checks = 'https://support.kniterate.com/hc/en-us/articles/11698092127005'
     const feeder = 'https://support.kniterate.com/hc/en-us/articles/360010645337'
     const transfers = 'https://support.kniterate.com/hc/en-us/articles/360012868118'
+    const split = 'https://support.kniterate.com/hc/en-us/articles/360012868178'
     const manual = 'https://support.kniterate.com/hc/article_attachments/360009727217'
     const customist = 'https://editor.kniterate.design/documentation'
     const backend = 'packages/machine-lib/src/knitout/vendor/knitout-to-kcode.cjs'
@@ -649,7 +670,7 @@ describe('KCode machine-safety envelope', () => {
       facingNeedles: ['official-documented', [racking, checks, customist]],
       bedRange: ['official-documented', [checks, customist, corpus]],
       stoppingDistance: ['official-documented', [feeder, customist, backend, corpus]],
-      transferWithCarrier: ['official-documented', [transfers, checks, customist, corpus]],
+      transferWithCarrier: ['unverified', [split, transfers, backend, corpus]],
       carrierlessTuck: ['reference-corpus-observed', [backend, corpus]],
       carrierHomeStops: ['official-documented', [checks, customist, backend, corpus]],
       speed: ['official-documented', [customist]],

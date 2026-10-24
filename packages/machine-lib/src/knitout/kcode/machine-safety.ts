@@ -76,7 +76,7 @@ export interface MachineSafetyEnvelopeV1 {
    * from every needle another pass operates.
    */
   readonly stoppingDistance: { readonly value: number; readonly evidence: KCodeEvidence }
-  /** Transfer passes carry no yarn. */
+  /** A transfer with a carrier (a split stitch) until its encoding is verified. */
   readonly transferWithCarrier: { readonly evidence: KCodeEvidence }
   /** Carrierless passes that select needles are plain drops (Kn-Kn). */
   readonly carrierlessTuck: { readonly evidence: KCodeEvidence }
@@ -98,6 +98,7 @@ const RACKING_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/3600166
 const CHECKS_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/11698092127005'
 const FEEDER_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360010645337'
 const TRANSFERS_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360012868118'
+const SPLIT_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360012868178'
 const MACHINE_MANUAL = 'https://support.kniterate.com/hc/article_attachments/360009727217'
 const CUSTOMIST_MANUAL = 'https://editor.kniterate.design/documentation'
 const PINNED_BACKEND = 'packages/machine-lib/src/knitout/vendor/knitout-to-kcode.cjs'
@@ -127,8 +128,8 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
       'Kniterate: "Never place a feeder over the needle bed. This can cause a collision between the needles and the feeder." The carrier stopping distance (default 2.5) keeps feeders clear of the knitting. Every reference program turns the carriage and carrier at least 2.5 past the outermost operated needle and rests idle carriers at least 2.5 from every operated needle.'),
   },
   transferWithCarrier: {
-    evidence: evidence('official-documented', [TRANSFERS_ARTICLE, CHECKS_ARTICLE, CUSTOMIST_MANUAL, REFERENCE_CORPUS],
-      'Kniterate: "Transfer rows must have NO yarn carrier assigned." Its editor does not compile a transfer row with a carrier. No reference program contains one.'),
+    evidence: evidence('unverified', [SPLIT_ARTICLE, TRANSFERS_ARTICLE, PINNED_BACKEND, REFERENCE_CORPUS],
+      'Kniterate documents split stitches, a transfer whose delivering needle receives yarn at once, and ordinary transfer rows with no carrier. No reference program contains a split, so how Kniterate\'s software encodes one in KCode is unverified; the pinned backend\'s transfer-with-carrier encoding is refused until a captured program establishes it.'),
   },
   carrierlessTuck: {
     evidence: evidence('reference-corpus-observed', [PINNED_BACKEND, REFERENCE_CORPUS],
@@ -154,7 +155,7 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
   takedown: {
     maxPassesWithoutRoller: 4,
     evidence: evidence('reference-corpus-observed', [CUSTOMIST_MANUAL, REFERENCE_CORPUS],
-      'The waste section exists so the rollers can pull the fabric down; without pull-down the knitting fails. No reference program knits more than 4 loop-forming passes in a row with roller 0.'),
+      'The waste section exists so the rollers can pull the fabric down; without pull-down the knitting fails. Any pass that advances the roller pulls, transfers included. No reference program knits more than 4 loop-forming passes without one.'),
   },
   loopFormingStitch: {
     min: 2,
@@ -203,23 +204,26 @@ const CARRIERS: readonly MachineCarrierV1[] = ['1', '2', '3', '4', '5', '6']
 
 interface OperatedNeedle {
   readonly actionIndex: number
-  /** Stop-frame coordinate, the frame the carriage and carrier stops use. */
+  /** Stop-frame coordinate, the frame the command validator checks carriage reach in. */
   readonly stop: number
+  /**
+   * Where the needle meets the feeders, in the front-bed frame. A transfer's
+   * two needles face each other, so it sits at its front-bed needle: a rear
+   * source at a rack is not where its raster column says.
+   */
+  readonly position: number
   readonly span: KCodeSourceSpan
 }
 
-/** Operated needles in the stop frame used by the command validator. */
 function operatedNeedles(pass: MachineTracePassV1): OperatedNeedle[] {
   const needles: OperatedNeedle[] = []
   for (const [actionIndex, action] of pass.actions.entries()) {
     if (action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'drop') {
-      needles.push({
-        actionIndex,
-        stop: regularActionTraversalCoordinate(action.at, pass.rack),
-        span: action.at.sourceSpan,
-      })
+      const stop = regularActionTraversalCoordinate(action.at, pass.rack)
+      needles.push({ actionIndex, stop, position: stop, span: action.at.sourceSpan })
     } else if (action.kind === 'xfer' || action.kind === 'split') {
-      needles.push({ actionIndex, stop: action.source.traceCoordinate, span: action.source.sourceSpan })
+      const front = action.source.bed === 'front' ? action.source : action.target
+      needles.push({ actionIndex, stop: action.source.traceCoordinate, position: front.traceCoordinate, span: front.sourceSpan })
     }
   }
   return needles
@@ -296,12 +300,15 @@ export function validateKCodeMachineSafetyV1(
         pass, pass.source.footer)
     }
 
+    // Any pass that advances the roller pulls the fabric down; only knitting
+    // passes without it count toward the gap.
     const formsLoops = pass.actions.some((action) => action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'split')
-    if (formsLoops) {
-      passesWithoutRoller = pass.roller > 0 ? 0 : passesWithoutRoller + 1
+    if (pass.roller > 0) passesWithoutRoller = 0
+    else if (formsLoops) {
+      passesWithoutRoller += 1
       if (passesWithoutRoller === envelope.takedown.maxPassesWithoutRoller + 1) {
         add('machine-safety.takedown-gap',
-          `Pass ${pass.index + 1} makes ${passesWithoutRoller} knitting passes in a row with the roller at 0 or below; with no pull-down the loops cannot clear the needles (at most ${envelope.takedown.maxPassesWithoutRoller}).`,
+          `Pass ${pass.index + 1} makes ${passesWithoutRoller} knitting passes since the roller last pulled the fabric down; without pull-down the loops cannot clear the needles (at most ${envelope.takedown.maxPassesWithoutRoller}).`,
           pass, pass.source.footer)
       }
     }
@@ -315,7 +322,7 @@ export function validateKCodeMachineSafetyV1(
 
     if (pass.actions.some((action) => action.kind === 'split')) {
       add('machine-safety.transfer-with-carrier',
-        `Pass ${pass.index + 1} transfers with carrier ${pass.carrier}; the machine transfers only on rows with no yarn carrier.`,
+        `Pass ${pass.index + 1} transfers with carrier ${pass.carrier} (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified.`,
         pass, pass.source.footer)
     }
 
@@ -371,10 +378,10 @@ export function validateKCodeMachineSafetyV1(
         if (carrier === pass.carrier) continue
         const at = rest.get(carrier)!
         const nearest = needles.reduce((best, needle) =>
-          Math.abs(needle.stop - at) < Math.abs(best.stop - at) ? needle : best)
-        if (Math.abs(nearest.stop - at) >= distance) continue
+          Math.abs(needle.position - at) < Math.abs(best.position - at) ? needle : best)
+        if (Math.abs(nearest.position - at) >= distance) continue
         add('machine-safety.feeder-clearance',
-          `Pass ${pass.index + 1} operates needle ${formatStop(nearest.stop)} while carrier ${carrier} rests at ${formatStop(at)}, closer than ${distance}; a feeder over the needles collides with them.`,
+          `Pass ${pass.index + 1} operates needle ${formatStop(nearest.position)} while carrier ${carrier} rests at ${formatStop(at)}, closer than ${distance}; a feeder over the needles collides with them.`,
           pass, nearest.span, nearest.actionIndex)
       }
     }

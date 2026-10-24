@@ -730,9 +730,9 @@ const ENTRIES: readonly ValidatorMessage[] = [
   },
   {
     rule: 'machine-safety.transfer-with-carrier',
-    title: 'Transfer with a yarn carrier',
+    title: 'Transfer with a yarn carrier (split stitch)',
     explanation:
-      'A transfer pass has a yarn carrier assigned. Kniterate transfers only on rows with no carrier, and its editor refuses to compile one. Blocks export.',
+      'A transfer pass has a yarn carrier assigned, which makes it a split stitch. Kniterate supports split stitches, but no Kniterate reference program shows how its software writes one in KCode, so Studio refuses them until that encoding is verified. Ordinary transfers carry no yarn. Blocks export.',
     severityHint: 'error',
   },
   {
@@ -781,7 +781,7 @@ const ENTRIES: readonly ValidatorMessage[] = [
     rule: 'machine-safety.takedown-gap',
     title: 'Knitting without takedown',
     explanation:
-      'More than four knitting passes in a row run with the roller at 0. Without pull-down the new loops cannot clear the needles. No Kniterate program knits longer without takedown. Blocks export.',
+      'More than four knitting passes run since any pass last advanced the roller. Without pull-down the new loops cannot clear the needles. No Kniterate program knits longer without takedown. Blocks export.',
     severityHint: 'error',
   },
   {

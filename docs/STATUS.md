@@ -492,18 +492,24 @@ ship," trust this file and the working tree instead.
     operated needle;
   - a carriage or carrier turning less than 2.5 past the outermost operated
     needle;
-  - a transfer with a carrier (split), and a carrierless tuck-family pass that
-    selects needles;
+  - a transfer with a carrier (a split stitch: Kniterate supports them, but no
+    reference program shows how one is encoded, so it stays refused until a
+    captured program does), and a carrierless tuck-family pass that selects
+    needles;
   - a carrier that does not start at its home stop moving right, goes left of
     it, or is not home at the end (C1 −11.5, C2–C3 −9.5, C4–C6 −7.5);
   - speed outside 10–800, roller outside 0–999, more than four knitting passes
-    in a row at roller 0, knit or tuck stitch below 2, and transfer passes over
-    speed 400 or roller 450.
+    since any pass last advanced the roller, knit or tuck stitch below 2, and
+    transfer passes over speed 400 or roller 450.
+
+  Feeder clearance measures a transfer at its front-bed needle, so a racked
+  rear-to-front transfer is checked where its receiving needle actually is
+  (fixed 2026-10-24 after review).
 
   Each threshold carries its evidence in
   `KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1`: Kniterate's support articles,
   manual and Customist manual (facing needles collide, never leave a feeder
-  over the bed, transfers carry no yarn, home is on the left, speed 10–800,
+  over the bed, ordinary transfers carry no yarn, home is on the left, speed 10–800,
   small stitches break needles) plus the reference corpus, which has zero
   findings. The refusal corpus pins one case per rule (24 cases), the rule
   ledger witnesses 87 rules, the 1,904-case legality matrix asserts exactly

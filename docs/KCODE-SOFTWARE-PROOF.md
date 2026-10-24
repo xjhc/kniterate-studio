@@ -255,11 +255,12 @@ The gate establishes:
 - a blocking machine-safety envelope over every trace, authored or imported:
   no facing needles at a whole-number rack, no work off the bed edge at the
   current rack, idle carriers and carriage/carrier turns at least the 2.5
-  stopping distance from operated needles, no transfer with a carrier or
-  carrierless tuck, carriers starting and ending at their home stops, speed
-  10–800, roller 0–999, at most four knitting passes in a row without
-  takedown, knit and tuck stitch at least 2, and transfers within speed 400
-  and roller 450. Every threshold names its evidence, the 13 references have
+  stopping distance from operated needles (a transfer measured at its
+  front-bed needle), no carrierless tuck, no transfer with a carrier (a split
+  stitch, refused because no reference program shows its encoding), carriers
+  starting and ending at their home stops, speed 10–800, roller 0–999, at
+  most four knitting passes since any pass last advanced the roller, knit and
+  tuck stitch at least 2, and transfers within speed 400 and roller 450. Every threshold names its evidence, the 13 references have
   zero findings, and each rule has a pinned refusal case;
 - a shared conservative software loop-stack policy (warning above two loops,
   error above three) used by planning and KCode replay;
