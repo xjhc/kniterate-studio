@@ -1,5 +1,9 @@
 #!/usr/bin/env -S node --import tsx
-/** KCode-native refusal gate. Every case keeps one deliberate command defect. */
+/**
+ * KCode-native refusal gate. Every case keeps one deliberate defect: command
+ * cases break the command contract; machine-safety cases are otherwise clean
+ * complete jobs that break the machine-safety envelope.
+ */
 
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -12,8 +16,9 @@ import {
 } from '../src/knitout/kcode/machine-profile.js';
 import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js';
 import { validateKCodeMachineTrace } from '../src/knitout/kcode/machine-validator.js';
+import { validateKCodeMachineSafetyV1 } from '../src/knitout/kcode/machine-safety.js';
 import { parseKCodeDocument } from '../src/knitout/kcode/parser.js';
-import { isKCodeCommandLegalityExportEligible } from '../src/knitout/kcode/export-eligibility.js';
+import { isKCodeMachineExportEligible } from '../src/knitout/kcode/export-eligibility.js';
 
 const PADDING = 15;
 const NEEDLE_COLUMNS = 253;
@@ -28,6 +33,8 @@ interface PassSpec {
   rear: number[];
   carriageStops?: { left: number; right: number };
   carrierStops?: { left: number; right: number };
+  speed?: number;
+  roller?: number;
 }
 
 interface RefusalCase {
@@ -39,7 +46,7 @@ interface RefusalCase {
 interface RefusalEvaluation {
   readonly blockingRules: readonly string[];
   readonly exportEligible: boolean;
-  readonly rejectionStage: 'parser' | 'validator' | 'none';
+  readonly rejectionStage: 'parser' | 'validator' | 'machine-safety' | 'none';
 }
 
 function baseBed(selected: readonly number[]): string {
@@ -82,7 +89,7 @@ function render(passes: readonly PassSpec[]): string {
       `STIF:${'6'.repeat(BASE_WIDTH)}`,
       `REAR:${decorate(baseBed(pass.rear), pass)}`,
       `STIR:${'6'.repeat(BASE_WIDTH)}`,
-      `${pass.direction} ${pass.operation} ${pass.carrier} 300 100`,
+      `${pass.direction} ${pass.operation} ${pass.carrier} ${pass.speed ?? 300} ${pass.roller ?? 100}`,
     );
   }
   return `${lines.join('\n')}\n`;
@@ -100,6 +107,25 @@ const validTransfer = render([
   { rack: 0, direction: '<<', operation: 'Kn-Kn', carrier: '2', front: [100], rear: [] },
   { rack: 0, direction: '>>', operation: 'Tr-Rr', carrier: '0', front: [100], rear: [100] },
 ]);
+
+// A clean complete job: carrier 3 leaves its home stop, knits front 100..103
+// out and back, and returns home. Machine-safety cases each change one thing.
+const knitOut: PassSpec = {
+  rack: 0, direction: '>>', operation: 'Kn-Kn', carrier: '3', front: [100, 101, 102, 103], rear: [],
+  carriageStops: { left: -9.5, right: 105.5 }, carrierStops: { left: -9.5, right: 105.5 },
+};
+const knitBack: PassSpec = {
+  rack: 0, direction: '<<', operation: 'Kn-Kn', carrier: '3', front: [100, 101, 102, 103], rear: [],
+  carriageStops: { left: 97.5, right: 105.5 }, carrierStops: { left: 97.5, right: 105.5 },
+};
+const goHome = (from: number, carriageRight = from): PassSpec => ({
+  rack: 0, direction: '<<', operation: 'Tu-Tu', carrier: '3', front: [], rear: [],
+  carriageStops: { left: -9.5, right: carriageRight }, carrierStops: { left: -9.5, right: from },
+});
+const carriageMove = (direction: KCodePassDirectionV1, left: number, right: number): PassSpec => ({
+  rack: 0, direction, operation: 'Kn-Kn', carrier: '0', front: [], rear: [], carriageStops: { left, right },
+});
+const cleanJob = render([knitOut, knitBack, goHome(97.5)]);
 
 function replaceFooter(source: string, mutate: (line: string) => string): string {
   const lines = source.split('\n');
@@ -191,6 +217,118 @@ const CASES: readonly RefusalCase[] = [
       carrierStops: { left: 110.5, right: 120.5 },
     }]),
   },
+  {
+    id: 'facing-needles-at-rack-0',
+    expectedBlockingRules: ['machine-safety.facing-needles'],
+    source: render([{ ...knitOut, rear: [101] }, knitBack, goHome(97.5)]),
+  },
+  {
+    id: 'needle-action-off-the-bed-at-rack-1',
+    expectedBlockingRules: ['machine-safety.unsafe-bed-range'],
+    source: render([
+      { ...knitOut, rack: 1, front: [0, 1, 2, 3], carriageStops: { left: -9.5, right: 5.5 }, carrierStops: { left: -9.5, right: 5.5 } },
+      { ...knitBack, rack: 1, front: [0, 1, 2, 3], carriageStops: { left: -2.5, right: 5.5 }, carrierStops: { left: -2.5, right: 5.5 } },
+      { ...goHome(-2.5), rack: 1 },
+    ]),
+  },
+  {
+    id: 'idle-feeder-over-the-needles',
+    expectedBlockingRules: ['machine-safety.feeder-clearance'],
+    source: render([
+      { ...knitOut, carrier: '4', front: [100], carriageStops: { left: -7.5, right: 102.5 }, carrierStops: { left: -7.5, right: 102.5 } },
+      carriageMove('<<', -9.5, 102.5),
+      knitOut,
+      knitBack,
+      goHome(97.5),
+      carriageMove('>>', -9.5, 102.5),
+      { ...goHome(102.5), carrier: '4', carrierStops: { left: -7.5, right: 102.5 } },
+    ]),
+  },
+  {
+    id: 'carriage-turns-inside-stopping-distance',
+    expectedBlockingRules: ['machine-safety.stop-overrun'],
+    source: render([
+      { ...knitOut, carriageStops: { left: -9.5, right: 104.5 }, carrierStops: { left: -9.5, right: 104.5 } },
+      { ...knitBack, carriageStops: { left: 97.5, right: 104.5 }, carrierStops: { left: 97.5, right: 104.5 } },
+      goHome(97.5),
+    ]),
+  },
+  {
+    id: 'transfer-with-carrier',
+    expectedBlockingRules: ['machine-safety.transfer-with-carrier'],
+    source: render([knitOut, { ...knitBack, operation: 'Tr-Rl', front: [100], rear: [100] }, goHome(97.5)]),
+  },
+  {
+    id: 'carrierless-tuck-pass',
+    expectedBlockingRules: ['machine-safety.carrierless-tuck'],
+    source: render([
+      knitOut,
+      knitBack,
+      { ...carriageMove('>>', 97.5, 105.5), operation: 'Tu-Tu', front: [100] },
+      goHome(97.5, 105.5),
+    ]),
+  },
+  {
+    id: 'carrier-starts-away-from-home',
+    expectedBlockingRules: ['machine-safety.carrier-start'],
+    source: render([
+      { ...knitOut, carriageStops: { left: -5.5, right: 105.5 }, carrierStops: { left: -5.5, right: 105.5 } },
+      knitBack,
+      goHome(97.5),
+    ]),
+  },
+  {
+    id: 'carrier-driven-past-home',
+    expectedBlockingRules: ['machine-safety.carrier-behind-home'],
+    source: render([
+      knitOut,
+      knitBack,
+      { ...goHome(97.5), carriageStops: { left: -11.5, right: 97.5 }, carrierStops: { left: -11.5, right: 97.5 } },
+      { ...goHome(-9.5), direction: '>>', carriageStops: { left: -11.5, right: -9.5 }, carrierStops: { left: -11.5, right: -9.5 } },
+    ]),
+  },
+  {
+    id: 'carrier-left-on-the-bed',
+    expectedBlockingRules: ['machine-safety.carrier-not-home'],
+    source: render([knitOut, knitBack]),
+  },
+  {
+    id: 'speed-below-machine-range',
+    expectedBlockingRules: ['machine-safety.speed-range'],
+    source: render([{ ...knitOut, speed: 5 }, knitBack, goHome(97.5)]),
+  },
+  {
+    id: 'reversed-roller',
+    expectedBlockingRules: ['machine-safety.roller-range'],
+    source: render([{ ...knitOut, roller: -100 }, knitBack, goHome(97.5)]),
+  },
+  {
+    id: 'knitting-without-takedown',
+    expectedBlockingRules: ['machine-safety.takedown-gap'],
+    source: render([
+      { ...knitOut, roller: 0 },
+      { ...knitBack, roller: 0 },
+      { ...knitOut, roller: 0, carriageStops: { left: 97.5, right: 105.5 }, carrierStops: { left: 97.5, right: 105.5 } },
+      { ...knitBack, roller: 0 },
+      { ...knitOut, roller: 0, carriageStops: { left: 97.5, right: 105.5 }, carrierStops: { left: 97.5, right: 105.5 } },
+      goHome(105.5),
+    ]),
+  },
+  {
+    id: 'stitch-size-too-small',
+    expectedBlockingRules: ['machine-safety.stitch-too-small'],
+    source: replaceLine(cleanJob, 'STIF:', (line) => `${line.slice(0, 5 + PADDING + 100)}1${line.slice(6 + PADDING + 100)}`),
+  },
+  {
+    id: 'fast-transfer',
+    expectedBlockingRules: ['machine-safety.transfer-settings'],
+    source: render([
+      knitOut,
+      knitBack,
+      { ...carriageMove('>>', 97.5, 105.5), operation: 'Tr-Rr', front: [100], rear: [100], speed: 500 },
+      goHome(97.5, 105.5),
+    ]),
+  },
 ];
 
 function evaluate(source: string): RefusalEvaluation {
@@ -210,12 +348,22 @@ function evaluate(source: string): RefusalEvaluation {
   }
   const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
   const validation = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2);
+  const safety = validateKCodeMachineSafetyV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2);
+  const exportEligible = isKCodeMachineExportEligible({ parseOk: parsed.ok, validation, safety });
+  if (!validation.ok) {
+    return {
+      blockingRules: validation.diagnostics
+        .filter((diagnostic) => diagnostic.severity === 'error')
+        .map((diagnostic) => diagnostic.rule),
+      exportEligible,
+      rejectionStage: 'validator',
+    };
+  }
   return {
-    blockingRules: validation.diagnostics
-      .filter((diagnostic) => diagnostic.severity === 'error')
-      .map((diagnostic) => diagnostic.rule),
-    exportEligible: isKCodeCommandLegalityExportEligible({ parseOk: parsed.ok, validation }),
-    rejectionStage: validation.ok ? 'none' : 'validator',
+    // One defect may repeat across passes; name each blocking rule once.
+    blockingRules: [...new Set(safety.diagnostics.map((diagnostic) => diagnostic.rule))],
+    exportEligible,
+    rejectionStage: safety.ok ? 'none' : 'machine-safety',
   };
 }
 
@@ -232,13 +380,16 @@ export function collectKCodeCommandRefusalReport() {
     };
   });
   const noInvalidReachedExport = results.every((result) => result.refusedExport);
-  const ok = noInvalidReachedExport && results.every((result) => result.exactRules);
+  const cleanBaseline = evaluate(cleanJob);
+  const cleanBaselineExportEligible = cleanBaseline.exportEligible && cleanBaseline.blockingRules.length === 0;
+  const ok = noInvalidReachedExport && cleanBaselineExportEligible && results.every((result) => result.exactRules);
   return {
     kind: 'kniterate-kcode-command-refusal-report',
-    schemaVersion: 2,
+    schemaVersion: 3,
     ok,
     caseCount: results.length,
     noInvalidReachedExport,
+    cleanBaselineExportEligible,
     results,
   } as const;
 }

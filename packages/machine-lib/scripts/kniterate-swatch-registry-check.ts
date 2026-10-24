@@ -32,6 +32,7 @@ import {
 import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../src/knitout/kcode/machine-profile.js';
 import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js';
 import { validateKCodeMachineTrace } from '../src/knitout/kcode/machine-validator.js';
+import { validateKCodeMachineSafetyV1 } from '../src/knitout/kcode/machine-safety.js';
 import { parseKCodeDocument } from '../src/knitout/kcode/parser.js';
 
 const SHA256 = /^[a-f0-9]{64}$/;
@@ -150,6 +151,11 @@ function deriveCommandCoverage(
   const validation = validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2);
   if (!validation.ok || validation.profileConformance !== 'conformant') {
     currentnessMessages.push(`out.kc is historical under the current profile because command-legality validation fails: ${validation.diagnostics.slice(0, 8).map((diagnostic) => diagnostic.rule).join(', ')}`);
+    return null;
+  }
+  const safety = validateKCodeMachineSafetyV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2);
+  if (!safety.ok) {
+    currentnessMessages.push(`out.kc is historical because it breaks the machine-safety envelope: ${safety.diagnostics.slice(0, 8).map((diagnostic) => diagnostic.rule).join(', ')}`);
     return null;
   }
   const combinations = [...new Map(trace.passes.map((pass) => {

@@ -8,19 +8,18 @@ import type { KCodeSourceSpan } from './types.js'
 /**
  * Knitter-facing advisories over an exact strict-KCode trace.
  *
- * These mirror the float-distance and bed-range checks in the official
- * Kniterate editor, recomputed from encoded KCode alone. They are advisories,
- * not validator rules: neither establishes a physical failure, and KCode does
- * not encode carrier in/out, so a carrier resting between uses is
- * indistinguishable from a float.
+ * This mirrors the float-distance check in the official Kniterate editor,
+ * recomputed from encoded KCode alone. It is an advisory, not a validator
+ * rule: a long float is not a machine hazard, and KCode does not encode
+ * carrier in/out, so a carrier resting between uses is indistinguishable
+ * from a float. The editor's unsafe-bed-range check is a blocking
+ * machine-safety rule (`machine-safety.ts`).
  */
 export type MachineTraceAdvisoryRuleV1 =
   | 'machine-advisory.float-distance'
-  | 'machine-advisory.facing-needle-outside-domain'
 
 export const MACHINE_TRACE_ADVISORY_RULES_V1: readonly MachineTraceAdvisoryRuleV1[] = [
   'machine-advisory.float-distance',
-  'machine-advisory.facing-needle-outside-domain',
 ]
 
 /** Official editor default for its float-distance warning. */
@@ -70,17 +69,15 @@ function formatDistance(value: number): string {
 
 export function deriveMachineTraceAdvisoriesV1(
   trace: Pick<MachineTraceV1, 'passes'>,
-  profile: Pick<KCodeMachineProfileV1, 'raster'>,
+  _profile: Pick<KCodeMachineProfileV1, 'raster'>,
   options: DeriveMachineTraceAdvisoriesOptionsV1 = {},
 ): MachineTraceAdvisoryReportV1 {
   const maxFloatDistance = options.maxFloatDistance ?? DEFAULT_MAX_FLOAT_DISTANCE_V1
   if (!Number.isFinite(maxFloatDistance) || maxFloatDistance < 0) {
     throw new RangeError('Maximum float distance must be a finite non-negative number.')
   }
-  const { min, max } = profile.raster.kcodeColumnRange
   const counts: Record<MachineTraceAdvisoryRuleV1, number> = {
     'machine-advisory.float-distance': 0,
-    'machine-advisory.facing-needle-outside-domain': 0,
   }
   const advisories: MachineTraceAdvisoryV1[] = []
   const record = (advisory: MachineTraceAdvisoryV1): void => {
@@ -109,22 +106,6 @@ export function deriveMachineTraceAdvisoriesV1(
         // Unknown loop effects cannot support a later distance claim.
         lastLoopByCarrier.clear()
       }
-      if (action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'drop') {
-        const { at } = action
-        const facing = at.bed === 'front'
-          ? at.kcodeColumn - pass.rack
-          : at.kcodeColumn + pass.rack
-        if (facing < min || facing > max) {
-          record({
-            rule: 'machine-advisory.facing-needle-outside-domain',
-            passIndex: pass.index,
-            actionIndex,
-            sourceSpan: at.sourceSpan,
-            message: `Pass ${pass.index + 1} ${action.kind}s ${at.bed} KCode column ${at.kcodeColumn} at rack ${pass.rack}; the facing ${at.bed === 'front' ? 'rear' : 'front'} position ${formatDistance(facing)} is outside KCode columns ${min}..${max}.`,
-          })
-        }
-      }
-
       const formed = action.kind === 'knit' || action.kind === 'tuck'
         ? action.at
         : action.kind === 'split' ? action.source : null

@@ -191,9 +191,9 @@ describe('Kniterate 7gg KCode machine profiles', () => {
     expect(roller.footerSyntaxEvidence.confidence).toBe('pinned-implementation')
 
     expect(speed.editorDocumentedBounds.lower).toMatchObject({
-      value: null,
-      inclusive: null,
-      evidence: { confidence: 'unverified' },
+      value: 10,
+      inclusive: true,
+      evidence: { confidence: 'official-documented' },
     })
     expect(speed.editorDocumentedBounds.upper).toMatchObject({
       value: 800,

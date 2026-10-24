@@ -69,7 +69,7 @@ test('a measured gauge belongs to its backing: another keeps the numbers, not as
   await expect(page.getByLabel('Body (double-layer fabric) measured')).toBeChecked();
 });
 
-test('the waste yarn at the start is your own: shorter knits fewer passes, and a short one warns', async ({ page }) => {
+test('the waste yarn at the start is your own: shorter knits fewer passes, and one too short for the rollers is refused', async ({ page }) => {
   test.setTimeout(120_000);
   await createBeanie(page);
   const file = page.locator('.status-pieces .piece-facts');
@@ -80,10 +80,14 @@ test('the waste yarn at the start is your own: shorter knits fewer passes, and a
   await page.getByRole('button', { name: /^Machine settings/ }).click();
   const machine = page.locator('#machine');
   await expect(machine).toContainText('Standard: 81 rows');
+  await machine.getByLabel('Waste yarn rows').fill('71');
+  await machine.getByLabel('Waste yarn rows').press('Enter');
+  await expect.poll(passes, { timeout: 30_000 }).toBe(standard - 10);
+  // Below 70 the rollers may not grip the fabric: the input never applies it.
   await machine.getByLabel('Waste yarn rows').fill('41');
   await machine.getByLabel('Waste yarn rows').press('Enter');
-  await expect(machine.getByRole('alert')).toContainText('may not reach the rollers');
-  await expect.poll(passes, { timeout: 30_000 }).toBe(standard - 40);
+  await expect(machine.getByLabel('Waste yarn rows')).toHaveValue('71');
+  await expect.poll(passes, { timeout: 30_000 }).toBe(standard - 10);
   await machine.getByRole('button', { name: 'Use the standard 81' }).click();
   await expect.poll(passes, { timeout: 30_000 }).toBe(standard);
 });

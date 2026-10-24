@@ -75,8 +75,9 @@ const FrameSchema = z.object({
 /**
  * A section's machine settings where a project sets its own. Stitch sizes are
  * the KCode selectors 0–15; speed and roller stay within the editor's
- * documented range (speed up to 800 mm/s, roller −500 to 999). The machine
- * checks still refuse a program the machine cannot knit.
+ * documented range (speed up to 800 mm/s, roller −500 to 999) so saved
+ * projects keep opening. A value outside the machine-safety envelope is
+ * refused when the project compiles (`apps/studio/src/machineSetup.ts`).
  */
 const SectionSettingsSchema = z.object({
   speed: z.number().min(0).max(800).optional(),
@@ -86,7 +87,7 @@ const SectionSettingsSchema = z.object({
 export type SectionSettings = z.infer<typeof SectionSettingsSchema>;
 
 const MachineSetupSchema = z.object({
-  /** Waste interlock passes before the piece starts. Kniterate's own default is 80; much fewer and the fabric may not reach the rollers. */
+  /** Waste interlock passes before the piece starts. Kniterate's own default is 80; below 70 the fabric may not reach the rollers, and the project is refused when it compiles. */
   wasteRows: z.number().int().min(4).max(200).optional(),
   /** A draw thread (C1) between the waste yarn and the piece, pulled out to free it. False for none: the waste is unravelled or cut away. */
   drawThread: z.boolean().optional(),

@@ -15,12 +15,14 @@ import {
   resolveValidatorMessage,
   summarizeMachineTracePassMetricsV1,
   summarizeMachineTracePassRolesV1,
+  validateKCodeMachineSafetyV1,
   validateKCodeMachineTrace,
   validateKnitoutProgram,
   type KCodeDialect,
   type KCodeDocumentV1,
   type KCodeMachineTraceDiff,
   type KCodeSourceSpan,
+  type MachineSafetyReportV1,
   type MachineSceneV1,
   type MachineTraceAdvisoryReportV1,
   type MachineTracePassRoleV1,
@@ -139,6 +141,7 @@ export type MachineDiagnosticClass =
   | 'semantic'
   | 'kinematic'
   | 'operational-advisory'
+  | 'machine-safety'
   | 'knitout';
 
 export interface MachineDiagnostic extends ResolvedValidatorMessage {
@@ -469,9 +472,33 @@ function validatorFindings(
 }
 
 /**
- * Float and bed-edge advisories mirror the official editor's knitter-facing
- * checks. They carry no physical failure evidence, so foreign imports present
- * them as non-blocking information rather than verdict-gating warnings.
+ * Machine-safety findings block every foreign file: each one is a documented
+ * collision or a departure from the envelope Kniterate's own programs keep.
+ */
+function safetyFindings(
+  report: MachineSafetyReportV1,
+  emitted: boolean,
+): MachineDiagnostic[] {
+  return report.diagnostics.map((diagnostic, index) => resolveDiagnostic({
+    severity: diagnostic.severity,
+    rule: diagnostic.rule,
+    message: diagnostic.message,
+  }, {
+    id: `${emitted ? 'emitted-' : ''}${diagnostic.rule}-${diagnostic.passIndex ?? 'trace'}-${diagnostic.actionIndex ?? 'pass'}-${index}`,
+    passIndex: diagnostic.passIndex,
+    actionIndex: diagnostic.actionIndex ?? null,
+    // Emitted locations belong to generated KCode, not the imported Knitout source.
+    line: emitted ? null : diagnostic.line,
+    sourceSpan: emitted ? null : diagnostic.sourceSpan,
+    classification: diagnostic.class,
+    occurrences: diagnostic.occurrences,
+  }));
+}
+
+/**
+ * Float advisories mirror the official editor's knitter-facing check. They
+ * carry no physical failure evidence, so foreign imports present them as
+ * non-blocking information rather than verdict-gating warnings.
  */
 function advisoryFindings(
   report: MachineTraceAdvisoryReportV1,
@@ -652,7 +679,7 @@ function finishDocument(input: {
   const advisoryInfoCount = informationCount((item) => item.rule.startsWith('machine-advisory.'));
   const informationParts = [
     ...(loopStackInfoCount > 0 ? [`${loopStackInfoCount.toLocaleString()} non-blocking loop-stack observation${loopStackInfoCount === 1 ? '' : 's'}`] : []),
-    ...(advisoryInfoCount > 0 ? [`${advisoryInfoCount.toLocaleString()} non-blocking float or bed-edge advisor${advisoryInfoCount === 1 ? 'y' : 'ies'}`] : []),
+    ...(advisoryInfoCount > 0 ? [`${advisoryInfoCount.toLocaleString()} non-blocking float advisor${advisoryInfoCount === 1 ? 'y' : 'ies'}`] : []),
   ];
   const informationSummary = informationParts.length > 0
     ? ` ${informationParts.join(' and ')} remain visible as informational evidence.`
@@ -679,8 +706,8 @@ function finishDocument(input: {
           ? 'Imported warnings remain unresolved, so this foreign file is blocked under the conservative V1 policy.'
           : 'Machine-facing findings must be resolved before this file should be knit.'
         : input.format === 'kc'
-          ? `Strict KCode parsing and conformance to the V1 operation, direction, carrier, rack, selection, transfer, stop, and continuity contract passed.${informationSummary} Controller acceptance, operational limits, and physical knitting remain unproven.`
-          : `Pinned backend lowering, strict emitted KCode parsing, V1 command-contract conformance, scheduled-pass differential checks, and empty-bed state replay passed.${informationSummary} Controller acceptance and physical yarn, tension, and fabric behavior remain separate gates.`,
+          ? `Strict KCode parsing, conformance to the V1 operation, direction, carrier, rack, selection, transfer, stop, and continuity contract, and the machine-safety envelope passed.${informationSummary} Controller acceptance, settings for this yarn, and physical knitting remain unproven.`
+          : `Pinned backend lowering, strict emitted KCode parsing, V1 command-contract conformance, the machine-safety envelope, scheduled-pass differential checks, and empty-bed state replay passed.${informationSummary} Controller acceptance and physical yarn, tension, and fabric behavior remain separate gates.`,
     },
     sourceDisclosure: input.format === 'k'
       ? {
@@ -802,6 +829,7 @@ function openKCodeDocument(
       validation = validateKCodeMachineTrace(trace, KNITERATE_MACHINE_PROFILE_V1);
       scene = projectMachineScene(trace);
       appendAll(findings, validatorFindings(validation));
+      appendAll(findings, safetyFindings(validateKCodeMachineSafetyV1(trace, KNITERATE_MACHINE_PROFILE_V1), false));
       appendAll(findings, advisoryFindings(deriveMachineTraceAdvisoriesV1(trace, KNITERATE_MACHINE_PROFILE_V1), false));
     } catch (error) {
       findings.push(projectionFinding(error));
@@ -908,6 +936,7 @@ function openKnitoutDocument(
           scene = projectMachineScene(trace);
           differential = compareScheduledPassesToMachineTrace(converted.scheduledPasses, trace);
           appendAll(findings, emittedValidatorFindings(validation));
+          appendAll(findings, safetyFindings(validateKCodeMachineSafetyV1(trace, KNITERATE_MACHINE_PROFILE_V1), true));
           appendAll(findings, differentialFindings(differential));
           appendAll(findings, advisoryFindings(deriveMachineTraceAdvisoriesV1(trace, KNITERATE_MACHINE_PROFILE_V1), true));
           passes = trace.passes.map((pass, index) => tracePass(pass, {

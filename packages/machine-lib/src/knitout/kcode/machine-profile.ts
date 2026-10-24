@@ -291,7 +291,7 @@ const RACK_VALUES = [
 const operationEvidence = evidence(
   'pinned-implementation',
   [OFFICIAL_KCODE_SPECS, OFFICIAL_MACHINE_MANUAL, PINNED_BACKEND, REFERENCE_CORPUS],
-  'The official KCode 1.0 specification defines Kn/Tu/Tr/Rr/Rl bed modes and Rr/Rl receive direction. Carrier-0 and carrier-1..6 action behavior is pinned-backend and corpus evidence, not an official controller-acceptance claim. The machine manual describes physical transfer direction differently, so this contract proves serialized command conformance but does not translate a token into controller-observed physical motion.',
+  'The official KCode 1.0 specification defines Kn/Tu/Tr/Rr/Rl bed modes and Rr/Rl receive direction. Carrier-0 Kn-Kn drops and carrier-1..6 knit/tuck behavior are pinned-backend and corpus evidence, not an official controller-acceptance claim. Carrier-0 Tu-Tu/Kn-Tu/Tu-Kn selections and carrier-1..6 transfers (split) are pinned-backend only and never appear in the reference corpus; the machine-safety envelope refuses both. The machine manual describes physical transfer direction differently, so this contract proves serialized command conformance but does not translate a token into controller-observed physical motion.',
 )
 
 const regularOperation = (
@@ -463,7 +463,7 @@ export const KNITERATE_7GG_KCODE_PROFILE_V2: KCodeMachineProfileV1 = {
       footerSyntax: 'decimal-number',
       footerSyntaxEvidence: evidence('pinned-implementation', [PINNED_BACKEND]),
       editorDocumentedBounds: {
-        lower: unknownBound('Official options documentation says only “up to 800 mm/sec”; it does not state a lower editor bound.', [OFFICIAL_CUSTOMIST_MANUAL, OFFICIAL_OPTIONS]),
+        lower: officialBound(10, 'The Customist editor accepts speed values from 10 to 800.'),
         upper: officialBound(800),
       },
       operationalBounds: {

@@ -11,6 +11,7 @@ export default defineConfig({
       'test/knitout/kcode-document-property.test.ts',
       'test/knitout/kcode-machine-trace.test.ts',
       'test/knitout/kcode-machine-validator.test.ts',
+      'test/knitout/kcode-machine-safety.test.ts',
       'test/knitout/kcode-independent-oracle.test.ts',
       'test/knitout/kcode-command-legality.test.ts',
       'test/knitout/kcode-scheduled-differential.test.ts',

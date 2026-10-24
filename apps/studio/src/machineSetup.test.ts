@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
+import { CUSTOMIST_MIN_WASTE_PASSES_V1, CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
 import { runAuthoredPipeline } from './authoredPipeline';
 import { createBeanieProject } from './beanie';
 import { compileColorworkProject } from './blanket/compileProject';
@@ -10,12 +10,13 @@ import { createSweaterProject, planSweater } from './sweater/sweater';
 import { sweaterInstructions } from './sweater/sweaterHandoff';
 import { planProject } from './plan';
 import { bodyStandard, machineSetupWords, sectionStandards, settingsWarning } from './workspace/MachineSetupSection';
+import { machineSetupErrors, sectionLimits } from './machineSetup';
 import { runSweaterPipeline } from './sweater/sweaterPipeline';
 
 /** A project's own waste section: shorter than the reference saves exactly those passes, and the file still passes the strict checks. */
 
-const WASTE = 40;
-// The waste keeps the reference's parity, rounded up: 40 knits 41 on an odd reference.
+const WASTE = 71;
+// The waste keeps the reference's parity, rounded up: 71 knits 72 on birdseye's even reference.
 const knitted = (construction: keyof typeof CUSTOMIST_STANDARD_WASTE_PASSES_V1) => customistWastePassesV1(construction, WASTE);
 const withWaste = (project: ColorworkProjectV1, wasteRows: number) => appendProjectEdit(project, { id: 'setup', source: 'human', edit: { kind: 'set-machine-setup', setup: { wasteRows } } });
 
@@ -59,6 +60,67 @@ describe('the waste yarn at the start', () => {
     expect(short.verdict.state).toBe('surface');
     expect(standard.pieces[0]!.kcode!.passCount - short.pieces[0]!.kcode!.passCount).toBe(CUSTOMIST_STANDARD_WASTE_PASSES_V1.flat - knitted('flat'));
   });
+
+  it('is refused when too short for the rollers to grip, on every construction', async () => {
+    const tooShort = CUSTOMIST_MIN_WASTE_PASSES_V1 - 2;
+    const fairisle = compileColorworkProject(withWaste(chart('fairisle'), tooShort));
+    expect(fairisle.ok).toBe(false);
+    expect(fairisle.messages).toEqual([{
+      severity: 'error',
+      rule: 'project-waste-too-short',
+      message: `The waste knits ${customistWastePassesV1('fairisle', tooShort)} rows; it needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1} so the fabric reaches the rollers before your piece starts. Without pull-down the knitting fails.`,
+    }]);
+    const birdseye = await runAuthoredPipeline(withWaste(chart('birdseye'), tooShort));
+    expect(birdseye.verdict.state).toBe('blocked');
+    expect(birdseye.exportReady).toBe(false);
+    const hat = createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' }, main: { name: 'Black', hex: '#111111' } }, { id: 'hat', source: 'human', group: 'create' });
+    expect(compileColorworkProject(withWaste(hat, tooShort)).messages.map((item) => item.rule)).toEqual(['project-waste-too-short']);
+    const scarf = createPanelProject({ title: 'Scarf', widthCm: 20, lengthCm: 30, textureId: 'stockinette', yarn: { name: 'Oat', hex: '#D9CBB0' } }, { id: 'scarf', source: 'human', group: 'create' });
+    const short = await runSweaterPipeline(withWaste(scarf, tooShort));
+    expect(short.verdict.state).toBe('blocked');
+    expect(short.exportReady).toBe(false);
+    expect(short.pieces[0]!.compileError).toContain(`it needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1}`);
+    // The floor is inclusive.
+    expect(machineSetupErrors({ wasteRows: CUSTOMIST_MIN_WASTE_PASSES_V1 }, 'birdseye')).toEqual([]);
+    expect(machineSetupErrors({ wasteRows: CUSTOMIST_MIN_WASTE_PASSES_V1 - 1 }, 'birdseye')).toEqual([]);
+    expect(machineSetupErrors({ wasteRows: CUSTOMIST_MIN_WASTE_PASSES_V1 - 1 }, 'flat').map((error) => error.rule)).toEqual(['project-waste-too-short']);
+  });
+});
+
+describe('settings outside the machine-safety envelope', () => {
+  it('bound every section, with transfer limits and room for a rib’s rear stitch', () => {
+    expect(sectionLimits('body')).toEqual({ stitch: { min: 2, max: 15 }, speed: { min: 10, max: 800 }, roller: { min: 0, max: 999 } });
+    expect(sectionLimits('waste')).toEqual(sectionLimits('body'));
+    expect(sectionLimits('castOn')).toEqual(sectionLimits('body'));
+    expect(sectionLimits('rib')).toEqual({ stitch: { min: 3, max: 15 }, speed: { min: 10, max: 800 }, roller: { min: 0, max: 999 } });
+    expect(sectionLimits('transfers')).toEqual({ stitch: { min: 0, max: 15 }, speed: { min: 10, max: 400 }, roller: { min: 0, max: 450 } });
+  });
+
+  it('are refused before anything is compiled', async () => {
+    expect(machineSetupErrors({ body: { stitch: 2, speed: 10, roller: 0 }, transfers: { stitch: 0, speed: 400, roller: 450 }, rib: { stitch: 3 } }, 'flat')).toEqual([]);
+    expect(machineSetupErrors({ body: { stitch: 1, speed: 801 }, rib: { stitch: 2 }, transfers: { speed: 500, roller: 451 }, waste: { roller: -1 } }, 'flat')).toEqual([
+      { rule: 'project-setting-outside-machine-range', message: 'Waste roller -1 is outside what the machine allows (0 to 999).' },
+      { rule: 'project-setting-outside-machine-range', message: 'Rib stitch size 2 is outside what the machine allows (3 to 15).' },
+      { rule: 'project-setting-outside-machine-range', message: 'Body stitch size 1 is outside what the machine allows (2 to 15).' },
+      { rule: 'project-setting-outside-machine-range', message: 'Body speed 801 is outside what the machine allows (10 to 800).' },
+      { rule: 'project-setting-outside-machine-range', message: 'Transfers speed 500 is outside what the machine allows (10 to 400).' },
+      { rule: 'project-setting-outside-machine-range', message: 'Transfers roller 451 is outside what the machine allows (0 to 450).' },
+    ]);
+    // A chart sets only its waste and body.
+    expect(machineSetupErrors({ transfers: { speed: 500 }, body: { speed: 9 } }, 'fairisle').map((error) => error.message)).toEqual(['Body speed 9 is outside what the machine allows (10 to 800).']);
+    const setup = (project: ColorworkProjectV1, value: Record<string, unknown>) => appendProjectEdit(project, { id: 'unsafe', source: 'human', edit: { kind: 'set-machine-setup', setup: value } });
+    const chartResult = await runAuthoredPipeline(setup(chart('fairisle'), { body: { speed: 0, roller: -500 } }));
+    expect(chartResult.verdict.state).toBe('blocked');
+    expect(chartResult.exportReady).toBe(false);
+    expect(chartResult.compiled!.messages.map((item) => item.message)).toEqual([
+      'Body speed 0 is outside what the machine allows (10 to 800).',
+      'Body roller -500 is outside what the machine allows (0 to 999).',
+    ]);
+    const hat = createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' }, main: { name: 'Black', hex: '#111111' } }, { id: 'hat', source: 'human', group: 'create' });
+    const hatResult = await runAuthoredPipeline(setup(hat, { transfers: { speed: 800, roller: 999 } }));
+    expect(hatResult.verdict.state).toBe('blocked');
+    expect(hatResult.exportReady).toBe(false);
+  });
 });
 
 describe('the machine settings section', () => {
@@ -67,7 +129,7 @@ describe('the machine settings section', () => {
     expect(machineSetupWords(undefined, 'fairisle')).toMatchObject({ wasteRows: 87, drawThread: null });
     expect(machineSetupWords({ drawThread: false }, 'flat')).toMatchObject({ drawThread: false, own: true });
     expect(machineSetupWords({ wasteRows: 71 }, 'flat')).toMatchObject({ wasteRows: 71, own: true, warning: null });
-    expect(machineSetupWords({ wasteRows: 40 }, 'flat')).toMatchObject({ wasteRows: 41, own: true, warning: 'Below about 70 rows the fabric may not reach the rollers before your piece starts.' });
+    expect(machineSetupWords({ wasteRows: 40 }, 'flat')).toMatchObject({ wasteRows: 41, own: true, warning: 'Below 70 rows the fabric may not reach the rollers before your piece starts, so no program is made.' });
   });
 });
 

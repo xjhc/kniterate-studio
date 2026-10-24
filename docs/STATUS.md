@@ -471,18 +471,46 @@ ship," trust this file and the working tree instead.
   with a knit/tuck/xfer line is shown as a backend-inserted kickback, while a
   `miss`/`in`/`out` line is a requested carrier move; direct KCode records no
   origin. `machine-advisories.ts` recomputes the official editor's float-distance
-  (default maximum 7, in the front-bed frame including rack) and unsafe
-  bed-range checks (facing needle outside the KCode column domain at the
-  current rack). Both are non-blocking information for foreign files and
-  never change the verdict. Endpoints retain bed/needle coordinates, use the
+  check (default maximum 7, in the front-bed frame including rack). It is
+  non-blocking information for foreign files and never changes the verdict.
+  (The editor's unsafe bed-range check is a blocking machine-safety rule since
+  2026-10-24; see below.) Endpoints retain bed/needle coordinates, use the
   current rack, follow transfers/splits, and invalidate on drops or unknown
-  operations. The 13-file corpus now yields zero float and zero bed-range
-  advisories; the previous ten float findings used stale transferred/dropped
-  endpoints. Real synthetic long-float cases remain covered. KCode does not
+  operations. The 13-file corpus now yields zero float advisories; the
+  previous ten float findings used stale transferred/dropped endpoints. Real synthetic long-float cases remain covered. KCode does not
   encode carrier in/out, so a
   between-pass float can be a parked or cut yarn; floats are not a physical
   failure claim. Roles and advisories reach Studio, the run sheet, and
   `machine:check`.
+- **Machine-safety envelope (2026-10-24).** `machine-safety.ts` checks every
+  strict trace after the command validator, for authored and foreign files
+  alike, and every finding blocks export (`isKCodeMachineExportEligible`). It
+  refuses:
+  - knit, tuck or drop on directly facing needles at a whole-number rack;
+  - a needle whose facing position is off the bed at the current rack;
+  - an idle carrier resting within the 2.5-needle stopping distance of an
+    operated needle;
+  - a carriage or carrier turning less than 2.5 past the outermost operated
+    needle;
+  - a transfer with a carrier (split), and a carrierless tuck-family pass that
+    selects needles;
+  - a carrier that does not start at its home stop moving right, goes left of
+    it, or is not home at the end (C1 −11.5, C2–C3 −9.5, C4–C6 −7.5);
+  - speed outside 10–800, roller outside 0–999, more than four knitting passes
+    in a row at roller 0, knit or tuck stitch below 2, and transfer passes over
+    speed 400 or roller 450.
+
+  Each threshold carries its evidence in
+  `KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1`: Kniterate's support articles,
+  manual and Customist manual (facing needles collide, never leave a feeder
+  over the bed, transfers carry no yarn, home is on the left, speed 10–800,
+  small stitches break needles) plus the reference corpus, which has zero
+  findings. The refusal corpus pins one case per rule (24 cases), the rule
+  ledger witnesses 87 rules, the 1,904-case legality matrix asserts exactly
+  which cases face or split, and the module is in the mutation gate. Authored
+  setup values are checked before compiling (`machineSetup.ts`). The envelope
+  says nothing about which settings suit a yarn; physical knitting stays the
+  final gate.
 - **Programmed-motion receipt.** Strict KCode traces expose exact encoded
   stop-coordinate travel. A separate model uses the profile's documented 3.63
   mm needle pitch and each pass's encoded speed only as explicit assumptions;
@@ -616,8 +644,9 @@ ship," trust this file and the working tree instead.
     - The count keeps the reference's odd or even parity, rounding up
       (`customistWastePassesV1`). A flipped parity costs seven extra passes
       to move the waste yarn back.
-    - Below 70 rows it warns that the fabric may not reach the rollers. It
-      never refuses; the machine checks still do.
+    - Below 70 rows the fabric may not reach the rollers, so the project
+      does not compile (`project-waste-too-short`, 2026-10-24). The input
+      starts at 70; a project saved with fewer still opens and says why.
     - The swatch file uses the project's setup.
     - The old `frame` settings stay unread: every project stores their
       defaults (`wasteRows: 20`), so reading them would shrink every
@@ -653,7 +682,13 @@ ship," trust this file and the working tree instead.
         the roller pulls on the same passes. A rib keeps the reference's
         one-step difference between its front and rear stitch sizes.
       - Stitch sizes are the KCode selectors 0–15 (10–15 are written as
-        A–F). Speed and roller stay in the editor's range (up to 800;
+        A–F). Since 2026-10-24 each section's inputs stay inside the
+        machine-safety envelope (`machineSetup.ts::sectionLimits`): knitting
+        sections stitch 2–15 (a rib 3–15, for its rear bed), speed 10–800,
+        roller 0–999; transfers speed 10–400 and roller 0–450. A stored
+        value outside it blocks compiling
+        (`project-setting-outside-machine-range`). Before that they stayed in
+        the editor's range (up to 800;
         −500 to 999), with a warning outside what Kniterate's own files use
         (speed 60–700, roller 0–600).
       - A project that sets none knits byte for byte as before.
@@ -739,8 +774,10 @@ ship," trust this file and the working tree instead.
 Software now proves KCode grammar and bytes, deterministic pinned lowering,
 equivalence for every machine-executable scheduled field, programmed
 operation/direction/carrier/rack contract conformance, stops/selections/actions,
-carriage and carrier continuity, transfer pairing, and empty-bed loop-state
-transitions. Separately tested topology projection establishes a deterministic
+carriage and carrier continuity, transfer pairing, empty-bed loop-state
+transitions, and the machine-safety envelope (documented collision geometry,
+carrier home positions, stopping distance, and speed, takedown, stitch and
+transfer limits). Separately tested topology projection establishes a deterministic
 software graph and schematic rendering under that assumption. The validation
 report separates profile conformance, modeled state, operational policy, and
 controller acceptance. It does not

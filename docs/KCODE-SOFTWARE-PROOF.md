@@ -252,6 +252,15 @@ The gate establishes:
 - programmed carriage/carrier stops and continuity, selections, traversal
   order, transfer pairing, rack geometry, and action semantics;
 - empty-bed loop-state replay for knit, tuck, drop, transfer, and split;
+- a blocking machine-safety envelope over every trace, authored or imported:
+  no facing needles at a whole-number rack, no work off the bed edge at the
+  current rack, idle carriers and carriage/carrier turns at least the 2.5
+  stopping distance from operated needles, no transfer with a carrier or
+  carrierless tuck, carriers starting and ending at their home stops, speed
+  10–800, roller 0–999, at most four knitting passes in a row without
+  takedown, knit and tuck stitch at least 2, and transfers within speed 400
+  and roller 450. Every threshold names its evidence, the 13 references have
+  zero findings, and each rule has a pinned refusal case;
 - a shared conservative software loop-stack policy (warning above two loops,
   error above three) used by planning and KCode replay;
 - full-raster KCode diffing rather than footer-only comparison;
@@ -319,11 +328,16 @@ Software proof does not turn encoded commands into a physical-knit claim.
    still needs the documented two-endpoint machine observation before the UI
    labels a trace coordinate as a physical needle number. Direct foreign KCode
    has no authored-coordinate provenance and cannot inherit this bridge.
-2. **Operational safety envelopes are incomplete.** Official/editor bounds are
-   recorded separately from encodable values. The shared two/three-loop
-   thresholds are a conservative software policy, not a physical-safety claim;
-   safe speed, signed roller, and operational loop limits still require
-   authoritative evidence.
+2. **The machine-safety envelope is documented and observed, not measured.**
+   Official/editor bounds are recorded separately from encodable values. The
+   blocking machine-safety envelope (`machine-safety.ts`) takes its geometry
+   rules from Kniterate's documentation and its numeric limits from that
+   documentation and the reference corpus; no limit was measured on a
+   machine, and a value inside it is not a claim that it suits a given yarn.
+   The shared two/three-loop thresholds remain a conservative software policy
+   (Kniterate's editor also warns, and does not refuse, above two loops);
+   physically safe speed, roller and loop limits for a yarn still need the
+   physical trial.
 3. **Foreign KCode lacks carrier lifecycle.** KCode does not encode Knitout
    `in`/`out`; authored compilation retains source provenance, while a foreign
    file cannot prove carrier threading lifecycle from KCode alone.

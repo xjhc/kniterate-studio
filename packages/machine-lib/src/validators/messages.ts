@@ -701,11 +701,102 @@ const ENTRIES: readonly ValidatorMessage[] = [
     severityHint: 'info',
   },
   {
-    rule: 'machine-advisory.facing-needle-outside-domain',
+    rule: 'machine-safety.facing-needles',
+    title: 'Facing needles knit together at a whole rack',
+    explanation:
+      'A pass knits, tucks or drops on a front needle and the rear needle directly facing it while the beds are at a whole-number rack. Kniterate documents that facing needles collide when they come out together; rack to a half pitch or split the pass. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.unsafe-bed-range',
     title: 'Stitch near the bed edge at this rack',
     explanation:
-      'At the current racking, the needle facing this stitch on the other bed falls outside the KCode column domain. The official editor warns about this unsafe bed range; move the work inward or reduce the rack. Non-blocking advisory in KCode column terms, not physical needle labels.',
-    severityHint: 'info',
+      'At the current racking, the position facing this stitch on the other bed is off the bed. The official editor calls this an unsafe bed range; move the work inward or reduce the rack. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.feeder-clearance',
+    title: 'Idle yarn feeder over the needles',
+    explanation:
+      'A yarn carrier that is not knitting rests closer than the stopping distance (2.5 needles) to a needle another pass works. Kniterate warns that a feeder over the needle bed collides with the needles. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.stop-overrun',
+    title: 'Carriage or carrier turns too close to the work',
+    explanation:
+      'The carriage or the yarn carrier turns less than the stopping distance (2.5 needles) past the outermost needle the pass works. Every Kniterate program turns at least that far out. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.transfer-with-carrier',
+    title: 'Transfer with a yarn carrier',
+    explanation:
+      'A transfer pass has a yarn carrier assigned. Kniterate transfers only on rows with no carrier, and its editor refuses to compile one. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.carrierless-tuck',
+    title: 'Needles selected for a tuck with no yarn',
+    explanation:
+      'A pass with no carrier selects needles with a tuck operation. Kniterate programs drop loops only with a plain carrierless knit pass; a carrierless tuck keeps the loop, so the needle would hold more loops than the program shows. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.carrier-start',
+    title: 'Carrier does not start from home',
+    explanation:
+      'A yarn carrier\'s first pass does not start at its home stop on the left moving right. Every feeder starts the job parked at home; one that starts elsewhere depends on someone placing it by hand. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.carrier-behind-home',
+    title: 'Carrier taken past its home stop',
+    explanation:
+      'A pass moves a yarn carrier further left than its home stop. No Kniterate program does this. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.carrier-not-home',
+    title: 'Carrier left out at the end',
+    explanation:
+      'The job ends with a yarn carrier away from its home stop. The next job expects every feeder parked at home, so a feeder left on the bed can meet the needles. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.speed-range',
+    title: 'Speed outside the machine range',
+    explanation:
+      'A pass runs at a speed outside 10 to 800, the range the official editor accepts. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.roller-range',
+    title: 'Roller outside the takedown range',
+    explanation:
+      'A pass sets the roller below 0 or above 999. A negative roller turns the takedown backwards and pushes the fabric up into the needles. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.takedown-gap',
+    title: 'Knitting without takedown',
+    explanation:
+      'More than four knitting passes in a row run with the roller at 0. Without pull-down the new loops cannot clear the needles. No Kniterate program knits longer without takedown. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.stitch-too-small',
+    title: 'Stitch size too small',
+    explanation:
+      'A knit or tuck uses a stitch size below 2. Kniterate warns that a stitch that is too small can break the yarn or the needles. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.transfer-settings',
+    title: 'Transfers too fast or pulled too hard',
+    explanation:
+      'A transfer pass runs faster than speed 400 or with the roller above 450. Kniterate recommends transfers at speed 100 to 120 with the roller at 0, and its own programs stay within these limits. Blocks export.',
+    severityHint: 'error',
   },
   {
     rule: 'machine-trace.drop-empty',

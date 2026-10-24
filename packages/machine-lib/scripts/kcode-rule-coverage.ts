@@ -14,11 +14,12 @@ const RUNTIME_WITNESS_PATHS = [
   'test/knitout/kcode-document-adversarial.test.ts',
   'test/knitout/strict-kcode-document.test.ts',
   'test/knitout/kcode-machine-validator.test.ts',
+  'test/knitout/kcode-machine-safety.test.ts',
 ] as const
 
 interface RuntimeObservationRecord {
   readonly kind: 'observation'
-  readonly rail: 'raw-kcode-parser' | 'machine-trace-validator'
+  readonly rail: 'raw-kcode-parser' | 'machine-trace-validator' | 'machine-safety'
   readonly rule: string
   readonly sourcePath: string
   readonly severity: 'error' | 'warning'
@@ -26,7 +27,7 @@ interface RuntimeObservationRecord {
 
 interface RuntimeTargetedRecord {
   readonly kind: 'targeted'
-  readonly rail: 'raw-kcode-parser' | 'machine-trace-validator'
+  readonly rail: 'raw-kcode-parser' | 'machine-trace-validator' | 'machine-safety'
   readonly sourcePath: string
   readonly caseId: string
   readonly expectedRule: string
@@ -39,7 +40,7 @@ interface RuntimeTargetedRecord {
 
 type RuntimeWitnessRecord = RuntimeObservationRecord | RuntimeTargetedRecord
 
-function declaredRules(path: string, prefix: 'kcode.' | 'machine-trace.'): string[] {
+function declaredRules(path: string, prefix: 'kcode.' | 'machine-trace.' | 'machine-safety.'): string[] {
   const matches = readFileSync(path, 'utf8').matchAll(
     new RegExp(`'(${prefix.replace('.', '\\.') }[a-z0-9-]+)'`, 'g'),
   )
@@ -95,6 +96,7 @@ function collectRuntimeWitnesses(root: string): {
 export function collectKCodeRuleCoverage(root = process.cwd()) {
   const parserRules = declaredRules(resolve(root, 'src/knitout/kcode/types.ts'), 'kcode.')
   const validatorRules = declaredRules(resolve(root, 'src/knitout/kcode/machine-validator.ts'), 'machine-trace.')
+  const safetyRules = declaredRules(resolve(root, 'src/knitout/kcode/machine-safety.ts'), 'machine-safety.')
   const runtime = collectRuntimeWitnesses(root)
   const refusalReport = collectKCodeCommandRefusalReport()
   const byRule = new Map<string, RuntimeObservationRecord[]>()
@@ -116,7 +118,7 @@ export function collectKCodeRuleCoverage(root = process.cwd()) {
       byRule.set(record.rule, records)
     }
   }
-  const rules = [...parserRules, ...validatorRules]
+  const rules = [...parserRules, ...validatorRules, ...safetyRules]
   const witnesses = rules.map((rule) => {
     const observations = byRule.get(rule) ?? []
     const targeted = targetedByRule.get(rule) ?? []
@@ -161,6 +163,7 @@ export function collectKCodeRuleCoverage(root = process.cwd()) {
     ok,
     parserRuleCount: parserRules.length,
     validatorRuleCount: validatorRules.length,
+    machineSafetyRuleCount: safetyRules.length,
     runtimeWitnessedRuleCount: witnesses.length - missing.length,
     blockingRuleCount: witnesses.filter((entry) => entry.classification === 'blocking').length,
     advisoryOnlyRuleCount: witnesses.filter((entry) => entry.classification === 'advisory').length,

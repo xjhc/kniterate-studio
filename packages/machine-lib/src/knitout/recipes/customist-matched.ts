@@ -143,6 +143,17 @@ export function customistWastePassesV1(construction: keyof typeof CUSTOMIST_STAN
   return requested + (Math.abs(standard - requested) % 2)
 }
 
+/**
+ * The fewest waste passes a piece may start on. The rollers grip the waste;
+ * with less, the fabric may not reach them before the piece starts and the
+ * knitting has no pull-down. Kniterate's default is 80 interlock rows and its
+ * manual warns that fewer "may cause issues".
+ */
+export const CUSTOMIST_MIN_WASTE_PASSES_V1 = 70
+
+/** A rib knits its rear bed this many stitch sizes below the front setting. */
+export const CUSTOMIST_RIB_STITCH_STEP_V1 = FLAT.ribStitchFront - FLAT.ribStitchRear
+
 export function buildCustomistMatchedCompileInputV1(request: CustomistMatchedCompileRequestV1): CompileChartInput {
   const chart: KnitlabChartState = request.technique === 'birdseye'
     ? {

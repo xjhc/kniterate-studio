@@ -1,6 +1,7 @@
 import type {
   AuthoredKCodeCoordinateBridgeV1,
   KCodeDiagnostic,
+  MachineSafetyReportV1,
   MachineSceneV1,
   MachineTraceV1,
   MachineValidationReportV1,
@@ -50,6 +51,8 @@ export interface KCodeArtifact {
   trace: MachineTraceV1 | null;
   scene: MachineSceneV1 | null;
   validation: MachineValidationReportV1 | null;
+  /** Machine-safety envelope over the same trace; null when no trace exists. */
+  safety: MachineSafetyReportV1 | null;
   differential: ScheduledTraceComparisonV1 | null;
   passProvenance: readonly KCodePassProvenance[];
   passLines: readonly { passIndex: number; lineStart: number; lineEnd: number }[];

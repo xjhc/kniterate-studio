@@ -1281,7 +1281,8 @@ describe('KCode-native MachineTrace validation', () => {
       report.diagnostics.filter((diagnostic) =>
         diagnostic.rule === 'machine-trace.setting-documented-range').length
 
-    expect(documentedRangeCount(reportFor(-10_000, -500))).toBe(0)
+    expect(documentedRangeCount(reportFor(10, -500))).toBe(0)
+    expect(documentedRangeCount(reportFor(9.5, -500))).toBe(1)
     expect(documentedRangeCount(reportFor(800, 999))).toBe(0)
     expect(documentedRangeCount(reportFor(801, -501))).toBe(2)
     expect(documentedRangeCount(reportFor(801, 1_000))).toBe(2)
@@ -1327,6 +1328,25 @@ describe('KCode-native MachineTrace validation', () => {
       },
     }
     expect(documentedRangeCount(reportFor(300, 100_000, unknownUpperProfile))).toBe(0)
+
+    const unknownLowerProfile: KCodeMachineProfileV1 = {
+      ...KNITERATE_7GG_KCODE_PROFILE_V2,
+      processSettings: {
+        ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings,
+        speed: {
+          ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings.speed,
+          editorDocumentedBounds: {
+            ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings.speed.editorDocumentedBounds,
+            lower: {
+              ...KNITERATE_7GG_KCODE_PROFILE_V2.processSettings.speed.editorDocumentedBounds.lower,
+              value: null,
+              inclusive: null,
+            },
+          },
+        },
+      },
+    }
+    expect(documentedRangeCount(reportFor(-10_000, 0, unknownLowerProfile))).toBe(0)
   })
 
   it('sorts final loop snapshots by bed and numeric coordinate independent of insertion order', () => {

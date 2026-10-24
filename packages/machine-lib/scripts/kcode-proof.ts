@@ -26,6 +26,11 @@ import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../src/knitout/kcode/machine-pro
 import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js'
 import { emitKCodeDocumentBytes, parseKCodeBytes } from '../src/knitout/kcode/bytes.js'
 import { validateKCodeMachineTrace } from '../src/knitout/kcode/machine-validator.js'
+import {
+  KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1,
+  MACHINE_SAFETY_RULES_V1,
+  validateKCodeMachineSafetyV1,
+} from '../src/knitout/kcode/machine-safety.js'
 import { collectKCodeRuleCoverage } from './kcode-rule-coverage.js'
 
 interface GateResult {
@@ -49,6 +54,8 @@ const PROOF_TESTS = [
   'test/knitout/kcode-document-property.test.ts',
   'test/knitout/kcode-machine-trace.test.ts',
   'test/knitout/kcode-machine-validator.test.ts',
+  'test/knitout/kcode-machine-safety.test.ts',
+  'test/knitout/kcode-machine-safety-corpus.test.ts',
   'test/knitout/kcode-command-legality.test.ts',
   'test/knitout/kcode-machine-scene.test.ts',
   'test/knitout/kcode-machine-topology.test.ts',
@@ -99,6 +106,7 @@ const CONTRACT_SOURCES = [
   'src/knitout/kcode/pass-metrics.ts',
   'src/knitout/kcode/programmed-motion.ts',
   'src/knitout/kcode/machine-validator.ts',
+  'src/knitout/kcode/machine-safety.ts',
   'src/knitout/kcode/export-eligibility.ts',
   'src/knitout/kcode/machine-scene.ts',
   'src/knitout/kcode/machine-topology.ts',
@@ -278,6 +286,16 @@ function collectReferenceCorpus() {
           .join(', ')
         throw new Error(`${name} failed MachineTrace validation: ${summary}`)
       }
+      // Kniterate's own programs define the envelope's observed bounds, so any
+      // finding here is a false positive in the safety layer.
+      const safety = validateKCodeMachineSafetyV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2)
+      if (!safety.ok) {
+        const summary = safety.diagnostics
+          .slice(0, 8)
+          .map((diagnostic) => `${diagnostic.rule}@${diagnostic.line}:${diagnostic.column}`)
+          .join(', ')
+        throw new Error(`${name} failed the machine-safety envelope: ${summary}`)
+      }
       const unknownActionCount = trace.passes.reduce(
         (count, pass) => count + pass.actions.filter((action) => action.kind === 'unknown').length,
         0,
@@ -293,6 +311,7 @@ function collectReferenceCorpus() {
         actions: trace.passes.reduce((count, pass) => count + pass.actions.length, 0),
         validationErrors: validation.errorCount,
         validationWarnings: validation.warningCount,
+        safetyErrors: safety.errorCount,
       }
     })
 
@@ -476,6 +495,7 @@ function main(): void {
       'deterministic-pinned-backend-lowering',
       'machine-executable-scheduled-pass-to-machine-trace-differential',
       'kcode-native-loop-and-kinematic-validation',
+      'kniterate-machine-safety-envelope',
       'profile-command-legality-v2',
       'independent-1904-case-command-legality-matrix',
       'kcode-native-invalid-command-refusal-corpus',
@@ -504,12 +524,18 @@ function main(): void {
       directions: 2,
       carrierTokens: 7,
       rackValues: 17,
-      kcodeNativeRefusalCases: 10,
+      kcodeNativeRefusalCases: ruleCoverage?.rawCommandRefusalCoverage.caseCount ?? null,
       oracle: 'test/knitout/kcode-legality-spec.ts',
       contractSha256: sha256(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V2.operations)),
       oracleSha256: sha256(readFileSync(resolve(process.cwd(), 'test/knitout/kcode-legality-spec.ts'))),
       ruleCoverage,
       profileSha256: sha256(JSON.stringify(KNITERATE_7GG_KCODE_PROFILE_V2)),
+    },
+    machineSafety: {
+      envelope: `${KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1.id}@${KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1.version}`,
+      envelopeSha256: sha256(JSON.stringify(KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1)),
+      rules: MACHINE_SAFETY_RULES_V1,
+      referenceCorpusFindings: corpus?.fixtures.reduce((total, fixture) => total + fixture.safetyErrors, 0) ?? null,
     },
     proofTests: [
       ...PROOF_TESTS,

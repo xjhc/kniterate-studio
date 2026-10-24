@@ -24,6 +24,13 @@
   promotion now requires structured machine, yarn, run, placement, measurement,
   inspection, and photo-receipt evidence plus a fresh in-process byte-identical
   recompile and re-emission.
+- Added a blocking machine-safety envelope for every authored and imported
+  machine file. It refuses facing needles at a whole-number rack, work off the
+  bed edge, idle feeders near the needles, short carriage and carrier
+  overruns, transfers with a carrier, carrierless tucks, and carriers that
+  don't start and end at home. It also refuses speed, roller, takedown, stitch
+  and transfer settings outside Kniterate's documented and observed range.
+  Project settings outside it, or fewer than 70 waste rows, no longer compile.
 - Kept physical knitting outside the software oracle; the existing hash-bound
   real-machine trial remains the final release gate.
 

@@ -1,6 +1,6 @@
 import { appendFileSync } from 'node:fs'
 
-export type KCodeRuntimeWitnessRail = 'raw-kcode-parser' | 'machine-trace-validator'
+export type KCodeRuntimeWitnessRail = 'raw-kcode-parser' | 'machine-trace-validator' | 'machine-safety'
 
 export interface KCodeRuntimeDiagnostic {
   readonly rule: string
