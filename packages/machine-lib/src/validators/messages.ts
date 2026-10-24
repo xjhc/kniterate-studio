@@ -785,6 +785,27 @@ const ENTRIES: readonly ValidatorMessage[] = [
     severityHint: 'error',
   },
   {
+    rule: 'machine-safety.central-short-rows',
+    title: 'Short rows in the middle of the piece',
+    explanation:
+      'A needle keeps forming loops while older loops are held on both sides of it on the same bed: a short row in the centre of the piece. Kniterate can short-row only 2 to 3 rows in the centre (edges are fine), because the rollers cannot pull the middle down while the sides are held. Studio counts loops, since KCode has no rows, and refuses more than 4. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.tuck-stack',
+    title: 'Too many tucks on one needle',
+    explanation:
+      'A tuck leaves more than two loops on a needle. Kniterate\'s editor calls a loop with more than two parents dangerous, and a needle should hold at most two tucked loops. Knit the needle between tucks. Blocks export.',
+    severityHint: 'error',
+  },
+  {
+    rule: 'machine-safety.adjacent-transfers',
+    title: 'Neighbouring needles transfer together',
+    explanation:
+      'One pass transfers two neighbouring needles on the same bed. The Kniterate transfers neighbours in two passes, even needles and odd needles, for reliability. Blocks export.',
+    severityHint: 'error',
+  },
+  {
     rule: 'machine-safety.stitch-too-small',
     title: 'Stitch size too small',
     explanation:

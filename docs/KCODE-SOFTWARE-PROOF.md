@@ -260,7 +260,11 @@ The gate establishes:
   stitch, refused because no reference program shows its encoding), carriers
   starting and ending at their home stops, speed 10–800, roller 0–999, at
   most four knitting passes since any pass last advanced the roller, knit and
-  tuck stitch at least 2, and transfers within speed 400 and roller 450. Every threshold names its evidence, the 13 references have
+  tuck stitch at least 2, transfers within speed 400 and roller 450, no
+  neighbouring needles transferred together, at most four loops formed while
+  older loops are held on both sides on the same bed (central short rows),
+  and at most two loops left by a tuck. A seeded property test checks the
+  needle geometry against an independent oracle. Every threshold names its evidence, the 13 references have
   zero findings, and each rule has a pinned refusal case;
 - a shared conservative software loop-stack policy (warning above two loops,
   error above three) used by planning and KCode replay;
@@ -338,7 +342,10 @@ Software proof does not turn encoded commands into a physical-knit claim.
    The shared two/three-loop thresholds remain a conservative software policy
    (Kniterate's editor also warns, and does not refuse, above two loops);
    physically safe speed, roller and loop limits for a yarn still need the
-   physical trial.
+   physical trial. The envelope does not model attached yarn: KCode cannot
+   show whether a retired carrier's yarn was cut, so yarn dragged across
+   later knitting is not detected. Within-pass phases (pickup, release,
+   needle extension, roller timing) are not reconstructed.
 3. **Foreign KCode lacks carrier lifecycle.** KCode does not encode Knitout
    `in`/`out`; authored compilation retains source provenance, while a foreign
    file cannot prove carrier threading lifecycle from KCode alone.

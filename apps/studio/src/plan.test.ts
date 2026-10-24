@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit } from '@kniterate-studio/project-contract';
 import { planProject } from './plan';
 import { imageToChart } from './imageChart';
-import { resolveReadiness, type Finding } from './readiness';
+import { MACHINE_START_CHECKS, resolveReadiness, type Finding } from './readiness';
 
 const chart = {
   kind: 'knitlab-colorwork-chart', version: 1, title: 'Plan fixture', width: 60, height: 100, rowNumbering: 'bottom-up',
@@ -149,9 +149,12 @@ describe('readiness', () => {
   const finding = (overrides: Partial<Finding>): Finding => ({ stage: 'compile', rule: 'long-float', severity: 'warning', owner: 'design', path: null, title: '', message: 'm', fixes: [], ...overrides });
 
   it('is ready only with a non-blocked verdict and no warning or error findings', () => {
-    expect(resolveReadiness({ verdict: surface, findings: [] })).toEqual({ ready: true, blockers: [], operatorChecks: [] });
+    expect(resolveReadiness({ verdict: surface, findings: [] })).toEqual({ ready: true, blockers: [], operatorChecks: [...MACHINE_START_CHECKS] });
     expect(resolveReadiness({ verdict: surface, findings: [finding({})] }).ready).toBe(false);
-    expect(resolveReadiness({ verdict: { ...surface, state: 'blocked', label: 'Blocked' }, findings: [] }).blockers).toEqual([{ kind: 'verdict-blocked', label: 'Blocked' }]);
+    const blocked = resolveReadiness({ verdict: { ...surface, state: 'blocked', label: 'Blocked' }, findings: [] });
+    expect(blocked.blockers).toEqual([{ kind: 'verdict-blocked', label: 'Blocked' }]);
+    // No file to knit, so nothing to check at the machine.
+    expect(blocked.operatorChecks).toEqual([]);
   });
 
   it('keeps compiler-owned warnings as blockers and lists operator info as checks', () => {
@@ -164,7 +167,7 @@ describe('readiness', () => {
     ] });
     expect(result.ready).toBe(false);
     expect(result.blockers.map((blocker) => blocker.kind)).toEqual(['finding', 'assumed-value', 'missing-input', 'unsupported']);
-    expect(result.operatorChecks).toEqual(['X-carrier-spacing = 2 is not encoded']);
+    expect(result.operatorChecks).toEqual(['X-carrier-spacing = 2 is not encoded', ...MACHINE_START_CHECKS]);
   });
 });
 

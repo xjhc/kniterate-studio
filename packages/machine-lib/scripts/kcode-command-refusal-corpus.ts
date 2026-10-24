@@ -126,6 +126,7 @@ const carriageMove = (direction: KCodePassDirectionV1, left: number, right: numb
   rack: 0, direction, operation: 'Kn-Kn', carrier: '0', front: [], rear: [], carriageStops: { left, right },
 });
 const cleanJob = render([knitOut, knitBack, goHome(97.5)]);
+const WIDE = Array.from({ length: 21 }, (_, index) => 90 + index);
 
 function replaceFooter(source: string, mutate: (line: string) => string): string {
   const lines = source.split('\n');
@@ -318,6 +319,41 @@ const CASES: readonly RefusalCase[] = [
     id: 'stitch-size-too-small',
     expectedBlockingRules: ['machine-safety.stitch-too-small'],
     source: replaceLine(cleanJob, 'STIF:', (line) => `${line.slice(0, 5 + PADDING + 100)}1${line.slice(6 + PADDING + 100)}`),
+  },
+  {
+    id: 'neighbouring-transfers-in-one-pass',
+    expectedBlockingRules: ['machine-safety.adjacent-transfers'],
+    source: render([
+      knitOut,
+      knitBack,
+      { ...carriageMove('>>', 97.5, 105.5), operation: 'Tr-Rr', front: [100, 101], rear: [100, 101] },
+      goHome(97.5, 105.5),
+    ]),
+  },
+  {
+    id: 'central-short-rows',
+    expectedBlockingRules: ['machine-safety.central-short-rows'],
+    source: render([
+      { ...knitOut, front: WIDE, carriageStops: { left: -9.5, right: 112.5 }, carrierStops: { left: -9.5, right: 112.5 } },
+      ...[0, 1, 2, 3, 4].map((row): PassSpec => ({
+        ...knitBack,
+        direction: row % 2 === 0 ? '<<' : '>>',
+        front: [99, 100, 101],
+        carriageStops: { left: 96.5, right: row === 0 ? 112.5 : 103.5 },
+        carrierStops: { left: 96.5, right: row === 0 ? 112.5 : 103.5 },
+      })),
+      goHome(96.5),
+    ]),
+  },
+  {
+    id: 'three-tucks-on-a-needle',
+    expectedBlockingRules: ['machine-safety.tuck-stack'],
+    source: render([
+      knitOut,
+      { ...knitBack, operation: 'Tu-Tu' },
+      { ...knitBack, operation: 'Tu-Tu', direction: '>>' },
+      goHome(105.5),
+    ]),
   },
   {
     id: 'fast-transfer',

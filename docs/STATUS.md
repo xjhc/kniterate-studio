@@ -500,23 +500,58 @@ ship," trust this file and the working tree instead.
     it, or is not home at the end (C1 −11.5, C2–C3 −9.5, C4–C6 −7.5);
   - speed outside 10–800, roller outside 0–999, more than four knitting passes
     since any pass last advanced the roller, knit or tuck stitch below 2, and
-    transfer passes over speed 400 or roller 450.
+    transfer passes over speed 400 or roller 450;
+  - neighbouring needles on one bed transferred in the same pass (Kniterate
+    splits them into even and odd passes);
+  - central short rows: a needle forming more than four loops while older
+    loops are held on both sides of it on the same bed. Kniterate allows 2–3
+    central short rows; KCode has no rows, so loops are counted, and the
+    reference corpus reaches 4 in a double-bed backing. Holding one bed while
+    the other knits (an Ottoman) is not counted;
+  - a tuck that leaves more than two loops on a needle. A three-loop stack
+    made by transfers stays a warning, as in Kniterate's editor, because
+    Kniterate's own reference crown makes one.
 
   Feeder clearance measures a transfer at its front-bed needle, so a racked
   rear-to-front transfer is checked where its receiving needle actually is
   (fixed 2026-10-24 after review).
+
+  Every exportable project's readiness lists three operator checks no file
+  can make: an empty needle bed, every feeder parked at home, and a swatch to
+  try the settings with the yarn (`readiness.ts::MACHINE_START_CHECKS`). The
+  `machine:check` receipt states the same start assumptions.
 
   Each threshold carries its evidence in
   `KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1`: Kniterate's support articles,
   manual and Customist manual (facing needles collide, never leave a feeder
   over the bed, ordinary transfers carry no yarn, home is on the left, speed 10–800,
   small stitches break needles) plus the reference corpus, which has zero
-  findings. The refusal corpus pins one case per rule (24 cases), the rule
-  ledger witnesses 87 rules, the 1,904-case legality matrix asserts exactly
-  which cases face or split, and the module is in the mutation gate. Authored
-  setup values are checked before compiling (`machineSetup.ts`). The envelope
-  says nothing about which settings suit a yarn; physical knitting stays the
-  final gate.
+  findings. The refusal corpus pins one case per rule (27 cases), the legality
+  matrix asserts exactly which cases face or split, a seeded property test
+  checks the needle geometry against an independent oracle
+  (`kcode-machine-safety-oracle.test.ts`), and the module is in the mutation
+  gate. Authored setup values are checked before compiling against Studio's
+  limits (`machineSetup.ts`). The envelope says nothing about which settings
+  suit a yarn; physical knitting stays the final gate.
+
+  Open safety qualification work (reviewed 2026-10-24, not built):
+  - attached-yarn paths: KCode does not say whether a retired carrier's yarn
+    was cut, so a carrier taken out on the right mid-program can drag yarn
+    across later knitting without a finding; introduction, parking,
+    retirement and release need their own transition model;
+  - construction-aware held-fabric checks beyond the central short-row
+    count: where fabric is held, which region knits on, and how the rollers
+    act on it, plus edge loading and finishing;
+  - comparing our sleeve increases with Customist 2.5's minimum increase
+    spacing before calling consecutive-row increases safe or unsafe;
+  - yarn recipes that bind yarn, structure, stitch selectors, roller, speed,
+    width and transitions, qualified by swatches (Customist 2.6 adds yarn
+    profiles);
+  - within-pass execution phases (pickup, release, needle extension, roller
+    and carriage timing), kept explicit as unknowns;
+  - a versioned operation and transition conformance corpus of small
+    Customist designs with their source, version, settings and exported
+    KCode, and supervised physical runs bound to exact file hashes.
 - **Programmed-motion receipt.** Strict KCode traces expose exact encoded
   stop-coordinate travel. A separate model uses the profile's documented 3.63
   mm needle pitch and each pass's encoded speed only as explicit assumptions;

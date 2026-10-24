@@ -151,6 +151,16 @@ const PLAN_BLOCKER_KIND: Partial<Record<string, 'assumed-value' | 'missing-input
   'size-exceeds-capacity': 'unsupported',
 };
 
+/**
+ * What every machine file assumes when the job starts. No file can show
+ * these, so each one is the operator's to check at the machine, every time.
+ */
+export const MACHINE_START_CHECKS: readonly string[] = [
+  'Start with no fabric or loops on the needles: every check assumes an empty bed.',
+  'Park every yarn feeder at home on the left (C1 to C6) before you start: every check assumes they start there.',
+  'Knit a swatch to try the stitch size, speed and roller with your yarn: the file keeps inside Studio’s machine limits, which say nothing about your yarn.',
+];
+
 export function resolveReadiness(input: { verdict: AuthoredPipelineResult['verdict']; findings: readonly Finding[] }): Readiness {
   const blockers: ReadinessBlocker[] = [];
   if (input.verdict.state === 'blocked') blockers.push({ kind: 'verdict-blocked', label: input.verdict.label });
@@ -164,5 +174,7 @@ export function resolveReadiness(input: { verdict: AuthoredPipelineResult['verdi
     if (planKind !== undefined) blockers.push({ kind: planKind, path: finding.path ?? '', rule: finding.rule });
     else blockers.push({ kind: 'finding', rule: finding.rule, severity: finding.severity, owner: finding.owner, path: finding.path });
   }
+  // A file that can be knitted carries the checks it cannot make itself.
+  if (input.verdict.state !== 'blocked') operatorChecks.push(...MACHINE_START_CHECKS);
   return { ready: blockers.length === 0, blockers, operatorChecks };
 }

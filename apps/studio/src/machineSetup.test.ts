@@ -68,7 +68,7 @@ describe('the waste yarn at the start', () => {
     expect(fairisle.messages).toEqual([{
       severity: 'error',
       rule: 'project-waste-too-short',
-      message: `The waste knits ${customistWastePassesV1('fairisle', tooShort)} rows; it needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1} so the fabric reaches the rollers before your piece starts. Without pull-down the knitting fails.`,
+      message: `The waste knits ${customistWastePassesV1('fairisle', tooShort)} rows; Studio needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1}, because with fewer the fabric may not reach the rollers before your piece starts, and without pull-down the knitting fails.`,
     }]);
     const birdseye = await runAuthoredPipeline(withWaste(chart('birdseye'), tooShort));
     expect(birdseye.verdict.state).toBe('blocked');
@@ -79,7 +79,7 @@ describe('the waste yarn at the start', () => {
     const short = await runSweaterPipeline(withWaste(scarf, tooShort));
     expect(short.verdict.state).toBe('blocked');
     expect(short.exportReady).toBe(false);
-    expect(short.pieces[0]!.compileError).toContain(`it needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1}`);
+    expect(short.pieces[0]!.compileError).toContain(`Studio needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1}`);
     // The floor is inclusive.
     expect(machineSetupErrors({ wasteRows: CUSTOMIST_MIN_WASTE_PASSES_V1 }, 'birdseye')).toEqual([]);
     expect(machineSetupErrors({ wasteRows: CUSTOMIST_MIN_WASTE_PASSES_V1 - 1 }, 'birdseye')).toEqual([]);
@@ -99,22 +99,22 @@ describe('settings outside the machine-safety envelope', () => {
   it('are refused before anything is compiled', async () => {
     expect(machineSetupErrors({ body: { stitch: 2, speed: 10, roller: 0 }, transfers: { stitch: 0, speed: 400, roller: 450 }, rib: { stitch: 3 } }, 'flat')).toEqual([]);
     expect(machineSetupErrors({ body: { stitch: 1, speed: 801 }, rib: { stitch: 2 }, transfers: { speed: 500, roller: 451 }, waste: { roller: -1 } }, 'flat')).toEqual([
-      { rule: 'project-setting-outside-machine-range', message: 'Waste roller -1 is outside what the machine allows (0 to 999).' },
-      { rule: 'project-setting-outside-machine-range', message: 'Rib stitch size 2 is outside what the machine allows (3 to 15).' },
-      { rule: 'project-setting-outside-machine-range', message: 'Body stitch size 1 is outside what the machine allows (2 to 15).' },
-      { rule: 'project-setting-outside-machine-range', message: 'Body speed 801 is outside what the machine allows (10 to 800).' },
-      { rule: 'project-setting-outside-machine-range', message: 'Transfers speed 500 is outside what the machine allows (10 to 400).' },
-      { rule: 'project-setting-outside-machine-range', message: 'Transfers roller 451 is outside what the machine allows (0 to 450).' },
+      { rule: 'project-setting-outside-machine-range', message: "Waste roller -1 is outside Studio's safety limits for the machine (0 to 999)." },
+      { rule: 'project-setting-outside-machine-range', message: "Rib stitch size 2 is outside Studio's safety limits for the machine (3 to 15)." },
+      { rule: 'project-setting-outside-machine-range', message: "Body stitch size 1 is outside Studio's safety limits for the machine (2 to 15)." },
+      { rule: 'project-setting-outside-machine-range', message: "Body speed 801 is outside Studio's safety limits for the machine (10 to 800)." },
+      { rule: 'project-setting-outside-machine-range', message: "Transfers speed 500 is outside Studio's safety limits for the machine (10 to 400)." },
+      { rule: 'project-setting-outside-machine-range', message: "Transfers roller 451 is outside Studio's safety limits for the machine (0 to 450)." },
     ]);
     // A chart sets only its waste and body.
-    expect(machineSetupErrors({ transfers: { speed: 500 }, body: { speed: 9 } }, 'fairisle').map((error) => error.message)).toEqual(['Body speed 9 is outside what the machine allows (10 to 800).']);
+    expect(machineSetupErrors({ transfers: { speed: 500 }, body: { speed: 9 } }, 'fairisle').map((error) => error.message)).toEqual(["Body speed 9 is outside Studio's safety limits for the machine (10 to 800)."]);
     const setup = (project: ColorworkProjectV1, value: Record<string, unknown>) => appendProjectEdit(project, { id: 'unsafe', source: 'human', edit: { kind: 'set-machine-setup', setup: value } });
     const chartResult = await runAuthoredPipeline(setup(chart('fairisle'), { body: { speed: 0, roller: -500 } }));
     expect(chartResult.verdict.state).toBe('blocked');
     expect(chartResult.exportReady).toBe(false);
     expect(chartResult.compiled!.messages.map((item) => item.message)).toEqual([
-      'Body speed 0 is outside what the machine allows (10 to 800).',
-      'Body roller -500 is outside what the machine allows (0 to 999).',
+      "Body speed 0 is outside Studio's safety limits for the machine (10 to 800).",
+      "Body roller -500 is outside Studio's safety limits for the machine (0 to 999).",
     ]);
     const hat = createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' }, main: { name: 'Black', hex: '#111111' } }, { id: 'hat', source: 'human', group: 'create' });
     const hatResult = await runAuthoredPipeline(setup(hat, { transfers: { speed: 800, roller: 999 } }));

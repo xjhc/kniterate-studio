@@ -56,6 +56,7 @@ const PROOF_TESTS = [
   'test/knitout/kcode-machine-validator.test.ts',
   'test/knitout/kcode-machine-safety.test.ts',
   'test/knitout/kcode-machine-safety-corpus.test.ts',
+  'test/knitout/kcode-machine-safety-oracle.test.ts',
   'test/knitout/kcode-command-legality.test.ts',
   'test/knitout/kcode-machine-scene.test.ts',
   'test/knitout/kcode-machine-topology.test.ts',

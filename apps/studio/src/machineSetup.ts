@@ -39,16 +39,18 @@ export function sectionLimits(section: SetupSection): Record<keyof SectionSettin
 }
 
 /**
- * A project's own machine settings that would take the machine outside its
- * safety envelope. Each blocks compiling, so no program is exported. A chart
- * sets only its waste and body; a flat piece every section.
+ * A project's own machine settings outside Studio's machine-safety envelope.
+ * Each blocks compiling, so no program is exported. These are Studio's
+ * limits, from Kniterate's documentation and its own files, not measured
+ * hardware limits, and a value inside them is not tested with any yarn. A
+ * chart sets only its waste and body; a flat piece every section.
  */
 export function machineSetupErrors(setup: MachineSetup | undefined, construction: SetupConstruction): { rule: string; message: string }[] {
   const errors: { rule: string; message: string }[] = [];
   if (setup?.wasteRows !== undefined) {
     const passes = customistWastePassesV1(construction, setup.wasteRows);
     if (passes < CUSTOMIST_MIN_WASTE_PASSES_V1) {
-      errors.push({ rule: 'project-waste-too-short', message: `The waste knits ${passes} rows; it needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1} so the fabric reaches the rollers before your piece starts. Without pull-down the knitting fails.` });
+      errors.push({ rule: 'project-waste-too-short', message: `The waste knits ${passes} rows; Studio needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1}, because with fewer the fabric may not reach the rollers before your piece starts, and without pull-down the knitting fails.` });
     }
   }
   const sections: readonly SetupSection[] = construction === 'flat' ? ['waste', 'castOn', 'rib', 'body', 'transfers'] : ['waste', 'body'];
@@ -57,7 +59,7 @@ export function machineSetupErrors(setup: MachineSetup | undefined, construction
     for (const key of ['stitch', 'speed', 'roller'] as const) {
       const value = setup?.[section]?.[key];
       if (value === undefined || (value >= limits[key].min && value <= limits[key].max)) continue;
-      errors.push({ rule: 'project-setting-outside-machine-range', message: `${SECTION_NAMES[section]} ${key === 'stitch' ? 'stitch size' : key} ${value} is outside what the machine allows (${limits[key].min} to ${limits[key].max}).` });
+      errors.push({ rule: 'project-setting-outside-machine-range', message: `${SECTION_NAMES[section]} ${key === 'stitch' ? 'stitch size' : key} ${value} is outside Studio's safety limits for the machine (${limits[key].min} to ${limits[key].max}).` });
     }
   }
   return errors;

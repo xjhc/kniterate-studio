@@ -40,8 +40,11 @@ export type MachineSafetyRuleV1 =
   | 'machine-safety.speed-range'
   | 'machine-safety.roller-range'
   | 'machine-safety.takedown-gap'
+  | 'machine-safety.central-short-rows'
+  | 'machine-safety.tuck-stack'
   | 'machine-safety.stitch-too-small'
   | 'machine-safety.transfer-settings'
+  | 'machine-safety.adjacent-transfers'
 
 export const MACHINE_SAFETY_RULES_V1: readonly MachineSafetyRuleV1[] = [
   'machine-safety.facing-needles',
@@ -56,8 +59,11 @@ export const MACHINE_SAFETY_RULES_V1: readonly MachineSafetyRuleV1[] = [
   'machine-safety.speed-range',
   'machine-safety.roller-range',
   'machine-safety.takedown-gap',
+  'machine-safety.central-short-rows',
+  'machine-safety.tuck-stack',
   'machine-safety.stitch-too-small',
   'machine-safety.transfer-settings',
+  'machine-safety.adjacent-transfers',
 ]
 
 type MachineCarrierV1 = Exclude<KCodeCarrierToken, '0'>
@@ -89,9 +95,19 @@ export interface MachineSafetyEnvelopeV1 {
   readonly roller: { readonly min: number; readonly max: number; readonly evidence: KCodeEvidence }
   /** Longest run of loop-forming passes the rollers may leave without takedown. */
   readonly takedown: { readonly maxPassesWithoutRoller: number; readonly evidence: KCodeEvidence }
+  /**
+   * Most loops a needle may form while older loops are held on both sides of
+   * it on the same bed: central short rows. KCode encodes passes, not rows, so
+   * this counts the needle's own knits and tucks.
+   */
+  readonly centralShortRows: { readonly maxKnits: number; readonly evidence: KCodeEvidence }
+  /** Most loops a tuck may leave on a needle. */
+  readonly tuckStack: { readonly maxLoops: number; readonly evidence: KCodeEvidence }
   /** Smallest stitch selector for a knit or tuck. */
   readonly loopFormingStitch: { readonly min: number; readonly evidence: KCodeEvidence }
   readonly transfer: { readonly maxSpeed: number; readonly maxRoller: number; readonly evidence: KCodeEvidence }
+  /** Neighbouring needles on one bed transfer in separate passes. */
+  readonly adjacentTransfers: { readonly evidence: KCodeEvidence }
 }
 
 const RACKING_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360016699857'
@@ -99,6 +115,9 @@ const CHECKS_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/11698092
 const FEEDER_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360010645337'
 const TRANSFERS_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360012868118'
 const SPLIT_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360012868178'
+const LIMITATIONS_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360010783278'
+const TRANSFERS_BLOG = 'https://www.kniterate.com/2023/07/19/all-you-ever-wanted-to-know-about-transfers/'
+const KNITOUT_CHEATSHEET = 'https://soup.agnescameron.info/2026/04/09/cheatsheet.html'
 const MACHINE_MANUAL = 'https://support.kniterate.com/hc/article_attachments/360009727217'
 const CUSTOMIST_MANUAL = 'https://editor.kniterate.design/documentation'
 const PINNED_BACKEND = 'packages/machine-lib/src/knitout/vendor/knitout-to-kcode.cjs'
@@ -157,6 +176,16 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
     evidence: evidence('reference-corpus-observed', [CUSTOMIST_MANUAL, REFERENCE_CORPUS],
       'The waste section exists so the rollers can pull the fabric down; without pull-down the knitting fails. Any pass that advances the roller pulls, transfers included. No reference program knits more than 4 loop-forming passes without one.'),
   },
+  centralShortRows: {
+    maxKnits: 4,
+    evidence: evidence('official-documented', [LIMITATIONS_ARTICLE, REFERENCE_CORPUS],
+      'Kniterate: short-rowing is limited to "a maximum of 2-3 rows in the centre of the piece"; short rows at the edges are possible. KCode does not encode rows, so this counts the loops a needle forms while older loops are held on both sides of it on the same bed; holding one bed while the other knits (an Ottoman, say) is a different structure and is not counted. Reference programs reach 4, where a double-bed backing knits a rear needle more than once per row.'),
+  },
+  tuckStack: {
+    maxLoops: 2,
+    evidence: evidence('official-documented', [CHECKS_ARTICLE, CUSTOMIST_MANUAL, KNITOUT_CHEATSHEET],
+      'Kniterate\'s editor reports a loop with more than two parents as "dangerous", and knitout guidance for the Kniterate keeps stacked tucks to two. Studio refuses a tuck that leaves more than two loops; a three-loop stack made by a transfer stays a warning, as in the editor, because Kniterate\'s own reference crown makes one. No reference program tucks on a selected needle.'),
+  },
   loopFormingStitch: {
     min: 2,
     evidence: evidence('official-documented', [MACHINE_MANUAL, REFERENCE_CORPUS],
@@ -167,6 +196,10 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
     maxRoller: 450,
     evidence: evidence('reference-corpus-observed', [TRANSFERS_ARTICLE, CUSTOMIST_MANUAL, REFERENCE_CORPUS],
       'Kniterate recommends transfers at stitch 0, roller 0 and speed 100 to 120. Reference transfer passes stay within speed 400 and roller 450.'),
+  },
+  adjacentTransfers: {
+    evidence: evidence('official-documented', [TRANSFERS_BLOG, PINNED_BACKEND, REFERENCE_CORPUS],
+      'Kniterate: "When transferring multiple adjacent loops, the Kniterate machine does it in 2 passes, alternating even and odd wales for reliability." The pinned backend splits them the same way, and no reference program transfers neighbouring needles in one pass.'),
   },
 }
 
@@ -201,6 +234,15 @@ export interface MachineSafetyReportV1 {
 const MAX_MACHINE_SAFETY_DIAGNOSTIC_DETAILS = 512
 
 const CARRIERS: readonly MachineCarrierV1[] = ['1', '2', '3', '4', '5', '6']
+
+interface HeldLoops {
+  readonly bed: 'front' | 'rear'
+  readonly coordinate: number
+  readonly count: number
+  /** Pass that formed the needle's oldest loop still held. */
+  readonly formed: number
+}
+
 
 interface OperatedNeedle {
   readonly actionIndex: number
@@ -285,6 +327,16 @@ export function validateKCodeMachineSafetyV1(
   const rest = new Map<MachineCarrierV1, number>(CARRIERS.map((carrier) => [carrier, home[carrier]]))
   const lastPass = new Map<MachineCarrierV1, MachineTracePassV1>()
   let passesWithoutRoller = 0
+  const held = new Map<string, HeldLoops>()
+  // Each needle's latest loop-forming passes: more than maxKnits of them
+  // cannot change whether it exceeds maxKnits.
+  const recent = new Map<string, number[]>()
+  const needleKey = (selection: { readonly bed: 'front' | 'rear'; readonly traceCoordinate: number }) => `${selection.bed}:${selection.traceCoordinate}`
+  const recordLoop = (key: string, passIndex: number): void => {
+    const formed = recent.get(key)
+    // Stryker disable next-line MethodExpression: Equivalent mutant: the slice only bounds memory; no more than maxKnits earlier loops can change whether a needle exceeds maxKnits.
+    recent.set(key, formed === undefined ? [passIndex] : [...formed, passIndex].slice(-envelope.centralShortRows.maxKnits))
+  }
 
   for (const pass of trace.passes) {
     const needles = operatedNeedles(pass)
@@ -318,6 +370,19 @@ export function validateKCodeMachineSafetyV1(
       add('machine-safety.transfer-settings',
         `Transfer pass ${pass.index + 1} runs at speed ${pass.speedRaw} with roller ${pass.rollerRaw}; transfers stay at or below speed ${envelope.transfer.maxSpeed} and roller ${envelope.transfer.maxRoller}.`,
         pass, pass.source.footer)
+    }
+
+    const sources = pass.actions
+      .filter((action): action is Extract<MachineTraceActionV1, { readonly source: unknown }> => action.kind === 'xfer' || action.kind === 'split')
+      .map((action) => action.source)
+    const neighbour = (['front', 'rear'] as const).flatMap((bed) => {
+      const columns = sources.filter((source) => source.bed === bed).sort((a, b) => a.traceCoordinate - b.traceCoordinate)
+      return columns.filter((source, index) => index > 0 && source.traceCoordinate - columns[index - 1]!.traceCoordinate === 1)
+    })[0]
+    if (neighbour !== undefined) {
+      add('machine-safety.adjacent-transfers',
+        `Pass ${pass.index + 1} transfers neighbouring ${neighbour.bed} needles ${neighbour.traceCoordinate - 1} and ${neighbour.traceCoordinate} together; the machine transfers neighbours in separate passes, alternating even and odd needles.`,
+        pass, neighbour.sourceSpan)
     }
 
     if (pass.actions.some((action) => action.kind === 'split')) {
@@ -363,6 +428,31 @@ export function validateKCodeMachineSafetyV1(
         pass, selector.sourceSpan, actionIndex)
     }
 
+    // Loops held on both sides of a needle, on its own bed, while it keeps
+    // forming loops: a central short row. A pass that knits cannot transfer,
+    // so the needles it works are its knits, tucks and drops.
+    const operated = new Set(regular.map(({ action }) => needleKey(action.at)))
+    const waiting = [...held.entries()].filter(([key]) => !operated.has(key)).map(([, loop]) => loop)
+    for (const [actionIndex, action] of pass.actions.entries()) {
+      if (action.kind !== 'knit' && action.kind !== 'tuck') continue
+      // A side with nothing held stays at infinity, so no earlier loop counts.
+      let left = Number.POSITIVE_INFINITY
+      let right = Number.POSITIVE_INFINITY
+      for (const loop of waiting) {
+        if (loop.bed !== action.at.bed) continue
+        // Stryker disable next-line EqualityOperator,ConditionalExpression: Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate.
+        if (loop.coordinate < action.at.traceCoordinate) left = Math.min(left, loop.formed)
+        else right = Math.min(right, loop.formed)
+      }
+      const since = Math.max(left, right)
+      const earlier = recent.get(needleKey(action.at))?.filter((formed) => formed > since).length ?? 0
+      if (earlier + 1 <= envelope.centralShortRows.maxKnits) continue
+      add('machine-safety.central-short-rows',
+        `Pass ${pass.index + 1} forms more than ${envelope.centralShortRows.maxKnits} loops on ${action.at.bed} needle ${action.at.traceCoordinate} while older loops are held on both sides of it; the machine short-rows at most 2-3 rows in the centre of a piece.`,
+        pass, action.at.sourceSpan, actionIndex)
+      break
+    }
+
     if (needles.length > 0) {
       const lowest = Math.min(...needles.map((needle) => needle.stop))
       const highest = Math.max(...needles.map((needle) => needle.stop))
@@ -383,6 +473,46 @@ export function validateKCodeMachineSafetyV1(
         add('machine-safety.feeder-clearance',
           `Pass ${pass.index + 1} operates needle ${formatStop(nearest.position)} while carrier ${carrier} rests at ${formatStop(at)}, closer than ${distance}; a feeder over the needles collides with them.`,
           pass, nearest.span, nearest.actionIndex)
+      }
+    }
+
+    for (const [actionIndex, action] of pass.actions.entries()) {
+      if (action.kind === 'knit' || action.kind === 'tuck') {
+        const key = needleKey(action.at)
+        const loop = held.get(key)
+        const tucked = action.kind === 'tuck' && loop !== undefined
+        held.set(key, {
+          bed: action.at.bed,
+          coordinate: action.at.traceCoordinate,
+          count: tucked ? loop.count + 1 : 1,
+          formed: tucked ? loop.formed : pass.index,
+        })
+        recordLoop(key, pass.index)
+        if (tucked && loop.count + 1 > envelope.tuckStack.maxLoops) {
+          add('machine-safety.tuck-stack',
+            `Pass ${pass.index + 1} tucks ${action.at.bed} needle ${action.at.traceCoordinate} onto ${loop.count} loops, leaving ${loop.count + 1}; a needle holds at most ${envelope.tuckStack.maxLoops} tucked loops.`,
+            pass, action.at.sourceSpan, actionIndex)
+        }
+      } else if (action.kind === 'drop') {
+        held.delete(needleKey(action.at))
+      } else if (action.kind === 'xfer' || action.kind === 'split') {
+        const from = needleKey(action.source)
+        const loop = held.get(from)
+        if (loop === undefined) continue
+        const to = needleKey(action.target)
+        const there = held.get(to)
+        held.set(to, {
+          bed: action.target.bed,
+          coordinate: action.target.traceCoordinate,
+          count: loop.count + (there?.count ?? 0),
+          formed: Math.min(loop.formed, there?.formed ?? loop.formed),
+        })
+        if (action.kind === 'split') {
+          held.set(from, { ...loop, count: 1, formed: pass.index })
+          recordLoop(from, pass.index)
+        } else {
+          held.delete(from)
+        }
       }
     }
 

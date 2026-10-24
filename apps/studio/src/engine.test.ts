@@ -740,11 +740,14 @@ describe('Knitout machine document behavior', () => {
 
     expect(document.kcode?.differential?.ok).toBe(true);
     expect(policy.map((finding) => finding.severity)).toEqual(['info', 'error']);
-    expect(document.stats).toMatchObject({ infoCount: 1, warningCount: 0, errorCount: 1 });
+    // Stacked by tucking, the third and fourth loops are also machine-safety errors.
+    expect(document.diagnostics.filter((finding) => finding.rule === 'machine-safety.tuck-stack')).toHaveLength(2);
+    expect(document.stats).toMatchObject({ infoCount: 1, warningCount: 0, errorCount: 3 });
     expect(document.verdict.state).toBe('blocked');
   });
 
   it('opens a foreign depth-three loop stack Surface-proven with the observation visible', () => {
+    // Two transfers stack three loops on f41, as Kniterate's reference crown does.
     const source = [
       ';!knitout-2',
       ';;Machine: kniterate',
@@ -752,13 +755,22 @@ describe('Knitout machine document behavior', () => {
       'x-speed-number 300',
       'x-roller-advance 450',
       'in 2',
-      'tuck + f40 2',
-      'tuck - f40 2',
-      'tuck + f40 2',
+      'knit + f40 2',
+      'knit + f41 2',
+      'knit + f42 2',
+      'xfer f42 b42',
+      'rack -1',
+      'xfer b42 f41',
+      'rack 0',
+      'xfer f40 b40',
+      'rack 1',
+      'xfer b40 f41',
+      'rack 0',
+      'knit - f41 2',
       'out 2',
       '',
     ].join('\n');
-    const document = openMachineDocument('three-tucks.k', source);
+    const document = openMachineDocument('three-by-transfer.k', source);
 
     expect(document.diagnostics).toContainEqual(expect.objectContaining({
       severity: 'info',
@@ -835,6 +847,32 @@ describe('Knitout machine document behavior', () => {
     expect(document.verdict.annotation).toContain('1 non-blocking float advisory remain visible');
   });
 
+  it('refuses a depth-three stack made by tucking', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      'x-speed-number 300',
+      'x-roller-advance 450',
+      'in 2',
+      'tuck + f40 2',
+      'tuck - f40 2',
+      'tuck + f40 2',
+      'out 2',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('three-tucks.k', source);
+
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({ severity: 'info', rule: 'machine-trace.loop-stack-policy' }));
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'error',
+      classification: 'machine-safety',
+      rule: 'machine-safety.tuck-stack',
+      passIndex: 2,
+    }));
+    expect(document.verdict.state).toBe('blocked');
+  });
+
   it('keeps rule-specific truncated depth-three observations informational', () => {
     const operations = Array.from({ length: 513 }, () => [
       'tuck + f40 2',
@@ -863,11 +901,9 @@ describe('Knitout machine document behavior', () => {
       occurrences: 1,
       rawMessage: expect.stringContaining('omitted 1 additional warning finding'),
     }));
-    expect(document.stats).toMatchObject({ infoCount: 513, warningCount: 0, errorCount: 0 });
-    expect(document.verdict).toMatchObject({
-      state: 'surface',
-      label: 'Surface-proven (imported)',
-    });
+    // The observations stay information; the tucked stacks themselves are machine-safety errors.
+    expect(document.stats).toMatchObject({ infoCount: 513, warningCount: 0, errorCount: 513 });
+    expect(document.verdict.state).toBe('blocked');
   });
 
   it('pins every reference-corpus import verdict to the documented policy', { timeout: 30_000 }, () => {

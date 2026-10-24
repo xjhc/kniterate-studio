@@ -31,7 +31,11 @@
   verified), carrierless tucks, and carriers that don't start and end at
   home. It also refuses speed, roller, takedown, stitch
   and transfer settings outside Kniterate's documented and observed range.
-  Project settings outside it, or fewer than 70 waste rows, no longer compile.
+  It also refuses neighbouring transfers in one pass, more than four loops in
+  a central short row, and more than two tucked loops on a needle. Project
+  settings outside Studio's limits, or fewer than 70 waste rows, no longer
+  compile, and every knittable project lists the start-of-job operator
+  checks.
 - Kept physical knitting outside the software oracle; the existing hash-bound
   real-machine trial remains the final release gate.
 

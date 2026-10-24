@@ -422,6 +422,176 @@ describe('KCode machine-safety envelope', () => {
     })
   })
 
+  describe('neighbouring transfers', () => {
+    const transferring = (actions: MachineTraceActionV1[], operation: KCodeOperationV1 = 'Tr-Rr') =>
+      safety(job({ direction: '>>', carrier: '0', operation, carriage: { left: 90.5, right: 112.5 }, actions }))
+    const count = (report: MachineSafetyReportV1) => report.counts['machine-safety.adjacent-transfers']
+
+    it('refuses neighbouring needles transferred in one pass', () => {
+      const report = transferring([xfer(101, 101), xfer(100, 100)])
+      expectTargeted('neighbouring-transfers', 'machine-safety.adjacent-transfers', report)
+      expect(report.diagnostics).toEqual([expect.objectContaining({
+        passIndex: 0,
+        sourceSpan: at('front', 101, 0).sourceSpan,
+        message: 'Pass 1 transfers neighbouring front needles 100 and 101 together; the machine transfers neighbours in separate passes, alternating even and odd needles.',
+      })])
+      expect(Object.keys(report.diagnostics[0]!)).not.toContain('actionIndex')
+    })
+
+    it('checks each bed, splits too, and reports a pass once', () => {
+      expect(count(transferring([xfer(100, 100), xfer(102, 102), xfer(104, 104)]))).toBe(0)
+      expect(count(transferring([xfer(100, 100), xfer(101, 101), xfer(102, 102)]))).toBe(1)
+      expect(messages(transferring([xferToFront(100, 100), xferToFront(101, 101)], 'Rr-Tr'))[0]).toContain('neighbouring rear needles 100 and 101')
+      expect(count(transferring([xfer(100, 100), xferToFront(101, 101)]))).toBe(0)
+      expect(count(transferring([xfer(100, 100), xferToFront(100, 100), xfer(101, 101)]))).toBe(1)
+      expect(messages(transferring([xferToFront(100, 100), xferToFront(101, 101), xfer(110, 110), xfer(111, 111)]))[0]).toContain('front needles 110 and 111')
+      expect(count(transferring([split(100, 100, '3'), split(101, 101, '3')]))).toBe(1)
+      expect(count(transferring([knit('front', 100), knit('front', 101)]))).toBe(0)
+    })
+  })
+
+  describe('central short rows', () => {
+    const WIDE = [90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110]
+    const run = (rows: number, bed: MachineTraceBedV1 = 'front', needles = [99, 100, 101], held: MachineTraceBedV1 = bed) => safety(job(
+      { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: WIDE.map((needle) => knit(held, needle)) },
+      ...Array.from({ length: rows }, (_, row): PassSpec => ({
+        direction: row % 2 === 0 ? '<<' : '>>',
+        carrier: '3',
+        carriage: { left: 96.5, right: 112.5 },
+        actions: needles.map((needle) => knit(bed, needle)),
+      })),
+    ))
+    const count = (report: MachineSafetyReportV1) => report.counts['machine-safety.central-short-rows']
+
+    it('refuses more than four loops formed in the centre while both sides are held', () => {
+      expect(count(run(4))).toBe(0)
+      const five = run(5)
+      expectTargeted('central-short-rows', 'machine-safety.central-short-rows', { ...five, diagnostics: five.diagnostics.filter((item) => item.rule === 'machine-safety.central-short-rows') })
+      expect(five.diagnostics.filter((item) => item.rule === 'machine-safety.central-short-rows')).toEqual([expect.objectContaining({
+        passIndex: 5,
+        actionIndex: 0,
+        sourceSpan: at('front', 99).sourceSpan,
+        message: 'Pass 6 forms more than 4 loops on front needle 99 while older loops are held on both sides of it; the machine short-rows at most 2-3 rows in the centre of a piece.',
+      })])
+      // One finding per pass, however many needles are in the short row.
+      expect(count(run(7))).toBe(3)
+      expect(count(run(7, 'rear'))).toBe(3)
+    })
+
+    it('allows short rows at an edge and holding one bed while the other knits', () => {
+      expect(count(run(8, 'front', [90, 91, 92]))).toBe(0)
+      expect(count(run(8, 'front', [108, 109, 110]))).toBe(0)
+      // An Ottoman: the front holds while the rear knits extra rows.
+      expect(count(run(8, 'rear', [99, 100, 101], 'front'))).toBe(0)
+    })
+
+    // Pass 0 knits the full width; then `before` rows of needle 100, the passes
+    // in `between`, and `after` more rows of needle 100.
+    const sequence = (before: number, between: PassSpec[], after: number) => count(safety(job(
+      { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: WIDE.map((needle) => knit('front', needle)) },
+      ...Array.from({ length: before }, (_, row): PassSpec => ({ direction: row % 2 === 0 ? '<<' : '>>', carrier: '3', carriage: { left: 96.5, right: 112.5 }, actions: [knit('front', 100)] })),
+      ...between,
+      ...Array.from({ length: after }, (_, row): PassSpec => ({ direction: row % 2 === 0 ? '<<' : '>>', carrier: '3', carriage: { left: 96.5, right: 112.5 }, actions: [knit('front', 100)] })),
+    )))
+    const RIGHT = [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]
+
+    it('counts from the younger side: a knit renews a held loop and a tuck does not', () => {
+      // Two rows, a pass over the right side, three more rows of needle 100.
+      expect(sequence(2, [], 3)).toBe(1)
+      const renew: PassSpec = { direction: '<<', carrier: '3', carriage: { left: 96.5, right: 112.5 }, actions: [...RIGHT].reverse().map((needle) => knit('front', needle)) }
+      expect(sequence(2, [renew], 3)).toBe(0)
+      expect(sequence(2, [renew], 5)).toBe(1)
+      const tucks: PassSpec = { ...renew, operation: 'Tu-Tu', actions: [...RIGHT].reverse().map((needle) => tuck('front', needle)) }
+      expect(sequence(2, [tucks], 3)).toBe(1)
+    })
+
+    it('follows held loops through drops, transfers and splits', () => {
+      expect(sequence(2, [], 3)).toBe(1)
+      const dropRight: PassSpec = { direction: '>>', carrier: '0', carriage: { left: 98.5, right: 112.5 }, actions: RIGHT.map((needle) => drop('front', needle)) }
+      expect(sequence(2, [dropRight], 3)).toBe(0)
+      const even = [102, 104, 106, 108, 110]
+      const odd = [101, 103, 105, 107, 109]
+      const toRear = (needles: number[]): PassSpec => ({ direction: '>>', carrier: '0', operation: 'Tr-Rr', carriage: { left: 98.5, right: 112.5 }, actions: needles.map((needle) => xfer(needle, needle)) })
+      const toFront = (needles: number[]): PassSpec => ({ direction: '<<', carrier: '0', operation: 'Rl-Tr', carriage: { left: 98.5, right: 112.5 }, actions: needles.map((needle) => xferToFront(needle, needle)) })
+      // Moved to the rear, the right side is no longer held on the front bed.
+      expect(sequence(2, [toRear(even), toRear(odd)], 3)).toBe(0)
+      // Moved back, its loops keep their age.
+      expect(sequence(2, [toRear(even), toFront(even)], 3)).toBe(1)
+      // A loop moved onto a needle already holding one keeps the older age.
+      expect(sequence(2, [toRear(even), { ...toRear(odd), actions: odd.map((needle) => knit('rear', needle + 1)) }, toFront(even)], 3)).toBe(1)
+      // A split leaves a new loop where it transfers from.
+      const splitRight: PassSpec = { direction: '>>', carrier: '3', operation: 'Tr-Rr', carriage: { left: 98.5, right: 112.5 }, actions: RIGHT.map((needle) => split(needle, needle, '3')) }
+      expect(sequence(2, [splitRight], 3)).toBe(0)
+      expect(sequence(2, [splitRight], 5)).toBe(1)
+      // A split on the short-row needle forms one of its loops.
+      const splitCentre: PassSpec = { direction: '>>', carrier: '3', operation: 'Tr-Rr', carriage: { left: 97.5, right: 112.5 }, actions: [split(100, 100, '3')] }
+      expect(sequence(3, [splitCentre], 1)).toBe(1)
+      expect(sequence(2, [splitCentre], 1)).toBe(0)
+    })
+
+    it('keeps the older age when a loop joins a needle already holding one', () => {
+      // Only needle 110 is held on the right: it moves to the rear onto a younger loop and back.
+      const dropMiddle: PassSpec = { direction: '>>', carrier: '0', carriage: { left: 98.5, right: 112.5 }, actions: RIGHT.slice(0, 9).map((needle) => drop('front', needle)) }
+      const youngRear: PassSpec = { direction: '<<', carrier: '3', carriage: { left: 97.5, right: 112.5 }, actions: [knit('rear', 110)] }
+      const toRear: PassSpec = { direction: '>>', carrier: '0', operation: 'Tr-Rr', carriage: { left: 107.5, right: 112.5 }, actions: [xfer(110, 110)] }
+      const toFront: PassSpec = { direction: '<<', carrier: '0', operation: 'Rl-Tr', carriage: { left: 107.5, right: 112.5 }, actions: [xferToFront(110, 110)] }
+      expect(sequence(2, [dropMiddle, youngRear, toRear, toFront], 3)).toBe(1)
+    })
+
+    it('counts a needle first knitted after its sides, and tucks as well as knits', () => {
+      const withoutCentre = (rows: PassSpec[]) => count(safety(job(
+        { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: WIDE.filter((needle) => needle !== 100).map((needle) => knit('front', needle)) },
+        ...rows,
+      )))
+      const row = (index: number, action: MachineTraceActionV1): PassSpec => ({ direction: index % 2 === 0 ? '<<' : '>>', carrier: '3', carriage: { left: 96.5, right: 112.5 }, actions: [action] })
+      expect(withoutCentre([0, 1, 2, 3].map((index) => row(index, knit('front', 100))))).toBe(0)
+      expect(withoutCentre([0, 1, 2, 3, 4].map((index) => row(index, knit('front', 100))))).toBe(1)
+      // Tuck, knit, tuck, knit, tuck: the fifth loop is a tuck, and never more than two loops.
+      const alternating = [0, 1, 2, 3, 4].map((index) => row(index, index % 2 === 0 ? tuck('front', 100) : knit('front', 100)))
+      expect(withoutCentre(alternating)).toBe(1)
+    })
+
+    it('ends a short row when a held side is knitted in the same pass', () => {
+      // Only needle 110 is held on the right; the fifth row knits it with the centre.
+      const dropMiddle: PassSpec = { direction: '>>', carrier: '0', carriage: { left: 98.5, right: 112.5 }, actions: RIGHT.slice(0, 9).map((needle) => drop('front', needle)) }
+      const both: PassSpec = { direction: '<<', carrier: '3', carriage: { left: 96.5, right: 112.5 }, actions: [knit('front', 110), knit('front', 100)] }
+      expect(sequence(0, [dropMiddle], 4)).toBe(0)
+      expect(count(safety(job(
+        { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: WIDE.map((needle) => knit('front', needle)) },
+        dropMiddle,
+        ...[0, 1, 2, 3].map((index): PassSpec => ({ direction: index % 2 === 0 ? '<<' : '>>', carrier: '3', carriage: { left: 96.5, right: 112.5 }, actions: [knit('front', 100)] })),
+        both,
+      )))).toBe(0)
+    })
+  })
+
+  describe('tuck stacks', () => {
+    const stack = (...passes: MachineTraceActionV1[][]) => safety(job(...passes.map((actions, index): PassSpec => ({
+      direction: index % 2 === 0 ? '>>' : '<<', carrier: actions.some((action) => action.kind === 'xfer') ? '0' : '3', carriage: { left: 90.5, right: 110.5 }, actions,
+    }))))
+    const count = (report: MachineSafetyReportV1) => report.counts['machine-safety.tuck-stack']
+
+    it('refuses a tuck that leaves more than two loops on a needle', () => {
+      expect(count(stack([tuck('front', 100)], [tuck('front', 100)]))).toBe(0)
+      const three = stack([knit('front', 100)], [tuck('front', 100)], [tuck('front', 100)])
+      expectTargeted('tuck-stack', 'machine-safety.tuck-stack', { ...three, diagnostics: three.diagnostics.filter((item) => item.rule === 'machine-safety.tuck-stack') })
+      expect(three.diagnostics.filter((item) => item.rule === 'machine-safety.tuck-stack')).toEqual([expect.objectContaining({
+        passIndex: 2,
+        actionIndex: 0,
+        sourceSpan: at('front', 100).sourceSpan,
+        message: 'Pass 3 tucks front needle 100 onto 2 loops, leaving 3; a needle holds at most 2 tucked loops.',
+      })])
+    })
+
+    it('counts loops a transfer brings, and resets on a knit, drop or split', () => {
+      expect(count(stack([knit('rear', 100)], [knit('front', 100)], [xfer(100, 100)], [tuck('rear', 100)]))).toBe(1)
+      expect(count(stack([knit('front', 100)], [tuck('front', 100)], [knit('front', 100)], [tuck('front', 100)]))).toBe(0)
+      expect(count(stack([knit('front', 100)], [tuck('front', 100)], [drop('front', 100)], [tuck('front', 100)], [tuck('front', 100)]))).toBe(0)
+      expect(count(stack([knit('front', 100)], [tuck('front', 100)], [split(100, 100, '3')], [tuck('front', 100)]))).toBe(0)
+      expect(count(stack([knit('front', 100)], [xfer(100, 100)], [tuck('front', 100)], [tuck('front', 100)]))).toBe(0)
+    })
+  })
+
   it('refuses a carrierless pass that selects needles with anything but Kn-Kn', () => {
     const carrierless = (operation: KCodeOperationV1, actions: MachineTraceActionV1[], carrier: KCodeCarrierToken = '0') =>
       safety(job({ direction: '>>', carrier, operation, carriage: { left: 97.5, right: 105.5 }, actions }))
@@ -654,6 +824,8 @@ describe('KCode machine-safety envelope', () => {
     expect(envelope.takedown.maxPassesWithoutRoller).toBe(4)
     expect(envelope.loopFormingStitch.min).toBe(2)
     expect([envelope.transfer.maxSpeed, envelope.transfer.maxRoller]).toEqual([400, 450])
+    expect(envelope.centralShortRows.maxKnits).toBe(4)
+    expect(envelope.tuckStack.maxLoops).toBe(2)
     const racking = 'https://support.kniterate.com/hc/en-us/articles/360016699857'
     const checks = 'https://support.kniterate.com/hc/en-us/articles/11698092127005'
     const feeder = 'https://support.kniterate.com/hc/en-us/articles/360010645337'
@@ -678,6 +850,9 @@ describe('KCode machine-safety envelope', () => {
       takedown: ['reference-corpus-observed', [customist, corpus]],
       loopFormingStitch: ['official-documented', [manual, corpus]],
       transfer: ['reference-corpus-observed', [transfers, customist, corpus]],
+      centralShortRows: ['official-documented', ['https://support.kniterate.com/hc/en-us/articles/360010783278', corpus]],
+      tuckStack: ['official-documented', [checks, customist, 'https://soup.agnescameron.info/2026/04/09/cheatsheet.html']],
+      adjacentTransfers: ['official-documented', ['https://www.kniterate.com/2023/07/19/all-you-ever-wanted-to-know-about-transfers/', backend, corpus]],
     })
     for (const value of Object.values(envelope)) {
       if (typeof value !== 'object') continue
