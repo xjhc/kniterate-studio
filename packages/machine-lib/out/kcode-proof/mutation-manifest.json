@@ -22,7 +22,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "sha256": "dc9e5037a91bc0806b83228a9ef35be556e604d5d2209378a57cde071fd8f442"
+      "sha256": "90fb0de5db402d65bdd8f0fd56a07b9cfdfd16b475711d9a63b62d414b867d13"
     },
     {
       "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -167,15 +167,15 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "startLine": 413,
-      "endLine": 413,
+      "startLine": 420,
+      "endLine": 420,
       "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
     }
   ],
   "diagnosticProseExclusions": [
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "line": 413,
+      "line": 420,
       "column": 16,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -398,7 +398,7 @@
       "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
     }
   ],
-  "diagnosticProseExclusionsSha256": "d07b29b7105108b13e522c03bc324582b7c3dd91c1f6b76541e261293b5373b0",
+  "diagnosticProseExclusionsSha256": "617e84a333ab21ae8bbe47b84b188ff787438ea02265cdc29737bb09d5583cd4",
   "equivalentMutantSuppressions": [
     {
       "path": "src/knitout/kcode/machine-trace.ts",
@@ -669,7 +669,7 @@
   "unreviewedIgnoredMutants": [],
   "misScopedDiagnosticProseExclusions": [],
   "counts": {
-    "Killed": 2898,
+    "Killed": 2903,
     "Survived": 0,
     "Timeout": 0,
     "NoCoverage": 0,
