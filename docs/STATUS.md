@@ -515,7 +515,19 @@ ship," trust this file and the working tree instead.
     every needle it moves to, and a lineage count refuses them;
   - a tuck that leaves more than two loops on a needle. A three-loop stack
     made by transfers stays a warning, as in Kniterate's editor, because
-    Kniterate's own reference crown makes one.
+    Kniterate's own reference crown makes one;
+  - work under another carrier's dragged yarn. A carrier that moves without
+    knitting (parking, a kick, a Knitout `out`) drags its yarn from its last
+    stitch, which a transfer takes along, to where it rests; KCode cannot say
+    a yarn was cut, so it stays attached. Until the rollers have run 26 passes
+    since that stitch, no other pass may work a needle under it more than the
+    editor's float distance (7) past it. Taking a carrier out on the right
+    partway through drags its yarn across the whole piece (Cameron's Knitout
+    notes); reference programs work farther under a parked yarn only after 26
+    roller passes, as a sleeve widens under one (added 2026-10-25 after
+    review). Studio's chain bind-off now starts on the side its yarn ended,
+    walking the mirror image from the right, instead of first moving the yarn
+    left across the live stitches.
 
   Feeder clearance measures a transfer at its front-bed needle, so a racked
   rear-to-front transfer is checked where its receiving needle actually is
@@ -532,7 +544,7 @@ ship," trust this file and the working tree instead.
   manual and Customist manual (facing needles collide, never leave a feeder
   over the bed, ordinary transfers carry no yarn, home is on the left, speed 10–800,
   small stitches break needles) plus the reference corpus, which has zero
-  findings. The refusal corpus pins one case per rule (27 cases), the legality
+  findings. The refusal corpus pins one case per rule (28 cases), the legality
   matrix asserts exactly which cases face or split, a seeded property test
   checks the needle geometry against an independent oracle
   (`kcode-machine-safety-oracle.test.ts`), and the module is in the mutation
@@ -541,10 +553,13 @@ ship," trust this file and the working tree instead.
   suit a yarn; physical knitting stays the final gate.
 
   Open safety qualification work (reviewed 2026-10-24, not built):
-  - attached-yarn paths: KCode does not say whether a retired carrier's yarn
-    was cut, so a carrier taken out on the right mid-program can drag yarn
-    across later knitting without a finding; introduction, parking,
-    retirement and release need their own transition model;
+  - attached-yarn paths beyond the blocking rule above. It follows a yarn
+    only from its latest stitch, and it leaves a carry within a knitting pass
+    to the float advisory. Studio's four-colour birdseye ("minimal" backing)
+    carries a colour that is absent from the end of a row up to 19 needles
+    past its last stitch before other yarns knit there; Kniterate's own
+    double-bed programs never go past 1. Introduction, and release of a yarn
+    known to be cut, have no model;
   - construction-aware held-fabric checks beyond the central short-row
     count: where fabric is held, which region knits on, and how the rollers
     act on it, plus edge loading and finishing. The count is per needle

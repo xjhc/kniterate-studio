@@ -356,6 +356,16 @@ const CASES: readonly RefusalCase[] = [
     ]),
   },
   {
+    id: 'knitting-under-a-yarn-taken-out-on-the-right',
+    expectedBlockingRules: ['machine-safety.attached-yarn'],
+    source: render([
+      { ...knitOut, front: WIDE, carriageStops: { left: -9.5, right: 112.5 }, carrierStops: { left: -9.5, right: 112.5 } },
+      goHome(112.5),
+      { ...knitOut, carrier: '4', front: WIDE, carriageStops: { left: -9.5, right: 112.5 }, carrierStops: { left: -7.5, right: 112.5 } },
+      { ...goHome(112.5), carrier: '4', carrierStops: { left: -7.5, right: 112.5 } },
+    ]),
+  },
+  {
     id: 'fast-transfer',
     expectedBlockingRules: ['machine-safety.transfer-settings'],
     source: render([

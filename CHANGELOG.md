@@ -32,7 +32,10 @@
   home. It also refuses speed, roller, takedown, stitch
   and transfer settings outside Kniterate's documented and observed range.
   It also refuses neighbouring transfers in one pass, more than four loops in
-  a central short row, and more than two tucked loops on a needle. Project
+  a central short row, more than two tucked loops on a needle, and work under
+  a yarn that a carrier dragged away without knitting, such as one taken out
+  on the right partway through. Studio's chain bind-off now starts on the
+  side its yarn ended instead of dragging the yarn across first. Project
   settings outside Studio's limits, or fewer than 70 waste rows, no longer
   compile, and every knittable project lists the start-of-job operator
   checks.

@@ -3,10 +3,12 @@ import type {
   KCodeEvidence,
   KCodeMachineProfileV1,
 } from './machine-profile.js'
+import { DEFAULT_MAX_FLOAT_DISTANCE_V1 } from './machine-advisories.js'
 import {
   regularActionTraversalCoordinate,
   type MachineTraceActionV1,
   type MachineTracePassV1,
+  type MachineTraceSelectionV1,
   type MachineTraceStopRangeV1,
   type MachineTraceV1,
 } from './machine-trace.js'
@@ -25,7 +27,8 @@ import type { KCodeSourceSpan } from './types.js'
  * every yarn; that remains the physical trial's job.
  *
  * The envelope assumes the documented job boundary: every carrier starts the
- * job parked at its home stop on the left and the job leaves it there.
+ * job parked at its home stop on the left and the job leaves it there. It
+ * also assumes no yarn is cut during the job, which KCode cannot record.
  */
 export type MachineSafetyRuleV1 =
   | 'machine-safety.facing-needles'
@@ -45,6 +48,7 @@ export type MachineSafetyRuleV1 =
   | 'machine-safety.stitch-too-small'
   | 'machine-safety.transfer-settings'
   | 'machine-safety.adjacent-transfers'
+  | 'machine-safety.attached-yarn'
 
 export const MACHINE_SAFETY_RULES_V1: readonly MachineSafetyRuleV1[] = [
   'machine-safety.facing-needles',
@@ -64,6 +68,7 @@ export const MACHINE_SAFETY_RULES_V1: readonly MachineSafetyRuleV1[] = [
   'machine-safety.stitch-too-small',
   'machine-safety.transfer-settings',
   'machine-safety.adjacent-transfers',
+  'machine-safety.attached-yarn',
 ]
 
 type MachineCarrierV1 = Exclude<KCodeCarrierToken, '0'>
@@ -109,6 +114,13 @@ export interface MachineSafetyEnvelopeV1 {
   readonly transfer: { readonly maxSpeed: number; readonly maxRoller: number; readonly evidence: KCodeEvidence }
   /** Neighbouring needles on one bed transfer in separate passes. */
   readonly adjacentTransfers: { readonly evidence: KCodeEvidence }
+  /**
+   * A carrier moved without knitting drags its yarn from its last stitch to
+   * where it rests: KCode cannot say the yarn was cut. Until the rollers have
+   * run freshPulls passes since that stitch, no other pass works a needle
+   * under the yarn more than maxNeedles past it, a float's length.
+   */
+  readonly attachedYarn: { readonly maxNeedles: number; readonly freshPulls: number; readonly evidence: KCodeEvidence }
 }
 
 const RACKING_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360016699857'
@@ -119,6 +131,7 @@ const SPLIT_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360012868
 const LIMITATIONS_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360010783278'
 const TRANSFERS_BLOG = 'https://www.kniterate.com/2023/07/19/all-you-ever-wanted-to-know-about-transfers/'
 const KNITOUT_CHEATSHEET = 'https://soup.agnescameron.info/2026/04/09/cheatsheet.html'
+const KNITOUT_TRANSFER_NOTES = 'https://soup.agnescameron.info/2026/04/01/transfers.html'
 const MACHINE_MANUAL = 'https://support.kniterate.com/hc/article_attachments/360009727217'
 const CUSTOMIST_MANUAL = 'https://editor.kniterate.design/documentation'
 const PINNED_BACKEND = 'packages/machine-lib/src/knitout/vendor/knitout-to-kcode.cjs'
@@ -201,6 +214,12 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
   adjacentTransfers: {
     evidence: evidence('official-documented', [TRANSFERS_BLOG, PINNED_BACKEND, REFERENCE_CORPUS],
       'Kniterate: "When transferring multiple adjacent loops, the Kniterate machine does it in 2 passes, alternating even and odd wales for reliability." The pinned backend splits them the same way, and no reference program transfers neighbouring needles in one pass.'),
+  },
+  attachedYarn: {
+    maxNeedles: DEFAULT_MAX_FLOAT_DISTANCE_V1,
+    freshPulls: 26,
+    evidence: evidence('reference-corpus-observed', [KNITOUT_TRANSFER_NOTES, CUSTOMIST_MANUAL, PINNED_BACKEND, REFERENCE_CORPUS],
+      'Knitout notes for the Kniterate: taking a carrier "out" on the right makes it "trail over the whole knit to move to the Home position". The machine has no yarn cutter and KCode cannot say a yarn was cut, so a carrier moved without knitting drags its yarn from its last stitch to where it rests, and needles worked under it can catch it. Within the official editor\'s float distance (7 needles) that yarn is a float. Reference programs work farther than that past a yarn\'s last stitch only once the rollers have run at least 26 passes since, as a sleeve widens under a parked yarn.'),
   },
 }
 
@@ -341,6 +360,13 @@ export function validateKCodeMachineSafetyV1(
   const { min: firstColumn, max: lastColumn } = profile.raster.kcodeColumnRange
   const rest = new Map<MachineCarrierV1, number>(CARRIERS.map((carrier) => [carrier, home[carrier]]))
   const lastPass = new Map<MachineCarrierV1, MachineTracePassV1>()
+  // Where each carrier's yarn is attached, the needle holding its last stitch
+  // (a transfer takes the yarn along), and how many roller passes had run
+  // when it was made; and the carriers that have since moved without
+  // knitting, dragging the yarn after them.
+  const yarn = new Map<MachineCarrierV1, { readonly stitch: Pick<MachineTraceSelectionV1, 'bed' | 'traceCoordinate'>; readonly pulls: number }>()
+  const moved = new Set<MachineCarrierV1>()
+  let pulls = 0
   let passesWithoutRoller = 0
   const held = new Map<string, HeldLoops>()
   // Each needle's latest loop-forming passes: more than maxKnits of them
@@ -372,8 +398,10 @@ export function validateKCodeMachineSafetyV1(
     // Any pass that advances the roller pulls the fabric down; only knitting
     // passes without it count toward the gap.
     const formsLoops = pass.actions.some((action) => action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'split')
-    if (pass.roller > 0) passesWithoutRoller = 0
-    else if (formsLoops) {
+    if (pass.roller > 0) {
+      passesWithoutRoller = 0
+      pulls += 1
+    } else if (formsLoops) {
       passesWithoutRoller += 1
       if (passesWithoutRoller === envelope.takedown.maxPassesWithoutRoller + 1) {
         add('machine-safety.takedown-gap',
@@ -497,6 +525,29 @@ export function validateKCodeMachineSafetyV1(
           `Pass ${pass.index + 1} operates needle ${formatStop(nearest.position)} while carrier ${carrier} rests at ${formatStop(at)}, closer than ${distance}; a feeder over the needles collides with them.`,
           pass, nearest.span, nearest.actionIndex)
       }
+      // A carrier moved away without knitting drags its yarn, still near the
+      // needles, from its last stitch to where it rests: needles worked under
+      // it can catch it. A carry within a knitting pass is a float.
+      for (const [carrier, attached] of yarn) {
+        if (!moved.has(carrier) || carrier === pass.carrier || pulls - attached.pulls >= envelope.attachedYarn.freshPulls) continue
+        const at = rest.get(carrier)!
+        const stitch = regularActionTraversalCoordinate(attached.stitch, pass.rack)
+        const toward = Math.sign(at - stitch)
+        let deepest: OperatedNeedle | undefined
+        let depth = envelope.attachedYarn.maxNeedles
+        for (const needle of needles) {
+          // Under the yarn: past the stitch toward the carrier, and short of it.
+          const offset = needle.position - stitch
+          if (Math.sign(offset) !== toward || Math.sign(at - needle.position) !== toward) continue
+          if (Math.abs(offset) <= depth) continue
+          deepest = needle
+          depth = Math.abs(offset)
+        }
+        if (deepest === undefined) continue
+        add('machine-safety.attached-yarn',
+          `Pass ${pass.index + 1} works needle ${formatStop(deepest.position)}, ${formatStop(depth)} needles past carrier ${carrier}'s last stitch at ${formatStop(stitch)}, under its yarn to where it rests at ${formatStop(at)}. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job.`,
+          pass, deepest.span, deepest.actionIndex)
+      }
     }
 
     for (const [actionIndex, action] of pass.actions.entries()) {
@@ -521,6 +572,9 @@ export function validateKCodeMachineSafetyV1(
         held.delete(needleKey(action.at))
       } else if (action.kind === 'xfer' || action.kind === 'split') {
         const from = needleKey(action.source)
+        for (const [carrier, attached] of yarn) {
+          if (needleKey(attached.stitch) === from) yarn.set(carrier, { ...attached, stitch: action.target })
+        }
         const loop = held.get(from)
         if (loop === undefined) continue
         const to = needleKey(action.target)
@@ -555,6 +609,16 @@ export function validateKCodeMachineSafetyV1(
       }
       rest.set(carrier, pass.direction === '>>' ? right : left)
       lastPass.set(carrier, pass)
+      // A pass lists its stitches in the order it makes them; the last holds the yarn.
+      const last = pass.actions
+        .filter((action): action is Extract<MachineTraceActionV1, { readonly at: unknown }> => action.kind === 'knit' || action.kind === 'tuck')
+        .at(-1)
+      if (last !== undefined) {
+        yarn.set(carrier, { stitch: last.at, pulls })
+        moved.delete(carrier)
+      } else {
+        moved.add(carrier)
+      }
     }
   }
 

@@ -254,15 +254,16 @@ function emitMachineBindOff(input: BindOffInput): BindOffResult {
 
   // Bind-off consumes stitches left→right. Each iteration's merged stitch
   // lives at the RIGHT neighbor (rack +1 shifts the back-bed right; the
-  // b→f transfer lands at f(n+1)). The knit always travels right→left so
-  // the carrier ends parked on the LEFT — far from the next iteration's
+  // b→f transfer lands at f(n+1)). The knit travels right→left so the
+  // carrier ends parked on the LEFT — far from the next iteration's
   // active needles, which are moving rightward. Keeping the carrier clear
   // of the xfer needles is what prevents the vendor compiler from
   // inserting per-iteration kick passes; the resulting choreography
   // matches the fairisle parity recipe's reference (Tr-Rr / Rl-Tr / Tu-Tu / Kn-Kn,
-  // four carriage passes per stitch).
+  // four carriage passes per stitch). The mirror image (rack -1, knits
+  // rightward) consumes them right→left.
   const order = rangeAsc(needleStart, needleEnd);
-  const direction: Direction = '-';
+  let direction: Direction = '-';
 
   // Lined fabric: the walker homed the lining, so every live front
   // needle holds 2 loops. Knit one consolidation row first; the chain
@@ -279,15 +280,16 @@ function emitMachineBindOff(input: BindOffInput): BindOffResult {
     drain();
   }
 
-  // Pre-position the knit carrier on the LEFT (away from the bind-off
-  // needles, which march rightward). Emit a leftward miss if it's
-  // currently parked on the right; that also flips the vendor's
-  // `nextDirection` to right, so iteration 1's first xfer is Tr-Rr
-  // going right — matching the reference's per-stitch shape exactly.
+  // The chain starts on the knit carrier's side and marches away from it,
+  // so the carrier stays clear of the xfer needles. A carrier on the LEFT
+  // matches the reference's per-stitch shape exactly. One on the RIGHT walks
+  // the mirror image instead of being moved left first: a carrier moved
+  // without knitting drags its yarn across the live stitches.
   if (order.length > 0 && sideOfSim(sim, knitCarrier) === 'right') {
-    sim.miss(knitCarrier, '-', f(needleStart));
-    drain();
+    order.reverse();
+    direction = '+';
   }
+  const rack = direction === '-' ? 1 : -1;
 
   const ramp = config.knitRollerRamp;
   for (let i = 0; i < order.length - 1; i++) {
@@ -298,7 +300,7 @@ function emitMachineBindOff(input: BindOffInput): BindOffResult {
     sim.setSpeed(config.xferSpeed, { force: true });
     sim.setXferStitch(config.xferStitch, { force: true });
     sim.xferBatch([{ from: f(n), to: backBed(n) }]);
-    sim.setRacking(1);
+    sim.setRacking(rack);
     sim.xferBatch([{ from: backBed(n), to: f(next) }]);
     sim.setRacking(0);
     // Knit-merge pass. Body speed; per-iteration roller advance ramps
@@ -310,8 +312,7 @@ function emitMachineBindOff(input: BindOffInput): BindOffResult {
     sim.knit(knitCarrier, direction, f(next));
     drain();
   }
-  // Drop the final (rightmost) stitch — it has no neighbor left to merge
-  // with on the right.
+  // Drop the final stitch — it has no neighbor left to merge with.
   if (order.length > 0) {
     sim.drop(f(order[order.length - 1]!));
     drain();

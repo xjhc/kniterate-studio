@@ -760,6 +760,158 @@ describe('KCode machine-safety envelope', () => {
     })
   })
 
+  describe('attached yarn', () => {
+    const WIDE = Array.from({ length: 21 }, (_, index) => 90 + index)
+    const wide = { left: -9.5, right: 112.5 }
+    // Carrier 3 knits front 90..110 rightward, then is taken home from the right.
+    const knitRight: PassSpec = { direction: '>>', carrier: '3', carriage: wide, actions: front(...WIDE) }
+    const outRight: PassSpec = { direction: '<<', carrier: '3', operation: 'Tu-Tu', carriage: wide }
+    const four = (direction: '>>' | '<<', actions: MachineTraceActionV1[], carriage: MachineTraceStopRangeV1): PassSpec =>
+      ({ direction, carrier: '4', carriage, actions })
+    const fourHome = (from: number): PassSpec =>
+      ({ direction: '<<', carrier: '4', operation: 'Tu-Tu', carriage: { left: -7.5, right: from } })
+    const attached = (report: MachineSafetyReportV1) => report.counts['machine-safety.attached-yarn']
+
+    it('refuses knitting under a yarn taken home from the right', () => {
+      const report = safety(job(
+        knitRight,
+        outRight,
+        four('>>', front(...WIDE), { left: -7.5, right: 112.5 }),
+        four('<<', front(...[...WIDE].reverse()), { left: 87.5, right: 112.5 }),
+        fourHome(87.5),
+      ))
+      expectTargeted('attached-yarn-out-on-the-right', 'machine-safety.attached-yarn', report)
+      expect(messages(report)).toEqual([
+        'Pass 3 works needle 90, 20 needles past carrier 3\'s last stitch at 110, under its yarn to where it rests at -9.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job.',
+        'Pass 4 works needle 90, 20 needles past carrier 3\'s last stitch at 110, under its yarn to where it rests at -9.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job.',
+      ])
+      expect(report.diagnostics.map(({ passIndex, actionIndex, sourceSpan }) => ({ passIndex, actionIndex, sourceSpan }))).toEqual([
+        { passIndex: 2, actionIndex: 0, sourceSpan: at('front', 90).sourceSpan },
+        { passIndex: 3, actionIndex: 20, sourceSpan: at('front', 90).sourceSpan },
+      ])
+      const tucked = safety(job(
+        { ...knitRight, operation: 'Tu-Tu', actions: WIDE.map((coordinate) => tuck('front', coordinate)) },
+        outRight,
+        four('>>', front(...WIDE), { left: -7.5, right: 112.5 }),
+        fourHome(112.5),
+      ))
+      expect(attached(tucked)).toBe(1)
+    })
+
+    it('allows a float\'s length under a fresh stitch and measures toward the carrier on either side', () => {
+      const underRight = (...needles: number[]) => attached(safety(job(
+        OUT,
+        { ...HOME, carriage: { left: -9.5, right: 105.5 } },
+        four('>>', front(...needles), { left: -7.5, right: 105.5 }),
+        fourHome(105.5),
+      )))
+      expect(underRight(96, 97, 98, 99, 100, 101, 102, 103)).toBe(0)
+      expect(underRight(95, 96, 97, 98, 99, 100, 101, 102, 103)).toBe(1)
+      // Carrier 3 last stitches at 100 moving left, then rests at 112.5 to its right.
+      const report = safety(job(
+        OUT,
+        BACK,
+        { direction: '>>', carrier: '3', operation: 'Tu-Tu', carriage: { left: 97.5, right: 112.5 } },
+        four('>>', front(101, 102, 103, 104, 105, 106, 107, 108, 109, 110), { left: -7.5, right: 112.5 }),
+        { ...HOME, carriage: { left: -9.5, right: 112.5 } },
+        fourHome(112.5),
+      ))
+      expect(messages(report)).toEqual([
+        'Pass 4 works needle 110, 10 needles past carrier 3\'s last stitch at 100, under its yarn to where it rests at 112.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job.',
+      ])
+    })
+
+    it('treats a carry within a knitting pass as a float, and a move after it as a drag', () => {
+      // Carrier 3 stitches up to 100 and carries its yarn on to 112.5.
+      const carry = (moveAfter: boolean) => attached(safety(job(
+        { direction: '>>', carrier: '3', carriage: { left: -9.5, right: moveAfter ? 102.5 : 112.5 }, actions: front(90, 95, 100) },
+        ...(moveAfter ? [{ direction: '>>', carrier: '3', operation: 'Tu-Tu', carriage: { left: 102.5, right: 112.5 } } satisfies PassSpec] : []),
+        four('>>', front(101, 102, 103, 104, 105, 106, 107, 108, 109, 110), { left: -7.5, right: 112.5 }),
+        { ...HOME, carriage: { left: -9.5, right: 112.5 } },
+        fourHome(112.5),
+      )))
+      expect(carry(false)).toBe(0)
+      expect(carry(true)).toBe(1)
+      // Knitting again ends a drag: its yarn past the new last stitch is a float.
+      const knitsAgain = safety(job(
+        knitRight,
+        outRight,
+        { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: front(90, 95, 100) },
+        four('>>', front(101, 102, 103, 104, 105, 106, 107, 108, 109, 110), { left: -7.5, right: 112.5 }),
+        { ...HOME, carriage: { left: -9.5, right: 112.5 } },
+        fourHome(112.5),
+      ))
+      expect(knitsAgain.diagnostics).toEqual([])
+    })
+
+    it('follows the last stitch when a transfer moves it', () => {
+      // f110 holds carrier 3's last stitch; it moves to f106 by way of b110,
+      // past an unrelated transfer at 95.
+      const report = safety(job(
+        knitRight,
+        { direction: '>>', carrier: '0', carriage: { left: 92.5, right: 112.5 }, actions: [xfer(95, 95), xfer(110, 110)] },
+        { direction: '<<', carrier: '0', rack: -4, carriage: { left: 92.5, right: 112.5 }, actions: [xferToFront(110, 106), xferToFront(95, 99)] },
+        outRight,
+        four('>>', front(...WIDE), { left: -7.5, right: 112.5 }),
+        fourHome(112.5),
+      ))
+      expect(messages(report)).toEqual([
+        'Pass 5 works needle 90, 16 needles past carrier 3\'s last stitch at 106, under its yarn to where it rests at -9.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job.',
+      ])
+    })
+
+    it('ignores needles beyond the carrier and a carrier knitting its own yarn', () => {
+      // Carrier 3 moves to 96.5, left of its last stitch at 100: 88..94 are past it.
+      const beyond = safety(job(
+        OUT,
+        BACK,
+        { direction: '<<', carrier: '3', operation: 'Tu-Tu', carriage: { left: 96.5, right: 97.5 } },
+        four('>>', front(88, 89, 90, 91, 92, 93, 94), { left: -7.5, right: 96.5 }),
+        fourHome(96.5),
+        { ...HOME, carriage: { left: -9.5, right: 96.5 } },
+      ))
+      expect(beyond.diagnostics).toEqual([])
+      // Taking its yarn back across the knitting itself is a carry, not this rule.
+      const own = safety(job(
+        knitRight,
+        outRight,
+        { ...knitRight, carriage: wide },
+        { ...outRight, carriage: wide },
+      ))
+      expect(own.diagnostics).toEqual([])
+    })
+
+    it('counts a stitch as fresh until the rollers have run 26 passes since it', () => {
+      // Pass 1 pulls once with the stitch, the move home does not, and carrier
+      // 4 pulls on needles clear of the yarn before knitting under it.
+      const after = (clearPasses: number) => attached(safety(job(
+        knitRight,
+        { ...outRight, roller: 0 },
+        ...Array.from({ length: clearPasses }, (_, index) => index % 2 === 0
+          ? four('>>', front(115, 116, 117, 118, 119, 120), { left: index === 0 ? -7.5 : 112.5, right: 122.5 })
+          : four('<<', front(120, 119, 118, 117, 116, 115), { left: 112.5, right: 122.5 })),
+        four(clearPasses % 2 === 0 ? '>>' : '<<', front(...WIDE), { left: 87.5, right: 112.5 }),
+        fourHome(112.5),
+      )))
+      expect(after(24)).toBe(1)
+      expect(after(25)).toBe(0)
+    })
+
+    it('refuses the same through the pinned backend, and accepts taking the carrier out on the left', () => {
+      const rows = (carrier: number, directions: readonly ('+' | '-')[]) => directions.flatMap((direction) =>
+        (direction === '+' ? WIDE : [...WIDE].reverse()).map((needle) => `knit ${direction} f${needle - 26} ${carrier}`))
+      const program = (lastRow: '+' | '-') => knitoutTrace([
+        'in 3', ...rows(3, ['+', '-', '+', '-', lastRow]), 'out 3',
+        'in 4', ...rows(4, ['+', '-', '+', '-']), 'out 4',
+      ])
+      const right = program('+')
+      expect(validateKCodeMachineTrace(right, profile).ok).toBe(true)
+      expect(new Set(rules(safety(right)))).toEqual(new Set(['machine-safety.attached-yarn']))
+      expect(attached(safety(right))).toBe(4)
+      expect(safety(program('-')).diagnostics).toEqual([])
+    })
+  })
+
   describe('speed and roller', () => {
     const withSettings = (speed: number, roller: number) => safety(job({ ...OUT, speed, roller }, BACK, HOME))
 
@@ -910,6 +1062,7 @@ describe('KCode machine-safety envelope', () => {
     expect([envelope.transfer.maxSpeed, envelope.transfer.maxRoller]).toEqual([400, 450])
     expect(envelope.centralShortRows.maxKnits).toBe(4)
     expect(envelope.tuckStack.maxLoops).toBe(2)
+    expect([envelope.attachedYarn.maxNeedles, envelope.attachedYarn.freshPulls]).toEqual([7, 26])
     const racking = 'https://support.kniterate.com/hc/en-us/articles/360016699857'
     const checks = 'https://support.kniterate.com/hc/en-us/articles/11698092127005'
     const feeder = 'https://support.kniterate.com/hc/en-us/articles/360010645337'
@@ -937,6 +1090,7 @@ describe('KCode machine-safety envelope', () => {
       centralShortRows: ['official-documented', ['https://support.kniterate.com/hc/en-us/articles/360010783278', corpus]],
       tuckStack: ['official-documented', [checks, customist, 'https://soup.agnescameron.info/2026/04/09/cheatsheet.html']],
       adjacentTransfers: ['official-documented', ['https://www.kniterate.com/2023/07/19/all-you-ever-wanted-to-know-about-transfers/', backend, corpus]],
+      attachedYarn: ['reference-corpus-observed', ['https://soup.agnescameron.info/2026/04/01/transfers.html', customist, backend, corpus]],
     })
     for (const value of Object.values(envelope)) {
       if (typeof value !== 'object') continue
