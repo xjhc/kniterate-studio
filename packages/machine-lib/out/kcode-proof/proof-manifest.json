@@ -43,7 +43,7 @@
     "directions": 2,
     "carrierTokens": 7,
     "rackValues": 17,
-    "kcodeNativeRefusalCases": 27,
+    "kcodeNativeRefusalCases": 28,
     "oracle": "test/knitout/kcode-legality-spec.ts",
     "contractSha256": "20bbc9b3930fc470dd44cae542e6a827fae5aa48cd6d5115b23bd8ac7e601d67",
     "oracleSha256": "eae502e4a399eea38e2fa82299fe68bea0e11912b5f9e10087941ca2d71a9532",
@@ -53,11 +53,11 @@
       "ok": true,
       "parserRuleCount": 30,
       "validatorRuleCount": 43,
-      "machineSafetyRuleCount": 17,
-      "runtimeWitnessedRuleCount": 90,
-      "blockingRuleCount": 87,
+      "machineSafetyRuleCount": 18,
+      "runtimeWitnessedRuleCount": 91,
+      "blockingRuleCount": 88,
       "advisoryOnlyRuleCount": 3,
-      "blockingRuleTargetedWitnessCount": 87,
+      "blockingRuleTargetedWitnessCount": 88,
       "runtimeGate": {
         "command": "pnpm exec vitest run test/knitout/kcode-document-adversarial.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-safety.test.ts --maxWorkers=1",
         "exitCode": 0,
@@ -67,7 +67,7 @@
         "kind": "kniterate-kcode-command-refusal-report",
         "schemaVersion": 3,
         "ok": true,
-        "caseCount": 27,
+        "caseCount": 28,
         "noInvalidReachedExport": true,
         "cleanBaselineExportEligible": true,
         "results": [
@@ -403,6 +403,19 @@
             ],
             "blockingRules": [
               "machine-safety.tuck-stack"
+            ],
+            "exportEligible": false,
+            "rejectionStage": "machine-safety",
+            "exactRules": true,
+            "refusedExport": true
+          },
+          {
+            "id": "knitting-under-a-yarn-taken-out-on-the-right",
+            "expectedBlockingRules": [
+              "machine-safety.attached-yarn"
+            ],
+            "blockingRules": [
+              "machine-safety.attached-yarn"
             ],
             "exportEligible": false,
             "rejectionStage": "machine-safety",
@@ -30073,7 +30086,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30088,7 +30101,41 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
+            }
+          ]
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "classification": "blocking",
+          "severities": [
+            "error"
+          ],
+          "observations": [
+            {
+              "rail": "machine-safety",
+              "severity": "error",
+              "path": "test/knitout/kcode-machine-safety.test.ts",
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
+            }
+          ],
+          "targetedWitnesses": [
+            {
+              "rail": "machine-safety",
+              "caseId": "attached-yarn-out-on-the-right",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "rule": "machine-safety.attached-yarn",
+                  "severity": "error"
+                },
+                {
+                  "rule": "machine-safety.attached-yarn",
+                  "severity": "error"
+                }
+              ],
+              "path": "test/knitout/kcode-machine-safety.test.ts",
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30103,7 +30150,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30122,7 +30169,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30137,7 +30184,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30152,7 +30199,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30167,7 +30214,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30182,7 +30229,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30197,7 +30244,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30212,7 +30259,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30227,7 +30274,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30242,7 +30289,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30257,7 +30304,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30272,7 +30319,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30287,7 +30334,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30306,7 +30353,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30321,7 +30368,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30336,7 +30383,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30351,7 +30398,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30366,7 +30413,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30381,7 +30428,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30396,7 +30443,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30411,7 +30458,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30438,7 +30485,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30453,7 +30500,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30468,7 +30515,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30483,7 +30530,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30498,7 +30545,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30513,7 +30560,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30528,7 +30575,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30543,7 +30590,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30558,7 +30605,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         },
@@ -30573,7 +30620,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ],
           "targetedWitnesses": [
@@ -30588,7 +30635,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb"
+              "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed"
             }
           ]
         }
@@ -30598,7 +30645,7 @@
   },
   "machineSafety": {
     "envelope": "kniterate-7gg-machine-safety@1",
-    "envelopeSha256": "12258941a91e66e3a817e0a18cda5492eafcf64668925b5f20ef7f792cd91ca9",
+    "envelopeSha256": "14662de20b0c3b94adf2d2eaaf12820bed2b9365dd13d9156e3cb973f59f292e",
     "rules": [
       "machine-safety.facing-needles",
       "machine-safety.unsafe-bed-range",
@@ -30616,7 +30663,8 @@
       "machine-safety.tuck-stack",
       "machine-safety.stitch-too-small",
       "machine-safety.transfer-settings",
-      "machine-safety.adjacent-transfers"
+      "machine-safety.adjacent-transfers",
+      "machine-safety.attached-yarn"
     ],
     "referenceCorpusFindings": 0
   },
@@ -30888,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "5b1621406493cf7786898b56a8abe5f334972fe7ff8b6564c023f19c29c647da",
+    "sha256": "752b190b8228d5a1c2eaaef5c53ea885ca583a986ae20d572b1347e36a3820c1",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31997,7 +32045,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "81470ed69299ac937337c844125a54a439c1aec84971115c0e1ff9ebc6615ac6",
+        "sha256": "8fefb189773739b9aed663f4f8f1508e72921d2794cb06e3716590b1cca8567a",
         "bytes": 179
       },
       {
@@ -32077,8 +32125,8 @@
       },
       {
         "path": "scripts/kcode-command-refusal-corpus.ts",
-        "sha256": "25e147b39a334562f17633a9cc942dfaed09d95916599bffa097685569223013",
-        "bytes": 16165
+        "sha256": "2885e7478b509dd2f8b5dfd6a71aac5a0f9417b5ffe3abaa301c220f6218c66d",
+        "bytes": 16689
       },
       {
         "path": "scripts/kcode-mutation.ts",
@@ -32372,8 +32420,8 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "sha256": "39c4e946bee0177fcc14182953bed76794142673a62d16e7cd836f11f701fc47",
-        "bytes": 31918
+        "sha256": "b81b873999e701d923d8e5cd7ef49c48886d5860676188fa89f8f22a36d81e1d",
+        "bytes": 36197
       },
       {
         "path": "src/knitout/kcode/machine-scene.ts",
@@ -32482,8 +32530,8 @@
       },
       {
         "path": "src/knitout/passes/bind-off.ts",
-        "sha256": "f9de6972c519ce428bd8e2beaf3c03f84b9c54399334666dd8b04ae0eb601438",
-        "bytes": 24307
+        "sha256": "1306c3c118c92ef0aa99a1b4fda24bb716019e8f333993dbf4c1b5d099a1a187",
+        "bytes": 24393
       },
       {
         "path": "src/knitout/passes/cable-cross.ts",
@@ -32847,8 +32895,8 @@
       },
       {
         "path": "src/validators/messages.ts",
-        "sha256": "cb386a1780e55891999b7350a24612ef95254b4025f745f45bc7fb4507a7433c",
-        "bytes": 46099
+        "sha256": "8e074b75979af426640a965f483bb5a7d26d8651b303fcb73a9becaf328bcaa3",
+        "bytes": 46849
       },
       {
         "path": "src/validators/tile-conservation.ts",
@@ -32904,6 +32952,11 @@
         "path": "test/knitout/browser-converter-source.test.ts",
         "sha256": "fd771035a776fd2f6a11e7281aeaad69359dbf9e2acde9ec6756623018a2ed93",
         "bytes": 1386
+      },
+      {
+        "path": "test/knitout/chain-bind-off.test.ts",
+        "sha256": "a11e28773028b437a14b259d789defcd3e11c20c969aaf8cb9bce2ed67459250",
+        "bytes": 3045
       },
       {
         "path": "test/knitout/customist-rib-beanie.test.ts",
@@ -33032,8 +33085,8 @@
       },
       {
         "path": "test/knitout/kcode-machine-safety.test.ts",
-        "sha256": "8a403c161befb28e2232e924b1ffba52dc37bd1e276f797977b4cb5ae63b5bcb",
-        "bytes": 56780
+        "sha256": "71f7df964be5616357f76a2f466f366915c7f07bdc24a2abcd6b0103d8dd73ed",
+        "bytes": 65583
       },
       {
         "path": "test/knitout/kcode-machine-scene.test.ts",
@@ -33122,8 +33175,8 @@
       },
       {
         "path": "test/knitout/reference-kc/manifest.ts",
-        "sha256": "becc82ac45efb0d27aa7a587c0c106113c3fa19293ae082b0a9a656882fe3748",
-        "bytes": 10758
+        "sha256": "264de718c391681b186cb9eb3c91c1394b47b5ac3ca2910cf327058b490b3fb9",
+        "bytes": 10914
       },
       {
         "path": "test/knitout/reference-kc/reference-kc-parity.test.ts",
@@ -33205,9 +33258,9 @@
   "mutationEvidence": {
     "inputGrammarAndDiffMutations": true,
     "implementationSourceMutationScoring": true,
-    "receiptSha256": "9b91370e4911d2ee82602c684fe3f79ec5d780b900dd81b2b7f484cce05a70af",
+    "receiptSha256": "4b38226c42a3e4f38cd2660721b46e12c7aa8508de6d13daf52aa68be513beaf",
     "counts": {
-      "Killed": 3113,
+      "Killed": 3180,
       "Survived": 0,
       "Timeout": 0,
       "NoCoverage": 0,
@@ -33232,7 +33285,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "sha256": "39c4e946bee0177fcc14182953bed76794142673a62d16e7cd836f11f701fc47"
+        "sha256": "b81b873999e701d923d8e5cd7ef49c48886d5860676188fa89f8f22a36d81e1d"
       },
       {
         "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -33242,7 +33295,7 @@
     "diagnosticProseExclusions": [
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "line": 574,
+        "line": 638,
         "column": 16,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -33465,11 +33518,11 @@
         "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
       }
     ],
-    "diagnosticProseExclusionsSha256": "5b802deb5206fd190bb9d1f8a57b7325d70a407f29048416063f3009aad317d5",
+    "diagnosticProseExclusionsSha256": "5a0e636e02e362bf88fd4fca244e07ead0f7f56a4d7a2245124f0a034e490653",
     "equivalentMutantSuppressions": [
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "line": 353,
+        "line": 379,
         "column": 57,
         "mutator": "MethodExpression",
         "replacement": "[...formed, passIndex]",
@@ -33477,7 +33530,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "line": 462,
+        "line": 490,
         "column": 13,
         "mutator": "EqualityOperator",
         "replacement": "loop.coordinate <= action.at.traceCoordinate",
@@ -33485,7 +33538,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "line": 462,
+        "line": 490,
         "column": 13,
         "mutator": "EqualityOperator",
         "replacement": "loop.coordinate >= action.at.traceCoordinate",
@@ -33756,7 +33809,7 @@
         "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
       }
     ],
-    "equivalentMutantSuppressionsSha256": "c28dac55615c7b980bf90c7f20f2d65499de786af6b53c996853d59e873a50a2",
+    "equivalentMutantSuppressionsSha256": "e364ea8761e0dbc97b3418d65e8163bbb1489ef62d21c29b60e2c8e40d976eb3",
     "globallyExcludedMutations": [],
     "diagnosticProseDirectiveAudit": [
       {
@@ -33893,8 +33946,8 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "startLine": 574,
-        "endLine": 574,
+        "startLine": 638,
+        "endLine": 638,
         "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
       }
     ],
