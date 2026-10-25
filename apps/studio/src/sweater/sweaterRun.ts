@@ -64,32 +64,51 @@ export interface SweaterRunState {
   error: string | null;
 }
 
-/** Runs the sweater pipeline in a Worker after edits settle; the previous result stays visible, marked stale, while checking. */
+/**
+ * Runs the sweater pipeline in a Worker after edits settle; the previous result stays visible, marked stale, while checking.
+ * A check still running when a newer one is sent is for an older revision: its Worker is replaced rather than waited for.
+ */
 export function useSweaterRun(project: ColorworkProjectV1 | null, debounceMs = 250): SweaterRunState {
   const workerRef = useRef<Worker | null>(null);
   const activeRequest = useRef(0);
+  const busy = useRef(false);
   const [state, setState] = useState<SweaterRunState>({ status: 'checking', summary: null, current: false, error: null });
   const enabled = project !== null;
-  useEffect(() => {
-    if (!enabled) return;
+  const spawn = useRef(() => {
     const worker = new Worker(new URL('./sweater.worker.ts', import.meta.url), { type: 'module' });
-    workerRef.current = worker;
     worker.onmessage = (event: MessageEvent<SweaterRunResponse>) => {
+      busy.current = false;
       const response = event.data;
       if (response.requestId !== activeRequest.current) return;
       if (response.kind === 'sweater-failed') setState((current) => ({ ...current, status: 'failed', current: false, error: response.error }));
       else setState({ status: 'ready', summary: response.summary, current: true, error: null });
     };
-    worker.onerror = (event) => setState((current) => ({ ...current, status: 'failed', current: false, error: event.message || 'The sweater checker stopped.' }));
-    return () => { worker.terminate(); workerRef.current = null; };
-  }, [enabled]);
+    worker.onerror = (event) => {
+      busy.current = false;
+      setState((current) => ({ ...current, status: 'failed', current: false, error: event.message || 'The sweater checker stopped.' }));
+    };
+    return worker;
+  }).current;
+  useEffect(() => {
+    if (!enabled) return;
+    workerRef.current = spawn();
+    return () => { workerRef.current?.terminate(); workerRef.current = null; busy.current = false; };
+  }, [enabled, spawn]);
   useEffect(() => {
     if (project === null) return;
     const requestId = activeRequest.current + 1;
     activeRequest.current = requestId;
     setState((current) => ({ ...current, status: 'checking', current: false, error: null }));
-    const timeout = window.setTimeout(() => workerRef.current?.postMessage({ requestId, project }), debounceMs);
+    const timeout = window.setTimeout(() => {
+      if (workerRef.current === null) return;
+      if (busy.current) {
+        workerRef.current.terminate();
+        workerRef.current = spawn();
+      }
+      busy.current = true;
+      workerRef.current.postMessage({ requestId, project });
+    }, debounceMs);
     return () => window.clearTimeout(timeout);
-  }, [project, debounceMs]);
+  }, [project, debounceMs, spawn]);
   return state;
 }
