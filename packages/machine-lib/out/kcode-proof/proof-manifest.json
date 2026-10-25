@@ -30936,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "ded73dd31b8a739b3b81aa53ca288828d1f5f469167e7535848a1246234c3d16",
+    "sha256": "a021b6cf40af169d878304502180d14b0fde7419442253b9d1a54c4176c53553",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31055,7 +31055,7 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.test.ts",
-        "sha256": "8368c45f1b7ec08a265df9bb242c3f593a389483a45809335312088a59241790",
+        "sha256": "b80903fded031f29001301fb5746a1765d2420ba27c118d57dfbbb5a17227333",
         "bytes": 22255
       },
       {
@@ -31220,7 +31220,7 @@
       },
       {
         "path": "../../apps/studio/src/fabric/compileForeignFabricPreview.test.tsx",
-        "sha256": "09272700b2f54c6cf66fb22d7a77b1058f94dff55f5596bfc37a05f87d8ef17e",
+        "sha256": "037fe12f5459acdc7923f1d0ab6cba8d9dcd04c0a47493cfc000de5575456ebc",
         "bytes": 6543
       },
       {
