@@ -22,7 +22,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "sha256": "b81b873999e701d923d8e5cd7ef49c48886d5860676188fa89f8f22a36d81e1d"
+      "sha256": "f5f55c47f9cc85d8df72a602d31f820dc2ca8a06da49839568925d7859e1dddf"
     },
     {
       "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -167,15 +167,15 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "startLine": 638,
-      "endLine": 638,
+      "startLine": 643,
+      "endLine": 643,
       "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
     }
   ],
   "diagnosticProseExclusions": [
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "line": 638,
+      "line": 643,
       "column": 16,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -398,7 +398,7 @@
       "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
     }
   ],
-  "diagnosticProseExclusionsSha256": "5a0e636e02e362bf88fd4fca244e07ead0f7f56a4d7a2245124f0a034e490653",
+  "diagnosticProseExclusionsSha256": "e87c8f6034dce85b181f0f43621c5c54ed696f150af1ca3ff6d90af216eeba77",
   "equivalentMutantSuppressions": [
     {
       "path": "src/knitout/kcode/machine-safety.ts",
@@ -410,7 +410,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "line": 490,
+      "line": 488,
       "column": 13,
       "mutator": "EqualityOperator",
       "replacement": "loop.coordinate <= action.at.traceCoordinate",
@@ -418,7 +418,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "line": 490,
+      "line": 488,
       "column": 13,
       "mutator": "EqualityOperator",
       "replacement": "loop.coordinate >= action.at.traceCoordinate",
@@ -689,11 +689,11 @@
       "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
     }
   ],
-  "equivalentMutantSuppressionsSha256": "e364ea8761e0dbc97b3418d65e8163bbb1489ef62d21c29b60e2c8e40d976eb3",
+  "equivalentMutantSuppressionsSha256": "f634b0ea8653c5500d8143b97d09441d923effa1c802f3c862ef63d234bfc349",
   "unreviewedIgnoredMutants": [],
   "misScopedDiagnosticProseExclusions": [],
   "counts": {
-    "Killed": 3180,
+    "Killed": 3188,
     "Survived": 0,
     "Timeout": 0,
     "NoCoverage": 0,
