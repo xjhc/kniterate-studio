@@ -315,8 +315,10 @@ not an established physical loop-stack limit.
 
 The mutation rail keeps the existing grammar/input mutations and adds
 StrykerJS 10.0.0 implementation-source mutation scoring with the Vitest runner,
-fixed tests, concurrency one, and deterministic normalized evidence at
-`packages/machine-lib/out/kcode-proof/mutation-manifest.json`. Diagnostic prose
+fixed tests, eight concurrent test runners, and deterministic normalized
+evidence at `packages/machine-lib/out/kcode-proof/mutation-manifest.json`. A
+mutant that times out fails the receipt, so a loaded machine can only fail the
+rail, never count a slow surviving mutant as killed. Diagnostic prose
 string mutations may be excluded only at diagnostic-prose sites; rule
 identifiers, severities, control flow, conditionals, arithmetic, boundaries,
 and collections remain in scope. Equivalent-mutant suppressions must be

@@ -17,7 +17,7 @@ const config = {
   // The proof receipt reads this effective value and blocks any global mutator
   // exclusion. Reviewed site-local directives are the only suppression seam.
   mutator: { excludedMutations: [] },
-  concurrency: 1,
+  concurrency: 8,
   maxTestRunnerReuse: 100,
   timeoutMS: 20_000,
   timeoutFactor: 2,

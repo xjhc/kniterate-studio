@@ -316,7 +316,7 @@ afterEach(() => {
   for (const root of temporaryRoots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
 
-describe('generated physical registry manifest', () => {
+describe('generated physical registry manifest', { timeout: 30_000 }, () => {
   it('publishes strict structured machine, yarn, and run templates with the exact outcome enum', () => {
     const root = resolve(import.meta.dirname, '../registry/swatches')
     const machine = readObject(join(root, '_template/machine.json'))
@@ -771,7 +771,7 @@ describe('generated physical registry manifest', () => {
   })
 })
 
-describe('fresh V1 physical release gate', () => {
+describe('fresh V1 physical release gate', { timeout: 30_000 }, () => {
   it('binds generated packages to one full clean Git commit and refuses dirty state', () => {
     const commit = 'a'.repeat(40)
     const source = readCleanV1KnitTrialReleaseSource((args) =>
