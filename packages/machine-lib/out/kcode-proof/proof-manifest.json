@@ -30936,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "a021b6cf40af169d878304502180d14b0fde7419442253b9d1a54c4176c53553",
+    "sha256": "c149a8b89f30b32a65a920f7559dae61ebcaba1767aa529127f96d4bdf6e7540",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31370,8 +31370,8 @@
       },
       {
         "path": "../../apps/studio/src/kcode/useKCodeArtifact.ts",
-        "sha256": "ee1132faef1a7807b2ffc51f510fed681a00efee02b24f7d7fb1e2b0b04c711d",
-        "bytes": 2963
+        "sha256": "94a4ea61d4f1be028fa10d5c8c92e9c5ea7dbdd3a85850980bd06760f0c64227",
+        "bytes": 3476
       },
       {
         "path": "../../apps/studio/src/kcode/useMachineExecution.ts",
@@ -31645,8 +31645,8 @@
       },
       {
         "path": "../../apps/studio/src/sweater/sweaterRun.ts",
-        "sha256": "abb5bf336531b60581fd019ebfb6bfe05c468bb823227d6bf01dc96711b4ce71",
-        "bytes": 4283
+        "sha256": "eb4db16ea6bfaae85e5a5909892480014276dc5d6db213ec2203980cec42bca4",
+        "bytes": 4821
       },
       {
         "path": "../../apps/studio/src/sweater/textures.ts",
