@@ -101,7 +101,10 @@ export function collectKCodeRuleCoverage(root = process.cwd()) {
   const refusalReport = collectKCodeCommandRefusalReport()
   const byRule = new Map<string, RuntimeObservationRecord[]>()
   const targetedByRule = new Map<string, RuntimeTargetedRecord[]>()
-  for (const record of runtime.records) {
+  // Vitest orders test files by cached timings, so the records arrive in a
+  // load-dependent order. Sort them so the ledger and receipt stay byte-stable.
+  const records = [...runtime.records].sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)))
+  for (const record of records) {
     if (record.kind === 'targeted') {
       const records = targetedByRule.get(record.expectedRule) ?? []
       if (!records.some((candidate) => candidate.caseId === record.caseId)) {
