@@ -265,8 +265,9 @@ The gate establishes:
   older loops are held on both sides on the same bed (central short rows; a
   tucked side stays held, and a stitch moved from a taller column counts
   from it), at most two loops left by a tuck, and no work more than the
-  7-needle float distance past a dragged carrier's fresh last stitch under
-  its yarn. A seeded property test checks the
+  7-needle float distance past a dragged carrier's last stitch under its
+  yarn until that stitch's needle has been knitted over 36 times. A seeded
+  property test checks the
   needle geometry against an independent oracle. Every threshold names its evidence, the 13 references have
   zero findings, and each rule has a pinned refusal case;
 - a shared conservative software loop-stack policy (warning above two loops,

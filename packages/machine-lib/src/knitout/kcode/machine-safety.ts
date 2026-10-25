@@ -116,11 +116,12 @@ export interface MachineSafetyEnvelopeV1 {
   readonly adjacentTransfers: { readonly evidence: KCodeEvidence }
   /**
    * A carrier moved without knitting drags its yarn from its last stitch to
-   * where it rests: KCode cannot say the yarn was cut. Until the rollers have
-   * run freshPulls passes since that stitch, no other pass works a needle
-   * under the yarn more than maxNeedles past it, a float's length.
+   * where it rests: KCode cannot say the yarn was cut. Until the needle
+   * holding that stitch has been knitted over coveringKnits times, burying
+   * it in the fabric, no other pass works a needle under the yarn more than
+   * maxNeedles past it, a float's length.
    */
-  readonly attachedYarn: { readonly maxNeedles: number; readonly freshPulls: number; readonly evidence: KCodeEvidence }
+  readonly attachedYarn: { readonly maxNeedles: number; readonly coveringKnits: number; readonly evidence: KCodeEvidence }
 }
 
 const RACKING_ARTICLE = 'https://support.kniterate.com/hc/en-us/articles/360016699857'
@@ -217,9 +218,9 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
   },
   attachedYarn: {
     maxNeedles: DEFAULT_MAX_FLOAT_DISTANCE_V1,
-    freshPulls: 26,
+    coveringKnits: 36,
     evidence: evidence('reference-corpus-observed', [KNITOUT_TRANSFER_NOTES, CUSTOMIST_MANUAL, PINNED_BACKEND, REFERENCE_CORPUS],
-      'Knitout notes for the Kniterate: taking a carrier "out" on the right makes it "trail over the whole knit to move to the Home position". The machine has no yarn cutter and KCode cannot say a yarn was cut, so a carrier moved without knitting drags its yarn from its last stitch to where it rests, and needles worked under it can catch it. Within the official editor\'s float distance (7 needles) that yarn is a float. Reference programs work farther than that past a yarn\'s last stitch only once the rollers have run at least 26 passes since, as a sleeve widens under a parked yarn.'),
+      'Knitout notes for the Kniterate: taking a carrier "out" on the right makes it "trail over the whole knit to move to the Home position". The machine has no yarn cutter and KCode cannot say a yarn was cut, so a carrier moved without knitting drags its yarn from its last stitch to where it rests, and needles worked under it can catch it. Within the official editor\'s float distance (7 needles) that yarn is a float. The stitch holds the yarn at the needles until other yarns knit over it; reference programs work farther than a float past a parked yarn\'s last stitch only once its needle has been knitted over at least 36 times, as a sleeve widens under a parked yarn.'),
   },
 }
 
@@ -361,12 +362,11 @@ export function validateKCodeMachineSafetyV1(
   const rest = new Map<MachineCarrierV1, number>(CARRIERS.map((carrier) => [carrier, home[carrier]]))
   const lastPass = new Map<MachineCarrierV1, MachineTracePassV1>()
   // Where each carrier's yarn is attached, the needle holding its last stitch
-  // (a transfer takes the yarn along), and how many roller passes had run
-  // when it was made; and the carriers that have since moved without
-  // knitting, dragging the yarn after them.
-  const yarn = new Map<MachineCarrierV1, { readonly stitch: Pick<MachineTraceSelectionV1, 'bed' | 'traceCoordinate'>; readonly pulls: number }>()
+  // (a transfer takes the yarn along), and how many times other yarns have
+  // knitted over that needle since; and the carriers that have since moved
+  // without knitting, dragging the yarn after them.
+  const yarn = new Map<MachineCarrierV1, { readonly stitch: Pick<MachineTraceSelectionV1, 'bed' | 'traceCoordinate'>; readonly covers: number }>()
   const moved = new Set<MachineCarrierV1>()
-  let pulls = 0
   let passesWithoutRoller = 0
   const held = new Map<string, HeldLoops>()
   // Each needle's latest loop-forming passes: more than maxKnits of them
@@ -398,10 +398,8 @@ export function validateKCodeMachineSafetyV1(
     // Any pass that advances the roller pulls the fabric down; only knitting
     // passes without it count toward the gap.
     const formsLoops = pass.actions.some((action) => action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'split')
-    if (pass.roller > 0) {
-      passesWithoutRoller = 0
-      pulls += 1
-    } else if (formsLoops) {
+    if (pass.roller > 0) passesWithoutRoller = 0
+    else if (formsLoops) {
       passesWithoutRoller += 1
       if (passesWithoutRoller === envelope.takedown.maxPassesWithoutRoller + 1) {
         add('machine-safety.takedown-gap',
@@ -527,9 +525,9 @@ export function validateKCodeMachineSafetyV1(
       }
       // A carrier moved away without knitting drags its yarn, still near the
       // needles, from its last stitch to where it rests: needles worked under
-      // it can catch it. A carry within a knitting pass is a float.
+      // it can catch it. A carry within a knitting pass is outside this rule.
       for (const [carrier, attached] of yarn) {
-        if (!moved.has(carrier) || carrier === pass.carrier || pulls - attached.pulls >= envelope.attachedYarn.freshPulls) continue
+        if (!moved.has(carrier) || carrier === pass.carrier || attached.covers >= envelope.attachedYarn.coveringKnits) continue
         const at = rest.get(carrier)!
         const stitch = regularActionTraversalCoordinate(attached.stitch, pass.rack)
         const toward = Math.sign(at - stitch)
@@ -553,6 +551,13 @@ export function validateKCodeMachineSafetyV1(
     for (const [actionIndex, action] of pass.actions.entries()) {
       if (action.kind === 'knit' || action.kind === 'tuck') {
         const key = needleKey(action.at)
+        // A knit pulls a new loop through a yarn's last stitch, burying it; a
+        // tuck leaves it on the needle.
+        if (action.kind === 'knit') {
+          for (const [carrier, attached] of yarn) {
+            if (needleKey(attached.stitch) === key) yarn.set(carrier, { ...attached, covers: attached.covers + 1 })
+          }
+        }
         const loop = held.get(key)
         const tucked = action.kind === 'tuck' && loop !== undefined
         const column = recordLoop(key, pass.index)
@@ -614,7 +619,7 @@ export function validateKCodeMachineSafetyV1(
         .filter((action): action is Extract<MachineTraceActionV1, { readonly at: unknown }> => action.kind === 'knit' || action.kind === 'tuck')
         .at(-1)
       if (last !== undefined) {
-        yarn.set(carrier, { stitch: last.at, pulls })
+        yarn.set(carrier, { stitch: last.at, covers: 0 })
         moved.delete(carrier)
       } else {
         moved.add(carrier)

@@ -519,13 +519,16 @@ ship," trust this file and the working tree instead.
   - work under another carrier's dragged yarn. A carrier that moves without
     knitting (parking, a kick, a Knitout `out`) drags its yarn from its last
     stitch, which a transfer takes along, to where it rests; KCode cannot say
-    a yarn was cut, so it stays attached. Until the rollers have run 26 passes
-    since that stitch, no other pass may work a needle under it more than the
-    editor's float distance (7) past it. Taking a carrier out on the right
+    a yarn was cut, so it stays attached. The stitch keeps the yarn at the
+    needles until other yarns knit over it: until its needle has been knitted
+    over 36 times, no other pass may work a needle under the yarn more than
+    the editor's float distance (7) past it. Rollers turning while the stitch
+    stays on its needle do not clear it. Taking a carrier out on the right
     partway through drags its yarn across the whole piece (Cameron's Knitout
-    notes); reference programs work farther under a parked yarn only after 26
-    roller passes, as a sleeve widens under one (added 2026-10-25 after
-    review). Studio's chain bind-off now starts on the side its yarn ended,
+    notes); reference programs work farther under a parked yarn only once its
+    needle has been knitted over 36 times, as a sleeve widens under one (added
+    2026-10-25 after review; the clearance was a count of roller passes until
+    a second review). Studio's chain bind-off now starts on the side its yarn ended,
     walking the mirror image from the right, instead of first moving the yarn
     left across the live stitches.
 
@@ -537,7 +540,9 @@ ship," trust this file and the working tree instead.
   can make: an empty needle bed, every feeder parked at home, and a swatch to
   try the settings with the yarn (`readiness.ts::MACHINE_START_CHECKS`).
   Every status panel, written pattern and printed run sheet shows them, and
-  the `machine:check` receipt states the same start assumptions.
+  the `machine:check` receipt states the same start assumptions. A swatch
+  that can be downloaded while its design is blocked lists them beside its
+  download (fixed 2026-10-25 after review).
 
   Each threshold carries its evidence in
   `KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1`: Kniterate's support articles,
@@ -554,12 +559,14 @@ ship," trust this file and the working tree instead.
 
   Open safety qualification work (reviewed 2026-10-24, not built):
   - attached-yarn paths beyond the blocking rule above. It follows a yarn
-    only from its latest stitch, and it leaves a carry within a knitting pass
-    to the float advisory. Studio's four-colour birdseye ("minimal" backing)
-    carries a colour that is absent from the end of a row up to 19 needles
-    past its last stitch before other yarns knit there; Kniterate's own
-    double-bed programs never go past 1. Introduction, and release of a yarn
-    known to be cut, have no model;
+    only from its latest stitch. A carry within a knitting pass, from a
+    carrier's last stitch to where it parks, is outside the rule and is not
+    reliably detected: the float advisory compares a carrier's consecutive
+    stitches, so some carries pass with no warning at all. Studio's
+    four-colour birdseye ("minimal" backing) carries a colour that is absent
+    from the end of a row up to 19 needles past its last stitch before other
+    yarns knit there; Kniterate's own double-bed programs never go past 1.
+    Introduction, and release of a yarn known to be cut, have no model;
   - construction-aware held-fabric checks beyond the central short-row
     count: where fabric is held, which region knits on, and how the rollers
     act on it, plus edge loading and finishing. The count is per needle

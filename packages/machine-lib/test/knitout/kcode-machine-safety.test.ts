@@ -860,7 +860,15 @@ describe('KCode machine-safety envelope', () => {
       ])
     })
 
-    it('ignores needles beyond the carrier and a carrier knitting its own yarn', () => {
+    it('ignores needles behind the last stitch, beyond the carrier, and a carrier knitting its own yarn', () => {
+      // Carrier 3 rests at -9.5, left of its last stitch at 110: 115..125 are behind it.
+      const behind = safety(job(
+        knitRight,
+        outRight,
+        four('>>', front(115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125), { left: -7.5, right: 127.5 }),
+        fourHome(127.5),
+      ))
+      expect(behind.diagnostics).toEqual([])
       // Carrier 3 moves to 96.5, left of its last stitch at 100: 88..94 are past it.
       const beyond = safety(job(
         OUT,
@@ -881,20 +889,32 @@ describe('KCode machine-safety envelope', () => {
       expect(own.diagnostics).toEqual([])
     })
 
-    it('counts a stitch as fresh until the rollers have run 26 passes since it', () => {
-      // Pass 1 pulls once with the stitch, the move home does not, and carrier
-      // 4 pulls on needles clear of the yarn before knitting under it.
-      const after = (clearPasses: number) => attached(safety(job(
+    it('keeps a stitch fresh until other yarns have knitted over its needle 36 times', () => {
+      // Carrier 4 knits over carrier 3's last stitch at f110 on its own, then under its yarn.
+      const after = (covering: readonly MachineTraceActionV1[][]) => attached(safety(job(
         knitRight,
-        { ...outRight, roller: 0 },
-        ...Array.from({ length: clearPasses }, (_, index) => index % 2 === 0
-          ? four('>>', front(115, 116, 117, 118, 119, 120), { left: index === 0 ? -7.5 : 112.5, right: 122.5 })
-          : four('<<', front(120, 119, 118, 117, 116, 115), { left: 112.5, right: 122.5 })),
-        four(clearPasses % 2 === 0 ? '>>' : '<<', front(...WIDE), { left: 87.5, right: 112.5 }),
+        outRight,
+        ...covering.map((actions, index) => four(index % 2 === 0 ? '>>' : '<<', actions, { left: index === 0 ? -7.5 : 107.5, right: 112.5 })),
+        four(covering.length % 2 === 0 ? '>>' : '<<', front(...WIDE), { left: 87.5, right: 112.5 }),
         fourHome(112.5),
       )))
-      expect(after(24)).toBe(1)
-      expect(after(25)).toBe(0)
+      const knits = (count: number) => Array.from({ length: count }, () => front(110))
+      expect(after(knits(35))).toBe(1)
+      expect(after(knits(36))).toBe(0)
+      // A tuck leaves the stitch on its needle.
+      expect(after([...knits(35), [tuck('front', 110)]])).toBe(1)
+    })
+
+    it('keeps a stitch fresh however long the rollers run while it stays on its needle', () => {
+      const idle = (roller: number) => attached(safety(job(
+        knitRight,
+        outRight,
+        ...Array.from({ length: 26 }, (_, index): PassSpec => ({ direction: index % 2 === 0 ? '>>' : '<<', carrier: '0', roller, carriage: wide })),
+        four('>>', front(...WIDE), { left: -7.5, right: 112.5 }),
+        fourHome(112.5),
+      )))
+      expect(idle(1)).toBe(1)
+      expect(idle(0)).toBe(1)
     })
 
     it('refuses the same through the pinned backend, and accepts taking the carrier out on the left', () => {
@@ -1062,7 +1082,7 @@ describe('KCode machine-safety envelope', () => {
     expect([envelope.transfer.maxSpeed, envelope.transfer.maxRoller]).toEqual([400, 450])
     expect(envelope.centralShortRows.maxKnits).toBe(4)
     expect(envelope.tuckStack.maxLoops).toBe(2)
-    expect([envelope.attachedYarn.maxNeedles, envelope.attachedYarn.freshPulls]).toEqual([7, 26])
+    expect([envelope.attachedYarn.maxNeedles, envelope.attachedYarn.coveringKnits]).toEqual([7, 36])
     const racking = 'https://support.kniterate.com/hc/en-us/articles/360016699857'
     const checks = 'https://support.kniterate.com/hc/en-us/articles/11698092127005'
     const feeder = 'https://support.kniterate.com/hc/en-us/articles/360010645337'

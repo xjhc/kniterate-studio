@@ -809,7 +809,7 @@ const ENTRIES: readonly ValidatorMessage[] = [
     rule: 'machine-safety.attached-yarn',
     title: 'Knitting under another yarn',
     explanation:
-      'A pass works needles under the yarn of a carrier that is not knitting. The Kniterate cannot cut yarn and KCode cannot say a yarn was cut, so that yarn still runs from its last stitch to where its carrier rests, and the needles can catch it. Taking a carrier out on the right drags its yarn across the whole piece. Within the editor\'s float distance of 7 needles the yarn is a float. Studio refuses work farther past a yarn\'s last stitch until the rollers have run 26 passes since it, as Kniterate\'s own programs do. Take the carrier out after a leftward pass, or at the end of the job. Blocks export.',
+      'A pass works needles under the yarn of a carrier that is not knitting. The Kniterate cannot cut yarn and KCode cannot say a yarn was cut, so that yarn still runs from its last stitch to where its carrier rests, and the needles can catch it. Taking a carrier out on the right drags its yarn across the whole piece. Within the editor\'s float distance of 7 needles the yarn is a float. The stitch holds the yarn at the needles until other yarns knit over it, so Studio refuses work farther past it until its needle has been knitted over 36 times, as Kniterate\'s own programs do. Take the carrier out after a leftward pass, or at the end of the job. Blocks export.',
     severityHint: 'error',
   },
   {
