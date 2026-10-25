@@ -29,7 +29,7 @@
       "sha256": "976c0cc54823b2568a47e444dbf88a0732d8be10453d077a7e6204fe7a196546"
     }
   ],
-  "configSha256": "077b5a674ad59d567945f417cc058c076d83a30bf1ff4175b6ed953e09ec21b9",
+  "configSha256": "40507ff786c825073d708d4be9b31dddeccae7a869adcce2f9614ddc5e4a3e8b",
   "testConfigSha256": "ac89d7e0eb7767d7ce0d779824d1e1db1692d864ff63e806f5dfe983c0653631",
   "globallyExcludedMutations": [],
   "diagnosticProseDirectiveAudit": [

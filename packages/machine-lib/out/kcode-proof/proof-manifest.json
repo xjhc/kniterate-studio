@@ -30936,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "03b0394cf3fa04c8a3bb99c830fad12717b3da123864ab541088707c72a014b0",
+    "sha256": "ded73dd31b8a739b3b81aa53ca288828d1f5f469167e7535848a1246234c3d16",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -32910,8 +32910,8 @@
       },
       {
         "path": "stryker.config.mjs",
-        "sha256": "077b5a674ad59d567945f417cc058c076d83a30bf1ff4175b6ed953e09ec21b9",
-        "bytes": 1294
+        "sha256": "40507ff786c825073d708d4be9b31dddeccae7a869adcce2f9614ddc5e4a3e8b",
+        "bytes": 1545
       },
       {
         "path": "test/back-face-projection.test.ts",
@@ -33263,7 +33263,7 @@
   "mutationEvidence": {
     "inputGrammarAndDiffMutations": true,
     "implementationSourceMutationScoring": true,
-    "receiptSha256": "389daf148c4001f97dbc1b909fec3de3c779da37e33a4b62dca8024829d7e065",
+    "receiptSha256": "3a3d79cb8a30943dd775d514c8d53fdaa39d7f65f5af39f2d64def6d95301b96",
     "counts": {
       "Killed": 3188,
       "Survived": 0,
