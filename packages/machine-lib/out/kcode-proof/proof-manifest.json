@@ -438,17 +438,47 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
+            {
+              "rail": "raw-kcode-parser",
+              "caseId": "kcode.bed-markers:4611158d55b83cce",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "severity": "error",
+                  "rule": "kcode.bed-markers",
+                  "message": "FRNT requires one ordered /...\\ carriage-marker pair and exactly two 2 carrier markers.",
+                  "span": {
+                    "start": {
+                      "offset": 51,
+                      "line": 4,
+                      "column": 6
+                    },
+                    "end": {
+                      "offset": 338,
+                      "line": 4,
+                      "column": 293
+                    }
+                  },
+                  "line": 4,
+                  "column": 6,
+                  "endLine": 4,
+                  "endColumn": 293
+                }
+              ],
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
             {
               "rail": "raw-kcode-parser",
               "caseId": "kcode.bed-markers:6da57f6f85c78b2d",
@@ -649,58 +679,28 @@
             },
             {
               "rail": "raw-kcode-parser",
-              "caseId": "kcode.bed-markers:e72ff489edbc689a",
+              "caseId": "kcode.bed-markers:80fa9e00a83e5f8f",
               "expectedSeverity": "error",
               "actualDiagnostics": [
                 {
                   "severity": "error",
                   "rule": "kcode.bed-markers",
-                  "message": "FRNT requires one ordered /...\\ carriage-marker pair and exactly two 2 carrier markers.",
+                  "message": "FRNT and REAR carriage/carrier markers must occupy identical columns.",
                   "span": {
                     "start": {
-                      "offset": 51,
-                      "line": 4,
+                      "offset": 633,
+                      "line": 6,
                       "column": 6
                     },
                     "end": {
-                      "offset": 338,
-                      "line": 4,
+                      "offset": 920,
+                      "line": 6,
                       "column": 293
                     }
                   },
-                  "line": 4,
+                  "line": 6,
                   "column": 6,
-                  "endLine": 4,
-                  "endColumn": 293
-                }
-              ],
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
-            {
-              "rail": "raw-kcode-parser",
-              "caseId": "kcode.bed-markers:4611158d55b83cce",
-              "expectedSeverity": "error",
-              "actualDiagnostics": [
-                {
-                  "severity": "error",
-                  "rule": "kcode.bed-markers",
-                  "message": "FRNT requires one ordered /...\\ carriage-marker pair and exactly two 2 carrier markers.",
-                  "span": {
-                    "start": {
-                      "offset": 51,
-                      "line": 4,
-                      "column": 6
-                    },
-                    "end": {
-                      "offset": 338,
-                      "line": 4,
-                      "column": 293
-                    }
-                  },
-                  "line": 4,
-                  "column": 6,
-                  "endLine": 4,
+                  "endLine": 6,
                   "endColumn": 293
                 }
               ],
@@ -760,28 +760,28 @@
             },
             {
               "rail": "raw-kcode-parser",
-              "caseId": "kcode.bed-markers:80fa9e00a83e5f8f",
+              "caseId": "kcode.bed-markers:e72ff489edbc689a",
               "expectedSeverity": "error",
               "actualDiagnostics": [
                 {
                   "severity": "error",
                   "rule": "kcode.bed-markers",
-                  "message": "FRNT and REAR carriage/carrier markers must occupy identical columns.",
+                  "message": "FRNT requires one ordered /...\\ carriage-marker pair and exactly two 2 carrier markers.",
                   "span": {
                     "start": {
-                      "offset": 633,
-                      "line": 6,
+                      "offset": 51,
+                      "line": 4,
                       "column": 6
                     },
                     "end": {
-                      "offset": 920,
-                      "line": 6,
+                      "offset": 338,
+                      "line": 4,
                       "column": 293
                     }
                   },
-                  "line": 6,
+                  "line": 4,
                   "column": 6,
-                  "endLine": 6,
+                  "endLine": 4,
                   "endColumn": 293
                 }
               ],
@@ -800,14 +800,14 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -22537,6 +22537,12 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
               "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
             },
@@ -22545,15 +22551,39 @@
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
               "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
-            },
-            {
-              "rail": "raw-kcode-parser",
-              "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             }
           ],
           "targetedWitnesses": [
+            {
+              "rail": "raw-kcode-parser",
+              "caseId": "kcode.field-charset:3d568cb5f715060b",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "severity": "error",
+                  "rule": "kcode.field-charset",
+                  "message": "STIF contains unsupported character \"G\".",
+                  "span": {
+                    "start": {
+                      "offset": 344,
+                      "line": 5,
+                      "column": 6
+                    },
+                    "end": {
+                      "offset": 345,
+                      "line": 5,
+                      "column": 7
+                    }
+                  },
+                  "line": 5,
+                  "column": 6,
+                  "endLine": 5,
+                  "endColumn": 7
+                }
+              ],
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
             {
               "rail": "raw-kcode-parser",
               "caseId": "kcode.field-charset:443d7e122949bc0d",
@@ -22634,36 +22664,6 @@
               ],
               "path": "test/knitout/kcode-document-adversarial.test.ts",
               "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
-            {
-              "rail": "raw-kcode-parser",
-              "caseId": "kcode.field-charset:3d568cb5f715060b",
-              "expectedSeverity": "error",
-              "actualDiagnostics": [
-                {
-                  "severity": "error",
-                  "rule": "kcode.field-charset",
-                  "message": "STIF contains unsupported character \"G\".",
-                  "span": {
-                    "start": {
-                      "offset": 344,
-                      "line": 5,
-                      "column": 6
-                    },
-                    "end": {
-                      "offset": 345,
-                      "line": 5,
-                      "column": 7
-                    }
-                  },
-                  "line": 5,
-                  "column": 6,
-                  "endLine": 5,
-                  "endColumn": 7
-                }
-              ],
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             }
           ]
         },
@@ -22677,110 +22677,17 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
-            {
-              "rail": "raw-kcode-parser",
-              "caseId": "kcode.field-order:f058deb05b449f57",
-              "expectedSeverity": "error",
-              "actualDiagnostics": [
-                {
-                  "severity": "error",
-                  "rule": "kcode.field-order",
-                  "message": "Expected STIF but received REAR.",
-                  "span": {
-                    "start": {
-                      "offset": 339,
-                      "line": 5,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 631,
-                      "line": 5,
-                      "column": 293
-                    }
-                  },
-                  "line": 5,
-                  "column": 1,
-                  "endLine": 5,
-                  "endColumn": 293
-                },
-                {
-                  "severity": "error",
-                  "rule": "kcode.field-order",
-                  "message": "Expected REAR but received STIF.",
-                  "span": {
-                    "start": {
-                      "offset": 632,
-                      "line": 6,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 920,
-                      "line": 6,
-                      "column": 289
-                    }
-                  },
-                  "line": 6,
-                  "column": 1,
-                  "endLine": 6,
-                  "endColumn": 289
-                },
-                {
-                  "severity": "error",
-                  "rule": "kcode.incomplete-pass",
-                  "message": "Pass block is incomplete; expected FRNT, STIF, REAR, STIR, footer and saw FRNT, REAR, STIF, STIR.",
-                  "span": {
-                    "start": {
-                      "offset": 1210,
-                      "line": 8,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 1228,
-                      "line": 8,
-                      "column": 19
-                    }
-                  },
-                  "line": 8,
-                  "column": 1,
-                  "endLine": 8,
-                  "endColumn": 19
-                },
-                {
-                  "severity": "error",
-                  "rule": "kcode.no-passes",
-                  "message": "KCode document must contain at least one complete pass block.",
-                  "span": {
-                    "start": {
-                      "offset": 1229,
-                      "line": 9,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 1229,
-                      "line": 9,
-                      "column": 1
-                    }
-                  },
-                  "line": 9,
-                  "column": 1,
-                  "endLine": 9,
-                  "endColumn": 1
-                }
-              ],
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
             {
               "rail": "raw-kcode-parser",
               "caseId": "kcode.field-order:eb8ac55af4bfd040",
@@ -22894,6 +22801,99 @@
               ],
               "path": "test/knitout/kcode-document-adversarial.test.ts",
               "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "caseId": "kcode.field-order:f058deb05b449f57",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "severity": "error",
+                  "rule": "kcode.field-order",
+                  "message": "Expected STIF but received REAR.",
+                  "span": {
+                    "start": {
+                      "offset": 339,
+                      "line": 5,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 631,
+                      "line": 5,
+                      "column": 293
+                    }
+                  },
+                  "line": 5,
+                  "column": 1,
+                  "endLine": 5,
+                  "endColumn": 293
+                },
+                {
+                  "severity": "error",
+                  "rule": "kcode.field-order",
+                  "message": "Expected REAR but received STIF.",
+                  "span": {
+                    "start": {
+                      "offset": 632,
+                      "line": 6,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 920,
+                      "line": 6,
+                      "column": 289
+                    }
+                  },
+                  "line": 6,
+                  "column": 1,
+                  "endLine": 6,
+                  "endColumn": 289
+                },
+                {
+                  "severity": "error",
+                  "rule": "kcode.incomplete-pass",
+                  "message": "Pass block is incomplete; expected FRNT, STIF, REAR, STIR, footer and saw FRNT, REAR, STIF, STIR.",
+                  "span": {
+                    "start": {
+                      "offset": 1210,
+                      "line": 8,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 1228,
+                      "line": 8,
+                      "column": 19
+                    }
+                  },
+                  "line": 8,
+                  "column": 1,
+                  "endLine": 8,
+                  "endColumn": 19
+                },
+                {
+                  "severity": "error",
+                  "rule": "kcode.no-passes",
+                  "message": "KCode document must contain at least one complete pass block.",
+                  "span": {
+                    "start": {
+                      "offset": 1229,
+                      "line": 9,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 1229,
+                      "line": 9,
+                      "column": 1
+                    }
+                  },
+                  "line": 9,
+                  "column": 1,
+                  "endLine": 9,
+                  "endColumn": 1
+                }
+              ],
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             }
           ]
         },
@@ -22907,14 +22907,14 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -23118,6 +23118,57 @@
             },
             {
               "rail": "raw-kcode-parser",
+              "caseId": "kcode.field-width:bffae652168b8a4f",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "severity": "error",
+                  "rule": "kcode.field-width",
+                  "message": "FRNT and REAR widths must match; received 287 and 286.",
+                  "span": {
+                    "start": {
+                      "offset": 633,
+                      "line": 6,
+                      "column": 6
+                    },
+                    "end": {
+                      "offset": 919,
+                      "line": 6,
+                      "column": 292
+                    }
+                  },
+                  "line": 6,
+                  "column": 6,
+                  "endLine": 6,
+                  "endColumn": 292
+                },
+                {
+                  "severity": "error",
+                  "rule": "kcode.field-width",
+                  "message": "REAR width must equal stitch width 283 plus 4 carriage/carrier markers; expected 287, received 286.",
+                  "span": {
+                    "start": {
+                      "offset": 633,
+                      "line": 6,
+                      "column": 6
+                    },
+                    "end": {
+                      "offset": 919,
+                      "line": 6,
+                      "column": 292
+                    }
+                  },
+                  "line": 6,
+                  "column": 6,
+                  "endLine": 6,
+                  "endColumn": 292
+                }
+              ],
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
+            {
+              "rail": "raw-kcode-parser",
               "caseId": "kcode.field-width:fb73b85aaff6d2ae",
               "expectedSeverity": "error",
               "actualDiagnostics": [
@@ -23208,57 +23259,6 @@
               ],
               "path": "test/knitout/kcode-document-adversarial.test.ts",
               "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
-            {
-              "rail": "raw-kcode-parser",
-              "caseId": "kcode.field-width:bffae652168b8a4f",
-              "expectedSeverity": "error",
-              "actualDiagnostics": [
-                {
-                  "severity": "error",
-                  "rule": "kcode.field-width",
-                  "message": "FRNT and REAR widths must match; received 287 and 286.",
-                  "span": {
-                    "start": {
-                      "offset": 633,
-                      "line": 6,
-                      "column": 6
-                    },
-                    "end": {
-                      "offset": 919,
-                      "line": 6,
-                      "column": 292
-                    }
-                  },
-                  "line": 6,
-                  "column": 6,
-                  "endLine": 6,
-                  "endColumn": 292
-                },
-                {
-                  "severity": "error",
-                  "rule": "kcode.field-width",
-                  "message": "REAR width must equal stitch width 283 plus 4 carriage/carrier markers; expected 287, received 286.",
-                  "span": {
-                    "start": {
-                      "offset": 633,
-                      "line": 6,
-                      "column": 6
-                    },
-                    "end": {
-                      "offset": 919,
-                      "line": 6,
-                      "column": 292
-                    }
-                  },
-                  "line": 6,
-                  "column": 6,
-                  "endLine": 6,
-                  "endColumn": 292
-                }
-              ],
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             }
           ]
         },
@@ -23272,14 +23272,14 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -23456,36 +23456,6 @@
           "targetedWitnesses": [
             {
               "rail": "raw-kcode-parser",
-              "caseId": "kcode.footer-number:edfdb9a55fc83477",
-              "expectedSeverity": "error",
-              "actualDiagnostics": [
-                {
-                  "severity": "error",
-                  "rule": "kcode.footer-number",
-                  "message": "Pass speed must be a finite decimal number; received \"3e2\".",
-                  "span": {
-                    "start": {
-                      "offset": 1221,
-                      "line": 8,
-                      "column": 12
-                    },
-                    "end": {
-                      "offset": 1224,
-                      "line": 8,
-                      "column": 15
-                    }
-                  },
-                  "line": 8,
-                  "column": 12,
-                  "endLine": 8,
-                  "endColumn": 15
-                }
-              ],
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
-            {
-              "rail": "raw-kcode-parser",
               "caseId": "kcode.footer-number:59027387f529f3f1",
               "expectedSeverity": "error",
               "actualDiagnostics": [
@@ -23513,6 +23483,36 @@
               ],
               "path": "test/knitout/kcode-document-adversarial.test.ts",
               "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "caseId": "kcode.footer-number:edfdb9a55fc83477",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "severity": "error",
+                  "rule": "kcode.footer-number",
+                  "message": "Pass speed must be a finite decimal number; received \"3e2\".",
+                  "span": {
+                    "start": {
+                      "offset": 1221,
+                      "line": 8,
+                      "column": 12
+                    },
+                    "end": {
+                      "offset": 1224,
+                      "line": 8,
+                      "column": 15
+                    }
+                  },
+                  "line": 8,
+                  "column": 12,
+                  "endLine": 8,
+                  "endColumn": 15
+                }
+              ],
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             }
           ]
         },
@@ -23526,14 +23526,14 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -23715,83 +23715,41 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
             {
               "rail": "raw-kcode-parser",
-              "caseId": "kcode.incomplete-pass:f058deb05b449f57",
+              "caseId": "kcode.incomplete-pass:b6125d5e9b26b81a",
               "expectedSeverity": "error",
               "actualDiagnostics": [
                 {
                   "severity": "error",
-                  "rule": "kcode.field-order",
-                  "message": "Expected STIF but received REAR.",
-                  "span": {
-                    "start": {
-                      "offset": 339,
-                      "line": 5,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 631,
-                      "line": 5,
-                      "column": 293
-                    }
-                  },
-                  "line": 5,
-                  "column": 1,
-                  "endLine": 5,
-                  "endColumn": 293
-                },
-                {
-                  "severity": "error",
-                  "rule": "kcode.field-order",
-                  "message": "Expected REAR but received STIF.",
-                  "span": {
-                    "start": {
-                      "offset": 632,
-                      "line": 6,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 920,
-                      "line": 6,
-                      "column": 289
-                    }
-                  },
-                  "line": 6,
-                  "column": 1,
-                  "endLine": 6,
-                  "endColumn": 289
-                },
-                {
-                  "severity": "error",
                   "rule": "kcode.incomplete-pass",
-                  "message": "Pass block is incomplete; expected FRNT, STIF, REAR, STIR, footer and saw FRNT, REAR, STIF, STIR.",
+                  "message": "Pass block is incomplete; expected FRNT, STIF, REAR, STIR, footer and saw FRNT, STIF, REAR.",
                   "span": {
                     "start": {
-                      "offset": 1210,
-                      "line": 8,
+                      "offset": 921,
+                      "line": 7,
                       "column": 1
                     },
                     "end": {
-                      "offset": 1228,
-                      "line": 8,
+                      "offset": 939,
+                      "line": 7,
                       "column": 19
                     }
                   },
-                  "line": 8,
+                  "line": 7,
                   "column": 1,
-                  "endLine": 8,
+                  "endLine": 7,
                   "endColumn": 19
                 },
                 {
@@ -23800,19 +23758,19 @@
                   "message": "KCode document must contain at least one complete pass block.",
                   "span": {
                     "start": {
-                      "offset": 1229,
-                      "line": 9,
+                      "offset": 940,
+                      "line": 8,
                       "column": 1
                     },
                     "end": {
-                      "offset": 1229,
-                      "line": 9,
+                      "offset": 940,
+                      "line": 8,
                       "column": 1
                     }
                   },
-                  "line": 9,
+                  "line": 8,
                   "column": 1,
-                  "endLine": 9,
+                  "endLine": 8,
                   "endColumn": 1
                 }
               ],
@@ -23935,28 +23893,70 @@
             },
             {
               "rail": "raw-kcode-parser",
-              "caseId": "kcode.incomplete-pass:b6125d5e9b26b81a",
+              "caseId": "kcode.incomplete-pass:f058deb05b449f57",
               "expectedSeverity": "error",
               "actualDiagnostics": [
                 {
                   "severity": "error",
-                  "rule": "kcode.incomplete-pass",
-                  "message": "Pass block is incomplete; expected FRNT, STIF, REAR, STIR, footer and saw FRNT, STIF, REAR.",
+                  "rule": "kcode.field-order",
+                  "message": "Expected STIF but received REAR.",
                   "span": {
                     "start": {
-                      "offset": 921,
-                      "line": 7,
+                      "offset": 339,
+                      "line": 5,
                       "column": 1
                     },
                     "end": {
-                      "offset": 939,
-                      "line": 7,
+                      "offset": 631,
+                      "line": 5,
+                      "column": 293
+                    }
+                  },
+                  "line": 5,
+                  "column": 1,
+                  "endLine": 5,
+                  "endColumn": 293
+                },
+                {
+                  "severity": "error",
+                  "rule": "kcode.field-order",
+                  "message": "Expected REAR but received STIF.",
+                  "span": {
+                    "start": {
+                      "offset": 632,
+                      "line": 6,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 920,
+                      "line": 6,
+                      "column": 289
+                    }
+                  },
+                  "line": 6,
+                  "column": 1,
+                  "endLine": 6,
+                  "endColumn": 289
+                },
+                {
+                  "severity": "error",
+                  "rule": "kcode.incomplete-pass",
+                  "message": "Pass block is incomplete; expected FRNT, STIF, REAR, STIR, footer and saw FRNT, REAR, STIF, STIR.",
+                  "span": {
+                    "start": {
+                      "offset": 1210,
+                      "line": 8,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 1228,
+                      "line": 8,
                       "column": 19
                     }
                   },
-                  "line": 7,
+                  "line": 8,
                   "column": 1,
-                  "endLine": 7,
+                  "endLine": 8,
                   "endColumn": 19
                 },
                 {
@@ -23965,19 +23965,19 @@
                   "message": "KCode document must contain at least one complete pass block.",
                   "span": {
                     "start": {
-                      "offset": 940,
-                      "line": 8,
+                      "offset": 1229,
+                      "line": 9,
                       "column": 1
                     },
                     "end": {
-                      "offset": 940,
-                      "line": 8,
+                      "offset": 1229,
+                      "line": 9,
                       "column": 1
                     }
                   },
-                  "line": 8,
+                  "line": 9,
                   "column": 1,
-                  "endLine": 8,
+                  "endLine": 9,
                   "endColumn": 1
                 }
               ],
@@ -23996,14 +23996,14 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -24329,14 +24329,14 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -24382,6 +24382,12 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
               "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
             },
@@ -24390,12 +24396,6 @@
               "severity": "error",
               "path": "test/knitout/strict-kcode-document.test.ts",
               "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
-            },
-            {
-              "rail": "raw-kcode-parser",
-              "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             }
           ],
           "targetedWitnesses": [
@@ -24551,14 +24551,14 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -24625,14 +24625,14 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -24689,36 +24689,6 @@
             },
             {
               "rail": "raw-kcode-parser",
-              "caseId": "kcode.pass-interrupted:9a856e5b7629d132",
-              "expectedSeverity": "error",
-              "actualDiagnostics": [
-                {
-                  "severity": "error",
-                  "rule": "kcode.pass-interrupted",
-                  "message": "Pass block must be contiguous in FRNT, STIF, REAR, STIR, footer order; comment interrupted it.",
-                  "span": {
-                    "start": {
-                      "offset": 339,
-                      "line": 5,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 354,
-                      "line": 5,
-                      "column": 16
-                    }
-                  },
-                  "line": 5,
-                  "column": 1,
-                  "endLine": 5,
-                  "endColumn": 16
-                }
-              ],
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
-            {
-              "rail": "raw-kcode-parser",
               "caseId": "kcode.pass-interrupted:2bd6ba8707aad0e2",
               "expectedSeverity": "error",
               "actualDiagnostics": [
@@ -24746,6 +24716,36 @@
               ],
               "path": "test/knitout/kcode-document-adversarial.test.ts",
               "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "caseId": "kcode.pass-interrupted:9a856e5b7629d132",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "severity": "error",
+                  "rule": "kcode.pass-interrupted",
+                  "message": "Pass block must be contiguous in FRNT, STIF, REAR, STIR, footer order; comment interrupted it.",
+                  "span": {
+                    "start": {
+                      "offset": 339,
+                      "line": 5,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 354,
+                      "line": 5,
+                      "column": 16
+                    }
+                  },
+                  "line": 5,
+                  "column": 1,
+                  "endLine": 5,
+                  "endColumn": 16
+                }
+              ],
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             }
           ]
         },
@@ -24759,14 +24759,14 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -24865,6 +24865,57 @@
             },
             {
               "rail": "raw-kcode-parser",
+              "caseId": "kcode.rack-order:20447eddf07c8a1d",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "severity": "error",
+                  "rule": "kcode.pass-interrupted",
+                  "message": "Pass block must be contiguous in FRNT, STIF, REAR, STIR, footer order; rack interrupted it.",
+                  "span": {
+                    "start": {
+                      "offset": 339,
+                      "line": 5,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 347,
+                      "line": 5,
+                      "column": 9
+                    }
+                  },
+                  "line": 5,
+                  "column": 1,
+                  "endLine": 5,
+                  "endColumn": 9
+                },
+                {
+                  "severity": "error",
+                  "rule": "kcode.rack-order",
+                  "message": "RACK records may appear only between complete pass blocks.",
+                  "span": {
+                    "start": {
+                      "offset": 339,
+                      "line": 5,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 347,
+                      "line": 5,
+                      "column": 9
+                    }
+                  },
+                  "line": 5,
+                  "column": 1,
+                  "endLine": 5,
+                  "endColumn": 9
+                }
+              ],
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
+            {
+              "rail": "raw-kcode-parser",
               "caseId": "kcode.rack-order:6c92dfaa1f4b22a6",
               "expectedSeverity": "error",
               "actualDiagnostics": [
@@ -24934,57 +24985,6 @@
               ],
               "path": "test/knitout/kcode-document-adversarial.test.ts",
               "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
-            {
-              "rail": "raw-kcode-parser",
-              "caseId": "kcode.rack-order:20447eddf07c8a1d",
-              "expectedSeverity": "error",
-              "actualDiagnostics": [
-                {
-                  "severity": "error",
-                  "rule": "kcode.pass-interrupted",
-                  "message": "Pass block must be contiguous in FRNT, STIF, REAR, STIR, footer order; rack interrupted it.",
-                  "span": {
-                    "start": {
-                      "offset": 339,
-                      "line": 5,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 347,
-                      "line": 5,
-                      "column": 9
-                    }
-                  },
-                  "line": 5,
-                  "column": 1,
-                  "endLine": 5,
-                  "endColumn": 9
-                },
-                {
-                  "severity": "error",
-                  "rule": "kcode.rack-order",
-                  "message": "RACK records may appear only between complete pass blocks.",
-                  "span": {
-                    "start": {
-                      "offset": 339,
-                      "line": 5,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 347,
-                      "line": 5,
-                      "column": 9
-                    }
-                  },
-                  "line": 5,
-                  "column": 1,
-                  "endLine": 5,
-                  "endColumn": 9
-                }
-              ],
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             }
           ]
         },
@@ -25045,47 +25045,17 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
-            {
-              "rail": "raw-kcode-parser",
-              "caseId": "kcode.source-byte:a2c624101fd9556e",
-              "expectedSeverity": "error",
-              "actualDiagnostics": [
-                {
-                  "severity": "error",
-                  "rule": "kcode.source-byte",
-                  "message": "KCode source must use printable 7-bit ASCII (plus tab and line endings); found code unit 0x00.",
-                  "span": {
-                    "start": {
-                      "offset": 14,
-                      "line": 3,
-                      "column": 3
-                    },
-                    "end": {
-                      "offset": 15,
-                      "line": 3,
-                      "column": 4
-                    }
-                  },
-                  "line": 3,
-                  "column": 3,
-                  "endLine": 3,
-                  "endColumn": 4
-                }
-              ],
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
-            },
             {
               "rail": "raw-kcode-parser",
               "caseId": "kcode.source-byte:39326272a0b3c0db",
@@ -25141,6 +25111,36 @@
                   "column": 1,
                   "endLine": 1,
                   "endColumn": 2
+                }
+              ],
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+            },
+            {
+              "rail": "raw-kcode-parser",
+              "caseId": "kcode.source-byte:a2c624101fd9556e",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "severity": "error",
+                  "rule": "kcode.source-byte",
+                  "message": "KCode source must use printable 7-bit ASCII (plus tab and line endings); found code unit 0x00.",
+                  "span": {
+                    "start": {
+                      "offset": 14,
+                      "line": 3,
+                      "column": 3
+                    },
+                    "end": {
+                      "offset": 15,
+                      "line": 3,
+                      "column": 4
+                    }
+                  },
+                  "line": 3,
+                  "column": 3,
+                  "endLine": 3,
+                  "endColumn": 4
                 }
               ],
               "path": "test/knitout/kcode-document-adversarial.test.ts",
@@ -25311,26 +25311,26 @@
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "warning",
-              "path": "test/knitout/strict-kcode-document.test.ts",
-              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
+              "path": "test/knitout/kcode-document-adversarial.test.ts",
+              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "error",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             },
             {
               "rail": "raw-kcode-parser",
               "severity": "warning",
-              "path": "test/knitout/kcode-document-adversarial.test.ts",
-              "sha256": "37309be25ff7287a1e4b09decf5f3b0e3f3edce388ffdbc9dc9d03139535f692"
+              "path": "test/knitout/strict-kcode-document.test.ts",
+              "sha256": "0fdf71690c8b78a77cccac0bc585da6a12d61ed6338bc02ed5c1719ebbfa86f9"
             }
           ],
           "targetedWitnesses": [
@@ -27266,13 +27266,13 @@
           "observations": [
             {
               "rail": "machine-trace-validator",
-              "severity": "warning",
+              "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
               "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
             },
             {
               "rail": "machine-trace-validator",
-              "severity": "error",
+              "severity": "warning",
               "path": "test/knitout/kcode-machine-validator.test.ts",
               "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
             }
@@ -27885,61 +27885,6 @@
           "targetedWitnesses": [
             {
               "rail": "machine-trace-validator",
-              "caseId": "machine-trace.rack-command-position:9",
-              "expectedSeverity": "error",
-              "actualDiagnostics": [
-                {
-                  "severity": "error",
-                  "class": "structural",
-                  "rule": "machine-trace.rack-command-position",
-                  "message": "Rack command 0 boundary 2 must be an ordered integer in 0..1.",
-                  "passIndex": null,
-                  "sourceSpan": {
-                    "start": {
-                      "offset": 0,
-                      "line": 1,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 1,
-                      "line": 1,
-                      "column": 2
-                    }
-                  },
-                  "line": 1,
-                  "column": 1,
-                  "endLine": 1,
-                  "endColumn": 2
-                },
-                {
-                  "severity": "error",
-                  "class": "structural",
-                  "rule": "machine-trace.rack-command-initial",
-                  "message": "MachineTraceV1 must begin with an explicit RACK:0 command before pass 0.",
-                  "passIndex": 0,
-                  "sourceSpan": {
-                    "start": {
-                      "offset": 0,
-                      "line": 1,
-                      "column": 1
-                    },
-                    "end": {
-                      "offset": 1,
-                      "line": 1,
-                      "column": 2
-                    }
-                  },
-                  "line": 1,
-                  "column": 1,
-                  "endLine": 1,
-                  "endColumn": 2
-                }
-              ],
-              "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
-            },
-            {
-              "rail": "machine-trace-validator",
               "caseId": "machine-trace.rack-command-position:10",
               "expectedSeverity": "error",
               "actualDiagnostics": [
@@ -28074,6 +28019,61 @@
                   "line": 6,
                   "column": 1,
                   "endLine": 6,
+                  "endColumn": 2
+                }
+              ],
+              "path": "test/knitout/kcode-machine-validator.test.ts",
+              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+            },
+            {
+              "rail": "machine-trace-validator",
+              "caseId": "machine-trace.rack-command-position:9",
+              "expectedSeverity": "error",
+              "actualDiagnostics": [
+                {
+                  "severity": "error",
+                  "class": "structural",
+                  "rule": "machine-trace.rack-command-position",
+                  "message": "Rack command 0 boundary 2 must be an ordered integer in 0..1.",
+                  "passIndex": null,
+                  "sourceSpan": {
+                    "start": {
+                      "offset": 0,
+                      "line": 1,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 1,
+                      "line": 1,
+                      "column": 2
+                    }
+                  },
+                  "line": 1,
+                  "column": 1,
+                  "endLine": 1,
+                  "endColumn": 2
+                },
+                {
+                  "severity": "error",
+                  "class": "structural",
+                  "rule": "machine-trace.rack-command-initial",
+                  "message": "MachineTraceV1 must begin with an explicit RACK:0 command before pass 0.",
+                  "passIndex": 0,
+                  "sourceSpan": {
+                    "start": {
+                      "offset": 0,
+                      "line": 1,
+                      "column": 1
+                    },
+                    "end": {
+                      "offset": 1,
+                      "line": 1,
+                      "column": 2
+                    }
+                  },
+                  "line": 1,
+                  "column": 1,
+                  "endLine": 1,
                   "endColumn": 2
                 }
               ],
@@ -30888,7 +30888,7 @@
     ]
   },
   "contract": {
-    "sha256": "e0968ef9c06595165a4976a55ff93bba2c5a8a9154bb50056795834cb5806cd3",
+    "sha256": "5b1621406493cf7786898b56a8abe5f334972fe7ff8b6564c023f19c29c647da",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -32097,8 +32097,8 @@
       },
       {
         "path": "scripts/kcode-rule-coverage.ts",
-        "sha256": "ab82cb3d93eacb9fe60350dd172f3cfb61255ab73ce7368814ba9f34cc4eea3c",
-        "bytes": 7861
+        "sha256": "08a457a5e403d5d1bbbc125b0f8a7c5fd303edb92a85adc40ef60b7b54d80629",
+        "bytes": 8116
       },
       {
         "path": "scripts/kcode-rule-runtime-ledger.ts",
@@ -32857,7 +32857,7 @@
       },
       {
         "path": "stryker.config.mjs",
-        "sha256": "3e18618ff990dcaf48e7e8ea5aa973ef56c303ca005c2d13f35e710c90f88a05",
+        "sha256": "077b5a674ad59d567945f417cc058c076d83a30bf1ff4175b6ed953e09ec21b9",
         "bytes": 1294
       },
       {
@@ -33147,8 +33147,8 @@
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
-        "sha256": "87e26a59c0747f1ab363531cd1a33b3f6fa2dc23e29494307871ebeb990b26bd",
-        "bytes": 37875
+        "sha256": "1d0e024bbe74c5863a37970f65b2a09d822b9002268fdf810d02c270cd67cbcf",
+        "bytes": 37917
       },
       {
         "path": "test/physical-registry.test.ts",
@@ -33205,7 +33205,7 @@
   "mutationEvidence": {
     "inputGrammarAndDiffMutations": true,
     "implementationSourceMutationScoring": true,
-    "receiptSha256": "8d1ae27ce113ce1163c29db56bc62b8d800b20b6c2cea05398b9d237483564e2",
+    "receiptSha256": "9b91370e4911d2ee82602c684fe3f79ec5d780b900dd81b2b7f484cce05a70af",
     "counts": {
       "Killed": 3113,
       "Survived": 0,
