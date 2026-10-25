@@ -37,6 +37,7 @@ test('exports validated k-code and reproduces it byte-identically after project 
   await menu(page, 'File', 'Print knitting sheet');
   await expect(page.locator('.run-sheet')).toContainText('C1');
   await expect(page.locator('.run-sheet')).toContainText('C6');
+  for (const check of ['every check assumes an empty bed', 'Park every yarn feeder at home', 'Knit a swatch to try the stitch size']) await expect(page.locator('.run-sheet')).toContainText(check);
   if (testInfo.project.name === 'chromium') {
     const pdfPath = testInfo.outputPath('run-sheet.pdf');
     await page.pdf({ path: pdfPath, printBackground: true });

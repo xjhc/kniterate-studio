@@ -21,6 +21,7 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
 
   await menu(page, 'File', 'Print knitting sheet');
   await expect(page.locator('.run-sheet')).toContainText('fairisle.kc');
+  for (const check of ['every check assumes an empty bed', 'Park every yarn feeder at home', 'Knit a swatch to try the stitch size']) await expect(page.locator('.run-sheet')).toContainText(check);
   if (testInfo.project.name === 'chromium') {
     const pdfPath = testInfo.outputPath('foreign-run-sheet.pdf');
     await page.pdf({ path: pdfPath, printBackground: true });

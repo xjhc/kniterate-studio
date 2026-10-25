@@ -38,7 +38,7 @@ import { panelInstructions, panelPackageFiles } from './sweater/panelHandoff';
 import { StartScreen } from './StartScreen';
 import { handoffFiles, instructionsMarkdown, readinessStory, schematicSvg } from './handoff';
 import { planProject } from './plan';
-import { MEASUREMENT_RULES, collectFindings, resolveReadiness, type Finding } from './readiness';
+import { MACHINE_START_CHECKS, MEASUREMENT_RULES, collectFindings, resolveReadiness, type Finding } from './readiness';
 import { zipStore } from './zip';
 import { ChangesPanel, continuationFrom } from './garment/ChangesPanel';
 import { GarmentSheet } from './garment/GarmentSheet';
@@ -475,7 +475,7 @@ export function RunSheet({ document, onClose }: { document: MachineDocument; onC
           <p>{group.explanation}</p>
           <ul className="run-sheet-finding-anchors">{group.representatives.map((representative, index) => <li key={`${formatForeignRunSheetFindingAnchor(representative)}-${index}`}><b>{formatForeignRunSheetFindingAnchor(representative)}</b>{representative.detail !== group.explanation ? ` — ${representative.detail}` : ''}</li>)}</ul>
         </li>)}</ul></section>}
-        <section><h2>Pre-knit check</h2><ul className="checklist"><li>Carrier yarns and roles confirmed against the original program setup</li><li>Needle bed is clear and carriage moves freely</li><li>Required waste yarn and draw thread confirmed from the original setup</li><li>Encoded per-pass speed and roller values have machine-side review; editor/profile checks are not physical safety approval</li><li>Representative swatch has been knit and inspected</li></ul></section>
+        <section><h2>Pre-knit check</h2><ul className="checklist"><li>Carrier yarns and roles confirmed against the original program setup</li><li>Carriage moves freely</li><li>Required waste yarn and draw thread confirmed from the original setup</li><li>Encoded per-pass speed and roller values have machine-side review; editor/profile checks are not physical safety approval</li>{(document.verdict.state === 'blocked' ? ['Needle bed is clear', 'Representative swatch has been knit and inspected'] : MACHINE_START_CHECKS).map((check) => <li key={check}>{check}</li>)}</ul></section>
         <footer>Generated locally · {new Date().toLocaleDateString()}</footer>
       </article>
     </div>
@@ -498,7 +498,7 @@ function AuthoredRunSheet({ project, compiled, kcode, verdict, onClose }: { proj
     <section><h2>Carrier map</h2><div className="carrier-map">{(compiled.frame?.frameCarriers ?? []).map((carrier) => <span key={`frame-${carrier}`}><i style={{ background: CARRIER_COLORS[carrier] }} />C{carrier}<b>Frame yarn (Customist draw/cameo)</b></span>)}{state.machine.yarnAssignments.map((assignment) => { const color = state.chart.palette.find((entry) => entry.id === assignment.paletteId); return <span key={assignment.paletteId}><i style={{ background: color?.hex }} />C{assignment.carrier}<b>{assignment.yarnName}</b></span>; })}{compiled.frame?.wasteCarrier && <span><i style={{ background: CARRIER_COLORS[compiled.frame.wasteCarrier] }} />C{compiled.frame.wasteCarrier}<b>Waste yarn · {compiled.frame.wastePasses ?? '-'} passes</b></span>}</div></section>
     <section><h2>Finish and identity</h2><dl><div><dt>Frame</dt><dd>Matched to Customist {compiled.frame?.reference.replace('reference/', '') ?? '-'} ({compiled.frame?.preset ?? '-'})</dd></div><div><dt>Finish</dt><dd>{compiled.frame?.bindOff ?? '-'}</dd></div><div><dt>Project revision</dt><dd>{compiled.revision}</dd></div><div><dt>Compile hash</dt><dd>{compiled.inputHash}</dd></div><div><dt>K-code SHA-256</dt><dd>{kcode.kcHash.slice(0, 16)}</dd></div></dl></section>
     {findings.length > 0 && <section><h2>Known findings</h2><ul>{findings.map((finding) => <li key={finding.rule}><b>{finding.severity.toUpperCase()}</b> {finding.message}</li>)}</ul></section>}
-    <section><h2>Pre-knit check</h2><ul className="checklist"><li>Every carrier in the carrier map is loaded: frame yarns, waste, and C2–C5 pattern yarns</li><li>Needles {state.machine.needleOffset}–{needleEnd} are selected and the remaining bed is clear</li><li>Carriage moves freely and takedown is ready for {compiled.frame?.wastePasses ?? '-'} waste passes</li><li>The exact compiled settings recipe has machine-side review; Surface-proven does not establish physical setting safety</li><li>Machine profile is 7gg worsted and the finish is {compiled.frame?.bindOff ?? '-'}</li><li>A representative swatch has been knit and inspected</li></ul></section>
+    <section><h2>Pre-knit check</h2><ul className="checklist"><li>Every carrier in the carrier map is loaded: frame yarns, waste, and C2–C5 pattern yarns</li><li>Needles {state.machine.needleOffset}–{needleEnd} are selected and the remaining bed is clear</li><li>Carriage moves freely and takedown is ready for {compiled.frame?.wastePasses ?? '-'} waste passes</li><li>The exact compiled settings recipe has machine-side review; Surface-proven does not establish physical setting safety</li><li>Machine profile is 7gg worsted and the finish is {compiled.frame?.bindOff ?? '-'}</li>{MACHINE_START_CHECKS.map((check) => <li key={check}>{check}</li>)}</ul></section>
     <footer>Generated locally · {new Date().toLocaleDateString()}</footer>
   </article></div>;
 }

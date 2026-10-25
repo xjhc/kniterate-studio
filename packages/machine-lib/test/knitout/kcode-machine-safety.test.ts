@@ -563,6 +563,90 @@ describe('KCode machine-safety envelope', () => {
         both,
       )))).toBe(0)
     })
+
+    it('keeps a held side held when it is tucked in the same pass', () => {
+      // Needles 99 to 101, four rows of needle 100, then a pass that tucks it and some of its sides.
+      const tucked = (needles: number[]) => count(safety(job(
+        { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 103.5 }, actions: front(99, 100, 101) },
+        ...[0, 1, 2, 3].map((index): PassSpec => ({ direction: index % 2 === 0 ? '<<' : '>>', carrier: '3', carriage: { left: 96.5, right: 112.5 }, actions: [knit('front', 100)] })),
+        { direction: '<<', carrier: '3', operation: 'Tu-Tu', carriage: { left: 96.5, right: 112.5 }, actions: needles.map((needle) => tuck('front', needle)) },
+      )))
+      expect(tucked([100])).toBe(1)
+      expect(tucked([100, 99])).toBe(1)
+      expect(tucked([101, 100, 99])).toBe(1)
+      // A needle's own loop is not one of its sides: with only the left held, tucks are not short rows.
+      expect(count(safety(job(
+        { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: WIDE.filter((needle) => needle <= 100).map((needle) => knit('front', needle)) },
+        ...[0, 1, 2, 3, 4].map((index): PassSpec => ({ direction: index % 2 === 0 ? '<<' : '>>', carrier: '3', operation: 'Tu-Tu', carriage: { left: 96.5, right: 112.5 }, actions: [tuck('front', 100)] })),
+      )))).toBe(0)
+    })
+
+    it('counts a stitch moved from a taller column by that column', () => {
+      // Rows of needles 100 and 101, then 100 moves onto 101 by way of the rear and 101 knits `after` more rows.
+      const row = (index: number, ...needles: number[]): PassSpec => ({ direction: index % 2 === 0 ? '<<' : '>>', carrier: '3', carriage: { left: 96.5, right: 112.5 }, actions: needles.map((needle) => knit('front', needle)) })
+      const toRear: PassSpec = { direction: '>>', carrier: '0', operation: 'Tr-Rr', carriage: { left: 97.5, right: 103.5 }, actions: [xfer(100, 100)] }
+      const toFront: PassSpec = { direction: '<<', carrier: '0', operation: 'Rl-Tr', rack: 1, carriage: { left: 97.5, right: 103.5 }, actions: [xferToFront(100, 101)] }
+      const shifted = (rows: PassSpec[], after = 1, moves: PassSpec[] = [toRear, toFront], knitAt = 101) => count(safety(job(
+        { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: WIDE.map((needle) => knit('front', needle)) },
+        ...rows,
+        ...moves,
+        ...Array.from({ length: after }, (_, index) => row(index, knitAt)),
+      )))
+      const centre = (rows: number) => Array.from({ length: rows }, (_, index) => row(index, 100))
+      expect(shifted(centre(3))).toBe(0)
+      expect(shifted(centre(4))).toBe(1)
+      // Stacked columns count as the taller one, not the two added together.
+      const alternating = [row(0, 100), row(1, 101), row(2, 100), row(3, 101)]
+      expect(shifted(alternating, 2)).toBe(0)
+      expect(shifted(alternating, 3)).toBe(1)
+      expect(shifted([row(0, 100, 101), row(1, 101, 100)], 2)).toBe(0)
+      expect(shifted([row(0, 100, 101), row(1, 101, 100)], 3)).toBe(1)
+      // The taller stitch may already be on the needle a shorter one joins.
+      const joinLeft: PassSpec = { direction: '>>', carrier: '0', operation: 'Tr-Rr', rack: -1, carriage: { left: 96.5, right: 103.5 }, actions: [xfer(99, 100)] }
+      expect(shifted(centre(4), 1, [toRear, joinLeft, toFront])).toBe(1)
+      // A needle whose loops moved away still counts its own column.
+      expect(shifted(centre(4), 1, [toRear], 100)).toBe(1)
+    })
+
+    it('does not count a bind-off chain, one loop knitted again at each needle it moves to', () => {
+      // Kniterate's own neck bind-offs knit like this between held shoulders.
+      const RIGHT_HELD = [106, 107, 108, 109, 110]
+      const chain = [105, 104, 103, 102, 101, 100, 99].flatMap((needle, index): PassSpec[] => [
+        { direction: index % 2 === 0 ? '<<' : '>>', carrier: '3', carriage: { left: 90.5, right: 112.5 }, actions: [knit('front', needle)] },
+        { direction: '>>', carrier: '0', operation: 'Tr-Rr', carriage: { left: 90.5, right: 112.5 }, actions: [xfer(needle, needle)] },
+        { direction: '<<', carrier: '0', operation: 'Rl-Tr', rack: -1, carriage: { left: 90.5, right: 112.5 }, actions: [xferToFront(needle, needle - 1)] },
+      ])
+      expect(count(safety(job(
+        { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: WIDE.map((needle) => knit('front', needle)) },
+        { direction: '<<', carrier: '0', carriage: { left: 90.5, right: 112.5 }, actions: [104, 103, 102, 101, 100, 99, 98].map((needle) => drop('front', needle)) },
+        ...chain,
+        { direction: '<<', carrier: '3', carriage: { left: 90.5, right: 112.5 }, actions: [...RIGHT_HELD].reverse().map((needle) => knit('front', needle)) },
+      )))).toBe(0)
+    })
+
+    it('refuses the same short rows in what the pinned backend lowers from Knitout', () => {
+      const shortRows = (body: readonly string[]) => validateKCodeMachineSafetyV1(knitoutTrace(body), profile).counts['machine-safety.central-short-rows']
+      const centre = ['in 3', 'knit + f99 3', 'knit + f100 3', 'knit + f101 3', 'knit - f100 3', 'knit + f100 3', 'knit - f100 3', 'knit + f100 3']
+      const finish = ['knit + f99 3', 'knit + f100 3', 'knit + f101 3', 'drop f99', 'drop f100', 'drop f101', 'out 3']
+      expect(shortRows([...centre, 'tuck - f100 3', ...finish])).toBe(1)
+      expect(shortRows([...centre, 'tuck - f100 3', 'tuck - f99 3', ...finish])).toBe(1)
+      expect(shortRows([...centre, 'tuck - f101 3', 'tuck - f100 3', 'tuck - f99 3', ...finish])).toBe(1)
+      // Four rows of f100 move to f101 by way of the rear before f101 knits a fifth.
+      const wide = [95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105]
+      const shift = (rows: number) => shortRows([
+        'in 3',
+        ...wide.map((needle) => `knit + f${needle} 3`),
+        ...Array.from({ length: rows }, (_, index) => `knit ${index % 2 === 0 ? '-' : '+'} f100 3`),
+        'miss + f105 3',
+        'xfer f100 b100', 'rack 1', 'xfer b100 f101', 'rack 0',
+        'knit - f101 3',
+        ...wide.map((needle) => `knit + f${needle} 3`),
+        ...wide.map((needle) => `drop f${needle}`),
+        'out 3',
+      ])
+      expect(shift(3)).toBe(0)
+      expect(shift(4)).toBe(1)
+    })
   })
 
   describe('tuck stacks', () => {

@@ -98,7 +98,8 @@ export interface MachineSafetyEnvelopeV1 {
   /**
    * Most loops a needle may form while older loops are held on both sides of
    * it on the same bed: central short rows. KCode encodes passes, not rows, so
-   * this counts the needle's own knits and tucks.
+   * this counts the loops formed in a needle's column, or in the column of a
+   * loop transferred onto it if that one is taller.
    */
   readonly centralShortRows: { readonly maxKnits: number; readonly evidence: KCodeEvidence }
   /** Most loops a tuck may leave on a needle. */
@@ -179,7 +180,7 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
   centralShortRows: {
     maxKnits: 4,
     evidence: evidence('official-documented', [LIMITATIONS_ARTICLE, REFERENCE_CORPUS],
-      'Kniterate: short-rowing is limited to "a maximum of 2-3 rows in the centre of the piece"; short rows at the edges are possible. KCode does not encode rows, so this counts the loops a needle forms while older loops are held on both sides of it on the same bed; holding one bed while the other knits (an Ottoman, say) is a different structure and is not counted. Reference programs reach 4, where a double-bed backing knits a rear needle more than once per row.'),
+      'Kniterate: short-rowing is limited to "a maximum of 2-3 rows in the centre of the piece"; short rows at the edges are possible. KCode does not encode rows, so this counts the loops a needle forms while older loops are held on both sides of it on the same bed; holding one bed while the other knits (an Ottoman, say) is a different structure and is not counted. A tuck keeps the loop under it held, and a loop knitted through a stitch transferred from a taller column counts from that column. A count does not follow a loop from needle to needle: Kniterate\'s own neck bind-offs knit one chain loop again at every needle it moves to. Reference programs reach 4, where a double-bed backing knits a rear needle more than once per row.'),
   },
   tuckStack: {
     maxLoops: 2,
@@ -241,8 +242,22 @@ interface HeldLoops {
   readonly count: number
   /** Pass that formed the needle's oldest loop still held. */
   readonly formed: number
+  /** Loop-forming passes of the needle columns these loops were made in, merged. */
+  readonly column: readonly number[]
 }
 
+/**
+ * The loop-forming passes of two columns whose loops stack on one needle.
+ * Counted back from the latest, each place keeps the later of the two passes,
+ * so the result has as many loops after any pass as the taller column had.
+ */
+function stackedFormation(a: readonly number[], b: readonly number[]): number[] {
+  const length = Math.max(a.length, b.length)
+  return Array.from({ length }, (_, index) => Math.max(
+    a[a.length - length + index] ?? Number.NEGATIVE_INFINITY,
+    b[b.length - length + index] ?? Number.NEGATIVE_INFINITY,
+  ))
+}
 
 interface OperatedNeedle {
   readonly actionIndex: number
@@ -332,10 +347,12 @@ export function validateKCodeMachineSafetyV1(
   // cannot change whether it exceeds maxKnits.
   const recent = new Map<string, number[]>()
   const needleKey = (selection: { readonly bed: 'front' | 'rear'; readonly traceCoordinate: number }) => `${selection.bed}:${selection.traceCoordinate}`
-  const recordLoop = (key: string, passIndex: number): void => {
+  const recordLoop = (key: string, passIndex: number): readonly number[] => {
     const formed = recent.get(key)
     // Stryker disable next-line MethodExpression: Equivalent mutant: the slice only bounds memory; no more than maxKnits earlier loops can change whether a needle exceeds maxKnits.
-    recent.set(key, formed === undefined ? [passIndex] : [...formed, passIndex].slice(-envelope.centralShortRows.maxKnits))
+    const column = formed === undefined ? [passIndex] : [...formed, passIndex].slice(-envelope.centralShortRows.maxKnits)
+    recent.set(key, column)
+    return column
   }
 
   for (const pass of trace.passes) {
@@ -430,22 +447,28 @@ export function validateKCodeMachineSafetyV1(
 
     // Loops held on both sides of a needle, on its own bed, while it keeps
     // forming loops: a central short row. A pass that knits cannot transfer,
-    // so the needles it works are its knits, tucks and drops.
-    const operated = new Set(regular.map(({ action }) => needleKey(action.at)))
-    const waiting = [...held.entries()].filter(([key]) => !operated.has(key)).map(([, loop]) => loop)
+    // so a needle's held loop is released only by a knit or a drop in it; a
+    // tuck leaves the loop under it held.
+    const released = new Set(regular.filter(({ action }) => action.kind !== 'tuck').map(({ action }) => needleKey(action.at)))
+    const waiting = [...held.entries()].filter(([key]) => !released.has(key)).map(([, loop]) => loop)
     for (const [actionIndex, action] of pass.actions.entries()) {
       if (action.kind !== 'knit' && action.kind !== 'tuck') continue
       // A side with nothing held stays at infinity, so no earlier loop counts.
       let left = Number.POSITIVE_INFINITY
       let right = Number.POSITIVE_INFINITY
       for (const loop of waiting) {
-        if (loop.bed !== action.at.bed) continue
-        // Stryker disable next-line EqualityOperator,ConditionalExpression: Equivalent mutant: the needle's own loops are operated and so not waiting, so no waiting loop on its bed shares its coordinate.
+        if (loop.bed !== action.at.bed || loop.coordinate === action.at.traceCoordinate) continue
+        // Stryker disable next-line EqualityOperator: Equivalent mutant: loops at the needle's own coordinate were skipped above.
         if (loop.coordinate < action.at.traceCoordinate) left = Math.min(left, loop.formed)
         else right = Math.min(right, loop.formed)
       }
       const since = Math.max(left, right)
-      const earlier = recent.get(needleKey(action.at))?.filter((formed) => formed > since).length ?? 0
+      // The needle's own column, or a taller one a stitch it knits through came from.
+      const key = needleKey(action.at)
+      const earlier = Math.max(
+        recent.get(key)?.filter((formed) => formed > since).length ?? 0,
+        held.get(key)?.column.filter((formed) => formed > since).length ?? 0,
+      )
       if (earlier + 1 <= envelope.centralShortRows.maxKnits) continue
       add('machine-safety.central-short-rows',
         `Pass ${pass.index + 1} forms more than ${envelope.centralShortRows.maxKnits} loops on ${action.at.bed} needle ${action.at.traceCoordinate} while older loops are held on both sides of it; the machine short-rows at most 2-3 rows in the centre of a piece.`,
@@ -481,13 +504,14 @@ export function validateKCodeMachineSafetyV1(
         const key = needleKey(action.at)
         const loop = held.get(key)
         const tucked = action.kind === 'tuck' && loop !== undefined
+        const column = recordLoop(key, pass.index)
         held.set(key, {
           bed: action.at.bed,
           coordinate: action.at.traceCoordinate,
           count: tucked ? loop.count + 1 : 1,
           formed: tucked ? loop.formed : pass.index,
+          column: tucked ? stackedFormation(loop.column, column) : column,
         })
-        recordLoop(key, pass.index)
         if (tucked && loop.count + 1 > envelope.tuckStack.maxLoops) {
           add('machine-safety.tuck-stack',
             `Pass ${pass.index + 1} tucks ${action.at.bed} needle ${action.at.traceCoordinate} onto ${loop.count} loops, leaving ${loop.count + 1}; a needle holds at most ${envelope.tuckStack.maxLoops} tucked loops.`,
@@ -506,10 +530,10 @@ export function validateKCodeMachineSafetyV1(
           coordinate: action.target.traceCoordinate,
           count: loop.count + (there?.count ?? 0),
           formed: Math.min(loop.formed, there?.formed ?? loop.formed),
+          column: stackedFormation(there?.column ?? [], loop.column),
         })
         if (action.kind === 'split') {
-          held.set(from, { ...loop, count: 1, formed: pass.index })
-          recordLoop(from, pass.index)
+          held.set(from, { ...loop, count: 1, formed: pass.index, column: recordLoop(from, pass.index) })
         } else {
           held.delete(from)
         }

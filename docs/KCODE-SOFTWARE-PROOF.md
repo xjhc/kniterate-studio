@@ -262,8 +262,9 @@ The gate establishes:
   most four knitting passes since any pass last advanced the roller, knit and
   tuck stitch at least 2, transfers within speed 400 and roller 450, no
   neighbouring needles transferred together, at most four loops formed while
-  older loops are held on both sides on the same bed (central short rows),
-  and at most two loops left by a tuck. A seeded property test checks the
+  older loops are held on both sides on the same bed (central short rows; a
+  tucked side stays held, and a stitch moved from a taller column counts
+  from it), and at most two loops left by a tuck. A seeded property test checks the
   needle geometry against an independent oracle. Every threshold names its evidence, the 13 references have
   zero findings, and each rule has a pinned refusal case;
 - a shared conservative software loop-stack policy (warning above two loops,

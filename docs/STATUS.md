@@ -507,7 +507,12 @@ ship," trust this file and the working tree instead.
     loops are held on both sides of it on the same bed. Kniterate allows 2–3
     central short rows; KCode has no rows, so loops are counted, and the
     reference corpus reaches 4 in a double-bed backing. Holding one bed while
-    the other knits (an Ottoman) is not counted;
+    the other knits (an Ottoman) is not counted. A tuck leaves a held side
+    held, and a loop knitted through a stitch transferred from a taller
+    column counts from that column (both fixed 2026-10-24 after review). The
+    count does not follow a loop on from needle to needle: Kniterate's own
+    neck bind-offs in `front.kc` and `back.kc` knit one chain loop again at
+    every needle it moves to, and a lineage count refuses them;
   - a tuck that leaves more than two loops on a needle. A three-loop stack
     made by transfers stays a warning, as in Kniterate's editor, because
     Kniterate's own reference crown makes one.
@@ -518,8 +523,9 @@ ship," trust this file and the working tree instead.
 
   Every exportable project's readiness lists three operator checks no file
   can make: an empty needle bed, every feeder parked at home, and a swatch to
-  try the settings with the yarn (`readiness.ts::MACHINE_START_CHECKS`). The
-  `machine:check` receipt states the same start assumptions.
+  try the settings with the yarn (`readiness.ts::MACHINE_START_CHECKS`).
+  Every status panel, written pattern and printed run sheet shows them, and
+  the `machine:check` receipt states the same start assumptions.
 
   Each threshold carries its evidence in
   `KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1`: Kniterate's support articles,
@@ -541,7 +547,10 @@ ship," trust this file and the working tree instead.
     retirement and release need their own transition model;
   - construction-aware held-fabric checks beyond the central short-row
     count: where fabric is held, which region knits on, and how the rollers
-    act on it, plus edge loading and finishing;
+    act on it, plus edge loading and finishing. The count is per needle
+    column plus one transfer, so a short-row column that moves one needle
+    each row, shaped like a bind-off chain, is not counted as one; whether
+    that is safe in the centre is unverified;
   - comparing our sleeve increases with Customist 2.5's minimum increase
     spacing before calling consecutive-row increases safe or unsafe;
   - yarn recipes that bind yarn, structure, stitch selectors, roller, speed,

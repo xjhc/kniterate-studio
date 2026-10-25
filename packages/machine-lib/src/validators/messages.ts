@@ -788,7 +788,7 @@ const ENTRIES: readonly ValidatorMessage[] = [
     rule: 'machine-safety.central-short-rows',
     title: 'Short rows in the middle of the piece',
     explanation:
-      'A needle keeps forming loops while older loops are held on both sides of it on the same bed: a short row in the centre of the piece. Kniterate can short-row only 2 to 3 rows in the centre (edges are fine), because the rollers cannot pull the middle down while the sides are held. Studio counts loops, since KCode has no rows, and refuses more than 4. Blocks export.',
+      'A needle keeps forming loops while older loops are held on both sides of it on the same bed: a short row in the centre of the piece. Kniterate can short-row only 2 to 3 rows in the centre (edges are fine), because the rollers cannot pull the middle down while the sides are held. Studio counts loops, since KCode has no rows, and refuses more than 4. Tucking a held needle leaves it held, and a stitch transferred from a taller column counts from that column. Blocks export.',
     severityHint: 'error',
   },
   {

@@ -19,6 +19,9 @@ test('a one-colour scarf in any stitch: sized in cm, rib ends, the whole run in 
   await expect(status).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
   await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(1);
   await expect(page.locator('.status-pieces')).toContainText('scarf.kc');
+  // What no file can check, at the machine before every run.
+  const atTheMachine = page.getByRole('region', { name: 'At the machine' });
+  for (const check of ['every check assumes an empty bed', 'Park every yarn feeder at home', 'Knit a swatch to try the stitch size']) await expect(atTheMachine).toContainText(check);
 
   // Size in cm, wanted and knitted; a change is one undoable step.
   const width = page.getByLabel('Width', { exact: true });
