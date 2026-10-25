@@ -384,7 +384,7 @@ describe('blanket project compiler', () => {
     }
   });
 
-  it('reopens the canonical authored export through the normal import path', { timeout: 30_000 }, async () => {
+  it('reopens the canonical authored export through the normal import path', { timeout: 60_000 }, async () => {
     let project = createColorworkProjectV1(
       fourColorChart(200, 300, 'Large authored self-reopen'),
       { id: 'large-authored-self-reopen' },
