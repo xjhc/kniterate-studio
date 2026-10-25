@@ -1,3 +1,5 @@
+import { availableParallelism } from 'node:os'
+
 /** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 const config = {
   plugins: ['@stryker-mutator/vitest-runner'],
@@ -17,7 +19,9 @@ const config = {
   // The proof receipt reads this effective value and blocks any global mutator
   // exclusion. Reviewed site-local directives are the only suppression seam.
   mutator: { excludedMutations: [] },
-  concurrency: 8,
+  // One test runner per four cores, at most eight. More runners than the
+  // machine can carry time mutants out, which fails the receipt.
+  concurrency: Math.max(1, Math.min(8, Math.floor(availableParallelism() / 4))),
   maxTestRunnerReuse: 100,
   timeoutMS: 20_000,
   timeoutFactor: 2,
