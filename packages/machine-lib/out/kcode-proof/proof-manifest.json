@@ -30936,17 +30936,17 @@
     ]
   },
   "contract": {
-    "sha256": "c149a8b89f30b32a65a920f7559dae61ebcaba1767aa529127f96d4bdf6e7540",
+    "sha256": "04b024c3b2db505b89fb328a5aef54bb6ac45c15babb0def2b4b7fcfcdff0e02",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
-        "sha256": "80d57bd4e4275e1fe5d528082a7aa508fc4cc53c6e037841869df4d3ffb2d813",
-        "bytes": 968
+        "sha256": "1ecf74e9617d12a08f2a9735802627c1fd0e15ce8138b308863980afc105e104",
+        "bytes": 1838
       },
       {
         "path": "../../.github/workflows/pages.yml",
-        "sha256": "c7b3c419a7deb22d00f49152fcbcf5b9e81db111e1660f538e3b03df1cb902b1",
-        "bytes": 1063
+        "sha256": "93d684c243abfcb5743a8320be315abe4d8db17e4783faab0331e538170a3f7f",
+        "bytes": 1264
       },
       {
         "path": "../../.node-version",
@@ -31830,8 +31830,8 @@
       },
       {
         "path": "../../package.json",
-        "sha256": "fd6ac864e3a860a75199e585456f0e016e5cdf93c3e35b40f0aa8a44ce52b73f",
-        "bytes": 1885
+        "sha256": "ed43402beaaa664109ef3de5c820fb4cae0ca0c9b9b1f41f13d6000a2f45b03b",
+        "bytes": 1971
       },
       {
         "path": "../../playwright.config.ts",
@@ -31970,8 +31970,8 @@
       },
       {
         "path": "package.json",
-        "sha256": "8bfa1897a522f0b97a67f60af1944fd2c9c7bec71fecfd1d34aa1ad08174392c",
-        "bytes": 4361
+        "sha256": "10e4439ff02ec284d2f95855db48bf83fd696d56d1a63b2c5a9fe903f7282f06",
+        "bytes": 4441
       },
       {
         "path": "reference/2x2-rib-beanie.kc",
@@ -32050,7 +32050,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "c53418ff1113db8d9b64d0f85d77ed232bd2ace93465e253750a3cef0b65ace9",
+        "sha256": "48466659e1d09a3db6a9fd58f31c19404714808eb24dc595dbd7c0c34be088c2",
         "bytes": 179
       },
       {
@@ -32145,8 +32145,13 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "5848171973aa4482c9cdea593781d88486229a6c3f0afbe938a1ce1d96f01279",
-        "bytes": 23721
+        "sha256": "55c6187a45d57c8367d3cd34a864ab5ec899d696220dd1bc8ccb391115e61bab",
+        "bytes": 23728
+      },
+      {
+        "path": "scripts/kcode-receipt-check.ts",
+        "sha256": "818b3a9d7a06dd882519d52ad5685fc4ad93db63349d066c3deee1eab5a4736f",
+        "bytes": 4005
       },
       {
         "path": "scripts/kcode-rule-coverage.ts",
@@ -32932,6 +32937,11 @@
         "path": "test/fixtures/machine-check-clean.k",
         "sha256": "5cf269203d696a9df1942a352be5dc27247c84c561b8ba8b50effbe610f1aa06",
         "bytes": 94
+      },
+      {
+        "path": "test/kcode-receipt-check.test.ts",
+        "sha256": "3cc89819f3082cb5cd83b4617f225054ea7f13bda85590934ed5c219c52c9400",
+        "bytes": 3548
       },
       {
         "path": "test/knitout/__snapshots__/from-chart-jacquard.test.ts.snap",
