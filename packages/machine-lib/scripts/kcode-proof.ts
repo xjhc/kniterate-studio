@@ -346,7 +346,7 @@ export function collectContractFingerprint(root = process.cwd()) {
   }
 }
 
-function collectToolchainFingerprint() {
+export function collectToolchainFingerprint() {
   const rootPackage = JSON.parse(
     readFileSync(resolve(process.cwd(), '../../package.json'), 'utf8'),
   ) as { readonly packageManager?: string }

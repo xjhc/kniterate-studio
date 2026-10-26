@@ -159,9 +159,17 @@ pnpm verify:kcode
 ```
 
 `pnpm verify:kcode:check` runs the same gates without rewriting evidence and
-fails unless the tracked receipt already has the exact expected bytes. The full
-`pnpm verify` and CI paths use this read-only form, as well as the read-only
-physical-registry and conformance-report checks.
+fails unless the tracked receipt already has the exact expected bytes.
+`release:trial` and a weekly CI job (also run on demand) use this full
+read-only form.
+
+`pnpm verify:kcode:receipt` re-runs no gate. It fails unless the tracked
+receipt names exactly the current sources, harness, tests and toolchain, every
+gate in it passed, and it cites the tracked mutation receipt for the current
+mutation targets and Stryker settings. `pnpm verify` and every pull request use
+this check, alongside the read-only physical-registry and conformance-report
+checks, so a change to any bound input fails until `pnpm verify:kcode` has
+regenerated both receipts.
 
 The command runs the exact machine-library and Studio proof-test lists, their
 strict TypeScript checks plus the checker entrypoint typecheck, the KCode-native

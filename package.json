@@ -17,6 +17,7 @@
     "kniterate:conform:check": "pnpm --dir packages/machine-lib kniterate:conform:check",
     "verify:kcode": "pnpm --dir packages/machine-lib verify:kcode",
     "verify:kcode:check": "pnpm --dir packages/machine-lib verify:kcode:check",
+    "verify:kcode:receipt": "pnpm --dir packages/machine-lib verify:kcode:receipt",
     "machine:check": "tsx scripts/check-machine-file.ts",
     "studio": "tsx scripts/studio.ts",
     "parity": "tsx scripts/parity.ts",
@@ -26,7 +27,7 @@
     "release:register": "tsx scripts/register-v1-knit-trial.ts",
     "release:physical-check": "pnpm --dir packages/machine-lib kniterate:swatches:check && tsx scripts/check-v1-physical-release.ts",
     "verify:quick": "pnpm typecheck && pnpm machine:check:typecheck && pnpm test && pnpm kniterate:conform:check && pnpm build",
-    "verify": "pnpm typecheck && pnpm machine:check:typecheck && pnpm test && pnpm kniterate:conform:check && pnpm build && pnpm verify:kcode:check"
+    "verify": "pnpm typecheck && pnpm machine:check:typecheck && pnpm test && pnpm kniterate:conform:check && pnpm build && pnpm verify:kcode:receipt"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
