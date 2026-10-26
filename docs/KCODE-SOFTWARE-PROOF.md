@@ -160,8 +160,7 @@ pnpm verify:kcode
 
 `pnpm verify:kcode:check` runs the same gates without rewriting evidence and
 fails unless the tracked receipt already has the exact expected bytes.
-`release:trial` and a weekly CI job (also run on demand) use this full
-read-only form.
+`release:trial` uses this full read-only form.
 
 `pnpm verify:kcode:receipt` re-runs no gate. It fails unless the tracked
 receipt names exactly the current sources, harness, tests and toolchain, every
