@@ -1,8 +1,9 @@
 name: CI
 
 # Pull requests run the fast checks: `pnpm verify` confirms the tracked KCode
-# receipt matches the checkout, and each browser runs in its own job. The full
-# mutation proof, which re-runs every gate, runs weekly and on demand.
+# receipt matches the checkout, and each browser tests the production build in
+# its own job. The full mutation proof, which re-runs every gate, runs weekly
+# and on demand.
 on:
   pull_request:
   schedule:
@@ -41,8 +42,12 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Test the production build that deploys, not the dev server.
+      - run: pnpm build
       - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
       - run: pnpm exec playwright test --project=${{ matrix.browser }}
+        env:
+          PLAYWRIGHT_SERVE_BUILD: '1'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
