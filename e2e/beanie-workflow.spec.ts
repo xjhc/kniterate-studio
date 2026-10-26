@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { menu } from './menu';
+import { menu, openStatusDisclosure, statusDisclosure } from './menu';
 import { materializeColorworkProject, type ColorworkProjectV1 } from '../packages/project-contract/src/index';
 import { encodePng } from '../scripts/lib/png';
 
@@ -22,7 +22,7 @@ async function createBeanie(page: Page) {
   await expect(dialog.getByRole('tab', { name: 'Beanie' })).toHaveAttribute('aria-selected', 'true');
   await dialog.getByLabel('Project name').fill('Ring toque');
   await dialog.getByRole('button', { name: 'Create beanie' }).click();
-  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
 }
 
 async function placeImage(page: Page, heightCm: string) {
@@ -73,6 +73,8 @@ test('the waste yarn at the start is your own: shorter knits fewer passes, and o
   test.setTimeout(120_000);
   await createBeanie(page);
   const file = page.locator('.status-pieces .piece-facts');
+  await openStatusDisclosure(page, 'Files and printing');
+  await expect(file).toBeVisible();
   await expect(file).toContainText(/\d+ passes/, { timeout: 30_000 });
   // While the file is rewritten it has no pass count yet: wait for it.
   const passes = async () => { const found = /([\d,]+) passes/.exec((await file.textContent()) ?? ''); return found ? Number(found[1]!.replace(/,/g, '')) : null; };
@@ -99,33 +101,51 @@ test('long floats are one thing to check, however many there are', async ({ page
   await placeImage(page, '6');
   await page.locator('#backing').getByRole('button', { name: /^Fairisle/ }).click();
   await expect(page.locator('#backing .section-aside')).toHaveText('Fairisle', { timeout: 30_000 });
-  await expect(page.locator('.status-notes:not(.operator) > li').filter({ hasText: 'Body colourwork' })).toHaveCount(1, { timeout: 30_000 });
+  await expect(page.locator('.status-reason, .status-notes:not(.operator) > li').filter({ hasText: 'Body colourwork' })).toHaveCount(1, { timeout: 30_000 });
   await expect(page.getByTestId('readiness-headline')).toHaveText(/^[12] things? to check$/);
 });
 
-test('the status panel walks the steps: the swatch is next, then the download, each ticked when done', async ({ page }) => {
+test('the status panel leads with the swatch, then the package, and reveals details by keyboard', async ({ page }) => {
   test.setTimeout(120_000);
   await createBeanie(page);
-  const steps = page.getByRole('list', { name: 'Steps' });
-  const next = steps.locator('[aria-current="step"] > .step-body > h3');
-  await expect(next).toHaveText('Measure a swatch');
+  const status = page.getByRole('complementary', { name: 'Status' });
+  const primary = status.locator('.primary-button:visible');
+  await expect(primary).toHaveText('Download swatch file');
+  for (const label of ['Why?', 'Swatch', 'Files and printing', 'Before knitting'] as const) {
+    await expect(statusDisclosure(page, label)).toHaveJSProperty('open', false);
+  }
+  await expect(status.getByRole('region', { name: 'Machine files' })).toBeHidden();
+  await expect(status.getByRole('button', { name: 'Print knitting sheet' })).toBeHidden();
+  await expect(status.getByRole('button', { name: 'Download knitting package' })).toBeHidden();
+
+  // Preparation is available before the swatch; native summaries work with both keys.
+  const before = statusDisclosure(page, 'Before knitting');
+  await before.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(before).toHaveJSProperty('open', true);
+  await expect(before.getByRole('region', { name: 'At the machine' })).toBeVisible();
+  for (const check of ['every check assumes an empty bed', 'Park every yarn feeder at home', 'Knit a swatch to try the stitch size']) await expect(before).toContainText(check);
+  await page.keyboard.press('Space');
+  await expect(before).toHaveJSProperty('open', false);
+  await expect(before.locator('summary')).toBeFocused();
+
   // The swatch is its own checked machine file, in the hat's yarns, backing and gauge.
   const swatch = page.waitForEvent('download');
-  await steps.getByRole('button', { name: 'Download swatch file' }).click();
+  await primary.click();
   expect((await swatch).suggestedFilename()).toMatch(/-swatch\.kc$/);
-  await steps.getByRole('button', { name: 'Enter your swatch' }).click();
+  const swatchDetails = await openStatusDisclosure(page, 'Swatch');
+  await swatchDetails.getByRole('button', { name: 'Enter your swatch' }).click();
   await expect(page.getByLabel(/^Body \(.+ fabric\) stitches per 10 cm$/)).toBeFocused();
-  // Measured gauges tick the swatch step; the download is next until this design is downloaded.
+  // Measured gauges bring the package forward; inspection stays available on demand.
   await page.getByLabel(/^Body \(.+ fabric\) measured$/).check();
   await page.getByLabel('Cuff (2x2 rib) measured').check();
-  await expect(next).toHaveText('Download', { timeout: 30_000 });
+  await expect(primary).toHaveText('Download knitting package', { timeout: 30_000 });
+  await expect(statusDisclosure(page, 'Files and printing')).toHaveJSProperty('open', false);
   const download = page.waitForEvent('download');
-  await steps.getByRole('button', { name: 'Download knitting package' }).click();
+  await primary.click();
   await download;
-  // The steps end with the download: nothing is left to do but knit it.
-  await expect(steps.locator('.step-done h3', { hasText: 'Download' })).toBeVisible();
-  await expect(steps.locator('[aria-current="step"]')).toHaveCount(0);
-  await expect(steps.locator('h3', { hasText: /^Knit/ })).toHaveCount(0);
+  await expect(await openStatusDisclosure(page, 'Why?')).toContainText('This design’s files have been downloaded.');
+  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed');
 });
 
 test('a one-yarn beanie is one layer or two; adding a colour and painting it makes it colourwork', async ({ page }) => {
@@ -138,7 +158,7 @@ test('a one-yarn beanie is one layer or two; adding a colour and painting it mak
   await expect(dialog.getByRole('group', { name: 'Body fabric' })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Double layer' })).toHaveAttribute('aria-pressed', 'true');
   await dialog.getByRole('button', { name: 'Create beanie' }).click();
-  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
   const backing = page.locator('#backing .section-aside');
   await expect(backing).toHaveText('Double layer');
 
@@ -160,13 +180,13 @@ test('a one-yarn beanie is one layer or two; adding a colour and painting it mak
   await page.mouse.move(box.x + 70 + 60 * cell, y, { steps: 8 });
   await page.mouse.up();
   await expect(backing).toHaveText('Birdseye', { timeout: 30_000 });
-  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
 });
 
 test('a beanie is edited as a garment: fit, motifs, readiness, package and measurements', async ({ page }) => {
   test.setTimeout(180_000);
   await createBeanie(page);
-  await expect(page.getByLabel('Verdict: Ready to knit')).toBeVisible();
+  await expect(page.getByLabel('Verdict: File checks passed')).toBeVisible();
   await expect(needles(page, 134)).toBeVisible();
   await expect(headRow(page).locator('.knitted').first()).toHaveText('50.8');
 
@@ -218,6 +238,7 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   const height = page.locator('.motif-inspector input[type="number"]').first();
   await height.fill('40'); await height.press('Enter');
   await expect(page.getByRole('button', { name: /^motif-3.*Does not fit/ })).toBeVisible({ timeout: 30_000 });
+  await openStatusDisclosure(page, 'Files and printing');
   await expect(page.getByRole('button', { name: 'Download knitting package' })).toBeDisabled({ timeout: 30_000 });
   const again = page.locator('.motif-inspector input[type="number"]').first();
   await again.fill('3'); await again.press('Enter');
@@ -226,7 +247,7 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   // Measured gauges make it ready.
   await page.getByLabel(/^Body .* measured$/).check();
   await page.getByLabel('Cuff (2x2 rib) measured').check();
-  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit', { timeout: 30_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed', { timeout: 30_000 });
 
   // The package carries the project, the exact program and the measurement form.
   const download = page.waitForEvent('download');
@@ -249,7 +270,7 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   await expect(measure.getByRole('list', { name: 'Recorded hats' })).toContainText(/clean .*\(test data\)/);
   await measure.getByRole('button', { name: 'Cancel' }).click();
   // Synthetic values never satisfy the real-measurement requirement, and readiness says why.
-  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
+  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
   await expect(page.getByRole('note').filter({ hasText: 'test data' })).toBeVisible();
 
   // The changes panel lists the operations, newest first.

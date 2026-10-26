@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { kcDownload, menu } from './menu';
+import { kcDownload, menu, openStatusDisclosure } from './menu';
 
 test('every project has one layout: a menu bar, Design / Schematic / Machine file, and status with the files', async ({ page }) => {
   const errors: string[] = [];
@@ -17,6 +17,7 @@ test('every project has one layout: a menu bar, Design / Schematic / Machine fil
   await expect(page.locator('.strategy-segments button')).toHaveCount(2);
   await page.getByRole('button', { name: /^Fairisle/ }).click();
   await page.getByRole('button', { name: /^Birdseye/ }).click();
+  await openStatusDisclosure(page, 'Files and printing');
   await expect(kcDownload(page)).toBeEnabled({ timeout: 20_000 });
   await expect(page.getByRole('button', { name: 'Download knitting package' })).toBeEnabled();
 

@@ -12,7 +12,7 @@ test('opens, navigates, diffs, prints, and blocks foreign machine files', async 
   await expect(page.getByRole('dialog', { name: 'How was this KCode produced?' })).toHaveCount(0);
   // The strict import (parse, replay, scene) takes a few seconds while the whole suite runs.
   await expect(page.getByRole('heading', { name: 'Passes' })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByLabel('Verdict: Ready to knit')).toBeVisible();
+  await expect(page.getByLabel('Verdict: File checks passed')).toBeVisible();
   await expect(page.getByRole('region', { name: 'Exact machine movement' })).toBeVisible();
   await expect(page.getByText('KCode coordinates; physical needle labels unverified.')).toBeVisible();
   const selectedBefore = await page.locator('.pass-row.selected .pass-number').innerText();

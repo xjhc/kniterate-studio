@@ -304,8 +304,8 @@ describe('sweater pipeline', () => {
     expect(manifest.pieces.find((piece: { id: string }) => piece.id === 'sleeve')).toMatchObject({ copies: 2, file: 'sleeve.kc', verdict: 'Surface-proven' });
     const pattern = sweaterInstructions(project, plan, summary);
     // The panel's headline: a typical gauge leaves the sizes unconfirmed, not the sweater unknittable.
-    expect(readinessStory({ findings: summary.findings, readiness: summary.readiness, verdict: summary.verdict, exportReady: summary.exportReady }).headline).toBe('Ready to knit, sizes not confirmed');
-    expect(pattern).toContain('**Ready to knit, sizes not confirmed.** Sizes use a typical gauge until you measure a swatch.');
+    expect(readinessStory({ findings: summary.findings, readiness: summary.readiness, verdict: summary.verdict, exportReady: summary.exportReady }).headline).toBe('File checks passed, sizes not confirmed');
+    expect(pattern).toContain('**File checks passed, sizes not confirmed.** Sizes use a typical gauge until you measure a swatch.');
     expect(pattern).not.toContain('Not ready');
     expect(pattern).toMatch(/### Sleeve — knit 2/);
     expect(pattern).toMatch(/Row \d+: neck\. Bind off the centre \d+ stitches/);

@@ -609,10 +609,15 @@ ship," trust this file and the working tree instead.
     menu bar (File / Edit / View) replaces the icon ribbons.
     - Left: what you are making.
     - Middle: Design / Schematic / Machine file, always in the same place.
-    - Right: whether it can be knitted, then the steps in order (Design,
-      Measure a swatch, Download), each holding what belongs to it; the
-      next one is marked. Download lists what to set at the machine before
-      knitting. Measuring a finished hat is not a step:
+    - Right: the current result and one primary next action. Following the
+      user's progressive-disclosure decision (2026-10-26), Why? explains the
+      result; Swatch holds measurements; Files and printing holds individual
+      files and the run sheet; Before knitting holds the machine preparation
+      checks, including when only a swatch is downloadable. Each starts closed.
+      Blocking reasons and their available fixes stay visible. Software checks
+      say "File checks passed"; only exact physical evidence says "Proven on
+      the machine". Export eligibility is unchanged. Measuring a finished hat
+      remains separate:
       File → Record a finished hat (beanie) records it after knitting and
       corrects the design for the next one.
   - Schematics come from the machine file read back (`workspace/RunSchematic`).

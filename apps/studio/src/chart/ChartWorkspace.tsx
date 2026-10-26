@@ -267,7 +267,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     window.addEventListener('keydown', handler); return () => window.removeEventListener('keydown', handler);
   }, [project, chart, selection, clipboard, view, brush]);
 
-  // The status panel: whether it can be knitted, then the steps. A garment's gauge is its swatch step, not a design note.
+  // The current result and next action. Gauge details stay in the swatch disclosure.
   const tone: StatusTone = story === null ? (storyPending ? 'checking' : 'blocked') : story.status === 'ready' ? 'ready' : story.status === 'blocked' ? 'blocked' : story.status === 'needs-measurements' ? 'next' : 'warn';
   const cuffed = beanieObjectOf(materialized.state)?.construction === 'rib-cuff-jersey-body';
   const backing = projectBackingWords(materialized.state);
@@ -359,6 +359,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       downloaded={status.downloaded}
       swatch={swatch}
       atTheMachine={story?.operatorChecks ?? []}
+      evidence={story?.evidence}
       footer={story?.notices.map((notice) => <p className="design-hint" role="note" key={notice}>{notice}</p>)}
     />
     {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); setWholeHat(false); onView('design'); setFitRequest((request) => request + 1); } }} />}

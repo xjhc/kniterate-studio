@@ -41,7 +41,7 @@ describe('one-yarn scarf or blanket', () => {
     // With a typical gauge it can be knitted; only the size is unconfirmed, as the panel says.
     const result = await runSweaterPipeline(create());
     const pattern = panelInstructions(create(), planPanel(materializeColorworkProject(create()).state), summarizeSweaterRun(result));
-    expect(pattern).toContain('**Ready to knit, sizes not confirmed.** Sizes use a typical gauge until you measure a swatch.');
+    expect(pattern).toContain('**File checks passed, sizes not confirmed.** Sizes use a typical gauge until you measure a swatch.');
     expect(pattern).not.toMatch(/Not ready|assumed gauge/);
   });
 

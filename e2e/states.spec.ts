@@ -28,20 +28,21 @@ async function check(page: Page, name: string, expected: string | RegExp) {
   await expect(headline).toHaveText(expected);
   const title = (await headline.textContent())!.trim();
 
-  // The badge says what the panel says. "N things to check" can still be knitted.
+  // The badge says what the panel says. "N things to check" still allows export.
   const badge = (await page.locator('.authored-verdict').textContent())!.trim();
-  if (/things? to check$/.test(title)) expect(badge).toMatch(/^Ready to knit(, sizes not confirmed)?$/);
+  if (/things? to check$/.test(title)) expect(badge).toMatch(/^File checks passed(, sizes not confirmed)?$/);
   else expect(badge).toBe(title);
 
   // One note per thing to check, and as many as the headline counts.
   // A note's own words, without its buttons.
-  const notes = await page.locator('.status-notes:not(.operator) > li').evaluateAll((items) => items.map((item) => item.firstChild?.textContent?.trim() ?? ''));
+  const notes = await page.locator('.status-reason, .status-notes:not(.operator) > li').evaluateAll((items) => items.map((item) => item.firstChild?.textContent?.trim() ?? ''));
   expect(new Set(notes).size, `repeated notes: ${notes.join(' | ')}`).toBe(notes.length);
   const counted = /^(\d+) things? to check$/.exec(title);
   if (counted) expect(notes).toHaveLength(Number(counted[1]));
-  // Nor is a note repeated elsewhere in the panel, under the files or as the headline's detail.
-  const panel = await page.getByRole('complementary', { name: 'Status' }).innerText();
+  // Check all disclosure content for repetition while keeping the default view collapsed.
+  const panel = (await page.getByRole('complementary', { name: 'Status' }).textContent())!;
   for (const note of notes) expect(panel.split(note).length - 1, `said more than once: ${note}`).toBe(1);
+  await expect(page.getByRole('complementary', { name: 'Status' }).locator('details[open]')).toHaveCount(0);
 
   // Nothing scrolls sideways, and the views are all in reach.
   expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
@@ -96,14 +97,14 @@ test.describe('the workspace in each state', () => {
 
   test('a new sweater', async ({ page }) => {
     await sweater(page);
-    await check(page, 'sweater-typical', 'Ready to knit, sizes not confirmed');
+    await check(page, 'sweater-typical', 'File checks passed, sizes not confirmed');
   });
 
   test('a sweater with measured gauges', async ({ page }) => {
     await sweater(page);
     await settled(page);
     for (const label of ['Stockinette gauge', 'Rib gauge']) await page.getByRole('group', { name: label }).getByLabel('measured').check();
-    await check(page, 'sweater-measured', 'Ready to knit');
+    await check(page, 'sweater-measured', 'File checks passed');
   });
 
   test("a sweater that can't be knitted", async ({ page }) => {
@@ -118,12 +119,12 @@ test.describe('the workspace in each state', () => {
     const dialog = await start(page, /^Scarf or blanket/);
     await dialog.getByLabel('Project name').fill('Moss scarf');
     await dialog.getByRole('button', { name: 'Create' }).click();
-    await check(page, 'scarf-typical', 'Ready to knit, sizes not confirmed');
+    await check(page, 'scarf-typical', 'File checks passed, sizes not confirmed');
   });
 
   test('a new beanie', async ({ page }) => {
     await beanie(page);
-    await check(page, 'beanie-typical', 'Ready to knit, sizes not confirmed');
+    await check(page, 'beanie-typical', 'File checks passed, sizes not confirmed');
   });
 
   test('a beanie whose motif floats in many places', async ({ page }) => {
@@ -147,7 +148,7 @@ test.describe('the workspace in each state', () => {
     await settings.getByRole('button', { name: 'Save' }).click();
     await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Whole hat' }).click();
     await expect(page.getByRole('img', { name: 'The hat as worn, from the front' })).toBeVisible();
-    await check(page, 'beanie-whole-hat-light', 'Ready to knit, sizes not confirmed');
+    await check(page, 'beanie-whole-hat-light', 'File checks passed, sizes not confirmed');
   });
 
   test('a new colour chart', async ({ page }) => {
@@ -155,6 +156,6 @@ test.describe('the workspace in each state', () => {
     await dialog.getByRole('radio', { name: 'Colour chart' }).click();
     await dialog.getByLabel('Project name').fill('Harbor blanket');
     await dialog.getByRole('button', { name: 'Create' }).click();
-    await check(page, 'chart-typical', /^Ready to knit/);
+    await check(page, 'chart-typical', /^File checks passed/);
   });
 });

@@ -202,16 +202,16 @@ export function readinessStory({ findings, readiness, verdict, exportReady = tru
     detail = 'Fix these first.';
   } else if (readiness.ready) {
     status = 'ready';
-    headline = 'Ready to knit';
-    detail = 'Every software check passed.';
+    headline = verdict.state === 'knit' ? 'Proven on the machine' : 'File checks passed';
+    detail = verdict.state === 'knit' ? 'This exact file was knitted and recorded.' : 'Physical knitting has not been verified.';
   } else if (notes.length === 0) {
     status = 'needs-measurements';
-    headline = 'Ready to knit, sizes not confirmed';
+    headline = `${verdict.state === 'knit' ? 'Proven on the machine' : 'File checks passed'}, sizes not confirmed`;
     detail = 'Sizes use a typical gauge until you measure a swatch.';
   } else {
     status = 'design-issues';
     headline = `${notes.length} ${notes.length === 1 ? 'thing' : 'things'} to check`;
-    detail = 'It can be knitted. Check these first.';
+    detail = 'Check these before knitting.';
   }
   const synthetic = trials.filter((trial) => trial.synthetic);
   const notices = synthetic.length

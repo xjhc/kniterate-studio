@@ -9,7 +9,7 @@ import type { PieceId } from './draft';
 import type { PiecesPlan } from './sweater';
 import type { SweaterRunState } from './sweaterRun';
 
-/** Whether a flat-piece project (a sweater, a scarf or blanket) can be knitted, the steps to knit it, and its machine files. */
+/** The current result and next action for a flat-piece project, with details available on demand. */
 export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile, onOpenFile, onDownloadPiece, onPackage, onPrint, packaging, fileDetail }: {
   plan: PiecesPlan;
   run: SweaterRunState;
@@ -70,6 +70,7 @@ export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile,
     downloaded={downloaded}
     swatch={{ gauges, onEnter: () => revealSection('swatch'), file: swatchFile }}
     atTheMachine={story?.operatorChecks ?? []}
+    evidence={story?.evidence}
     fileDetail={fileDetail}
     footer={<p className="design-hint status-yarn" title={plan.yarn.how}>About {plan.yarn.metres.toLocaleString('en')} m of yarn.</p>}
   />;

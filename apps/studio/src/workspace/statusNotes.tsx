@@ -5,10 +5,9 @@ import { MEASUREMENT_RULES } from '../readiness';
 import type { StatusNote } from './StatusPanel';
 
 /**
- * The notes under Design for every kind of project: one per thing to check,
- * in the readiness story's words, what it leads to on hover, and buttons to
- * show the problem or apply its fix where the workspace offers them. While a
- * swatch step stands, the gauge is its, not a note.
+ * One note per thing to check, in the readiness story's words, with its
+ * consequence and buttons to show the problem or apply a supported fix.
+ * The panel decides what to reveal; gauge notes belong in its swatch section.
  */
 export function statusNotes(items: readonly StoryItem[], { swatchStep, goTo, operate }: {
   swatchStep: boolean;

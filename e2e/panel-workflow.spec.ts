@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { menu } from './menu';
+import { menu, openStatusDisclosure, statusDisclosure } from './menu';
 
 test('a one-colour scarf in any stitch: sized in cm, rib ends, the whole run in its schematic, one machine file', async ({ page }) => {
   test.setTimeout(180_000);
@@ -16,11 +16,18 @@ test('a one-colour scarf in any stitch: sized in cm, rib ends, the whole run in 
   await dialog.getByRole('button', { name: 'Create' }).click();
 
   const status = page.locator('.status-card');
-  await expect(status).toContainText('Ready to knit, sizes not confirmed', { timeout: 90_000 });
+  await expect(status).toContainText('File checks passed, sizes not confirmed', { timeout: 90_000 });
+  await expect(statusDisclosure(page, 'Files and printing')).toHaveJSProperty('open', false);
+  await expect(page.getByRole('region', { name: 'Machine files' })).toBeHidden();
+  await openStatusDisclosure(page, 'Files and printing');
   await expect(page.locator('.status-pieces .piece-ok')).toHaveCount(1);
+  await expect(page.locator('.status-pieces .piece-ok')).toBeVisible();
   await expect(page.locator('.status-pieces')).toContainText('scarf.kc');
   // What no file can check, at the machine before every run.
+  await expect(statusDisclosure(page, 'Before knitting')).toHaveJSProperty('open', false);
+  await openStatusDisclosure(page, 'Before knitting');
   const atTheMachine = page.getByRole('region', { name: 'At the machine' });
+  await expect(atTheMachine).toBeVisible();
   for (const check of ['every check assumes an empty bed', 'Park every yarn feeder at home', 'Knit a swatch to try the stitch size']) await expect(atTheMachine).toContainText(check);
 
   // Size in cm, wanted and knitted; a change is one undoable step.
@@ -34,7 +41,7 @@ test('a one-colour scarf in any stitch: sized in cm, rib ends, the whole run in 
   await page.getByRole('radio', { name: /^Garter stitch/ }).click();
   const ends = page.getByLabel('End rib height', { exact: true });
   await ends.fill('0'); await ends.press('Enter');
-  await expect(status).toContainText(/Ready to knit/, { timeout: 90_000 });
+  await expect(status).toContainText(/File checks passed/, { timeout: 90_000 });
 
   // The schematic is the whole run; the machine file reads back from waste yarn to bind-off.
   await page.getByRole('tab', { name: 'Schematic', exact: true }).click();
