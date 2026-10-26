@@ -32,6 +32,7 @@ const TARGETS = [
   'src/knitout/kcode/parser.ts',
   'src/knitout/kcode/machine-trace.ts',
   'src/knitout/kcode/machine-validator.ts',
+  'src/knitout/kcode/machine-safety.ts',
   'src/knitout/kcode/scheduled-trace-diff.ts',
 ] as const;
 const STATUS_ORDER = [

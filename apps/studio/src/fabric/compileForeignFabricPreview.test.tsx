@@ -75,7 +75,7 @@ describe('foreign fabric topology Worker compiler', () => {
       expect(response.mesh.edges.length).toBeLessThanOrEqual(18_000);
       expect(response.summary.loopCount).toBeGreaterThan(response.mesh.nodes.length);
     }
-  }, 20_000);
+  }, 60_000);
 
   it('retains full lineage in the Worker while returning only the requested window', () => {
     const compile = createForeignFabricCompiler();

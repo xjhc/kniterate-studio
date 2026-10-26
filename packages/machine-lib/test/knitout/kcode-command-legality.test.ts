@@ -6,6 +6,7 @@ import {
   KNITERATE_7GG_KCODE_PROFILE_V2,
   KNITERATE_KCODE_OPERATION_CONTRACTS_V1,
 } from '../../src/knitout/kcode/machine-profile.js'
+import { validateKCodeMachineSafetyV1 } from '../../src/knitout/kcode/machine-safety.js'
 import { projectKCodeMachineTrace } from '../../src/knitout/kcode/machine-trace.js'
 import { validateKCodeMachineTrace } from '../../src/knitout/kcode/machine-validator.js'
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
@@ -34,12 +35,14 @@ const LEGALITY_RAILS = [
     parse: parseKCodeDocument,
     project: projectKCodeMachineTrace,
     validate: validateKCodeMachineTrace,
+    safety: validateKCodeMachineSafetyV1,
   },
   {
     id: 'browser-entrypoint',
     parse: browserApi.parseKCodeDocument,
     project: browserApi.projectKCodeMachineTrace,
     validate: browserApi.validateKCodeMachineTrace,
+    safety: browserApi.validateKCodeMachineSafetyV1,
   },
 ] as const
 
@@ -218,6 +221,17 @@ describe('V1 command-legality contract', () => {
             const source = coreDocument(operation, direction, carrier, rack)
             const expectedConformant = expected.directions.includes(direction as never)
               && (expected.family === 'regular' || Number.isInteger(rack))
+            // Command legality is not machine safety. The regular cases put
+            // front 100 and rear 101 in one pass: front n faces rear n - rack,
+            // so at rack -1 they are facing needles, which collide.
+            const expectedFacingNeedles = expected.family === 'regular'
+              && Number.isInteger(rack)
+              && SOURCE_COORDINATE - rack === SOURCE_COORDINATE + 1
+            // A transfer operation with a yarn carrier is a split, which the
+            // machine does not do.
+            const expectedTransferWithCarrier = expected.family === 'transfer'
+              && carrier !== '0'
+              && Number.isInteger(rack)
             for (const rail of LEGALITY_RAILS) {
               const parsed = rail.parse(source, {
                 profile: KNITERATE_7GG_KCODE_PROFILE_V2,
@@ -243,6 +257,11 @@ describe('V1 command-legality contract', () => {
               expect(report.controllerAcceptance).toBe(
                 'not-established-by-software-validation',
               )
+              const safety = rail.safety(trace, KNITERATE_7GG_KCODE_PROFILE_V2)
+              expect(safety.counts['machine-safety.facing-needles'] > 0, `${label} facing needles`)
+                .toBe(expectedFacingNeedles)
+              expect(safety.counts['machine-safety.transfer-with-carrier'] > 0, `${label} transfer with carrier`)
+                .toBe(expectedTransferWithCarrier)
             }
             checked++
           }

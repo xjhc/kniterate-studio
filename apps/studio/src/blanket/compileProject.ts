@@ -11,7 +11,7 @@ import {
   type ResolvedProjectPlacement,
   type ProjectState,
 } from '@kniterate-studio/project-contract';
-import { flatSections } from '../machineSetup';
+import { flatSections, machineSetupErrors } from '../machineSetup';
 import {
   CUSTOMIST_MATCHED_PRESETS_V1,
   customistWastePassesV1,
@@ -204,6 +204,10 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   }
   // A placement that does not fit is not drawn; refuse to export a program that silently omits it.
   for (const resolved of placements) if (resolved.status === 'conflict') setupMessages.push(setupError('project-placement-conflict', resolved.reason ?? `Placement ${resolved.placement.id} does not fit.`));
+  // Settings that would take the machine outside its safety envelope never reach a program.
+  if (isAuthoredTechnique(state.strategy.technique)) {
+    for (const error of machineSetupErrors(state.setup, usedPalette.length < 2 ? 'fairisle' : state.strategy.technique)) setupMessages.push(setupError(error.rule, error.message));
+  }
 
   const base = {
     revision: projectRevision(project),
@@ -395,6 +399,8 @@ function compileBeanieProject(
   for (const resolved of overrides) setupMessages.push(setupError(resolved.status === 'quarantined' ? 'project-override-quarantined' : 'project-override-unsupported', resolved.reason ?? `Override ${resolved.override.id} cannot be compiled for a beanie; remove it to export.`));
   // A placement that does not fit is not drawn; refuse to export a program that silently omits it.
   for (const resolved of placements) if (resolved.status === 'conflict') setupMessages.push(setupError('project-placement-conflict', resolved.reason ?? `Placement ${resolved.placement.id} does not fit.`));
+  // Settings that would take the machine outside its safety envelope never reach a program.
+  for (const error of machineSetupErrors(state.setup, 'flat')) setupMessages.push(setupError(error.rule, error.message));
   // The construction knits only what it implements; never compile a different backing than the one chosen.
   const backing = state.strategy.technique;
   if (withBody && backing !== 'fairisle' && backing !== 'birdseye') setupMessages.push(setupError('project-beanie-backing-unsupported', `The beanie body supports fairisle and birdseye backings; ${backing} is not built for beanies yet.`));

@@ -29,10 +29,12 @@ function markerFreeBed(selected: readonly number[]): string {
   return '.'.repeat(LEFT_PADDING) + needles.join('') + '.'.repeat(RIGHT_PADDING);
 }
 
+// Carrier 2 starts at its home stop (-9.5, base offset 6) and the carriage
+// turns at -9.5 and 257.5; carrierless passes keep the carriage at -5.5.
 function decorateBed(base: string, carrier: '0' | '2'): string {
   const markers: readonly [number, string][] = carrier === '0'
     ? [[10, '/'], [273, '\\']]
-    : [[10, '/'], [45, carrier], [235, carrier], [273, '\\']];
+    : [[6, '/'], [6, carrier], [235, carrier], [273, '\\']];
   let output = '';
   let cursor = 0;
   for (const [offset, marker] of markers) {
@@ -56,6 +58,14 @@ function kcode(options: {
   const carrier = options.carrier ?? '2';
   const newline = options.newline ?? '\n';
   const stitch = options.stitch ?? '6';
+  // A complete job: carrier 2 knits out from home, then moves back home.
+  const home = carrier === '0' ? [] : [
+    `FRNT:${decorateBed(markerFreeBed([]), carrier)}`,
+    `STIF:${'6'.repeat(BASE_WIDTH)}`,
+    `REAR:${decorateBed(markerFreeBed([]), carrier)}`,
+    `STIR:${'6'.repeat(BASE_WIDTH)}`,
+    `<< Tu-Tu ${carrier} 300 450`,
+  ];
   return [
     'HOME',
     'RACK:0',
@@ -65,6 +75,7 @@ function kcode(options: {
     `REAR:${decorateBed(markerFreeBed(options.rear ?? []), carrier)}`,
     `STIR:${stitch.repeat(BASE_WIDTH)}`,
     `>> ${options.operation ?? 'Kn-Kn'} ${carrier} ${options.speed ?? '300'} ${options.roller ?? '450'}`,
+    ...home,
     '',
   ].join(newline);
 }
@@ -72,7 +83,8 @@ function kcode(options: {
 function largeKCode(passCount: number): string {
   const selected = Array.from({ length: NEEDLE_COLUMNS }, (_, index) => index);
   const decorateFullBed = (base: string): string => {
-    const markers: readonly [number, string][] = [[10, '/'], [15, '2'], [268, '2'], [273, '\\']];
+    // Carrier 2 travels from home (-9.5) to 254.5, the stopping distance past needle 252.
+    const markers: readonly [number, string][] = [[6, '/'], [6, '2'], [270, '2'], [273, '\\']];
     let output = '';
     let cursor = 0;
     for (const [offset, marker] of markers) {
@@ -174,7 +186,7 @@ describe('strict KCode machine document engine', () => {
 
     expect(document.verdict.label).toBe('Surface-proven (imported)');
     expect(document.source).toBe(KC);
-    expect(document.passes).toHaveLength(1);
+    expect(document.passes).toHaveLength(2);
     expect(document.passes[0]).toMatchObject({
       lineStart: 4,
       lineEnd: 8,
@@ -185,11 +197,11 @@ describe('strict KCode machine document engine', () => {
     });
     expect(document.kcode?.document?.rawText).toBe(KC);
     expect(document.kcode?.document?.metadata.dialect).toBe('knitout-vendor');
-    expect(document.kcode?.trace?.passes).toHaveLength(1);
+    expect(document.kcode?.trace?.passes).toHaveLength(2);
     expect(document.kcode?.validation).toMatchObject({ ok: true, diagnostics: [] });
-    expect(document.kcode?.scene?.passes).toHaveLength(1);
+    expect(document.kcode?.scene?.passes).toHaveLength(2);
     expect(document.stats).toMatchObject({
-      passCount: 1,
+      passCount: 2,
       loopFormingPassCount: 1,
       authoredRowCount: null,
       passMetricProvenance: 'strict-kcode-trace',
@@ -296,7 +308,7 @@ describe('strict KCode machine document engine', () => {
   });
 
   it('shows warnings and conservatively blocks unresolved imported warnings', () => {
-    const document = openMachineDocument('warning.kc', kcode({ speed: '801' }), {
+    const document = openMachineDocument('warning.kc', kcode({ carrier: '0' }), {
       dialect: 'knitout-vendor',
     });
 
@@ -304,14 +316,45 @@ describe('strict KCode machine document engine', () => {
     expect(document.stats).toMatchObject({ errorCount: 0, warningCount: 1 });
     expect(document.diagnostics).toContainEqual(expect.objectContaining({
       severity: 'warning',
-      classification: 'operational-advisory',
-      rule: 'machine-trace.setting-documented-range',
+      classification: 'semantic',
+      rule: 'machine-trace.drop-empty',
     }));
     expect(document.verdict).toMatchObject({
       state: 'blocked',
       label: 'Blocked',
     });
     expect(document.verdict.annotation).toContain('conservative V1 policy');
+  });
+
+  it('blocks a speed outside the machine range as a machine-safety error', () => {
+    const document = openMachineDocument('fast.kc', kcode({ speed: '801' }), {
+      dialect: 'knitout-vendor',
+    });
+
+    expect(document.kcode?.validation?.ok).toBe(true);
+    expect(document.stats).toMatchObject({ errorCount: 1, warningCount: 1 });
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'error',
+      classification: 'machine-safety',
+      rule: 'machine-safety.speed-range',
+      passIndex: 0,
+      line: 8,
+      rawMessage: "Pass 1 runs at speed 801; the machine's range is 10 to 800.",
+    }));
+    expect(document.verdict).toMatchObject({ state: 'blocked', label: 'Blocked' });
+    expect(document.verdict.annotation).toContain('Machine-facing findings');
+  });
+
+  it('blocks directly facing needles knit together at a whole-number rack', () => {
+    const document = openMachineDocument('facing.kc', kcode({ front: [100], rear: [100] }), {
+      dialect: 'knitout-vendor',
+    });
+
+    expect(document.kcode?.validation?.ok).toBe(true);
+    expect(document.diagnostics.filter((item) => item.severity === 'error')).toEqual([
+      expect.objectContaining({ rule: 'machine-safety.facing-needles', classification: 'machine-safety', passIndex: 0, line: 6 }),
+    ]);
+    expect(document.verdict.state).toBe('blocked');
   });
 
   it('keeps exact programmed travel but withholds the time term for nonpositive speed', () => {
@@ -321,7 +364,7 @@ describe('strict KCode machine document engine', () => {
 
     expect(document.stats.programmedMotion).toMatchObject({
       coordinateMetric: {
-        programmedTravelUnits: 263,
+        programmedTravelUnits: 534,
         unit: 'encoded-stop-coordinate-unit',
         provenance: 'exact-machine-trace',
       },
@@ -433,8 +476,8 @@ describe('authoritative KCode MachineTrace diff', () => {
       comparison: 'strict-machine-trace-v1',
       status: 'compared',
       identical: false,
-      generatedPassCount: 1,
-      referencePassCount: 1,
+      generatedPassCount: 2,
+      referencePassCount: 2,
     });
     expect(result.summary.deltas.map((delta) => delta.field)).toEqual(expect.arrayContaining([
       'selections.front[0].payloadIndex',
@@ -697,11 +740,14 @@ describe('Knitout machine document behavior', () => {
 
     expect(document.kcode?.differential?.ok).toBe(true);
     expect(policy.map((finding) => finding.severity)).toEqual(['info', 'error']);
-    expect(document.stats).toMatchObject({ infoCount: 1, warningCount: 0, errorCount: 1 });
+    // Stacked by tucking, the third and fourth loops are also machine-safety errors.
+    expect(document.diagnostics.filter((finding) => finding.rule === 'machine-safety.tuck-stack')).toHaveLength(2);
+    expect(document.stats).toMatchObject({ infoCount: 1, warningCount: 0, errorCount: 3 });
     expect(document.verdict.state).toBe('blocked');
   });
 
   it('opens a foreign depth-three loop stack Surface-proven with the observation visible', () => {
+    // Two transfers stack three loops on f41, as Kniterate's reference crown does.
     const source = [
       ';!knitout-2',
       ';;Machine: kniterate',
@@ -709,13 +755,22 @@ describe('Knitout machine document behavior', () => {
       'x-speed-number 300',
       'x-roller-advance 450',
       'in 2',
-      'tuck + f40 2',
-      'tuck - f40 2',
-      'tuck + f40 2',
+      'knit + f40 2',
+      'knit + f41 2',
+      'knit + f42 2',
+      'xfer f42 b42',
+      'rack -1',
+      'xfer b42 f41',
+      'rack 0',
+      'xfer f40 b40',
+      'rack 1',
+      'xfer b40 f41',
+      'rack 0',
+      'knit - f41 2',
       'out 2',
       '',
     ].join('\n');
-    const document = openMachineDocument('three-tucks.k', source);
+    const document = openMachineDocument('three-by-transfer.k', source);
 
     expect(document.diagnostics).toContainEqual(expect.objectContaining({
       severity: 'info',
@@ -789,7 +844,33 @@ describe('Knitout machine document behavior', () => {
     });
     expect(document.stats).toMatchObject({ infoCount: 1, warningCount: 0, errorCount: 0 });
     expect(document.verdict.state).toBe('surface');
-    expect(document.verdict.annotation).toContain('1 non-blocking float or bed-edge advisory remain visible');
+    expect(document.verdict.annotation).toContain('1 non-blocking float advisory remain visible');
+  });
+
+  it('refuses a depth-three stack made by tucking', () => {
+    const source = [
+      ';!knitout-2',
+      ';;Machine: kniterate',
+      ';;Carriers: 1 2 3 4 5 6',
+      'x-speed-number 300',
+      'x-roller-advance 450',
+      'in 2',
+      'tuck + f40 2',
+      'tuck - f40 2',
+      'tuck + f40 2',
+      'out 2',
+      '',
+    ].join('\n');
+    const document = openMachineDocument('three-tucks.k', source);
+
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({ severity: 'info', rule: 'machine-trace.loop-stack-policy' }));
+    expect(document.diagnostics).toContainEqual(expect.objectContaining({
+      severity: 'error',
+      classification: 'machine-safety',
+      rule: 'machine-safety.tuck-stack',
+      passIndex: 2,
+    }));
+    expect(document.verdict.state).toBe('blocked');
   });
 
   it('keeps rule-specific truncated depth-three observations informational', () => {
@@ -820,11 +901,9 @@ describe('Knitout machine document behavior', () => {
       occurrences: 1,
       rawMessage: expect.stringContaining('omitted 1 additional warning finding'),
     }));
-    expect(document.stats).toMatchObject({ infoCount: 513, warningCount: 0, errorCount: 0 });
-    expect(document.verdict).toMatchObject({
-      state: 'surface',
-      label: 'Surface-proven (imported)',
-    });
+    // The observations stay information; the tucked stacks themselves are machine-safety errors.
+    expect(document.stats).toMatchObject({ infoCount: 513, warningCount: 0, errorCount: 513 });
+    expect(document.verdict.state).toBe('blocked');
   });
 
   it('pins every reference-corpus import verdict to the documented policy', { timeout: 30_000 }, () => {
@@ -942,7 +1021,7 @@ describe('one-file machine check contract', () => {
   });
 
   it('keeps warning-only foreign KCode blocked in machine-readable output', () => {
-    const source = kcode({ speed: '801' });
+    const source = kcode({ carrier: '0' });
     const document = openMachineDocument('warning.kc', new TextEncoder().encode(source), {
       dialect: 'knitout-vendor',
     });
@@ -956,7 +1035,7 @@ describe('one-file machine check contract', () => {
       stats: { errorCount: 0, warningCount: 1 },
       diagnostics: [{
         severity: 'warning',
-        rule: 'machine-trace.setting-documented-range',
+        rule: 'machine-trace.drop-empty',
       }],
     });
   });

@@ -34,6 +34,8 @@ const PLAN_RULES: Record<string, string> = {
   'cuff-off-target': 'The beanie cuff does not have the rows its recorded height needs at the recorded 2x2 rib gauge (twice the height when it folds up). The fix sets the cuff rows and keeps the body rows.',
   'placement-size-off': 'A motif placed from an image no longer spans the height it was asked for at the current gauge. Re-convert it from the stored image with studio place --refresh <id>.',
   'project-placement-conflict': 'A placed motif does not fit the piece at its anchor (too wide, or too tall above the cuff). Nothing is drawn and export is blocked; move it, make it smaller, or resize the piece.',
+  'project-waste-too-short': 'The project sets fewer than 70 waste rows. Kniterate\'s default is 80 and it warns that fewer may not reach the rollers before the piece starts; without pull-down the knitting fails. Studio makes no program below 70. Seventy rows does not guarantee the rollers grip: check that the fabric reaches them.',
+  'project-setting-outside-machine-range': 'A section\'s own stitch size, speed or roller is outside Studio\'s machine-safety limits (knitting: stitch 2 to 15, a rib 3 to 15, speed 10 to 800, roller 0 to 999; transfers: speed up to 400, roller up to 450). They come from Kniterate\'s documentation and its own files, not from measuring a machine, and a value inside them still needs a swatch with your yarn. No program is made until it is back in range.',
   'project-beanie-backing-unsupported': 'The beanie body is built only with the backings it implements (fairisle, and birdseye with every color in the back on every row). Any other strategy is refused instead of being silently knitted with a different backing.',
 };
 

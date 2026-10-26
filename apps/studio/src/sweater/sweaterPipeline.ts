@@ -18,7 +18,7 @@ import { resolveReadiness, settingName, type Finding, type Readiness } from '../
 import type { PieceId } from './draft';
 import { planSweater, type PiecesPlan, type SweaterPiecePlan } from './sweater';
 import { planPanel } from './panel';
-import { flatSections } from '../machineSetup';
+import { flatSections, machineSetupErrors } from '../machineSetup';
 import { textureTransfersPerRepeat } from './textures';
 
 /**
@@ -113,12 +113,15 @@ export async function runSweaterPipeline(project: ColorworkProjectV1): Promise<S
   const plan: PiecesPlan = state.object?.kind === 'panel' ? planPanel(state) : planSweater(state);
   const capacity = assessAuthoredCapacityV1(project);
   const designErrors = plan.findings.filter((finding) => finding.severity === 'error');
+  // Settings that would take the machine outside its safety envelope never reach a program.
+  const setupErrors = machineSetupErrors(state.setup, 'flat');
   const pieces: SweaterPieceResult[] = [];
   for (const piece of plan.pieces) {
     let compiled: CompiledPiece | null = null;
     let compileError: string | null = null;
     const pieceErrors = designErrors.filter((finding) => finding.piece === null || finding.piece === piece.id);
     if (pieceErrors.length > 0) compileError = pieceErrors.map((finding) => finding.message).join(' ');
+    else if (setupErrors.length > 0) compileError = setupErrors.map((error) => error.message).join(' ');
     else {
       try {
         compiled = compileSweaterPiece(plan, piece, state.setup);

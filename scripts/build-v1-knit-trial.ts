@@ -15,6 +15,7 @@ import { deriveMachineTraceProgrammedMotionV1 } from '../packages/machine-lib/sr
 import { diffTraceStitchesV1 } from '../packages/machine-lib/src/knitout/kcode/trace-stitch-diff.js';
 import { diffKc, diffKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kc-diff.js';
 import { validateKCodeMachineTrace } from '../packages/machine-lib/src/knitout/kcode/machine-validator.js';
+import { validateKCodeMachineSafetyV1 } from '../packages/machine-lib/src/knitout/kcode/machine-safety.js';
 import { parseKCodeDocument } from '../packages/machine-lib/src/knitout/kcode/parser.js';
 import { compareScheduledPassesToMachineTrace } from '../packages/machine-lib/src/knitout/kcode/scheduled-trace-diff.js';
 import { validateKnitoutProgram } from '../packages/machine-lib/src/validators/knitout-program.js';
@@ -130,6 +131,10 @@ export function compileCurrentV1KnitTrial() {
   const machineValidation = validateKCodeMachineTrace(machineTrace, KNITERATE_7GG_KCODE_PROFILE_V2);
   if (!machineValidation.ok || machineValidation.profileConformance !== 'conformant') {
     throw new Error(`generated KCode failed command-legality validation: ${machineValidation.diagnostics.map((diagnostic) => `${diagnostic.rule}: ${diagnostic.message}`).join('; ')}`);
+  }
+  const machineSafety = validateKCodeMachineSafetyV1(machineTrace, KNITERATE_7GG_KCODE_PROFILE_V2);
+  if (!machineSafety.ok) {
+    throw new Error(`generated KCode failed the machine-safety envelope: ${machineSafety.diagnostics.map((diagnostic) => `${diagnostic.rule}: ${diagnostic.message}`).join('; ')}`);
   }
   const reconstructed = kcToKnitout(converted.kcode);
   const validation = validateKnitoutProgram(reconstructed.program);

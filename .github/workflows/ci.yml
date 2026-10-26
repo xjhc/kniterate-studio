@@ -1,15 +1,21 @@
 name: CI
 
+# Pull requests run the fast checks: `pnpm verify` confirms the tracked KCode
+# receipt matches the checkout, and each browser tests the production build in
+# its own job. The full mutation proof, which re-runs every gate, runs weekly
+# and on demand.
 on:
-  push:
-    branches: [main]
   pull_request:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   verify:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +28,35 @@ jobs:
       - run: pnpm verify
 
   browser:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Test the production build that deploys, not the dev server.
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
+      - run: pnpm exec playwright test --project=${{ matrix.browser }}
+        env:
+          PLAYWRIGHT_SERVE_BUILD: '1'
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results-${{ matrix.browser }}
+          path: output/playwright/test-results
+          retention-days: 7
+
+  mutation-proof:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,11 +66,4 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium firefox webkit
-      - run: pnpm test:e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: playwright-results
-          path: output/playwright/test-results
-          retention-days: 7
+      - run: pnpm verify:kcode:check

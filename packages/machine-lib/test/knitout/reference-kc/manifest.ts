@@ -205,10 +205,12 @@ export const REFERENCE_KC_CASES: readonly ReferenceKcCase[] = [
 
 /** The tiny single-color swatch both bindoff cases regenerate. Shared
  *  so the direct-engine and through-shell builders gate the same chart. */
+// An odd row count leaves the carrier on the left, as the reference's last
+// row does, so the chain starts there; on the right it walks the mirror image.
 function colorSwatchBindoffChart(): KnitlabChartState {
   return {
     id: 'color-swatch-bindoff-reference',
-    rows: 4,
+    rows: 5,
     cols: 6,
     orientation: 'bottom-up',
     name: 'Color swatch bindoff reference',

@@ -3,11 +3,12 @@ import {
   KNITERATE_7GG_KCODE_PROFILE_V2,
   compareScheduledPassesToMachineTrace,
   createAuthoredKCodeCoordinateBridgeV1,
-  isKCodeCommandLegalityExportEligible,
+  isKCodeMachineExportEligible,
   parseKCodeDocument,
   parseKnitoutProgram,
   projectKCodeMachineTrace,
   projectMachineScene,
+  validateKCodeMachineSafetyV1,
   validateKCodeMachineTrace,
   type AuthoredKCodeCoordinateBridgeV1,
   type MachineTraceV1,
@@ -214,6 +215,7 @@ function messagesForArtifact(input: {
   knitoutIssues: ReturnType<typeof parseKnitoutProgram>['issues'];
   parserDiagnostics: KCodeArtifact['parserDiagnostics'];
   validation: KCodeArtifact['validation'];
+  safety: KCodeArtifact['safety'];
   differential: KCodeArtifact['differential'];
 }): ValidationMessage[] {
   return [
@@ -227,6 +229,7 @@ function messagesForArtifact(input: {
     ...input.knitoutIssues.map((issue): ValidationMessage => ({ severity: 'error', rule: issue.rule ?? 'generated-knitout-parse', message: `Knitout line ${issue.line}: ${issue.message}`, occurrences: issue.occurrences })),
     ...input.parserDiagnostics.map((item): ValidationMessage => ({ severity: item.severity, rule: item.rule, message: `KCode ${item.line}:${item.column}: ${item.message}`, occurrences: item.occurrences })),
     ...(input.validation?.diagnostics ?? []).map((item): ValidationMessage => ({ severity: item.severity, rule: item.rule, message: item.line === null ? item.message : `KCode ${item.line}:${item.column}: ${item.message}`, occurrences: item.occurrences })),
+    ...(input.safety?.diagnostics ?? []).map((item): ValidationMessage => ({ severity: item.severity, rule: item.rule, message: item.line === null ? item.message : `KCode ${item.line}:${item.column}: ${item.message}`, occurrences: item.occurrences })),
     ...(input.differential?.mismatches ?? []).map((item): ValidationMessage => ({ severity: 'error', rule: 'kcode.backend-schedule-differential', message: item.message })),
   ];
 }
@@ -297,6 +300,9 @@ export async function compileKCodeArtifact(
   const validation = trace === null
     ? null
     : validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2);
+  const safety = trace === null
+    ? null
+    : validateKCodeMachineSafetyV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2);
   const scene = trace === null ? null : projectMachineScene(trace);
   const differential = trace === null
     ? null
@@ -329,6 +335,7 @@ export async function compileKCodeArtifact(
     knitoutIssues: parsedKnitout.issues,
     parserDiagnostics: parsed.diagnostics,
     validation,
+    safety,
     differential,
   }), ...provenance.messages];
 
@@ -352,6 +359,7 @@ export async function compileKCodeArtifact(
     trace,
     scene,
     validation,
+    safety,
     differential,
     passProvenance,
     passLines,
@@ -359,7 +367,7 @@ export async function compileKCodeArtifact(
     rowPasses,
     coordinateBridge,
     passKnitoutNeedles: passKnitoutNeedles(trace, coordinateBridge),
-    ok: isKCodeCommandLegalityExportEligible({ parseOk: parsed.ok, validation })
+    ok: isKCodeMachineExportEligible({ parseOk: parsed.ok, validation, safety })
       && parsedKnitout.issues.length === 0
       && differential?.ok === true
       && provenance.ok

@@ -40,7 +40,6 @@ export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile,
     detail = story.status === 'ready' ? '' : story.detail;
     tone = story.status === 'blocked' ? 'blocked' : story.status === 'ready' ? 'ready' : story.status === 'design-issues' ? 'warn' : 'next';
   } else if (designErrors.length > 0) { tone = 'blocked'; title = "Can't knit yet"; detail = 'Fix these first.'; }
-  const operator = summary && !checking ? summary.findings.filter((finding) => finding.severity === 'info' && finding.owner === 'operator') : [];
   const gauges = [{ name: plan.object.body.name, measured: plan.gauge.source === 'measured' }, ...(ribUsed ? [{ name: 'Rib', measured: plan.ribGauge.source === 'measured' }] : [])];
   return <StatusPanel
     tone={tone}
@@ -70,7 +69,7 @@ export function SweaterStatusPanel({ plan, run, ribUsed, downloaded, swatchFile,
     canPrint={!checking && summary !== null}
     downloaded={downloaded}
     swatch={{ gauges, onEnter: () => revealSection('swatch'), file: swatchFile }}
-    atTheMachine={operator.map((note) => note.message)}
+    atTheMachine={story?.operatorChecks ?? []}
     fileDetail={fileDetail}
     footer={<p className="design-hint status-yarn" title={plan.yarn.how}>About {plan.yarn.metres.toLocaleString('en')} m of yarn.</p>}
   />;

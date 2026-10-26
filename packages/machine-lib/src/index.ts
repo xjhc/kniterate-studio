@@ -81,6 +81,8 @@ export {
 } from './knitout/kcode/pass-metrics.js';
 export {
   CUSTOMIST_MATCHED_PRESETS_V1,
+  CUSTOMIST_MIN_WASTE_PASSES_V1,
+  CUSTOMIST_RIB_STITCH_STEP_V1,
   CUSTOMIST_STANDARD_WASTE_PASSES_V1,
   CUSTOMIST_STANDARD_BODY_SETTINGS_V1,
   CUSTOMIST_STANDARD_SECTION_SETTINGS_V1,
@@ -177,7 +179,19 @@ export {
   type MachineValidationDiagnosticV1,
   type MachineValidationReportV1,
 } from './knitout/kcode/machine-validator.js';
-export { isKCodeCommandLegalityExportEligible } from './knitout/kcode/export-eligibility.js';
+export {
+  KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1,
+  MACHINE_SAFETY_RULES_V1,
+  validateKCodeMachineSafetyV1,
+  type MachineSafetyDiagnosticV1,
+  type MachineSafetyEnvelopeV1,
+  type MachineSafetyReportV1,
+  type MachineSafetyRuleV1,
+} from './knitout/kcode/machine-safety.js';
+export {
+  isKCodeCommandLegalityExportEligible,
+  isKCodeMachineExportEligible,
+} from './knitout/kcode/export-eligibility.js';
 export {
   compareScheduledPassesToMachineTrace,
   type ScheduledTraceComparisonV1,

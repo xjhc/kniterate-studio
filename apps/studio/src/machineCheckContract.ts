@@ -142,6 +142,7 @@ export function createMachineCheckReceipt(
       document.sourceDisclosure.summary,
       'Programmed travel is exact only in encoded stop-coordinate units. Millimetres and the constant-speed time term assume one coordinate unit equals one 3.63 mm needle pitch and encoded speed is constant mm/s; they are not physical duration or lower-bound claims.',
       'Surface-proven remains software evidence; controller acceptance and physical knitting are separate gates.',
+      'Every check assumes the job starts with an empty needle bed and every yarn feeder parked at home on the left; the file cannot show either, so check both at the machine.',
     ],
   };
 }

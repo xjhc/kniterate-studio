@@ -1,18 +1,17 @@
 import { beanieObjectOf, type MachineSetup, type ProjectState, type SectionSettings } from '@kniterate-studio/project-contract';
-import { CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_SECTION_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, EIGHT_LINE_CROWN_V1, customistTopWasteRowsV1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
+import { CUSTOMIST_MIN_WASTE_PASSES_V1, CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_SECTION_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, EIGHT_LINE_CROWN_V1, customistTopWasteRowsV1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
+import { sectionLimits, type SetupSection } from '../machineSetup';
 import { Chips, NumberInput, Section } from './panel';
 
 /**
  * The machine's start and finish, the same section for every kind of
  * project. Each setting is the construction's reference (Kniterate's own
- * files) until you set your own; a short waste section warns, it never
- * refuses: the machine checks still refuse anything it cannot knit.
+ * files) until you set your own. The inputs stay inside the machine-safety
+ * envelope; a waste section too short for the rollers, or a setting outside
+ * the envelope, is refused when the project compiles.
  */
 
 type Construction = keyof typeof CUSTOMIST_STANDARD_WASTE_PASSES_V1;
-
-/** Below this many waste rows the fabric may not reach the rollers before the piece starts (Kniterate's default is 80, and ~70 is the usual floor). */
-export const SHORT_WASTE_ROWS = 70;
 
 /** Which reference start a project knits with: a colour chart's backing, or the flat start every garment and scarf shares. */
 export function wasteConstruction(state: ProjectState): Construction {
@@ -31,7 +30,7 @@ export function machineSetupWords(setup: MachineSetup | undefined, construction:
     // Only the flat start has a draw thread: the chart references knit without one.
     drawThread: construction === 'flat' ? setup?.drawThread !== false : null,
     own: setup !== undefined && Object.keys(setup).length > 0,
-    warning: wasteRows < SHORT_WASTE_ROWS ? `Below about ${SHORT_WASTE_ROWS} rows the fabric may not reach the rollers before your piece starts.` : null,
+    warning: wasteRows < CUSTOMIST_MIN_WASTE_PASSES_V1 ? `Below ${CUSTOMIST_MIN_WASTE_PASSES_V1} rows the fabric may not reach the rollers before your piece starts, so no program is made.` : null,
   };
 }
 
@@ -45,10 +44,8 @@ export function bodyStandard(state: ProjectState): Standard | null {
   return CUSTOMIST_STANDARD_BODY_SETTINGS_V1[birdseye ? 'birdseye' : 'fairisle'];
 }
 
-type SectionKey = 'waste' | 'castOn' | 'rib' | 'body' | 'transfers';
-
 /** Each section a project can set, in knitting order, with its reference: a chart its waste and body; a flat piece its waste, cast-on, rib (when it has one), body and transfers. */
-export function sectionStandards(state: ProjectState): { key: SectionKey; label: string; standard: Standard; note?: string }[] {
+export function sectionStandards(state: ProjectState): { key: SetupSection; label: string; standard: Standard; note?: string }[] {
   const construction = wasteConstruction(state);
   const body = bodyStandard(state);
   if (construction !== 'flat') return [{ key: 'waste', label: 'Waste', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1[construction].waste }, ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : [])];
@@ -65,7 +62,7 @@ export function sectionStandards(state: ProjectState): { key: SectionKey; label:
   ];
 }
 
-/** Outside what Kniterate's own files use, a setting warns; the machine checks refuse only what cannot be knitted. */
+/** Inside the inputs' range but outside what Kniterate's own files use, a setting warns. */
 export function settingsWarning(value: SectionSettings | undefined): string | null {
   if (value?.speed !== undefined && (value.speed < 60 || value.speed > 700)) return "Kniterate's own files keep the speed between 60 and 700.";
   if (value?.roller !== undefined && (value.roller < 0 || value.roller > 600)) return "Kniterate's own files keep the roller between 0 and 600.";
@@ -73,7 +70,7 @@ export function settingsWarning(value: SectionSettings | undefined): string | nu
 }
 
 /** One section's stitch size, speed and roller, each the standard until you set it. */
-function SectionSettingsFields({ id, label, value, standard, note, onChange }: { id: string; label: string; value: SectionSettings | undefined; standard: Standard; note?: string; onChange: (next: SectionSettings | undefined, what: string) => void }) {
+function SectionSettingsFields({ id, section, label, value, standard, note, onChange }: { id: string; section: SetupSection; label: string; value: SectionSettings | undefined; standard: Standard; note?: string; onChange: (next: SectionSettings | undefined, what: string) => void }) {
   const set = (key: keyof SectionSettings, name: string, raw: number) => {
     const next = key === 'stitch' ? Math.round(raw) : raw;
     const { [key]: _drop, ...rest } = value ?? {};
@@ -86,9 +83,10 @@ function SectionSettingsFields({ id, label, value, standard, note, onChange }: {
     <NumberInput label={`${label} ${key === 'stitch' ? 'stitch size' : name.toLowerCase()}`} value={value?.[key] ?? standard[key]} min={min} max={max} step={step} onCommit={(next) => set(key, key === 'stitch' ? 'stitch size' : name.toLowerCase(), next)} />
   </label>;
   const warning = settingsWarning(value);
+  const limits = sectionLimits(section);
   return <fieldset className="gauge-fields section-settings" id={id}>
     <legend>{label}</legend>
-    <div className="gauge-row">{field('stitch', 'Stitch', 0, 15, 1)}{field('speed', 'Speed', 0, 800, 10)}{field('roller', 'Roller', -500, 999, 10)}</div>
+    <div className="gauge-row">{field('stitch', 'Stitch', limits.stitch.min, limits.stitch.max, 1)}{field('speed', 'Speed', limits.speed.min, limits.speed.max, 10)}{field('roller', 'Roller', limits.roller.min, limits.roller.max, 10)}</div>
     <p className={`design-hint${warning ? ' warn' : ''}`} role={warning ? 'alert' : undefined}>
       {warning ?? `Standard: stitch ${standard.stitch}, speed ${standard.speed}, roller ${standard.roller}.${note && !value ? ` ${note}` : ''}`}
       {value && <> <button type="button" className="link-button" onClick={() => onChange(undefined, `Standard ${label.toLowerCase()} settings`)}>Use the standard</button></>}
@@ -129,7 +127,7 @@ export function MachineSetupSection({ state, onChange, objectTop }: {
   };
   const sections = sectionStandards(state);
   const ownSections = sections.some((section) => state.setup?.[section.key] !== undefined);
-  const setSection = (key: SectionKey, next: SectionSettings | undefined, label: string) => {
+  const setSection = (key: SetupSection, next: SectionSettings | undefined, label: string) => {
     const { [key]: _drop, ...rest } = state.setup ?? {};
     save(next ? { ...rest, [key]: next } : rest, label);
   };
@@ -140,7 +138,7 @@ export function MachineSetupSection({ state, onChange, objectTop }: {
   return <Section id="machine" title="Machine settings" defaultOpen={false} aside={<em className={`section-aside${words.warning ? ' warn' : ''}`}>{words.own ? 'your own' : 'standard'}</em>}>
     <div className="field-row">
       <span>Waste yarn</span>
-      <NumberInput label="Waste yarn rows" value={words.wasteRows} min={4} max={200} step={2} suffix="rows" onCommit={(rows) => setWaste(Math.round(rows))} />
+      <NumberInput label="Waste yarn rows" value={words.wasteRows} min={CUSTOMIST_MIN_WASTE_PASSES_V1} max={200} step={2} suffix="rows" onCommit={(rows) => setWaste(Math.round(rows))} />
     </div>
     <p className={`design-hint${words.warning ? ' warn' : ''}`} role={words.warning ? 'alert' : undefined}>
       {words.warning ?? `Knitted before your piece so the rollers can grip it. Standard: ${words.standard} rows, from Kniterate's own files.`}
@@ -164,7 +162,7 @@ export function MachineSetupSection({ state, onChange, objectTop }: {
       </>}
     <details className="machine-sections" open={ownSections}>
       <summary>Speed, roller and stitch size</summary>
-      {sections.map((section) => <SectionSettingsFields key={section.key} id={`machine.${section.key}`} label={section.label} value={state.setup?.[section.key]} standard={section.standard} {...(section.note ? { note: section.note } : {})} onChange={(next, label) => setSection(section.key, next, label)} />)}
+      {sections.map((section) => <SectionSettingsFields key={section.key} id={`machine.${section.key}`} section={section.key} label={section.label} value={state.setup?.[section.key]} standard={section.standard} {...(section.note ? { note: section.note } : {})} onChange={(next, label) => setSection(section.key, next, label)} />)}
     </details>
   </Section>;
 }

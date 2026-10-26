@@ -13,6 +13,7 @@ describe('KCode mutation suppression policy', () => {
       'src/knitout/kcode/parser.ts',
       'src/knitout/kcode/machine-trace.ts',
       'src/knitout/kcode/machine-validator.ts',
+      'src/knitout/kcode/machine-safety.ts',
       'src/knitout/kcode/scheduled-trace-diff.ts',
     ].flatMap((path) => diagnosticProseDirectives(resolve(import.meta.dirname, '../..', path)))
 

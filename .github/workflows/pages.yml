@@ -23,9 +23,11 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm verify
-      - run: pnpm exec playwright install --with-deps chromium firefox webkit
-      - run: PLAYWRIGHT_SERVE_BUILD=1 pnpm test:e2e
+      # The merged commit passed the pull request's checks; this build is
+      # smoke-tested in Chromium as it will be served.
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: PLAYWRIGHT_SERVE_BUILD=1 pnpm exec playwright test --project=chromium e2e/launch-polish.spec.ts e2e/m2.spec.ts e2e/m3d.spec.ts
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:

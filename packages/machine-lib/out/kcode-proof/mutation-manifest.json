@@ -21,12 +21,16 @@
       "sha256": "dae44550a85ef78e1be847bc729f0cc7ab0fd756e731b05237a37fd2b284c5f9"
     },
     {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "sha256": "f5f55c47f9cc85d8df72a602d31f820dc2ca8a06da49839568925d7859e1dddf"
+    },
+    {
       "path": "src/knitout/kcode/scheduled-trace-diff.ts",
       "sha256": "976c0cc54823b2568a47e444dbf88a0732d8be10453d077a7e6204fe7a196546"
     }
   ],
-  "configSha256": "4bfb6e5a02b74a91a402579e771e300fe659587b5d2bfe1a95e752306dcb9221",
-  "testConfigSha256": "c95269a297475b87d7a05749b9fc5e2f91cf383d04e9455981677d8ae70f9138",
+  "configSha256": "40507ff786c825073d708d4be9b31dddeccae7a869adcce2f9614ddc5e4a3e8b",
+  "testConfigSha256": "ac89d7e0eb7767d7ce0d779824d1e1db1692d864ff63e806f5dfe983c0653631",
   "globallyExcludedMutations": [],
   "diagnosticProseDirectiveAudit": [
     {
@@ -160,9 +164,23 @@
       "startLine": 1435,
       "endLine": 1435,
       "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
+    },
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "startLine": 643,
+      "endLine": 643,
+      "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
     }
   ],
   "diagnosticProseExclusions": [
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 643,
+      "column": 16,
+      "mutator": "StringLiteral",
+      "replacement": "``",
+      "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
+    },
     {
       "path": "src/knitout/kcode/machine-trace.ts",
       "line": 254,
@@ -380,8 +398,32 @@
       "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
     }
   ],
-  "diagnosticProseExclusionsSha256": "35d33a97046f8a21867db327cd05b16695e34b923cb6bb843c10f9ff5331c3ea",
+  "diagnosticProseExclusionsSha256": "e87c8f6034dce85b181f0f43621c5c54ed696f150af1ca3ff6d90af216eeba77",
   "equivalentMutantSuppressions": [
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 379,
+      "column": 57,
+      "mutator": "MethodExpression",
+      "replacement": "[...formed, passIndex]",
+      "reason": "Equivalent mutant: the slice only bounds memory; no more than maxKnits earlier loops can change whether a needle exceeds maxKnits."
+    },
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 488,
+      "column": 13,
+      "mutator": "EqualityOperator",
+      "replacement": "loop.coordinate <= action.at.traceCoordinate",
+      "reason": "Equivalent mutant: loops at the needle's own coordinate were skipped above."
+    },
+    {
+      "path": "src/knitout/kcode/machine-safety.ts",
+      "line": 488,
+      "column": 13,
+      "mutator": "EqualityOperator",
+      "replacement": "loop.coordinate >= action.at.traceCoordinate",
+      "reason": "Equivalent mutant: loops at the needle's own coordinate were skipped above."
+    },
     {
       "path": "src/knitout/kcode/machine-trace.ts",
       "line": 359,
@@ -647,17 +689,17 @@
       "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
     }
   ],
-  "equivalentMutantSuppressionsSha256": "aeb6f7bec4dbab88f2a8a6f1956b9827855cd08511f547b4ce0c9ccc7c0ea5bf",
+  "equivalentMutantSuppressionsSha256": "f634b0ea8653c5500d8143b97d09441d923effa1c802f3c862ef63d234bfc349",
   "unreviewedIgnoredMutants": [],
   "misScopedDiagnosticProseExclusions": [],
   "counts": {
-    "Killed": 2440,
+    "Killed": 3188,
     "Survived": 0,
     "Timeout": 0,
     "NoCoverage": 0,
     "CompileError": 0,
     "RuntimeError": 0,
-    "Ignored": 60,
+    "Ignored": 64,
     "Pending": 0
   },
   "mutationScore": 100

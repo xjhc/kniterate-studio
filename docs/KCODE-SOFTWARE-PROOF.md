@@ -159,9 +159,17 @@ pnpm verify:kcode
 ```
 
 `pnpm verify:kcode:check` runs the same gates without rewriting evidence and
-fails unless the tracked receipt already has the exact expected bytes. The full
-`pnpm verify` and CI paths use this read-only form, as well as the read-only
-physical-registry and conformance-report checks.
+fails unless the tracked receipt already has the exact expected bytes.
+`release:trial` and a weekly CI job (also run on demand) use this full
+read-only form.
+
+`pnpm verify:kcode:receipt` re-runs no gate. It fails unless the tracked
+receipt names exactly the current sources, harness, tests and toolchain, every
+gate in it passed, and it cites the tracked mutation receipt for the current
+mutation targets and Stryker settings. `pnpm verify` and every pull request use
+this check, alongside the read-only physical-registry and conformance-report
+checks, so a change to any bound input fails until `pnpm verify:kcode` has
+regenerated both receipts.
 
 The command runs the exact machine-library and Studio proof-test lists, their
 strict TypeScript checks plus the checker entrypoint typecheck, the KCode-native
@@ -252,6 +260,24 @@ The gate establishes:
 - programmed carriage/carrier stops and continuity, selections, traversal
   order, transfer pairing, rack geometry, and action semantics;
 - empty-bed loop-state replay for knit, tuck, drop, transfer, and split;
+- a blocking machine-safety envelope over every trace, authored or imported:
+  no facing needles at a whole-number rack, no work off the bed edge at the
+  current rack, idle carriers and carriage/carrier turns at least the 2.5
+  stopping distance from operated needles (a transfer measured at its
+  front-bed needle), no carrierless tuck, no transfer with a carrier (a split
+  stitch, refused because no reference program shows its encoding), carriers
+  starting and ending at their home stops, speed 10–800, roller 0–999, at
+  most four knitting passes since any pass last advanced the roller, knit and
+  tuck stitch at least 2, transfers within speed 400 and roller 450, no
+  neighbouring needles transferred together, at most four loops formed while
+  older loops are held on both sides on the same bed (central short rows; a
+  tucked side stays held, and a stitch moved from a taller column counts
+  from it), at most two loops left by a tuck, and no work more than the
+  7-needle float distance past a dragged carrier's last stitch under its
+  yarn until that stitch's needle has been knitted over 36 times. A seeded
+  property test checks the
+  needle geometry against an independent oracle. Every threshold names its evidence, the 13 references have
+  zero findings, and each rule has a pinned refusal case;
 - a shared conservative software loop-stack policy (warning above two loops,
   error above three) used by planning and KCode replay;
 - full-raster KCode diffing rather than footer-only comparison;
@@ -300,8 +326,11 @@ not an established physical loop-stack limit.
 
 The mutation rail keeps the existing grammar/input mutations and adds
 StrykerJS 10.0.0 implementation-source mutation scoring with the Vitest runner,
-fixed tests, concurrency one, and deterministic normalized evidence at
-`packages/machine-lib/out/kcode-proof/mutation-manifest.json`. Diagnostic prose
+fixed tests, one concurrent test runner per four cores (at most eight), and
+deterministic normalized evidence at
+`packages/machine-lib/out/kcode-proof/mutation-manifest.json`. A mutant that
+times out fails the receipt, so a loaded machine can only fail the rail, never
+count a slow surviving mutant as killed. Diagnostic prose
 string mutations may be excluded only at diagnostic-prose sites; rule
 identifiers, severities, control flow, conditionals, arithmetic, boundaries,
 and collections remain in scope. Equivalent-mutant suppressions must be
@@ -319,11 +348,19 @@ Software proof does not turn encoded commands into a physical-knit claim.
    still needs the documented two-endpoint machine observation before the UI
    labels a trace coordinate as a physical needle number. Direct foreign KCode
    has no authored-coordinate provenance and cannot inherit this bridge.
-2. **Operational safety envelopes are incomplete.** Official/editor bounds are
-   recorded separately from encodable values. The shared two/three-loop
-   thresholds are a conservative software policy, not a physical-safety claim;
-   safe speed, signed roller, and operational loop limits still require
-   authoritative evidence.
+2. **The machine-safety envelope is documented and observed, not measured.**
+   Official/editor bounds are recorded separately from encodable values. The
+   blocking machine-safety envelope (`machine-safety.ts`) takes its geometry
+   rules from Kniterate's documentation and its numeric limits from that
+   documentation and the reference corpus; no limit was measured on a
+   machine, and a value inside it is not a claim that it suits a given yarn.
+   The shared two/three-loop thresholds remain a conservative software policy
+   (Kniterate's editor also warns, and does not refuse, above two loops);
+   physically safe speed, roller and loop limits for a yarn still need the
+   physical trial. The envelope does not model attached yarn: KCode cannot
+   show whether a retired carrier's yarn was cut, so yarn dragged across
+   later knitting is not detected. Within-pass phases (pickup, release,
+   needle extension, roller timing) are not reconstructed.
 3. **Foreign KCode lacks carrier lifecycle.** KCode does not encode Knitout
    `in`/`out`; authored compilation retains source provenance, while a foreign
    file cannot prove carrier threading lifecycle from KCode alone.

@@ -24,6 +24,21 @@
   promotion now requires structured machine, yarn, run, placement, measurement,
   inspection, and photo-receipt evidence plus a fresh in-process byte-identical
   recompile and re-emission.
+- Added a blocking machine-safety envelope for every authored and imported
+  machine file. It refuses facing needles at a whole-number rack, work off the
+  bed edge, idle feeders near the needles, short carriage and carrier
+  overruns, transfers with a carrier (split stitches, until their encoding is
+  verified), carrierless tucks, and carriers that don't start and end at
+  home. It also refuses speed, roller, takedown, stitch
+  and transfer settings outside Kniterate's documented and observed range.
+  It also refuses neighbouring transfers in one pass, more than four loops in
+  a central short row, more than two tucked loops on a needle, and work under
+  a yarn that a carrier dragged away without knitting, such as one taken out
+  on the right partway through. Studio's chain bind-off now starts on the
+  side its yarn ended instead of dragging the yarn across first. Project
+  settings outside Studio's limits, or fewer than 70 waste rows, no longer
+  compile, and every knittable project lists the start-of-job operator
+  checks.
 - Kept physical knitting outside the software oracle; the existing hash-bound
   real-machine trial remains the final release gate.
 

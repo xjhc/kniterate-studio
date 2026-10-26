@@ -18,12 +18,11 @@ import { knitoutToKCodeWithTrace } from '../../src/knitout/kniterate/to-kcode.js
 
 const profile = KNITERATE_7GG_KCODE_PROFILE_V2
 
-function traceFor(body: readonly string[], position?: 'Keep') {
+function traceFor(body: readonly string[]) {
   const source = [
     ';!knitout-2',
     ';;Machine: kniterate',
     ';;Carriers: 1 2 3 4 5 6',
-    ...(position === undefined ? [] : [`;;Position: ${position}`]),
     'x-stitch-number 6',
     'x-speed-number 300',
     'x-roller-advance 450',
@@ -163,21 +162,10 @@ describe('strict KCode advisories', () => {
     expect(dropped.counts['machine-advisory.float-distance']).toBe(0)
   })
 
-  it('reports a stitch whose facing needle falls outside the KCode column domain at the current rack', () => {
-    const trace = traceFor(['in 2', 'knit + f1 2', 'knit + f2 2', 'rack 2', 'knit - f2 2', 'knit - f1 2', 'out 2'], 'Keep')
-    const report = deriveMachineTraceAdvisoriesV1(trace, profile)
-    expect(report.counts['machine-advisory.facing-needle-outside-domain']).toBe(2)
-    expect(report.advisories.map((advisory) => advisory.message)).toEqual([
-      'Pass 2 knits front KCode column 1 at rack 2; the facing rear position -1 is outside KCode columns 0..252.',
-      'Pass 2 knits front KCode column 0 at rack 2; the facing rear position -2 is outside KCode columns 0..252.',
-    ])
-  })
-
   it('keeps the reference corpus free of floats after endpoint transfers and drops', () => {
     const floats: Record<string, number> = {}
     for (const name of readdirSync(resolve(__dirname, '../../reference')).filter((item) => item.endsWith('.kc'))) {
       const report = deriveMachineTraceAdvisoriesV1(traceForReference(name), profile)
-      expect(report.counts['machine-advisory.facing-needle-outside-domain'], name).toBe(0)
       if (report.counts['machine-advisory.float-distance'] > 0) {
         floats[name] = report.counts['machine-advisory.float-distance']
       }

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { AlertTriangle, Check, CheckCircle2, CircleAlert, Download, Info, LoaderCircle, Package, Printer, Ruler } from 'lucide-react';
+import { MACHINE_START_CHECKS } from '../readiness';
 
 /**
  * The right-hand panel of every project: whether it can be knitted, then the
@@ -87,6 +88,8 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
   const current = tone === 'checking' ? null : order.find((step) => !done[step]) ?? null;
   const state = (step: keyof typeof done): StepState => (done[step] ? 'done' : current === step ? 'current' : 'todo');
   const number = (step: keyof typeof done) => order.indexOf(step) + 1;
+  // A swatch can be knitted while the design can't; then it carries the start checks itself.
+  const swatchChecks = swatch?.file?.onDownload && !MACHINE_START_CHECKS.every((check) => atTheMachine.includes(check)) ? MACHINE_START_CHECKS : [];
   return <aside className="sweater-status" aria-label="Status">
     <section className={`status-card tone-${tone}`} role="status">
       <Icon size={22} className={tone === 'checking' ? 'spin' : undefined} />
@@ -102,6 +105,10 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
           <button type="button" className="secondary-button step-action" onClick={swatch.onEnter}><Ruler size={15} />{done.swatch ? 'Change your swatch' : 'Enter your swatch'}</button>
         </div>
         {swatch.file?.problem && <p className="piece-error" role="alert">{swatch.file.problem}</p>}
+        {swatchChecks.length > 0 && <section className="at-the-machine" aria-label="Before the swatch">
+          <p className="step-hint">At the machine, before knitting the swatch:</p>
+          <ul className="status-notes operator">{swatchChecks.map((note, index) => <li key={index}>{note}</li>)}</ul>
+        </section>}
       </Step>}
       <Step number={number('download')} title="Download" state={state('download')}>
         <section className="status-pieces" aria-label="Machine files">
