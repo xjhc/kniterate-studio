@@ -30936,12 +30936,12 @@
     ]
   },
   "contract": {
-    "sha256": "774ba8cb96a2672bc7ca7d68d7ecc3449a41d9b21125926c0088a586b24ad324",
+    "sha256": "bdb172f6b5f712242d4ef9e23a88fbee9f45c28a21df704507268ff00c47ef4f",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
-        "sha256": "d401ae345a350e28c0c4904d1f6d549a4d5933e7108f6929715bae0ed95c8de9",
-        "bytes": 2005
+        "sha256": "380a95cd683450c018196a95363252806efe21c554a30aac33027b1dd57a0b98",
+        "bytes": 1377
       },
       {
         "path": "../../.github/workflows/pages.yml",
