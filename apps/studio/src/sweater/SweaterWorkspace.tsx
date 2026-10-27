@@ -141,7 +141,7 @@ export function SweaterWorkspace({ project, onProject, plan, run, view, onView, 
       {error && <p className="stage-error" role="alert">{error}<button type="button" className="link-button" onClick={() => setError(null)}>Dismiss</button></p>}
       <div className="stage-body">{body}</div>
     </section>
-    <SweaterStatusPanel plan={plan} run={run} ribUsed downloaded={downloaded} swatchFile={swatchFile} onOpenFile={openFile} onDownloadPiece={onDownloadPiece} onPackage={onPackage} onPrint={onPrint} packaging={packaging}
+    <SweaterStatusPanel key={project.id} plan={plan} run={run} ribUsed downloaded={downloaded} swatchFile={swatchFile} onOpenFile={openFile} onDownloadPiece={onDownloadPiece} onPackage={onPackage} onPrint={onPrint} packaging={packaging}
       fileDetail={selected?.raster ? { id: selected.id, content: <ShapingList raster={selected.raster} onHover={setHighlight} /> } : undefined} />
   </main>;
 }

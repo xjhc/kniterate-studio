@@ -6,6 +6,16 @@ export async function menu(page: Page, title: 'File' | 'Edit' | 'View', item: st
   await page.getByRole('menu', { name: title }).getByRole(typeof item === 'string' && ['Design', 'Schematic', 'Machine file', 'History', 'Dark mode', 'Passes', 'Fabric', 'Compare with another file'].includes(item) ? 'menuitemcheckbox' : 'menuitem', { name: item }).click();
 }
 
+/** The status panel once the latest change is checked: while a check runs it keeps showing its last result. */
+export function settledStatus(page: Page) {
+  return page.locator('aside[aria-label="Status"][aria-busy="false"]');
+}
+
+/** The status headline once the latest change is checked. */
+export function settledHeadline(page: Page) {
+  return settledStatus(page).getByTestId('readiness-headline');
+}
+
 export function statusDisclosure(page: Page, label: 'Why?' | 'Swatch' | 'Files and printing' | 'Before knitting') {
   return page.getByRole('complementary', { name: 'Status' }).locator('details').filter({
     has: page.locator('summary').filter({ hasText: label }),

@@ -44,6 +44,12 @@ export function swatchProject(project: ColorworkProjectV1): ColorworkProjectV1 |
   return swatch && setup ? appendProjectEdit(swatch, { id: `${group}-setup`, source: 'system', edit: { kind: 'set-machine-setup', setup } }) : swatch;
 }
 
+/** What the swatch's machine file is made from: projects with the same key knit the same swatch. Null without a swatch. */
+export function swatchKey(project: ColorworkProjectV1): string | null {
+  const swatch = swatchProject(project);
+  return swatch && JSON.stringify(materializeColorworkProject(swatch).state);
+}
+
 function swatchOf(project: ColorworkProjectV1): ColorworkProjectV1 | null {
   const { state } = materializeColorworkProject(project);
   const object = state.object;

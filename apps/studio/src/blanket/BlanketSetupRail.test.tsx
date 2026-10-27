@@ -1,28 +1,26 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { createColorworkProjectV1, materializeColorworkProject } from '@kniterate-studio/project-contract';
-import { AuthoredVerdictBadge } from '../App';
+import { StatusBadge } from '../App';
 import { BlanketSetupRail } from './BlanketSetupRail';
 import { ChartSizeSection } from '../chart/ChartSizeSection';
 import { compileColorworkProject } from './compileProject';
 import { createBeanieProject } from '../beanie';
 
-describe('authored verdict badge', () => {
-  it('shows Knit-proven with its exact physical match', () => {
-    const markup = renderToStaticMarkup(<AuthoredVerdictBadge
-      verdict={{ state: 'knit', label: 'Knit-proven', annotation: 'Exact compiled artifact match.', evidenceId: '2026-07-12-proof' }}
-      pending="checking"
-      onClick={() => {}}
-    />);
-    expect(markup).toContain('Knit-proven');
-    expect(markup).toContain('Exact physical match');
+describe('status badge', () => {
+  it('says what the status panel says, in its tone, and opens Why?', () => {
+    const markup = renderToStaticMarkup(<StatusBadge tone="warn" headline="1 thing to check" pending="checking" />);
+    expect(markup).toContain('verdict-warn');
+    expect(markup).toContain('aria-label="Status: 1 thing to check"');
+    expect(markup).toContain('>1 thing to check<');
+    expect(markup).not.toContain('proven');
   });
 
-  it('reports lowering progress while no verdict exists', () => {
-    expect(renderToStaticMarkup(<AuthoredVerdictBadge verdict={null} pending="compiling" onClick={() => {}} />)).toContain('Writing');
-    const checking = renderToStaticMarkup(<AuthoredVerdictBadge verdict={null} pending="checking" onClick={() => {}} />);
+  it('reports lowering progress before there is any result', () => {
+    expect(renderToStaticMarkup(<StatusBadge tone="checking" headline="" pending="compiling" />)).toContain('Writing');
+    const checking = renderToStaticMarkup(<StatusBadge tone="checking" headline="" pending="checking" />);
     expect(checking).toContain('Checking');
-    expect(checking).not.toContain('proven');
+    expect(checking).toContain('verdict-pending');
   });
 });
 

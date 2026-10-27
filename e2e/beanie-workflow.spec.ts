@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { menu, openStatusDisclosure, statusDisclosure } from './menu';
+import { menu, openStatusDisclosure, statusDisclosure, settledHeadline } from './menu';
 import { materializeColorworkProject, type ColorworkProjectV1 } from '../packages/project-contract/src/index';
 import { encodePng } from '../scripts/lib/png';
 
@@ -22,7 +22,7 @@ async function createBeanie(page: Page) {
   await expect(dialog.getByRole('tab', { name: 'Beanie' })).toHaveAttribute('aria-selected', 'true');
   await dialog.getByLabel('Project name').fill('Ring toque');
   await dialog.getByRole('button', { name: 'Create beanie' }).click();
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
 }
 
 async function placeImage(page: Page, heightCm: string) {
@@ -89,6 +89,7 @@ test('the waste yarn at the start is your own: shorter knits fewer passes, and o
   await machine.getByLabel('Waste yarn rows').fill('41');
   await machine.getByLabel('Waste yarn rows').press('Enter');
   await expect(machine.getByLabel('Waste yarn rows')).toHaveValue('71');
+  await expect(machine).toContainText(/Use \d+–200 rows; kept 71 rows\./);
   await expect.poll(passes, { timeout: 30_000 }).toBe(standard - 10);
   await machine.getByRole('button', { name: 'Use the standard 81' }).click();
   await expect.poll(passes, { timeout: 30_000 }).toBe(standard);
@@ -102,7 +103,7 @@ test('long floats are one thing to check, however many there are', async ({ page
   await page.locator('#backing').getByRole('button', { name: /^Fairisle/ }).click();
   await expect(page.locator('#backing .section-aside')).toHaveText('Fairisle', { timeout: 30_000 });
   await expect(page.locator('.status-reason, .status-notes:not(.operator) > li').filter({ hasText: 'Body colourwork' })).toHaveCount(1, { timeout: 30_000 });
-  await expect(page.getByTestId('readiness-headline')).toHaveText(/^[12] things? to check$/);
+  await expect(settledHeadline(page)).toHaveText(/^[12] things? to check$/);
 });
 
 test('the status panel leads with the swatch, then the package, and reveals details by keyboard', async ({ page }) => {
@@ -133,8 +134,11 @@ test('the status panel leads with the swatch, then the package, and reveals deta
   const swatch = page.waitForEvent('download');
   await primary.click();
   expect((await swatch).suggestedFilename()).toMatch(/-swatch\.kc$/);
-  const swatchDetails = await openStatusDisclosure(page, 'Swatch');
-  await swatchDetails.getByRole('button', { name: 'Enter your swatch' }).click();
+  // Then the machine: its checks open once, and entering the swatch is next.
+  await expect(status).toContainText('Swatch file downloaded');
+  await expect(before).toHaveJSProperty('open', true);
+  await expect(primary).toHaveText('Enter your swatch');
+  await primary.click();
   await expect(page.getByLabel(/^Body \(.+ fabric\) stitches per 10 cm$/)).toBeFocused();
   // Measured gauges bring the package forward; inspection stays available on demand.
   await page.getByLabel(/^Body \(.+ fabric\) measured$/).check();
@@ -144,8 +148,35 @@ test('the status panel leads with the swatch, then the package, and reveals deta
   const download = page.waitForEvent('download');
   await primary.click();
   await download;
-  await expect(await openStatusDisclosure(page, 'Why?')).toContainText('This design’s files have been downloaded.');
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed');
+  // Downloaded: printing the sheet for the machine is next; the package stays a click away.
+  await expect(status).toContainText('Downloaded');
+  await expect(primary).toHaveText('Print knitting sheet');
+  await expect(settledHeadline(page)).toHaveText('File checks passed');
+  await expect(page.getByLabel('Status: File checks passed', { exact: true })).toBeVisible();
+});
+
+test('a change keeps the status in place while it is checked', async ({ page }) => {
+  test.setTimeout(120_000);
+  await createBeanie(page);
+  const status = page.getByRole('complementary', { name: 'Status' });
+  await expect(status).toHaveAttribute('aria-busy', 'false');
+  const disclosures = status.locator('.status-disclosures');
+  const top = (await disclosures.boundingBox())!.y;
+  // Every headline the panel shows, and whether it was ever busy, while the change is checked.
+  await page.evaluate(() => {
+    const panel = document.querySelector('aside[aria-label="Status"]')!;
+    const headline = panel.querySelector('[data-testid="readiness-headline"]')!;
+    const seen = { headlines: new Set([headline.textContent]), busy: false };
+    Object.assign(window, { seen });
+    new MutationObserver(() => { seen.headlines.add(headline.textContent); seen.busy ||= panel.getAttribute('aria-busy') === 'true'; }).observe(panel, { subtree: true, childList: true, characterData: true, attributes: true });
+  });
+  await page.getByLabel('Body height').fill('16');
+  await page.getByLabel('Body height').press('Enter');
+  await expect.poll(() => page.evaluate(() => (window as unknown as { seen: { busy: boolean } }).seen.busy)).toBe(true);
+  await expect(page.locator('.verdict-pending')).toHaveCount(0, { timeout: 60_000 });
+  await expect(status).toHaveAttribute('aria-busy', 'false');
+  expect(await page.evaluate(() => [...(window as unknown as { seen: { headlines: Set<string> } }).seen.headlines])).toEqual(['File checks passed, sizes not confirmed']);
+  expect((await disclosures.boundingBox())!.y).toBe(top);
 });
 
 test('a one-yarn beanie is one layer or two; adding a colour and painting it makes it colourwork', async ({ page }) => {
@@ -158,7 +189,7 @@ test('a one-yarn beanie is one layer or two; adding a colour and painting it mak
   await expect(dialog.getByRole('group', { name: 'Body fabric' })).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Double layer' })).toHaveAttribute('aria-pressed', 'true');
   await dialog.getByRole('button', { name: 'Create beanie' }).click();
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
   const backing = page.locator('#backing .section-aside');
   await expect(backing).toHaveText('Double layer');
 
@@ -180,13 +211,13 @@ test('a one-yarn beanie is one layer or two; adding a colour and painting it mak
   await page.mouse.move(box.x + 70 + 60 * cell, y, { steps: 8 });
   await page.mouse.up();
   await expect(backing).toHaveText('Birdseye', { timeout: 30_000 });
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
 });
 
 test('a beanie is edited as a garment: fit, motifs, readiness, package and measurements', async ({ page }) => {
   test.setTimeout(180_000);
   await createBeanie(page);
-  await expect(page.getByLabel('Verdict: File checks passed')).toBeVisible();
+  await expect(page.getByLabel('Status: File checks passed')).toBeVisible();
   await expect(needles(page, 134)).toBeVisible();
   await expect(headRow(page).locator('.knitted').first()).toHaveText('50.8');
 
@@ -247,7 +278,7 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   // Measured gauges make it ready.
   await page.getByLabel(/^Body .* measured$/).check();
   await page.getByLabel('Cuff (2x2 rib) measured').check();
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed', { timeout: 30_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed', { timeout: 30_000 });
 
   // The package carries the project, the exact program and the measurement form.
   const download = page.waitForEvent('download');
@@ -270,7 +301,7 @@ test('a beanie is edited as a garment: fit, motifs, readiness, package and measu
   await expect(measure.getByRole('list', { name: 'Recorded hats' })).toContainText(/clean .*\(test data\)/);
   await measure.getByRole('button', { name: 'Cancel' }).click();
   // Synthetic values never satisfy the real-measurement requirement, and readiness says why.
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
   await expect(page.getByRole('note').filter({ hasText: 'test data' })).toBeVisible();
 
   // The changes panel lists the operations, newest first.

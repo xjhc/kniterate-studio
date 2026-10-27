@@ -6,7 +6,7 @@ import { planProject } from './plan';
 import { createSweaterProject } from './sweater/sweater';
 import { createPanelProject, planPanel } from './sweater/panel';
 import { runSweaterPipeline } from './sweater/sweaterPipeline';
-import { swatchProject, SWATCH_CM } from './swatch';
+import { swatchKey, swatchProject, SWATCH_CM } from './swatch';
 
 const gauge = { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'assumed' as const };
 const rib = { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'assumed' as const };
@@ -73,5 +73,18 @@ describe('a swatch knits the project’s own fabric', () => {
     expect(state.machine.yarnAssignments).toEqual(original.machine.yarnAssignments);
     expect(state.chart.cells.at(-1)).toEqual(original.chart.cells.at(-1)!.slice((width - state.chart.width) >> 1, ((width - state.chart.width) >> 1) + state.chart.width));
     expect((await runAuthoredPipeline(swatch)).exportReady).toBe(true);
+  });
+});
+
+describe('the swatch key', () => {
+  it('names what the swatch file is made from: its settings change it, the design alone does not', () => {
+    const hat = createBeanieProject({ title: 'Toque', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: gauge, cuffCm: 7, ribGauge: rib, fold: true, backing: 'fairisle', main: { name: 'Black', hex: '#111111' }, accent: { name: 'White', hex: '#F2F2F2' } }, { id: 'toque', source: 'human', group: 'create' });
+    const key = swatchKey(hat);
+    expect(key).not.toBeNull();
+    expect(swatchKey(hat)).toBe(key);
+    const target = materializeColorworkProject(hat).state.target;
+    expect(swatchKey(appendProjectEdit(hat, { id: 'taller', source: 'human', edit: { kind: 'set-target', target: { ...target, heightCm: 15 } } }))).toBe(key);
+    expect(swatchKey(appendProjectEdit(hat, { id: 'waste', source: 'human', edit: { kind: 'set-machine-setup', setup: { wasteRows: 40 } } }))).not.toBe(key);
+    expect(swatchKey(appendProjectEdit(hat, { id: 'gauge', source: 'human', edit: { kind: 'set-gauge', gauge: { ...gauge, stitchesPer10cm: 24 } } }))).not.toBe(key);
   });
 });

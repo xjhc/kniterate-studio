@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { clear, copy, cut, paste, type MirrorAxes, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
-import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement } from '@kniterate-studio/project-contract';
+import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement, type ProjectState } from '@kniterate-studio/project-contract';
 import { BRUSH_SIZES, ChartToolbar, type ChartTool } from './ChartToolbar';
 import { ColorworkCanvas, MIN_CHART_ZOOM, type CanvasPlacement } from './ColorworkCanvas';
 import { beanieFitEdits, withSizingFixes, type BeanieFitChange } from '../beanie';
@@ -15,7 +15,7 @@ import { BeanieWornView } from '../garment/BeanieWornView';
 import { readKnitFile, type KnitFileCarriers } from '../sweater/knitFile';
 import { KnitFileView } from '../sweater/KnitFileView';
 import { RunSchematic } from '../workspace/RunSchematic';
-import { StatusPanel, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
+import { StatusPanel, storyTone, type StatusTone, type SwatchStep } from '../workspace/StatusPanel';
 import { statusNotes } from '../workspace/statusNotes';
 import { machineFileName, onePieceName } from '../workspace/fileNames';
 import { revealSection } from '../workspace/panel';
@@ -209,6 +209,13 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       operate(label, edits);
     } catch (error) { setIssue(error instanceof Error ? error.message : String(error)); }
   };
+  const setBacking = (technique: ProjectState['strategy']['technique']) => {
+    const { state } = materialized;
+    if (technique === state.strategy.technique) return;
+    // Another backing is another fabric: the gauge follows it in the same operation (appendDesignOperation).
+    if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`);
+    else operate(`Backing: ${technique}`, [{ kind: 'set-strategy', strategy: { ...state.strategy, technique } }]);
+  };
   const goTo = (target: string) => {
     if (target === 'program') { onView('file'); return; }
     if (target.startsWith('placement:')) { setSelectedPlacement(target.slice(10)); setWholeHat(false); onView('design'); }
@@ -268,7 +275,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   }, [project, chart, selection, clipboard, view, brush]);
 
   // The current result and next action. Gauge details stay in the swatch disclosure.
-  const tone: StatusTone = story === null ? (storyPending ? 'checking' : 'blocked') : story.status === 'ready' ? 'ready' : story.status === 'blocked' ? 'blocked' : story.status === 'needs-measurements' ? 'next' : 'warn';
+  const tone: StatusTone = story === null ? (storyPending ? 'checking' : 'blocked') : storyTone(story.status);
   const cuffed = beanieObjectOf(materialized.state)?.construction === 'rib-cuff-jersey-body';
   const backing = projectBackingWords(materialized.state);
   const swatch: SwatchStep | undefined = isGarment ? {
@@ -279,7 +286,10 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
     onEnter: () => { onView('design'); revealSection('swatch'); },
     file: status.swatchFile,
   } : gauge ? { gauges: [{ name: backing ? `Colourwork (${backing.fabric})` : 'Plain stockinette', measured: gauge.source === 'measured' }], onEnter: () => { onView('design'); revealSection('swatch'); }, file: status.swatchFile } : undefined;
-  const notes = statusNotes(story?.items ?? [], { swatchStep: swatch !== undefined, goTo, operate: (label, edits) => { operate(label, edits); } });
+  // A beanie's floats and carries go away on a birdseye back: offered unless its comparison compile says it cannot knit.
+  const birdseyeBlocked = compile.comparisons.find((item) => item.technique === 'birdseye')?.compileVerdict === 'blocked';
+  const birdseye = isGarment && materialized.state.strategy.technique === 'fairisle' && !birdseyeBlocked ? () => setBacking('birdseye') : null;
+  const notes = statusNotes(story?.items ?? [], { swatchStep: swatch !== undefined, goTo, operate: (label, edits) => { operate(label, edits); }, birdseye });
   const fileState = status.exportReady && kcode ? 'ok' as const : tone === 'blocked' && !storyPending ? 'blocked' as const : 'checking' as const;
 
   const center: ReactNode = (() => {
@@ -323,13 +333,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
         onNeedles={(width) => Number.isInteger(width) && width > 0 && width <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })}
         onRows={(height) => { if (!Number.isInteger(height) || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }}
         onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} />}
-      onStrategy={(technique) => {
-        const { state } = materialized;
-        if (technique === state.strategy.technique) return;
-        // Another backing is another fabric: the gauge follows it in the same operation (appendDesignOperation).
-        if (isGarment && (technique === 'fairisle' || technique === 'birdseye')) fit({ backing: technique }, `Backing: ${technique}`);
-        else operate(`Backing: ${technique}`, [{ kind: 'set-strategy', strategy: { ...state.strategy, technique } }]);
-      }} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
+      onStrategy={setBacking} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
     <section className="sweater-stage" aria-label={kindName}>
       <header className="stage-head">
         {isGarment
@@ -344,9 +348,10 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       <div className={`stage-body${view === 'design' ? ' chart-stage-body' : ''}`}>{center}</div>
     </section>
     <StatusPanel
+      key={`${project.id}:${generation}`}
       tone={tone}
       title={story?.headline ?? (storyPending ? 'Checking…' : "Can't knit yet")}
-      detail={story?.status === 'ready' ? '' : story?.detail ?? ''}
+      detail={story?.detail ?? ''}
       notes={notes}
       files={[{ id: 'file', name: kindName, fileName, facts: `${chart.width} st · ${chart.height} rows${kcode ? ` · ${kcode.passCount.toLocaleString()} passes` : ''}`, state: fileState, error: fileState === 'blocked' ? story?.detail ?? null : null }]}
       onOpenFile={() => onView('file')}
@@ -359,7 +364,6 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       downloaded={status.downloaded}
       swatch={swatch}
       atTheMachine={story?.operatorChecks ?? []}
-      evidence={story?.evidence}
       footer={story?.notices.map((notice) => <p className="design-hint" role="note" key={notice}>{notice}</p>)}
     />
     {intake && <ImageIntakeDialog state={materialized.state} replacing={intake.replacing} refresh={intake.refresh} onClose={() => setIntake(null)} onPlace={(placement, label) => { if (operate(label, [{ kind: 'set-placement', placement }])) { setSelectedPlacement(placement.id); setIntake(null); setWholeHat(false); onView('design'); setFitRequest((request) => request + 1); } }} />}

@@ -614,10 +614,20 @@ ship," trust this file and the working tree instead.
       result; Swatch holds measurements; Files and printing holds individual
       files and the run sheet; Before knitting holds the machine preparation
       checks, including when only a swatch is downloadable. Each starts closed.
-      Blocking reasons and their available fixes stay visible. Software checks
-      say "File checks passed"; only exact physical evidence says "Proven on
-      the machine". Export eligibility is unchanged. Measuring a finished hat
-      remains separate:
+      The first thing to check stays visible as what is wrong in a few words
+      ("Body colourwork: floats too long") with its fix button (a beanie's
+      floats and carries offer "Use a birdseye back"); the next step is
+      spelled out only where no button takes it. The next action follows the
+      work: Download swatch file, then Enter your swatch; Download knitting
+      package, then Print knitting sheet, with Before knitting opened once
+      after each download. While a change is checked the last result stays in
+      place, dimmed only if the check takes a moment, with its buttons off.
+      The top bar's badge repeats the panel's headline and tone and opens Why?;
+      the verdict ladder popover is only for opened `.kc`/`.k` files. Software
+      checks say "File checks passed"; only exact physical evidence says
+      "Proven on the machine". Export eligibility is unchanged. A number
+      outside its range is not applied and says so ("Use 10–800; kept 400").
+      Measuring a finished hat remains separate:
       File → Record a finished hat (beanie) records it after knitting and
       corrects the design for the next one.
   - Schematics come from the machine file read back (`workspace/RunSchematic`).

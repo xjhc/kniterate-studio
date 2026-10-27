@@ -1,16 +1,18 @@
 import type { ComponentProps } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { MACHINE_START_CHECKS } from '../readiness';
+import { storyItems } from '../handoff';
+import { MACHINE_START_CHECKS, type Finding } from '../readiness';
 import { StatusPanel, type SwatchStep } from './StatusPanel';
+import { statusNotes } from './statusNotes';
 
 const noop = () => {};
 type PanelProps = ComponentProps<typeof StatusPanel>;
 
-const swatch = (measured: boolean, downloadable = true): SwatchStep => ({
+const swatch = (measured: boolean, downloadable = true, downloaded = false): SwatchStep => ({
   gauges: [{ name: 'Body', measured }],
   onEnter: noop,
-  file: { onDownload: downloadable ? noop : null, writing: false, problem: null },
+  file: { onDownload: downloadable ? noop : null, writing: false, problem: null, downloaded },
 });
 
 function panel(overrides: Partial<PanelProps> = {}): string {
@@ -49,7 +51,7 @@ function disclosure(html: string, label: string): string {
     .map(([details]) => details)
     .find((details) => {
       const summary = details.match(/<summary\b[^>]*>([\s\S]*?)<\/summary>/)?.[1];
-      return summary !== undefined && textContent(summary).trim() === label;
+      return summary !== undefined && textContent(summary).trim().startsWith(label);
     });
   expect(found, `disclosure ${label}`).toBeDefined();
   expect(found!.match(/^<details\b[^>]*>/)?.[0], `${label} starts closed`).not.toMatch(/\bopen(?:=|\s|>)/);
@@ -94,6 +96,22 @@ describe('status panel progressive disclosure', () => {
     expectDisabled(disclosure(html, 'Files and printing'), 'Download knitting package', false);
   });
 
+  it('leads with entering measurements once the swatch file is downloaded', () => {
+    const html = panel({ swatch: swatch(false, true, true) });
+    expect(primaryLabels(html)).toEqual(['Enter your swatch']);
+    expect(initiallyVisible(html)).toContain('Swatch file downloaded');
+    expect(disclosure(html, 'Swatch')).toContain('Download swatch file');
+    expect(occurrences(html, 'Enter your swatch')).toBe(1);
+  });
+
+  it('leads with printing once the package is downloaded, and keeps the package a click away', () => {
+    const html = panel({ downloaded: true });
+    expect(primaryLabels(html)).toEqual(['Print knitting sheet']);
+    expect(initiallyVisible(html)).toContain('Downloaded');
+    expectDisabled(disclosure(html, 'Files and printing'), 'Download knitting package', false);
+    expect(occurrences(html, 'Print knitting sheet')).toBe(1);
+  });
+
   it('leads with entering measurements when no swatch file is available', () => {
     const html = panel({ swatch: swatch(false, false) });
     expect(primaryLabels(html)).toEqual(['Enter your swatch']);
@@ -107,7 +125,7 @@ describe('status panel progressive disclosure', () => {
       title: 'Fix the design',
       canPackage: false,
       notes: [
-        { severity: 'error', text: 'The body is too wide.', actions: <button type="button">Change width</button> },
+        { severity: 'error', text: 'The body is too wide.', why: 'It would not fit on the bed.', actions: <button type="button">Change width</button> },
         { severity: 'error', text: 'A transfer needs attention.' },
         { severity: 'info', text: 'The draw yarn uses carrier 1.' },
       ],
@@ -115,13 +133,30 @@ describe('status panel progressive disclosure', () => {
     const visible = initiallyVisible(html);
     expect(visible).toContain('The body is too wide.');
     expect(visible).toContain('Change width');
+    expect(visible).not.toContain('It would not fit on the bed.');
+    expect(visible).toContain('2 more to check');
     expect(visible).not.toContain('A transfer needs attention.');
     expect(visible).not.toContain('The draw yarn uses carrier 1.');
     const why = disclosure(html, 'Why?');
+    expect(why).toContain('It would not fit on the bed.');
     expect(why).toContain('A transfer needs attention.');
     expect(why).toContain('The draw yarn uses carrier 1.');
     expect(occurrences(html, 'The body is too wide.')).toBe(1);
     expectDisabled(html, 'Download knitting package', true);
+  });
+
+  it('shows the next step in words when no button takes it', () => {
+    const html = panel({ tone: 'warn', title: '1 thing to check', notes: [{ severity: 'warning', text: 'Motif: cannot be placed', action: 'Move or shrink the motif.', why: 'It is left out.' }] });
+    expect(initiallyVisible(html)).toContain('Move or shrink the motif.');
+    expect(disclosure(html, 'Why?')).toContain('It is left out.');
+    expect(primaryLabels(html)).toEqual([]);
+  });
+
+  it('leaves out Why? when there is nothing more to say', () => {
+    const html = panel({ tone: 'blocked', title: 'The check stopped', detail: 'The worker failed.', notes: [], canPackage: false });
+    expect(initiallyVisible(html)).toContain('The worker failed.');
+    expect(html).not.toContain('<summary>Why?');
+    expect(occurrences(html, 'The worker failed.')).toBe(1);
   });
 
   it('disables garment downloads and printing while checking, while preserving a validated swatch', () => {
@@ -187,5 +222,33 @@ describe('status panel start checks', () => {
   it('does not invent startup checks for a blocked design without a downloadable swatch', () => {
     const html = panel({ tone: 'blocked', canPackage: false, canPrint: false, atTheMachine: [], swatch: swatch(false, false) });
     for (const check of MACHINE_START_CHECKS) expect(occurrences(html, check), check).toBe(0);
+  });
+});
+
+describe('status notes', () => {
+  const finding = (rule: string, fixes: Finding['fixes'] = []): Finding => ({ stage: 'kcode', rule, severity: 'warning', owner: 'design', path: null, title: rule, message: `${rule} message`, fixes });
+
+  it('says what is wrong in a few words, with a birdseye back as the fix for long floats', () => {
+    const [note] = statusNotes(storyItems([finding('long-float')]), { swatchStep: true, goTo: noop, birdseye: noop });
+    expect(note!.text).toBe('Body colourwork: floats too long');
+    expect(note!.action).toBeNull();
+    expect(note!.why).toBe('A long strand of yarn would lie behind the work and snag fingers and hair. Switch the body to a birdseye back, or make the motif bolder or more compact.');
+    const buttons = renderToStaticMarkup(<>{note!.actions}</>);
+    expect(buttons.indexOf('Use a birdseye back')).toBeLessThan(buttons.indexOf('Show'));
+  });
+
+  it('keeps the next step in words where no fix is offered', () => {
+    const [note] = statusNotes(storyItems([finding('long-float')]), { swatchStep: true, goTo: noop, birdseye: null });
+    expect(note!.action).toBe('Switch the body to a birdseye back, or make the motif bolder or more compact.');
+    expect(note!.why).toBe('A long strand of yarn would lie behind the work and snag fingers and hair.');
+    expect(renderToStaticMarkup(<>{note!.actions}</>)).not.toContain('birdseye');
+  });
+
+  it('offers a finding’s own fix first, and a message without a story as it is', () => {
+    const [resize, other] = statusNotes(storyItems([finding('size-off-target', [{ label: 'Resize to 44 rows', edits: [] }]), finding('unknown-rule')]), { swatchStep: true, goTo: noop, operate: noop });
+    expect(resize!.text).toBe('Size: not the size you asked for');
+    expect(resize!.action).toBeNull();
+    expect(renderToStaticMarkup(<>{resize!.actions}</>)).toContain('Resize to 44 rows');
+    expect(other).toMatchObject({ text: 'unknown-rule message', action: null, why: null });
   });
 });

@@ -33,12 +33,14 @@ import './workspace/workspace.css';
 import { useSweaterRun } from './sweater/sweaterRun';
 import { SweaterWorkspace } from './sweater/SweaterWorkspace';
 import { PanelWorkspace } from './sweater/PanelWorkspace';
+import { piecesStatus } from './sweater/SweaterStatusPanel';
+import { storyTone, type StatusTone } from './workspace/StatusPanel';
 import { createPanelProject, planPanel, type PanelIntent } from './sweater/panel';
 import { panelInstructions, panelPackageFiles } from './sweater/panelHandoff';
 import { StartScreen } from './StartScreen';
 import { handoffFiles, instructionsMarkdown, readinessStory, schematicSvg } from './handoff';
 import { planProject } from './plan';
-import { MACHINE_START_CHECKS, MEASUREMENT_RULES, collectFindings, resolveReadiness, type Finding } from './readiness';
+import { MACHINE_START_CHECKS, collectFindings, resolveReadiness } from './readiness';
 import { zipStore } from './zip';
 import { ChangesPanel, continuationFrom } from './garment/ChangesPanel';
 import { GarmentSheet } from './garment/GarmentSheet';
@@ -164,17 +166,29 @@ function Verdict({ document, onClick }: { document: MachineDocument; onClick: ()
   );
 }
 
-/** The verdict in plain words; a file ready to knit says so while its sizes rest on a typical gauge, as the panel does. */
-function verdictWords(verdict: AuthoredVerdict, findings: readonly Finding[]): string {
-  const unconfirmed = verdict.state === 'surface' && findings.some((finding) => finding.severity !== 'info' && MEASUREMENT_RULES.has(finding.rule));
-  return `${VERDICT_WORDS[verdict.state].name}${unconfirmed ? ', sizes not confirmed' : ''}`;
+/**
+ * The status panel's headline in the top bar, in its words and colour, for
+ * when the panel is out of view. While a change is checked it keeps the last
+ * result, dimmed if the check takes a moment; clicking it opens the panel's Why?.
+ */
+export function StatusBadge({ tone, headline, pending }: { tone: StatusTone; headline: string; pending: 'compiling' | 'checking' }) {
+  // Read in render on purpose, as the panel does: the last result stays until the next.
+  const last = useRef<{ tone: StatusTone; headline: string } | null>(null);
+  const busy = tone === 'checking';
+  if (!busy) last.current = { tone, headline };
+  const shown = last.current;
+  if (!shown) return <span className="verdict authored-verdict verdict-waiting verdict-pending" role="status" aria-label={pending === 'compiling' ? 'Writing the machine file' : 'Checking the machine file'}><LoaderCircle size={12} className="spin" />{pending === 'compiling' ? 'Writing' : 'Checking'}</span>;
+  return <button className={`verdict authored-verdict verdict-${shown.tone}${busy ? ' verdict-pending' : ''}`} type="button" aria-label={`Status: ${shown.headline}`} aria-busy={busy} onClick={showWhy}><span className="verdict-dot" />{shown.headline}</button>;
 }
 
-export function AuthoredVerdictBadge({ verdict, findings = [], pending, onClick }: { verdict: AuthoredVerdict | null; findings?: readonly Finding[]; pending: 'compiling' | 'checking'; onClick: () => void }) {
-  // A null verdict means lowering is still in progress; the badge is the top bar's single progress and verdict signal.
-  if (!verdict) return <span className="verdict authored-verdict verdict-pending" role="status" aria-label={pending === 'compiling' ? 'Writing the machine file' : 'Checking the machine file'}><LoaderCircle size={12} className="spin" />{pending === 'compiling' ? 'Writing' : 'Checking'}</span>;
-  const words = verdictWords(verdict, findings);
-  return <button className={`verdict authored-verdict verdict-${verdict.state}`} type="button" title={`${verdict.label}: ${verdict.annotation}`} aria-label={`Verdict: ${words}${verdict.evidenceId ? ' / Exact physical match' : ''}`} onClick={onClick}><span className="verdict-dot" />{words}</button>;
+/** Opens the status panel's Why? and brings it into view. */
+function showWhy() {
+  const why = window.document.getElementById('status-why');
+  const target = why instanceof HTMLDetailsElement ? why : window.document.getElementById('status-panel');
+  if (!target) return;
+  if (target instanceof HTMLDetailsElement) target.open = true;
+  target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  (target.querySelector('summary') ?? target).focus({ preventScroll: true });
 }
 
 function PassGrid({ passes, selected, collapsed, onToggle, onSelect, compiled = false }: {
@@ -431,16 +445,6 @@ function VerdictPanel({ document, onClose }: { document: MachineDocument; onClos
       <span className="profile-chip">7gg worsted · 252 needles</span>
     </div>
   );
-}
-
-function AuthoredVerdictPanel({ verdict, findings, onClose }: { verdict: AuthoredVerdict; findings: readonly Finding[]; onClose: () => void }) {
-  return <div className="popover verdict-panel">
-    <div className="popover-head"><strong>Can it be knitted?</strong><button className="icon-button" type="button" onClick={onClose} aria-label="Close verdict"><X size={16} /></button></div>
-    <div className={`verdict-summary verdict-${verdict.state}`}><span className="verdict-dot" /><strong>{verdictWords(verdict, findings)}</strong></div>
-    <VerdictLadder state={verdict.state} />
-    <details className="verdict-detail"><summary>What was checked</summary><p>{verdict.annotation}</p></details>
-    <span className="profile-chip">7gg worsted / 252-needle bed</span>
-  </div>;
 }
 
 function formattedMetric(value: number): string {
@@ -824,6 +828,8 @@ export function App() {
     try { openProjectFile((await openStudioProjectFile(file)).project); setDocument(null); setAppError(null); } catch (error) { setAppError(projectFileProblem(file.name, error)); }
   };
   const sweaterReady = isPieces && sweaterRun.current && sweaterRun.summary !== null;
+  const piecesPlan = sweaterPlan ?? panelPlan;
+  const piecesState = piecesPlan ? piecesStatus(piecesPlan, sweaterRun) : null;
   const downloadSweaterPackage = async () => {
     if (!(sweaterPlan || panelPlan) || !sweaterRun.current || !sweaterRun.summary?.exportReady) return;
     setPackaging(true);
@@ -946,8 +952,8 @@ export function App() {
         <MenuBar menus={menus} />
         <span className="topbar-spacer" />
         {document && <Verdict document={document} onClick={() => setShowVerdict((value) => !value)} />}
-        {projectChrome && isPieces && <AuthoredVerdictBadge verdict={sweaterRun.current ? sweaterRun.summary?.verdict ?? null : null} findings={sweaterRun.summary?.findings} pending="checking" onClick={() => setShowVerdict((value) => !value)} />}
-        {projectChrome && !isPieces && <AuthoredVerdictBadge verdict={authoredVerdict} findings={authoredStory?.findings} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} onClick={() => setShowVerdict((value) => !value)} />}
+        {projectChrome && piecesState && <StatusBadge key={`${project.id}:${openGeneration}`} tone={piecesState.tone} headline={piecesState.title} pending="checking" />}
+        {projectChrome && !isPieces && <StatusBadge key={`${project.id}:${openGeneration}`} tone={authoredStory ? storyTone(authoredStory.story.status) : 'checking'} headline={authoredStory?.story.headline ?? ''} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} />}
       </header>
       {appError && <div className="machine-import-status" role="alert"><span>{appError}</span><button className="secondary-button" type="button" onClick={() => setAppError(null)}>Dismiss</button></div>}
       <input ref={projectInput} className="file-input" type="file" accept=".json,application/json" aria-label="Project file to open" onChange={(event) => void openProjectInput(event)} />
@@ -991,8 +997,6 @@ export function App() {
         </div>
       )}
       {document && showVerdict && <VerdictPanel document={document} onClose={() => setShowVerdict(false)} />}
-      {!document && showVerdict && !isPieces && authoredVerdict && <AuthoredVerdictPanel verdict={authoredVerdict} findings={authoredStory?.findings ?? []} onClose={() => setShowVerdict(false)} />}
-      {!document && showVerdict && isPieces && sweaterRun.current && sweaterRun.summary && <AuthoredVerdictPanel verdict={sweaterRun.summary.verdict} findings={sweaterRun.summary.findings} onClose={() => setShowVerdict(false)} />}
       {document && showRunSheet && <RunSheet document={document} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && isPanel && panelPlan && <GarmentSheet markdown={panelInstructions(project, panelPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={null} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && isSweater && sweaterPlan && <GarmentSheet markdown={sweaterInstructions(project, sweaterPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={sweaterSchematicSvg(sweaterPlan, authoredState.chart.palette[0]!.hex)} onClose={() => setShowRunSheet(false)} />}

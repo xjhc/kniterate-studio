@@ -179,7 +179,7 @@
 .status-card.tone-next { border-color: var(--line-strong); background: var(--paper); }
 .status-card.tone-next svg { color: var(--ink-2); }
 .status-next { display: grid; gap: 8px; }
-.status-reason { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.5; }
+.status-reason { margin: 0; color: var(--ink); font-size: 13px; line-height: 1.5; }
 .status-disclosures { border-top: 1px solid var(--line); }
 .status-disclosure { border-bottom: 1px solid var(--line); }
 .status-disclosure > summary { padding: 11px 0; color: var(--ink-2); font-size: 13px; font-weight: 600; cursor: pointer; }
@@ -209,6 +209,19 @@ ul.status-notes li.note-error { color: var(--blocked); }
 .status-actions { display: grid; gap: 6px; }
 .status-actions .primary-button, .status-actions .secondary-button { justify-content: center; min-height: 38px; font-size: 13px; }
 .status-actions button:disabled { opacity: .45; cursor: default; }
+/* While a change is checked the last result stays; it dims only if the check takes a moment. */
+.status-card, .status-next, .status-actions button, .note-actions button { transition: opacity .12s; }
+.sweater-status.is-checking :is(.status-card, .status-next) { opacity: .6; transition: opacity .2s .3s; }
+.sweater-status.is-checking :is(.status-actions, .note-actions) button:disabled { transition: opacity .2s .3s; }
+.status-busy { display: grid; margin-left: auto; color: var(--ink-3); opacity: 0; animation: status-busy-in .2s .3s forwards; }
+@keyframes status-busy-in { to { opacity: 1; } }
+fieldset.note-actions { min-width: 0; margin-bottom: 0; margin-left: 0; margin-right: 0; padding: 0; border: 0; }
+.note-actions button:disabled { opacity: .45; cursor: default; }
+.status-done { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; color: var(--proven); font-size: 12px; font-weight: 700; }
+.status-more { margin-left: 8px; color: var(--ink-3); font-weight: 500; }
+/* Why a number was not applied, under its field; the fields beside it stay level. */
+.number-kept { grid-column: 1 / -1; color: var(--warning); font-size: 11px; line-height: 1.35; }
+.gauge-row:has(.number-kept) { align-items: start; }
 .status-verdict { margin: auto 0 0; color: var(--ink-3); font-size: 11px; line-height: 1.45; }
 
 @media (max-width: 1100px) {

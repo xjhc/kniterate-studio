@@ -78,11 +78,16 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
 .stat-strip b { color: var(--ink); }
 
 .verdict { gap: 7px; min-height: 30px; padding: 0 9px; border: 1px solid; border-radius: 99px; background: transparent; font-size: 11px; font-weight: 800; cursor: pointer; }
-.authored-verdict { cursor: default; white-space: nowrap; }
+.authored-verdict { white-space: nowrap; transition: opacity .12s; }
 .verdict-surface { border-color: var(--surface); color: var(--surface); background: var(--surface-soft); }
 .verdict-knit { background: var(--surface-soft); }
 .verdict-blocked { border-color: var(--blocked); color: var(--blocked); background: var(--blocked-soft); }
-.verdict-pending { border-color: var(--line-strong); color: var(--ink-2); background: var(--panel-2); cursor: default; }
+.verdict-waiting { border-color: var(--line-strong); color: var(--ink-2); background: var(--panel-2); cursor: default; }
+/* The status badge, in the status panel's tones; while a change is checked it keeps the last one, dimmed if it takes a moment. */
+.verdict-ready { border-color: var(--surface); color: var(--surface); background: var(--surface-soft); }
+.verdict-warn { border-color: var(--warning); color: var(--warning); background: var(--warning-soft); }
+.verdict-next { border-color: var(--line-strong); color: var(--ink-2); background: var(--panel); }
+.authored-verdict.verdict-pending:not(.verdict-waiting) { opacity: .6; transition: opacity .2s .3s; }
 .verdict-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
 
 .machine-layout { display: grid; grid-template-columns: minmax(600px, 1fr) 310px; grid-template-rows: minmax(0, 1fr) 220px; min-width: 0; min-height: 0; }

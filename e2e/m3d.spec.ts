@@ -21,7 +21,8 @@ test('exports validated k-code and reproduces it byte-identically after project 
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await page.locator('input[accept=".json,application/json"]').setInputFiles('fixtures/colorwork-chart-v1/four-color-checker.json');
-  await expect(page.getByLabel('Verdict: File checks passed')).toBeVisible({ timeout: 15_000 });
+  // The 4-stitch checker can be knitted; it warns that it is narrow.
+  await expect(page.getByLabel(/^Status: (File checks passed|1 thing to check)$/)).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole('button', { name: /Fairisle/ }).click();
   await page.getByRole('button', { name: /Birdseye/ }).click();
@@ -108,7 +109,7 @@ test('exports and reopens the canonical 200x300 four-color authored blanket', as
   expect(await readFile(secondKc)).toEqual(firstBytes);
 
   await page.locator('input[accept=".kc,.k,text/plain"]').first().setInputFiles(secondKc);
-  await expect(page.getByLabel('Verdict: File checks passed')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByLabel('Status: File checks passed')).toBeVisible({ timeout: 30_000 });
   expect(errors).toEqual([]);
 });
 
@@ -138,7 +139,7 @@ test('refuses an oversized authored Birdseye project before compiler allocation'
   const blockedAfterMs = Date.now() - started;
   expect(blockedAfterMs).toBeLessThan(15_000);
   testInfo.annotations.push({ type: 'benchmark', description: `Oversized authored refusal reported after ${blockedAfterMs} ms` });
-  await expect(page.getByLabel("Verdict: Can't knit yet")).toBeVisible();
+  await expect(page.getByLabel("Status: Can't knit yet")).toBeVisible();
   await openStatusDisclosure(page, 'Files and printing');
   await expect(kcDownload(page)).toBeDisabled();
   await expect(page.locator('.strategy-segments button.active')).toContainText('Cannot knit');

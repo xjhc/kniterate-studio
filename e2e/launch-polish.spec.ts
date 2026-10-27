@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { kcDownload, menu, openStatusDisclosure } from './menu';
+import { kcDownload, menu, openStatusDisclosure, settledHeadline } from './menu';
 
 test('creates, renames, recolors, autosaves, and recovers a customer project', async ({ page }) => {
   const errors: string[] = [];
@@ -65,7 +65,7 @@ test('starting another project keeps the first one on this device, to open again
   await expect(recent.getByRole('button', { name: /^Moss scarf/ })).toContainText('open now');
   await recent.getByRole('button', { name: /^Ring toque/ }).click();
   await expect(page.locator('.brand-copy small')).toContainText('Ring toque');
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
 
   // Both survive a reload, and the open one comes back open.
   await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');

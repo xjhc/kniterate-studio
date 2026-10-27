@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { menu, openStatusDisclosure, statusDisclosure } from './menu';
+import { menu, openStatusDisclosure, statusDisclosure, settledHeadline, settledStatus } from './menu';
 
 async function createSweater(page: Page, style: 'Drop shoulder' | 'J-sleeve' | 'Set-in sleeve', stitch: string) {
   await page.goto('/?theme=light');
@@ -13,7 +13,7 @@ async function createSweater(page: Page, style: 'Drop shoulder' | 'J-sleeve' | '
   await expect(dialog).toBeHidden();
 }
 
-const status = (page: Page) => page.locator('.status-card');
+const status = (page: Page) => settledStatus(page).locator('.status-card');
 
 const knitted = (page: Page, label: string) => page.locator('.measure-row').filter({ has: page.getByLabel(label, { exact: true }) }).locator('.knitted');
 
@@ -86,8 +86,8 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
 
   // Measured gauges confirm sizes; the software verdict remains file checks passed.
   for (const label of ['Seed stitch gauge', 'Rib gauge']) await page.getByRole('group', { name: label }).getByLabel('measured').check();
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed', { timeout: 90_000 });
-  await expect(page.getByLabel('Verdict: File checks passed', { exact: true })).toBeVisible();
+  await expect(settledHeadline(page)).toHaveText('File checks passed', { timeout: 90_000 });
+  await expect(page.getByLabel('Status: File checks passed', { exact: true })).toBeVisible();
 
   // A swatch measures one stitch: another keeps its numbers, but not as measured.
   const swatch = page.locator('#swatch');
@@ -95,19 +95,19 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   await expect(page.getByRole('group', { name: '1×1 rib gauge' }).getByLabel('measured')).not.toBeChecked();
   await expect(page.getByLabel('1×1 rib gauge stitches per 10 cm')).toHaveValue('25');
   await expect(swatch).toContainText('Measured on Seed stitch. Measure a swatch of 1×1 rib for true sizes.');
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 90_000 });
-  await expect(page.getByLabel('Verdict: File checks passed, sizes not confirmed')).toBeVisible();
+  await expect(settledHeadline(page)).toHaveText('File checks passed, sizes not confirmed', { timeout: 90_000 });
+  await expect(page.getByLabel('Status: File checks passed, sizes not confirmed')).toBeVisible();
   // Back on the stitch it was measured on, it is measured again.
   await page.getByRole('radio', { name: /Seed stitch/ }).click();
   await expect(page.getByRole('group', { name: 'Seed stitch gauge' }).getByLabel('measured')).toBeChecked();
   await expect(swatch).toContainText('From your swatch.');
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed', { timeout: 90_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed', { timeout: 90_000 });
 
   // So with the hem rib the rib gauge was measured on, and the stitch size: each is part of the fabric.
   await page.getByRole('radiogroup', { name: 'Hem rib' }).getByRole('radio', { name: '1×1' }).click();
   await expect(page.getByRole('group', { name: 'Rib gauge' }).getByLabel('measured')).not.toBeChecked();
   await expect(swatch).toContainText('Measured on 2×2 rib. Measure a swatch of 1×1 rib for true sizes.');
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 90_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed, sizes not confirmed', { timeout: 90_000 });
   await page.getByRole('radiogroup', { name: 'Hem rib' }).getByRole('radio', { name: '2×2' }).click();
   await expect(page.getByRole('group', { name: 'Rib gauge' }).getByLabel('measured')).toBeChecked();
   await page.getByRole('button', { name: /^Machine settings/ }).click();
@@ -116,10 +116,10 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   await page.getByLabel('Body stitch size').press('Enter');
   await expect(page.getByRole('group', { name: 'Seed stitch gauge' }).getByLabel('measured')).not.toBeChecked();
   await expect(swatch).toContainText('Measured on Seed stitch. Measure a swatch of Seed stitch at stitch size 11 for true sizes.');
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed, sizes not confirmed', { timeout: 90_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed, sizes not confirmed', { timeout: 90_000 });
   await page.locator('#machine\\.body').getByRole('button', { name: 'Use the standard' }).click();
   await expect(page.getByRole('group', { name: 'Seed stitch gauge' }).getByLabel('measured')).toBeChecked();
-  await expect(page.getByTestId('readiness-headline')).toHaveText('File checks passed', { timeout: 90_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed', { timeout: 90_000 });
 
   // The package holds every piece's program.
   const download = page.waitForEvent('download');

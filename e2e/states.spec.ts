@@ -18,6 +18,7 @@ const NOT_SAID = ['≈', 'palette 0', 'Machine truth', 'trials'];
 
 async function settled(page: Page) {
   await expect(page.locator('.verdict-pending')).toHaveCount(0, { timeout: 120_000 });
+  await expect(page.getByRole('complementary', { name: 'Status' })).toHaveAttribute('aria-busy', 'false', { timeout: 120_000 });
   await expect(page.getByTestId('readiness-headline')).not.toHaveText(/^Checking/, { timeout: 120_000 });
 }
 
@@ -28,10 +29,11 @@ async function check(page: Page, name: string, expected: string | RegExp) {
   await expect(headline).toHaveText(expected);
   const title = (await headline.textContent())!.trim();
 
-  // The badge says what the panel says. "N things to check" still allows export.
-  const badge = (await page.locator('.authored-verdict').textContent())!.trim();
-  if (/things? to check$/.test(title)) expect(badge).toMatch(/^File checks passed(, sizes not confirmed)?$/);
-  else expect(badge).toBe(title);
+  // The badge says what the panel says, in the same tone.
+  const badge = page.locator('.authored-verdict');
+  expect((await badge.textContent())!.trim()).toBe(title);
+  const tone = (await page.locator('.status-card').getAttribute('class'))!.match(/tone-(\w+)/)![1];
+  await expect(badge).toHaveClass(new RegExp(`verdict-${tone}`));
 
   // One note per thing to check, and as many as the headline counts.
   // A note's own words, without its buttons.
