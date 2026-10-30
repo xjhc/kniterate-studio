@@ -30936,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "ddbf495e663b79704f5cd8d2121825de36f5c3355c87d50f557395db2d4ead4b",
+    "sha256": "c2ace46c44badceffb562473d4296f492d33943ee32c4ce94e43b3dd3b5f6100",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31800,8 +31800,8 @@
       },
       {
         "path": "../../e2e/reference-patterns.spec.ts",
-        "sha256": "235fe4604c16127218df2c8cf9ddb6d0af1c3dc3213a6ed96376a9a93fe0ecf1",
-        "bytes": 4388
+        "sha256": "47ab4868e4395453fc5d91debd998064d7c4f33289c693224d95a9c3748c96e2",
+        "bytes": 5023
       },
       {
         "path": "../../e2e/states.spec.ts",
@@ -31810,8 +31810,8 @@
       },
       {
         "path": "../../e2e/sweater-workflow.spec.ts",
-        "sha256": "3d753c665177ccea540119dd9909ae469c373825f60ac84004004964d02d25ee",
-        "bytes": 16059
+        "sha256": "3b70842ee67f7fc8a7e80db8ec54da838a5d89e224eddac0fc380d4e5d72ee27",
+        "bytes": 16282
       },
       {
         "path": "../../e2e/workspace.spec.ts",

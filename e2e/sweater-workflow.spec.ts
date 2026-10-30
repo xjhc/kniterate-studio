@@ -67,9 +67,13 @@ test('a sweater is designed from size, style and stitch, checked piece by piece 
   await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Front' }).click();
   const canvas = page.getByRole('img', { name: /^Front: \d+ rows, \d+ stitches cast on$/ });
   await expect(canvas).toBeVisible();
-  const box = (await canvas.boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height - 2);
-  await expect(page.locator('.piece-tooltip')).toContainText(/^Row [12] · \d+ stitches · rib/);
+  // The piece refits through ResizeObserver; target its current bottom edge
+  // on each attempt rather than keeping coordinates from the initial layout.
+  await expect.poll(async () => {
+    const box = (await canvas.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height - 2);
+    return (await page.locator('.piece-tooltip').allTextContents()).join('');
+  }).toMatch(/^Row [12] · \d+ stitches · rib/);
   await expect(page.locator('.piece-rhythm li').first()).toContainText(/^Rows? \d+/);
   await page.getByRole('navigation', { name: 'Pieces' }).getByRole('button', { name: 'Whole sweater' }).click();
 
