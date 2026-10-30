@@ -544,9 +544,10 @@ ship," trust this file and the working tree instead.
     within-pass carries stay outside the blocking rule when the carrier
     knits/tucks/splits again, even if an empty fetch comes first. Existing
     empty-move checks remain. This extension is conservative product policy,
-    not observed physical clearance; ordinary colourwork floats remain
-    advisory. The [policy comparison](./benchmarks/yarn-parking-audit.json)
-    adds no findings to the 13 references or current authored candidates.
+    not observed physical clearance. Ordinary colourwork float findings stay
+    advisory, but the advisory does not detect every continuing carry (see
+    the open gap below). The [policy comparison](./benchmarks/yarn-parking-audit.json)
+    adds no findings to the 13 references or audited authored candidates.
 
   Feeder clearance measures a transfer at its front-bed needle, so a racked
   rear-to-front transfer is checked where its receiving needle actually is
@@ -580,6 +581,18 @@ ship," trust this file and the working tree instead.
   That software check does not establish pickup stability.
 
   Open safety qualification work (reviewed 2026-10-30):
+  - continuing within-pass carries in four-colour minimal birdseye. The
+    previously recorded case carries a colour absent from the end of a row
+    up to 19 needles past its last stitch before other yarns knit there,
+    versus at most 1 in the compared Kniterate double-bed programs. The colour
+    knits again later, so the final-use parking rule deliberately leaves this
+    carry outside its scope. The float advisory compares consecutive stitches
+    and misses some stitch-to-stop spans, so some carries pass with no warning
+    at all. An authored minimal-birdseye rectangle with a mid-row motif colour
+    remains untested by the audit: its authored sparse cases have solid-colour
+    rows, while the relevant 20/40-needle edge-motif cases use developer mode
+    and are already blocked by other findings. This remains an open hazard
+    and warning gap;
   - attached-yarn paths beyond the blocking rule above. It follows only the
     latest stitch and cannot prove physical yarn placement. Introduction,
     release of cut yarn and attachment after drop/recast remain unmodeled;
