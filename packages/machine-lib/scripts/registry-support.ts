@@ -41,15 +41,29 @@ const REGISTRY_PROJECT_BUDGET = {
 } as const;
 
 /**
- * The complete source/configuration closure used to produce the fixed V1 trial
- * and decide whether its manual evidence is eligible for promotion. Paths are
- * repository-relative so the same bytes hash identically in any clone.
+ * Source/configuration identity for authored machine output and its eligibility,
+ * including the fixed V1 trial and shaped-piece pipelines. Studio entries cover
+ * runtime compilation/planning dependencies, not its presentation components.
+ * Paths are repository-relative so the same bytes hash identically in any clone.
  */
 export const COMPILER_FINGERPRINT_INPUTS = [
   'packages/machine-lib/src',
   'packages/chart-contract/src',
   'packages/project-contract/src',
+  'apps/studio/src/authoredPipeline.ts',
   'apps/studio/src/blanket/compileProject.ts',
+  'apps/studio/src/engine.ts',
+  'apps/studio/src/machineSetup.ts',
+  'apps/studio/src/readiness.ts',
+  'apps/studio/src/kcode/compileKCodeArtifact.ts',
+  'apps/studio/src/kcode/kcodeProtocol.ts',
+  'apps/studio/src/kcode/sha256.ts',
+  'apps/studio/src/sweater/draft.ts',
+  'apps/studio/src/sweater/panel.ts',
+  'apps/studio/src/sweater/rasterize.ts',
+  'apps/studio/src/sweater/sweater.ts',
+  'apps/studio/src/sweater/sweaterPipeline.ts',
+  'apps/studio/src/sweater/textures.ts',
   'fixtures/colorwork-chart-v1/customist-fairisle-reference.json',
   'packages/machine-lib/reference/fairisle.kc',
   'scripts/build-v1-knit-trial.ts',

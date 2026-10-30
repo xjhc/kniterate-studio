@@ -11,8 +11,8 @@ and machine runs when they are registered.
 Why this order:
 
 - A real knit finds more than any extra check.
-- UI-only work (`apps/studio`, except `blanket/compileProject.ts`) leaves the
-  compiler fingerprint alone, so it never costs a re-knit.
+- Presentation-only work outside `COMPILER_FINGERPRINT_INPUTS` leaves the
+  compiler fingerprint alone. Authored and sweater runtime helpers are included.
 - Every compiler or contract change lands before the M9 freeze, because a
   later change means knitting all three qualification pieces again.
 - Each new construction gets a small development knit as it lands.
@@ -38,13 +38,15 @@ Why this order:
 
 **B. Safety, before new constructions**
 
-Execution details, dependencies, and acceptance criteria are in
-[`GAP-CLOSURE-PLAN.md`](./GAP-CLOSURE-PLAN.md). G1–G3 expand this section;
-G5 covers recipe/limit evidence, G4 is optional shared-debugger work, and G7
-prepares the complete M9 gate without changing the order below.
+The small implementation slice and its evidence are in
+[`GAP-CLOSURE-PLAN.md`](./GAP-CLOSURE-PLAN.md): final-use parking, one-needle
+sequences, compiler fingerprint coverage and one sweater capacity check.
 
-- [ ] Check the carrier path from the last stitch to its parking place.
-- [ ] Test sequences on one needle: transfer, tuck, drop, cast on again.
+- [x] Check the last stitch to final-use parking span, preserving continuing
+  colourwork floats; reference and authored comparisons add no findings.
+- [x] Test sequences on one needle: transfer, tuck, drop, cast on again.
+- [ ] Define a pickup-stability check from paired accepted/unstable examples.
+- [ ] Bound held-fabric and increase behavior before affected new constructions.
 - [ ] Qualify inferred limits, the 36-knit clearance rule first, with small
   swatches tied to exact file hashes.
 
@@ -60,9 +62,13 @@ prepares the complete M9 gate without changing the order below.
 
 **D. Release `1.0.0`**
 
+- [x] Include sweater/runtime dependencies in the compiler fingerprint.
+- [x] Check sweater replay capacity against the 400,000-event budget.
+- [ ] Add shared pass filters and loop-occupancy colors if inspection needs them.
 - [ ] Decide which M8 parity rows still matter, and build those.
 - [ ] M9: freeze; knit, finish and register the rectangle, beanie and
-  sweater; tag `1.0.0`.
+  sweater, including a complete manifest, fit tolerances, assembly evidence
+  and the expanded physical-release check; tag `1.0.0`.
 
 **E. After `1.0.0`**
 

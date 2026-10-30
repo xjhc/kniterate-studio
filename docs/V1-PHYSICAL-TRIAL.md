@@ -36,8 +36,9 @@ information; it never changes a verdict.
 
 The compiler fingerprint (`COMPILER_FINGERPRINT_INPUTS` in
 `packages/machine-lib/scripts/registry-support.ts`) covers all of
-`machine-lib/src`, `project-contract/src`, `compileProject.ts`, the release
-scripts, the lockfile and the TypeScript configuration. Changes in M5–M8 will
+`machine-lib/src`, `project-contract/src`, the authored and sweater runtime
+helpers listed there, the release scripts, the lockfile and the TypeScript
+configuration. Changes in M5–M8 will
 therefore make any earlier entry stale, even for a rectangle whose emitted
 bytes stay identical. The registry check rejects stale entries.
 

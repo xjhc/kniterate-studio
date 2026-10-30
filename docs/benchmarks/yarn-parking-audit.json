@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "kind": "kniterate-yarn-parking-policy-audit",
+  "reviewedOn": "2026-10-30",
+  "evidenceClass": "local scratch software comparison; no machine observations",
+  "baseline": {
+    "commits": [
+      "ef11fd4bb1bac2a64c0405d99cfbd3fa678d33b5",
+      "aac76b724cdd1c0714b701adf049a78e0209dc8f"
+    ],
+    "sourcePath": "packages/machine-lib/src/knitout/kcode/machine-safety.ts",
+    "sourceSha256": "f5f55c47f9cc85d8df72a602d31f820dc2ca8a06da49839568925d7859e1dddf",
+    "sourceIdenticalAtBothCommits": true,
+    "profile": "KNITERATE_7GG_KCODE_PROFILE_V2",
+    "dialect": "knitout-vendor"
+  },
+  "method": {
+    "intake": "Strict parse, project exact KCode trace, run isolated copies of baseline machine-safety.ts with only carry classification changed. Retain all geometry, transfer handling, 7-needle threshold, 36-covering-knit threshold and existing empty-move behavior.",
+    "policies": {
+      "before": "Track attached spans after an explicit non-loop-forming carrier move only.",
+      "all_within_pass_carries": "Also track the final stitch-to-stop span after every knit/tuck pass.",
+      "next_use_move_or_end": "Also track the final stitch-to-stop span when the next carrier use is non-loop-forming or absent. A future loop after that move does not cancel this classification.",
+      "final_loop_only": "Also track the final stitch-to-stop span after the carrier's last loop-forming pass in the complete trace; a later knit, tuck or split excludes the earlier within-pass span. Existing explicit empty-move checks remain unchanged."
+    },
+    "findingCount": "One attached-yarn finding per crossing pass and exposed carrier under the existing checker; counts are not physical failures.",
+    "candidateCompilation": "Fresh candidates use compileColorworkProject then authoredKnitoutToKCodeWithTrace. The stored package is inspected separately. No source candidate files were edited.",
+    "lowLevelCompilation": "compileChartToKnitout followed by writeKnitoutProgram and authoredKnitoutToKCodeWithTrace; developerMode=true, needleOffset=50, wastePasses=4, bindOff=drop, backBedStyle=birdseye.",
+    "lowLevelMatrix": {
+      "colors": [
+        3,
+        4
+      ],
+      "widths": [
+        4,
+        20,
+        40
+      ],
+      "modes": [
+        "minimal",
+        "full"
+      ],
+      "patterns": {
+        "test146": "Two rows: row 0 all default cream; row 1 has each extra colour at x=i for colour index i=1..N-1. Generalizes from-chart-jacquard-birdseye.test.ts:146.",
+        "edges": "Four rows: extra colours at x=i-1 on even rows and x=width-i on odd rows; all remaining cells cream.",
+        "stripes": "Four rows: row y is entirely colour y modulo N."
+      },
+      "patternCarriers": "2 through N+1, ordered cream/navy/rust/green; default key palette plus 1x1 extra keys."
+    },
+    "authoredSparseMatrix": "Four-colour charts, widths20/40/100, four rows stored top-to-bottom as solid colours3/2/1/0; createColorworkProjectV1 with needleOffset40 and its default minimal Birdseye strategy.",
+    "referenceUseSequenceCount": "For each carrier, select passes carrying that carrier with non-null carrier stops. Count a loop-forming use immediately followed by an empty use when any later use forms a loop. Knit/tuck/split count as loop formation; pass examples below are one-based.",
+    "totalErrors": "Across these emitted candidates, all safety errors were attached-yarn findings; table counts therefore also equal total safety-error counts. The synthetic controls isolate one rule and do not make that assertion."
+  },
+  "summary": {
+    "referenceFiles": 13,
+    "referenceNewFinalLoopFindings": 0,
+    "storedOrFreshArcBirdCandidates": 3,
+    "arcBirdNewFinalLoopFindings": 0,
+    "otherAuthoredCandidates": 4,
+    "otherAuthoredNewFinalLoopFindings": 0,
+    "lowLevelVariants": 36,
+    "lowLevelAttachedYarnFindings": {
+      "before": 970,
+      "all_within_pass_carries": 1060,
+      "next_use_move_or_end": 970,
+      "final_loop_only": 970
+    },
+    "lowLevelNewFinalLoopFindings": 0,
+    "nextMoveThenLaterLoopSequences": 490,
+    "conclusion": "Final-loop-only preserves every audited reference and current authored candidate. Its new positive witness is synthetic; no new final-loop-positive emitted candidate was found. Broad classification adds90 findings to already-blocked low-level cases, all excluded by both narrower variants."
+  },
+  "arcBirdInput": {
+    "localProject": "output/m6-acrylic-trial/bird-toque.json",
+    "localStoredKCode": "output/m6-acrylic-trial/package/program.kc",
+    "sourceProjectSha256": "64d8131f017b74c90f4dd197b4a4fec84407b40bf600c7bda21c717d8c71a167",
+    "settings": "134 needles,45-row folded2x2 rib cuff,86 chart rows,56cm head,-10% ease,C3/C4; body gauge26/34 and rib gauge30/32 assumed. Recompile once with Fairisle and once with Birdseye strategy. Local project contains the Arc bird placement; no image or candidate bytes copied into this audit."
+  },
+  "syntheticControls": [
+    {
+      "case": "No later carrier loop; next use moves home",
+      "before": 0,
+      "all_within_pass_carries": 1,
+      "next_use_move_or_end": 1,
+      "final_loop_only": 1
+    },
+    {
+      "case": "Later carrier use knits",
+      "before": 0,
+      "all_within_pass_carries": 1,
+      "next_use_move_or_end": 0,
+      "final_loop_only": 0
+    },
+    {
+      "case": "No later carrier use",
+      "before": 0,
+      "all_within_pass_carries": 1,
+      "next_use_move_or_end": 1,
+      "final_loop_only": 1
+    }
+  ],
+  "syntheticGeometry": "Carrier3 knits front90/95/100 and stops112.5; carrier4 then knits front101..110. Synthetic traces isolate attached-yarn classification and are not independently exportable machine candidates.",
+  "moveThenLaterLoop": {
+    "byReferenceFile": {
+      "2x2-rib-beanie.kc": 0,
+      "back.kc": 102,
+      "color-swatch-bindoff.kc": 59,
+      "dbj.kc": 0,
+      "fairisle.kc": 1,
+      "fox-baby-beanie.kc": 0,
+      "front.kc": 143,
+      "jacquard.kc": 0,
+      "sleeves.kc": 169,
+      "sophie.kc": 5,
+      "sophie2.kc": 7,
+      "sophie_stripe.kc": 4,
+      "swatch.kc": 0
+    },
+    "examples": [
+      {
+        "file": "fairisle.kc",
+        "carrier": "6",
+        "loopPass": 6,
+        "emptyMovePass": 7,
+        "laterLoopPass": 9
+      },
+      {
+        "file": "color-swatch-bindoff.kc",
+        "carrier": "3",
+        "loopPass": 212,
+        "emptyMovePass": 215,
+        "laterLoopPass": 216
+      }
+    ]
+  },
+  "cases": [
+    ["reference/2x2-rib-beanie.kc", "de0002e2ac7f36ea95f87940ac83c39439c97eea8ab9ed98427c5bf29f5c2b4a", 530, 0, 0, 0, 0],
+    ["reference/back.kc", "fc7683dba9af398143e2d1d346bc0375635ad106389f2e87f8d9dce0ab450c8b", 2108, 0, 0, 0, 0],
+    ["reference/color-swatch-bindoff.kc", "1584c39f268f63189905582ddd16baa8866046ab1c8b0b8c25f70b6509a62fb8", 458, 0, 0, 0, 0],
+    ["reference/dbj.kc", "3e39d3491666afbc70d06986cbcf492844b41812965013bc79726d1e7071f6dd", 498, 0, 0, 0, 0],
+    ["reference/fairisle.kc", "0dba85bca3f3251030bd2302a539b26a14870692261313c948007fb99ccae8e7", 286, 0, 0, 0, 0],
+    ["reference/fox-baby-beanie.kc", "cab085708317a5e943c1c9976fd1c9646fe11533e31c8794307f7ab139234160", 220, 0, 0, 0, 0],
+    ["reference/front.kc", "8f451241667025c6f4dc7cd34a2e832c60bf2998e766371d7951be84ead07fbf", 2544, 0, 0, 0, 0],
+    ["reference/jacquard.kc", "2082bfff804b54efdd9f270941912d563b12a63e1f6430f97b83820d01398efb", 350, 0, 0, 0, 0],
+    ["reference/sleeves.kc", "1a092b9665786a0f5a5030d49ff3b2b99371f40923637c9ce302f770a47252af", 1994, 0, 0, 0, 0],
+    ["reference/sophie.kc", "00d75440ac6c47b460caab48aecab8cad40ec730223471d6f855097d0a10da7b", 3766, 0, 0, 0, 0],
+    ["reference/sophie2.kc", "4d6ff927b9c229b7eb131f75ec7768f0af60446477339473206d13c31119ad46", 3716, 0, 0, 0, 0],
+    ["reference/sophie_stripe.kc", "005627ce0953b8d8687956fa76734f2d0ea89d7f76f5c5cade84e541a24c122e", 3734, 0, 0, 0, 0],
+    ["reference/swatch.kc", "ee8807b2f7f50a868cdc6107dfb23c9de2c7fcfe2d10ef79ac124878214c0005", 364, 0, 0, 0, 0],
+    ["stored-m6-bird-package", "79670c31402cb4ff7f7113a4c9e3e1935dab33169ba3fe597ccbbbf8ee62817d", 950, 0, 0, 0, 0],
+    ["fresh-m6-bird-fairisle", "b4b2c153541f4f983b6873e01bc4072d97020a67a2510e987fefdf2c6c5d60af", 790, 0, 0, 0, 0],
+    ["fresh-m6-bird-birdseye", "79670c31402cb4ff7f7113a4c9e3e1935dab33169ba3fe597ccbbbf8ee62817d", 950, 0, 0, 0, 0],
+    ["extra/Four color checker", "a029aeed15755377df31c2981d9916ba6d4beff7518593a80d365c2b29dbc41e", 186, 0, 0, 0, 0],
+    ["extra/sparse-20", "fa926f0ecad827270d64c6fc1cf6987aa1ffb29d240bb4e38011049085f76236", 174, 0, 0, 0, 0],
+    ["extra/sparse-40", "a92b0bc90d73d629ba08ace543bda5a33e940b43e6409f0d0b7e01edbeeca534", 174, 0, 0, 0, 0],
+    ["extra/sparse-100", "a0715a0995fe2ce6542ef9a5ce1313f2080544a70782042642a9935805b79967", 174, 0, 0, 0, 0]
+  ],
+  "lowLevelCases": [
+    ["lowlevel-3c-4w-minimal-test146", "1cbeec462e2cd76daf247b234c08a5341b9c88cc19087748919e894190803519", 36, 0, 0, 0, 0],
+    ["lowlevel-3c-4w-minimal-edges", "5a9f35f08f0fe76bc6c897c13c4a66bcf6f8d7b1a76204da0e3f45871c8c144d", 64, 0, 0, 0, 0],
+    ["lowlevel-3c-4w-minimal-stripes", "4590daad9b31e788ca5ccc9a4e1206c67e3b312a22b3a3d827173ff79230e18d", 36, 0, 0, 0, 0],
+    ["lowlevel-3c-4w-full-test146", "97489af09eb5afe2a7703e8f97b987bb729343cb3d4df4aab12eb50355fb8a5f", 42, 0, 0, 0, 0],
+    ["lowlevel-3c-4w-full-edges", "5a9f35f08f0fe76bc6c897c13c4a66bcf6f8d7b1a76204da0e3f45871c8c144d", 64, 0, 0, 0, 0],
+    ["lowlevel-3c-4w-full-stripes", "cc661991c943e6f079d6fb49f3d00471b8ae372c81d9b22b93cdea4c7f7524c2", 50, 0, 0, 0, 0],
+    ["lowlevel-3c-20w-minimal-test146", "3050eee45b319aeb5bb8fcf383425d022499485d216dde004f96a93dd600125a", 52, 23, 26, 23, 23],
+    ["lowlevel-3c-20w-minimal-edges", "251ace445c8f053ff6a29176cc962d8a60d757db750c305f47de8b50f24bf9a1", 80, 35, 41, 35, 35],
+    ["lowlevel-3c-20w-minimal-stripes", "b7a575aea0ac0099ec4231f9818159545bfd3072dd90695aae6015c64f10ccba", 52, 23, 23, 23, 23],
+    ["lowlevel-3c-20w-full-test146", "9c3dbc1e1e2c3734eb68cf6679956d9ea401daabc780217a7faf36a6b5f6815a", 58, 25, 25, 25, 25],
+    ["lowlevel-3c-20w-full-edges", "251ace445c8f053ff6a29176cc962d8a60d757db750c305f47de8b50f24bf9a1", 80, 35, 41, 35, 35],
+    ["lowlevel-3c-20w-full-stripes", "a675dafb1d29aa962570f8ffeb06aaf13281566eadce64b91f69f117007f4eed", 66, 31, 31, 31, 31],
+    ["lowlevel-3c-40w-minimal-test146", "c11188a91e70e2fce1963b41523877012db4f02f93ce1f4829314b87d2c0387a", 72, 43, 46, 43, 43],
+    ["lowlevel-3c-40w-minimal-edges", "62c5464a92445594b7a92d15103503533eebcfb049c232b82c5826f5d12d0d39", 100, 55, 61, 55, 55],
+    ["lowlevel-3c-40w-minimal-stripes", "8e51fbd549c43ff18c892eadb5d4e2dbfb0d42e30c9a41a38040054523e17042", 72, 43, 43, 43, 43],
+    ["lowlevel-3c-40w-full-test146", "efb0ddc522fe452ea3943d1b069010abb129ec98f5e55ece37d0ade6ea4c89d3", 78, 45, 45, 45, 45],
+    ["lowlevel-3c-40w-full-edges", "62c5464a92445594b7a92d15103503533eebcfb049c232b82c5826f5d12d0d39", 100, 55, 61, 55, 55],
+    ["lowlevel-3c-40w-full-stripes", "563a9b711bf8fb7611e6ecf916b6903de36383fb010b66befa4e67c66f024f07", 86, 51, 51, 51, 51],
+    ["lowlevel-4c-4w-minimal-test146", "7b1b503affcf685363ff7983380360646b9c15dc41f8ab733731a9c53ca06df7", 42, 0, 0, 0, 0],
+    ["lowlevel-4c-4w-minimal-edges", "ed338c704957f6b9f109318b64296a68a2b47864539efa3996d65404fb9e7802", 82, 0, 0, 0, 0],
+    ["lowlevel-4c-4w-minimal-stripes", "deef93b341d0bf364f53e98837107a16ee3039882b1e7e8327c233724be1c567", 36, 0, 0, 0, 0],
+    ["lowlevel-4c-4w-full-test146", "15a3fb4dcc5ed16e59179e98f10ff6630454138d3ae924ce61967b63e46d39e0", 50, 0, 0, 0, 0],
+    ["lowlevel-4c-4w-full-edges", "ed338c704957f6b9f109318b64296a68a2b47864539efa3996d65404fb9e7802", 82, 0, 0, 0, 0],
+    ["lowlevel-4c-4w-full-stripes", "6b63689830c2588a29c71fdfb5beb3f7b582bc2e34d5fc2c5e3566eb9a2ceb35", 58, 0, 0, 0, 0],
+    ["lowlevel-4c-20w-minimal-test146", "2ac7eef9ff8a941ac1d292c591ebfe7c4111347049777f034a3e071fb5286b08", 58, 25, 31, 25, 25],
+    ["lowlevel-4c-20w-minimal-edges", "b8bff039d4dc4787b99f6861887d6af8f0879834f1ba4c9325794775d282fcbd", 98, 41, 53, 41, 41],
+    ["lowlevel-4c-20w-minimal-stripes", "c5643ad71462ba69c7fef017344d818c68fe31a57d0fe6a887e2407c4c321547", 52, 23, 23, 23, 23],
+    ["lowlevel-4c-20w-full-test146", "a27c11d9b630c99c22e309029a5889dd87d2c8f485d905b677e83c779ac27753", 66, 28, 28, 28, 28],
+    ["lowlevel-4c-20w-full-edges", "b8bff039d4dc4787b99f6861887d6af8f0879834f1ba4c9325794775d282fcbd", 98, 41, 53, 41, 41],
+    ["lowlevel-4c-20w-full-stripes", "80e6ac620882c458a9faa4ba06da04999bba3da1e9009ce355d01e0f7878a006", 74, 35, 35, 35, 35],
+    ["lowlevel-4c-40w-minimal-test146", "f5db798ea0945079f6e594b8b399c5ca7f03b6c06c0829e63f2b58a940cebb33", 78, 45, 51, 45, 45],
+    ["lowlevel-4c-40w-minimal-edges", "f651bfae6d0fb4a057416d1707401249652dbe54f9279148e5dda93c8bf0e1e9", 118, 61, 73, 61, 61],
+    ["lowlevel-4c-40w-minimal-stripes", "ba2c8a8d53fddd943746ace7a2d4f2409a7f686cf3011aecf6c186375396e3a0", 72, 43, 43, 43, 43],
+    ["lowlevel-4c-40w-full-test146", "5d322d11f2dee861e37f4b2c675a2da78ed64b0445a3362fff511e685b872774", 86, 48, 48, 48, 48],
+    ["lowlevel-4c-40w-full-edges", "f651bfae6d0fb4a057416d1707401249652dbe54f9279148e5dda93c8bf0e1e9", 118, 61, 73, 61, 61],
+    ["lowlevel-4c-40w-full-stripes", "fd689fc0e9f1925697437dde2f0f9a7d1fa686ef3d67ac2798d883133bf4f1b9", 94, 55, 55, 55, 55]
+  ],
+  "limitations": [
+    "This records prototype policy comparison, not a production verification receipt, browser validation, controller acceptance or physical safety proof.",
+    "The inspected files are a bounded corpus; zero findings does not prove absence of false positives or missed hazards in other programs.",
+    "A next empty carrier move does not prove retirement:490 reference sequences resume loop formation later.",
+    "The final-loop policy deliberately leaves continuing within-pass carries outside the added check. It does not establish that those carries are physically safe.",
+    "KCode cannot prove cutting/in-out lifecycle. Drop/recast attachment, within-pass timing, and physical qualification of inferred clearance remain separate work.",
+    "The20/40-needle low-level witnesses already have baseline attached-yarn errors; broad-only additions do not demonstrate a currently exportable candidate newly becoming unsafe.",
+    "Arc bird input is a local ignored project; reproducing those exact hashes requires that input. This audit retains its hash without redistributing the project or image.",
+    "Thresholds and reported geometry are retained software assumptions; no acceleration, tension, yarn-shape or physical-clearance measurements were made."
+  ],
+  "caseColumns": [
+    "name",
+    "kcodeSha256",
+    "passes",
+    "beforeAttachedYarnFindings",
+    "allWithinPassAttachedYarnFindings",
+    "nextUseMoveOrEndAttachedYarnFindings",
+    "finalLoopOnlyAttachedYarnFindings"
+  ]
+}
