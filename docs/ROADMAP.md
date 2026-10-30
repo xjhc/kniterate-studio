@@ -38,6 +38,11 @@ Why this order:
 
 **B. Safety, before new constructions**
 
+Execution details, dependencies, and acceptance criteria are in
+[`GAP-CLOSURE-PLAN.md`](./GAP-CLOSURE-PLAN.md). G1–G3 expand this section;
+G5 covers recipe/limit evidence, G4 is optional shared-debugger work, and G7
+prepares the complete M9 gate without changing the order below.
+
 - [ ] Check the carrier path from the last stitch to its parking place.
 - [ ] Test sequences on one needle: transfer, tuck, drop, cast on again.
 - [ ] Qualify inferred limits, the 36-knit clearance rule first, with small
