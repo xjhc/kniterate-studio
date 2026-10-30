@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { kcDownload } from './menu';
+import { kcDownload, openStatusDisclosure, settledHeadline, settledStatus } from './menu';
 import type { ColorworkChartV1 } from '@kniterate-studio/chart-contract';
 
 interface DecodedReference {
@@ -70,11 +70,21 @@ for (const name of ['fairisle', 'jacquard', 'dbj'] as const) {
       name: `${name}.colorwork.json`, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(chart)),
     });
     await expect(page.locator('.brand-copy small')).toContainText(`${name} reference pattern`);
-    // Each reference is exported with its own backing: dbj is birdseye; the
-    // others keep the default for their palette.
-    if (name === 'dbj') {
+    if (name === 'jacquard') {
+      // In Fairisle, C3's final stitch is at 126 but it parks at 84.5 while
+      // C2 keeps knitting underneath. This is final-use parking, not a float
+      // between knitting uses: the authored file must remain blocked.
+      await expect(settledHeadline(page)).toHaveText("Can't knit yet", { timeout: 20_000 });
+      await expect(settledStatus(page).locator('.status-reason')).toContainText('under its yarn');
+      await openStatusDisclosure(page, 'Files and printing');
+      await expect(kcDownload(page)).toBeDisabled();
+    }
+    // Keep Fairisle for its reference face; use the existing Birdseye backing
+    // for the jacquard and dbj faces before checking an exportable result.
+    if (name !== 'fairisle') {
       await page.getByRole('button', { name: /^Birdseye/ }).click();
     }
+    await openStatusDisclosure(page, 'Files and printing');
     const exportButton = kcDownload(page);
     await expect(exportButton).toBeEnabled({ timeout: 20_000 });
     const downloadPromise = page.waitForEvent('download');

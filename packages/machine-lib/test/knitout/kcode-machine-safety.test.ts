@@ -821,27 +821,74 @@ describe('KCode machine-safety envelope', () => {
       ])
     })
 
-    it('treats a carry within a knitting pass as a float, and a move after it as a drag', () => {
+    it('checks final-use parking, but keeps carries between knitting uses as floats', () => {
       // Carrier 3 stitches up to 100 and carries its yarn on to 112.5.
-      const carry = (moveAfter: boolean) => attached(safety(job(
+      const resume: PassSpec = { direction: '<<', carrier: '3', carriage: { left: 87.5, right: 112.5 }, actions: front(100, 95, 90) }
+      const fetch: PassSpec = { direction: '>>', carrier: '3', operation: 'Tu-Tu', carriage: { left: 112.5, right: 115.5 } }
+      const carry = (moveAfter: boolean, next: 'home' | 'empty-actions' | 'end' | 'knit' | 'fetch-then-knit') => attached(safety(job(
         { direction: '>>', carrier: '3', carriage: { left: -9.5, right: moveAfter ? 102.5 : 112.5 }, actions: front(90, 95, 100) },
         ...(moveAfter ? [{ direction: '>>', carrier: '3', operation: 'Tu-Tu', carriage: { left: 102.5, right: 112.5 } } satisfies PassSpec] : []),
         four('>>', front(101, 102, 103, 104, 105, 106, 107, 108, 109, 110), { left: -7.5, right: 112.5 }),
-        { ...HOME, carriage: { left: -9.5, right: 112.5 } },
+        ...(next === 'fetch-then-knit' ? [fetch, { ...resume, carriage: { left: 87.5, right: 115.5 } }] : next === 'knit' ? [resume] : []),
+        ...(next === 'end' ? [] : [{ ...HOME, actions: next === 'empty-actions' ? [] : undefined, carriage: { left: -9.5, right: next === 'home' || next === 'empty-actions' ? 112.5 : 87.5 } }]),
         fourHome(112.5),
       )))
-      expect(carry(false)).toBe(0)
-      expect(carry(true)).toBe(1)
-      // Knitting again ends a drag: its yarn past the new last stitch is a float.
+      expect(carry(false, 'home')).toBe(1)
+      expect(carry(false, 'end')).toBe(1)
+      // A malformed later action list cannot imply new stitches and erase the
+      // known parking span; structural validation independently refuses it.
+      expect(carry(false, 'empty-actions')).toBe(1)
+      expect(carry(false, 'knit')).toBe(0)
+      // A next empty move is a fetch here, not evidence that the yarn goes out.
+      expect(carry(false, 'fetch-then-knit')).toBe(0)
+      expect(carry(true, 'home')).toBe(1)
+      // Explicit dragging is still checked even if this carrier knits later.
+      expect(carry(true, 'knit')).toBe(1)
+      // Knitting again ends a drag while the carrier continues making stitches.
       const knitsAgain = safety(job(
         knitRight,
         outRight,
         { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: front(90, 95, 100) },
         four('>>', front(101, 102, 103, 104, 105, 106, 107, 108, 109, 110), { left: -7.5, right: 112.5 }),
-        { ...HOME, carriage: { left: -9.5, right: 112.5 } },
+        resume,
+        { ...HOME, carriage: { left: -9.5, right: 87.5 } },
         fourHome(112.5),
       ))
       expect(knitsAgain.diagnostics).toEqual([])
+    })
+
+    it.each(['front', 'rear'] as const)('checks final knit and tuck parking on the %s bed in either direction', (bed) => {
+      for (const direction of ['>>', '<<'] as const) {
+        for (const action of [knit(bed, 100), tuck(bed, 100)]) {
+          const rack = bed === 'rear' ? 1 : 0
+          const target = 100 + rack + (direction === '>>' ? 10 : -10)
+          const report = safety(job(
+            ...(direction === '<<' ? [{ direction: '>>', carrier: '3', rack, carriage: { left: -9.5, right: 114.5 }, actions: [knit(bed, 100)] } satisfies PassSpec] : []),
+            { direction, carrier: '3', rack, carriage: { left: direction === '>>' ? -9.5 : 87.5, right: 114.5 }, actions: [action] },
+            { ...four('>>', front(target), { left: -7.5, right: 114.5 }), rack },
+            { ...HOME, carriage: { left: -9.5, right: 114.5 } },
+            fourHome(114.5),
+          ))
+          expect(attached(report)).toBe(1)
+          expect(messages(report).some((message) => message.includes(`10 needles past carrier 3's last stitch`))).toBe(true)
+        }
+      }
+    })
+
+    it('keeps a carry before a later tuck or split outside the terminal-parking rule', () => {
+      for (const next of [tuck('front', 100), split(100, 100, '3')]) {
+        const report = safety(job(
+          { direction: '>>', carrier: '3', carriage: { left: -9.5, right: 112.5 }, actions: front(90, 95, 100) },
+          four('>>', front(101, 102, 103, 104, 105, 106, 107, 108, 109, 110), { left: -7.5, right: 112.5 }),
+          { direction: '<<', carrier: '3', operation: next.kind === 'split' ? 'Tr-Rl' : 'Tu-Tu', carriage: { left: 97.5, right: 112.5 }, actions: [next] },
+          { ...HOME, carriage: { left: -9.5, right: 97.5 } },
+          fourHome(112.5),
+        ))
+        expect(attached(report)).toBe(0)
+        // Split encoding remains independently refused; its presence still
+        // establishes that the earlier pass was not the final yarn-forming use.
+        expect(report.counts['machine-safety.transfer-with-carrier']).toBe(next.kind === 'split' ? 1 : 0)
+      }
     })
 
     it('follows the last stitch when a transfer moves it', () => {

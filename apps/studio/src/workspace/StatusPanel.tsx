@@ -1,22 +1,32 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AlertTriangle, Check, CheckCircle2, CircleAlert, Download, Info, LoaderCircle, Package, Printer, Ruler } from 'lucide-react';
+import type { StoryStatus } from '../handoff';
 import { MACHINE_START_CHECKS } from '../readiness';
 
 /**
- * The right-hand panel of every project: whether it can be knitted, then the
- * steps to a file you can knit, in order. Each step holds what belongs to it:
- * what to fix, the swatch, and the machine files with what to set at the
- * machine. The next step to take is marked.
+ * One status and the next useful action. What it means, the other things to
+ * check, single files and machine preparation open on demand; disclosure never
+ * changes whether a file can be exported. While a change is checked, the last
+ * result stays in place, dimmed with its buttons off: nothing jumps, and
+ * nothing stale can be applied or downloaded.
  */
 
 export type StatusTone = 'checking' | 'ready' | 'next' | 'warn' | 'blocked';
 
+/** A readiness story's status as a tone, for the panel and the top bar alike. */
+export function storyTone(status: StoryStatus): Exclude<StatusTone, 'checking'> {
+  return status === 'ready' ? 'ready' : status === 'blocked' ? 'blocked' : status === 'needs-measurements' ? 'next' : 'warn';
+}
+
 export interface StatusNote {
   severity: 'error' | 'warning' | 'info';
+  /** What is wrong, in a few words. */
   text: string;
-  /** What it leads to, on hover. */
+  /** The next step in words, where no button takes it. */
+  action?: string | null;
+  /** What it leads to, and any other way to fix it: in Why?. */
   why?: string | null;
-  /** Buttons that go to the problem or fix it. */
+  /** Buttons that fix the problem or go to it. */
   actions?: ReactNode;
 }
 
@@ -34,27 +44,10 @@ export interface StatusFile {
 export interface SwatchStep {
   gauges: { name: string; measured: boolean }[];
   onEnter: () => void;
-  file?: { onDownload: (() => void) | null; writing: boolean; problem: string | null };
+  file?: { onDownload: (() => void) | null; writing: boolean; problem: string | null; downloaded?: boolean };
 }
 
-type StepState = 'done' | 'current' | 'todo';
-
-function Step({ number, title, state, children }: { number: number; title: string; state: StepState; children?: ReactNode }) {
-  return <li className={`status-step step-${state}`} aria-current={state === 'current' ? 'step' : undefined}>
-    <span className="step-mark" aria-hidden="true">{state === 'done' ? <Check size={13} strokeWidth={3} /> : number}</span>
-    <div className="step-body">
-      <h3>{title}{state === 'done' && <span className="visually-hidden"> (done)</span>}</h3>
-      {children}
-    </div>
-  </li>;
-}
-
-function Notes({ notes }: { notes: StatusNote[] }) {
-  if (notes.length === 0) return null;
-  return <ul className="status-notes">{notes.map((note, index) => <li key={index} className={`note-${note.severity}`} title={note.why ?? undefined}>{note.text}{note.actions && <span className="note-actions">{note.actions}</span>}</li>)}</ul>;
-}
-
-export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onDownloadFile, onPackage, onPrint, packaging, canPackage, canPrint, downloaded, swatch, atTheMachine, footer, fileDetail }: {
+interface StatusPanelProps {
   tone: StatusTone;
   title: string;
   detail: string;
@@ -67,74 +60,133 @@ export function StatusPanel({ tone, title, detail, notes, files, onOpenFile, onD
   packaging: boolean;
   canPackage: boolean;
   canPrint: boolean;
-  /** Whether this design's files were downloaded since its last change. */
+  /** Whether this design's files have been downloaded since its last change. */
   downloaded: boolean;
-  /** Present when the sizes come from a gauge. */
+  /** The swatch to measure, for a project sized in cm. */
   swatch?: SwatchStep;
-  /** Settings the file cannot make, to set on the machine before knitting it. */
+  /** What to check or set at the machine before knitting. */
   atTheMachine: string[];
   footer?: ReactNode;
-  /** More about the open file's piece (its shaping), shown under it. */
+  /** The open file's detail, shown under its row. */
   fileDetail?: { id: string; content: ReactNode };
-}) {
-  const Icon = tone === 'ready' ? CheckCircle2 : tone === 'next' ? Info : tone === 'warn' ? AlertTriangle : tone === 'blocked' ? CircleAlert : LoaderCircle;
-  // The first step not done is the one to take next; while checking, none is.
-  const done = {
-    design: tone === 'ready' || tone === 'next',
-    swatch: swatch?.gauges.every((gauge) => gauge.measured) ?? true,
-    download: downloaded,
-  };
-  const order = ['design', ...(swatch ? ['swatch'] : []), 'download'] as (keyof typeof done)[];
-  const current = tone === 'checking' ? null : order.find((step) => !done[step]) ?? null;
-  const state = (step: keyof typeof done): StepState => (done[step] ? 'done' : current === step ? 'current' : 'todo');
-  const number = (step: keyof typeof done) => order.indexOf(step) + 1;
-  // A swatch can be knitted while the design can't; then it carries the start checks itself.
-  const swatchChecks = swatch?.file?.onDownload && !MACHINE_START_CHECKS.every((check) => atTheMachine.includes(check)) ? MACHINE_START_CHECKS : [];
-  return <aside className="sweater-status" aria-label="Status">
+}
+
+/** The part of the panel that stays on screen while the next change is checked. */
+type Result = Pick<StatusPanelProps, 'tone' | 'title' | 'detail' | 'notes' | 'atTheMachine' | 'canPackage' | 'canPrint'>;
+
+function Notes({ notes, disabled }: { notes: StatusNote[]; disabled: boolean }) {
+  if (notes.length === 0) return null;
+  return <ul className="status-notes">{notes.map((note, index) => <li key={index} className={`note-${note.severity}`}>
+    {note.text}
+    {note.action && <p className="step-hint">{note.action}</p>}
+    {note.why && <p className="step-hint">{note.why}</p>}
+    {note.actions && <fieldset className="note-actions" disabled={disabled}>{note.actions}</fieldset>}
+  </li>)}</ul>;
+}
+
+export function StatusPanel(props: StatusPanelProps) {
+  const { files, onOpenFile, onDownloadFile, onPackage, onPrint, packaging, downloaded, swatch, footer, fileDetail } = props;
+  const checking = props.tone === 'checking';
+  // Read in render on purpose: the result shown until the next one is the last one checked.
+  const settled = useRef<Result | null>(null);
+  if (!checking) settled.current = props;
+  const { tone, title, detail, notes, atTheMachine, canPackage, canPrint } = (checking ? settled.current : null) ?? props;
+  // Nothing checked yet: there is no result to keep.
+  const waiting = tone === 'checking';
+  const Icon = waiting ? LoaderCircle : tone === 'ready' ? CheckCircle2 : tone === 'next' ? Info : tone === 'warn' ? AlertTriangle : CircleAlert;
+  const measured = swatch?.gauges.every((gauge) => gauge.measured) ?? true;
+  const swatchFile = swatch?.file?.onDownload ? swatch.file : null;
+  const swatchDownloaded = swatchFile?.downloaded === true;
+  const lead = tone === 'blocked' || tone === 'warn' ? notes.find((note) => note.severity === 'error') ?? notes[0] : undefined;
+  const others = notes.filter((note) => note !== lead);
+  // The one next step: fix what blocks, else measure a swatch, else download, else print and go to the machine.
+  const next = waiting || lead ? null
+    : swatch && !measured ? (swatchFile && !swatchDownloaded ? 'swatch-file' : 'swatch-enter')
+      : canPackage ? (downloaded && canPrint ? 'print' : 'package')
+        : null;
+  const startChecks = [...new Set([...atTheMachine, ...(swatchFile ? MACHINE_START_CHECKS : [])])];
+  // A download sends you to the machine: its checks open once, and stay as you leave them.
+  const [machineOpen, setMachineOpen] = useState(false);
+  useEffect(() => { if (downloaded || swatchDownloaded) setMachineOpen(true); }, [downloaded, swatchDownloaded]);
+  const why = lead ? lead.why : tone === 'blocked' ? null : detail;
+
+  const swatchDownload = (primary: boolean) => swatchFile && <button type="button" className={primary ? 'primary-button' : 'secondary-button'} disabled={swatchFile.writing} onClick={swatchFile.onDownload!}>{swatchFile.writing ? <LoaderCircle size={15} className="spin" aria-hidden="true" /> : <Download size={15} aria-hidden="true" />}{swatchFile.writing ? 'Writing the swatch file…' : 'Download swatch file'}</button>;
+  const swatchEnter = (primary: boolean) => swatch && <button type="button" className={primary ? 'primary-button' : 'secondary-button'} onClick={swatch.onEnter}><Ruler size={15} aria-hidden="true" />{measured ? 'Change your swatch' : 'Enter your swatch'}</button>;
+  const packageButton = (primary: boolean) => <button type="button" className={primary ? 'primary-button' : 'secondary-button'} disabled={checking || !canPackage || packaging} onClick={onPackage}>{packaging ? <LoaderCircle size={16} className="spin" aria-hidden="true" /> : <Package size={16} aria-hidden="true" />}{packaging ? 'Writing the knitting package…' : 'Download knitting package'}</button>;
+  const printButton = (primary: boolean) => <button type="button" className={primary ? 'primary-button' : 'secondary-button'} disabled={checking || !canPrint} onClick={onPrint}><Printer size={16} aria-hidden="true" />Print knitting sheet</button>;
+
+  return <aside id="status-panel" className={`sweater-status${checking ? ' is-checking' : ''}`} aria-label="Status" aria-busy={checking}>
     <section className={`status-card tone-${tone}`} role="status">
-      <Icon size={22} className={tone === 'checking' ? 'spin' : undefined} />
-      <div><strong data-testid="readiness-headline">{title}</strong>{detail && <p>{detail}</p>}</div>
+      <Icon size={20} className={waiting ? 'spin' : undefined} aria-hidden="true" />
+      <div><strong data-testid="readiness-headline">{title}</strong>{tone === 'blocked' && !lead && detail && <p>{detail}</p>}</div>
+      {/* Shown only if the check takes a moment, so a quick one changes nothing on screen. */}
+      {checking && !waiting && <span className="status-busy" aria-hidden="true"><LoaderCircle size={14} className="spin" /></span>}
     </section>
-    <ol className="status-steps" aria-label="Steps">
-      <Step number={number('design')} title="Design" state={state('design')}><Notes notes={notes} /></Step>
-      {swatch && <Step number={number('swatch')} title="Measure a swatch" state={state('swatch')}>
-        <ul className="swatch-gauges">{swatch.gauges.map((gauge) => <li key={gauge.name} className={gauge.measured ? 'measured' : ''}>{gauge.name}<span>{gauge.measured ? 'measured' : 'typical values'}</span></li>)}</ul>
-        {!done.swatch && swatch.file?.onDownload && <p className="step-hint">Knit the swatch file, wash and dry it like the finished piece, then measure 10 cm in the middle.</p>}
-        <div className="step-buttons">
-          {swatch.file?.onDownload && <button type="button" className="secondary-button step-action" disabled={swatch.file.writing} onClick={swatch.file.onDownload}>{swatch.file.writing ? <LoaderCircle size={15} className="spin" /> : <Download size={15} />}{swatch.file.writing ? 'Writing the swatch file…' : 'Download swatch file'}</button>}
-          <button type="button" className="secondary-button step-action" onClick={swatch.onEnter}><Ruler size={15} />{done.swatch ? 'Change your swatch' : 'Enter your swatch'}</button>
+    {lead && <section className="status-next" aria-label="Next step">
+      <p className="status-reason">{lead.text}</p>
+      {lead.action && <p className="step-hint">{lead.action}</p>}
+      {lead.actions && <fieldset className="note-actions" disabled={checking}>{lead.actions}</fieldset>}
+    </section>}
+    {next && <div className="status-actions" aria-label="Next step">
+      {next === 'print' && <p className="status-done"><Check size={14} aria-hidden="true" />Downloaded</p>}
+      {next === 'swatch-enter' && swatchDownloaded && <p className="status-done"><Check size={14} aria-hidden="true" />Swatch file downloaded</p>}
+      {next === 'swatch-file' && swatchDownload(true)}
+      {next === 'swatch-enter' && swatchEnter(true)}
+      {next === 'package' && packageButton(true)}
+      {next === 'print' && printButton(true)}
+    </div>}
+    {swatch?.file?.problem && <p className="piece-error" role="alert">{swatch.file.problem}</p>}
+    <div className="status-disclosures">
+      {(why || waiting || others.length > 0) && <details id="status-why" className="status-disclosure">
+        <summary>Why?{others.length > 0 && <span className="status-more">{others.length} more to check</span>}</summary>
+        <div className="status-disclosure-body">
+          {why && <p className="step-hint">{why}</p>}
+          {waiting && <p className="step-hint">Downloads update when the current design has been checked.</p>}
+          <Notes notes={others} disabled={checking} />
         </div>
-        {swatch.file?.problem && <p className="piece-error" role="alert">{swatch.file.problem}</p>}
-        {swatchChecks.length > 0 && <section className="at-the-machine" aria-label="Before the swatch">
-          <p className="step-hint">At the machine, before knitting the swatch:</p>
-          <ul className="status-notes operator">{swatchChecks.map((note, index) => <li key={index}>{note}</li>)}</ul>
-        </section>}
-      </Step>}
-      <Step number={number('download')} title="Download" state={state('download')}>
-        <section className="status-pieces" aria-label="Machine files">
-          <ul>
-            {files.map((file) => <li key={file.id} className={`piece-row piece-${file.state}`}>
-              <button type="button" className="piece-open" onClick={() => onOpenFile(file.id)} title={`See what ${file.fileName} knits`}>
-                <span className="piece-dot" aria-hidden="true" />
-                <span className="piece-name"><code>{file.fileName}</code> {file.name}{file.copies && file.copies > 1 ? <em> · run {file.copies}×</em> : null}</span>
-                <span className="piece-facts">{file.facts}</span>
-              </button>
-              <button type="button" className="icon-button" disabled={file.state !== 'ok'} onClick={() => onDownloadFile(file.id)} title={`Download ${file.fileName}`} aria-label={`Download ${file.fileName}`}><Download size={15} /></button>
-              {file.state === 'blocked' && file.error && !notes.some((note) => note.text === file.error) && <p className="piece-error">{file.error}</p>}
-              {fileDetail?.id === file.id && <div className="file-detail">{fileDetail.content}</div>}
-            </li>)}
-          </ul>
+      </details>}
+      {swatch && <details className="status-disclosure">
+        <summary>Swatch</summary>
+        <div className="status-disclosure-body">
+          <ul className="swatch-gauges">{swatch.gauges.map((gauge) => <li key={gauge.name} className={gauge.measured ? 'measured' : ''}>{gauge.name}<span>{gauge.measured ? 'measured' : 'typical values'}</span></li>)}</ul>
+          {!measured && <p className="step-hint">Knit a swatch, wash and dry it like the finished piece, then measure 10 cm in the middle.</p>}
+          <div className="step-buttons">
+            {next !== 'swatch-file' && swatchDownload(false)}
+            {next !== 'swatch-enter' && swatchEnter(false)}
+          </div>
+        </div>
+      </details>}
+      <details className="status-disclosure">
+        <summary>Files and printing</summary>
+        <div className="status-disclosure-body">
+          <section className="status-pieces" aria-label="Machine files">
+            <ul>
+              {files.map((file) => <li key={file.id} className={`piece-row piece-${checking ? 'checking' : file.state}`}>
+                <button type="button" className="piece-open" onClick={() => onOpenFile(file.id)} title={`See what ${file.fileName} knits`}>
+                  <span className="piece-dot" aria-hidden="true" />
+                  <span className="piece-name"><code>{file.fileName}</code> {file.name}{file.copies && file.copies > 1 ? <em> · run {file.copies}×</em> : null}</span>
+                  <span className="piece-facts">{file.facts}</span>
+                </button>
+                <button type="button" className="icon-button" disabled={checking || file.state !== 'ok'} onClick={() => onDownloadFile(file.id)} title={`Download ${file.fileName}`} aria-label={`Download ${file.fileName}`}><Download size={15} aria-hidden="true" /></button>
+                {file.state === 'blocked' && file.error && !notes.some((note) => note.text === file.error) && <p className="piece-error">{file.error}</p>}
+                {fileDetail?.id === file.id && <div className="file-detail">{fileDetail.content}</div>}
+              </li>)}
+            </ul>
+          </section>
+          <div className="status-actions">
+            {next !== 'package' && packageButton(false)}
+            {next !== 'print' && printButton(false)}
+          </div>
+          {footer}
+        </div>
+      </details>
+      {startChecks.length > 0 && <details className="status-disclosure" open={machineOpen} onToggle={(event) => setMachineOpen(event.currentTarget.open)}>
+        <summary>Before knitting</summary>
+        <section className="status-disclosure-body at-the-machine" aria-label="At the machine">
+          <p className="step-hint">Check these at the machine before every run, including a swatch.</p>
+          <ul className="status-notes operator">{startChecks.map((note) => <li key={note}>{note}</li>)}</ul>
         </section>
-        <div className="status-actions">
-          <button type="button" className="primary-button" disabled={!canPackage || packaging} onClick={onPackage}>{packaging ? <LoaderCircle size={16} className="spin" /> : <Package size={16} />}Download knitting package</button>
-          <button type="button" className="secondary-button" disabled={!canPrint} onClick={onPrint}><Printer size={16} />Print knitting sheet</button>
-        </div>
-        {atTheMachine.length > 0 && <section className="at-the-machine" aria-label="At the machine">
-          <p className="step-hint">At the machine, before knitting:</p>
-          <ul className="status-notes operator">{atTheMachine.map((note, index) => <li key={index}>{note}</li>)}</ul>
-        </section>}
-      </Step>
-    </ol>
-    {footer}
+      </details>}
+    </div>
   </aside>;
 }

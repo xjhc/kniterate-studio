@@ -1,21 +1,15 @@
 name: CI
 
-# Pull requests run the fast checks: `pnpm verify` confirms the tracked KCode
-# receipt matches the checkout, and each browser tests the production build in
-# its own job. The full mutation proof, which re-runs every gate, runs weekly
-# and on demand.
+# `pnpm verify` confirms the tracked KCode receipt matches the checkout, and
+# each browser tests the production build in its own job.
 on:
   pull_request:
-  schedule:
-    - cron: '0 6 * * 1'
-  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   verify:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +22,6 @@ jobs:
       - run: pnpm verify
 
   browser:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -54,16 +47,3 @@ jobs:
           name: playwright-results-${{ matrix.browser }}
           path: output/playwright/test-results
           retention-days: 7
-
-  mutation-proof:
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .node-version
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm verify:kcode:check

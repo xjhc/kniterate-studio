@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "aac76b724cdd1c0714b701adf049a78e0209dc8f",
+  "sourceModified": true,
+  "compilerFingerprint": "2e525c1d2886a1552ff2539471ac7a2ae56e3ec0d0669594ba21ead61eafe60d",
+  "reproduce": "node --import tsx scripts/audit-sweater-replay-capacity.ts",
+  "scope": "One synthetic maximum-plan-width/schema-max-body-length candidate; not an exhaustive largest-program search or a physical trial.",
+  "intent": {
+    "title": "Synthetic sweater capacity audit",
+    "silhouette": "drop-shoulder",
+    "neckline": "boat",
+    "size": "XXL",
+    "fit": "oversized",
+    "textureId": "stockinette",
+    "yarn": {
+      "name": "Synthetic audit yarn",
+      "hex": "#D9CBB0"
+    },
+    "gauge": {
+      "stitchesPer10cm": 20,
+      "rowsPer10cm": 28,
+      "source": "assumed"
+    },
+    "ribGauge": {
+      "stitchesPer10cm": 20,
+      "rowsPer10cm": 32,
+      "source": "assumed"
+    },
+    "measurements": {
+      "chest": 240,
+      "length": 250
+    }
+  },
+  "object": {
+    "kind": "sweater",
+    "silhouette": "drop-shoulder",
+    "neckline": "boat",
+    "measurements": {
+      "chest": 240,
+      "length": 250,
+      "sleeveLength": 34.4,
+      "upperArm": 57.2,
+      "cuff": 23,
+      "armholeDepth": 28.6,
+      "shoulderWidth": 78,
+      "neckWidth": 20,
+      "frontNeckDepth": 9,
+      "backNeckDepth": 2,
+      "shoulderDrop": 1.5
+    },
+    "size": "XXL oversized",
+    "body": {
+      "name": "Stockinette",
+      "texture": [
+        "k"
+      ]
+    },
+    "trims": {
+      "hem": {
+        "rib": "kkpp",
+        "cm": 6
+      },
+      "cuff": {
+        "rib": "kkpp",
+        "cm": 6
+      },
+      "neck": {
+        "rib": "kp",
+        "cm": 2.5
+      }
+    },
+    "ribGauge": {
+      "stitchesPer10cm": 20,
+      "rowsPer10cm": 32,
+      "source": "assumed"
+    }
+  },
+  "elapsedSeconds": 10.281622102,
+  "sweaterVerdict": "blocked",
+  "exportReady": false,
+  "readiness": {
+    "ready": false,
+    "blockers": [
+      {
+        "kind": "verdict-blocked",
+        "label": "Blocked"
+      },
+      {
+        "kind": "assumed-value",
+        "path": "gauge",
+        "rule": "gauge-assumed"
+      },
+      {
+        "kind": "assumed-value",
+        "path": "object.ribGauge",
+        "rule": "gauge-assumed"
+      },
+      {
+        "kind": "finding",
+        "rule": "machine-safety.attached-yarn",
+        "severity": "error",
+        "owner": "compiler",
+        "path": "pieces/sleeve"
+      },
+      {
+        "kind": "finding",
+        "rule": "machine-safety.attached-yarn",
+        "severity": "error",
+        "owner": "compiler",
+        "path": "pieces/sleeve"
+      }
+    ],
+    "operatorChecks": [
+      "Yarn on C3, waste yarn on C6, draw thread on C1."
+    ]
+  },
+  "admittedAuthoredEventBound": {
+    "selections": 200000,
+    "passes": 8192,
+    "records": 100000,
+    "formula": "selections + 3 * passes + records",
+    "rationale": "At most one action per selection or empty pass, two pass boundaries, and at most one rack event per record.",
+    "events": 324576,
+    "limit": 400000
+  },
+  "pieces": [
+    {
+      "id": "back",
+      "raster": {
+        "castOnStitches": 240,
+        "widestStitches": 240,
+        "rows": 703,
+        "ribRows": {
+          "bottom": 19,
+          "top": 8
+        },
+        "widthCm": 120,
+        "heightCm": 249.9
+      },
+      "verdict": "surface",
+      "kcodeOk": true,
+      "kcodeSha256": "af134783f1d74654b19e1177235cd35da783901489652d8285e52150def391c8",
+      "hashMatches": true,
+      "passes": 1788,
+      "rackCommands": 479,
+      "selectedCells": 195394,
+      "actions": 194445,
+      "selectionHeadroom": 4606,
+      "events": 198500,
+      "eventLimit": 400000,
+      "eventHeadroom": 201500,
+      "eventFormulaMatches": true,
+      "finalReplayMatchesValidator": true,
+      "errors": []
+    },
+    {
+      "id": "front",
+      "raster": {
+        "castOnStitches": 240,
+        "widestStitches": 240,
+        "rows": 703,
+        "ribRows": {
+          "bottom": 19,
+          "top": 8
+        },
+        "widthCm": 120,
+        "heightCm": 249.9
+      },
+      "verdict": "surface",
+      "kcodeOk": true,
+      "kcodeSha256": "af134783f1d74654b19e1177235cd35da783901489652d8285e52150def391c8",
+      "hashMatches": true,
+      "passes": 1788,
+      "rackCommands": 479,
+      "selectedCells": 195394,
+      "actions": 194445,
+      "selectionHeadroom": 4606,
+      "events": 198500,
+      "eventLimit": 400000,
+      "eventHeadroom": 201500,
+      "eventFormulaMatches": true,
+      "finalReplayMatchesValidator": true,
+      "errors": []
+    },
+    {
+      "id": "sleeve",
+      "raster": {
+        "castOnStitches": 46,
+        "widestStitches": 114,
+        "rows": 99,
+        "ribRows": {
+          "bottom": 19,
+          "top": 0
+        },
+        "widthCm": 57,
+        "heightCm": 34.5
+      },
+      "verdict": "blocked",
+      "kcodeOk": false,
+      "kcodeSha256": "2d9e947d0e4bf794f02a64fc182e586c63e07bcc6cf15ad15d14ed22c1f6fe10",
+      "hashMatches": true,
+      "passes": 1074,
+      "rackCommands": 363,
+      "selectedCells": 13243,
+      "actions": 13175,
+      "selectionHeadroom": 186757,
+      "events": 15686,
+      "eventLimit": 400000,
+      "eventHeadroom": 384314,
+      "eventFormulaMatches": true,
+      "finalReplayMatchesValidator": true,
+      "errors": [
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "KCode 2131:177: Pass 224 works needle 155, 8 needles past carrier 6's last stitch at 147, under its yarn to where it rests at 157.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "KCode 2140:178: Pass 225 works needle 155, 8 needles past carrier 6's last stitch at 147, under its yarn to where it rests at 157.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        }
+      ]
+    }
+  ]
+}

@@ -22,7 +22,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "sha256": "f5f55c47f9cc85d8df72a602d31f820dc2ca8a06da49839568925d7859e1dddf"
+      "sha256": "6ae7810412f4374ba87f1003122f562556842c3cc8640924b89fca7ebeee8777"
     },
     {
       "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -167,15 +167,15 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "startLine": 643,
-      "endLine": 643,
+      "startLine": 653,
+      "endLine": 653,
       "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
     }
   ],
   "diagnosticProseExclusions": [
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "line": 643,
+      "line": 653,
       "column": 16,
       "mutator": "StringLiteral",
       "replacement": "``",
@@ -398,11 +398,11 @@
       "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
     }
   ],
-  "diagnosticProseExclusionsSha256": "e87c8f6034dce85b181f0f43621c5c54ed696f150af1ca3ff6d90af216eeba77",
+  "diagnosticProseExclusionsSha256": "8f94301a95db9b620538922cef502132e0849f9328006c5052604c1f1cbd0630",
   "equivalentMutantSuppressions": [
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "line": 379,
+      "line": 387,
       "column": 57,
       "mutator": "MethodExpression",
       "replacement": "[...formed, passIndex]",
@@ -410,7 +410,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "line": 488,
+      "line": 496,
       "column": 13,
       "mutator": "EqualityOperator",
       "replacement": "loop.coordinate <= action.at.traceCoordinate",
@@ -418,7 +418,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "line": 488,
+      "line": 496,
       "column": 13,
       "mutator": "EqualityOperator",
       "replacement": "loop.coordinate >= action.at.traceCoordinate",
@@ -689,11 +689,11 @@
       "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
     }
   ],
-  "equivalentMutantSuppressionsSha256": "f634b0ea8653c5500d8143b97d09441d923effa1c802f3c862ef63d234bfc349",
+  "equivalentMutantSuppressionsSha256": "61da205bdc79e32f69dae2f9786953860552c371da8edf8ebe6666e8685e7e01",
   "unreviewedIgnoredMutants": [],
   "misScopedDiagnosticProseExclusions": [],
   "counts": {
-    "Killed": 3188,
+    "Killed": 3213,
     "Survived": 0,
     "Timeout": 0,
     "NoCoverage": 0,

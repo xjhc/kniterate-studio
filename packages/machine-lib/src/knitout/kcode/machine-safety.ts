@@ -220,7 +220,7 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
     maxNeedles: DEFAULT_MAX_FLOAT_DISTANCE_V1,
     coveringKnits: 36,
     evidence: evidence('reference-corpus-observed', [KNITOUT_TRANSFER_NOTES, CUSTOMIST_MANUAL, PINNED_BACKEND, REFERENCE_CORPUS],
-      'Knitout notes for the Kniterate: taking a carrier "out" on the right makes it "trail over the whole knit to move to the Home position". The machine has no yarn cutter and KCode cannot say a yarn was cut, so a carrier moved without knitting drags its yarn from its last stitch to where it rests, and needles worked under it can catch it. Within the official editor\'s float distance (7 needles) that yarn is a float. The stitch holds the yarn at the needles until other yarns knit over it; reference programs work farther than a float past a parked yarn\'s last stitch only once its needle has been knitted over at least 36 times, as a sleeve widens under a parked yarn.'),
+      'Knitout notes for the Kniterate: taking a carrier "out" on the right makes it "trail over the whole knit to move to the Home position". The machine has no yarn cutter and KCode cannot say a yarn was cut, so a carrier moved without knitting drags its yarn from its last stitch to where it rests, and needles worked under it can catch it. Within the official editor\'s float distance (7 needles) that yarn is a float. The stitch holds the yarn at the needles until other yarns knit over it; reference programs work farther than a float past a parked yarn\'s last stitch only once its needle has been knitted over at least 36 times, as a sleeve widens under a parked yarn. Studio conservatively applies the same check to parking after a carrier\'s final loop-forming pass; that extension is product policy, not observed physical clearance. Continuing within-pass carries remain float advisories.'),
   },
 }
 
@@ -361,10 +361,18 @@ export function validateKCodeMachineSafetyV1(
   const { min: firstColumn, max: lastColumn } = profile.raster.kcodeColumnRange
   const rest = new Map<MachineCarrierV1, number>(CARRIERS.map((carrier) => [carrier, home[carrier]]))
   const lastPass = new Map<MachineCarrierV1, MachineTracePassV1>()
+  // An empty move may fetch a carrier that knits again. Treat a within-pass
+  // carry as parking only after the final loop-forming use.
+  const lastLoopPass = new Map<MachineTracePassV1['carrier'], number>()
+  for (const pass of trace.passes) {
+    if (pass.actions.some((action) => action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'split')) {
+      lastLoopPass.set(pass.carrier, pass.index)
+    }
+  }
   // Where each carrier's yarn is attached, the needle holding its last stitch
   // (a transfer takes the yarn along), and how many times other yarns have
-  // knitted over that needle since; and the carriers that have since moved
-  // without knitting, dragging the yarn after them.
+  // knitted over that needle since. Track yarn exposed by an empty move or
+  // by parking after the carrier's final stitch-forming pass.
   const yarn = new Map<MachineCarrierV1, { readonly stitch: Pick<MachineTraceSelectionV1, 'bed' | 'traceCoordinate'>; readonly covers: number }>()
   const moved = new Set<MachineCarrierV1>()
   let passesWithoutRoller = 0
@@ -523,9 +531,10 @@ export function validateKCodeMachineSafetyV1(
           `Pass ${pass.index + 1} operates needle ${formatStop(nearest.position)} while carrier ${carrier} rests at ${formatStop(at)}, closer than ${distance}; a feeder over the needles collides with them.`,
           pass, nearest.span, nearest.actionIndex)
       }
-      // A carrier moved away without knitting drags its yarn, still near the
-      // needles, from its last stitch to where it rests: needles worked under
-      // it can catch it. A carry within a knitting pass is outside this rule.
+      // Empty moves and final-use parking leave yarn between the last stitch
+      // and the encoded stop. A continuing colourwork carry is not made a
+      // parking hazard just because a later fetch precedes its next stitch;
+      // the separate empty-move rule still applies once that fetch occurs.
       for (const [carrier, attached] of yarn) {
         if (!moved.has(carrier) || carrier === pass.carrier || attached.covers >= envelope.attachedYarn.coveringKnits) continue
         const at = rest.get(carrier)!
@@ -620,7 +629,8 @@ export function validateKCodeMachineSafetyV1(
         .at(-1)
       if (last !== undefined) {
         yarn.set(carrier, { stitch: last.at, covers: 0 })
-        moved.delete(carrier)
+        if (lastLoopPass.get(carrier) === pass.index) moved.add(carrier)
+        else moved.delete(carrier)
       } else {
         moved.add(carrier)
       }

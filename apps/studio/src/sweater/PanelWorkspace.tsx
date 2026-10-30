@@ -99,6 +99,6 @@ export function PanelWorkspace({ project, onProject, plan, run, view, onView, on
       {error && <p className="stage-error" role="alert">{error}<button type="button" className="link-button" onClick={() => setError(null)}>Dismiss</button></p>}
       <div className="stage-body">{body}</div>
     </section>
-    <SweaterStatusPanel plan={plan} run={run} ribUsed={object.ends.cm > 0} downloaded={downloaded} swatchFile={swatchFile} onOpenFile={() => onView('file')} onDownloadPiece={onDownloadPiece} onPackage={onPackage} onPrint={onPrint} packaging={packaging} />
+    <SweaterStatusPanel key={project.id} plan={plan} run={run} ribUsed={object.ends.cm > 0} downloaded={downloaded} swatchFile={swatchFile} onOpenFile={() => onView('file')} onDownloadPiece={onDownloadPiece} onPackage={onPackage} onPrint={onPrint} packaging={packaging} />
   </main>;
 }

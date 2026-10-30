@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { kcDownload, menu } from './menu';
+import { kcDownload, menu, openStatusDisclosure, settledHeadline } from './menu';
 
 test('creates, renames, recolors, autosaves, and recovers a customer project', async ({ page }) => {
   const errors: string[] = [];
@@ -32,6 +32,7 @@ test('creates, renames, recolors, autosaves, and recovers a customer project', a
   await settings.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(page.locator('.brand-copy small')).toContainText('Harbor blanket v1');
   await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+  await openStatusDisclosure(page, 'Files and printing');
   await expect(kcDownload(page)).toBeEnabled({ timeout: 15_000 });
 
   await page.reload();
@@ -64,7 +65,7 @@ test('starting another project keeps the first one on this device, to open again
   await expect(recent.getByRole('button', { name: /^Moss scarf/ })).toContainText('open now');
   await recent.getByRole('button', { name: /^Ring toque/ }).click();
   await expect(page.locator('.brand-copy small')).toContainText('Ring toque');
-  await expect(page.getByTestId('readiness-headline')).toHaveText('Ready to knit, sizes not confirmed', { timeout: 30_000 });
+  await expect(settledHeadline(page)).toHaveText('File checks passed, sizes not confirmed', { timeout: 30_000 });
 
   // Both survive a reload, and the open one comes back open.
   await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');

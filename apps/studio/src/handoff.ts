@@ -43,89 +43,110 @@ export interface ReadinessStory {
   notices: string[];
 }
 
-interface RuleStory { part: string; consequence: string; action: string; target: (finding: Finding) => string | null }
+interface RuleStory {
+  part: string;
+  /** What is wrong, in a few words, after the part: "Body colourwork: floats too long". */
+  problem: string;
+  consequence: string;
+  action: string;
+  target: (finding: Finding) => string | null;
+}
 
 const RULE_STORIES: Record<string, RuleStory> = {
   'gauge-assumed': {
     part: 'Fit',
+    problem: 'sizes rest on a typical gauge',
     consequence: 'The finished size is a calculation from a guessed gauge, so the hat may not fit.',
     action: 'Knit a swatch, measure it and enter the gauge.',
     target: (finding) => (finding.path === 'object.ribGauge' ? 'gauge.rib' : 'gauge.body'),
   },
   'size-needs-gauge': {
     part: 'Fit',
+    problem: 'no gauge to size it from',
     consequence: 'Without a gauge, stitch and row counts cannot be derived from centimetres.',
     action: 'Enter the gauge measured on a swatch in this yarn and fabric.',
     target: (finding) => (finding.path === 'object.ribGauge' ? 'gauge.rib' : 'gauge.body'),
   },
   'size-off-target': {
     part: 'Size',
+    problem: 'not the size you asked for',
     consequence: 'The piece would knit to a different size than the one asked for.',
     action: 'Apply the offered resize, or change the requested size.',
     target: (finding) => (finding.path === 'target.heightCm' ? 'fit.body' : 'fit.head'),
   },
   'size-exceeds-capacity': {
     part: 'Size',
+    problem: 'too big for the machine',
     consequence: 'The machine bed cannot hold this size at this gauge.',
     action: 'Choose a smaller size or a finer gauge.',
     target: () => 'fit.head',
   },
   'beanie-width-invalid': {
     part: 'Size',
+    problem: 'no crown fits this width',
     consequence: 'The crown cannot be planned at this width, so nothing can be knitted.',
     action: 'Apply the offered width.',
     target: () => 'fit.head',
   },
   'project-beanie-width': {
     part: 'Size',
+    problem: 'no crown fits this width',
     consequence: 'The crown cannot be knitted at this width, so no program is produced.',
     action: 'Apply the offered width under Size.',
     target: () => 'fit.head',
   },
   'cuff-off-target': {
     part: 'Cuff',
+    problem: 'not the height you asked for',
     consequence: 'The cuff would knit to a different height than the one asked for.',
     action: 'Apply the offered cuff rows; the body and motifs stay where they are.',
     target: () => 'fit.cuff',
   },
   'placement-size-off': {
     part: 'Motif',
+    problem: 'made at another gauge',
     consequence: 'The motif was converted at another gauge and would knit stretched or squashed.',
     action: 'Refresh the motif from its stored image.',
     target: (finding) => (finding.path?.startsWith('placements/') ? `placement:${finding.path.slice(11)}` : null),
   },
   'project-placement-conflict': {
     part: 'Motif',
+    problem: 'cannot be placed',
     consequence: 'The motif cannot be drawn (it does not fit, or a colour maps to no yarn), so it is left out and export is blocked.',
     action: 'Move or shrink the motif, make the piece larger, or fix its colour mapping.',
     target: () => 'placements',
   },
   'long-float': {
     part: 'Body colourwork',
+    problem: 'floats too long',
     consequence: 'A long strand of yarn would lie behind the work and snag fingers and hair.',
     action: 'Switch the body to a birdseye back, or make the motif bolder or more compact.',
     target: () => 'backing',
   },
   'project-long-carry': {
     part: 'Body colourwork',
+    problem: 'a yarn is carried unused for many rows',
     consequence: 'A yarn would run unused up the inside of the hat over many rows.',
     action: 'Switch the body to a birdseye back, or bring the colour into the rows between.',
     target: (finding) => finding.path,
   },
   'project-beanie-backing-unsupported': {
     part: 'Body colourwork',
+    problem: 'this backing is not made for beanies',
     consequence: 'This backing is not built for beanies, so nothing is knitted.',
     action: 'Choose fairisle or birdseye.',
     target: () => 'backing',
   },
   'project-beanie-colorwork-unsupported': {
     part: 'Cuff',
+    problem: 'colours in the rib',
     consequence: 'The rib cuff knits one yarn; coloured stitches in it cannot be knitted.',
     action: 'Keep the cuff rows one colour and put colourwork above the cuff.',
     target: () => 'fit.cuff',
   },
   'name-encodes-carrier': {
     part: 'Yarns',
+    problem: 'a name points to another carrier',
     consequence: 'The yarn name names a different carrier than the one it is loaded on, which invites a loading mistake.',
     action: 'Apply the offered rename.',
     target: () => 'yarns',
@@ -154,6 +175,15 @@ export function storyItems(findings: readonly Finding[]): StoryItem[] {
 export function noteWords(item: StoryItem): { text: string; why: string | null } {
   return RULE_STORIES[item.rule] ? { text: `${item.part}: ${item.action}`, why: item.consequence } : { text: item.message, why: null };
 }
+
+/** A note's words in the status panel: what is wrong in a few words, the next step and what it leads to; any other as its own message. */
+export function statusWords(item: StoryItem): { text: string; action: string | null; why: string | null } {
+  const story = RULE_STORIES[item.rule];
+  return story ? { text: `${item.part}: ${story.problem}`, action: item.action, why: item.consequence } : { text: item.message, action: null, why: null };
+}
+
+/** Rules a birdseye back fixes: the yarn is knitted in behind every stitch, so nothing floats or is carried. */
+export const BIRDSEYE_FIXES: ReadonlySet<string> = new Set(['long-float', 'project-long-carry']);
 
 /**
  * One note per thing to check: notes that say the same (every long float,
@@ -202,16 +232,16 @@ export function readinessStory({ findings, readiness, verdict, exportReady = tru
     detail = 'Fix these first.';
   } else if (readiness.ready) {
     status = 'ready';
-    headline = 'Ready to knit';
-    detail = 'Every software check passed.';
+    headline = verdict.state === 'knit' ? 'Proven on the machine' : 'File checks passed';
+    detail = verdict.state === 'knit' ? 'This exact file was knitted and recorded.' : 'Physical knitting has not been verified.';
   } else if (notes.length === 0) {
     status = 'needs-measurements';
-    headline = 'Ready to knit, sizes not confirmed';
+    headline = `${verdict.state === 'knit' ? 'Proven on the machine' : 'File checks passed'}, sizes not confirmed`;
     detail = 'Sizes use a typical gauge until you measure a swatch.';
   } else {
     status = 'design-issues';
     headline = `${notes.length} ${notes.length === 1 ? 'thing' : 'things'} to check`;
-    detail = 'It can be knitted. Check these first.';
+    detail = 'Check these before knitting.';
   }
   const synthetic = trials.filter((trial) => trial.synthetic);
   const notices = synthetic.length

@@ -14,6 +14,15 @@ ship," trust this file and the working tree instead.
 
 ## Implemented in `apps/studio`
 
+- **Runtime fingerprint and replay capacity (2026-10-30).** The compiler
+  fingerprint includes sweater production and authored eligibility helpers;
+  a runtime-import regression checks that closure. Earlier registrations are
+  stale against this changed fingerprint. The existing authored admission
+  budgets bound replay below 400,000 events (at most 324,576); a 240-needle,
+  703-row synthetic sweater front/back uses 198,500. Its sleeves retain two
+  existing attached-yarn errors, so this is not a ready garment or a physical
+  claim. See [the small gap closure](./GAP-CLOSURE-PLAN.md) and
+  [capacity report](./benchmarks/sweater-replay-capacity.json).
 - **Foreign-`.kc`/`.k` workspace (Story 1 / "S1").** Open any `.kc` or Knitout
   `.k` → canonical V1 KCode semantics, strict byte-preserving intake, pinned
   lowering and scheduled-pass differential for `.k`, virtualized pass grid,
@@ -530,7 +539,15 @@ ship," trust this file and the working tree instead.
     2026-10-25 after review; the clearance was a count of roller passes until
     a second review). Studio's chain bind-off now starts on the side its yarn ended,
     walking the mirror image from the right, instead of first moving the yarn
-    left across the live stitches.
+    left across the live stitches. Since 2026-10-30 the same span check also
+    covers parking after a carrier's final loop-forming pass. Earlier
+    within-pass carries stay outside the blocking rule when the carrier
+    knits/tucks/splits again, even if an empty fetch comes first. Existing
+    empty-move checks remain. This extension is conservative product policy,
+    not observed physical clearance. Ordinary colourwork float findings stay
+    advisory, but the advisory does not detect every continuing carry (see
+    the open gap below). The [policy comparison](./benchmarks/yarn-parking-audit.json)
+    adds no findings to the 13 references or audited authored candidates.
 
   Feeder clearance measures a transfer at its front-bed needle, so a racked
   rear-to-front transfer is checked where its receiving needle actually is
@@ -557,16 +574,29 @@ ship," trust this file and the working tree instead.
   limits (`machineSetup.ts`). The envelope says nothing about which settings
   suit a yarn; physical knitting stays the final gate.
 
-  Open safety qualification work (reviewed 2026-10-24, not built):
-  - attached-yarn paths beyond the blocking rule above. It follows a yarn
-    only from its latest stitch. A carry within a knitting pass, from a
-    carrier's last stitch to where it parks, is outside the rule and is not
-    reliably detected: the float advisory compares a carrier's consecutive
-    stitches, so some carries pass with no warning at all. Studio's
-    four-colour birdseye ("minimal" backing) carries a colour that is absent
-    from the end of a row up to 19 needles past its last stitch before other
-    yarns knit there; Kniterate's own double-bed programs never go past 1.
-    Introduction, and release of a yarn known to be cut, have no model;
+  One-needle sequence coverage (2026-10-30) compares converter-emitted
+  knit/tuck/transfer/drop/recast operations on both beds at rack −1/0/+1.
+  Validator counts, execution snapshots, topology identities and safety
+  tuck-stack decisions agree; dropped loops do not become new loop parents.
+  That software check does not establish pickup stability.
+
+  Open safety qualification work (reviewed 2026-10-30):
+  - continuing within-pass carries in four-colour minimal birdseye. The
+    previously recorded case carries a colour absent from the end of a row
+    up to 19 needles past its last stitch before other yarns knit there,
+    versus at most 1 in the compared Kniterate double-bed programs. The colour
+    knits again later, so the final-use parking rule deliberately leaves this
+    carry outside its scope. The float advisory compares consecutive stitches
+    and misses some stitch-to-stop spans, so some carries pass with no warning
+    at all. An authored minimal-birdseye rectangle with a mid-row motif colour
+    remains untested by the audit: its authored sparse cases have solid-colour
+    rows, while the relevant 20/40-needle edge-motif cases use developer mode
+    and are already blocked by other findings. This remains an open hazard
+    and warning gap;
+  - attached-yarn paths beyond the blocking rule above. It follows only the
+    latest stitch and cannot prove physical yarn placement. Introduction,
+    release of cut yarn and attachment after drop/recast remain unmodeled;
+    pickup stability needs paired accepted/unstable construction evidence;
   - construction-aware held-fabric checks beyond the central short-row
     count: where fabric is held, which region knits on, and how the rollers
     act on it, plus edge loading and finishing. The count is per needle
@@ -609,10 +639,25 @@ ship," trust this file and the working tree instead.
     menu bar (File / Edit / View) replaces the icon ribbons.
     - Left: what you are making.
     - Middle: Design / Schematic / Machine file, always in the same place.
-    - Right: whether it can be knitted, then the steps in order (Design,
-      Measure a swatch, Download), each holding what belongs to it; the
-      next one is marked. Download lists what to set at the machine before
-      knitting. Measuring a finished hat is not a step:
+    - Right: the current result and one primary next action. Following the
+      user's progressive-disclosure decision (2026-10-26), Why? explains the
+      result; Swatch holds measurements; Files and printing holds individual
+      files and the run sheet; Before knitting holds the machine preparation
+      checks, including when only a swatch is downloadable. Each starts closed.
+      The first thing to check stays visible as what is wrong in a few words
+      ("Body colourwork: floats too long") with its fix button (a beanie's
+      floats and carries offer "Use a birdseye back"); the next step is
+      spelled out only where no button takes it. The next action follows the
+      work: Download swatch file, then Enter your swatch; Download knitting
+      package, then Print knitting sheet, with Before knitting opened once
+      after each download. While a change is checked the last result stays in
+      place, dimmed only if the check takes a moment, with its buttons off.
+      The top bar's badge repeats the panel's headline and tone and opens Why?;
+      the verdict ladder popover is only for opened `.kc`/`.k` files. Software
+      checks say "File checks passed"; only exact physical evidence says
+      "Proven on the machine". Export eligibility is unchanged. A number
+      outside its range is not applied and says so ("Use 10–800; kept 400").
+      Measuring a finished hat remains separate:
       File → Record a finished hat (beanie) records it after knitting and
       corrects the design for the next one.
   - Schematics come from the machine file read back (`workspace/RunSchematic`).

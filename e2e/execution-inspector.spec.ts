@@ -64,7 +64,7 @@ test('shows exact emitted KCode for a Knitout event and preserves access to orig
   const emittedLines = converted.kcode.split('\n');
   await page.goto('/');
   await page.locator('input[accept=".kc,.k,text/plain"]').setInputFiles({ name: 'inspector.k', mimeType: 'text/plain', buffer: Buffer.from(smallKnitout) });
-  await expect(page.getByLabel('Verdict: Ready to knit')).toBeVisible();
+  await expect(page.getByLabel('Verdict: File checks passed')).toBeVisible();
   const controls = page.getByRole('region', { name: 'Execution controls' });
   await controls.getByRole('button', { name: 'Next event', exact: true }).click();
   await expect(controls).toContainText('Pass 1 · action 1 · tuck');

@@ -10,6 +10,8 @@ import {
 import { KNITERATE_7GG_KCODE_PROFILE_V2 as profile } from '../../src/knitout/kcode/machine-profile.js'
 import { projectKCodeMachineTrace, type MachineTraceV1 } from '../../src/knitout/kcode/machine-trace.js'
 import { validateKCodeMachineTrace } from '../../src/knitout/kcode/machine-validator.js'
+import { validateKCodeMachineSafetyV1 } from '../../src/knitout/kcode/machine-safety.js'
+import { projectMachineTopologyV1 } from '../../src/knitout/kcode/machine-topology.js'
 import { parseKCodeBytes } from '../../src/knitout/kcode/bytes.js'
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
 import { knitoutToKCodeWithTrace } from '../../src/knitout/kniterate/to-kcode.js'
@@ -37,6 +39,46 @@ function isAction(event: MachineExecutionEventV1): event is Extract<MachineExecu
 }
 
 describe('KCode execution cursor', () => {
+  it.each([
+    { sourceBed: 'f', targetBed: 'b', rack: -1 },
+    { sourceBed: 'f', targetBed: 'b', rack: 0 },
+    { sourceBed: 'f', targetBed: 'b', rack: 1 },
+    { sourceBed: 'b', targetBed: 'f', rack: -1 },
+    { sourceBed: 'b', targetBed: 'f', rack: 0 },
+    { sourceBed: 'b', targetBed: 'f', rack: 1 },
+  ])('recasts fresh loops after a $sourceBed→$targetBed transfer and drop at rack $rack', ({ sourceBed, targetBed, rack }) => {
+    const source = `${sourceBed}40`
+    const target = `${targetBed}${40 + (sourceBed === 'f' ? -rack : rack)}`
+    const instructions = [
+      'in 2', `knit + ${source} 2`, `tuck - ${source} 2`,
+      `rack ${rack}`, `xfer ${source} ${target}`, 'rack 0', `drop ${target}`,
+      `tuck + ${target} 2`, `tuck - ${target} 2`,
+    ]
+    const trace = compileTrace([...instructions, `knit + ${target} 2`])
+    const { index, validation } = indexFor(trace)
+    const actions = index.events.filter(isAction).filter((event) => event.action.kind !== 'move')
+    expect(actions.map((event) => event.action.kind)).toEqual(['knit', 'tuck', 'xfer', 'drop', 'tuck', 'tuck', 'knit'])
+    const expectedTotals = [1, 2, 2, 0, 1, 2, 1]
+    for (const [position, event] of actions.entries()) {
+      expect(inspectMachineExecutionV1(index, event.index).loopState?.totalLoops).toBe(expectedTotals[position])
+      expect(inspectMachineExecutionV1(index, event.index - 1).loopState?.totalLoops).toBe(position === 0 ? 0 : expectedTotals[position - 1])
+    }
+    expect(inspectMachineExecutionV1(index, index.events.length - 1).loopState).toEqual(validation.finalState)
+
+    const topology = projectMachineTopologyV1(trace)
+    expect(topology.loops.map((loop) => loop.creation)).toEqual(['knit', 'tuck', 'tuck', 'tuck', 'knit'])
+    expect(topology.loops.slice(0, 2).map((loop) => loop.terminal?.kind)).toEqual(['dropped', 'dropped'])
+    expect(topology.loops[2]!.parentLoopIds).toEqual([])
+    expect(topology.loops[4]!.parentLoopIds).toEqual([2, 3])
+    expect(topology.summary.liveLoopCount).toBe(validation.finalState.totalLoops)
+
+    // The old two-loop stack was dropped: two fresh tucks are allowed, while
+    // a third fresh tuck reaches the existing blocking threshold on either bed.
+    expect(validateKCodeMachineSafetyV1(trace, profile).counts['machine-safety.tuck-stack']).toBe(0)
+    const thirdTuck = compileTrace([...instructions, `tuck + ${target} 2`])
+    expect(validateKCodeMachineSafetyV1(thirdTuck, profile).counts['machine-safety.tuck-stack']).toBe(1)
+  })
+
   it('steps before and after knit, tuck, transfer, split and drop over both full beds', () => {
     const trace = compileTrace([
       'in 2', 'knit + f40 2', 'knit + f41 2',

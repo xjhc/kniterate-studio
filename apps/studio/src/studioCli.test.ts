@@ -162,7 +162,7 @@ describe('authored CLI command receipts', () => {
     expect(ready.receipt.summary.join('\n')).toContain('45-row 2x2 rib cuff folding up to 7 cm; 44-row fairisle colorwork body (12.9 cm); 30-row eight-line (jersey) crown');
     expect(cli(['export', projectPath, '-o', resolve(directory, 'toque.kc')]).status).toBe(0);
     const sheet = readFileSync(resolve(directory, 'toque-instructions.md'), 'utf8');
-    expect(sheet).toContain('**Ready to knit.**');
+    expect(sheet).toContain('**File checks passed.**');
     expect(sheet).toContain('Software checks passed · Surface-proven · physical knit pending');
     expect(sheet).toContain('Flat beanie, seamed afterwards: 134 needles');
     expect(sheet).toContain('Fold the rib cuff up');

@@ -57,7 +57,7 @@ export interface AuthoredVerdict {
  */
 export const VERDICT_WORDS: Record<VerdictState, { name: string; meaning: string }> = {
   blocked: { name: "Can't knit yet", meaning: 'The machine file did not pass its checks.' },
-  surface: { name: 'Ready to knit', meaning: 'The machine file passed every check. It has not been knitted yet.' },
+  surface: { name: 'File checks passed', meaning: 'The machine file passed its software checks. Physical knitting has not been verified.' },
   knit: { name: 'Proven on the machine', meaning: 'This exact file was knitted and recorded.' },
 };
 

@@ -1,5 +1,10 @@
 # KCODE-COMPILER-GAPS — tracked baseline and corrected gap register
 
+For the 2026-10-30 implementation sequence, see
+[`GAP-CLOSURE-PLAN.md`](./GAP-CLOSURE-PLAN.md). It covers final-use parking,
+one-needle sequences, fingerprint coverage and sweater replay capacity. The
+historical closure labels below retain their original software scope.
+
 **Evidence class: tracked local software evidence plus explicitly labelled external
 documentation.** Revised 2026-09-17 against `accumulate`. The historical
 2026-08-29 baseline below is distinct from the debugger implementation update.
