@@ -342,3 +342,57 @@ describe('sweater CLI', () => {
     expect(project.history.entries.filter((entry) => entry.label).map((entry) => entry.label)).toEqual(['Create Sweater', 'Seed stitch', 'Body shaped by hand', 'Body shape from the measurements']);
   });
 });
+
+describe('machine-file CLI', () => {
+  const knitted = 'apps/studio/public/handoff-2/2-studio-fairisle';
+
+  it('lists Kniterate\'s reference files and their sections', { timeout: 60_000 }, () => {
+    const list = cli(['reference']);
+    expect(list.status).toBe(0);
+    expect(list.receipt.references.map((item: { name: string }) => item.name)).toContain('ref:dbj');
+    const dbj = cli(['reference', 'dbj']);
+    expect(dbj.receipt).toMatchObject({ file: 'packages/machine-lib/reference/dbj.kc', passCount: 498, sections: ['waste 1-105', 'draw 106-108', 'cast-on 109-112', 'body 113-460', 'top 461-486', 'carriers-out 487-498'] });
+    expect(dbj.receipt.audit).toContain('start-hold 5/12 ok');
+  });
+
+  it('lists the passes of a section, one line each', { timeout: 60_000 }, () => {
+    const passes = cli(['passes', 'ref:dbj', '--section', 'cast-on']);
+    expect(passes.status).toBe(0);
+    expect(passes.receipt.passes).toEqual([
+      '109 >> c0 rack 0.5 speed 600 roller 0 | move [cast-on]',
+      '110 << c3 rack 0.5 speed 200 roller 400 stitch f3,r3 | knit front 70 (92..161), knit rear 70 (92..161) [cast-on]',
+      '111 >> c3 rack 0 speed 200 roller 400 stitch f6 | knit front 70 (92..161) [cast-on]',
+      '112 << c3 rack 0 speed 200 roller 400 stitch r6 | knit rear 70 (92..161) [cast-on]',
+    ]);
+  });
+
+  it('audits the knitted handoff 2 file: its start held a waste loop for 90 passes', { timeout: 60_000 }, () => {
+    const audit = cli(['audit', knitted]);
+    expect(audit.status).toBe(1);
+    const check = audit.receipt.files[0].checks.find((item: { id: string }) => item.id === 'start-hold');
+    expect(check).toMatchObject({ ok: false, value: 90, at: ['b94 from pass 2 (c6) to 92 (c2)'] });
+    expect(audit.receipt.files[0].notes).toContain('no longer re-makes these bytes');
+  });
+
+  it('compares a file with Kniterate\'s own, section by section and pass by pass', { timeout: 60_000 }, () => {
+    const castOn = cli(['compare', knitted, 'ref:fairisle', '--carriers', '2=4', '--section', 'cast-on']);
+    expect(castOn.status).toBe(0);
+    expect(castOn.receipt.comparison).toMatchObject({ a: { from: 115, to: 120 }, b: { from: 107, to: 112 }, compared: 6, identical: 6 });
+    const all = cli(['compare', knitted, 'ref:fairisle', '--carriers', '2=4']);
+    expect(all.status).toBe(1);
+    expect(all.receipt.sections.map((section: { section: string; identical: number; compared: number }) => `${section.section} ${section.identical}/${section.compared}`)).toEqual(['waste 84/104', 'draw 2/2', 'cast-on 6/6', 'body 141/148', 'top 17/17', 'carriers-out 5/9']);
+  });
+
+  it('audits a project as compiled now, with its run-record sections', { timeout: 60_000 }, () => {
+    const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-'));
+    const projectPath = resolve(directory, 'project.json');
+    writeFileSync(projectPath, serializeColorworkProjectV1(createColorworkProjectV1(chart, { id: 'cli-audit' })));
+    const audit = cli(['audit', projectPath]);
+    expect(audit.status).toBe(0);
+    expect(audit.receipt.files[0]).toMatchObject({ ok: true, sectionSource: 'project' });
+    const unknown = cli(['passes', 'ref:nope']);
+    expect(unknown.status).toBe(2);
+    expect(unknown.receipt.error).toMatchObject({ kind: 'usage' });
+    expect(unknown.receipt.error.message).toContain('ref:nope'.slice(4));
+  });
+});

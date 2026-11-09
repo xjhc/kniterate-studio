@@ -14,6 +14,10 @@
 - **Verdict is three rungs** (Blocked / Surface-proven / Knit-proven). Experimental
   and waivers were cut from V1 on 2026-07-12 (SYSTEM-DESIGN R6). Docs, the
   canonical mockup, and the dead UI rung were reconciled to match.
+- **Reading and checking a machine file:** `pnpm --silent studio -- reference |
+  passes | audit | compare | matrix` (see `studio -- help`, the
+  `kniterate-engine` skill and STATUS, 2026-11-09). Compare against Kniterate's
+  own files (`ref:<name>`) stitch by stitch before and after any engine change.
 - **Machine truth now starts at emitted KCode.** Strict byte-preserving parsing,
   canonical V1 raster semantics, exact `MachineTraceV1`, loop/kinematic replay,
   scheduled backend differential checks, and synchronized movement rendering

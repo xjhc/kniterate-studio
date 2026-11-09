@@ -1,0 +1,33 @@
+{
+  "kind": "kniterate-studio-measurements",
+  "schemaVersion": 1,
+  "candidate": {
+    "kcodeSha256": "d91041a8db720828c420b3a6dde3c4d1d98bf6edbcf11428274dd425939dddee",
+    "label": "Bind-off strip",
+    "predictedCm": {
+      "circumference": null,
+      "cuffVisible": null,
+      "body": null,
+      "crown": null,
+      "total": null
+    }
+  },
+  "synthetic": false,
+  "outcome": null,
+  "bodyGauge": {
+    "stitchesPer10cm": null,
+    "rowsPer10cm": null
+  },
+  "ribGauge": {
+    "stitchesPer10cm": null,
+    "rowsPer10cm": null
+  },
+  "finishedCm": {
+    "circumference": null,
+    "cuffVisible": null,
+    "body": null,
+    "crown": null,
+    "total": null
+  },
+  "notes": ""
+}

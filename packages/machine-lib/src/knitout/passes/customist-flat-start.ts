@@ -98,7 +98,8 @@ export const STUDIO_FLAT_START_SETTINGS_V1: FlatStartSettingsV1 = Object.freeze(
 /** A piece's own settings for the sections of the flat start and its rib, over the reference's. */
 export interface FlatSectionSettingsV1 {
   readonly waste?: SectionSettingsV1
-  readonly castOn?: SectionSettingsV1
+  /** The cast-on row's settings; `tubularRoller` sets the two tubular rows after it. */
+  readonly castOn?: SectionSettingsV1 & { readonly tubularRoller?: number }
   readonly rib?: SectionSettingsV1
   readonly transfers?: SectionSettingsV1
   /** A beanie crown's knitted rows; other pieces have none. */
@@ -120,11 +121,20 @@ export function flatStartSettingsV1(own: FlatSectionSettingsV1 = {}, base: FlatS
   return Object.freeze({
     ...base,
     wasteStitch: waste.stitch ?? base.wasteStitch,
+    // A slower waste or cast-on speed also caps that section's other knitting:
+    // the yarns' insert rows and every waste tube row (the top waste too, which
+    // already knits at the waste's stitch size), and the cast-on's tubular
+    // rows. Otherwise a section set to 100 still knits rows at 200 (PR #14).
+    // Carrier moves keep their speed: they knit nothing.
+    insertSpeed: waste.speed === undefined ? base.insertSpeed : Math.min(base.insertSpeed, waste.speed),
+    tubeSpeed: waste.speed === undefined ? base.tubeSpeed : Math.min(base.tubeSpeed, waste.speed),
+    tubularSpeed: castOn.speed === undefined ? base.tubularSpeed : Math.min(base.tubularSpeed, castOn.speed),
     wasteSpeed: waste.speed === undefined ? base.wasteSpeed : (p: number) => (p < base.wasteRampPasses ? Math.min(base.wasteSpeed(p), waste.speed!) : waste.speed!),
     wasteRoller: waste.roller === undefined ? base.wasteRoller : (p: number) => (base.wasteRoller(p) === 0 ? 0 : waste.roller!),
     castOnSpeed: castOn.speed ?? base.castOnSpeed,
     castOnRoller: castOn.roller ?? base.castOnRoller,
     castOnStitch: castOn.stitch ?? base.castOnStitch,
+    tubularRoller: castOn.tubularRoller ?? base.tubularRoller,
     ribSpeed: rib.speed ?? base.ribSpeed,
     ribRoller: rib.roller ?? base.ribRoller,
     ribStitchFront: rib.stitch ?? base.ribStitchFront,
@@ -257,7 +267,15 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
 
   // Waste interlock. Rightward passes knit the full 1×1 (front even, rear
   // odd); leftward passes knit the interior with the parities swapped. The
-  // start pass skips the outermost needles.
+  // start pass skips the outermost needles. With the yarn catch, leftward
+  // passes also knit each edge needle the catch's return leaves a waste loop
+  // on: the rear-left needle always, and the front-right one when the catch
+  // spans the whole piece (20 needles or fewer). These rows would never knit
+  // them, so the loop was held until the first colour knitted it, about 90
+  // passes later (issue #9, handoff 2).
+  const catchZone = Math.min(s.catchNeedles, width)
+  const rearLeft = catchZone > 0 ? 0 : 1
+  const frontRight = catchZone >= width ? width : width - 1
   sim.bringIn(waste, { side: 'left' })
   catchYarn(waste)
   for (let p = 0; p < (input.wastePasses ?? s.wastePasses); p++) {
@@ -266,7 +284,7 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
       row(waste, '+', (o) => even(o) && o > 0, (o) => !even(o) && o < width - 1)
       sim.miss(waste, '+', f(hi - 1 + WASTE_START_EXTEND))
     }
-    else if (p % 2 === 1) row(waste, '-', (o) => !even(o) && o < width - 1, (o) => even(o) && o > 0)
+    else if (p % 2 === 1) row(waste, '-', (o) => !even(o) && o < frontRight, (o) => even(o) && o >= rearLeft)
     else row(waste, '+', even, (o) => !even(o))
   }
   drain()

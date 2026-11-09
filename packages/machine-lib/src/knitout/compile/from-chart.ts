@@ -66,6 +66,8 @@ export interface CompileChartInput {
     knitSpeed: number;
     knitStitch: number;
     knitRollerRamp: number[];
+    knitFirstStitch: boolean;
+    firstStitchRoller: number;
   }>;
   /** Per-pass machine settings for `bindOff: 'fairisle-park-bindoff'`.
    *  Forwarded to `emitFairisleParkBindoff`; see `FairisleParkConfig`. */

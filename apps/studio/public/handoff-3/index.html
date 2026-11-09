@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23262b29'/%3E%3Cpath d='M8 9h16M8 16h16M8 23h16' stroke='%23f8f7f3' stroke-width='2.5'/%3E%3C/svg%3E" />
+<title>Machine handoff 3</title>
+<style>
+  :root { color-scheme: light dark;
+    --paper: #f8faf9; --panel: #ffffff; --ink: #202624; --ink-2: #59635f; --line: #cdd4d0; --accent: #d4553d; --surface: #13785a; }
+  @media (prefers-color-scheme: dark) { :root {
+    --paper: #202623; --panel: #252c29; --ink: #edf2ef; --ink-2: #bac4bf; --line: #3c4742; --accent: #ef8a6e; --surface: #70c7a2; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 8px; }
+  h2 { font-size: 1.1rem; margin: 0 0 4px; }
+  p { margin: 0 0 12px; }
+  a { color: var(--accent); }
+  .muted { color: var(--ink-2); }
+  .all { display: inline-block; margin: 8px 0 24px; padding: 10px 16px; border-radius: 6px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 600; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin: 0 0 16px; }
+  ul { margin: 8px 0 12px; padding-left: 20px; }
+  section > ul:last-child { margin-bottom: 0; }
+  code { font: 0.8rem/1.4 "SFMono-Regular", Consolas, monospace; overflow-wrap: anywhere; }
+  .hash { color: var(--ink-2); }
+  .kc { font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Machine handoff 3</h1>
+  <p>Two bind-off strips to knit on the Kniterate, in this order, with run 4B's yarn and machine setup. Both passed Studio's checks (Surface-proven). Neither has been knitted yet.</p>
+  <p class="muted">Check each file's SHA-256 before loading it. The instructions now include three setup checks from Kniterate's support pages: the side tension arms, where the cones stand, and the knot sensor and brake disc. Fill in the run record at the machine, then post the results on <a href="https://github.com/xjhc/kniterate-studio/issues/9">issue #9</a>.</p>
+  <a class="all" href="./handoff-3.zip" download>Download both (zip)</a>
+
+  <section>
+    <h2>1. Bind-off strip, fixed start</h2>
+    <p>Run 4's strip with only the start fixed: no waste loop is held at the left corner any more. The same 30 needles, rows and bind-off as run 4B. The first cast-on row's roller is back at the standard 450 (run 4B had 300).</p>
+    <p>Does the left corner still break? Does the bind-off break again where it starts, on the right? 256 passes.</p>
+    <ul>
+      <li><a class="kc" href="./1-bindoff-strip-fixed-start/program.kc" download="1-bindoff-strip-fixed-start.kc">program.kc</a> <code class="hash">d91041a8db720828c420b3a6dde3c4d1d98bf6edbcf11428274dd425939dddee</code></li>
+      <li><a href="./1-bindoff-strip-fixed-start/instructions.md">Instructions</a> · <a href="./1-bindoff-strip-fixed-start/measurement-form.md">Measurement form and run record</a> · <a href="./1-bindoff-strip-fixed-start/chart.png">Chart</a></li>
+      <li class="muted"><a href="./1-bindoff-strip-fixed-start/program.k" download="1-bindoff-strip-fixed-start.k">program.k</a> · <a href="./1-bindoff-strip-fixed-start/project.kniterate-studio.json" download="1-bindoff-strip-fixed-start.kniterate-studio.json">Studio project</a> · <a href="./1-bindoff-strip-fixed-start/manifest.json">manifest</a></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. Bind-off strip, Kniterate's settings</h2>
+    <p>Strip 1 with three of Kniterate's settings, and nothing else changed:</p>
+    <ul>
+      <li>The two circular rows after the zigzag (passes 109 and 110) at roller 200 instead of 400. Kniterate advises less roller pull when the first rows break; 200 is an experienced owner's value.</li>
+      <li>The bind-off knits at stitch 4, the Kniterate app's current default, instead of the 6 in Kniterate's bind-off swatch file.</li>
+      <li>Kniterate's "Knit first stitch": the first needle is knitted once more at roller 350 before its first transfer (passes 134 and 135). Kniterate says this squares the corner and stops the first bind-off stitch dropping.</li>
+    </ul>
+    <p>If strip 1 breaks at the cast-on or where the bind-off starts, do these settings stop it? If strip 1 knits cleanly, is this edge neater? 258 passes.</p>
+    <ul>
+      <li><a class="kc" href="./2-bindoff-strip-kniterate-settings/program.kc" download="2-bindoff-strip-kniterate-settings.kc">program.kc</a> <code class="hash">8fd76ea382c082c318eb6e975576989186a95761dea6f48eeac5d3f3458140c6</code></li>
+      <li><a href="./2-bindoff-strip-kniterate-settings/instructions.md">Instructions</a> · <a href="./2-bindoff-strip-kniterate-settings/measurement-form.md">Measurement form and run record</a> · <a href="./2-bindoff-strip-kniterate-settings/chart.png">Chart</a></li>
+      <li class="muted"><a href="./2-bindoff-strip-kniterate-settings/program.k" download="2-bindoff-strip-kniterate-settings.k">program.k</a> · <a href="./2-bindoff-strip-kniterate-settings/project.kniterate-studio.json" download="2-bindoff-strip-kniterate-settings.kniterate-studio.json">Studio project</a> · <a href="./2-bindoff-strip-kniterate-settings/manifest.json">manifest</a></li>
+    </ul>
+  </section>
+
+  <p class="muted">These are the exact files from the handoff 3 comment on issue #9. Use them as they are: an edited or re-exported file can't be registered as this run. <a href="../">Open Studio</a></p>
+</main>
+</body>
+</html>

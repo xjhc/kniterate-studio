@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, type ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { CUSTOMIST_MIN_WASTE_PASSES_V1, CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistWastePassesV1 } from '@kniterate-studio/machine-lib/browser';
+import { CUSTOMIST_MIN_WASTE_PASSES_V1, CUSTOMIST_STANDARD_BODY_SETTINGS_V1, CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1, CUSTOMIST_STANDARD_WASTE_PASSES_V1, customistWastePassesV1, traceAutoSectionsV1 } from '@kniterate-studio/machine-lib/browser';
 import { runAuthoredPipeline } from './authoredPipeline';
 import { createBeanieProject } from './beanie';
 import { compileColorworkProject } from './blanket/compileProject';
@@ -233,7 +233,7 @@ describe('every section’s speed, roller and stitch size', () => {
   const hat = () => createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' }, cuffCm: 7, ribGauge: { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'measured' }, fold: true, main: { name: 'Black', hex: '#111111' }, accent: { name: 'White', hex: '#F2F2F2' } }, { id: 'hat', source: 'human', group: 'create' });
 
   it.each(['fairisle', 'birdseye'] as const)('of a %s chart: its waste', async (technique) => {
-    expect(sectionStandards(materializeColorworkProject(chart(technique)).state).map((section) => section.key)).toEqual(['waste', 'body']);
+    expect(sectionStandards(materializeColorworkProject(chart(technique)).state).map((section) => section.key)).toEqual(technique === 'fairisle' ? ['waste', 'castOn', 'body'] : ['waste', 'body']);
     const result = await runAuthoredPipeline(own(chart(technique), 'waste'));
     expect(result.verdict.state).toBe('surface');
     expect(uses(result.compiled!.knitoutText!)).toEqual([true, true, true]);
@@ -274,6 +274,20 @@ describe('every section’s speed, roller and stitch size', () => {
     expect(crownOf(knitout)).toMatch(/^x-speed-number 150$/m);
   });
 
+  it('of a beanie: a slower waste and cast-on knit every start row no faster, the tube and tubular rows too (PR #14)', { timeout: 60_000 }, async () => {
+    const slow = { speed: 100 };
+    const slowed = appendProjectEdit(hat(), { id: 'slow-start', source: 'human', edit: { kind: 'set-machine-setup', setup: { waste: slow, castOn: slow } } });
+    const [before, after] = await Promise.all([runAuthoredPipeline(hat()), runAuthoredPipeline(slowed)]);
+    expect(after.verdict.state).toBe('surface');
+    const startKnits = (trace: NonNullable<NonNullable<typeof after.kcode>['trace']>) => {
+      const start = traceAutoSectionsV1(trace).filter((section) => ['waste', 'draw', 'cast-on'].includes(section.name));
+      return trace.passes.filter((pass) => start.some((section) => pass.index + 1 >= section.from && pass.index + 1 <= section.to) && pass.actions.some((action) => action.kind === 'knit'));
+    };
+    // The standard start knits its waste tube and tubular rows at 200.
+    expect(startKnits(before.kcode!.trace!).filter((pass) => pass.speed === 200).length).toBeGreaterThan(4);
+    expect(Math.max(...startKnits(after.kcode!.trace!).map((pass) => pass.speed))).toBe(100);
+  });
+
   it('of a beanie: the top is waste yarn over the crown’s stitches, its rows your own', async () => {
     const topOf = (knitout: string) => knitout.slice(knitout.indexOf('WASTE ON TOP'));
     const rows = (knitout: string) => topOf(knitout).split('\n').filter((line) => /^knit [+-] f\d+ 6$/.test(line)).length;
@@ -296,5 +310,99 @@ describe('every section’s speed, roller and stitch size', () => {
     const piece = (await runSweaterPipeline(own(scarf(4), 'rib'))).pieces[0]!;
     expect(piece.verdict.state).toBe('surface');
     expect(uses(piece.compiled!.knitoutText)).toEqual([true, true, true]);
+  });
+});
+
+describe('a fairisle chart\'s cast-on and a chart\'s chain bind-off', () => {
+  const withSetup = (project: ColorworkProjectV1, setup: object) => appendProjectEdit(project, { id: 'setup', source: 'human', edit: { kind: 'set-machine-setup', setup } as never });
+  const differing = (a: readonly { raw: unknown }[], b: readonly { raw: unknown }[]) => a.flatMap((pass, index) => (JSON.stringify(pass.raw) === JSON.stringify(b[index]?.raw) ? [] : [index]));
+
+  it('cast-on roller and stitch set only the first zig-zag row (the operator\'s setting behind issue #9 run 4B)', { timeout: 60_000 }, async () => {
+    const [before, after] = await Promise.all([runAuthoredPipeline(chart('fairisle')), runAuthoredPipeline(withSetup(chart('fairisle'), { castOn: { roller: 300 } }))]);
+    expect(after.exportReady).toBe(true);
+    const a = before.kcode!.trace!.passes;
+    const b = after.kcode!.trace!.passes;
+    expect(b).toHaveLength(a.length);
+    const changed = differing(a, b);
+    expect(changed).toHaveLength(1);
+    expect([a[changed[0]!]!.roller, b[changed[0]!]!.roller]).toEqual([450, 300]);
+    expect(b[changed[0]!]!.raw.FRNT).toBe(a[changed[0]!]!.raw.FRNT);
+  });
+
+  it('cast-on speed sets the three cast-on rows and nothing else: the first body row stays slow', { timeout: 60_000 }, async () => {
+    const [before, after] = await Promise.all([runAuthoredPipeline(chart('fairisle')), runAuthoredPipeline(withSetup(chart('fairisle'), { castOn: { speed: 50 } }))]);
+    expect(after.exportReady).toBe(true);
+    const a = before.kcode!.trace!.passes;
+    const b = after.kcode!.trace!.passes;
+    expect(b).toHaveLength(a.length);
+    const changed = differing(a, b);
+    expect(changed).toEqual([changed[0], changed[0]! + 1, changed[0]! + 2]);
+    expect(changed.map((index) => [a[index]!.speed, b[index]!.speed])).toEqual([[100, 50], [100, 50], [100, 50]]);
+    // The first body row after the transfers, one pass per colour, keeps its
+    // slow 100 (issue #9 runs 1 and 2).
+    const firstBody = b.filter((pass, index) => index > changed[2]! && pass.actions.some((action) => action.kind === 'knit')).slice(0, 2);
+    expect(firstBody.map((pass) => [pass.carrier, pass.speed])).toEqual([['2', 100], ['3', 100]]);
+  });
+
+  it('the tubular roller sets only the two tubular rows after the zig-zag (an owner\'s fix for first-row breaks)', { timeout: 60_000 }, async () => {
+    const [before, after] = await Promise.all([runAuthoredPipeline(chart('fairisle')), runAuthoredPipeline(withSetup(chart('fairisle'), { castOn: { tubularRoller: 200 } }))]);
+    expect(after.exportReady).toBe(true);
+    const a = before.kcode!.trace!.passes;
+    const b = after.kcode!.trace!.passes;
+    const changed = differing(a, b);
+    expect(changed).toHaveLength(2);
+    expect(changed[1]).toBe(changed[0]! + 1);
+    expect(changed.map((index) => [a[index]!.roller, b[index]!.roller])).toEqual([[400, 200], [400, 200]]);
+    expect(changed.map((index) => b[index]!.raw.FRNT + b[index]!.raw.REAR)).toEqual(changed.map((index) => a[index]!.raw.FRNT + a[index]!.raw.REAR));
+  });
+
+  it('a bind-off top can knit Kniterate\'s first stitch at roller 350 and set the chain\'s knit stitch size', { timeout: 60_000 }, async () => {
+    const top = { top: 'bind-off' };
+    const [before, after] = await Promise.all([runAuthoredPipeline(withSetup(chart('fairisle'), top)), runAuthoredPipeline(withSetup(chart('fairisle'), { ...top, bindOff: { stitch: 4, knitFirstStitch: true } }))]);
+    expect(before.exportReady).toBe(true);
+    expect(after.exportReady).toBe(true);
+    const a = before.kcode!.trace!.passes;
+    const b = after.kcode!.trace!.passes;
+    const first = differing(a, b)[0]!;
+    // Everything up to the bind-off is unchanged; the bind-off gains only the
+    // first stitch's knit and the yarn's move to it.
+    expect(a.slice(0, first).map((pass) => pass.raw)).toEqual(b.slice(0, first).map((pass) => pass.raw));
+    expect(b).toHaveLength(a.length + 2);
+    const knits = (pass: (typeof b)[number]) => pass.actions.filter((action) => action.kind === 'knit');
+    const bindOff = b.slice(first);
+    const [knitFirst, ...chain] = bindOff.filter((pass) => knits(pass).length > 0);
+    expect(knits(knitFirst!)).toHaveLength(1);
+    expect(knitFirst!.roller).toBe(350);
+    // Kniterate knits the first stitch in the chain knits' own direction, so the
+    // yarn then waits outside the edge: no carrier moves while the beds are racked.
+    expect(chain.length).toBeGreaterThan(30);
+    expect(new Set(chain.map((pass) => pass.direction))).toEqual(new Set([knitFirst!.direction]));
+    expect(bindOff.filter((pass) => pass.rack !== 0 && pass.carrier !== '0').map((pass) => pass.index)).toEqual([]);
+    // Every chain knit uses stitch 4.
+    expect(new Set([knitFirst!, ...chain].flatMap((pass) => knits(pass).map((action) => ('at' in action ? action.at.stitchSelector.encodedValue : -1))))).toEqual(new Set([4]));
+  });
+
+  it('refuses values outside the machine\'s limits', () => {
+    expect(machineSetupErrors({ castOn: { roller: -1, stitch: 1, speed: 0 } }, 'fairisle')).toHaveLength(3);
+    expect(machineSetupErrors({ top: 'bind-off', bindOff: { stitch: 4, knitFirstStitch: true }, castOn: { tubularRoller: 200 } }, 'fairisle')).toEqual([]);
+    expect(machineSetupErrors({ top: 'bind-off', bindOff: { stitch: 1 }, castOn: { tubularRoller: 1000 } }, 'fairisle').map((error) => error.rule)).toEqual(['project-setting-outside-machine-range', 'project-setting-outside-machine-range']);
+  });
+
+  it('keeps a setting the construction does not use, and ignores it: switching the backing or the top never blocks the project', { timeout: 60_000 }, async () => {
+    // The panel hides these sections then, so a refusal could not be cleared there.
+    expect(machineSetupErrors({ castOn: { roller: 300 } }, 'birdseye')).toEqual([]);
+    expect(machineSetupErrors({ bindOff: { stitch: 4, knitFirstStitch: true } }, 'fairisle')).toEqual([]);
+    expect(machineSetupErrors({ bindOff: { stitch: 4 } }, 'flat')).toEqual([]);
+    const raw = (result: Awaited<ReturnType<typeof runAuthoredPipeline>>) => result.kcode!.trace!.passes.map((pass) => pass.raw);
+    const [birdseye, birdseyeOwn, waste, wasteOwn] = await Promise.all([
+      runAuthoredPipeline(chart('birdseye')),
+      runAuthoredPipeline(withSetup(chart('birdseye'), { castOn: { roller: 300, speed: 50, tubularRoller: 200 } })),
+      runAuthoredPipeline(chart('fairisle')),
+      runAuthoredPipeline(withSetup(chart('fairisle'), { bindOff: { stitch: 4, knitFirstStitch: true } })),
+    ]);
+    expect(birdseyeOwn.exportReady).toBe(true);
+    expect(raw(birdseyeOwn)).toEqual(raw(birdseye));
+    expect(wasteOwn.exportReady).toBe(true);
+    expect(raw(wasteOwn)).toEqual(raw(waste));
   });
 });

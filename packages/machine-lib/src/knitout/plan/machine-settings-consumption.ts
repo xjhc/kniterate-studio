@@ -78,10 +78,11 @@ const MACHINE_SETTING_CONSUMPTION_RULES: readonly MachineSettingConsumptionRule[
 const MACHINE_SETTING_FIELD_REGISTRY: Readonly<Record<MachineSettingPrefix, readonly string[]>> = {
   kniterate: MACHINE_EFFECTIVE_KNITERATE_SETTINGS,
   wasteMachineConfig: Object.keys(WASTE_BASE_DEFAULTS),
-  bindOffMachineConfig: Object.keys(CHAIN_BINDOFF_DEFAULTS),
+  // A project may also ask for Kniterate's "Knit first stitch" (bind-off.ts).
+  bindOffMachineConfig: [...Object.keys(CHAIN_BINDOFF_DEFAULTS), 'knitFirstStitch', 'firstStitchRoller'],
   fairisleParkConfig: Object.keys(FAIRISLE_PARK_BINDOFF_DEFAULTS),
   // Studio's start adds the optional yarn catch and gentle first row (carrier-intro.ts).
-  fairisleCarrierIntro: [...Object.keys(FAIRISLE_CARRIER_INTRO_DEFAULTS), 'catchNeedles', 'firstRowRoller'],
+  fairisleCarrierIntro: [...Object.keys(FAIRISLE_CARRIER_INTRO_DEFAULTS), 'catchNeedles', 'firstRowRoller', 'tubularRoller', 'castOnSpeed'],
 };
 
 export function machineSettingConsumptionWarnings(

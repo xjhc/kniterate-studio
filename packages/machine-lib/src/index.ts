@@ -80,6 +80,27 @@ export {
   type MachineTracePassRoleV1,
 } from './knitout/kcode/pass-metrics.js';
 export {
+  DEFAULT_TRACE_YARN_ROLES_V1,
+  TRACE_MAX_STACK_LIMIT_V1,
+  TRACE_START_HOLD_LIMIT_V1,
+  auditTraceV1,
+  compareTraceRangesV1,
+  traceAutoSectionsV1,
+  traceRackAtV1,
+  traceRowsV1,
+  traceSectionOfV1,
+  type TraceAuditCheckV1,
+  type TraceAuditOptionsV1,
+  type TraceAuditV1,
+  type TraceComparisonV1,
+  type TraceHoldV1,
+  type TracePassDifferenceV1,
+  type TracePassRowV1,
+  type TraceRangeV1,
+  type TraceSectionV1,
+  type TraceYarnRolesV1,
+} from './knitout/kcode/trace-audit.js';
+export {
   CUSTOMIST_MATCHED_PRESETS_V1,
   CUSTOMIST_MIN_WASTE_PASSES_V1,
   CUSTOMIST_RIB_STITCH_STEP_V1,

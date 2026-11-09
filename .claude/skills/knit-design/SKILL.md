@@ -59,6 +59,17 @@ measurements.json` records the trial, makes the gauges measured and re-sizes
 in one undoable operation; the knitted candidate's files stay as they were.
 Mark made-up values `"synthetic": true`; never present them as a real knit.
 
+**Machine settings per project** go in one `set-machine-setup` edit
+(`studio -- schema` lists every field): `wasteRows`, `top`, and each
+section's `stitch`/`speed`/`roller` (a chart: `waste` and `body`, and on
+fairisle `castOn`; a flat piece: `waste`, `castOn`, `rib`, `body`,
+`transfers`, `crown`). `castOn.tubularRoller` sets the two tubular rows after
+the zig-zag. A chart with `top: "bind-off"` also takes `bindOff.stitch` and
+`bindOff.knitFirstStitch` (Kniterate's "Knit first stitch" at roller 350).
+A value outside Studio's machine limits blocks the compile. Handoff 3's strip B,
+for example:
+`edit p.json '{"kind":"set-machine-setup","setup":{"top":"bind-off","castOn":{"tubularRoller":200},"bindOff":{"stitch":4,"knitFirstStitch":true}}}'`.
+
 For both kinds:
 - The target width is the finished circumference; the plan adds the seam
   stitches and keeps the rib symmetric. `plan`, `describe`, `readiness`,
@@ -187,6 +198,34 @@ pnpm --silent studio -- export p.json -o command.kc
 
 For many cells, generate the edit JSON with a short script (a stripe or a
 repeat) rather than writing it by hand. `schema` prints every edit kind.
+
+## Check what a machine file does
+
+When a knit report comes back, a file looks odd, or you want to know what Studio
+will make the machine do, read the file itself rather than reasoning from the
+design:
+
+```bash
+pnpm --silent studio -- reference                          # Kniterate's own files (ref:<name>) and their sections
+pnpm --silent studio -- passes p.json                      # the file's sections: waste, draw, cast-on, rib, body, bind-off, top
+pnpm --silent studio -- passes p.json 110-125              # one line per pass: carrier, racking, speed, roller, stitch sizes, needles
+pnpm --silent studio -- audit p.json                       # every loop replayed: held start loops, waste through doubled loops, unheld drops, loops left
+pnpm --silent studio -- compare p.json ref:dbj --section cast-on   # stitch by stitch against Kniterate's own file
+pnpm --silent studio -- matrix --quick                     # build and audit a set of every construction (about 5 s)
+```
+
+- Pass numbers count from 1, as in the run record the knitter fills in: "stopped
+  at pass 117" is `passes <package folder> 110-125`.
+- A handoff package folder, a `.kc` or `.k` file, or `ref:<name>` works wherever
+  a project does. A sweater needs `--piece front|back|sleeve|neckband`.
+- `audit` exits 1 on an issue; say which check and which pass. A `note` (eyelets
+  at fashioned increases) is for judgement, not a failure. Each check says what
+  Kniterate's own files show.
+- `compare` lines files up section by section even at different bed positions;
+  `width` means the same stitches over a different width. `--carriers 2=4` maps
+  your carriers onto the other file's.
+- Judge by stitches, never by speed and roller alone: a frame once matched
+  Kniterate's settings pass for pass while missing its drop and cast-on.
 
 ## Reporting back
 

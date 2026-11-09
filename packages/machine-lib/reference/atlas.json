@@ -1,0 +1,232 @@
+{
+  "kind": "kniterate-reference-atlas",
+  "version": 1,
+  "about": "What each of Kniterate's own files in this folder is, which carriers are waste yarn and draw thread, and where each section of the run lies (passes numbered from 1, inclusive). Read with `pnpm studio -- reference [name]`; use as `ref:<name>` with passes, audit and compare. Sections were read from the files themselves (2026-11-09) and are checked by test/knitout/reference-atlas.test.ts.",
+  "references": [
+    {
+      "name": "fairisle",
+      "file": "fairisle.kc",
+      "sha256": "0dba85bca3f3251030bd2302a539b26a14870692261313c948007fb99ccae8e7",
+      "dialect": "knitout-vendor",
+      "what": "Customist's fairisle sample: 64 needles, two colours on one bed with floats (C4 ground, C3 motif). Studio's fairisle frame reproduces it.",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 104 },
+        { "name": "draw", "from": 105, "to": 106 },
+        { "name": "cast-on", "from": 107, "to": 112 },
+        { "name": "body", "from": 113, "to": 260 },
+        { "name": "top", "from": 261, "to": 277 },
+        { "name": "carriers-out", "from": 278, "to": 286 }
+      ],
+      "notes": "Rear waste dropped at 105, draw row 106; zig-zag over both beds at half rack (108), a front and a rear row, then the rear moved to the front (111-112)."
+    },
+    {
+      "name": "jacquard",
+      "file": "jacquard.kc",
+      "sha256": "2082bfff804b54efdd9f270941912d563b12a63e1f6430f97b83820d01398efb",
+      "dialect": "knitout-vendor",
+      "what": "Customist's two-colour birdseye jacquard sample: 67 needles on both beds (C2, C4).",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 98 },
+        { "name": "draw", "from": 99, "to": 100 },
+        { "name": "cast-on", "from": 101, "to": 104 },
+        { "name": "body", "from": 105, "to": 315 },
+        { "name": "top", "from": 316, "to": 341 },
+        { "name": "carriers-out", "from": 342, "to": 350 }
+      ],
+      "notes": "Closed cast-on: zig-zag over every needle of both beds at half rack (102), then a front and a rear row, no transfers. Top: rear homed to the front (316-317), one joining row in C2 (318), waste rows, release."
+    },
+    {
+      "name": "dbj",
+      "file": "dbj.kc",
+      "sha256": "3e39d3491666afbc70d06986cbcf492844b41812965013bc79726d1e7071f6dd",
+      "dialect": "knitout-vendor",
+      "what": "Customist's four-colour double-bed jacquard (birdseye, full back): 70 needles, C2-C5. Studio's birdseye chart frame follows it stitch for stitch at the cast-on and finish.",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 105 },
+        { "name": "draw", "from": 106, "to": 108 },
+        { "name": "cast-on", "from": 109, "to": 112 },
+        { "name": "body", "from": 113, "to": 460 },
+        { "name": "top", "from": 461, "to": 486 },
+        { "name": "carriers-out", "from": 487, "to": 498 }
+      ],
+      "notes": "Closed borders (Kniterate's Close): outer front needle always C2, outer rear always C5, inner front always C4. Joining row at 464."
+    },
+    {
+      "name": "2x2-rib-beanie",
+      "file": "2x2-rib-beanie.kc",
+      "sha256": "de0002e2ac7f36ea95f87940ac83c39439c97eea8ab9ed98427c5bf29f5c2b4a",
+      "dialect": "knitout-vendor",
+      "what": "Kniterate's 2x2 rib beanie: 194 needles, all rib with Kniterate's own crown, one yarn (C3).",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 105 },
+        { "name": "draw", "from": 106, "to": 108 },
+        { "name": "cast-on", "from": 109, "to": 116 },
+        { "name": "body", "from": 117, "to": 522 },
+        { "name": "top", "from": 523, "to": 523 },
+        { "name": "carriers-out", "from": 524, "to": 530 }
+      ],
+      "notes": "1x1 cast-on over both beds at rack 0 (110), then rib transfers. The crown's 25 last loops are dropped live (523) for gathering by hand; Studio's beanies end on waste yarn instead."
+    },
+    {
+      "name": "fox-baby-beanie",
+      "file": "fox-baby-beanie.kc",
+      "sha256": "cab085708317a5e943c1c9976fd1c9646fe11533e31c8794307f7ab139234160",
+      "dialect": "knitout-vendor",
+      "what": "Customist's baby beanie with a fox motif: 122 needles, four colours (C2-C5).",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 38 },
+        { "name": "draw", "from": 39, "to": 40 },
+        { "name": "cast-on", "from": 41, "to": 46 },
+        { "name": "body", "from": 47, "to": 190 },
+        { "name": "top", "from": 191, "to": 208 },
+        { "name": "carriers-out", "from": 209, "to": 220 }
+      ],
+      "notes": "Short waste section (38 passes); its top releases front and rear together at half rack (204)."
+    },
+    {
+      "name": "swatch",
+      "file": "swatch.kc",
+      "sha256": "ee8807b2f7f50a868cdc6107dfb23c9de2c7fcfe2d10ef79ac124878214c0005",
+      "dialect": "knitout-vendor",
+      "what": "Kniterate's tension swatch: 80 needles, body C5, waste yarn C2.",
+      "roles": { "waste": "2", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 94 },
+        { "name": "draw", "from": 95, "to": 96 },
+        { "name": "cast-on", "from": 97, "to": 102 },
+        { "name": "body", "from": 103, "to": 343 },
+        { "name": "top", "from": 344, "to": 355 },
+        { "name": "carriers-out", "from": 356, "to": 364 }
+      ],
+      "notes": "Cast-on yarn C3 (98-100), body C5."
+    },
+    {
+      "name": "color-swatch-bindoff",
+      "file": "color-swatch-bindoff.kc",
+      "sha256": "1584c39f268f63189905582ddd16baa8866046ab1c8b0b8c25f70b6509a62fb8",
+      "dialect": "knitout-vendor",
+      "what": "Customist colour swatch ending in a chain bind-off: 60 needles, C3/C4/C2 body, waste yarn C5. Studio's chain bind-off mirrors this one.",
+      "roles": { "waste": "5", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 94 },
+        { "name": "draw", "from": 95, "to": 96 },
+        { "name": "cast-on", "from": 97, "to": 102 },
+        { "name": "body", "from": 103, "to": 212 },
+        { "name": "bind-off", "from": 213, "to": 448 },
+        { "name": "carriers-out", "from": 449, "to": 458 }
+      ],
+      "notes": "Bind-off from the left: transfers at speed 120 roller 0, carrier move at 300, merge knit stitch 6 at roller 250 then 200, 150. The chain's last loop is left on the needle."
+    },
+    {
+      "name": "front",
+      "file": "front.kc",
+      "sha256": "8f451241667025c6f4dc7cd34a2e832c60bf2998e766371d7951be84ead07fbf",
+      "dialect": "app",
+      "what": "Customist's reversible (inverse) jacquard sweater, front: 232 needles; 1x1 hem rib in C6; inverse two-colour body in C3/C4, with C2/C5 for the second side of the neck split.",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 108 },
+        { "name": "draw", "from": 109, "to": 110 },
+        { "name": "cast-on", "from": 111, "to": 117 },
+        { "name": "rib", "from": 118, "to": 143 },
+        { "name": "body", "from": 144, "to": 2527 },
+        { "name": "top", "from": 2528, "to": 2532 },
+        { "name": "carriers-out", "from": 2533, "to": 2544 }
+      ],
+      "notes": "C6 is both the waste yarn and the hem rib yarn. After the rib every loop moves to the front (142-143) and a half-rack zig-zag fills the rear (144). Each shoulder (59 loops) is dropped live at the end."
+    },
+    {
+      "name": "back",
+      "file": "back.kc",
+      "sha256": "fc7683dba9af398143e2d1d346bc0375635ad106389f2e87f8d9dce0ab450c8b",
+      "dialect": "app",
+      "what": "Customist's reversible (inverse) jacquard sweater, back: 232 needles; same start as the front.",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 108 },
+        { "name": "draw", "from": 109, "to": 110 },
+        { "name": "cast-on", "from": 111, "to": 117 },
+        { "name": "rib", "from": 118, "to": 143 },
+        { "name": "body", "from": 144, "to": 2095 },
+        { "name": "top", "from": 2096, "to": 2096 },
+        { "name": "carriers-out", "from": 2097, "to": 2108 }
+      ],
+      "notes": "The first shoulder is dropped live at 2088, inside the body section; the second at 2096."
+    },
+    {
+      "name": "sleeves",
+      "file": "sleeves.kc",
+      "sha256": "1a092b9665786a0f5a5030d49ff3b2b99371f40923637c9ce302f770a47252af",
+      "dialect": "app",
+      "what": "Customist's reversible (inverse) jacquard sweater, sleeve: 124 needles at the cuff widening to 162, then the cap; 1x1 cuff rib in C2, body C3/C4.",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 102 },
+        { "name": "draw", "from": 103, "to": 104 },
+        { "name": "cast-on", "from": 105, "to": 112 },
+        { "name": "rib", "from": 113, "to": 138 },
+        { "name": "body", "from": 139, "to": 1619 },
+        { "name": "bind-off", "from": 1620, "to": 1983 },
+        { "name": "top", "from": 1984, "to": 1984 },
+        { "name": "carriers-out", "from": 1985, "to": 1994 }
+      ],
+      "notes": "Closed cast-on (zig-zag 106, front 107, rear 108), rib transfers, rib, rear homed to the front (137-138), half-rack zig-zag fill (139). Holds one rear edge waste loop from pass 81 to 156."
+    },
+    {
+      "name": "sophie",
+      "file": "sophie.kc",
+      "sha256": "00d75440ac6c47b460caab48aecab8cad40ec730223471d6f855097d0a10da7b",
+      "dialect": "app",
+      "what": "Kniterate app shaping sample: starts 6 needles wide, fashioned increases and decreases, one yarn (C3).",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 98 },
+        { "name": "draw", "from": 99, "to": 100 },
+        { "name": "cast-on", "from": 101, "to": 103 },
+        { "name": "body", "from": 104, "to": 3729 },
+        { "name": "bind-off", "from": 3730, "to": 3759 },
+        { "name": "top", "from": 3760, "to": 3760 },
+        { "name": "carriers-out", "from": 3761, "to": 3766 }
+      ],
+      "notes": "Fashioned increases knit onto an empty needle inside the fabric (48 times)."
+    },
+    {
+      "name": "sophie2",
+      "file": "sophie2.kc",
+      "sha256": "4d6ff927b9c229b7eb131f75ec7768f0af60446477339473206d13c31119ad46",
+      "dialect": "app",
+      "what": "Kniterate app shaping sample, second version: 6 needles at the start, fashioned shaping, one yarn (C3).",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 94 },
+        { "name": "draw", "from": 95, "to": 96 },
+        { "name": "cast-on", "from": 97, "to": 102 },
+        { "name": "body", "from": 103, "to": 3710 },
+        { "name": "carriers-out", "from": 3711, "to": 3716 }
+      ],
+      "notes": "Ends with 12 loops still on the needles (no bind-off or release)."
+    },
+    {
+      "name": "sophie_stripe",
+      "file": "sophie_stripe.kc",
+      "sha256": "005627ce0953b8d8687956fa76734f2d0ea89d7f76f5c5cade84e541a24c122e",
+      "dialect": "app",
+      "what": "Kniterate app shaping sample with a stripe: 6 needles at the start, fashioned shaping, C3 with a C2 stripe.",
+      "roles": { "waste": "6", "draw": "1" },
+      "sections": [
+        { "name": "waste", "from": 1, "to": 100 },
+        { "name": "draw", "from": 101, "to": 102 },
+        { "name": "cast-on", "from": 103, "to": 106 },
+        { "name": "body", "from": 107, "to": 3689 },
+        { "name": "bind-off", "from": 3690, "to": 3726 },
+        { "name": "carriers-out", "from": 3727, "to": 3734 }
+      ],
+      "notes": "The bind-off's last loop is left on the needle."
+    }
+  ]
+}

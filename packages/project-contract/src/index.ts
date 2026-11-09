@@ -99,8 +99,15 @@ const MachineSetupSchema = z.object({
   body: SectionSettingsSchema.optional(),
   /** The waste section's stitch size, steady speed and pulling roller. */
   waste: SectionSettingsSchema.optional(),
-  /** The cast-on's (beanies, sweaters and scarves). */
-  castOn: SectionSettingsSchema.optional(),
+  /**
+   * The cast-on's. On a flat piece (beanies, sweaters, scarves) the cast-on
+   * row's; on a fairisle chart, stitch and roller set the first zig-zag row and
+   * speed all three cast-on rows. `tubularRoller` sets the two tubular rows
+   * after the first (an owner fix for yarn breaking on the first rows).
+   */
+  castOn: SectionSettingsSchema.extend({ tubularRoller: z.number().min(-500).max(999).optional() }).optional(),
+  /** A chart's chain bind-off (top: bind-off): its knit stitch size, and Kniterate's "Knit first stitch". */
+  bindOff: z.object({ stitch: z.number().int().min(0).max(15).optional(), knitFirstStitch: z.boolean().optional() }).optional(),
   /** The rib's: its front stitch size, the rear keeping the reference's step below. */
   rib: SectionSettingsSchema.optional(),
   /** The transfers'. */

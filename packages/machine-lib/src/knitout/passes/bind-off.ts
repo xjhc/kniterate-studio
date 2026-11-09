@@ -74,7 +74,18 @@ export interface BindOffMachineConfig {
    *  shorter than the iteration count, the last value sticks for the
    *  remaining iterations. */
   knitRollerRamp: number[];
+  /** Kniterate's "Knit first stitch": one stitch on the first needle before
+   *  its transfer, which "makes the corner of your edge more square and
+   *  prevents the first bind-off stitch from dropping" (Kniterate blog,
+   *  "Mastering the bind-off", 2024-06-11). Off by default, as in Kniterate's
+   *  app and its own color-swatch-bindoff.kc. */
+  knitFirstStitch?: boolean;
+  /** Roller for that first stitch; the blog finds 350 works best. */
+  firstStitchRoller?: number;
 }
+
+/** The roller Kniterate's blog finds best for the bind-off's knitted first stitch. */
+export const KNITERATE_FIRST_STITCH_ROLLER_V1 = 350;
 
 export const CHAIN_BINDOFF_DEFAULTS: BindOffMachineConfig = Object.freeze({
   xferSpeed: 120,
@@ -290,6 +301,19 @@ function emitMachineBindOff(input: BindOffInput): BindOffResult {
     direction = '+';
   }
   const rack = direction === '-' ? 1 : -1;
+
+  // Kniterate's "Knit first stitch": knit the first needle once more before
+  // it is transferred, in the same direction as every chain knit (Kniterate's
+  // bind-off knits each stitch, the first included, against the chain's
+  // travel). The yarn then waits outside the edge, clear of the transfers.
+  if (config.knitFirstStitch && order.length > 1) {
+    ops.push(comment('-- knit first stitch (Kniterate) --'));
+    sim.setSpeed(config.knitSpeed, { force: true });
+    sim.setStitch(config.knitStitch, { force: true });
+    sim.setRoller(config.firstStitchRoller ?? KNITERATE_FIRST_STITCH_ROLLER_V1, { force: true });
+    sim.knit(knitCarrier, direction, f(order[0]!));
+    drain();
+  }
 
   const ramp = config.knitRollerRamp;
   for (let i = 0; i < order.length - 1; i++) {

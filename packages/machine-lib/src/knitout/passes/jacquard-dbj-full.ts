@@ -133,6 +133,17 @@ export function emitJacquardDbjFullWalk(input: JacquardDbjFullInput): JacquardDb
   sim.setStitch(6);
   sim.setPresserSpeed(600);
   sim.setPresserRoller(0);
+  // dbj.kc pass 464: the yarn that knitted the last front stitch knits one
+  // front row from where it waits, joining each needle's two loops (the
+  // front and the homed rear) into one stitch before the waste rows. Without
+  // it the waste knits the doubled loops, and the top edge comes off the
+  // machine as two live loops per needle.
+  const joiner = [...body.ops].reverse().find((op) => op.kind === 'knit' && op.needle.bed === 'f');
+  if (joiner && joiner.kind === 'knit') {
+    const carrier = joiner.carriers[0]!;
+    const dir = directionForCarrier(sim, carrier);
+    fullFrontRow(sim, carrier, dir, ...(dir === '+' ? [needleStart, needleEnd] as const : [needleEnd, needleStart] as const));
+  }
   ops.push(...sim.drainOps());
 
   let finalKnitCarrier: CarrierId = ground; // The final intro knit if the body is empty.
@@ -192,24 +203,45 @@ function emitIntro(
   fullBackRow(sim, wasteCarrier, '-', needleEnd, needleStart);
   fullFrontRow(sim, wasteCarrier, '+', needleStart, needleEnd);
 
+  // dbj.kc pass 106: drop every rear waste loop. The draw thread then knits
+  // the front only, so without this drop the back layer's first row would
+  // knit straight into the waste yarn, with nothing to pull out between them.
   sim.setSpeed(300);
   sim.setRoller(450);
-  sim.parkCarriage();
+  sim.setStitch(DBJ_CAST_ON_STITCHES.drop);
+  for (let n = needleStart; n <= needleEnd; n++) sim.drop(backBed(n));
 
   sim.setSpeed(100);
   sim.setRoller(200);
+  sim.setStitch(DBJ_CAST_ON_STITCHES.draw);
   fullFrontRow(sim, CAMEO_CARRIER, '-', needleEnd, needleStart);
 
-  // The ground starts the back layer from the side it waits on (C3: the right).
+  // The ground casts on from the side it waits on (C3: the right), as in
+  // dbj.kc passes 110-112: a zigzag over every needle of both beds at half
+  // rack, which closes the edge and joins the two layers, then one front
+  // and one rear row.
   sim.setSpeed(200);
   sim.setRoller(400);
   const out = directionForCarrier(sim, ground);
   const back: Direction = out === '+' ? '-' : '+';
   const span = (direction: Direction): [number, number] => (direction === '+' ? [needleStart, needleEnd] : [needleEnd, needleStart]);
-  fullFrontRow(sim, ground, out, ...span(out));
+  sim.setRacking(0.5);
+  sim.setStitch(DBJ_CAST_ON_STITCHES.zigzag);
+  const [from, to] = span(out);
+  const step = out === '+' ? 1 : -1;
+  for (let n = from; n !== to + step; n += step) {
+    // At half rack the rear needle sits right of its front needle: front first going right, rear first going left.
+    if (out === '+') { sim.knit(ground, out, f(n)); sim.knit(ground, out, backBed(n)); }
+    else { sim.knit(ground, out, backBed(n)); sim.knit(ground, out, f(n)); }
+  }
+  sim.setRacking(0);
+  sim.setStitch(DBJ_CAST_ON_STITCHES.tubular);
   fullFrontRow(sim, ground, back, ...span(back));
   fullBackRow(sim, ground, out, ...span(out));
 }
+
+/** Stitch sizes of dbj.kc's rear drop (pass 106), draw row (108), zigzag (110) and tubular rows (111-112). */
+const DBJ_CAST_ON_STITCHES = Object.freeze({ drop: 6, draw: 8, zigzag: 3, tubular: 6 });
 
 function directionForCarrier(sim: CarriageSimulator, carrier: CarrierId): Direction {
   const state = sim.positionOf(carrier);

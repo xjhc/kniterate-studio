@@ -44,7 +44,11 @@ export function sectionLimits(section: SetupSection): Record<keyof SectionSettin
  * Each blocks compiling, so no program is exported. These are Studio's
  * limits, from Kniterate's documentation and its own files, not measured
  * hardware limits, and a value inside them is not tested with any yarn. A
- * chart sets only its waste and body; a flat piece every section.
+ * fairisle chart uses its waste, cast-on and body, a birdseye chart its waste
+ * and body, and a flat piece every section; a chart with a bind-off top also
+ * uses its bind-off. A setting the construction doesn't use is kept and
+ * ignored, as a chart's rib settings are, so switching the backing or the top
+ * never leaves a project blocked by a setting the panel no longer shows.
  */
 export function machineSetupErrors(setup: MachineSetup | undefined, construction: SetupConstruction): { rule: string; message: string }[] {
   const errors: { rule: string; message: string }[] = [];
@@ -54,7 +58,13 @@ export function machineSetupErrors(setup: MachineSetup | undefined, construction
       errors.push({ rule: 'project-waste-too-short', message: `The waste knits ${passes} rows; Studio needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1}, because with fewer the fabric may not reach the rollers before your piece starts, and without pull-down the knitting fails.` });
     }
   }
-  const sections: readonly SetupSection[] = construction === 'flat' ? ['waste', 'castOn', 'rib', 'body', 'transfers', 'crown'] : ['waste', 'body'];
+  const castOnRoller = setup?.castOn?.tubularRoller;
+  const rollerLimits = sectionLimits('castOn').roller;
+  if (castOnRoller !== undefined && (castOnRoller < rollerLimits.min || castOnRoller > rollerLimits.max)) errors.push({ rule: 'project-setting-outside-machine-range', message: `Cast-on tubular roller ${castOnRoller} is outside Studio's safety limits for the machine (${rollerLimits.min} to ${rollerLimits.max}).` });
+  const bindOffStitch = setup?.bindOff?.stitch;
+  const stitchLimits = sectionLimits('body').stitch;
+  if (bindOffStitch !== undefined && (bindOffStitch < stitchLimits.min || bindOffStitch > stitchLimits.max)) errors.push({ rule: 'project-setting-outside-machine-range', message: `Bind-off stitch size ${bindOffStitch} is outside Studio's safety limits for the machine (${stitchLimits.min} to ${stitchLimits.max}).` });
+  const sections: readonly SetupSection[] = construction === 'flat' ? ['waste', 'castOn', 'rib', 'body', 'transfers', 'crown'] : construction === 'fairisle' ? ['waste', 'castOn', 'body'] : ['waste', 'body'];
   for (const section of sections) {
     const limits = sectionLimits(section);
     for (const key of ['stitch', 'speed', 'roller'] as const) {

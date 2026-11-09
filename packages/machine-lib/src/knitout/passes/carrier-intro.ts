@@ -104,6 +104,14 @@ export interface FairisleCarrierIntro {
    *  transfers, which then knits at the body's stitch instead of the ramp's
    *  handoff stitch; absent keeps the reference's first row. */
   firstRowRoller?: number;
+  /** A project's own roller for the two tubular (circular) rows after the
+   *  zig-zag; absent keeps `introRoller` (the reference's 400). An owner fix
+   *  for a yarn breaking on its first rows lowers it (O! Jolly: 200). */
+  tubularRoller?: number;
+  /** A project's own speed for the three cast-on rows (the zig-zag and the
+   *  two tubular rows); absent keeps `rampSpeed`. The first body row after
+   *  the transfers keeps `rampSpeed` either way, so it stays slow. */
+  castOnSpeed?: number;
 }
 
 /**

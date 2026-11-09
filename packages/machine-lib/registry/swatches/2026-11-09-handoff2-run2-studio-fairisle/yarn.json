@@ -1,0 +1,93 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-yarn-evidence-v1",
+  "schemaVersion": 1,
+  "yarns": [
+    {
+      "carrier": "1",
+      "role": "draw",
+      "name": "Draw thread (the existing thin one)",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "fiber": "not recorded",
+      "weight": "thin; ply not recorded; 1 is entered only because the record needs a number",
+      "ply": 1,
+      "color": "not recorded",
+      "coneSource": "not recorded"
+    },
+    {
+      "carrier": "2",
+      "role": "pattern",
+      "name": "Ground (file colour #F1EDE3)",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "fiber": "acrylic",
+      "weight": "2/14, one strand",
+      "ply": 2,
+      "color": "not recorded",
+      "coneSource": "not recorded"
+    },
+    {
+      "carrier": "3",
+      "role": "pattern",
+      "name": "Motif (file colour #29445F)",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "fiber": "acrylic",
+      "weight": "2/14, one strand",
+      "ply": 2,
+      "color": "not recorded",
+      "coneSource": "not recorded"
+    },
+    {
+      "carrier": "6",
+      "role": "waste",
+      "name": "Waste",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "fiber": "acrylic",
+      "weight": "2/30, two strands together",
+      "ply": 2,
+      "color": "not recorded",
+      "coneSource": "not recorded"
+    }
+  ],
+  "tensionSwatch": {
+    "machineProfile": "kniterate-7gg-worsted-v1",
+    "structure": "none: no tension swatch was knitted",
+    "settings": {
+      "stitchNumber": 9,
+      "xferStitchNumber": 5,
+      "speedNumber": 200,
+      "rollerAdvance": 450,
+      "xferStyle": "four-pass",
+      "carrierSpacing": 2,
+      "carrierStoppingDistance": 2.5
+    },
+    "measuredBy": "nobody",
+    "measuredOn": "2026-11-08",
+    "measurements": {
+      "offMachine": {
+        "status": "not-performed",
+        "reason": "No tension swatch was knitted or measured for this run."
+      },
+      "rested24h": {
+        "status": "not-performed",
+        "reason": "No tension swatch was knitted or measured for this run."
+      },
+      "steamed": {
+        "status": "not-performed",
+        "reason": "No tension swatch was knitted or measured for this run."
+      },
+      "wetFinished": {
+        "status": "not-performed",
+        "reason": "No tension swatch was knitted or measured for this run."
+      }
+    },
+    "notes": "No drape, hand or weight observations were recorded."
+  }
+}

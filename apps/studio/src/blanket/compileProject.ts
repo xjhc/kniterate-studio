@@ -243,6 +243,8 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     ...(state.setup?.topWasteRows !== undefined ? { topWasteRows: state.setup.topWasteRows } : {}),
     ...(state.setup?.body !== undefined ? { body: state.setup.body } : {}),
     ...(state.setup?.waste !== undefined ? { waste: state.setup.waste } : {}),
+    ...(state.setup?.castOn !== undefined ? { castOn: state.setup.castOn } : {}),
+    ...(state.setup?.bindOff !== undefined ? { bindOff: state.setup.bindOff } : {}),
     ...(technique === 'fairisle' ? { floatPolicy: { mode: 'warn-above' as const, threshold: state.strategy.floatLimit } } : {}),
   });
   const artifact = compileToRunArtifact(input);

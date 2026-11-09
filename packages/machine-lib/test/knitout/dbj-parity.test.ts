@@ -161,6 +161,58 @@ describe('dbj.kc frame comparison and explicit body divergence', () => {
     expect(stitches.differingPassIndices.some((index) => index >= BODY_START_PASS)).toBe(true);
   });
 
+  it('casts on as dbj.kc does, stitch for stitch: rear drop, draw thread, half-rack zigzag, front and rear rows', { timeout: 60_000 }, () => {
+    // The footer comparison above matched while these passes did not: the
+    // rear waste was never dropped and the zigzag was a front-only row, so the
+    // back layer started in the waste yarn and the edge was not closed.
+    type Trace = ReturnType<typeof projectKCodeMachineTrace>;
+    const trace = (kcode: string): Trace => {
+      const parsed = parseKCodeDocument(kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true });
+      if (!parsed.ok) throw new Error('not strict KCode');
+      return projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
+    };
+    // Passes 104-112: the last waste rows, the rear drop, the draw thread and the ground's cast-on,
+    // with needles counted from the draw thread's first needle (the two files sit one needle apart).
+    const castOn = (t: Trace) => {
+      const at = (pass: Trace['passes'][number]) => pass.actions.flatMap((action) => ('at' in action ? [action] : []));
+      const base = Math.min(...at(t.passes[107]!).map((action) => action.at.traceCoordinate));
+      return t.passes.slice(103, 112).map((pass) => ({
+        carrier: pass.carrier,
+        speed: pass.speed,
+        roller: pass.roller,
+        rack: t.rackCommands.filter((command) => command.beforePassIndex <= pass.index).at(-1)?.value ?? 0,
+        stitches: at(pass).map((action) => `${action.kind} ${action.at.bed} ${action.at.traceCoordinate - base} ${action.at.stitchSelector.encodedValue}`).sort(),
+      }));
+    };
+    const { annotations: _annotations, ...plain } = chart;
+    const studio = castOn(trace(toKc(compileChartToKnitout(buildCustomistMatchedCompileInputV1({ technique: 'birdseye', chart: plain, keyPalette: PALETTE, yarnBindings: BINDINGS })))));
+    const reference = castOn(trace(REFERENCE));
+    expect(reference[2]!.stitches.every((stitch) => stitch.startsWith('drop rear'))).toBe(true);
+    expect(reference[6]!.rack).toBe(0.5);
+    expect(studio).toEqual(reference);
+
+    // The finish too: the rear homed onto the front, the waste rows, then the release.
+    const finish = (t: Trace) => {
+      const at = (pass: Trace['passes'][number]) => pass.actions.flatMap((action) => ('at' in action ? [action] : []));
+      const release = t.passes.findLastIndex((pass) => pass.actions.some((action) => action.kind === 'drop'));
+      const home = t.passes.findLastIndex((pass, index) => index < release && pass.actions.some((action) => action.kind === 'xfer')) - 1;
+      const base = Math.min(...at(t.passes[release]!).map((action) => action.at.traceCoordinate));
+      return t.passes.slice(home, release + 1).map((pass) => ({
+        carrier: pass.carrier,
+        speed: pass.speed,
+        roller: pass.roller,
+        stitches: pass.actions.map((action) => ('at' in action
+          ? `${action.kind} ${action.at.bed} ${action.at.traceCoordinate - base} ${action.at.stitchSelector.encodedValue}`
+          : 'source' in action ? `${action.kind} ${action.source.bed} ${action.source.traceCoordinate - base}` : action.kind)).sort(),
+      }));
+    };
+    const studioFinish = finish(trace(toKc(compileChartToKnitout(buildCustomistMatchedCompileInputV1({ technique: 'birdseye', chart: plain, keyPalette: PALETTE, yarnBindings: BINDINGS })))));
+    const referenceFinish = finish(trace(REFERENCE));
+    expect(referenceFinish[0]!.stitches.every((stitch) => stitch.startsWith('xfer rear'))).toBe(true);
+    expect(referenceFinish.at(-1)!.stitches.every((stitch) => stitch.startsWith('drop front'))).toBe(true);
+    expect(studioFinish).toEqual(referenceFinish);
+  });
+
   it('Studio and the detached configuration share the same body, apart from first-row protection', () => {
     const { annotations: _annotations, ...plain } = chart;
     const input = buildCustomistMatchedCompileInputV1({ technique: 'birdseye', chart: plain, keyPalette: PALETTE, yarnBindings: BINDINGS });

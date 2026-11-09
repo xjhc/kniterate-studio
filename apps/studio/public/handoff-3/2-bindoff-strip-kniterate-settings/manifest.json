@@ -1,0 +1,32 @@
+{
+  "kind": "kniterate-studio-handoff",
+  "schemaVersion": 1,
+  "title": "Bind-off strip",
+  "projectId": "817b0540ac68",
+  "historyCursor": 2,
+  "identity": {
+    "kcodeSha256": "8fd76ea382c082c318eb6e975576989186a95761dea6f48eeac5d3f3458140c6",
+    "compileHash": "5a906423",
+    "passCount": 258
+  },
+  "verdict": "Surface-proven",
+  "readiness": {
+    "ready": true,
+    "headline": "File checks passed",
+    "evidence": "Software checks passed · Surface-proven · physical knit pending",
+    "unresolved": [],
+    "notices": []
+  },
+  "files": {
+    "project.kniterate-studio.json": "cca1ffc195e89c0aff39a3f4b575ac437c80a9995bc9689f060027a68ff9a601",
+    "program.k": "205378bf25c70c259212dcab7f55d99da108e4b48d644679a0f7783332801c33",
+    "program.kc": "8fd76ea382c082c318eb6e975576989186a95761dea6f48eeac5d3f3458140c6",
+    "instructions.md": "d50274908c91ff1ff7bf491439e54ca375bd6c57b364b11d650b8a23e69c1a28",
+    "chart.png": "6c42da346dc861141ab8482b272281be1aea662f2d7ea1f7edebc59b40fa2b25"
+  },
+  "forms": [
+    "measurement-form.md",
+    "measurements.json"
+  ],
+  "trials": []
+}

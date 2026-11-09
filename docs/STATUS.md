@@ -109,6 +109,151 @@ ship," trust this file and the working tree instead.
     Setting the yarn introduction back to 200 fails it. The birdseye chart's
     start is not covered: it still knits at 400 and brings yarns in at 200
     without a catch.
+- **Cast-on and bind-off settings, setup checks, handoff 3 (2026-11-09).**
+  - **Settings.** A project's `machineSetup` can now set, besides each
+    section's stitch, speed and roller:
+    - a fairisle chart's cast-on (PR #14's meaning): roller and stitch set
+      the first zigzag row, and speed sets all three cast-on rows. Studio's
+      slow first body row keeps its 100: PR #14's version also sped it up;
+    - `castOn.tubularRoller`, the two circular rows after the zigzag, on a
+      fairisle chart or a flat piece;
+    - on a chart with a bind-off top, `bindOff.stitch` (the chain's knit
+      stitch size) and `bindOff.knitFirstStitch`.
+    A setting the construction doesn't use is kept and ignored, as a chart's
+    rib settings are, so switching the backing or the top never leaves a
+    project blocked by a section the panel no longer shows. Values outside
+    the machine limits block the compile. The panel shows the fairisle
+    cast-on's stitch, speed and roller. The tubular roller and the bind-off
+    are set in the project file or with `studio edit`, not in the panel.
+    Nothing changes unless a project sets them.
+  - **Knit first stitch.** This is Kniterate's bind-off option: the first
+    needle is knitted once more at roller 350 before its first transfer. It
+    knits in the chain knits' direction, as Kniterate's bind-off command does,
+    so the yarn waits outside the edge. Knitted the other way, the yarn sat
+    between the first two needles, and the converter moved it while the beds
+    were racked. The test fails on that version.
+  - **Flat-start speed cap (PR #14).** A flat piece's own waste speed now also
+    caps its insert rows and every waste tube row, the top waste's included
+    (which already knits at the waste's stitch size). Its cast-on speed caps
+    the tubular rows. Before, a section set to 100 still knitted those rows at
+    200. Carrier moves keep 600, as in Kniterate's files: they knit nothing.
+  - **Review.** An independent review of this change found the cast-on speed
+    reaching the first body row, and the refusals that the panel couldn't
+    clear. Both are fixed, and their tests fail on the earlier code.
+  - **Setup checks.** Every handoff's operator checks gain three of
+    Kniterate's support-page checks (`MACHINE_START_CHECKS` in
+    `readiness.ts`):
+    - the side tension arms almost upright, with the yarn tense on a
+      right-to-left pass;
+    - each cone straight under its first guide, with no yarns crossing;
+    - the knot sensor not clamping, and a little more brake on thin or
+      slippery yarn.
+  - **Handoff 3.** The site's `handoff-3/` has two bind-off strips, copied
+    byte for byte from `output/machine-handoff-3`.
+    - Strip 1 (`d91041a8`, 256 passes) is handoff 2's strip with the fixed
+      start.
+    - Strip 2 (`8fd76ea3`, 258 passes) adds three settings: the circular rows
+      at roller 200 instead of 400, the bind-off at stitch 4 instead of 6, and
+      Knit first stitch.
+
+    `compare` shows strip 2 differs from strip 1 only in those passes.
+    Neither strip has been knitted.
+- **Machine-file tools (2026-11-09).** Five CLI commands read what a file
+  does and check it against Kniterate's own files, so an engine fix or a knit
+  report takes minutes to check. They are listed in `pnpm --silent studio --
+  help` and in the `knit-design` and `kniterate-engine` skills
+  (`.claude/skills/`).
+  - **Inputs.** Each takes `ref:<name>`, a `.kc` or `.k` file, a project, or a
+    handoff package.
+  - **Pass numbers** count from 1, as in run records.
+  - **`reference [name]`:** Kniterate's 13 files in
+    `packages/machine-lib/reference`, with what each is, its yarn roles and its
+    sections. They come from `reference/atlas.json`, checked against the files
+    by `test/knitout/trace-audit.test.ts`.
+  - **`passes <file> [range] [--section]`:** one line per pass (carrier,
+    racking, speed, roller, stitch sizes, needles, section). A project's
+    sections are the run record's.
+  - **`audit <file>`:** replays every loop. It reports:
+    - start loops held over 12 passes;
+    - waste yarn knitting through doubled body loops;
+    - body loops dropped with nothing holding them;
+    - loops left on the needles;
+    - stacks over 3;
+    - eyelets inside the fabric, as a note only.
+
+    Each check states what Kniterate's own files show, and every exception
+    there is a deliberate choice. The rib beanie and the reversible sweater
+    release their tops live, and `sleeves.kc` holds one start loop for 75
+    passes.
+  - **`compare <a> <b> [--section | --passes] [--carriers 2=4]`:** stitch by
+    stitch, cutting both files into sections by the same rule. Needles count
+    from each range's edge; `width` marks the same stitches over a different
+    width.
+  - **`matrix [-o dir] [--quick]`:** builds every construction (both chart
+    backings at widths 9 to 60, three beanies, two scarves, six sweaters) and
+    audits all 40 files in about 20 s.
+  - **Library and tests.** The checks live in
+    `packages/machine-lib/src/knitout/kcode/trace-audit.ts`.
+    `flatStart.test.ts` now runs the audit on every start it checks, plus a
+    birdseye chart. `engineMatrix.test.ts` runs the full matrix.
+- **No held loop in the start (2026-11-08).** Handoff 2 was knitted (issue
+  #9). Run 2 (`092076f4`) is registered as partial
+  (`registry/swatches/2026-11-09-handoff2-run2-studio-fairisle`). It was the
+  best fabric so far, but the main yarn frayed at the bottom-left corner on
+  its first row after the waste.
+  - The yarn catch's return knits the rear-left needle. Kniterate's waste
+    rows never knit that needle, so the waste loop made there at pass 2 was
+    held until the first colour's catch knitted it, about 90 passes later
+    (47 under roller pull). That is the corner that broke. It's not shown to
+    be the cause.
+  - Every handoff 2 Studio file had it. Kniterate's fairisle, jacquard, DBJ
+    and rib-beanie files don't, and neither does the first handoff.
+  - The fix: with the catch on, the waste's leftward rows also knit the
+    rear-left needle, in both `customist-fairisle-frame.ts` and
+    `customist-flat-start.ts`. The operator's PR #14 makes the same change
+    to the fairisle routine, and their reversible v2 knitted that start
+    cleanly. The flat start's version hasn't been knitted.
+  - Each file changes by 40 waste stitches, and two empty waste-yarn moves
+    drop out. The recipe path without the catch is unchanged.
+  - An independent review found the same loop at the right edge on pieces
+    of 20 needles or fewer, where the catch spans the whole piece: the front
+    or rear right needle was held about 85 passes. The leftward rows now knit
+    that needle too when the catch reaches it. The left-edge fix had let some
+    narrow odd-width charts (9, 13, 17, 19) past
+    `machine-safety.central-short-rows` while they still held the right loop.
+  - `flatStart.test.ts` now also checks that no loop made in the start waits
+    more than 12 passes to be knitted again. It covers beanies, the scarf,
+    every sweater piece, a 60-wide chart, charts 9 to 21 wide and scarves of
+    12 and 20 needles. Kniterate's own fairisle, jacquard, DBJ and rib-beanie
+    starts wait at most 7. Its reversible sweater sleeve (`sleeves.kc`) holds
+    one rear edge loop for 75 passes. Studio's starts now wait at most 7, and
+    the old start fails this rule in every kind.
+- **Birdseye chart frame matches `dbj.kc` stitch for stitch (2026-11-08).**
+  An audit replayed every loop in Studio's files against Kniterate's own. It
+  found that the birdseye chart's frame, said to be derived from `dbj.kc`,
+  had only ever been compared on speed and roller. Its stitches differed in
+  three places (`jacquard-dbj-full.ts`):
+  - The rear waste was never dropped before the draw thread (`dbj.kc` pass
+    106), so the back layer's first row knitted straight into the waste
+    yarn.
+  - The ground's first row was a front-only row at rack 0. It is now
+    `dbj.kc`'s half-rack zigzag over both beds (pass 110), which closes the
+    edge and joins the layers. The draw row (stitch 8) and the two tubular
+    rows (stitch 6) now use `dbj.kc`'s stitch sizes too.
+  - After the rear is homed, no yarn knitted the joining row (`dbj.kc` pass
+    464), so the waste knitted the doubled loops and the top would come off
+    as two live loops per needle. The yarn that knitted the last front
+    stitch now knits it.
+  - `dbj-parity.test.ts` now compares the cast-on and the finish stitch for
+    stitch, not just the settings. Both fail on the old code.
+  - Nothing knitted is affected: no birdseye chart has been knitted. Issue
+    #9's birdseye toque came from the beanie route, which already had all
+    three.
+  - Known preview difference: the simulator predicts no pass for a drop
+    (`CarriageSimulator.drop`). The converter does emit one, as at `dbj.kc`
+    pass 106 and `fairisle.kc` pass 105. So the predicted pass count runs
+    short of the machine file at each drop. The machine file and its
+    stitch-level tests are what count.
 - **Fairisle colours end at the edge (2026-11-08).** Most fairisle colour
   charts were refused by `machine-safety.attached-yarn`. The refused cases
   included a centred motif, any chart whose colour stops short of the edges

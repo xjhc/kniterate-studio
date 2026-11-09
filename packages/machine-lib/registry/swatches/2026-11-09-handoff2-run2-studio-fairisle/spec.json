@@ -1,0 +1,34 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-studio-project",
+  "sourceFingerprint": "1de71c28",
+  "compilerFingerprint": "fb095f5572935b686a0eac1119367ad007c53f5ce52f64af3e58d87cfcb92c61",
+  "knitoutSha256": "9ecb74c9d0157e9ca91d85ee1d728044758eefb6b5f2fb602167e02754ea2cbc",
+  "kcodeSha256": "092076f4a15dca100f27f444c2bf5875aec7505ec9df00a638d969f50a2189fb",
+  "emitterCommit": "495e2a1e0ba12e793b23ba310ed0b58472ad18a7",
+  "compiledAt": "2026-11-09T02:53:17.204Z",
+  "studioVersion": "1.0.0-rc.1",
+  "compileResultOk": true,
+  "request": {
+    "path": "request.json",
+    "reemitCommand": "pnpm studio -- package project.kniterate-studio.json -o <directory>"
+  },
+  "reemitCheck": {
+    "status": "not-run",
+    "checkedAt": null,
+    "currentCommit": null,
+    "notes": "Historical operator note only. The registry checker independently recompiles and byte-compares current out.k/out.kc in-process."
+  },
+  "compileMessages": [],
+  "planSummary": {
+    "technique": "fairisle",
+    "coordinateSystem": "compiler/project coordinates mapped to exact KCode/trace coordinates; physical needle labels unverified",
+    "compilerCoordinateStart": 95,
+    "compilerCoordinateEnd": 158,
+    "rows": 50,
+    "wastePasses": 87,
+    "bindOff": "fairisle-park-bindoff",
+    "profile": "kniterate-7gg-worsted-v1"
+  },
+  "notes": "Development run of a Studio handoff package (Customist fairisle reference); not a 1.0.0 qualification artifact."
+}

@@ -6,7 +6,9 @@
  *   Start       both-bed row, then front-even / rear-odd single-bed rows
  *   Interlock   waste interlock: rightward rows knit the full width with
  *               the front bed at the left edge; leftward rows knit the
- *               interior (needle 0 only ever front, the last only rear)
+ *               interior (needle 0 only ever front, the last only rear);
+ *               with Studio's yarn catch they also knit the edge needles
+ *               the catch leaves loops on
  *   Insertions  each body yarn, then the draw yarn, knits one full-width
  *               interlock row (alternating needle parity), followed by a
  *               waste tubular front row and rear row
@@ -97,12 +99,22 @@ export function emitCustomistFairisleFrame(input: CustomistFairisleFrameInput): 
   const interlock = (c: CarrierId, dir: Direction, frontEven: boolean) => {
     for (const n of needles(dir, () => true)) sim.knit(c, dir, even(n) === frontEven ? f(n) : backBed(n))
   }
-  /** Leftward interior interlock: front on odd offsets, rear on even, edges skipped. */
-  const interiorInterlock = (c: CarrierId) => {
-    for (const n of needles('-', (m) => m > lo && m < hi)) sim.knit(c, '-', even(n) ? backBed(n) : f(n))
-  }
   /** Studio's yarn catch: out and back over the piece's leftmost needles, both beds alternating, at the intro settings. */
   const catchNeedles = Math.min(input.catchNeedles ?? 0, hi - lo + 1)
+  /**
+   * Leftward interior interlock: front on odd offsets, rear on even, edges
+   * skipped. With the yarn catch it also knits each edge needle the catch's
+   * return leaves a waste loop on, on the same bed: always the left one, and
+   * the right one when the catch spans the whole piece (20 needles or fewer).
+   * The reference's rows never knit those needles, so the loop was held until
+   * the first colour knitted it, about 90 passes later (issue #9, handoff 2).
+   * The operator's reversible v2 knitted this start (left edge).
+   */
+  const catchReachesRight = catchNeedles > 0 && catchNeedles >= hi - lo + 1
+  const interiorInterlock = (c: CarrierId) => {
+    const knits = (m: number) => (m > lo || (m === lo && catchNeedles > 0)) && (m < hi || (m === hi && catchReachesRight))
+    for (const n of needles('-', knits)) sim.knit(c, '-', even(n) ? backBed(n) : f(n))
+  }
   const catchYarn = (c: CarrierId) => {
     if (catchNeedles <= 0) return
     sim.setSpeed(intro.introSpeed)
@@ -129,8 +141,11 @@ export function emitCustomistFairisleFrame(input: CustomistFairisleFrameInput): 
       else if (dir === '-') bedRow(waste, '-', 'f', even)
       else bedRow(waste, '+', 'b', (n) => !even(n))
     } else if (p < castOnPasses + castOnMoves) {
-      // Customist's post-start Tu-Tu pair is the converter's own
-      // carrier-in release; these slots only set its speed/roller.
+      // Customist's post-start Tu-Tu pair is a converter kick: the start's
+      // leftward pass ends one needle in and the next rightward pass starts
+      // at the edge, at a new speed, so the converter moves the carrier aside
+      // in two empty passes. These slots only set their speed/roller. With
+      // the yarn catch the leftward pass ends at the edge and no kick is made.
       sim.setSpeed(mc.castOnTuckSpeed)
       sim.setRoller(mc.castOnTuckRoller)
     } else {
@@ -181,14 +196,14 @@ export function emitCustomistFairisleFrame(input: CustomistFairisleFrameInput): 
   sim.setPresserRoller(FRAME_CHOREOGRAPHY.autoMovePresserRoller)
   const [rampCastOn = 3, rampTubular = 5] = intro.rampStitches
   sim.setRacking(0.5)
-  sim.setSpeed(intro.rampSpeed)
+  sim.setSpeed(intro.castOnSpeed ?? intro.rampSpeed)
   sim.setRoller(intro.rampRoller)
   sim.setStitch(rampCastOn)
   for (let n = hi; n >= lo; n--) {
     sim.knit(primary, '-', backBed(n))
     sim.knit(primary, '-', f(n))
   }
-  sim.setRoller(intro.introRoller)
+  sim.setRoller(intro.tubularRoller ?? intro.introRoller)
   sim.setStitch(rampTubular)
   bedRow(primary, '+', 'f')
   sim.setRacking(0)

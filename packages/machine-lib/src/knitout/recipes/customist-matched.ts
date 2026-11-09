@@ -23,7 +23,7 @@ import { EIGHT_LINE_CROWN_V1, STUDIO_CROWN_JERSEY_STITCH_V1 } from '../passes/ri
 import { SHAPED_PANEL_TOP_WASTE_ROWS } from '../passes/shaped-panel.js'
 import { CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES, STUDIO_BIRDSEYE_BODY_ROLLER_V1 } from './customist-studio-birdseye-7gg.js'
 import { CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE } from './customist-studio-fairisle-7gg.js'
-import { STUDIO_YARN_CATCH_NEEDLES_V1 } from '../passes/carrier-intro.js'
+import { STUDIO_YARN_CATCH_NEEDLES_V1, FAIRISLE_CARRIER_INTRO_DEFAULTS } from '../passes/carrier-intro.js'
 import { STUDIO_FIRST_ROW_AFTER_TRANSFERS_ROLLER_V1 } from '../passes/first-row-speed.js'
 
 export type CustomistMatchedTechniqueV1 = 'fairisle' | 'birdseye'
@@ -57,6 +57,14 @@ export interface CustomistMatchedCompileRequestV1 {
   readonly body?: SectionSettingsV1
   /** The waste section's stitch size, steady speed and pulling roller, over the reference's. */
   readonly waste?: SectionSettingsV1
+  /**
+   * Fairisle cast-on: roller and stitch set the first zig-zag row, speed its
+   * three knitting passes (the operator's setting from PR #14, which made
+   * issue #9 run 4B); `tubularRoller` sets the two tubular rows after it.
+   */
+  readonly castOn?: SectionSettingsV1 & { readonly tubularRoller?: number }
+  /** A chain bind-off's knit stitch size, and Kniterate's "Knit first stitch". */
+  readonly bindOff?: { readonly stitch?: number; readonly knitFirstStitch?: boolean }
 }
 
 /** The reference's waste section for each chart backing. */
@@ -79,7 +87,10 @@ const FLAT_STEADY_WASTE_PASS = FLAT.wasteRampPasses + 1 - (FLAT.wasteRampPasses 
  * the top rows'.
  */
 export const CUSTOMIST_STANDARD_SECTION_SETTINGS_V1 = {
-  fairisle: { waste: { stitch: referenceWaste('fairisle').stitchNumber!, speed: referenceWaste('fairisle').wasteSpeed!, roller: referenceWaste('fairisle').rampRollerLeft! } },
+  fairisle: {
+    waste: { stitch: referenceWaste('fairisle').stitchNumber!, speed: referenceWaste('fairisle').wasteSpeed!, roller: referenceWaste('fairisle').rampRollerLeft! },
+    castOn: { stitch: FAIRISLE_CARRIER_INTRO_DEFAULTS.rampStitches[0]!, speed: FAIRISLE_CARRIER_INTRO_DEFAULTS.rampSpeed, roller: FAIRISLE_CARRIER_INTRO_DEFAULTS.rampRoller },
+  },
   birdseye: { waste: { stitch: referenceWaste('birdseye').stitchNumber!, speed: referenceWaste('birdseye').wasteSpeed!, roller: referenceWaste('birdseye').rampRollerLeft! } },
   flat: {
     waste: { stitch: FLAT.wasteStitch, speed: FLAT.wasteSpeed(FLAT_STEADY_WASTE_PASS), roller: FLAT.wasteRoller(FLAT_STEADY_WASTE_PASS) },
@@ -185,16 +196,32 @@ export function buildCustomistMatchedCompileInputV1(request: CustomistMatchedCom
     keyPalette: request.keyPalette,
     ...(request.floatPolicy ? { floatPolicy: request.floatPolicy } : {}),
   })
+  // A project's own chain bind-off settings.
+  const bound = request.bindOff && (request.bindOff.stitch !== undefined || request.bindOff.knitFirstStitch)
+    ? {
+        ...input,
+        bindOffMachineConfig: {
+          ...(input.bindOffMachineConfig ?? {}),
+          ...(request.bindOff.stitch !== undefined ? { knitStitch: request.bindOff.stitch } : {}),
+          ...(request.bindOff.knitFirstStitch ? { knitFirstStitch: true } : {}),
+        },
+      }
+    : input
   // Studio's fairisle start: a yarn catch before each yarn's first row and a
   // gentle first body row after the frame's transfers (issue #9 runs 1 and
   // 2). The recipe path itself still reproduces reference/fairisle.kc.
-  if (request.technique !== 'fairisle' || !input.fairisleCarrierIntro) return input
+  if (request.technique !== 'fairisle' || !bound.fairisleCarrierIntro) return bound
+  const castOn = request.castOn
   return {
-    ...input,
+    ...bound,
     fairisleCarrierIntro: {
-      ...(typeof input.fairisleCarrierIntro === 'object' ? input.fairisleCarrierIntro : {}),
+      ...(typeof bound.fairisleCarrierIntro === 'object' ? bound.fairisleCarrierIntro : {}),
       catchNeedles: STUDIO_YARN_CATCH_NEEDLES_V1,
       firstRowRoller: STUDIO_FIRST_ROW_AFTER_TRANSFERS_ROLLER_V1,
+      ...(castOn?.roller !== undefined ? { rampRoller: castOn.roller } : {}),
+      ...(castOn?.speed !== undefined ? { castOnSpeed: castOn.speed } : {}),
+      ...(castOn?.stitch !== undefined ? { rampStitches: [castOn.stitch, ...FAIRISLE_CARRIER_INTRO_DEFAULTS.rampStitches.slice(1)] } : {}),
+      ...(castOn?.tubularRoller !== undefined ? { tubularRoller: castOn.tubularRoller } : {}),
     },
   }
 }

@@ -49,7 +49,11 @@ export function bodyStandard(state: ProjectState): Standard | null {
 export function sectionStandards(state: ProjectState): { key: SetupSection; label: string; standard: Standard; note?: string }[] {
   const construction = wasteConstruction(state);
   const body = bodyStandard(state);
-  if (construction !== 'flat') return [{ key: 'waste', label: 'Waste', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1[construction].waste }, ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : [])];
+  if (construction !== 'flat') return [
+    { key: 'waste', label: 'Waste', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1[construction].waste },
+    ...(construction === 'fairisle' ? [{ key: 'castOn' as const, label: 'Cast-on', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1.fairisle.castOn, note: 'Stitch size and roller set the first zig-zag row; speed sets all three cast-on rows.' }] : []),
+    ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : []),
+  ];
   const flat = CUSTOMIST_STANDARD_SECTION_SETTINGS_V1.flat;
   const object = state.object;
   const rib = object?.kind !== 'panel' || object.ends.cm > 0;

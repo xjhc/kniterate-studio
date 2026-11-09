@@ -173,13 +173,22 @@ const PLAN_BLOCKER_KIND: Partial<Record<string, 'assumed-value' | 'missing-input
  * The brush check is an experienced owner's (EcoKnitware, community post
  * 4419488970129): yarn caught on brushes set too close loses its tension and
  * drops stitches on the right. The needles are meant to push through the
- * brushes.
+ * brushes. The tension, cone and brake checks are Kniterate's: "Tensioning"
+ * (article 360005947717: lateral arms almost vertical, sliders down for more
+ * pull; the knot sensor must not clamp; slippery yarn needs more brake-disc
+ * pressure), Kniterate staff on loose edges (community post 20836712892829:
+ * side tensioners "as far down as possible", the yarn "tense all the way" on a
+ * right-to-left pass), and "Breaking yarn", "Placing cones" and "Threading"
+ * (cones straight under the first guide, yarns never crossing or touching).
  */
 export const MACHINE_START_CHECKS: readonly string[] = [
   'Start with no fabric or loops on the needles: every check assumes an empty bed.',
   'Park every yarn feeder at home on the left (C1 to C6) before you start: every check assumes they start there.',
   'Check that each yarn feeder slides smoothly but firmly along its rail, with only a tiny bit of play: a loose feeder is pushed ahead of the carriage, where the needles hit it.',
   'Check that the brushes clear the yarn feeders and the yarn: yarn caught on a brush loses its tension, and stitches drop on the right.',
+  'Set the side tension arms with their sliders well down, so the arms stand almost upright, and watch a right-to-left pass: the yarn should look tense all the way across. Yarn that sags there loosens the turning edge and drops stitches on the right.',
+  'Stand each cone straight under the first guide its yarn runs to, with space between cones, and never let two yarns cross or touch: a cone off to the side or a yarn rubbing another drags, and can break.',
+  'Make sure the knot sensor does not clamp the yarn, and give a thin or slippery yarn a little more brake-disc pressure: it should run through with some resistance, never blocked or shooting out.',
   'Knit a swatch to try the stitch size, speed and roller with your yarn: the file keeps inside Studio’s machine limits, which say nothing about your yarn.',
 ];
 

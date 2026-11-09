@@ -1,0 +1,52 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-run-observation-v1",
+  "schemaVersion": 1,
+  "operator": "not recorded",
+  "startedAt": "2026-11-08T00:00:00-08:00",
+  "endedAt": "2026-11-08T23:59:59-08:00",
+  "outcome": "partial",
+  "physicalPlacement": {
+    "verified": false,
+    "compilerCoordinateStart": 95,
+    "compilerCoordinateEnd": 158,
+    "physicalNeedleStart": null,
+    "physicalNeedleEnd": null,
+    "orientation": null,
+    "method": null,
+    "verifiedBy": null,
+    "verifiedAt": null
+  },
+  "artifact": {
+    "loadedKcodeSha256": "092076f4a15dca100f27f444c2bf5875aec7505ec9df00a638d969f50a2189fb",
+    "displayedPassCount": null,
+    "manualProgramEdits": false
+  },
+  "manualInterventions": [],
+  "observations": {
+    "sections": {
+      "waste": "clean",
+      "castOn": "issue",
+      "drawThread": "clean",
+      "carrierBringIn": "clean",
+      "body": "clean",
+      "backing": "not-applicable",
+      "leftEdge": "issue",
+      "rightEdge": "issue",
+      "bindOff": "clean"
+    },
+    "stops": [],
+    "dimensionsCm": {
+      "offMachine": {
+        "status": "not-measured",
+        "reason": "No dimensions were measured or claimed for this run."
+      },
+      "rested24h": {
+        "status": "not-measured",
+        "reason": "No dimensions were measured or claimed for this run."
+      }
+    },
+    "photos": [],
+    "notes": "Reported in issue #9 comment 6728033787 for 2026-11-08 (America/Los_Angeles); start and end times were not recorded, so startedAt/endedAt bound the calendar day. The operator confirmed this was the handoff-2 file (355,337 bytes, SHA-256 092076f4...); the SD card was not read back. Yarns: C2 ground and C3 motif one strand of 2/14 acrylic each, C6 two strands of 2/30, C1 the existing draw thread. Knitted to the end; the operator called it the best fabric so far. Defects: on the first main-yarn row after the bottom waste the yarn appeared cut or broken and frayed slightly at the bottom-left corner (the operator suspects too much pull; not confirmed); the edge where a carrier turns looks a little loose (the right-hand edge for a left-to-right pass), reported as looseness, not dropped stitches. No stop was reported, so whether the left edge marks the corner break and the right edge the loose turns is this record's reading of the report. Sections marked clean had no issue reported; they were not individually inspected or photographed. Known file fact found after the run: the yarn catch leaves the waste loop it makes on rear-left needle 95 (pass 2) there until C2's catch knits it at pass 92, about 47 roller passes later; it sits at the corner that broke. Not shown to be the cause. Machine serial, software version, displayed pass count, stop pass numbers, photographs and gauge were not recorded."
+  }
+}

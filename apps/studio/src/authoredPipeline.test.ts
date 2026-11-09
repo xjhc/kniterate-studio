@@ -76,7 +76,8 @@ describe('Customist fairisle partial reproduction (physical trial candidate)', (
     expect(result.exportReady).toBe(true);
     const passes = result.kcode!.trace!.passes;
     // The reference's 286 passes plus the catch: each yarn knits out and back over the piece's leftmost 20 needles first.
-    expect(passes).toHaveLength(286 + 8);
+    // Two of the reference's empty waste-yarn moves drop out once the waste knits the rear-left needle (no held loop).
+    expect(passes).toHaveLength(286 + 8 - 2);
     const knits = (pass: (typeof passes)[number]) => pass.actions.filter((action) => action.kind === 'knit');
     const catches = passes.filter((pass) => knits(pass).length === 20);
     expect(catches.map((pass) => pass.carrier)).toEqual(['6', '6', '4', '4', '3', '3', '1', '1']);
@@ -95,7 +96,7 @@ describe('Customist fairisle partial reproduction (physical trial candidate)', (
     const trial = compileCurrentV1KnitTrial();
     expect(trial.manifest.customistParity).toMatchObject({
       reproduction: 'partial', comparedPasses: 286,
-      machineTraceComparison: { comparison: 'strict-machine-trace-v1', status: 'compared', identical: false, generatedPassCount: 294, referencePassCount: 286, detailsTruncated: true },
+      machineTraceComparison: { comparison: 'strict-machine-trace-v1', status: 'compared', identical: false, generatedPassCount: 292, referencePassCount: 286, detailsTruncated: true },
     });
     expect(trial.manifest.customistParity.note).toContain('yarn catch');
     expect(trial.manifest.customistParity.machineTraceComparison.deltas).toHaveLength(50);

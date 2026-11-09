@@ -24,11 +24,20 @@ Why this order:
   Knitted as issue #9's mini bird toque; it failed at the start and is
   registered. The flat start, the beanie top and crown settings were fixed
   from it (STATUS, 2026-11-07).
-- [ ] Knit a new mini toque from the fixed start, with a larger motif and a
-  taller body, and Kniterate's `fairisle.kc` again in run 2's yarns; register both.
-  (Handoff 2 on issue #9: `output/machine-handoff-2`, from 687e45b. The
-  exact files are also served from the site at `handoff-2/`, copied into
-  `apps/studio/public/handoff-2/`.)
+- [x] Knit handoff 2 (issue #9; files at the site's `handoff-2/`). Run 2 is
+  registered as partial: best fabric so far, with a frayed bottom-left
+  corner and loose turning edges. The operator knitted their own run 4
+  variant (4B) and reversible beanies (PR #14) instead of runs 3 and 4.
+  Run 1 wasn't knitted. The start's held waste loop is fixed (STATUS,
+  2026-11-08).
+- [ ] Knit handoff 3 (files at the site's `handoff-3/`), two bind-off strips.
+  Strip 1 is the strip with the fixed start. It answers two questions: does
+  the corner still break, and does the bind-off break again where it starts?
+  Strip 2 adds three of Kniterate's settings: the circular rows at roller 200,
+  the bind-off at stitch 4, and "Knit first stitch" at roller 350. If the
+  corner breaks again, knit Kniterate's `fairisle.kc` in the same yarns next.
+  It has the same cast-on and no catch, so it separates the yarn and cast-on
+  settings from Studio's start.
 - [x] Give each handoff a run record with the file's sections and passes, and
   pin the fixed start in a test (`flatStart.test.ts`).
 - [ ] After handoff 2's results, file changes from Kniterate's own practice,
@@ -159,6 +168,21 @@ it is registered):
   (`project-technique-unmatched`; parity row CP-B4, "Invert Colors"). It
   needs a start, body and finish matched to those files, then a strip and a
   scarf. It takes exactly two colours.
+  - **Start:** Kniterate's closed cast-on. Every needle of both beds is
+    knitted in one zigzag at half rack, then one row on the front and one
+    on the rear (`jacquard.kc` passes 102 to 104, `dbj.kc` 110 to 112,
+    `sleeves.kc` 106 to 108). In `jacquard.kc` and `dbj.kc` the body follows
+    with no transfers. `sleeves.kc` knits its rib cuff in between.
+  - **Why not the beanie route:** the operator's reversible v2 (PR #14)
+    started from the beanie's 1×1 cast-on, then knitted onto the empty
+    needles on both beds. That left evenly spaced holes along the visible
+    edge. Kniterate's sleeve fills empty needles only on the rear, after
+    moving every loop to the front.
+  - **Expected look:** the cast-on colour shows as one joining row on the
+    reverse, which the operator accepts. The faces lie apart wherever a
+    colour runs solid, since the layers only join where the colours swap.
+  - **Finish:** waste yarn on both beds before release, so no live stitch
+    is left unsupported.
 - [ ] Colourwork on sweater pieces (M7 colourwork below), as strips first:
   increases, armhole bind-off and the neck split, each in colourwork. Then
   the mini sweater again, in colourwork.

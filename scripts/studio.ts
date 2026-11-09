@@ -32,6 +32,7 @@ import { decodePng, encodePng } from './lib/png.ts';
 import { SWEATER_USAGE, SweaterUsageError, isSweaterProject, sweaterCheck, sweaterCommand, sweaterPlanJson, type SweaterCliIo } from './lib/sweater-cli.ts';
 import { planSweater } from '../apps/studio/src/sweater/sweater.ts';
 import { RENDER_VIEWS, renderView, type RenderView } from './lib/render.ts';
+import { MachineUsageError, auditCommand, compareCommand, loadMachineInput, matrixCommand, passesCommand, referenceCommand } from './lib/machine-cli.ts';
 
 const USAGE = `Usage: pnpm --silent studio -- <command> [args]
 
@@ -107,13 +108,40 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
   sweater <command> …
       Flat-panel sweaters (set-in, J-sleeve, drop shoulder; any knit/purl/tuck texture; rib trims):
       sweater choices | new | plan | set | check | package | pattern | schematic. Run "sweater help".
-      plan, describe, readiness, compile and package on a sweater project use the sweater commands.`;
+      plan, describe, readiness, compile and package on a sweater project use the sweater commands.
+
+Machine files: read what a .kc does, check it, and compare it with Kniterate's own files.
+<file> is ref:<name> (one of Kniterate's files; list them with "reference"), a .kc or .k file, a
+project .json (compiled; a sweater gives one file per piece, pick one with --piece <id>), or a
+handoff package folder. Passes are numbered from 1, as in run records and on the machine.
+
+  reference [<name>]
+      Kniterate's reference files: what each is, its yarn roles, and its sections (waste, draw,
+      cast-on, rib, body, bind-off, top, carriers-out) with pass numbers.
+  passes <file> [<from>-<to>] [--section <name>] [--piece <id>] [--detail]
+      Without a range: the file's sections. With one: each pass on one line (direction, carrier,
+      racking, speed, roller, stitch sizes, what it knits/transfers/drops and on which needles, and
+      its section). --detail gives the same as structured fields.
+  audit <file> [--piece <id>] [--waste <carrier>] [--draw <carrier>|none]
+      Replay every loop: start loops held too long, waste yarn knitting through doubled body loops,
+      body stitches dropped with nothing to hold them, loops left on the needles, stacks, and eyelets
+      from knitting onto empty needles. Each check says what Kniterate's own files show. Exit 1 on an
+      issue.
+  compare <file-a> <file-b> [--section <name> | --passes <from>-<to>[,<from>-<to>]] [--carriers 2=4,3=3]
+      Stitch by stitch: carrier, direction, racking, speed, roller, and every stitch (needles counted
+      from each range's left edge, so different bed positions line up). Without a range, a summary
+      for every section both files have. --carriers renames file-a's carriers to file-b's.
+      Example: compare my-chart.json ref:dbj --section cast-on
+  matrix [-o <directory>] [--quick]
+      Build every construction Studio makes (fairisle and birdseye charts including narrow and odd
+      widths, beanies, scarves, every sweater silhouette and neck) and audit each file. Exit 1 if any
+      piece fails to export or fails the audit. --quick builds a smaller set.`;
 
 const MAX_FINDINGS = 200;
 
 class UsageError extends Error {}
 
-const VALUE_OPTIONS = ['--leave', '--gauge-source', '--backing', '--image', '--refresh', '--object', '--color', '--accent', '--cuff-cm', '--rib-gauge', '--x', '--above-cuff', '--map', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
+const VALUE_OPTIONS = ['--section', '--piece', '--waste', '--draw', '--carriers', '--passes', '--leave', '--gauge-source', '--backing', '--image', '--refresh', '--object', '--color', '--accent', '--cuff-cm', '--rib-gauge', '--x', '--above-cuff', '--map', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
 
 interface Parsed {
   command: string | null;
@@ -143,6 +171,7 @@ function parseArguments(args: readonly string[]): Parsed {
       if (source !== 'human' && source !== 'assistant') throw new UsageError('--source must be human or assistant.');
       parsed.source = source;
     } else if (argument === '--cells') parsed.cells = true;
+    else if (argument === '--quick' || argument === '--detail') parsed.options.set(argument, 'true');
     else if (argument === '--fold') parsed.options.set('--fold', 'true');
     else if (argument === '--no-fold') parsed.options.set('--fold', 'false');
     else if ((VALUE_OPTIONS as readonly string[]).includes(argument)) parsed.options.set(argument, value());
@@ -468,6 +497,38 @@ async function main(): Promise<number> {
     case 'schema':
       print(ProjectEditSchema.toJSONSchema());
       return 0;
+    case 'reference':
+      print(referenceCommand(parsed.positionals[0]));
+      return 0;
+    case 'passes': {
+      const pieces = await loadMachineInput(positional(parsed, 0, '<file>'), parsed.options, readProject);
+      print(passesCommand(pieces, parsed.positionals[1], parsed.options, parsed.options.has('--detail')));
+      return 0;
+    }
+    case 'audit': {
+      const { result, ok } = auditCommand(await loadMachineInput(positional(parsed, 0, '<file>'), parsed.options, readProject), parsed.options);
+      print(result);
+      return ok ? 0 : 1;
+    }
+    case 'compare': {
+      const pickOne = (pieces: Awaited<ReturnType<typeof loadMachineInput>>, label: string) => {
+        if (pieces.length === 1) return pieces[0]!;
+        const wanted = parsed.options.get('--piece');
+        const found = wanted === undefined ? undefined : pieces.find((piece) => piece.name.endsWith(` · ${wanted}`));
+        if (!found) throw new UsageError(`${label} has ${pieces.length} files; add --piece <id> (${pieces.map((piece) => piece.name.split(' · ').at(-1)).join(', ')}).`);
+        return found;
+      };
+      const a = pickOne(await loadMachineInput(positional(parsed, 0, '<file-a>'), parsed.options, readProject), 'file-a');
+      const b = pickOne(await loadMachineInput(positional(parsed, 1, '<file-b>'), parsed.options, readProject), 'file-b');
+      const { result, identical } = compareCommand(a, b, parsed.options);
+      print(result);
+      return identical ? 0 : 1;
+    }
+    case 'matrix': {
+      const { result, ok } = await matrixCommand(parsed.out, parsed.options.has('--quick'));
+      print(result);
+      return ok ? 0 : 1;
+    }
     case 'explain':
       print(explain(positional(parsed, 0, 'term or rule')));
       return 0;
@@ -670,7 +731,7 @@ main().then((code) => { process.exitCode = code; }, (error: unknown) => {
   print({
     kind: 'kniterate-studio-cli-error',
     schemaVersion: 1,
-    error: { kind: error instanceof UsageError || error instanceof SweaterUsageError ? 'usage' : 'input-or-io', message },
+    error: { kind: error instanceof UsageError || error instanceof SweaterUsageError || error instanceof MachineUsageError ? 'usage' : 'input-or-io', message },
     ...(error instanceof UsageError ? { usage: USAGE } : error instanceof SweaterUsageError ? { usage: SWEATER_USAGE } : {}),
   });
   process.exitCode = 2;
