@@ -1,0 +1,32 @@
+{
+  "kind": "experimental-dbj-edge-crown-study",
+  "status": "software-checked-physically-untried",
+  "sourceProjectSha256": "492bc65c5cc878517cd77d724a420ca34a6372b9200a21bf220d86505aaa7dd2",
+  "baselineKnitoutMatchesStudio": true,
+  "crown": {
+    "steps": 8,
+    "rowsPerStep": 2
+  },
+  "columnsPerBed": [
+    62,
+    60,
+    58,
+    56,
+    54,
+    52,
+    50,
+    48,
+    46
+  ],
+  "bodyRows": 32,
+  "crownDesignRows": 16,
+  "topWasteRowsPerBed": 8,
+  "kcodeBytes": 970726,
+  "kcodeSha256": "135f5e6997554b240452b7ab66ed4ba0162e75e171fb9d0f8f4ee4635b0dfda7",
+  "passes": 794,
+  "diagnostics": [],
+  "encodedSpeeds": [
+    100
+  ],
+  "limitation": "Edge taper, not a rounded crown; birdseye backing, not inverse-image reversible; not integrated into Studio project/UI export."
+}

@@ -40,7 +40,7 @@ type Standard = Required<SectionSettings>;
 
 /** The reference's body settings for this project, or null when it has no body to set (a beanie all in rib). */
 export function bodyStandard(state: ProjectState): Standard | null {
-  if (state.object?.kind === 'beanie' && beanieObjectOf(state)?.construction !== 'rib-cuff-jersey-body') return null;
+  if (state.object?.kind === 'beanie' && beanieObjectOf(state)?.construction === 'flat-rib-2x2') return null;
   const birdseye = state.object?.kind === 'beanie' ? state.strategy.technique === 'birdseye' : wasteConstruction(state) === 'birdseye';
   return CUSTOMIST_STANDARD_BODY_SETTINGS_V1[birdseye ? 'birdseye' : 'fairisle'];
 }
@@ -49,18 +49,23 @@ export function bodyStandard(state: ProjectState): Standard | null {
 export function sectionStandards(state: ProjectState): { key: SetupSection; label: string; standard: Standard; note?: string }[] {
   const construction = wasteConstruction(state);
   const body = bodyStandard(state);
-  if (construction !== 'flat') return [{ key: 'waste', label: 'Waste', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1[construction].waste }, ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : [])];
+  if (construction !== 'flat') return [
+    { key: 'waste', label: 'Waste', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1[construction].waste },
+    ...(construction === 'fairisle' ? [{ key: 'castOn' as const, label: 'Cast-on', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1.fairisle.castOn, note: 'Stitch size and roller affect the first zig-zag row only. Speed affects all three cast-on rows.' }] : []),
+    ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : []),
+  ];
   const flat = CUSTOMIST_STANDARD_SECTION_SETTINGS_V1.flat;
   const object = state.object;
-  const rib = object?.kind !== 'panel' || object.ends.cm > 0;
+  const straight = object?.kind === 'beanie' && object.construction === 'straight-double-jacquard';
+  const rib = !straight && (object?.kind !== 'panel' || object.ends.cm > 0);
   return [
     { key: 'waste', label: 'Waste', standard: flat.waste },
     { key: 'castOn', label: 'Cast-on', standard: flat.castOn },
     ...(rib ? [{ key: 'rib' as const, label: 'Rib', standard: flat.rib }] : []),
     ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : []),
     // A beanie's crown transfers too: at its own reference settings until you set yours.
-    { key: 'transfers', label: 'Transfers', standard: flat.transfers, ...(object?.kind === 'beanie' ? { note: `Until you set your own, the crown keeps Kniterate's transfer settings (speed ${EIGHT_LINE_CROWN_V1.xferSpeed}).` } : {}) },
-    ...(object?.kind === 'beanie' ? [{ key: 'crown' as const, label: 'Crown', standard: flat.crown, note: `Until you set your own, the crown keeps Kniterate's settings row by row: its decrease rows knit at stitch ${EIGHT_LINE_CROWN_V1.jerseyStitch} with roller ${EIGHT_LINE_CROWN_V1.crownRoller} (in rib, ${EIGHT_LINE_CROWN_V1.crownStitchFront}), its top at the standard.` }] : []),
+    { key: 'transfers', label: 'Transfers', standard: flat.transfers, ...(object?.kind === 'beanie' && !straight ? { note: `Until you set your own, the crown keeps Kniterate's transfer settings (speed ${EIGHT_LINE_CROWN_V1.xferSpeed}).` } : {}) },
+    ...(object?.kind === 'beanie' && !straight ? [{ key: 'crown' as const, label: 'Crown', standard: flat.crown, note: `Until you set your own, the crown keeps Kniterate's settings row by row: its decrease rows knit at stitch ${EIGHT_LINE_CROWN_V1.jerseyStitch} with roller ${EIGHT_LINE_CROWN_V1.crownRoller} (in rib, ${EIGHT_LINE_CROWN_V1.crownStitchFront}), its top at the standard.` }] : []),
   ];
 }
 

@@ -99,7 +99,7 @@ const MachineSetupSchema = z.object({
   body: SectionSettingsSchema.optional(),
   /** The waste section's stitch size, steady speed and pulling roller. */
   waste: SectionSettingsSchema.optional(),
-  /** The cast-on's (beanies, sweaters and scarves). */
+  /** The cast-on's (flat pieces and fairisle charts). On a fairisle chart roller/stitch affect the first zig-zag row and speed the three cast-on knitting passes. */
   castOn: SectionSettingsSchema.optional(),
   /** The rib's: its front stitch size, the rear keeping the reference's step below. */
   rib: SectionSettingsSchema.optional(),
@@ -144,9 +144,11 @@ const BeanieObjectSchema = z.object({
   /**
    * `flat-rib-2x2`: the whole body is 2×2 rib. `rib-cuff-jersey-body`: the
    * bottom `cuffRows` chart rows are the rib cuff (one yarn); the rows above
-   * are a jersey colorwork body (fairisle).
+   * are a jersey colorwork body. `straight-double-jacquard`: full birdseye
+   * from the cast-on to a straight top, held on waste on both beds and
+   * gathered by hand; there is no rib cuff or machine-shaped crown.
    */
-  construction: z.enum(['flat-rib-2x2', 'rib-cuff-jersey-body']),
+  construction: z.enum(['flat-rib-2x2', 'rib-cuff-jersey-body', 'straight-double-jacquard']),
   cuffRows: z.number().int().min(1).max(1_200).optional(),
   /** The cuff is folded up when worn: it is knitted at twice its visible height and the fold shows the reverse. */
   cuffFold: z.boolean().optional(),
@@ -157,7 +159,8 @@ const BeanieObjectSchema = z.object({
   ease: z.number().gt(-0.5).lt(0.5).optional(),
   /** Gauge of the 2×2 rib (the cuff); the body uses the project gauge. */
   ribGauge: z.lazy(() => GaugeSchema).optional(),
-}).refine((object) => object.construction === 'flat-rib-2x2' || object.cuffRows !== undefined, 'rib-cuff-jersey-body needs cuffRows');
+}).refine((object) => object.construction !== 'rib-cuff-jersey-body' || object.cuffRows !== undefined, 'rib-cuff-jersey-body needs cuffRows')
+  .refine((object) => object.construction !== 'straight-double-jacquard' || (object.cuffRows === undefined && object.cuffTargetCm === undefined && object.cuffFold !== true && object.ribGauge === undefined), 'straight-double-jacquard has no rib cuff');
 export type BeanieObject = z.infer<typeof BeanieObjectSchema>;
 
 /**

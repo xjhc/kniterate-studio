@@ -181,3 +181,54 @@ describe('eight-line crown for any width', () => {
     expect(() => buildCustomistRibBeanieProgram({ ...PIECE, ribRows: 20, crown: 'customist-194', jerseyBody: { rows: [Array<'3'>(194).fill('3')] } })).toThrow(/all-rib/)
   })
 })
+
+describe('straight double-jacquard gathered panel', () => {
+  it('keeps both layers through the final chart row and releases only after eight waste rows per bed', () => {
+    const width = 62
+    const rows = Array.from({ length: 24 }, (_, r) => Array.from({ length: width }, (_, c) => r > 3 && r < 20 && c > 20 && c < 42 ? '4' as const : '3' as const))
+    const program = buildCustomistRibBeanieProgram({
+      ...PIECE, needleStart: 96, needleEnd: 157, ribRows: 0, crown: 'none', straightDoubleJacquard: true,
+      jerseyBody: { rows, backing: 'birdseye' }, topWasteRows: 8, bodySettings: { speed: 100 },
+      sections: { waste: { speed: 100 }, castOn: { speed: 100 }, transfers: { speed: 100 } },
+    })
+    const text = writeKnitoutProgram(program)
+    expect(text).not.toContain('2x2 RIB BODY')
+    expect(text).not.toContain('2x2 RIB CROWN')
+    const bodyText = text.split('--- BIRDSEYE COLORWORK BODY ---')[1]!
+    expect(bodyText).not.toMatch(/^xfer /m)
+    for (let r = 0; r < rows.length; r++) {
+      const knits = program.ops.filter(op => op.kind === 'knit' && op.sourceRows?.includes(r))
+      expect(knits).toHaveLength(2 * width)
+    }
+    const converted = authoredKnitoutToKCodeWithTrace(text)
+    if (!converted.ok) throw new Error(converted.error)
+    const parsed = parseKCodeDocument(converted.kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true })
+    if (!parsed.ok) throw new Error('not strict KCode')
+    const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2)
+    expect(validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2).diagnostics).toEqual([])
+    const lastMain = trace.passes.findLastIndex(pass => (pass.carrier === '3' || pass.carrier === '4') && pass.actions.some(a => a.kind === 'knit'))
+    const top = trace.passes.slice(lastMain + 1)
+    const waste = top.filter(pass => pass.actions.some(a => a.kind === 'knit'))
+    // The scheduler may split a row to move a parked carrier aside. Count
+    // actual stitches per needle, not carriage passes, to verify eight rows.
+    expect(waste.every(pass => pass.carrier === '6')).toBe(true)
+    for (const bed of ['front', 'rear']) for (let column = 95; column <= 156; column++) {
+      expect(waste.flatMap(p => p.actions).filter(a => a.kind === 'knit' && a.at.bed === bed && a.at.kcodeColumn === column)).toHaveLength(8)
+    }
+    for (const bed of ['front', 'rear']) {
+      expect(waste.flatMap(pass => pass.actions).filter(a => a.kind === 'knit' && a.at.bed === bed)).toHaveLength(8 * width)
+      expect(top.flatMap(pass => pass.actions).filter(a => a.kind === 'drop' && a.at.bed === bed)).toHaveLength(width)
+    }
+    expect(top.slice(0, top.findLastIndex(pass => pass.actions.some(a => a.kind === 'knit')) + 1).flatMap(p => p.actions).some(a => a.kind === 'drop')).toBe(false)
+    expect(new Set(trace.passes.map(pass => pass.speed))).toEqual(new Set([100]))
+    expect(new Set([...text.matchAll(/^x-speed-number (\d+)/gm)].map(m => Number(m[1])))).toEqual(new Set([100]))
+  })
+
+  it('refuses incompatible rib, crown and backing combinations', () => {
+    const base = { ...PIECE, ribRows: 0, crown: 'none' as const, straightDoubleJacquard: true, jerseyBody: { rows: [Array<'3'>(194).fill('3')], backing: 'birdseye' as const } }
+    expect(() => buildCustomistRibBeanieProgram({ ...base, ribRows: 2 })).toThrow(/zero rib/)
+    expect(() => buildCustomistRibBeanieProgram({ ...base, crown: 'eight-line' })).toThrow(/no machine crown/)
+    expect(() => buildCustomistRibBeanieProgram({ ...base, jerseyBody: { ...base.jerseyBody, backing: 'fairisle' } })).toThrow(/birdseye/)
+    expect(() => buildCustomistRibBeanieProgram({ ...base, topWasteRows: 0 })).toThrow(/waste rows/)
+  })
+})

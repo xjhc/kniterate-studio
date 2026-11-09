@@ -31,6 +31,7 @@ import { STUDIO_CROWN_JERSEY_STITCH_V1, planEightLineCrown, ribBed } from './rib
 import { CUSTOMIST_RIB_BEANIE_SETTINGS_V1, STUDIO_FLAT_START_SETTINGS_V1, emitCustomistFlatStart, flatPieceKit, flatStartSettingsV1, type FlatSectionSettingsV1, type SectionSettingsV1 } from './customist-flat-start.js'
 import { SHAPED_PANEL_TOP_WASTE_ROWS } from './shaped-panel.js'
 import { STUDIO_FIRST_ROW_AFTER_TRANSFERS_ROLLER_V1 } from './first-row-speed.js'
+import { doubleJacquardEdgeTransfers, validateDoubleJacquardEdgeCrown, type DoubleJacquardEdgeCrown } from './dbj-edge-decrease.js'
 
 export { CUSTOMIST_RIB_BEANIE_SETTINGS_V1 }
 
@@ -63,6 +64,14 @@ export interface CustomistRibBeanieInput {
   topWasteRows?: number
   /** 2×2 rib rows after the set-up. */
   ribRows: number
+  /** Straight birdseye panel: no rib, no layer join or decreases; hold both layers on waste for hand gathering. */
+  straightDoubleJacquard?: boolean
+  /** Development-only two-colour inverse backing; straight panel with both-bed waste finish. */
+  experimentalReversibleJacquard?: boolean
+  /** Fixed Run 2 waste/intro prefix; keeps this beanie's subsequent two-bed cast-on. */
+  experimentalStartup?: 'run2-waste-and-intro'
+  /** Development-only taper above the straight DBJ body. Not exposed as a validated Studio garment recipe. */
+  experimentalDoubleJacquardCrown?: DoubleJacquardEdgeCrown
   /**
    * `customist-194`: Customist's crown and top jersey, replayed exactly
    * (reference width only). `eight-line`: the same crown topology planned for
@@ -111,52 +120,72 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
   const width = hi - lo + 1
   if (width < 8 || width % 2 !== 0) throw new Error(`rib beanie width must be even and at least 8; got ${width}`)
   const bodyRows = input.jerseyBody?.rows ?? []
+  const straight = input.straightDoubleJacquard === true
+  const reversible = input.experimentalReversibleJacquard === true
+  const run2Startup = input.experimentalStartup === 'run2-waste-and-intro'
+  if (run2Startup && (!reversible || input.startWastePasses !== undefined || draw === null)) throw new Error('Run 2 startup requires reversible mode, draw thread, and its fixed waste length')
+  if (run2Startup && width <= 20) throw new Error('Run 2 startup currently requires width greater than its 20-needle catch zone')
+  const edgeCrown = input.experimentalDoubleJacquardCrown
+  if (reversible && (!straight || edgeCrown)) throw new Error('experimental reversible jacquard requires a straight panel without experimental decreases')
+  if (edgeCrown && !straight) throw new Error('experimental DBJ edge crown requires the straight double-jacquard body')
+  if (edgeCrown) validateDoubleJacquardEdgeCrown(lo, hi, edgeCrown)
+  let topLo = lo
+  let topHi = hi
+  if (straight && (input.reference || input.ribRows !== 0 || input.crown !== 'none' || input.jerseyBody?.backing !== 'birdseye' || bodyRows.length === 0)) {
+    throw new Error('straight double jacquard needs a birdseye body, zero rib rows, no machine crown and a waste top')
+  }
+  if (straight && input.topWasteRows !== undefined && (!Number.isInteger(input.topWasteRows) || input.topWasteRows < 2)) throw new Error('straight double jacquard needs at least two waste rows on each bed')
   if (bodyRows.some((cells) => cells.length !== width)) throw new Error(`every jersey body row must have ${width} cells`)
   if (input.jerseyBody && input.crown === 'customist-194') throw new Error('the customist-194 crown is for an all-rib body; use the eight-line crown with a jersey body')
   const extraCarriers = [...new Set(bodyRows.flat())].filter((c) => c !== body).sort()
+  if (reversible && (extraCarriers.length !== 1 || !bodyRows.some(row => row.includes(body)))) throw new Error('experimental reversible jacquard requires exactly two body colours including the ground')
   if (extraCarriers.some((c) => c === waste || c === draw)) throw new Error('jersey body colors must not use the waste or draw carrier')
   const s = flatStartSettingsV1(input.sections, input.reference ? CUSTOMIST_RIB_BEANIE_SETTINGS_V1 : STUDIO_FLAT_START_SETTINGS_V1)
   const sim = new CarriageSimulator({ carriers: ['1', '2', '3', '4', '5', '6'] })
-  const ops: KnitoutOp[] = [comment('--- CUSTOMIST 2x2 RIB BEANIE: WASTE & CAST-ON ---')]
+  const ops: KnitoutOp[] = [comment(straight ? '--- STRAIGHT DOUBLE JACQUARD: WASTE & CAST-ON ---' : '--- CUSTOMIST 2x2 RIB BEANIE: WASTE & CAST-ON ---')]
   const kit = flatPieceKit(sim, ops, lo, hi, s)
   const { offsets, settings, xfers, drain } = kit
   const all = () => true
-  emitCustomistFlatStart(sim, kit, { bodyCarrier: body, wasteCarrier: waste, drawCarrier: draw, extraCarriers, settings: s, ...(input.startWastePasses !== undefined ? { wastePasses: input.startWastePasses } : {}) })
+  emitCustomistFlatStart(sim, kit, { bodyCarrier: body, wasteCarrier: waste, drawCarrier: draw, extraCarriers, settings: s, run2WasteAndIntro: run2Startup, ...(input.startWastePasses !== undefined ? { wastePasses: input.startWastePasses } : {}) })
 
-  // 1×1 → 2×2: front offsets ≡ 0 go to the rear, rear offsets ≡ 1 to the front.
-  xfers([
-    { from: 'f', offsets: offsets('+', (o) => o % 4 === 0) },
-    { from: 'b', offsets: offsets('+', (o) => o % 4 === 1) },
-  ])
-  drain()
+  if (!straight) {
+    // 1×1 → 2×2: front offsets ≡ 0 go to the rear, rear offsets ≡ 1 to the front.
+    xfers([
+      { from: 'f', offsets: offsets('+', (o) => o % 4 === 0) },
+      { from: 'b', offsets: offsets('+', (o) => o % 4 === 1) },
+    ])
+    drain()
 
-  ops.push(comment('--- 2x2 RIB BODY ---'))
-  settings(s.ribSpeed, s.ribRoller)
-  // Design-row provenance (machine row = knit row: the rib first, then the body); it changes no emitted op.
-  for (let r = 0; r < input.ribRows; r++) {
-    sim.setSourceRows([r])
-    const dir = sim.finalNextDirection()
-    for (const o of offsets(dir, all)) {
-      const bed = ribBed(o)
-      sim.setStitch(bed === 'f' ? s.ribStitchFront : s.ribStitchRear)
-      sim.knit(body, dir, bed === 'f' ? f(lo + o) : backBed(lo + o))
+    ops.push(comment('--- 2x2 RIB BODY ---'))
+    settings(s.ribSpeed, s.ribRoller)
+    // Design-row provenance (machine row = knit row: the rib first, then the body); it changes no emitted op.
+    for (let r = 0; r < input.ribRows; r++) {
+      sim.setSourceRows([r])
+      const dir = sim.finalNextDirection()
+      for (const o of offsets(dir, all)) {
+        const bed = ribBed(o)
+        sim.setStitch(bed === 'f' ? s.ribStitchFront : s.ribStitchRear)
+        sim.knit(body, dir, bed === 'f' ? f(lo + o) : backBed(lo + o))
+      }
     }
+    sim.setSourceRows(undefined)
+    drain()
   }
-  sim.setSourceRows(undefined)
-  drain()
 
   if (input.jerseyBody) {
-    // Rib → jersey: every rear stitch moves to the empty front needle across.
-    xfers([{ from: 'b', offsets: offsets('+', (o) => ribBed(o) === 'b') }])
-    drain()
+    if (!straight) {
+      // Rib → jersey: every rear stitch moves to the empty front needle across.
+      xfers([{ from: 'b', offsets: offsets('+', (o) => ribBed(o) === 'b') }])
+      drain()
+    }
     if (input.jerseyBody.backing === 'birdseye') {
-      ops.push(comment('--- BIRDSEYE COLORWORK BODY ---'))
+      ops.push(comment(reversible ? '--- EXPERIMENTAL REVERSIBLE JACQUARD BODY ---' : '--- BIRDSEYE COLORWORK BODY ---'))
       const own = input.bodySettings ?? {}
       settings(own.speed ?? BIRDSEYE_BODY.speed, own.roller ?? BIRDSEYE_BODY.roller, own.stitch ?? BIRDSEYE_BODY.stitch)
       const colors = [body, ...extraCarriers]
       const sideOf = (carrier: CarrierId): Direction => sim.positionOf(carrier)?.side === 'right' ? '-' : '+'
-      /** One pass at half rack: front and rear in carriage order (rear n sits between front n and n + 1). */
-      const halfRackPass = (carrier: CarrierId, front: (o: number) => boolean, rear: (o: number) => boolean) => {
+      /** Half-rack supports both beds per column; rack-zero complement selections must be disjoint. */
+      const knitBedPass = (carrier: CarrierId, front: (o: number) => boolean, rear: (o: number) => boolean) => {
         const dir = sideOf(carrier)
         for (const o of offsets(dir, (x) => front(x) || rear(x))) {
           const beds = dir === '+' ? ['f', 'b'] as const : ['b', 'f'] as const
@@ -166,33 +195,73 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
           }
         }
       }
-      // Start the back layer (dbj.kc): the ground knits both beds, then one front and one rear row.
-      // The first pass after the rib's transfers pulls gently (Kniterate's guidance after many transfers).
+      // Fill both beds: the ground knits both, then one front and one rear row.
+      // The straight panel starts with the alternating-bed cast-on loops;
+      // the cuffed recipe starts with all loops transferred to the front.
+      // Keep the first full-bed row gentle in either construction.
       const bodyRoller = own.roller ?? BIRDSEYE_BODY.roller
       sim.setRoller(STUDIO_FIRST_ROW_AFTER_TRANSFERS_ROLLER_V1)
       sim.setRacking(0.5)
-      halfRackPass(body, all, all)
+      knitBedPass(body, all, all)
       sim.setRoller(bodyRoller)
       sim.setRacking(0)
       for (const bed of ['f', 'b'] as const) {
         const dir = sideOf(body)
         for (const o of offsets(dir, all)) sim.knit(body, dir, bed === 'f' ? f(lo + o) : backBed(lo + o))
       }
-      sim.setRacking(0.5)
+      sim.setRacking(reversible ? 0 : 0.5)
       bodyRows.forEach((cells, r) => {
         sim.setSourceRows([input.ribRows + r])
-        colors.forEach((carrier, index) => halfRackPass(carrier, (o) => cells[o] === carrier, (o) => (o + r) % colors.length === index))
+        // Experimental shaping only: ease the last design row before transfers.
+        if (edgeCrown && r === bodyRows.length - 1) sim.setRoller(Math.floor(bodyRoller / 2))
+        // Inverse backing: each carrier knits exactly one bed per column,
+        // at rack zero. Across the pair, both beds knit every needle once.
+        // Keep the layers on their own beds through the waste finish.
+        colors.forEach((carrier, index) => knitBedPass(carrier, (o) => cells[o] === carrier,
+          (o) => reversible ? cells[o] !== carrier : (o + r) % colors.length === index))
       })
       sim.setSourceRows(undefined)
+      if (edgeCrown) {
+        drain()
+        ops.push(comment('--- EXPERIMENTAL DOUBLE JACQUARD EDGE CROWN ---'))
+        for (let step = 0; step < edgeCrown.steps; step++) {
+          settings(input.sections?.transfers?.speed ?? 100, 0)
+          sim.setXferStitch(0)
+          for (const transfer of doubleJacquardEdgeTransfers(topLo, topHi)) {
+            sim.setRacking(transfer.rack)
+            sim.xfer(transfer.from, transfer.to)
+          }
+          topLo++
+          topHi--
+          drain()
+          ops.push(comment(`DBJ taper step ${step + 1}: ${topHi - topLo + 1} columns on EACH bed`))
+          settings(own.speed ?? BIRDSEYE_BODY.speed, bodyRoller, own.stitch ?? BIRDSEYE_BODY.stitch)
+          sim.setRacking(0.5)
+          for (let row = 0; row < edgeCrown.rowsPerStep; row++) {
+            const beforeNextDecrease = row === edgeCrown.rowsPerStep - 1 && step < edgeCrown.steps - 1
+            sim.setRoller(row === 0 ? STUDIO_FIRST_ROW_AFTER_TRANSFERS_ROLLER_V1 : beforeNextDecrease ? Math.floor(bodyRoller / 2) : bodyRoller)
+            const backingRow = bodyRows.length + step * edgeCrown.rowsPerStep + row
+            const active = (o: number) => lo + o >= topLo && lo + o <= topHi
+            // Solid ground face above the bird; alternate both colors on the
+            // backing, keeping the original birdseye phase and stitch size.
+            colors.forEach((carrier, index) => knitBedPass(carrier,
+              (o) => active(o) && carrier === body,
+              (o) => active(o) && (o + backingRow) % colors.length === index))
+          }
+          drain()
+        }
+      }
       sim.setRacking(0)
       drain()
-      // Join the layers (dbj.kc): every rear loop onto the front needle across, then one ground row.
-      xfers([{ from: 'b', offsets: offsets('+', all) }])
-      drain()
-      settings(FAIRISLE_BODY_DEFAULTS.speedNumber, FAIRISLE_BODY_DEFAULTS.rollerAdvance, FAIRISLE_BODY_DEFAULTS.stitchNumber)
-      const dir = sideOf(body)
-      for (const o of offsets(dir, all)) sim.knit(body, dir, f(lo + o))
-      drain()
+      if (!straight) {
+        // Join the layers (dbj.kc): every rear loop onto the front needle across, then one ground row.
+        xfers([{ from: 'b', offsets: offsets('+', all) }])
+        drain()
+        settings(FAIRISLE_BODY_DEFAULTS.speedNumber, FAIRISLE_BODY_DEFAULTS.rollerAdvance, FAIRISLE_BODY_DEFAULTS.stitchNumber)
+        const dir = sideOf(body)
+        for (const o of offsets(dir, all)) sim.knit(body, dir, f(lo + o))
+        drain()
+      }
     } else {
       ops.push(comment('--- JERSEY COLORWORK BODY ---'))
       const own = input.bodySettings ?? {}
@@ -283,6 +352,25 @@ export function emitCustomistRibBeanie(input: CustomistRibBeanieInput): Customis
       }
       drain()
       for (const o of span) sim.drop(f(lo + o))
+    }
+    drain()
+  }
+
+  if (straight) {
+    // Preserve both sets of live loops. Separate front/rear passes at rack 0
+    // make a waste tube; no layer join, tightening, or transfer is required.
+    ops.push(comment('--- WASTE ON TOP: BOTH BEDS ---'))
+    sim.setRacking(0)
+    settings(s.tubeSpeed, s.castOnRoller, s.wasteStitch)
+    for (let row = 0; row < (input.topWasteRows ?? SHAPED_PANEL_TOP_WASTE_ROWS); row++) {
+      for (const bed of ['f', 'b'] as const) {
+        const dir: Direction = sim.positionOf(waste)?.side === 'left' ? '+' : '-'
+        for (const o of offsets(dir, (x) => lo + x >= topLo && lo + x <= topHi)) sim.knit(waste, dir, bed === 'f' ? f(lo + o) : backBed(lo + o))
+      }
+    }
+    drain()
+    for (const bed of ['f', 'b'] as const) {
+      for (const o of offsets('+', (x) => lo + x >= topLo && lo + x <= topHi)) sim.drop(bed === 'f' ? f(lo + o) : backBed(lo + o))
     }
     drain()
   }

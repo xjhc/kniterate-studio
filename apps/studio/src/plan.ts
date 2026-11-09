@@ -62,6 +62,8 @@ export interface ProjectPlan {
 }
 
 export interface BeanieSections {
+  /** A straight panel has no machine-shaped crown; both layers are gathered after removal. */
+  gatheredTop?: boolean;
   cuff: { rows: number; knittedCm: Valued<number> | null; visibleCm: Valued<number> | null; folds: boolean } | null;
   /** Knitted body rows: the chart's body rows plus any rows the backing adds (birdseye starts and joins its back layer). */
   body: { rows: number; chartRows: number; fabric: 'rib' | 'fairisle colorwork' | 'birdseye colorwork'; cm: Valued<number> | null };
@@ -181,9 +183,10 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
   const beanie = state.object?.kind === 'beanie';
   // A cuff-and-body beanie: the height target is the body above the rib cuff.
   const beanieObject = beanieObjectOf(state);
+  const straight = beanieObject?.construction === 'straight-double-jacquard';
   const cuffRows = beanieObject?.construction === 'rib-cuff-jersey-body' ? Math.min(beanieObject.cuffRows ?? 0, state.chart.height) : 0;
   // Ground rows the construction knits in the body beyond the chart's (a birdseye body starts and joins its back layer).
-  const bodyExtraRows = cuffRows > 0 && state.strategy.technique === 'birdseye' ? BIRDSEYE_BODY_EXTRA_FRONT_ROWS : 0;
+  const bodyExtraRows = straight ? 2 : cuffRows > 0 && state.strategy.technique === 'birdseye' ? BIRDSEYE_BODY_EXTRA_FRONT_ROWS : 0;
 
   // Sizes predicted from an assumed gauge are assumptions, not calculations from measurements.
   const gaugeProvenance: Provenance = gauge?.source === 'assumed' ? 'assumed' : 'calculated';
@@ -202,7 +205,7 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
     heightCm: {
       value: round1((state.chart.height - cuffRows + bodyExtraRows) / perCm(gauge, 'height')),
       provenance: gaugeProvenance,
-      how: cuffRows > 0
+      how: cuffRows > 0 || straight
         ? `body: (${state.chart.height} − ${cuffRows} cuff rows${bodyExtraRows ? ` + ${bodyExtraRows} birdseye start/join rows` : ''}) ÷ ${gauge.rowsPer10cm} rows/10 cm`
         : `${state.chart.height} rows ÷ ${gauge.rowsPer10cm} rows/10 cm`,
     },
@@ -347,9 +350,9 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
 
   const finishing = beanie
     ? [
-        'The top comes off the machine on waste yarn, which holds its stitches. Thread the main-yarn tail through the top stitches below the waste and pull them closed, then unpick the waste yarn.',
+        straight ? 'The top comes off on waste yarn on both beds. Secure every live stitch of BOTH layers below the waste on holding threads before unpicking any waste. Keep them secured for seaming and gathering; the full-width gather will be bulky.' : 'The top comes off the machine on waste yarn, which holds its stitches. Thread the main-yarn tail through the top stitches below the waste and pull them closed, then unpick the waste yarn.',
         state.setup?.drawThread === false ? 'Unravel or cut away the waste yarn below the cast-on edge.' : 'Pull the draw thread (C1) to separate the waste yarn from the cast-on edge.',
-        'Sew the two long edges together with mattress stitch, one stitch in from each edge, from the crown down to the brim. Where the brim will fold up, sew from the other side so the seam is hidden.',
+        straight ? 'Sew the side edges together, taking matching edge stitches through the double-layer fabric; then gather and secure the top.' : 'Sew the two long edges together with mattress stitch, one stitch in from each edge, from the crown down to the brim. Where the brim will fold up, sew from the other side so the seam is hidden.',
         ...(beanieObjectOf(state)?.cuffFold ? [`Fold the rib cuff up along its middle (the cuff is ${cuffRows} rows, so fold at row ${Math.floor(cuffRows / 2)}); the folded half shows the rib's reverse, which looks the same for 2x2 rib.`] : []),
         'Weave in the ends. Wash or steam as the yarn label says, then measure.',
       ]
@@ -361,7 +364,7 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
     const chartBodyRows = state.chart.height - cuffRows;
     const birdseye = bodyExtraRows > 0;
     const bodyRows = chartBodyRows + bodyExtraRows;
-    const crown = crownFor(state.chart.width, jersey);
+    const crown = straight ? null : crownFor(state.chart.width, jersey);
     const rowsCm = (rows: number, g: ProjectGauge | null, label: string): Valued<number> | null => g === null ? null : {
       value: round1(rows / perCm(g, 'height')),
       provenance: g.source === 'assumed' ? 'assumed' : 'calculated',
@@ -371,10 +374,10 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
     const cuffVisible = cuffKnitted === null ? null : fold
       ? { value: round1(cuffRows / perCm(ribGauge!, 'height') / 2), provenance: ribGauge!.source === 'assumed' ? 'assumed' as const : 'calculated' as const, how: `half of the knitted cuff (it folds up): ${cuffRows} rows ÷ ${ribGauge!.rowsPer10cm} rows/10 cm ÷ 2` }
       : cuffKnitted;
-    const bodyRowsCm = rowsCm(bodyRows, gauge, jersey ? 'body' : 'rib');
+    const bodyRowsCm = rowsCm(bodyRows, gauge, jersey || straight ? 'body' : 'rib');
     const bodyCm = bodyRowsCm === null || !birdseye ? bodyRowsCm : {
       ...bodyRowsCm,
-      how: `${bodyRowsCm.how}; ${chartBodyRows} chart rows + ${bodyExtraRows} ground rows that start and join the birdseye back; the gauge must be measured on birdseye fabric`,
+      how: `${bodyRowsCm.how}; ${chartBodyRows} chart rows + ${bodyExtraRows} ground rows that ${straight ? 'start' : 'start and join'} the birdseye back; the gauge must be measured on birdseye fabric`,
     };
     // The crown is plain jersey; no jersey gauge is recorded, so its length is estimated with the body gauge.
     const crownRowsCm = crown === null ? null : rowsCm(crown.rows, gauge, 'crown');
@@ -383,10 +386,11 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
       : crownRowsCm;
     const parts = [cuffVisible, bodyCm, crownCm];
     sections = {
+      ...(straight ? { gatheredTop: true } : {}),
       cuff: jersey ? { rows: cuffRows, knittedCm: cuffKnitted, visibleCm: cuffVisible, folds: fold } : null,
       body: { rows: bodyRows, chartRows: chartBodyRows, fabric: birdseye ? 'birdseye colorwork' : jersey ? 'fairisle colorwork' : 'rib', cm: bodyCm },
       crown: crown === null ? null : { rows: crown.rows, recipe: crown.recipe, finalStitches: crown.finalStitches, needles: crown.needles, cm: crownCm },
-      finishedHeightCm: parts.some((part, index) => part === null && (index > 0 || jersey)) ? null : {
+      finishedHeightCm: straight ? (bodyCm === null ? null : { ...bodyCm, how: `${bodyCm.how}; straight panel height before gathering, which shortens it in wear` }) : parts.some((part, index) => part === null && (index > 0 || jersey)) ? null : {
         value: round1(parts.reduce((sum, part) => sum + (part?.value ?? 0), 0)),
         provenance: parts.some((part) => part?.provenance === 'assumed') ? 'assumed' : 'calculated',
         how: `${jersey ? `visible cuff ${cuffVisible!.value} + ` : ''}body ${bodyCm!.value} + crown ${crownCm!.value} cm, flat and unstretched; the crown is measured along its knitted length and the gathered top shortens it in wear`,

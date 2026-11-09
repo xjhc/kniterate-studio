@@ -290,7 +290,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const backing = projectBackingWords(materialized.state);
   const swatch: SwatchStep | undefined = isGarment ? {
     gauges: [
-      { name: cuffed ? `Body (${backing?.fabric ?? 'fairisle fabric'})` : '2x2 rib', measured: gauge?.source === 'measured' },
+      { name: backing ? `Body (${backing.fabric})` : '2x2 rib', measured: gauge?.source === 'measured' },
       ...(cuffed ? [{ name: 'Cuff (2x2 rib)', measured: ribGauge?.source === 'measured' }] : []),
     ],
     onEnter: () => { onView('design'); revealSection('swatch'); },

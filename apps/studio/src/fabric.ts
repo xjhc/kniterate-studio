@@ -44,9 +44,9 @@ export function gaugeFabrics(state: ProjectState): { body: Fabric | null; rib: F
   }
   const beanie = beanieObjectOf(state);
   // A beanie in rib all over: its gauge is the rib's.
-  if (beanie && beanie.construction !== 'rib-cuff-jersey-body') return { body: ribFabric('kkpp', ribStitch), rib: null };
+  if (beanie && beanie.construction === 'flat-rib-2x2') return { body: ribFabric('kkpp', ribStitch), rib: null };
   const body = atSize(projectBackingWords(state)?.fabric ?? 'plain stockinette', bodyStitch);
-  return { body: { name: body, key: body, own: false }, rib: beanie ? ribFabric('kkpp', ribStitch) : null };
+  return { body: { name: body, key: body, own: false }, rib: beanie?.construction === 'rib-cuff-jersey-body' ? ribFabric('kkpp', ribStitch) : null };
 }
 
 const same = (a: GaugeValue | undefined, b: GaugeValue | undefined) => a?.stitchesPer10cm === b?.stitchesPer10cm && a?.rowsPer10cm === b?.rowsPer10cm && a?.source === b?.source && a?.note === b?.note;

@@ -293,7 +293,7 @@ export function constructionLine(plan: ProjectPlan): string {
     `${plan.stitches.value} needles ${plan.needles.first}–${plan.needles.last}`,
     sections.cuff ? `${sections.cuff.rows}-row 2x2 rib cuff${sections.cuff.folds ? ` folding up to ${sections.cuff.visibleCm?.value ?? '?'} cm` : cm(sections.cuff.knittedCm)}` : null,
     `${sections.body.rows}-row ${sections.body.fabric} body${cm(sections.body.cm)}`,
-    sections.crown ? `${sections.crown.rows}-row ${sections.crown.recipe} crown to ${sections.crown.finalStitches} stitches${cm(sections.crown.cm)}` : 'no crown at this width',
+    sections.crown ? `${sections.crown.rows}-row ${sections.crown.recipe} crown to ${sections.crown.finalStitches} stitches${cm(sections.crown.cm)}` : sections.gatheredTop ? 'straight top, both layers held on waste and gathered by hand' : 'no crown at this width',
     sections.finishedHeightCm ? `finished height about ${sections.finishedHeightCm.value} cm flat` : null,
   ].filter(Boolean).join('; ');
 }
@@ -344,7 +344,7 @@ export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectP
     ...(sections ? [
       ...(sections.cuff ? [`Cuff: ${sections.cuff.rows} rows, knitted ${valued(sections.cuff.knittedCm)}${sections.cuff.folds ? `; folds up to ${valued(sections.cuff.visibleCm)}` : ''}.`] : []),
       `Body: ${sections.body.rows} rows of ${sections.body.fabric}, ${valued(sections.body.cm)}.`,
-      sections.crown ? `Crown: ${sections.crown.rows} rows, ${sections.crown.recipe}, closing to ${sections.crown.finalStitches} stitches, ${valued(sections.crown.cm)}.` : 'Crown: none at this width.',
+      sections.crown ? `Crown: ${sections.crown.rows} rows, ${sections.crown.recipe}, closing to ${sections.crown.finalStitches} stitches, ${valued(sections.crown.cm)}.` : sections.gatheredTop ? 'Top: straight, without decreases; gather both layers by hand after securing their live stitches below the waste.' : 'Crown: none at this width.',
       ...(sections.finishedHeightCm ? [`Finished height: ${valued(sections.finishedHeightCm)}.`] : []),
     ] : []),
     ...placements.map((resolved) => motifLine(resolved, plan)),
@@ -439,6 +439,7 @@ export function schematicSvg(project: ColorworkProjectV1, plan: ProjectPlan): st
     dimV(x0 - 8, crownTop, bodyTop, `crown ${cmLabel(sections.crown?.cm, crownRows)}`);
     text(x0 + W / 2, crownTop - 6, `gathered: ${sections.crown?.finalStitches} stitches, held on waste yarn`, 'middle', 11);
   }
+  if (sections.gatheredTop) text(x0 + W / 2, bodyTop - 6, `${widthStitches} stitches per bed; both layers held on waste`, 'middle', 11);
   // Seam edges.
   for (const x of [x0, x0 + W]) parts.push(`<path d="M${x} ${crownTop + (x === x0 ? 0 : 0)}V${base}" stroke="#2563eb" stroke-width="3" stroke-opacity="0.7"/>`);
   text(x0 + W + 4, base - cuff - body / 2, 'seam', 'start', 11);
@@ -469,7 +470,7 @@ export function schematicSvg(project: ColorworkProjectV1, plan: ProjectPlan): st
   const fx = 640; const fW = W / 2;
   const visibleCuff = sections.cuff ? (sections.cuff.folds ? cuff / 2 : cuff) : 0;
   const fBase = base; const fCuffTop = fBase - visibleCuff; const fBodyTop = fCuffTop - body; const fCrownTop = fBodyTop - crown * 0.7;
-  text(fx + fW / 2, 24, 'Finished, front view', 'middle', 13, 600);
+  text(fx + fW / 2, 24, sections.gatheredTop ? 'Seamed panel, before gathering' : 'Finished, front view', 'middle', 13, 600);
   parts.push(`<path d="M${fx} ${fBase}V${fBodyTop}C${fx} ${fCrownTop - 4} ${fx + fW} ${fCrownTop - 4} ${fx + fW} ${fBodyTop}V${fBase}Z" fill="${main}" fill-opacity="0.3" stroke="currentColor"/>`);
   if (visibleCuff > 0) {
     parts.push(`<rect x="${fx}" y="${fCuffTop}" width="${fW}" height="${visibleCuff}" fill="${main}" fill-opacity="0.55" stroke="currentColor"/>`);
@@ -576,8 +577,8 @@ export function measurementFormMarkdown(project: ColorworkProjectV1, plan: Proje
     `| Circumference | flat width at mid-body × 2, after seaming | ${predicted(plan.predicted?.widthCm)} | ___ cm |`,
     ...(sections?.cuff ? [`| Cuff | visible height${sections.cuff.folds ? ' when folded' : ''} | ${predicted(sections.cuff.visibleCm)} | ___ cm |`] : []),
     ...(sections ? [
-      `| Body | cuff top to the first crown decrease | ${predicted(sections.body.cm)} | ___ cm |`,
-      `| Crown | first decrease to the top, along the knitting | ${predicted(sections.crown?.cm)} | ___ cm |`,
+      `| Body | ${sections.gatheredTop ? 'cast-on to top, before gathering' : 'cuff top to the first crown decrease'} | ${predicted(sections.body.cm)} | ___ cm |`,
+      ...(sections.crown ? [`| Crown | first decrease to the top, along the knitting | ${predicted(sections.crown.cm)} | ___ cm |`] : []),
       `| Total | brim to top, flat | ${predicted(sections.finishedHeightCm)} | ___ cm |`,
     ] : []),
     '',

@@ -119,3 +119,11 @@ describe('a piece machine file read back', () => {
     }
   });
 });
+
+it('shows a straight double-jacquard panel going directly from body to waste, without a fictitious crown', async () => {
+  const project = createBeanieProject({ title: 'Straight', construction: 'straight-double-jacquard', headCircumferenceCm: 26, bodyCm: 10, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'assumed' }, main: { name: 'Black', hex: '#111111' } }, { id: 'straight', source: 'human', group: 'create' });
+  const result = await runAuthoredPipeline(project);
+  expect(result.exportReady).toBe(true);
+  const file = readKnitFile(result.kcode!, { zoneOfRow: () => 'body', carriers: { main: '3', second: null, waste: '6', draw: '1' }, kind: 'beanie' })!;
+  expect(file.sections.map(section => section.label).filter(label => !['Waste yarn', 'Draw thread'].includes(label))).toEqual(['Cast-on', 'Body', 'Waste yarn on top', 'Carriers out']);
+});

@@ -404,3 +404,34 @@ describe('fourth review', () => {
     expect(unmappedColors(motif, colors)).toEqual([{ color: 2, stitches: 2 }]);
   });
 });
+
+describe('straight double-jacquard beanie', () => {
+  const straight = () => createBeanieProject({
+    title: 'Small straight bird', construction: 'straight-double-jacquard',
+    headCircumferenceCm: 26, ease: -0.1, bodyCm: 8,
+    bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'assumed' },
+    main: TOQUE.main, accent: TOQUE.accent,
+  }, { id: 'straight-bird', source: 'assistant', group: 'straight' });
+
+  it('plans the whole panel as birdseye, including its start rows, with no rib or shaped crown', () => {
+    const project = place(straight(), 'bird', 5, 2);
+    const { state, placements } = materializeColorworkProject(project);
+    const plan = planProject(state, placements);
+    expect(state.object).toMatchObject({ construction: 'straight-double-jacquard' });
+    expect(state.chart.width).toBe(62);
+    expect(plan.sections).toMatchObject({ gatheredTop: true, cuff: null, crown: null, body: { rows: 27, chartRows: 25, fabric: 'birdseye colorwork' } });
+    expect(plan.sections!.finishedHeightCm!.value).toBe(7.9);
+    expect(plan.sizeChecks.every(check => check.ok)).toBe(true);
+    expect(plan.finishing.join(' ')).toContain('BOTH layers');
+    expect(placements[0]!.status).toBe('placed');
+    const compiled = compileColorworkProject(project);
+    expect(compiled.ok).toBe(true);
+    expect(compiled.knitoutText).not.toContain('2x2 RIB BODY');
+    expect(compiled.knitoutText).toContain('WASTE ON TOP: BOTH BEDS');
+    expect(compiled.rowProvenance.every(row => row.passIndices.length > 0)).toBe(true);
+    expect(schematicSvg(project, plan)).toContain('both layers held on waste');
+    expect(() => beanieFitEdits(project, { backing: 'fairisle' })).toThrow(/birdseye/);
+    const invalid = operate(project, [{ kind: 'set-strategy', strategy: { technique: 'fairisle', floatLimit: 7 } }]);
+    expect(compileColorworkProject(invalid).ok).toBe(false);
+  });
+});

@@ -1,0 +1,8 @@
+{
+  "previousSha256": "4db9d8ed8d68f611cbcfca496c49a9f3a0c857cb8d22cdbddb6dd2b0aa75d6cd",
+  "candidateSha256": "846cabf253ab25a42efe38c17583717c39e3d952075b984a474e11aa74f193c0",
+  "oldContinuationFirstPass": 107,
+  "newContinuationFirstPass": 111,
+  "followingMachinePassesByteIdentical": true,
+  "matchedPassCount": 140
+}

@@ -1,0 +1,343 @@
+[
+  {
+    "pass": 111,
+    "carrier": "0",
+    "op": "Tr-Rr",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 0,
+    "rack": 0,
+    "front": 0,
+    "rear": 0,
+    "stitch": [],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 112,
+    "carrier": "0",
+    "op": "Tr-Rl",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 0,
+    "rack": 0,
+    "front": 0,
+    "rear": 0,
+    "stitch": [],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 113,
+    "carrier": "0",
+    "op": "Rr-Tr",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 0,
+    "rack": 0,
+    "front": 0,
+    "rear": 0,
+    "stitch": [],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 114,
+    "carrier": "0",
+    "op": "Rl-Tr",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 0,
+    "rack": 0,
+    "front": 0,
+    "rear": 0,
+    "stitch": [],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 115,
+    "carrier": "6",
+    "op": "Kn-Kn",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 200,
+    "rack": 0,
+    "front": 31,
+    "rear": 0,
+    "stitch": [
+      5
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 116,
+    "carrier": "6",
+    "op": "Kn-Kn",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 200,
+    "rack": 0,
+    "front": 0,
+    "rear": 31,
+    "stitch": [
+      5
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 117,
+    "carrier": "6",
+    "op": "Kn-Kn",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 200,
+    "rack": 0,
+    "front": 31,
+    "rear": 0,
+    "stitch": [
+      5
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 118,
+    "carrier": "0",
+    "op": "Kn-Kn",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 450,
+    "rack": 0,
+    "front": 0,
+    "rear": 0,
+    "stitch": [],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 119,
+    "carrier": "0",
+    "op": "Kn-Kn",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 0,
+    "rack": 0,
+    "front": 0,
+    "rear": 0,
+    "stitch": [],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 120,
+    "carrier": "1",
+    "op": "Kn-Kn",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 200,
+    "rack": 0,
+    "front": 31,
+    "rear": 0,
+    "stitch": [
+      8
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 121,
+    "carrier": "0",
+    "op": "Kn-Kn",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 0,
+    "rack": 0,
+    "front": 0,
+    "rear": 0,
+    "stitch": [],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 122,
+    "carrier": "3",
+    "op": "Kn-Kn",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 450,
+    "rack": 0,
+    "front": 31,
+    "rear": 31,
+    "stitch": [
+      4
+    ],
+    "knitIntoEmpty": 31,
+    "emptyFront": 0,
+    "emptyRear": 31
+  },
+  {
+    "pass": 123,
+    "carrier": "3",
+    "op": "Kn-Kn",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 450,
+    "rack": 0,
+    "front": 31,
+    "rear": 0,
+    "stitch": [
+      6
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 124,
+    "carrier": "3",
+    "op": "Kn-Kn",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 450,
+    "rack": 0,
+    "front": 0,
+    "rear": 31,
+    "stitch": [
+      6
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 125,
+    "carrier": "3",
+    "op": "Kn-Kn",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 100,
+    "rack": 0.5,
+    "front": 62,
+    "rear": 62,
+    "stitch": [
+      7
+    ],
+    "knitIntoEmpty": 62,
+    "emptyFront": 31,
+    "emptyRear": 31
+  },
+  {
+    "pass": 126,
+    "carrier": "3",
+    "op": "Kn-Kn",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 700,
+    "rack": 0,
+    "front": 62,
+    "rear": 0,
+    "stitch": [
+      7
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 127,
+    "carrier": "3",
+    "op": "Kn-Kn",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 700,
+    "rack": 0,
+    "front": 0,
+    "rear": 62,
+    "stitch": [
+      7
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 128,
+    "carrier": "3",
+    "op": "Kn-Kn",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 700,
+    "rack": 0,
+    "front": 62,
+    "rear": 0,
+    "stitch": [
+      7
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 129,
+    "carrier": "0",
+    "op": "Kn-Kn",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 0,
+    "rack": 0,
+    "front": 0,
+    "rear": 0,
+    "stitch": [],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 130,
+    "carrier": "4",
+    "op": "Kn-Kn",
+    "dir": "<<",
+    "speed": 100,
+    "roller": 700,
+    "rack": 0,
+    "front": 0,
+    "rear": 62,
+    "stitch": [
+      7
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  },
+  {
+    "pass": 131,
+    "carrier": "3",
+    "op": "Kn-Kn",
+    "dir": ">>",
+    "speed": 100,
+    "roller": 700,
+    "rack": 0,
+    "front": 62,
+    "rear": 0,
+    "stitch": [
+      7
+    ],
+    "knitIntoEmpty": 0,
+    "emptyFront": 0,
+    "emptyRear": 0
+  }
+]

@@ -1,0 +1,45 @@
+{
+  "kind": "experimental-reversible-mini-beanie",
+  "status": "physical-trial-aborted-during-startup",
+  "sourceProjectSha256": "492bc65c5cc878517cd77d724a420ca34a6372b9200a21bf220d86505aaa7dd2",
+  "baselineKnitoutMatchesStudio": true,
+  "construction": "straight inverse-image double jacquard; hand seam and gathered top; no decreases or machine bind-off",
+  "columnsPerBed": 62,
+  "designRows": 32,
+  "bird": {
+    "width": 21,
+    "height": 16
+  },
+  "topWasteRowsPerBed": 8,
+  "carriers": {
+    "main": "3",
+    "contrast": "4",
+    "waste": "6",
+    "draw": "1"
+  },
+  "kcodeBytes": 297753,
+  "kcodeSha256": "4db9d8ed8d68f611cbcfca496c49a9f3a0c857cb8d22cdbddb6dd2b0aa75d6cd",
+  "passes": 246,
+  "inverseBodyCheckedFromKCode": true,
+  "bodyFirstPass1Based": 124,
+  "bodyLastPass1Based": 219,
+  "diagnostics": [],
+  "encodedSpeeds": [
+    100
+  ],
+  "bodyStitch": 7,
+  "bodyRack": 0,
+  "loopChecks": {
+    "emptyTransfers": 0,
+    "maxStack": 2,
+    "finalLoops": 0,
+    "bodyKnitIntoEmpty": 0
+  },
+  "limitation": "C1 missed its first introduction and C6 waste tangled; archived failed trial, superseded by v2.",
+  "physicalFeedback": {
+    "date": "2026-11-08",
+    "c1": "No stitches caught at FIRST ARRIVAL FROM THE LEFT, not the later draw-thread pass; exact pass within catch/intro unknown",
+    "c6": "waste yarn bunched/tangled near beginning of row",
+    "reversibleBodyReached": false
+  }
+}

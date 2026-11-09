@@ -63,6 +63,7 @@ export function GarmentFitSection({ state, plan, swatchFile, onFit }: { state: P
   const sections = plan.sections;
   const widthCheck = plan.sizeChecks.find((check) => check.dimension === 'width');
   const cuff = intent.construction === 'rib-cuff-jersey-body';
+  const colourwork = intent.construction !== 'flat-rib-2x2';
   const ease = intent.ease ?? -0.1;
   const fit = FITS.find((choice) => Math.abs(choice.ease - ease) < 0.001) ?? null;
   const easePercent = Math.round(ease * 1000) / 10;
@@ -70,7 +71,7 @@ export function GarmentFitSection({ state, plan, swatchFile, onFit }: { state: P
   const counts = { needles: plan.stitches.value, rows: plan.rows.value };
   const setGauge = (change: BeanieFitChange, label: string) => { setResizedFrom(counts); onFit(change, label); };
   const resized = resizedFrom && (resizedFrom.needles !== counts.needles || resizedFrom.rows !== counts.rows) ? resizedFrom : null;
-  const fabric = cuff ? projectBackingWords(state)?.fabric ?? 'fairisle fabric' : '2x2 rib';
+  const fabric = colourwork ? projectBackingWords(state)?.fabric ?? 'fairisle fabric' : '2x2 rib';
   const fabrics = gaugeFabrics(state);
   const swatch = swatchWords([{ gauge: state.gauge, fabric: fabrics.body?.name ?? 'fairisle fabric' }, ...(cuff ? [{ gauge: state.object?.ribGauge, fabric: fabrics.rib?.name ?? '2×2 rib' }] : [])]);
   const off = (wanted: number | undefined, knitted: Valued<number> | null | undefined) => wanted !== undefined && knitted != null && Math.abs(knitted.value - wanted) >= 1;
@@ -89,8 +90,8 @@ export function GarmentFitSection({ state, plan, swatchFile, onFit }: { state: P
           wanted={<NumberField id="fit.cuff" label="Cuff height" value={intent.cuffCm} min={1} max={30} suffix="cm" onCommit={(cuffCm) => onFit({ cuffCm }, `Cuff ${cuffCm} cm`)} />}
           knitted={sections?.cuff ? cm(sections.cuff.folds ? sections.cuff.visibleCm : sections.cuff.knittedCm) : '—'} count={sections?.cuff ? String(sections.cuff.rows) : '—'}
           off={off(intent.cuffCm, sections?.cuff ? (sections.cuff.folds ? sections.cuff.visibleCm : sections.cuff.knittedCm) : null)} />}
-        <MeasureRow label={cuff ? 'Body' : 'Rib body'} hint={`From the ${cuff ? 'cuff top' : 'cast-on'} to the first crown decrease. ${sections?.body.cm?.how ?? ''}`}
-          wanted={<NumberField id="fit.body" label={cuff ? 'Body height' : 'Rib body height'} value={intent.bodyCm} min={2} max={60} suffix="cm" onCommit={(bodyCm) => onFit({ bodyCm }, `Body ${bodyCm} cm`)} />}
+        <MeasureRow label={colourwork ? 'Body' : 'Rib body'} hint={`From the ${cuff ? 'cuff top' : 'cast-on'} to the ${sections?.gatheredTop ? 'top before gathering' : 'first crown decrease'}. ${sections?.body.cm?.how ?? ''}`}
+          wanted={<NumberField id="fit.body" label={colourwork ? 'Body height' : 'Rib body height'} value={intent.bodyCm} min={2} max={60} suffix="cm" onCommit={(bodyCm) => onFit({ bodyCm }, `Body ${bodyCm} cm`)} />}
           knitted={cm(sections?.body.cm)} count={sections ? String(sections.body.rows) : '—'} off={off(intent.bodyCm, sections?.body.cm)} />
         {sections?.crown && <MeasureRow label="Crown" hint={`Decreases to ${sections.crown.finalStitches} stitches, then straight rows that are gathered. ${sections.crown.cm?.how ?? ''}`}
           wanted={null} knitted={cm(sections.crown.cm)} count={String(sections.crown.rows)} />}
@@ -103,7 +104,7 @@ export function GarmentFitSection({ state, plan, swatchFile, onFit }: { state: P
     <Section id="swatch" title="Your swatch" aside={<SwatchAside aside={swatch.aside} />}>
       <p className="garment-help">{swatch.hint}</p>
       <SwatchFileButton file={swatchFile} />
-      <GaugeFields id="gauge.body" label={cuff ? `Body (${fabric})` : 'Rib'} gauge={state.gauge} onCommit={(bodyGauge) => setGauge({ bodyGauge }, `Body gauge ${bodyGauge.stitchesPer10cm}/${bodyGauge.rowsPer10cm} (${bodyGauge.source})`)} />
+      <GaugeFields id="gauge.body" label={colourwork ? `Body (${fabric})` : 'Rib'} gauge={state.gauge} onCommit={(bodyGauge) => setGauge({ bodyGauge }, `Body gauge ${bodyGauge.stitchesPer10cm}/${bodyGauge.rowsPer10cm} (${bodyGauge.source})`)} />
       {cuff && <GaugeFields id="gauge.rib" label="Cuff (2x2 rib)" gauge={state.object?.ribGauge} onCommit={(ribGauge) => setGauge({ ribGauge }, `Rib gauge ${ribGauge.stitchesPer10cm}/${ribGauge.rowsPer10cm} (${ribGauge.source})`)} />}
       {resized && <p className="garment-derived" role="status">Resized: {resized.needles} → {counts.needles} needles, {resized.rows} → {counts.rows} rows.</p>}
     </Section>

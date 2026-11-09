@@ -149,6 +149,7 @@ export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: n
     const across = frontKnits(lastBody);
     for (let index = lastBody + 1; index < trace.passes.length; index++) {
       if (!knits(index)) continue;
+      if (!yarn(trace.passes[index]!.carrier)) break;
       if (frontKnits(index) !== across) break;
       bodyEnd = index;
     }
@@ -195,7 +196,9 @@ export function readKnitFile(kcode: KCodeArtifact, options: { zoneOfRow: (row: n
     if (row !== null) section.rows = section.rows ? { from: Math.min(section.rows.from, row), to: Math.max(section.rows.to, row) } : { from: row, to: row };
   });
   // A beanie's crown ends in straight rows that are gathered by hand, held by waste yarn on top: each its own section.
-  const crown = kind === 'beanie' ? sections.findIndex((section) => section.kind === 'top') : -1;
+  // A straight gathered panel goes directly to waste. Carrier-only moves
+  // before that waste are not a crown section.
+  const crown = kind === 'beanie' ? sections.findIndex((section) => section.kind === 'top' && section.carriers.some(yarn)) : -1;
   if (crown !== -1) {
     const section = sections[crown]!;
     let wasteFrom = -1;

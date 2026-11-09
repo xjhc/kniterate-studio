@@ -79,9 +79,11 @@ function swatchOf(project: ColorworkProjectV1): ColorworkProjectV1 | null {
     const headCircumferenceCm = Math.round(((SWATCH_BEANIE_NEEDLES - 2) / gauge.stitchesPer10cm * 10) / (1 + ease) * 10) / 10;
     const cuffed = intent.construction === 'rib-cuff-jersey-body';
     const main = yarnOf(state, 0)!;
-    const accent = cuffed ? yarnOf(state, 1) : null;
+    const straight = intent.construction === 'straight-double-jacquard';
+    const accent = cuffed || straight ? yarnOf(state, 1) : null;
     const swatch = createBeanieProject({
       title, headCircumferenceCm, ease, bodyCm: SWATCH_CM, bodyGauge: gauge, main,
+      ...(straight ? { construction: 'straight-double-jacquard' as const, backing: 'birdseye' as const, ...(accent ? { accent } : {}) } : {}),
       ...(cuffed ? { cuffCm: SWATCH_RIB_CM, ribGauge: intent.ribGauge, fold: false, backing: intent.backing, ...(accent ? { accent } : {}) } : {}),
     }, { id, source: 'system', group });
     if (!accent) return swatch;

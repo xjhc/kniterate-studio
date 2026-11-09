@@ -124,7 +124,7 @@ function beanieYarnPaths(rows: readonly (readonly string[])[], ground: string, b
     const inBody = rows.flatMap((cells, row) => (birdseye || cells.includes(carrier) ? [row] : []));
     const used = carrier === ground ? [-1, ...inBody, rows.length] : inBody;
     if (carrier !== ground && used.length > 0) {
-      messages.push({ severity: 'info', rule: 'carried-yarn', message: `C${carrier} is carried from the waste section, past the cast-on and the ${cuffRows}-row cuff${used[0]! > 0 ? ` and ${used[0]} body row${used[0] === 1 ? '' : 's'}` : ''}, to its first stitch in body row ${used[0]! + 1}. Leave the strand slack while knitting and trim it after finishing.` });
+      messages.push({ severity: 'info', rule: 'carried-yarn', message: `C${carrier} is carried from the waste section, past the cast-on${cuffRows > 0 ? ` and the ${cuffRows}-row cuff` : ''}${used[0]! > 0 ? ` and ${used[0]} body row${used[0] === 1 ? '' : 's'}` : ''}, to its first stitch in body row ${used[0]! + 1}. Leave the strand slack while knitting and trim it after finishing.` });
       rowIds.push(rowIdOf(used[0]!));
     }
     for (let index = 1; index < used.length; index += 1) {
@@ -243,6 +243,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
     ...(state.setup?.topWasteRows !== undefined ? { topWasteRows: state.setup.topWasteRows } : {}),
     ...(state.setup?.body !== undefined ? { body: state.setup.body } : {}),
     ...(state.setup?.waste !== undefined ? { waste: state.setup.waste } : {}),
+    ...(state.setup?.castOn !== undefined ? { castOn: state.setup.castOn } : {}),
     ...(technique === 'fairisle' ? { floatPolicy: { mode: 'warn-above' as const, threshold: state.strategy.floatLimit } } : {}),
   });
   const artifact = compileToRunArtifact(input);
@@ -377,8 +378,9 @@ function compileBeanieProject(
   const width = state.chart.width;
   // Knitting order: the bottom chart row first (cells are stored top row first).
   const knitRows = [...state.chart.cells].reverse();
-  const withBody = object.construction === 'rib-cuff-jersey-body';
-  const cuffRows = withBody ? Math.min(object.cuffRows ?? 0, knitRows.length) : knitRows.length;
+  const straight = object.construction === 'straight-double-jacquard';
+  const withBody = object.construction !== 'flat-rib-2x2';
+  const cuffRows = straight ? 0 : withBody ? Math.min(object.cuffRows ?? 0, knitRows.length) : knitRows.length;
   const cuffColors = [...new Set(knitRows.slice(0, cuffRows).flat())];
   const bodyCells = knitRows.slice(cuffRows);
   const bodyColors = [...new Set(bodyCells.flat())];
@@ -404,11 +406,12 @@ function compileBeanieProject(
   for (const error of machineSetupErrors(state.setup, 'flat')) setupMessages.push(setupError(error.rule, error.message));
   // The construction knits only what it implements; never compile a different backing than the one chosen.
   const backing = state.strategy.technique;
+  if (straight && backing !== 'birdseye') setupMessages.push(setupError('project-beanie-backing-unsupported', 'Straight double jacquard requires full birdseye backing on both beds.'));
   if (withBody && backing !== 'fairisle' && backing !== 'birdseye') setupMessages.push(setupError('project-beanie-backing-unsupported', `The beanie body supports fairisle and birdseye backings; ${backing} is not built for beanies yet.`));
   if (withBody && backing === 'birdseye' && state.strategy.birdseyeMode === 'minimal') setupMessages.push(setupError('project-beanie-backing-unsupported', 'The beanie birdseye body ties every color into the backing on every row (full); minimal birdseye is not built for beanies.'));
-  const crown = width === CUSTOMIST_RIB_CROWN_WIDTH && !withBody ? 'customist-194' as const : 'eight-line' as const;
+  const crown = straight ? 'none' as const : width === CUSTOMIST_RIB_CROWN_WIDTH && !withBody ? 'customist-194' as const : 'eight-line' as const;
   const frame: CompiledFrame = {
-    preset: `customist-2x2-rib-beanie@1 (${crown} crown)`,
+    preset: straight ? 'straight-double-jacquard@1 (gathered by hand)' : `customist-2x2-rib-beanie@1 (${crown} crown)`,
     reference: 'reference/2x2-rib-beanie.kc',
     wastePasses: 81,
     wasteCarrier: '6',
@@ -436,6 +439,7 @@ function compileBeanieProject(
     wasteCarrier: '6',
     drawCarrier: state.setup?.drawThread === false ? null : '1',
     ribRows: cuffRows,
+    ...(straight ? { straightDoubleJacquard: true } : {}),
     crown,
     ...(state.setup?.wasteRows !== undefined ? { startWastePasses: customistWastePassesV1('flat', state.setup.wasteRows) } : {}),
     ...(state.setup?.topWasteRows !== undefined ? { topWasteRows: state.setup.topWasteRows } : {}),
@@ -464,7 +468,7 @@ function compileBeanieProject(
     ? beanieYarnPaths(input.jerseyBody!.rows, input.bodyCarrier, backing === 'birdseye', state.strategy.floatLimit, cuffRows, (bodyRow) => state.rowIds[height - 1 - (cuffRows + bodyRow)]!)
     : { messages: [], rowIds: [] };
   // The waste top: the waste yarn parks beside the piece's right edge after the start and is carried up it to the top.
-  const wasteCarry: ValidationMessage = { severity: 'info', rule: 'carried-yarn', message: `C${input.wasteCarrier} (waste) is carried from the waste section up the right edge of the piece, past the cast-on, ${withBody ? 'cuff, body' : 'rib'} and crown, to the waste rows on top. Leave the strand slack while knitting; it comes away with the waste.` };
+  const wasteCarry: ValidationMessage = { severity: 'info', rule: 'carried-yarn', message: `C${input.wasteCarrier} (waste) is carried from the waste section up the right edge of the piece, past the cast-on and ${straight ? 'double-jacquard body' : withBody ? 'cuff, body and crown' : 'rib and crown'}, to the waste rows on top. Leave the strand slack while knitting; it comes away with the waste.` };
   return {
     ...base,
     capacity: exactCapacity,

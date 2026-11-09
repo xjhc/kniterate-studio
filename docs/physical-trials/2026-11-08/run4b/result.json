@@ -1,0 +1,11 @@
+{
+  "status": "partial-with-startup-and-bindoff-yarn-breaks",
+  "kcodeBytes": 312817,
+  "kcodeSha256": "cd8252fbc0cc68667e2dd597b57439d07e901d41dfbab951867e63beb47effec",
+  "firstCastOnRoller": 300,
+  "observations": [
+    "Main yarn broke during the first left-to-right return, at the bottom left.",
+    "Bind-off mostly worked, with broken yarn at its right-hand starting edge."
+  ],
+  "issueComment": "https://github.com/xjhc/kniterate-studio/issues/9#issuecomment-6728492623"
+}

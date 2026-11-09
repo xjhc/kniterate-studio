@@ -21,6 +21,8 @@ export interface BeanieColor { name: string; hex: string }
 
 export interface BeanieIntent {
   title: string;
+  /** Straight birdseye fabric, gathered by hand; omitting this preserves the existing rib/cuff recipes. */
+  construction?: 'straight-double-jacquard';
   headCircumferenceCm?: number;
   /** Fraction; -0.1 is 10% negative ease. */
   ease?: number;
@@ -66,8 +68,11 @@ export function withSizingFixes(project: ColorworkProjectV1, edits: readonly Pro
 /** A new beanie project, sized by the Plan. Every edit is one operation in its history. */
 export function createBeanieProject(intent: BeanieIntent, options: { id: string; source: ProjectEditEntry['source']; group: string }): ColorworkProjectV1 {
   const cuff = intent.cuffCm !== undefined;
+  const straight = intent.construction === 'straight-double-jacquard';
+  if (straight && (cuff || intent.fold || intent.ribGauge)) throw new Error('Straight double jacquard has no rib cuff.');
+  if (straight && intent.backing !== undefined && intent.backing !== 'birdseye') throw new Error('Straight double jacquard requires birdseye backing.');
   if (cuff && intent.ribGauge === undefined) throw new Error('A cuff height needs a 2x2 rib gauge.');
-  if (intent.accent !== undefined && !cuff) throw new Error('A second color needs a colorwork body: add a cuff (the all-rib beanie knits one yarn).');
+  if (intent.accent !== undefined && !cuff && !straight) throw new Error('A second color needs a colorwork body: add a cuff or choose straight-double-jacquard.');
   // Placeholder counts; the Plan's fixes below set the real ones.
   const placeholderCuff = cuff ? Math.max(2, Math.round((intent.cuffCm! * (intent.fold ? 2 : 1) * intent.ribGauge!.rowsPer10cm) / 10)) : 0;
   const height = cuff ? placeholderCuff + 20 : 102;
@@ -84,7 +89,7 @@ export function createBeanieProject(intent: BeanieIntent, options: { id: string;
         ...(intent.ease !== undefined ? { ease: intent.ease } : {}),
       }
     : {
-        kind: 'beanie', construction: 'flat-rib-2x2',
+        kind: 'beanie', construction: straight ? 'straight-double-jacquard' : 'flat-rib-2x2',
         ...(intent.headCircumferenceCm !== undefined ? { headCircumferenceCm: intent.headCircumferenceCm } : {}),
         ...(intent.ease !== undefined ? { ease: intent.ease } : {}),
       };
@@ -94,7 +99,7 @@ export function createBeanieProject(intent: BeanieIntent, options: { id: string;
   ];
   if (intent.accent) edits.push({ kind: 'set-yarn-assignment', assignment: { paletteId: 'accent', carrier: '4', yarnName: intent.accent.name } });
   // A colorwork body uses Customist's default float warning distance (7).
-  if (cuff) edits.push({ kind: 'set-strategy', strategy: { technique: intent.backing ?? 'fairisle', floatLimit: 7 } });
+  if (cuff || straight) edits.push({ kind: 'set-strategy', strategy: { technique: straight ? 'birdseye' : intent.backing ?? 'fairisle', floatLimit: 7 } });
   if (intent.bodyGauge !== undefined) edits.push({ kind: 'set-gauge', gauge: { ...intent.bodyGauge } });
   if (intent.bodyCm !== undefined) edits.push({ kind: 'set-target', target: { heightCm: intent.bodyCm } });
   const project = createColorworkProjectV1(chart, { id: options.id, title: intent.title });
@@ -139,12 +144,13 @@ export function beanieFitEdits(project: ColorworkProjectV1, change: BeanieFitCha
   const { state } = materializeColorworkProject(project);
   const object = state.object;
   if (object?.kind !== 'beanie') throw new Error('This project is not a beanie.');
+  if (object.construction === 'straight-double-jacquard' && change.backing !== undefined && change.backing !== 'birdseye') throw new Error('Straight double jacquard requires birdseye backing.');
   const edits: ProjectEdit[] = [];
   const nextObject: ProjectObject = { ...object };
   if (change.headCircumferenceCm !== undefined) nextObject.headCircumferenceCm = change.headCircumferenceCm;
   if (change.ease !== undefined) nextObject.ease = change.ease;
   if (change.cuffCm !== undefined || change.fold !== undefined || change.ribGauge !== undefined) {
-    if (object.construction !== 'rib-cuff-jersey-body') throw new Error('This beanie has no cuff; its whole body is rib.');
+    if (object.construction !== 'rib-cuff-jersey-body') throw new Error('This beanie has no separate rib cuff.');
     if (change.cuffCm !== undefined) nextObject.cuffTargetCm = change.cuffCm;
     if (change.fold !== undefined) { if (change.fold) nextObject.cuffFold = true; else delete nextObject.cuffFold; }
     if (change.ribGauge !== undefined) nextObject.ribGauge = { ...change.ribGauge };
@@ -173,7 +179,7 @@ export function fitChangeLabel(change: BeanieFitChange): string {
 }
 
 /** The designer-facing fit of a beanie, read back from its state. */
-export function beanieIntentOf(state: ProjectState): BeanieFitChange & { construction: 'flat-rib-2x2' | 'rib-cuff-jersey-body' } | null {
+export function beanieIntentOf(state: ProjectState): BeanieFitChange & { construction: 'flat-rib-2x2' | 'rib-cuff-jersey-body' | 'straight-double-jacquard' } | null {
   const object = state.object;
   if (object?.kind !== 'beanie') return null;
   return {

@@ -44,7 +44,7 @@ export function sectionLimits(section: SetupSection): Record<keyof SectionSettin
  * Each blocks compiling, so no program is exported. These are Studio's
  * limits, from Kniterate's documentation and its own files, not measured
  * hardware limits, and a value inside them is not tested with any yarn. A
- * chart sets only its waste and body; a flat piece every section.
+ * fairisle chart also sets its cast-on; a flat piece sets every section.
  */
 export function machineSetupErrors(setup: MachineSetup | undefined, construction: SetupConstruction): { rule: string; message: string }[] {
   const errors: { rule: string; message: string }[] = [];
@@ -54,7 +54,8 @@ export function machineSetupErrors(setup: MachineSetup | undefined, construction
       errors.push({ rule: 'project-waste-too-short', message: `The waste knits ${passes} rows; Studio needs at least ${CUSTOMIST_MIN_WASTE_PASSES_V1}, because with fewer the fabric may not reach the rollers before your piece starts, and without pull-down the knitting fails.` });
     }
   }
-  const sections: readonly SetupSection[] = construction === 'flat' ? ['waste', 'castOn', 'rib', 'body', 'transfers', 'crown'] : ['waste', 'body'];
+  if (construction === 'birdseye' && setup?.castOn && Object.keys(setup.castOn).length > 0) errors.push({ rule: 'project-setting-unsupported', message: 'Cast-on overrides are not implemented for a birdseye chart; remove them or use a supported flat construction.' });
+  const sections: readonly SetupSection[] = construction === 'flat' ? ['waste', 'castOn', 'rib', 'body', 'transfers', 'crown'] : construction === 'fairisle' ? ['waste', 'castOn', 'body'] : ['waste', 'body'];
   for (const section of sections) {
     const limits = sectionLimits(section);
     for (const key of ['stitch', 'speed', 'roller'] as const) {

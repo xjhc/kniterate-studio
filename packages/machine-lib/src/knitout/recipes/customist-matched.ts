@@ -23,7 +23,7 @@ import { EIGHT_LINE_CROWN_V1, STUDIO_CROWN_JERSEY_STITCH_V1 } from '../passes/ri
 import { SHAPED_PANEL_TOP_WASTE_ROWS } from '../passes/shaped-panel.js'
 import { CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES, STUDIO_BIRDSEYE_BODY_ROLLER_V1 } from './customist-studio-birdseye-7gg.js'
 import { CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE } from './customist-studio-fairisle-7gg.js'
-import { STUDIO_YARN_CATCH_NEEDLES_V1 } from '../passes/carrier-intro.js'
+import { STUDIO_YARN_CATCH_NEEDLES_V1, FAIRISLE_CARRIER_INTRO_DEFAULTS } from '../passes/carrier-intro.js'
 import { STUDIO_FIRST_ROW_AFTER_TRANSFERS_ROLLER_V1 } from '../passes/first-row-speed.js'
 
 export type CustomistMatchedTechniqueV1 = 'fairisle' | 'birdseye'
@@ -57,6 +57,8 @@ export interface CustomistMatchedCompileRequestV1 {
   readonly body?: SectionSettingsV1
   /** The waste section's stitch size, steady speed and pulling roller, over the reference's. */
   readonly waste?: SectionSettingsV1
+  /** Fairisle cast-on: roller/stitch apply to the first zig-zag row; speed to its three knitting passes. */
+  readonly castOn?: SectionSettingsV1
 }
 
 /** The reference's waste section for each chart backing. */
@@ -79,7 +81,10 @@ const FLAT_STEADY_WASTE_PASS = FLAT.wasteRampPasses + 1 - (FLAT.wasteRampPasses 
  * the top rows'.
  */
 export const CUSTOMIST_STANDARD_SECTION_SETTINGS_V1 = {
-  fairisle: { waste: { stitch: referenceWaste('fairisle').stitchNumber!, speed: referenceWaste('fairisle').wasteSpeed!, roller: referenceWaste('fairisle').rampRollerLeft! } },
+  fairisle: {
+    waste: { stitch: referenceWaste('fairisle').stitchNumber!, speed: referenceWaste('fairisle').wasteSpeed!, roller: referenceWaste('fairisle').rampRollerLeft! },
+    castOn: { stitch: FAIRISLE_CARRIER_INTRO_DEFAULTS.rampStitches[0]!, speed: FAIRISLE_CARRIER_INTRO_DEFAULTS.rampSpeed, roller: FAIRISLE_CARRIER_INTRO_DEFAULTS.rampRoller },
+  },
   birdseye: { waste: { stitch: referenceWaste('birdseye').stitchNumber!, speed: referenceWaste('birdseye').wasteSpeed!, roller: referenceWaste('birdseye').rampRollerLeft! } },
   flat: {
     waste: { stitch: FLAT.wasteStitch, speed: FLAT.wasteSpeed(FLAT_STEADY_WASTE_PASS), roller: FLAT.wasteRoller(FLAT_STEADY_WASTE_PASS) },
@@ -195,6 +200,9 @@ export function buildCustomistMatchedCompileInputV1(request: CustomistMatchedCom
       ...(typeof input.fairisleCarrierIntro === 'object' ? input.fairisleCarrierIntro : {}),
       catchNeedles: STUDIO_YARN_CATCH_NEEDLES_V1,
       firstRowRoller: STUDIO_FIRST_ROW_AFTER_TRANSFERS_ROLLER_V1,
+      ...(request.castOn?.roller !== undefined ? { rampRoller: request.castOn.roller } : {}),
+      ...(request.castOn?.speed !== undefined ? { rampSpeed: request.castOn.speed } : {}),
+      ...(request.castOn?.stitch !== undefined ? { rampStitches: [request.castOn.stitch, ...FAIRISLE_CARRIER_INTRO_DEFAULTS.rampStitches.slice(1)] } : {}),
     },
   }
 }

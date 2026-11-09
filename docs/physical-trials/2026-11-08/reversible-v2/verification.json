@@ -1,0 +1,120 @@
+{
+  "kind": "experimental-reversible-mini-beanie",
+  "status": "physical-trial-completed-with-cast-on-design-defects",
+  "sourceProjectSha256": "492bc65c5cc878517cd77d724a420ca34a6372b9200a21bf220d86505aaa7dd2",
+  "baselineKnitoutMatchesStudio": true,
+  "construction": "straight inverse-image double jacquard; hand seam and gathered top; no decreases or machine bind-off",
+  "columnsPerBed": 62,
+  "designRows": 32,
+  "bird": {
+    "width": 21,
+    "height": 16
+  },
+  "topWasteRowsPerBed": 8,
+  "carriers": {
+    "main": "3",
+    "contrast": "4",
+    "waste": "6",
+    "draw": "1"
+  },
+  "kcodeBytes": 302567,
+  "kcodeSha256": "846cabf253ab25a42efe38c17583717c39e3d952075b984a474e11aa74f193c0",
+  "passes": 250,
+  "inverseBodyCheckedFromKCode": true,
+  "bodyFirstPass1Based": 128,
+  "bodyLastPass1Based": 223,
+  "diagnostics": [],
+  "encodedSpeeds": [
+    100,
+    200,
+    300,
+    600
+  ],
+  "bodyStitch": 7,
+  "bodyRack": 0,
+  "startup": "Run 2 waste and intro with rear-left catch-loop refresh; later beanie cast-on retained",
+  "startupVerification": {
+    "frozenRun2PrefixPassesMatched": 112,
+    "candidatePrefixPasses": 110,
+    "rearLeftRefreshPasses": 40,
+    "emptyReleaseMovesRemoved": 2,
+    "maxConsumedWasteAgeInMachinePasses": 5,
+    "catches": [
+      {
+        "carrier": "3",
+        "pass": 89,
+        "oldestWastePass": 87,
+        "newestWastePass": 87
+      },
+      {
+        "carrier": "3",
+        "pass": 90,
+        "oldestWastePass": 86,
+        "newestWastePass": 86
+      },
+      {
+        "carrier": "3",
+        "pass": 91,
+        "oldestWastePass": 87,
+        "newestWastePass": 87
+      },
+      {
+        "carrier": "4",
+        "pass": 95,
+        "oldestWastePass": 92,
+        "newestWastePass": 93
+      },
+      {
+        "carrier": "4",
+        "pass": 96,
+        "oldestWastePass": 92,
+        "newestWastePass": 93
+      },
+      {
+        "carrier": "4",
+        "pass": 97,
+        "oldestWastePass": 92,
+        "newestWastePass": 93
+      },
+      {
+        "carrier": "1",
+        "pass": 101,
+        "oldestWastePass": 98,
+        "newestWastePass": 99
+      },
+      {
+        "carrier": "1",
+        "pass": 102,
+        "oldestWastePass": 98,
+        "newestWastePass": 99
+      },
+      {
+        "carrier": "1",
+        "pass": 103,
+        "oldestWastePass": 98,
+        "newestWastePass": 99
+      }
+    ]
+  },
+  "loopChecks": {
+    "emptyTransfers": 0,
+    "maxStack": 2,
+    "finalLoops": 0,
+    "bodyKnitIntoEmpty": 0
+  },
+  "limitation": "One completed physical trial; startup and inverse body succeeded, but cast-on openings and one-colour setup band need redesign. Fit/gauge unmeasured. Experimental recipe not integrated into Studio UI.",
+  "physicalFeedback": {
+    "date": "2026-11-08",
+    "completed": true,
+    "c1Introduction": "successful per user",
+    "previousStartupIssue": "not observed per user",
+    "castOn": "regular openings along orange lower edge; user wants all-knit outward faces and colour-correct start",
+    "reverseSetupBand": "approximately four orange rows on grey side reported; four orange rear-bed setup stages verified in KC",
+    "construction": "user considers it a reversible rectangle, not a finished beanie",
+    "photos": [
+      "../photos/IMG_1178.jpg",
+      "../photos/IMG_1179.jpg"
+    ],
+    "closedEdgeRequirement": "One orange joining row on the grey side is acceptable; open yarn-over-like edge is unacceptable."
+  }
+}

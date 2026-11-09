@@ -233,7 +233,7 @@ describe('every section’s speed, roller and stitch size', () => {
   const hat = () => createBeanieProject({ title: 'Hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' }, cuffCm: 7, ribGauge: { stitchesPer10cm: 30, rowsPer10cm: 32, source: 'measured' }, fold: true, main: { name: 'Black', hex: '#111111' }, accent: { name: 'White', hex: '#F2F2F2' } }, { id: 'hat', source: 'human', group: 'create' });
 
   it.each(['fairisle', 'birdseye'] as const)('of a %s chart: its waste', async (technique) => {
-    expect(sectionStandards(materializeColorworkProject(chart(technique)).state).map((section) => section.key)).toEqual(['waste', 'body']);
+    expect(sectionStandards(materializeColorworkProject(chart(technique)).state).map((section) => section.key)).toEqual(technique === 'fairisle' ? ['waste', 'castOn', 'body'] : ['waste', 'body']);
     const result = await runAuthoredPipeline(own(chart(technique), 'waste'));
     expect(result.verdict.state).toBe('surface');
     expect(uses(result.compiled!.knitoutText!)).toEqual([true, true, true]);
@@ -296,5 +296,34 @@ describe('every section’s speed, roller and stitch size', () => {
     const piece = (await runSweaterPipeline(own(scarf(4), 'rib'))).pieces[0]!;
     expect(piece.verdict.state).toBe('surface');
     expect(uses(piece.compiled!.knitoutText)).toEqual([true, true, true]);
+  });
+});
+
+describe('fairisle first cast-on row', () => {
+  it('changes only the first zig-zag pass roller, preserving every other KCode line', async () => {
+    const project = chart('fairisle');
+    const changed = appendProjectEdit(project, { id: 'gentle-cast-on', source: 'human', edit: { kind: 'set-machine-setup', setup: { castOn: { roller: 300 } } } });
+    const [before, after] = await Promise.all([runAuthoredPipeline(project), runAuthoredPipeline(changed)]);
+    expect(before.exportReady).toBe(true);
+    expect(after.exportReady).toBe(true);
+    const a = before.kcode!.trace!.passes;
+    const b = after.kcode!.trace!.passes;
+    expect(b).toHaveLength(a.length);
+    const different = a.flatMap((p, index) => JSON.stringify(p.raw) === JSON.stringify(b[index]!.raw) ? [] : [index]);
+    expect(different).toHaveLength(1);
+    const index = different[0]!;
+    expect(a[index]).toMatchObject({ rack: 0.5, roller: 450, speed: 100 });
+    expect(b[index]).toMatchObject({ rack: 0.5, roller: 300, speed: 100 });
+    expect(a[index]!.selections.front).toHaveLength(40);
+    expect(a[index]!.selections.rear).toHaveLength(40);
+    expect(b[index]!.raw.FRNT).toBe(a[index]!.raw.FRNT);
+    expect(b[index]!.raw.REAR).toBe(a[index]!.raw.REAR);
+    expect(b[index]!.raw.STIF).toBe(a[index]!.raw.STIF);
+    expect(b[index]!.raw.STIR).toBe(a[index]!.raw.STIR);
+  });
+
+  it('rejects unsafe cast-on values and unsupported birdseye chart overrides', () => {
+    expect(machineSetupErrors({ castOn: { roller: -1, stitch: 1, speed: 0 } }, 'fairisle')).toHaveLength(3);
+    expect(machineSetupErrors({ castOn: { roller: 300 } }, 'birdseye')).toEqual([expect.objectContaining({ rule: 'project-setting-unsupported' })]);
   });
 });

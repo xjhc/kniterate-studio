@@ -19,7 +19,9 @@
 
 import { b as backBed, f, type CarrierId, type Direction, type KnitoutOp } from '../types.js'
 import type { CarriageSimulator } from '../sim/carriage-simulator.js'
-import { STUDIO_YARN_CATCH_NEEDLES_V1 } from './carrier-intro.js'
+import { STUDIO_YARN_CATCH_NEEDLES_V1, FAIRISLE_CARRIER_INTRO_DEFAULTS } from './carrier-intro.js'
+import { FAIRISLE_PARK_WASTE_DEFAULTS } from './waste-section.js'
+import { emitCustomistWasteAndIntro } from './customist-waste-intro.js'
 
 /** A section's machine settings where a piece sets its own; anything left out is the reference's. */
 export interface SectionSettingsV1 {
@@ -120,6 +122,12 @@ export function flatStartSettingsV1(own: FlatSectionSettingsV1 = {}, base: FlatS
   return Object.freeze({
     ...base,
     wasteStitch: waste.stitch ?? base.wasteStitch,
+    // A slower waste/cast-on setting also caps their insert/tube passes.
+    // Otherwise setting these sections to 100 still leaves hidden 200-speed knitting.
+    insertSpeed: waste.speed === undefined ? base.insertSpeed : Math.min(base.insertSpeed, waste.speed),
+    tubeSpeed: waste.speed === undefined ? base.tubeSpeed : Math.min(base.tubeSpeed, waste.speed),
+    tubularSpeed: castOn.speed === undefined ? base.tubularSpeed : Math.min(base.tubularSpeed, castOn.speed),
+    autoMovePresserSpeed: Math.min(base.autoMovePresserSpeed, waste.speed ?? base.autoMovePresserSpeed, castOn.speed ?? base.autoMovePresserSpeed),
     wasteSpeed: waste.speed === undefined ? base.wasteSpeed : (p: number) => (p < base.wasteRampPasses ? Math.min(base.wasteSpeed(p), waste.speed!) : waste.speed!),
     wasteRoller: waste.roller === undefined ? base.wasteRoller : (p: number) => (base.wasteRoller(p) === 0 ? 0 : waste.roller!),
     castOnSpeed: castOn.speed ?? base.castOnSpeed,
@@ -147,6 +155,7 @@ const BODY_PARK_BEYOND_EDGE = 0
 
 /** Pass helpers over one piece's needles `lo..hi`, used by the start and the constructions after it. */
 export interface FlatPieceKit {
+  readonly ops: KnitoutOp[]
   readonly lo: number
   readonly hi: number
   readonly width: number
@@ -174,6 +183,7 @@ export function flatPieceKit(sim: CarriageSimulator, ops: KnitoutOp[], lo: numbe
     if (stitch !== undefined) sim.setStitch(stitch)
   }
   return {
+    ops,
     lo,
     hi,
     width,
@@ -209,6 +219,8 @@ export interface CustomistFlatStartInput {
   drawCarrier: CarrierId | null
   /** Further yarns brought in after the body yarn, in order (each is carried up from the waste section to its first stitch). */
   extraCarriers: readonly CarrierId[]
+  /** Fixed Run 2 prefix only; later cast-on and waste finish still use settings. */
+  run2WasteAndIntro?: boolean
   /**
    * Waste interlock passes before the inserts (default 81, the reference's).
    * Fewer save yarn and time; too few and the fabric may not reach the
@@ -222,7 +234,7 @@ export interface CustomistFlatStartInput {
 
 /** Customist's waste, inserts, draw thread and 1×1 cast-on, ending with the body yarn parked on the left. */
 export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit, input: CustomistFlatStartInput): void {
-  const { lo, hi, width, offsets, row, settings, xfers, drain } = kit
+  const { lo, hi, width, offsets, row, settings, xfers, drain, ops } = kit
   const { bodyCarrier: body, wasteCarrier: waste, drawCarrier: draw } = input
   const s = input.settings ?? STUDIO_FLAT_START_SETTINGS_V1
   const even = (o: number) => o % 2 === 0
@@ -255,47 +267,61 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
     }
   }
 
-  // Waste interlock. Rightward passes knit the full 1×1 (front even, rear
-  // odd); leftward passes knit the interior with the parities swapped. The
-  // start pass skips the outermost needles.
-  sim.bringIn(waste, { side: 'left' })
-  catchYarn(waste)
-  for (let p = 0; p < (input.wastePasses ?? s.wastePasses); p++) {
-    settings(s.wasteSpeed(p), s.wasteRoller(p), s.wasteStitch)
-    if (p === 0) {
-      row(waste, '+', (o) => even(o) && o > 0, (o) => !even(o) && o < width - 1)
-      sim.miss(waste, '+', f(hi - 1 + WASTE_START_EXTEND))
+  if (input.run2WasteAndIntro) {
+    if (draw === null) throw new Error('Run 2 waste introduction requires a draw carrier')
+    emitCustomistWasteAndIntro(sim, ops, {
+      needleStart: lo, needleEnd: hi, wasteCarrier: waste,
+      bodyCarriers: [body, ...input.extraCarriers], drawCarrier: draw,
+      wastePasses: 87, waste: FAIRISLE_PARK_WASTE_DEFAULTS,
+      intro: FAIRISLE_CARRIER_INTRO_DEFAULTS, catchNeedles: STUDIO_YARN_CATCH_NEEDLES_V1,
+      refreshLeftCatchLoop: true,
+    })
+    ops.push({ kind: 'comment', text: '--- END RUN 2 WASTE AND INTRO; BEGIN BEANIE CAST-ON PREPARATION ---' })
+    sim.setPresserSpeed(s.autoMovePresserSpeed)
+    sim.setPresserRoller(s.autoMovePresserRoller)
+  } else {
+    // Waste interlock. Rightward passes knit the full 1×1 (front even, rear
+    // odd); leftward passes knit the interior with the parities swapped. The
+    // start pass skips the outermost needles.
+    sim.bringIn(waste, { side: 'left' })
+    catchYarn(waste)
+    for (let p = 0; p < (input.wastePasses ?? s.wastePasses); p++) {
+      settings(s.wasteSpeed(p), s.wasteRoller(p), s.wasteStitch)
+      if (p === 0) {
+        row(waste, '+', (o) => even(o) && o > 0, (o) => !even(o) && o < width - 1)
+        sim.miss(waste, '+', f(hi - 1 + WASTE_START_EXTEND))
+      }
+      else if (p % 2 === 1) row(waste, '-', (o) => !even(o) && o < width - 1, (o) => even(o) && o > 0)
+      else row(waste, '+', even, (o) => !even(o))
     }
-    else if (p % 2 === 1) row(waste, '-', (o) => !even(o) && o < width - 1, (o) => even(o) && o > 0)
-    else row(waste, '+', even, (o) => !even(o))
-  }
-  drain()
+    drain()
 
-  sim.setPresserSpeed(s.autoMovePresserSpeed)
-  sim.setPresserRoller(s.autoMovePresserRoller)
-  // Body yarn insert (front odd, rear even), then a waste tube.
-  sim.bringIn(body, { side: 'left' })
-  catchYarn(body)
-  settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
-  row(body, '+', (o) => !even(o), even)
-  tube(s.bodyTubeRows)
-  // Each further yarn: one 1×1 insert row (alternating parity), then two waste tube rows.
-  input.extraCarriers.forEach((carrier, index) => {
-    sim.bringIn(carrier, { side: 'left' })
-    catchYarn(carrier)
+    sim.setPresserSpeed(s.autoMovePresserSpeed)
+    sim.setPresserRoller(s.autoMovePresserRoller)
+    // Body yarn insert (front odd, rear even), then a waste tube.
+    sim.bringIn(body, { side: 'left' })
+    catchYarn(body)
     settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
-    row(carrier, '+', (o) => even(o) === (index % 2 === 0), (o) => even(o) !== (index % 2 === 0))
-    tube(2)
-  })
-  // Draw yarn insert (front even, rear odd), then a waste tube.
-  if (draw !== null) {
-    sim.bringIn(draw, { side: 'left' })
-    catchYarn(draw)
-    settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
-    row(draw, '+', even, (o) => !even(o))
+    row(body, '+', (o) => !even(o), even)
+    tube(s.bodyTubeRows)
+    // Each further yarn: one 1×1 insert row (alternating parity), then two waste tube rows.
+    input.extraCarriers.forEach((carrier, index) => {
+      sim.bringIn(carrier, { side: 'left' })
+      catchYarn(carrier)
+      settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
+      row(carrier, '+', (o) => even(o) === (index % 2 === 0), (o) => even(o) !== (index % 2 === 0))
+      tube(2)
+    })
+    // Draw yarn insert (front even, rear odd), then a waste tube.
+    if (draw !== null) {
+      sim.bringIn(draw, { side: 'left' })
+      catchYarn(draw)
+      settings(s.insertSpeed, s.insertRoller, s.wasteStitch)
+      row(draw, '+', even, (o) => !even(o))
+    }
+    tube(s.drawTubeRows)
+    drain()
   }
-  tube(s.drawTubeRows)
-  drain()
 
   // Collapse the tube into 1×1: front odd → rear, rear even → front.
   xfers([

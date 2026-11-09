@@ -27,7 +27,7 @@ const ONE_YARN: Record<Backing, BackingWords> = {
  */
 export function colourworkColours(state: ProjectState): number | null {
   const beanie = beanieObjectOf(state);
-  if (beanie && beanie.construction !== 'rib-cuff-jersey-body') return null;
+  if (beanie && beanie.construction === 'flat-rib-2x2') return null;
   const rows = beanie ? state.chart.cells.slice(0, Math.max(0, state.chart.height - (beanie.cuffRows ?? 0))) : state.chart.cells;
   return new Set(rows.flat()).size;
 }

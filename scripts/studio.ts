@@ -40,9 +40,10 @@ Every command prints JSON. Exit 0 = ok / export-ready, 1 = blocked, 2 = usage or
   new <chart.json|project.json> -o <project.json> [--id <id>]
   new --width <st> --height <rows> [--palette "Name=#RRGGBB,..."] [--title <t>] -o <project.json>
       Start a project from a ColorworkChartV1 file, an existing project, or a blank chart.
-  new --object beanie [--head-cm X [--ease E]] [--body-cm X] [--gauge <st>,<rows>] [--gauge-source measured|assumed]
+  new --object beanie [--construction straight-double-jacquard] [--head-cm X [--ease E]] [--body-cm X] [--gauge <st>,<rows>] [--gauge-source measured|assumed]
       [--color "Name=#RRGGBB"] [--cuff-cm X --rib-gauge <st>,<rows> [--fold] [--accent "Name=#RRGGBB"]
       [--backing fairisle|birdseye]] -o <project.json>
+      --construction straight-double-jacquard makes a birdseye panel with no rib or decreases; both layers end on waste for hand gathering.
       Flat beanie, seamed afterwards (Customist's construction). Without --cuff-cm it is all 2x2 rib:
       the chart is the rib body (width = needles, height = rib rows) and --gauge is the rib gauge; with
       no sizing it is Kniterate's reference hat (194 x 102, Customist's own crown). With --cuff-cm it is a
@@ -113,7 +114,7 @@ const MAX_FINDINGS = 200;
 
 class UsageError extends Error {}
 
-const VALUE_OPTIONS = ['--leave', '--gauge-source', '--backing', '--image', '--refresh', '--object', '--color', '--accent', '--cuff-cm', '--rib-gauge', '--x', '--above-cuff', '--map', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
+const VALUE_OPTIONS = ['--construction', '--leave', '--gauge-source', '--backing', '--image', '--refresh', '--object', '--color', '--accent', '--cuff-cm', '--rib-gauge', '--x', '--above-cuff', '--map', '--body-cm', '--head-cm', '--ease', '--view', '--width', '--height', '--palette', '--title', '--gauge', '--colors', '--pooling', '--width-st', '--height-rows', '--width-cm', '--height-cm'] as const;
 
 interface Parsed {
   command: string | null;
@@ -332,6 +333,8 @@ function newBeanie(parsed: Parsed): ColorworkProjectV1 {
   const headCm = numberOption(parsed, '--head-cm');
   const bodyCm = numberOption(parsed, '--body-cm');
   const cuffCm = numberOption(parsed, '--cuff-cm');
+  const construction = parsed.options.get('--construction');
+  if (construction !== undefined && construction !== 'straight-double-jacquard') throw new UsageError('--construction supports straight-double-jacquard.');
   const fold = parsed.options.has('--fold');
   if ((headCm !== null || bodyCm !== null) && gauge === null) throw new UsageError('--head-cm and --body-cm need --gauge <st>,<rows>.');
   if (cuffCm !== null && ribGauge === null) throw new UsageError('--cuff-cm needs --rib-gauge <st>,<rows> measured on 2x2 rib.');
@@ -341,12 +344,13 @@ function newBeanie(parsed: Parsed): ColorworkProjectV1 {
   if (!Number.isFinite(ease) || ease <= -0.5 || ease >= 0.5) throw new UsageError('--ease must be a fraction between -0.5 and 0.5, e.g. -0.1.');
   const main = colorOption(parsed.options.get('--color') ?? 'Main=#2B2B2B', '--color');
   const accent = parsed.options.has('--accent') ? colorOption(parsed.options.get('--accent')!, '--accent') : null;
-  if (accent !== null && cuffCm === null) throw new UsageError('--accent needs a colorwork body: add --cuff-cm (the all-rib beanie knits one yarn).');
-  const backing = parsed.options.get('--backing') ?? 'fairisle';
+  if (accent !== null && cuffCm === null && construction !== 'straight-double-jacquard') throw new UsageError('--accent needs a colorwork body: add --cuff-cm (the all-rib beanie knits one yarn).');
+  const backing = parsed.options.get('--backing') ?? (construction === 'straight-double-jacquard' ? 'birdseye' : 'fairisle');
   if (backing !== 'fairisle' && backing !== 'birdseye') throw new UsageError('--backing must be fairisle or birdseye.');
   try {
     return createBeanieProject({
       title: parsed.options.get('--title') ?? 'Beanie',
+      ...(construction === 'straight-double-jacquard' ? { construction } : {}),
       ...(headCm !== null ? { headCircumferenceCm: headCm, ease } : {}),
       ...(bodyCm !== null ? { bodyCm } : {}),
       ...(gauge !== null ? { bodyGauge: { ...gauge, source } } : {}),
