@@ -27,6 +27,15 @@ function cli(args: string[]) {
 }
 
 describe('authored CLI command receipts', () => {
+  it('prints a JSON Schema covering every edit kind', () => {
+    const { status, receipt } = cli(['schema']);
+    expect(status).toBe(0);
+    const kinds = receipt.oneOf.map((branch: { properties: { kind: { const: string } } }) => branch.properties.kind.const);
+    expect(kinds).toEqual(expect.arrayContaining(['paint-cells', 'set-strategy', 'set-placement', 'record-trial']));
+    const placement = receipt.oneOf.find((branch: { properties: { kind: { const: string } } }) => branch.properties.kind.const === 'set-placement');
+    expect(placement.properties.placement.properties.motif.description).toContain('colorwork-chart-v1.schema.json');
+  });
+
   it('exposes the canonical frame and every emitted carrier in compile and export', { timeout: 60_000 }, () => {
     const directory = mkdtempSync(resolve(tmpdir(), 'kniterate-studio-cli-'));
     const projectPath = resolve(directory, 'project.json');

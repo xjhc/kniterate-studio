@@ -13,8 +13,10 @@ button { color: inherit; }
   --accent: #d4553d; --accent-soft: #fbe9e4; --surface: #13785a; --surface-soft: #e2f2ea; --proven: #0f694f;
   --blocked: #b43734; --blocked-soft: #f9e5e3; --warning: #a9680d; --warning-soft: #fff2d6;
   --font-mono: "Knit Mono", "SFMono-Regular", Consolas, monospace;
-  display: grid; grid-template-rows: 54px minmax(0, 1fr); width: 100%; height: 100%; overflow: hidden; color: var(--ink); background: var(--paper);
+  display: grid; grid-template-rows: 54px auto minmax(0, 1fr); width: 100%; height: 100%; overflow: hidden; color: var(--ink); background: var(--paper);
 }
+/* Notices sit in their own row above the workspace, however many are showing. */
+.shell-notices { min-width: 0; }
 .app-shell[data-theme="dark"] {
   --paper: #202623; --paper-2: #171c1a; --panel: #252c29; --panel-2: #2d3531;
   --ink: #edf2ef; --ink-2: #bac4bf; --ink-3: #a7b1ac; --line: #3c4742; --line-strong: #59655f;
@@ -267,7 +269,7 @@ button:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 35%, 
   .pass-head, .pass-row { grid-template-columns: 48px 58px 70px minmax(85px, 1fr) 52px 85px 48px 55px 55px; }
 }
 @media (max-width: 700px) {
-  .app-shell { grid-template-rows: 48px minmax(0, 1fr); }
+  .app-shell { grid-template-rows: 48px auto minmax(0, 1fr); }
   .topbar { padding: 0 7px; }
   .brand-lockup strong { display: none; }
   .top-new { display: none; }
@@ -386,7 +388,7 @@ button:not(:disabled):active { transform: translateY(1px); }
 }
 
 @media (max-width: 760px) {
-  .app-shell { grid-template-rows: 48px minmax(0, 1fr); }
+  .app-shell { grid-template-rows: 48px auto minmax(0, 1fr); }
   .brand-copy { display: none; }
   .topbar { gap: 6px; padding: 0 calc(7px + env(safe-area-inset-right)) 0 calc(7px + env(safe-area-inset-left)); }
   .brand-lockup { margin-right: auto; }.topbar-actions { gap: 4px; }

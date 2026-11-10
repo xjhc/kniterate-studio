@@ -47,7 +47,7 @@
     },
     {
       "id": "sweater",
-      "request": "A size M crew-neck drop-shoulder sweater with 2x2 rib hems.",
+      "request": "A size M raglan sweater with 2x2 rib hems.",
       "expect": { "outcomes": ["unsupported"] }
     },
     {

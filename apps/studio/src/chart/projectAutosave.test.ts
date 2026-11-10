@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { AUTHORED_CAPACITY_LIMITS_V1, createColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { parseProjectAutosave, serializeProjectAutosave } from './projectAutosave';
+import { PROJECT_AUTOSAVE_KEY, UNREADABLE_AUTOSAVE_KEY, parseProjectAutosave, serializeProjectAutosave, setAsideUnreadableAutosave } from './projectAutosave';
 
 const project = createColorworkProjectV1({
   kind: 'knitlab-colorwork-chart', version: 1, title: 'Recovery', width: 2, height: 2,
@@ -18,5 +18,22 @@ describe('project autosave', () => {
     expect(parseProjectAutosave('{')).toBeNull();
     expect(parseProjectAutosave(JSON.stringify({ schemaVersion: 1, savedAt: 'now', project: { kind: 'wrong' } }))).toBeNull();
     expect(parseProjectAutosave(' '.repeat(AUTHORED_CAPACITY_LIMITS_V1.projectSourceCodeUnits + 1))).toBeNull();
+  });
+
+  it('moves a save that did not open aside, and leaves one that opened alone', () => {
+    const memory = (entries: Record<string, string>) => {
+      const map = new Map(Object.entries(entries));
+      return { map, getItem: (key: string) => map.get(key) ?? null, setItem: (key: string, value: string) => void map.set(key, value), removeItem: (key: string) => void map.delete(key) };
+    };
+    const damaged = memory({ [PROJECT_AUTOSAVE_KEY]: '{' });
+    expect(setAsideUnreadableAutosave(damaged, false)).toBe(true);
+    expect(Object.fromEntries(damaged.map)).toEqual({ [UNREADABLE_AUTOSAVE_KEY]: '{' });
+    // The copy is still reported on a later start, until it is dismissed.
+    expect(setAsideUnreadableAutosave(damaged, false)).toBe(true);
+
+    const fine = memory({ [PROJECT_AUTOSAVE_KEY]: serializeProjectAutosave(project) });
+    expect(setAsideUnreadableAutosave(fine, true)).toBe(false);
+    expect(fine.map.has(UNREADABLE_AUTOSAVE_KEY)).toBe(false);
+    expect(setAsideUnreadableAutosave(memory({}), false)).toBe(false);
   });
 });

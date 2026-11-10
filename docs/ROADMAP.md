@@ -396,7 +396,7 @@ the remaining gate.
 
 ---
 
-## Widened V1 (ruling 2026-09-28) — proposed, not started
+## Widened V1 (ruling 2026-09-28) — M5, M6 and an M7 slice built; see STATUS
 
 V1 is Customist Studio parity plus AI-driven rectangles, beanies and sweaters.
 See [`FOUNDING.md`](./FOUNDING.md) §1,

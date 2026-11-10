@@ -30936,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "86ce93782c3f860598720f74457f19cc616778163299dd228e4b6074315a0bdd",
+    "sha256": "7959af30198551a0ebe748dd9e151f2ae5cb336192347e73fbb98617425f67bb",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30970,13 +30970,13 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "6e28d07bd4921a28a73589168b1cc64ba1e3a8d052616a1c02124ec9aab51262",
-        "bytes": 81835
+        "sha256": "0edacf7c49a3e746bff830417ee8bcf9708bba511b0637fa6fe809317adf1361",
+        "bytes": 84012
       },
       {
         "path": "../../apps/studio/src/StartScreen.tsx",
-        "sha256": "0d4d5d46f3254da243aa96b53db24ee92d3dd5963f5ddcba5fd84f7ac1a1300e",
-        "bytes": 5154
+        "sha256": "be802039a5089ba3329fc8cde11754fb6b91e8c5de81215db5010903fa67de8d",
+        "bytes": 5727
       },
       {
         "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
@@ -31135,13 +31135,13 @@
       },
       {
         "path": "../../apps/studio/src/chart/projectAutosave.test.ts",
-        "sha256": "ec8a4cee252391b80abf34985081ead2ca636b9adddf62b14c5f32d02b590c08",
-        "bytes": 1181
+        "sha256": "a36ba87bab35e56caa6dcffe57abf84461fc0da95dc4cca143de4a99d2822d66",
+        "bytes": 2301
       },
       {
         "path": "../../apps/studio/src/chart/projectAutosave.ts",
-        "sha256": "b445b9b18839bd117556b5c8dfcbdf3063dacce6a18e99ada277081b73e3b203",
-        "bytes": 1235
+        "sha256": "24ad72e0672261b6624a3fb6268f18b38106a3d3166a5c1f7e1fd81dac9cf5ba",
+        "bytes": 2575
       },
       {
         "path": "../../apps/studio/src/chart/projectCanvasAdapter.test.ts",
@@ -31505,13 +31505,13 @@
       },
       {
         "path": "../../apps/studio/src/studioCli.test.ts",
-        "sha256": "6b7a738cf78e52a3d9726595a38bc108c3a6b86451ffcfa2e35015e218471b27",
-        "bytes": 28707
+        "sha256": "5cb4f50051057bdad5be9811ff409644f370495d305c8be53ea644541c36666f",
+        "bytes": 29360
       },
       {
         "path": "../../apps/studio/src/styles.css",
-        "sha256": "0e13085549ad12c7d9db3610cfac3a3bc3124398822e54c6948b768f75499266",
-        "bytes": 61806
+        "sha256": "1bfd6933ae7a9c85bc7ff811481461d8ff71561af01cea62eed5a6d7337fa5c7",
+        "bytes": 61936
       },
       {
         "path": "../../apps/studio/src/swatch.test.ts",
@@ -31635,8 +31635,8 @@
       },
       {
         "path": "../../apps/studio/src/sweater/sweater.css",
-        "sha256": "2388d87ef0e0c34f050b905f0076737b354f1c9809da73261990308bc13c40ad",
-        "bytes": 27567
+        "sha256": "594752511c9267207acfd8a67c8f98e8574ed7f8b09e62ce1750e1fe800fccf7",
+        "bytes": 28240
       },
       {
         "path": "../../apps/studio/src/sweater/sweater.test.ts",
@@ -31780,8 +31780,8 @@
       },
       {
         "path": "../../e2e/launch-polish.spec.ts",
-        "sha256": "c5be00ff5f40b53e1e6d707a34c0a7c328f913a92a8a190995ce9396d6ade5dd",
-        "bytes": 11213
+        "sha256": "60d18af4378849ffbdefccf32b5a9663993c6651eacd50d1f1851673e875d523",
+        "bytes": 15204
       },
       {
         "path": "../../e2e/m2.spec.ts",
@@ -31925,8 +31925,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "b580c93730d23af9c36f0d3711dbd7807a5c68e4e737188e0857f1cd7a615cdf",
-        "bytes": 46054
+        "sha256": "5902039321cffadbb88b9f450ef71f9e6a53e09724bed0f289d142ed3820350a",
+        "bytes": 46380
       },
       {
         "path": "../../tsconfig.base.json",

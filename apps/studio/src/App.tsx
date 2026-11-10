@@ -56,7 +56,7 @@ import type { KCodeArtifact } from './kcode/kcodeProtocol';
 import { MachineMovementView, type MachineMovementViewProps } from './kcode/MachineMovementView';
 import { programRegionForPass } from './chart/AuthoredMachinePanel';
 import { NewProjectDialog, ProjectSettingsDialog, RecentProjectsDialog, DEFAULT_PROJECT_PALETTE, type NewProjectValues } from './chart/ProjectDialogs';
-import { parseProjectAutosave, readProjectAutosave, serializeProjectAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
+import { clearUnreadableAutosave, parseProjectAutosave, readProjectAutosave, readUnreadableAutosave, serializeProjectAutosave, setAsideUnreadableAutosave, PROJECT_AUTOSAVE_KEY } from './chart/projectAutosave';
 import { downloadFileName, machineFileName, onePieceName } from './workspace/fileNames';
 import { ACTIVE_SLOT_KEY, RECENT_INDEX_KEY, builtOn, forgetProject, newRecentSlot, readRecentProject, readRecentProjects, recentKind, recentSlotOf, rememberProject, type RecentProject } from './chart/recentProjects';
 import { indexSourceLines, sourceWindow } from './sourceWindow';
@@ -109,18 +109,20 @@ function defaultProject(): ColorworkProjectV1 {
   }, { id: 'studio-default', title: 'Untitled colourwork' });
 }
 
-function initialProject(): { project: ColorworkProjectV1; recoveredAt: string | null; slot: string; recent: RecentProject[] } {
+function initialProject(): { project: ColorworkProjectV1; recoveredAt: string | null; slot: string; recent: RecentProject[]; unreadable: boolean } {
   let recovered: ReturnType<typeof readProjectAutosave> = null;
   let slot: string | null = null;
   let recent: RecentProject[] = [];
+  let unreadable = false;
   try {
     recovered = readProjectAutosave(window.localStorage);
     slot = window.localStorage.getItem(ACTIVE_SLOT_KEY);
     recent = readRecentProjects(window.localStorage);
+    unreadable = setAsideUnreadableAutosave(window.localStorage, recovered !== null);
   } catch {
     // Storage can be disabled by the browser; the editor must still start.
   }
-  return { ...(recovered ? { project: recovered.project, recoveredAt: recovered.savedAt } : { project: defaultProject(), recoveredAt: null }), slot: recovered && slot ? slot : newRecentSlot(), recent };
+  return { ...(recovered ? { project: recovered.project, recoveredAt: recovered.savedAt } : { project: defaultProject(), recoveredAt: null }), slot: recovered && slot ? slot : newRecentSlot(), recent, unreadable };
 }
 
 /** The blank chart a first visit opens on, never edited: there is nothing in it to keep. */
@@ -594,6 +596,7 @@ export function App() {
   // Each opened file is a new document session, even with the same project id: pending work from the last one is dropped.
   const [openGeneration, setOpenGeneration] = useState(0);
   const [autosaveState, setAutosaveState] = useState<'saving' | 'saved' | 'failed'>(initial.recoveredAt ? 'saved' : 'saving');
+  const [unreadableSave, setUnreadableSave] = useState(initial.unreadable);
   const blanketCompile = useBlanketCompiler(project);
   const materializedProject = useMemo(() => materializeColorworkProject(project), [project]);
   const authoredState = materializedProject.state;
@@ -650,12 +653,21 @@ export function App() {
   const unchanged = () => saved.current?.project === project && saved.current.slot === slot;
   // The save waiting to be written, so a change from another tab can cancel it before it lands in the shared slot.
   const pendingSave = useRef<number | undefined>(undefined);
+  // The same save, run at once when the page is closed before its delay is up.
+  const pendingWrite = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => {
+    const flush = () => pendingWrite.current?.();
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, []);
   useEffect(() => {
     if (unchanged()) return;
     setAutosaveState('saving');
     const kind = recentKind(authoredState.object);
-    pendingSave.current = window.setTimeout(() => {
+    const write = () => {
+      window.clearTimeout(pendingSave.current);
       pendingSave.current = undefined;
+      pendingWrite.current = undefined;
       try {
         window.localStorage.setItem(PROJECT_AUTOSAVE_KEY, serializeProjectAutosave(project));
         window.localStorage.setItem(ACTIVE_SLOT_KEY, slot);
@@ -665,8 +677,10 @@ export function App() {
       } catch {
         setAutosaveState('failed');
       }
-    }, 350);
-    return () => window.clearTimeout(pendingSave.current);
+    };
+    pendingWrite.current = write;
+    pendingSave.current = window.setTimeout(write, 350);
+    return () => { window.clearTimeout(pendingSave.current); pendingWrite.current = undefined; };
   }, [project, slot]);
   /**
    * The same project open in another tab. A change saved there is taken up
@@ -699,6 +713,7 @@ export function App() {
       }
       // From here on this tab saves to its own slot, never over the other tab's version.
       window.clearTimeout(pendingSave.current);
+      pendingWrite.current = undefined;
       const copy = newRecentSlot();
       setSlot(copy);
       try {
@@ -820,6 +835,11 @@ export function App() {
   const canRedo = project.history.cursor < project.history.entries.length;
   const undo = () => { if (canUndo) setProject(undoProjectEdit(project)); };
   const redo = () => { if (canRedo) setProject(redoProjectEdit(project)); };
+  const downloadUnreadableSave = () => {
+    const copy = readUnreadableAutosave(window.localStorage);
+    if (copy !== null) download('unreadable-project.json', new Blob([copy], { type: 'application/json' }));
+  };
+  const dismissUnreadableSave = () => { clearUnreadableAutosave(window.localStorage); setUnreadableSave(false); };
   const saveProject = () => download(`${project.id}.kniterate-studio.json`, new Blob([serializeColorworkProjectV1(project)], { type: 'application/json' }));
   const openProjectInput = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -955,9 +975,13 @@ export function App() {
         {projectChrome && piecesState && <StatusBadge key={`${project.id}:${openGeneration}`} tone={piecesState.tone} headline={piecesState.title} pending="checking" />}
         {projectChrome && !isPieces && <StatusBadge key={`${project.id}:${openGeneration}`} tone={authoredStory ? storyTone(authoredStory.story.status) : 'checking'} headline={authoredStory?.story.headline ?? ''} pending={blanketCompile.status === 'ready' ? 'checking' : 'compiling'} />}
       </header>
-      {appError && <div className="machine-import-status" role="alert"><span>{appError}</span><button className="secondary-button" type="button" onClick={() => setAppError(null)}>Dismiss</button></div>}
+      <div className="shell-notices">
+        {projectChrome && autosaveState === 'failed' && <div className="machine-import-status" role="alert"><span>This project isn’t being saved in this browser: its storage is full or blocked. Save a project file to keep your work.</span><button className="secondary-button" type="button" onClick={saveProject}>Save project file</button></div>}
+        {unreadableSave && !showStart && <div className="machine-import-status" role="alert"><span>The project saved in this browser couldn’t be opened, so Studio started a new one. The saved copy is kept until you dismiss this.</span><button className="secondary-button" type="button" onClick={downloadUnreadableSave}>Download the saved copy</button><button className="secondary-button" type="button" onClick={dismissUnreadableSave}>Dismiss</button></div>}
+        {appError && <div className="machine-import-status" role="alert"><span>{appError}</span><button className="secondary-button" type="button" onClick={() => setAppError(null)}>Dismiss</button></div>}
+        {importing && <div className="machine-import-status" role="status"><span>Checking {importing}…</span><button className="secondary-button" type="button" onClick={() => { importController.current?.abort(); setImporting(null); }}>Cancel import</button></div>}
+      </div>
       <input ref={projectInput} className="file-input" type="file" accept=".json,application/json" aria-label="Project file to open" onChange={(event) => void openProjectInput(event)} />
-      {importing && <div className="machine-import-status" role="status"><span>Checking {importing}…</span><button className="secondary-button" type="button" onClick={() => { importController.current?.abort(); setImporting(null); }}>Cancel import</button></div>}
       <input ref={fileInput} className="file-input" type="file" accept=".kc,.k,text/plain" onChange={handleInput} />
       <input ref={compareInput} className="file-input" type="file" accept=".kc,text/plain" onChange={(event) => handleInput(event, true)} />
 
@@ -1002,7 +1026,7 @@ export function App() {
       {!document && showRunSheet && isSweater && sweaterPlan && <GarmentSheet markdown={sweaterInstructions(project, sweaterPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={sweaterSchematicSvg(sweaterPlan, authoredState.chart.palette[0]!.hex)} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && authoredExportReady && authoredStory && authoredState.object?.kind === 'beanie' && <GarmentSheet markdown={instructionsMarkdown(project, plan, authoredStory.result, authoredStory.findings, authoredStory.readiness)} schematic={schematicSvg(project, plan)} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && !isPieces && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && authoredState.object?.kind !== 'beanie' && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
-      {showStart && !document && <StartScreen onNew={(kind) => { setNewProjectKind(kind); setShowNewProject(true); }} onOpenProject={openProjectFile} onOpenMachineFile={() => fileInput.current?.click()} onBlank={() => setShowStart(false)} recent={recent.filter((item) => item.slot !== slot)} onOpenRecent={openRecent} onRemoveRecent={removeRecent} />}
+      {showStart && !document && <StartScreen onNew={(kind) => { setNewProjectKind(kind); setShowNewProject(true); }} onOpenProject={openProjectFile} onOpenMachineFile={() => fileInput.current?.click()} onBlank={() => setShowStart(false)} recent={recent.filter((item) => item.slot !== slot)} onOpenRecent={openRecent} onRemoveRecent={removeRecent} unreadableSave={unreadableSave ? { onDownload: downloadUnreadableSave, onDismiss: dismissUnreadableSave } : undefined} />}
       {showRecent && <RecentProjectsDialog recent={recent} current={slot} onOpen={openRecent} onRemove={removeRecent} onClose={() => setShowRecent(false)} />}
       {showNewProject && <NewProjectDialog onCreate={createProject} onCreateBeanie={createBeanie} onCreateSweater={createSweater} onCreatePanel={createPanel} initialKind={newProjectKind ?? (isSweater ? 'sweater' : 'rectangle')} onClose={() => { setShowNewProject(false); setNewProjectKind(null); }} />}
       {!document && !isPieces && showChanges && <ChangesPanel project={project} highlightFrom={changesFrom} onProject={setProject} onClose={() => { setShowChanges(false); setChangesFrom(null); }} />}

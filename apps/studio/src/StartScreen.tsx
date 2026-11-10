@@ -29,7 +29,7 @@ function ScarfIcon() {
   </svg>;
 }
 
-export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, recent, onOpenRecent, onRemoveRecent }: {
+export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, recent, onOpenRecent, onRemoveRecent, unreadableSave }: {
   onNew: (kind: 'sweater' | 'beanie' | 'rectangle') => void;
   onOpenProject: (project: ColorworkProjectV1) => void;
   onOpenMachineFile: () => void;
@@ -38,6 +38,8 @@ export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, 
   recent: readonly RecentProject[];
   onOpenRecent: (slot: string) => void;
   onRemoveRecent: (slot: string) => void;
+  /** Set when the project saved in this browser couldn't be opened and its copy is waiting. */
+  unreadableSave?: { onDownload: () => void; onDismiss: () => void };
 }) {
   const projectInput = useRef<HTMLInputElement>(null);
   // A file that does not open says why here, where it was chosen, with another try one click away.
@@ -55,6 +57,7 @@ export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, 
     <div className="start-inner">
       <h1 id="start-title">What would you like to make?</h1>
       <p>Design it here and Studio turns it into checked programs for the Kniterate, with the pattern and how to put it together.</p>
+      {unreadableSave && <p className="start-problem" role="alert">The project saved in this browser couldn’t be opened. Its saved copy is kept until you dismiss this. <button type="button" className="link-button" onClick={unreadableSave.onDownload}>Download the saved copy</button> · <button type="button" className="link-button" onClick={unreadableSave.onDismiss}>Dismiss</button></p>}
       <div className="start-cards">
         <button type="button" onClick={() => onNew('sweater')}>
           <SilhouetteIcon silhouette="set-in" neckline="crew" />

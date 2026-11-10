@@ -6,11 +6,12 @@ description: Design a Kniterate machine-knitting project (sweater in flat pieces
 # Knit design with the Kniterate Studio CLI
 
 You author **intent**; Studio derives everything else. Run commands from the
-repository root. Every command prints JSON; exit 0 = ok/ready, 1 = blocked or
+repository root. Every command prints JSON (except `sweater help`, and
+`sweater pattern` without `-o`, which print text); exit 0 = ok/ready, 1 = blocked or
 not ready, 2 = usage error. `pnpm --silent studio -- help` lists commands and
 `pnpm --silent studio -- explain <term|rule>` explains any term or finding.
 
-## What exists (M5)
+## What exists
 
 One flat rectangular panel per project (scarf, blanket, swatch, colorwork
 panel): up to 252 stitches wide and 1,200 rows tall (75,600 cells), up to four
@@ -144,10 +145,10 @@ needs the same yarn on a second carrier (C4 by default) — say so. Readiness
 blocks on assumed gauges (body and rib) until measured. The shaping (fashioned
 transfers, chain bind-offs, the split neck) follows Kniterate's own sweater
 programs but has no captured reference parity and has never been knitted:
-say that a first sweater is a development knit. Raglan, V-neck, colorwork on
+say that a first sweater is a development knit. Raglan, colorwork on
 sweater pieces and stripes are not built yet.
 
-Not supported yet: raglan and V-neck sweaters, colorwork on sweaters, seamless tubes, and float
+Not supported yet: raglan sweaters, colorwork on sweaters, seamless tubes, and float
 catching or any beanie body backing other than fairisle and full birdseye (another backing is
 refused with `project-beanie-backing-unsupported`). Say so and offer the
 nearest supported thing instead of approximating.

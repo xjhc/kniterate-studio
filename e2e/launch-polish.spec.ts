@@ -170,3 +170,72 @@ test('the same project changed in two tabs at once: both versions are kept, each
   await expect.poll(kept).toEqual(both);
   expect(errors).toEqual([]);
 });
+
+async function newBeanie(page: import('@playwright/test').Page) {
+  await page.goto('/?theme=light');
+  await page.getByRole('button', { name: /^Beanie/ }).click();
+  await page.getByRole('dialog', { name: 'New project' }).getByRole('button', { name: 'Create beanie' }).click();
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+}
+
+async function rename(page: import('@playwright/test').Page, name: string) {
+  await menu(page, 'Edit', 'Name and colours…');
+  const settings = page.getByRole('dialog', { name: 'Project settings' });
+  await settings.getByLabel('Project name').fill(name);
+  await settings.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.locator('.brand-copy small')).toContainText(name);
+}
+
+test('a save the browser refuses says so in a banner, with the project file one click away', async ({ page }) => {
+  await newBeanie(page);
+  await page.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException('full', 'QuotaExceededError'); }; });
+  await rename(page, 'Too big to keep');
+  const alert = page.getByRole('alert').filter({ hasText: 'isn’t being saved in this browser' });
+  await expect(alert).toBeVisible();
+  const download = page.waitForEvent('download');
+  await alert.getByRole('button', { name: 'Save project file' }).click();
+  expect((await download).suggestedFilename()).toMatch(/\.kniterate-studio\.json$/);
+});
+
+test('a change made just before the page closes is saved', async ({ page }) => {
+  await newBeanie(page);
+  // The delayed save never runs, as when the tab is closed inside its delay.
+  await page.evaluate(() => {
+    const original = window.setTimeout;
+    window.setTimeout = ((handler: TimerHandler, delay?: number, ...rest: unknown[]) => (delay === 350 ? 0 : original(handler, delay, ...rest))) as typeof window.setTimeout;
+  });
+  await rename(page, 'Closed in a hurry');
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saving');
+  // Reloaded from the page, as a person does: Playwright's own reload skips Firefox's unload events.
+  await page.evaluate(() => window.location.reload());
+  await expect(page.locator('.brand-copy small')).toContainText('Closed in a hurry');
+});
+
+test('a saved project that cannot be opened is kept and offered as a download, not replaced', async ({ page }) => {
+  await page.goto('/?theme=light');
+  const damaged = '{"schemaVersion":2,"from":"a newer Studio"}';
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
+  await page.evaluate((value) => localStorage.setItem('kniterate-studio:active-project:v1', value), damaged);
+  await page.reload();
+  const alert = page.locator('.start-screen').getByRole('alert');
+  await expect(alert).toContainText('couldn’t be opened');
+  // Starting a project doesn't lose the copy, and the notice follows into the workspace.
+  await page.getByRole('button', { name: 'Start with a blank chart' }).click();
+  const banner = page.getByRole('alert').filter({ hasText: 'couldn’t be opened' });
+  const download = page.waitForEvent('download');
+  await banner.getByRole('button', { name: 'Download the saved copy' }).click();
+  const path = await (await download).path();
+  expect((await import('node:fs')).readFileSync(path, 'utf8')).toBe(damaged);
+  await page.reload();
+  await page.getByRole('button', { name: 'Start with a blank chart' }).click();
+  await banner.getByRole('button', { name: 'Dismiss' }).click();
+  await expect(banner).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('kniterate-studio:unreadable-project:v1'))).toBeNull();
+});
+
+test('on a laptop-width window the status and its next step stay at the top', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await newBeanie(page);
+  const next = page.getByRole('complementary', { name: 'Status' }).getByRole('button', { name: 'Knit a swatch' });
+  await expect(next).toBeInViewport();
+});

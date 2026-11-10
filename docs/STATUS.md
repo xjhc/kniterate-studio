@@ -1,10 +1,27 @@
 # STATUS — what is shipped vs. proposed
 
-**Front door. Read this before any planning doc.** Reconciled 2026-09-26 against
-the working tree. Repo at `1.0.0-rc.1`; `pnpm verify:kcode` and `pnpm verify`
-are the software gates. The debugger milestone below records implementation
-and focused local coverage; full-gate status belongs to the exact current
-proof receipt, not this document date.
+**Front door. Read this before any planning doc.** Repo at `1.0.0-rc.1`;
+`pnpm verify` is the software gate. Full-gate status belongs to the exact
+current proof receipt, not this document's dates.
+
+## Now (2026-11-09)
+
+- **Built, in the browser and the `studio` CLI:** colour charts (fairisle and
+  birdseye), cuffed and rib beanies, flat-panel sweaters (drop shoulder,
+  J-sleeve, set-in; crew, V, square or boat neck), one-colour scarves and
+  blankets, and checking any `.kc` or `.k` file. Every machine file passes the
+  blocking machine-safety envelope before it can be downloaded.
+- **Knitted:** three development runs are registered
+  (`packages/machine-lib/registry/swatches/`). None is promotable, and nothing
+  is Knit-proven. Handoff 3 (two bind-off strips) is waiting to be knitted.
+- **Not built:** the in-app assistant, a swatch-registry UI, raglan sweaters,
+  colourwork or stripes on sweater pieces. See "Not yet built".
+- **Next:** the checklist at the top of [`ROADMAP.md`](./ROADMAP.md).
+- **`1.0.0`** waits on the physical gate in
+  [`V1-PHYSICAL-TRIAL.md`](./V1-PHYSICAL-TRIAL.md).
+
+The sections below are a dated record, newest entries first within
+"Implemented". Where two entries disagree, the later date is right.
 
 The other docs are framed as forward design and drifted behind the code. Where a
 planning doc says a thing is "proposed" / "not built" / "the first slice to
@@ -1211,9 +1228,10 @@ schema.
   ([`CUSTOMIST-PARITY.md`](./CUSTOMIST-PARITY.md)) plus AI-driven rectangles,
   flat seamed beanies and sweaters through the design language
   ([`DESIGN-LANGUAGE.md`](./DESIGN-LANGUAGE.md)); milestones M5–M9 in
-  `ROADMAP.md`. Only the M5 rectangle subset above is built. Beanies,
-  sweaters, shaping, rib, and the M5 parity rows that need Customist reference
-  captures are not.
+  `ROADMAP.md`. The M5 rectangle subset, M6 beanies and an M7 sweater slice
+  are built (see their entries above). Raglan sweaters, colourwork on sweater
+  pieces, and the M5 parity rows that need Customist reference captures are
+  not.
 
 ## The one real promotion gate
 
@@ -1243,7 +1261,8 @@ metadata; controller observation stays pending until an accepted registry run.
 - `FOUNDING.md` — product boundary (three verdict rungs; dark mode in scope).
 - `UX-PROPOSAL.md` — UX rationale; part shipped, part forward design (see its banner).
 - `SYSTEM-DESIGN.md` — architecture (A.*) + risk register (R*); R6 = 3-rung ruling.
-- `ROADMAP.md` — milestone ledger (M0–M3D complete; widened-V1 M5–M9 proposed).
+- `ROADMAP.md` — the agreed work order (its top checklist) and milestone ledger
+  (M0–M3D complete; M5, M6 and an M7 slice built in software; M8–M9 proposed).
 - `CUSTOMIST-PARITY.md` — V1 Customist capability inventory and acceptance rules (proposed).
 - `DESIGN-LANGUAGE.md` — v2 Design → Plan → Program contract for people and agents (proposed).
 - `HANDOFF.md` — reduced to present truth; points here.

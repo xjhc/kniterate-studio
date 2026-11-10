@@ -19,8 +19,9 @@ pnpm verify
 pnpm dev
 ```
 
-`pnpm verify` is the full gate used by CI; it ends with the read-only KCode
-proof check, which re-runs mutation testing. While iterating on code that does
+`pnpm verify` is the full gate used by CI; it ends with a fast check that the
+tracked KCode proof receipt matches the checkout (`pnpm verify:kcode` rebuilds
+the receipt). While iterating on code that does
 not touch the compiler, converter, or machine output, `pnpm verify:quick` runs
 everything except that proof check.
 
@@ -60,7 +61,8 @@ input SHA-256 and format-evidence disclosure, but never source bytes. This is a
 software preflight; controller acceptance and physical knitting remain separate
 gates.
 
-Open `http://127.0.0.1:5173` and import a chart JSON exported by KnitLab Chart.
+Open `http://127.0.0.1:5173` and choose what to make (a sweater, a beanie, a
+scarf or blanket, or a blank colour chart), or open a project or machine file.
 `pnpm kniterate:conform` runs the extracted machine confidence ladder.
 
 ## GitHub Pages

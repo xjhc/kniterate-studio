@@ -1,4 +1,4 @@
-# Handoff — present truth (reconciled 2026-08-25)
+# Handoff — present truth (reconciled 2026-11-09)
 
 > **Read [`STATUS.md`](./STATUS.md) first.** It is the front door: what is shipped
 > vs. proposed, the 3-rung verdict model, and the remaining slices. This file is
@@ -24,8 +24,8 @@
   replace the former reconstruction/preview authority. `predictedPasses`
   remains planning telemetry only.
 - **V1 scope widened 2026-09-28** to Customist parity plus AI-driven
-  rectangles, flat seamed beanies and sweaters (FOUNDING §1; proposed, not
-  built). `1.0.0` now needs exact-artifact physical qualification of a
+  rectangles, flat seamed beanies and sweaters (FOUNDING §1; built in software
+  since, see below). `1.0.0` now needs exact-artifact physical qualification of a
   rectangle, a beanie and a complete sweater at the frozen final fingerprint
   (`V1-PHYSICAL-TRIAL.md`). Do not tag `1.0.0` before that; a rectangle-only run
   is development evidence.
@@ -72,7 +72,8 @@ The widened V1 starts with ROADMAP M5, the design language on rectangles
 ## Historical material
 
 The 2026-07-12 doc/mockup review, its 7-gap list (G1–G7, all resolved), the
-three-mockup reconciliation (resolved: `workspace-v2.html` canonical; the older
+three-mockup reconciliation (resolved then: `workspace-v2.html` canonical, since
+superseded by `docs/mockups/workspace-target.md`; the older
 two in `docs/mockups/archive/`), and the `BUILD-S1.md` brief are **historical** —
 they described a greenfield plan for code that already exists. `BUILD-S1.md` is
 archived under `docs/archive/` and marked as such. Provenance lives in git history;

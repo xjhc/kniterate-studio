@@ -495,7 +495,13 @@ async function main(): Promise<number> {
       print({ usage: USAGE });
       return 0;
     case 'schema':
-      print(ProjectEditSchema.toJSONSchema());
+      // The edits' input shape: a placement's motif is parsed by a transform, which has no output schema.
+      print(ProjectEditSchema.toJSONSchema({
+        io: 'input',
+        override: ({ path, jsonSchema }) => {
+          if (path.at(-1) === 'motif') jsonSchema.description = 'A ColorworkChartV1 chart: schemas/colorwork-chart-v1.schema.json';
+        },
+      }));
       return 0;
     case 'reference':
       print(referenceCommand(parsed.positionals[0]));

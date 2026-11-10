@@ -64,8 +64,9 @@ pnpm test:e2e --project=chromium --workers=4
 git diff --check
 ```
 
-Commit the change, then the refreshed `out/kcode-proof/proof-manifest.json` and
-`registry/knit-proven.json` as a separate `chore(kcode-proof)` commit. Stage only
+Commit the change, then the refreshed
+`packages/machine-lib/out/kcode-proof/proof-manifest.json` and
+`packages/machine-lib/registry/knit-proven.json` as a separate `chore(kcode-proof)` commit. Stage only
 your paths.
 
 ## 6. Report
