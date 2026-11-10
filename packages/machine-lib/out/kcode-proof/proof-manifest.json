@@ -30936,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "7959af30198551a0ebe748dd9e151f2ae5cb336192347e73fbb98617425f67bb",
+    "sha256": "99d901a40299c58b3e346041d78f1e6ccb2905cf2be6a22218c47c8915b4a641",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31310,8 +31310,8 @@
       },
       {
         "path": "../../apps/studio/src/handoff.ts",
-        "sha256": "968a5628459f93842bf7cc824a3249d1eab0c8118f1ae68e55de5d23a09eb7c2",
-        "bytes": 38794
+        "sha256": "2cb6067d9f617d56fa08ef841ae388ebfe0df0b5ed88b2426108ee32cf45af40",
+        "bytes": 39427
       },
       {
         "path": "../../apps/studio/src/imageChart.ts",
@@ -31475,8 +31475,8 @@
       },
       {
         "path": "../../apps/studio/src/plan.test.ts",
-        "sha256": "b1499e5baf272fbe0548676a831da8b2b03510d52d8261725c98e4060f6dd51f",
-        "bytes": 15141
+        "sha256": "53765da293f1d66f154fa3b1856d59854f0ae7858aef3602f22ce103418dd4c2",
+        "bytes": 15735
       },
       {
         "path": "../../apps/studio/src/plan.ts",
@@ -31767,71 +31767,6 @@
         "path": "../../apps/studio/vite.config.ts",
         "sha256": "4d79d8aa0c02c80e15493001d9268058ea9380a4ec0df1aefcb215c81380c692",
         "bytes": 323
-      },
-      {
-        "path": "../../e2e/beanie-workflow.spec.ts",
-        "sha256": "62ac5d82ac607bb79034cdb87d577d2c01a794e409f10c95a9a022763756371d",
-        "bytes": 36463
-      },
-      {
-        "path": "../../e2e/execution-inspector.spec.ts",
-        "sha256": "98e29232c074e8ab0d906b6e5e87864e91fc52642cf15f81f10635cbc1e96494",
-        "bytes": 7721
-      },
-      {
-        "path": "../../e2e/launch-polish.spec.ts",
-        "sha256": "60d18af4378849ffbdefccf32b5a9663993c6651eacd50d1f1851673e875d523",
-        "bytes": 15204
-      },
-      {
-        "path": "../../e2e/m2.spec.ts",
-        "sha256": "c508f5684a92d2ebeb1c746f03a1b6becd9abfc133112d31e0b0eff72ab11850",
-        "bytes": 6301
-      },
-      {
-        "path": "../../e2e/m3b.spec.ts",
-        "sha256": "6a0be00c0d3f412ac06317be6ff33eae7292c13fc72cee141039dbc3eb2f84ac",
-        "bytes": 10438
-      },
-      {
-        "path": "../../e2e/m3c.spec.ts",
-        "sha256": "053a52b0042f738d9bbaff0146c1bde611754d62616101238e3725d83922109b",
-        "bytes": 2862
-      },
-      {
-        "path": "../../e2e/m3d.spec.ts",
-        "sha256": "993080516dd14c814a3e7777699ebb5f1da6f8b1f71545daefc3d929bb99b0e7",
-        "bytes": 7806
-      },
-      {
-        "path": "../../e2e/menu.ts",
-        "sha256": "62d4050f2c4968f8e50f651ffba9f2e1bfccad5afc651958a66cff4a752ea169",
-        "bytes": 2353
-      },
-      {
-        "path": "../../e2e/panel-workflow.spec.ts",
-        "sha256": "b19c3d90c6599626f9f028ae7c66b3ba1ac224e34f03af311fd0f88337c1ef2d",
-        "bytes": 4124
-      },
-      {
-        "path": "../../e2e/reference-patterns.spec.ts",
-        "sha256": "c8cfa68c6d4e29afe65187a857a6c751b3319791757771a306b8ea97778fd4a9",
-        "bytes": 5193
-      },
-      {
-        "path": "../../e2e/states.spec.ts",
-        "sha256": "5315728727ffd189daeb8a38f903dc6c10ece17e9b66788b51b908fb4e65494d",
-        "bytes": 8257
-      },
-      {
-        "path": "../../e2e/sweater-workflow.spec.ts",
-        "sha256": "e24b7f263b4307de7029c9c91a08cf6092ce2095cd50846a6051ed4ff549c9ed",
-        "bytes": 16334
-      },
-      {
-        "path": "../../e2e/workspace.spec.ts",
-        "sha256": "206afa2b8f15071d4d2780fa02fdcd6a3dc9f82dc31acc64f587272eb97efc16",
-        "bytes": 3543
       },
       {
         "path": "../../fixtures/colorwork-chart-v1/customist-fairisle-reference.json",
@@ -32315,8 +32250,8 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "55c6187a45d57c8367d3cd34a864ab5ec899d696220dd1bc8ccb391115e61bab",
-        "bytes": 23728
+        "sha256": "6bb0c08aaf346599919c372312c4f2767ce0acd200005538f884dc9aaa60782c",
+        "bytes": 23860
       },
       {
         "path": "scripts/kcode-receipt-check.ts",
