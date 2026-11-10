@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { appendProjectEdit, createColorworkProjectV1, materializeColorworkProject, type ColorworkProjectV1, type ProjectEdit } from '@kniterate-studio/project-contract';
 import { planProject } from './plan';
+import { measurementFormMarkdown } from './handoff';
 import { imageToChart } from './imageChart';
 import { MACHINE_START_CHECKS, resolveReadiness, type Finding } from './readiness';
 
@@ -18,6 +19,14 @@ const plan = (project: ColorworkProjectV1) => planProject(materializeColorworkPr
 const measured = { stitchesPer10cm: 26, rowsPer10cm: 34, source: 'measured' as const };
 
 describe('project plan', () => {
+  it('a flat piece gets a flat piece\'s measurement form: width and length, no hat words', () => {
+    const project = edit(createColorworkProjectV1(chart, { id: 'flat-form' }), { kind: 'set-gauge', gauge: measured });
+    const form = measurementFormMarkdown(project, plan(project), 'abc');
+    expect(form).toContain('| Width | straight across the middle | 23.1 cm |');
+    expect(form).toContain('| Length | from end to end, along the middle | 29.4 cm |');
+    expect(form).not.toMatch(/\bhat\b|seam|crown|Circumference|folded/i);
+  });
+
   it('reports authored counts and no sizing claims without a gauge', () => {
     const result = plan(createColorworkProjectV1(chart, { id: 'plain' }));
     expect(result.stitches).toMatchObject({ value: 60, provenance: 'authored' });

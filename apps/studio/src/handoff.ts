@@ -563,17 +563,25 @@ export function runRecordMarkdown(file: KnitFile, carriers: KnitFileCarriers, he
 export function measurementFormMarkdown(project: ColorworkProjectV1, plan: ProjectPlan, kcodeSha256: string, run?: { file: KnitFile; carriers: KnitFileCarriers } | null): string {
   const sections = plan.sections;
   const predicted = (value: Valued<number> | null | undefined) => (value ? `${value.value} cm` : '—');
+  const hat = plan.piece === 'beanie';
   return `${[
     `# Measurement form: ${project.title}`,
     '',
     `Candidate: KCode SHA-256 \`${kcodeSha256}\`. Measure only the piece knitted from this exact file.`,
-    'After finishing (waste yarn off, seamed, folded, washed or steamed as the label says, dried flat, rested 24 h), lay it flat without tension and use a rigid rule. Record the values in Studio with File → Record a finished hat, or fill `measurements.json` with them and record it with `pnpm studio -- measure <project.json> measurements.json`.',
+    hat
+      ? 'After finishing (waste yarn off, seamed, folded, washed or steamed as the label says, dried flat, rested 24 h), lay it flat without tension and use a rigid rule. Record the values in Studio with File → Record a finished hat, or fill `measurements.json` with them and record it with `pnpm studio -- measure <project.json> measurements.json`.'
+      : 'After finishing (waste yarn off, washed or steamed as the label says, dried flat, rested 24 h), lay it flat without tension and use a rigid rule. Fill `measurements.json` with the values and record it with `pnpm studio -- measure <project.json> measurements.json`.',
     '',
     '| Measure | How | Predicted | Measured |',
     '|---|---|---|---|',
-    '| Body gauge | stitches and rows over 10 cm in a plain area of the body, face side | — | ___ st / ___ rows |',
+    `| ${hat ? 'Body gauge' : 'Gauge'} | stitches and rows over 10 cm in a plain area${hat ? ' of the body' : ''}, face side | — | ___ st / ___ rows |`,
     ...(sections?.cuff ? ['| Rib gauge | stitches and rows over 10 cm in the cuff, unstretched | — | ___ st / ___ rows |'] : []),
-    `| Circumference | flat width at mid-body × 2, after seaming | ${predicted(plan.predicted?.widthCm)} | ___ cm |`,
+    ...(hat
+      ? [`| Circumference | flat width at mid-body × 2, after seaming | ${predicted(plan.predicted?.widthCm)} | ___ cm |`]
+      : [
+        `| Width | straight across the middle | ${predicted(plan.predicted?.widthCm)} | ___ cm |`,
+        `| Length | from end to end, along the middle | ${predicted(plan.predicted?.heightCm)} | ___ cm |`,
+      ]),
     ...(sections?.cuff ? [`| Cuff | visible height${sections.cuff.folds ? ' when folded' : ''} | ${predicted(sections.cuff.visibleCm)} | ___ cm |`] : []),
     ...(sections ? [
       `| Body | cuff top to the first crown decrease | ${predicted(sections.body.cm)} | ___ cm |`,
@@ -581,7 +589,7 @@ export function measurementFormMarkdown(project: ColorworkProjectV1, plan: Proje
       `| Total | brim to top, flat | ${predicted(sections.finishedHeightCm)} | ___ cm |`,
     ] : []),
     '',
-    'Also: outcome (clean / issues / failed), every machine stop and what was done, and photographs of the front, the inside, the crown and any defect with a ruler in frame.',
+    `Also: outcome (clean / issues / failed), every machine stop and what was done, and photographs of ${hat ? 'the front, the inside, the crown' : 'both faces'} and any defect with a ruler in frame.`,
     ...(run ? ['', ...runRecordMarkdown(run.file, run.carriers)] : []),
   ].join('\n')}\n`;
 }

@@ -203,6 +203,8 @@ function listFilesRecursively(root: string, baseDirectory: string): string[] {
   return visit(absoluteRoot)
 }
 
+// Only what a gate reads, runs or builds is bound. The Playwright specs in e2e/ are run by CI,
+// not by any gate here, so editing one does not stale the receipt.
 function collectFingerprintSources(root: string): string[] {
   const filesUnder = (path: string) => listFilesRecursively(path, root)
   return [...new Set<string>([
@@ -219,7 +221,6 @@ function collectFingerprintSources(root: string): string[] {
     ...filesUnder('../project-contract/src'),
     ...filesUnder('reference'),
     ...filesUnder('registry/swatches'),
-    ...filesUnder('../../e2e'),
   ])].sort()
 }
 
