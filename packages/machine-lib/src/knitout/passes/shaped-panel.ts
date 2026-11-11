@@ -137,6 +137,10 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
     drawCarrier: input.drawCarrier,
     extraCarriers: splits ? [B!] : [],
     settings: RIB,
+    widest: {
+      lo: Math.min(...rows.flatMap((row) => row.segments.map((segment) => segment.lo))),
+      hi: Math.max(...rows.flatMap((row) => row.segments.map((segment) => segment.hi))),
+    },
     ...(input.startWastePasses !== undefined ? { wastePasses: input.startWastePasses } : {}),
   })
   const drain = kit.drain

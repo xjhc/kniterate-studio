@@ -216,7 +216,7 @@ export interface TraceHoldV1 {
 }
 
 export interface TraceAuditCheckV1 {
-  readonly id: 'start-hold' | 'waste-through-body-loops' | 'unsupported-body-drops' | 'loops-left' | 'max-stack' | 'inside-empty-front-knits'
+  readonly id: 'start-hold' | 'waste-through-body-loops' | 'unsupported-body-drops' | 'loops-left' | 'max-stack' | 'idle-feeder-moves' | 'inside-empty-front-knits'
   /** `issue` fails the audit; `note` is for a person to judge (e.g. fashioned increases leave eyelets by design). */
   readonly severity: 'issue' | 'note'
   readonly ok: boolean
@@ -348,6 +348,15 @@ export function auditTraceV1(trace: Trace, options: TraceAuditOptionsV1 = {}): T
       }
     }
   })
+  // Passes that only move the waste or draw feeder while the piece itself is being knitted.
+  let lastBodyKnit = -1
+  passes.forEach((pass, index) => { if (bodyYarn(pass.carrier, index + 1) && knits(pass)) lastBodyKnit = index })
+  const idleMoves: number[] = []
+  passes.forEach((pass, index) => {
+    if (index + 1 <= (startEnd ?? 0) || index >= lastBodyKnit) return
+    if (pass.carrier !== roles.waste && pass.carrier !== roles.draw) return
+    if (pass.actions.length > 0 && pass.actions.every((action) => action.kind === 'move')) idleMoves.push(index + 1)
+  })
   const loopsLeft = [...needles.values()].reduce((sum, loops) => sum + loops.length, 0)
   const longestHolds = holds
   const startHoldValue = longest.start
@@ -381,6 +390,12 @@ export function auditTraceV1(trace: Trace, options: TraceAuditOptionsV1 = {}): T
       meaning: 'The most loops on one needle at once.',
       kniterate: 'Kniterate\'s files stack at most 3; its app warns about more than 2 parents and advises never more than 4.',
       ...(maxStackAt ? { at: [maxStackAt] } : {}),
+    },
+    {
+      id: 'idle-feeder-moves', severity: 'issue', ok: idleMoves.length === 0, value: idleMoves.length, limit: 0,
+      meaning: 'Carriage passes that only push the waste or draw feeder aside while the piece is being knitted. A feeder parked inside the width the piece later reaches is moved again at every increase: each move is an extra carriage pass, and issue #18 reports the machine stopping (clump sensor) during them.',
+      kniterate: 'None of Kniterate\'s reference files moves either feeder after the start; the widening sleeves.kc sends both to the left home on their last start rows.',
+      ...(idleMoves.length ? { at: [`passes ${idleMoves.slice(0, 8).join(', ')}${idleMoves.length > 8 ? ', …' : ''}`] } : {}),
     },
     {
       id: 'inside-empty-front-knits', severity: 'note', ok: empty.front.inside === 0, value: empty.front.inside, limit: null,
