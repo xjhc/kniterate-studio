@@ -30936,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "99d901a40299c58b3e346041d78f1e6ccb2905cf2be6a22218c47c8915b4a641",
+    "sha256": "1bec407e657cb10ae603032b498b4e24989f4e50ec304249e82b8218f9f41761",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -32020,7 +32020,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "b3cf9ba35528fa941d276c9d1dc1c7468131c35318a1985cb595db980d4beb34",
+        "sha256": "0b62d6a33f863e6451beb2b87d57c3d38f5f0cb0989f2c97dad58f839e90c9f7",
         "bytes": 179
       },
       {
@@ -32590,8 +32590,8 @@
       },
       {
         "path": "src/knitout/kcode/trace-audit.ts",
-        "sha256": "8ba4aa4c7715a0f592274bc68e5735faf77b2242ab62f2d2c2265ef4bf74756b",
-        "bytes": 26597
+        "sha256": "3a45b9398b86d1045cfd8a579036edee85c7934b5fbb82c1edb74744256c5c40",
+        "bytes": 27927
       },
       {
         "path": "src/knitout/kcode/trace-stitch-diff.ts",
@@ -32675,8 +32675,8 @@
       },
       {
         "path": "src/knitout/passes/customist-flat-start.ts",
-        "sha256": "c7f85c38527637cbd8c3f22abcaad5190fcdfde87538c13dc5c0c0d77d328607",
-        "bytes": 16067
+        "sha256": "0b75838c7b57288efc662f2faf420b8924130a90a4b3be2e608d821628035999",
+        "bytes": 17104
       },
       {
         "path": "src/knitout/passes/customist-rib-beanie-crown.ts",
@@ -32745,8 +32745,8 @@
       },
       {
         "path": "src/knitout/passes/shaped-panel.ts",
-        "sha256": "1062ff356d48fe4f9c84355d79026cda6ebd0483131793f6bc91c593927f057f",
-        "bytes": 22820
+        "sha256": "df71d35c2c59f0ee20431e531e06f30cd3c7f0b8070e0d4ef105d708eff8b5aa",
+        "bytes": 23019
       },
       {
         "path": "src/knitout/passes/shaped-tube.ts",
@@ -33325,8 +33325,8 @@
       },
       {
         "path": "test/knitout/trace-audit.test.ts",
-        "sha256": "a295e308bd16796f1c169d4f824ba308797eedfad7880ab0f99428aaa0b69dc7",
-        "bytes": 9755
+        "sha256": "6b6ab77413881757c2c8619649ab3660a14f5f4b84ab441d652636dd2dcdb168",
+        "bytes": 14130
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
