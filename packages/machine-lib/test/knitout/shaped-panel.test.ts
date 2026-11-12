@@ -197,6 +197,64 @@ describe('shaped panel', () => {
     expect(bar.transfers).toBeGreaterThan(edge.transfers)
   })
 
+  it('narrows both edges two ways: the edge stitches together, or one loop per pass in Kniterate\'s order', { timeout: 60_000 }, () => {
+    // Four plain rows, then three decreases every second row at both edges.
+    const rowsWith = (decrease: 'together' | 'single'): PanelRowV1[] => Array.from({ length: 10 }, (_, r) => {
+      const lost = r < 4 ? 0 : Math.floor((r - 4) / 2) + 1
+      return { segments: [{ lo: 100 + lost, hi: 139 - lost }], stitch: () => 'k' as PanelStitchV1, settings: 'body' as const, decrease }
+    })
+    const measure = (decrease: 'together' | 'single') => {
+      const trace = expectMachineValid({ rows: rowsWith(decrease), ...CARRIERS, top: 'waste', fashion: 3 })
+      const loops = new Map<string, number>()
+      const key = (at: { bed: string; kcodeColumn: number }) => `${at.bed}${at.kcodeColumn}`
+      let started = false
+      const racked: number[] = []
+      /** For each loop that lands on an occupied needle: how many needles it travelled from where it was last knitted. */
+      const landedOnTop: number[] = []
+      const home = new Map<string, number>()
+      let doubledKnits = 0
+      // The body ends with the main yarn's last knitting pass; the waste top after it is not shaping.
+      const lastMain = trace.passes.findLastIndex((pass) => pass.carrier === '3' && pass.actions.some((action) => action.kind === 'knit'))
+      // It starts with the first whole jersey row: forty front stitches in the main yarn.
+      const firstRow = trace.passes.findIndex((pass) => pass.carrier === '3' && pass.actions.filter((action) => action.kind === 'knit' && action.at.bed === 'front').length === 40)
+      for (const [index, pass] of trace.passes.entries()) {
+        if (index > lastMain) break
+        if (index === firstRow) started = true
+        const moves = pass.actions.filter((action) => action.kind === 'xfer')
+        if (started && moves.length > 0 && Math.abs(pass.rack) >= 1) racked.push(moves.length)
+        for (const action of pass.actions) {
+          if (action.kind === 'knit') {
+            if (started && pass.carrier === '3' && (loops.get(key(action.at)) ?? 0) === 2) doubledKnits++
+            loops.set(key(action.at), 1)
+            home.set(key(action.at), action.at.kcodeColumn)
+          } else if (action.kind === 'drop') loops.set(key(action.at), 0)
+          else if (action.kind === 'xfer') {
+            const there = loops.get(key(action.target)) ?? 0
+            if (started && there > 0) landedOnTop.push(Math.abs(action.target.kcodeColumn - home.get(key(action.source))!))
+            loops.set(key(action.target), there + (loops.get(key(action.source)) ?? 0))
+            if (there === 0) home.set(key(action.target), home.get(key(action.source))!)
+            loops.set(key(action.source), 0)
+          }
+        }
+      }
+      return { racked, landedOnTop, doubledKnits, transferPasses: trace.passes.slice(firstRow, lastMain).filter((pass) => pass.actions.some((action) => action.kind === 'xfer')).length }
+    }
+    const together = measure('together')
+    const single = measure('single')
+    // Both make one doubled stitch per decrease, knitted in the next row.
+    expect(together.doubledKnits).toBe(6)
+    expect(single.doubledKnits).toBe(6)
+    // Together: a racked pass carries two of the three edge loops, and the loop that lands on top has moved one needle.
+    expect(Math.max(...together.racked)).toBe(2)
+    expect(together.landedOnTop).toEqual([1, 1, 1, 1, 1, 1])
+    // Single: every racked pass carries one loop (as all 3,035 of Kniterate's do), and the loop that lands
+    // on top is the covered stitch coming home, so it has not moved.
+    expect(single.racked.every((count) => count === 1)).toBe(true)
+    expect(single.landedOnTop).toEqual([0, 0, 0, 0, 0, 0])
+    expect(single.transferPasses).toBe(6 * 8)
+    expect(together.transferPasses).toBe(6 * 4)
+  })
+
   it('refuses shaping the machine cannot do, naming the row', () => {
     const base = [row([{ lo: 40, hi: 79 }], knit), row([{ lo: 40, hi: 79 }], knit)]
     const run = (rows: PanelRowV1[], extra: Partial<ShapedPanelInputV1> = {}) => () => emitShapedPanelV1({ ...CARRIERS, rows, top: 'bind-off', ...extra })

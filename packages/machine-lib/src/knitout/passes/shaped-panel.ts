@@ -58,6 +58,19 @@ export interface PanelSegmentV1 {
  */
 export type PanelIncreaseV1 = 'eyelet' | 'edge' | 'bar'
 
+/**
+ * How a one-stitch decrease is made:
+ *   together  the edge stitches cross to the rear bed in one group and come back one needle in; the
+ *             innermost lands on its neighbour (the default)
+ *   single    one loop per carriage pass, in the order of Kniterate's shaping samples (sophie, and
+ *             every racked shaping transfer in its sweater files): the stitch the edge will cover is
+ *             lifted to the rear first, the edge stitches step inward innermost first, each onto an
+ *             empty needle, and the lifted stitch comes back last on top. Only one loop is ever off
+ *             the front bed's row of neighbours, so the neighbours hold it taut where the rollers
+ *             cannot. Twice the transfer passes.
+ */
+export type PanelDecreaseV1 = 'together' | 'single'
+
 export interface PanelRowV1 {
   /** Live needles after this row's shaping, left to right: one segment, or two after the neck split. */
   readonly segments: readonly PanelSegmentV1[]
@@ -69,6 +82,8 @@ export interface PanelRowV1 {
   readonly sourceRow?: number
   /** How this row's increases are made (default `eyelet`). */
   readonly increase?: PanelIncreaseV1
+  /** How this row's one-stitch decreases are made (default `together`). */
+  readonly decrease?: PanelDecreaseV1
 }
 
 /** Rows of waste yarn a shaped piece finishes on, when its top is waste. */
@@ -236,6 +251,26 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
       ...(fill ? [{ from: 'b' as const, fromNeedle: gap, to: 'f' as const, toNeedle: gap }] : []),
     ], 0)
   }
+  /**
+   * A one-stitch decrease, one loop per pass (`PanelDecreaseV1` `single`). `edge` is the segment's
+   * outermost needle on that side; the stitch `fashion` needles in from it is the one covered.
+   */
+  const stepEdgeIn = (side: 'left' | 'right', edge: number) => {
+    const inward = side === 'left' ? 1 : -1
+    const sources = range(0, fashion - 1).map((k) => edge + inward * k)
+    const covered = edge + inward * fashion
+    const parked = covered + inward
+    for (const n of [...sources, covered]) if (bedOf(n) === null) fail(`the ${side} edge has no loop on needle ${n} to move`)
+    setBeds([...sources, covered, parked], () => 'f')
+    for (const n of [...sources, parked]) if ((loops.b.get(n) ?? 0) > 0) fail(`rear needle ${n} is not free for the ${side} edge shaping`)
+    // The covered stitch waits on the rear bed, one needle further in.
+    moveBatch([{ from: 'f', fromNeedle: covered, to: 'b', toNeedle: parked }], -inward)
+    for (const n of [...sources].reverse()) {
+      moveBatch([{ from: 'f', fromNeedle: n, to: 'b', toNeedle: n }], 0)
+      moveBatch([{ from: 'b', fromNeedle: n, to: 'f', toNeedle: n + inward }], inward)
+    }
+    moveBatch([{ from: 'b', fromNeedle: parked, to: 'f', toNeedle: covered }], -inward)
+  }
   /** The rear needle a `bar` increase into `nextRow` tucks on while this row knits, per segment; null for none. */
   const barNeedles = (segments: readonly PanelSegmentV1[], nextRow: PanelRowV1 | undefined): { needle: number; side: 'left' | 'right' }[] => {
     if (nextRow === undefined || nextRow.increase !== 'bar' || nextRow.segments.length !== segments.length) return []
@@ -399,8 +434,8 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
       segments.forEach((segment, index) => {
         const old = previous[index]!
         const carrier = carrierOf(index)
-        shapeOuterEdge('left', old.lo, segment.lo, carrier, sideOf(carrier) === 'left', row.increase)
-        shapeOuterEdge('right', old.hi, segment.hi, carrier, sideOf(carrier) === 'right', row.increase)
+        shapeOuterEdge('left', old.lo, segment.lo, carrier, sideOf(carrier) === 'left', row.increase, row.decrease)
+        shapeOuterEdge('right', old.hi, segment.hi, carrier, sideOf(carrier) === 'right', row.increase, row.decrease)
       })
       const plans = segments.map((segment) => planSegment(segment, row, next))
       setBeds(segments.flatMap((segment) => range(segment.lo, segment.hi)), (n) => bedFor(plans.find((plan) => plan.has(n))!.get(n)!, bedOf(n)))
@@ -420,7 +455,7 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
    * Changes one outer edge from `from` to `to`: shifts for small changes, a
    * chain bind-off (only from the side the yarn is on) for three or more.
    */
-  function shapeOuterEdge(side: 'left' | 'right', from: number, to: number, carrier: CarrierId, yarnHere: boolean, increase: PanelIncreaseV1 = 'eyelet') {
+  function shapeOuterEdge(side: 'left' | 'right', from: number, to: number, carrier: CarrierId, yarnHere: boolean, increase: PanelIncreaseV1 = 'eyelet', decrease1: PanelDecreaseV1 = 'together') {
     const decrease = side === 'left' ? to - from : from - to
     if (decrease === 0) return
     if (decrease < 0) {
@@ -429,6 +464,7 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
       if (increase !== 'edge') shiftEdge(side, from, -1, increase === 'bar')
       return
     }
+    if (decrease === 1 && decrease1 === 'single') { stepEdgeIn(side, from); return }
     if (decrease <= 2) { shiftEdge(side, from, decrease); return }
     if (!yarnHere) fail(`binding off ${decrease} stitches at the ${side} edge needs the yarn there; it is on the ${side === 'left' ? 'right' : 'left'}`)
     ops.push(comment(`${side} edge: bind off ${decrease} stitches`))
