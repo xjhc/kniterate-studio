@@ -30936,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "6c98d57d63427b0b01851015005b029ebf520bc2aa1009d7db35a974446fa32b",
+    "sha256": "25fd1d922e277fd84db6bdb4050a49b09e7354636b1037ba716f02bd3e3c20ec",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31829,6 +31829,11 @@
         "bytes": 19705
       },
       {
+        "path": "../../scripts/experiments/edge-swatch.ts",
+        "sha256": "e1aa53f0357aaaf03fd9d65adf4ad215c44822a1557a6a13e4593341792028d0",
+        "bytes": 12484
+      },
+      {
         "path": "../../scripts/experiments/increase-swatch.ts",
         "sha256": "39838bbcfbb475e77e3ee3bc44c4d7da413d44711b51a9daf3e2213152aac4d6",
         "bytes": 10270
@@ -32025,7 +32030,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "eb1c39327ffb034e955caae296bde1c1af60e4e5cea237a48ef0f2f88f352d9b",
+        "sha256": "62bcb753e5ce33c1e5c3c35e0fc547a2190f5e371ec3b96d3c8972f5c22550bb",
         "bytes": 179
       },
       {
@@ -32750,8 +32755,8 @@
       },
       {
         "path": "src/knitout/passes/shaped-panel.ts",
-        "sha256": "7a2ba2f9877972f9ec8bfe1795fa9f95ad3349a7da9f446c432aedbdbe9a823d",
-        "bytes": 26997
+        "sha256": "762c4b0bf3f0e9b58b8e18a68871b1f9654943e3717a12e18bb581e703ff3c56",
+        "bytes": 29332
       },
       {
         "path": "src/knitout/passes/shaped-tube.ts",
@@ -33225,8 +33230,8 @@
       },
       {
         "path": "test/knitout/kcode-machine-topology-window.test.ts",
-        "sha256": "c385b20fd758a8cbbca85ff4cf2b33cc82de6752241dd5e31e5ff03b189e6e01",
-        "bytes": 4137
+        "sha256": "749aad0f39b5b1862ca640eb9fa4b05754693a0111c4f7f3a4937103f408c813",
+        "bytes": 4263
       },
       {
         "path": "test/knitout/kcode-machine-topology.test.ts",
@@ -33315,8 +33320,8 @@
       },
       {
         "path": "test/knitout/shaped-panel.test.ts",
-        "sha256": "901c12c3a2b3dd3d411fbb2d1a7b59baa415163dfe3627f8db2f851bb4b93530",
-        "bytes": 13314
+        "sha256": "b719727d25dd68805a7803126a697f39dcc7fbbfa2668fcae53de2f8bf9d2e16",
+        "bytes": 17181
       },
       {
         "path": "test/knitout/sim/kc-section.test.ts",
