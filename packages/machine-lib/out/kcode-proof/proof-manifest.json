@@ -30936,7 +30936,7 @@
     ]
   },
   "contract": {
-    "sha256": "4a83d55e2fe59318c4eff23961336491ce688a206d666e2c08ad5f0fd8e1fe84",
+    "sha256": "6c98d57d63427b0b01851015005b029ebf520bc2aa1009d7db35a974446fa32b",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31829,6 +31829,11 @@
         "bytes": 19705
       },
       {
+        "path": "../../scripts/experiments/increase-swatch.ts",
+        "sha256": "39838bbcfbb475e77e3ee3bc44c4d7da413d44711b51a9daf3e2213152aac4d6",
+        "bytes": 10270
+      },
+      {
         "path": "../../scripts/lib/machine-cli.ts",
         "sha256": "aa7c81eac28327cb0425d637d8b565abe309e6404f3d1cb9ffc18a46badf019c",
         "bytes": 24536
@@ -32020,7 +32025,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "56b53e94a932a092b07a32a59130b88eb6708f717fd6abeb58fc4c4da3ba10b9",
+        "sha256": "eb1c39327ffb034e955caae296bde1c1af60e4e5cea237a48ef0f2f88f352d9b",
         "bytes": 179
       },
       {
@@ -32745,8 +32750,8 @@
       },
       {
         "path": "src/knitout/passes/shaped-panel.ts",
-        "sha256": "df71d35c2c59f0ee20431e531e06f30cd3c7f0b8070e0d4ef105d708eff8b5aa",
-        "bytes": 23019
+        "sha256": "7a2ba2f9877972f9ec8bfe1795fa9f95ad3349a7da9f446c432aedbdbe9a823d",
+        "bytes": 26997
       },
       {
         "path": "src/knitout/passes/shaped-tube.ts",
@@ -33310,8 +33315,8 @@
       },
       {
         "path": "test/knitout/shaped-panel.test.ts",
-        "sha256": "24221fd7af0d58d04c580e00f76e7be62a1b59d837d3830a585361a0b2237561",
-        "bytes": 10043
+        "sha256": "901c12c3a2b3dd3d411fbb2d1a7b59baa415163dfe3627f8db2f851bb4b93530",
+        "bytes": 13314
       },
       {
         "path": "test/knitout/sim/kc-section.test.ts",
