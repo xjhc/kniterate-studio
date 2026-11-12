@@ -37,6 +37,18 @@ pnpm --silent studio -- compare <package> ref:fairisle --carriers 2=4 --section 
   sections and notes (e.g. the reversible sweater knits its rib with C6, the
   waste carrier).
 
+## 2b. A new construction starts from Kniterate's nearest file
+
+Before building anything Studio has not knitted (a new shaping, start, finish
+or fabric), find the reference that does it and measure how, stitch by stitch:
+which yarn knits which needle, at what racking, how often, and where idle
+feeders sit. `reference/sleeves.kc` is the reversible increase (recorded in
+`trace-audit.test.ts`); `front.kc` and `back.kc` the reversible neck and
+shoulders. State every difference from it before a file is issued. The audit
+enforces three of these by default, each at Kniterate's own figure: no waste or
+draw feeder moved after the start, no more than 1.5 movement-only passes per
+knitting pass, and never two neighbouring empty needles knitted in one pass.
+
 ## 3. Decide the fix by evidence
 
 Rank sources: Kniterate's own files; Kniterate's support articles, app manual

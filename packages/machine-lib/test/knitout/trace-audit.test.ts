@@ -78,6 +78,30 @@ describe('loop audit', () => {
     expect(audit.ok).toBe(false)
   })
 
+  it('flags two neighbouring empty needles knitted in one pass, but not one empty needle or a whole-row pick-up', () => {
+    const sections: TraceSectionV1[] = [{ name: 'body', from: 1, to: 3 }]
+    // Needles 1-4 hold loops; the next row also knits 5 and 6, both empty: a float, not two stitches.
+    const paired = auditTraceV1(trace([row('3', 'front', 1, 4), row('3', 'front', 1, 6)]), { sections })
+    expect(check(paired, 'paired-empty-knits')).toMatchObject({ severity: 'issue', ok: false, value: 1, at: ['pass 2 f5..6 c3'] })
+    // One new needle a row, as Kniterate's increases do; and a first row on the rear bed, every needle empty.
+    const single = auditTraceV1(trace([row('3', 'front', 1, 4), row('3', 'front', 1, 5), row('3', 'rear', 1, 5)]), { sections })
+    expect(check(single, 'paired-empty-knits')).toMatchObject({ ok: true, value: 0 })
+  })
+
+  it('counts movement-only passes against knitting passes, and fails a file that mostly shuffles feeders', () => {
+    const move = (carrier: string) => ({ carrier, acts: [] as Act[] })
+    const withMoves = (passes: { carrier: string; acts: Act[] }[]) => {
+      const built = trace(passes)
+      return { ...built, passes: built.passes.map((pass) => (pass.actions.length === 0 ? { ...pass, actions: [{ kind: 'move', carrier: pass.carrier }] } : pass)) } as never
+    }
+    const sections: TraceSectionV1[] = [{ name: 'body', from: 1, to: 9 }]
+    const calm = auditTraceV1(withMoves([row('3', 'front', 1, 4), move('4'), row('4', 'front', 1, 4), row('3', 'front', 1, 4)]), { sections })
+    expect(calm.work).toEqual({ knitting: 3, transfers: 0, movementOnly: 1 })
+    expect(check(calm, 'movement-per-knit')).toMatchObject({ ok: true, value: 0.33 })
+    const busy = auditTraceV1(withMoves([row('3', 'front', 1, 4), move('4'), move('5'), move('4'), move('5'), row('3', 'front', 1, 4)]), { sections })
+    expect(check(busy, 'movement-per-knit')).toMatchObject({ severity: 'issue', ok: false, value: 2, limit: 1.5 })
+  })
+
   it('counts a waste carrier as body yarn inside a body section (Kniterate\'s sweater knits its rib with C6)', () => {
     const passes = [row('3', 'front', 1, 4), row('6', 'front', 1, 4), row('6', 'front', 1, 4)]
     const audit = auditTraceV1(trace(passes), { sections: [{ name: 'rib', from: 1, to: 3 }] })

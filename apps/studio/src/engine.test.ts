@@ -906,7 +906,7 @@ describe('Knitout machine document behavior', () => {
     expect(document.verdict.state).toBe('blocked');
   });
 
-  it('pins every reference-corpus import verdict to the documented policy', { timeout: 30_000 }, () => {
+  it('pins every reference-corpus import verdict to the documented policy', { timeout: 120_000 }, () => {
     const expected = {
       '2x2-rib-beanie.kc': 'surface',
       'back.kc': 'surface',

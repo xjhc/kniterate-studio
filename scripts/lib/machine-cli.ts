@@ -245,6 +245,7 @@ export function auditCommand(pieces: MachinePiece[], options: Map<string, string
       summary: auditSummary(audit),
       checks: audit.checks,
       longestHolds: audit.longestHolds.map((hold) => `${hold.passes} passes on ${hold.needle}: made by c${hold.from.carrier} at pass ${hold.from.pass}${hold.section ? ` (${hold.section})` : ''}, knitted by c${hold.to.carrier} at ${hold.to.pass}`),
+      work: audit.work,
       emptyNeedleKnits: audit.emptyNeedleKnits,
     };
   });
