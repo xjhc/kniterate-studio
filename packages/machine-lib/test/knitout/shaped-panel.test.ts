@@ -149,6 +149,54 @@ describe('shaped panel', () => {
     for (const fashion of [1, 2, 3]) expectMachineValid({ ...CARRIERS, rows, top: 'bind-off', fashion })
   })
 
+  it('makes a right-edge increase three ways: open, at the edge needle, and filled with the strand below', { timeout: 60_000 }, () => {
+    // Four plain rows, then four increases every second row at the right edge.
+    const rowsWith = (increase: 'eyelet' | 'edge' | 'bar'): PanelRowV1[] => Array.from({ length: 12 }, (_, r) => {
+      const grown = r < 4 ? 0 : Math.floor((r - 4) / 2) + 1
+      return { segments: [{ lo: 100, hi: 119 + grown }], stitch: () => 'k' as PanelStitchV1, settings: 'body' as const, ...(r >= 4 && (r - 4) % 2 === 0 ? { increase } : {}) }
+    })
+    const measure = (increase: 'eyelet' | 'edge' | 'bar') => {
+      const trace = strictTrace({ rows: rowsWith(increase), ...CARRIERS, top: 'waste', fashion: 3 })
+      expect(validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2).ok).toBe(true)
+      const loops = new Set<string>()
+      let emptyInside = 0
+      let emptyEdge = 0
+      let started = false
+      const tuckPasses: { rack: number; knits: number; tucks: number }[] = []
+      for (const pass of trace.passes) {
+        // The body: the main yarn's passes once the draw thread has knitted.
+        if (pass.carrier === '1') started = true
+        const knits = pass.actions.filter((action) => action.kind === 'knit').length
+        const tucks = pass.actions.filter((action) => action.kind === 'tuck').length
+        if (started && pass.carrier === '3' && tucks > 0) tuckPasses.push({ rack: pass.rack, knits, tucks })
+        for (const action of pass.actions) {
+          if (action.kind === 'knit' || action.kind === 'tuck') {
+            const k = `${action.at.bed}${action.at.kcodeColumn}`
+            if (action.kind === 'knit' && started && pass.carrier === '3' && action.at.bed === 'front' && !loops.has(k) && knits < 30) {
+              const neighbours = [-1, 1].every((d) => loops.has(`front${action.at.kcodeColumn + d}`))
+              if (neighbours) emptyInside++
+              else emptyEdge++
+            }
+            loops.add(k)
+          } else if (action.kind === 'drop') loops.delete(`${action.at.bed}${action.at.kcodeColumn}`)
+          else if (action.kind === 'xfer') { loops.delete(`${action.source.bed}${action.source.kcodeColumn}`); loops.add(`${action.target.bed}${action.target.kcodeColumn}`) }
+        }
+      }
+      return { emptyInside, emptyEdge, tuckPasses, transfers: trace.passes.filter((pass) => started && pass.actions.some((action) => action.kind === 'xfer')).length }
+    }
+    // Open: each increase knits one empty needle inside the fabric, three stitches from the edge.
+    expect(measure('eyelet')).toMatchObject({ emptyInside: 4, emptyEdge: 0, tuckPasses: [] })
+    // Edge needle: no stitch moves; the new outermost needle knits empty.
+    const edge = measure('edge')
+    expect(edge).toMatchObject({ emptyInside: 0, emptyEdge: 4, tuckPasses: [] })
+    // Lifted bar: no needle knits empty. The row before each increase knits whole at half racking with one
+    // rear tuck, and that strand goes into the gap.
+    const bar = measure('bar')
+    expect(bar).toMatchObject({ emptyInside: 0, emptyEdge: 0 })
+    expect(bar.tuckPasses).toEqual([20, 21, 22, 23].map((knits) => ({ rack: -0.5, knits, tucks: 1 })))
+    expect(bar.transfers).toBeGreaterThan(edge.transfers)
+  })
+
   it('refuses shaping the machine cannot do, naming the row', () => {
     const base = [row([{ lo: 40, hi: 79 }], knit), row([{ lo: 40, hi: 79 }], knit)]
     const run = (rows: PanelRowV1[], extra: Partial<ShapedPanelInputV1> = {}) => () => emitShapedPanelV1({ ...CARRIERS, rows, top: 'bind-off', ...extra })

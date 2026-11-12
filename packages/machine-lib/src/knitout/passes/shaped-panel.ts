@@ -46,6 +46,18 @@ export interface PanelSegmentV1 {
   readonly hi: number
 }
 
+/**
+ * How a one-stitch increase is made:
+ *   eyelet  the edge stitches shift outward and the needle they leave knits empty in the row: a
+ *           fashioning mark with a small hole (Kniterate's sophie samples; the default)
+ *   edge    nothing moves: the new outermost needle knits empty in the row (bringing a needle into
+ *           work by hand). No hole inside the fabric, a looser edge loop.
+ *   bar     the edge stitches shift outward and the needle they leave is filled with the strand
+ *           between two stitches of the row before (a hand knitter's lifted-bar "make one"): that
+ *           row tucks the strand on the rear needle opposite, and it is transferred into the gap.
+ */
+export type PanelIncreaseV1 = 'eyelet' | 'edge' | 'bar'
+
 export interface PanelRowV1 {
   /** Live needles after this row's shaping, left to right: one segment, or two after the neck split. */
   readonly segments: readonly PanelSegmentV1[]
@@ -55,6 +67,8 @@ export interface PanelRowV1 {
   readonly settings: 'rib' | 'body'
   /** Design row recorded on the row's passes (provenance only). */
   readonly sourceRow?: number
+  /** How this row's increases are made (default `eyelet`). */
+  readonly increase?: PanelIncreaseV1
 }
 
 /** Rows of waste yarn a shaped piece finishes on, when its top is waste. */
@@ -203,18 +217,35 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
    * `shift` needles inward (a decrease) or outward (an increase), through the
    * rear bed. `edge` is the segment's outermost needle on that side.
    */
-  const shiftEdge = (side: 'left' | 'right', edge: number, shift: number) => {
+  const shiftEdge = (side: 'left' | 'right', edge: number, shift: number, fill = false) => {
     const block = Math.max(fashion, Math.abs(shift))
     const inward = side === 'left' ? 1 : -1
     const sources = range(0, block - 1).map((k) => edge + inward * k)
     const delta = inward * shift
     const touched = [...new Set([...sources, ...sources.map((n) => n + delta)])]
+    // A lifted-bar increase: the strand tucked on the rear needle opposite the needle the block leaves.
+    const gap = sources.at(-1)!
+    if (fill && (loops.b.get(gap) ?? 0) !== 1) fail(`the ${side} increase has no tucked strand on rear needle ${gap} to fill its gap`)
     for (const n of sources) if (bedOf(n) === null) fail(`the ${side} edge has no loop on needle ${n} to move`)
     setBeds(touched, () => 'f')
-    for (const n of touched) if ((loops.b.get(n) ?? 0) > 0) fail(`rear needle ${n} is not free for the ${side} edge shaping`)
-    // Front n → rear n + delta (racking −delta), then rear → front at rack 0.
+    for (const n of touched) if ((loops.b.get(n) ?? 0) > 0 && !(fill && n === gap)) fail(`rear needle ${n} is not free for the ${side} edge shaping`)
+    // Front n → rear n + delta (racking −delta), then rear → front at rack 0; the tucked strand goes with them into the gap.
     moveBatch(sources.map((n) => ({ from: 'f', fromNeedle: n, to: 'b', toNeedle: n + delta })), -delta)
-    moveBatch(sources.map((n) => ({ from: 'b', fromNeedle: n + delta, to: 'f', toNeedle: n + delta })), 0)
+    moveBatch([
+      ...sources.map((n) => ({ from: 'b' as const, fromNeedle: n + delta, to: 'f' as const, toNeedle: n + delta })),
+      ...(fill ? [{ from: 'b' as const, fromNeedle: gap, to: 'f' as const, toNeedle: gap }] : []),
+    ], 0)
+  }
+  /** The rear needle a `bar` increase into `nextRow` tucks on while this row knits, per segment; null for none. */
+  const barNeedles = (segments: readonly PanelSegmentV1[], nextRow: PanelRowV1 | undefined): { needle: number; side: 'left' | 'right' }[] => {
+    if (nextRow === undefined || nextRow.increase !== 'bar' || nextRow.segments.length !== segments.length) return []
+    return segments.flatMap((segment, index) => {
+      const after = nextRow.segments[index]!
+      return [
+        ...(after.lo === segment.lo - 1 ? [{ needle: segment.lo + fashion - 1, side: 'left' as const }] : []),
+        ...(after.hi === segment.hi + 1 ? [{ needle: segment.hi - fashion + 1, side: 'right' as const }] : []),
+      ]
+    })
   }
 
   /**
@@ -287,14 +318,35 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
 
   /** One pass knitting `segment` by `plan` with `carrier`, from the side it is on. */
   const body = { speed: input.bodySettings?.speed ?? BODY.speed, roller: input.bodySettings?.roller ?? BODY.roller, stitch: input.bodySettings?.stitch ?? BODY.stitch }
-  const knitSegment = (carrier: CarrierId, segment: PanelSegmentV1, row: PanelRowV1, plan: Map<number, PanelStitchV1>) => {
+  const knitSegment = (carrier: CarrierId, segment: PanelSegmentV1, row: PanelRowV1, plan: Map<number, PanelStitchV1>, bars: readonly { needle: number; side: 'left' | 'right' }[] = []) => {
     const dir: Direction = sideOf(carrier) === 'left' ? '+' : '-'
     const needles = dir === '+' ? range(segment.lo, segment.hi) : range(segment.lo, segment.hi).reverse()
+    // A lifted-bar increase next row: this row knits at half racking, which puts the rear needle between
+    // two front needles (at rack 0 it faces one and both cannot work in a pass). There it catches the
+    // strand between the stitch that will move and its inner neighbour: rack −½ for a right-edge
+    // increase (rear g between front g−1 and g), +½ for a left-edge one (between g and g+1).
+    const here = bars.filter((bar) => bar.needle >= segment.lo && bar.needle <= segment.hi)
+    if (new Set(here.map((bar) => bar.side)).size > 1) fail('a lifted-bar increase on both edges of one row needs two rackings; widen one edge per row')
+    const barRack = here.length === 0 ? 0 : here[0]!.side === 'right' ? -0.5 : 0.5
+    if (here.length > 0) {
+      if ([...plan.values()].some((stitch) => stitch !== 'k')) fail('the row before a lifted-bar increase must be plain knit: its rear bed only tucks the strand')
+      sim.setRacking(barRack)
+    }
+    /** Whether the rear needle `n` comes before front `n` in this pass's travel. */
+    const barFirst = (side: 'left' | 'right') => (side === 'right') === (dir === '+')
+    const tuckBar = (n: number, before: boolean) => {
+      const bar = here.find((item) => item.needle === n)
+      if (bar === undefined || barFirst(bar.side) !== before) return
+      if ((loops.b.get(n) ?? 0) > 0) fail(`rear needle ${n} is not free to hold the increase's strand`)
+      sim.tuck(carrier, dir, needle('b', n))
+      loops.b.set(n, 1)
+    }
     if (row.settings === 'rib') { sim.setSpeed(RIB.ribSpeed); sim.setRoller(RIB.ribRoller) }
     else { sim.setSpeed(body.speed); sim.setRoller(body.roller) }
     for (const n of needles) {
       const stitch = plan.get(n)!
-      if (stitch === 's') continue
+      tuckBar(n, true)
+      if (stitch === 's') { tuckBar(n, false); continue }
       const current = bedOf(n)
       const bed = bedFor(stitch, current)
       if (current !== null && current !== bed) fail(`needle ${n} is on the ${current === 'f' ? 'front' : 'rear'} bed but its stitch needs the other`)
@@ -305,7 +357,9 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
       // A knit leaves one new loop; a tuck adds one to those held.
       loops[bed].set(n, tuck ? (loops[bed].get(n) ?? 0) + 1 : 1)
       if ((loops[bed].get(n) ?? 0) > 2) fail(`needle ${n} would hold more than two loops after repeated tucks`)
+      tuckBar(n, false)
     }
+    if (here.length > 0) sim.setRacking(0)
   }
   /** Transfers `segment` to its planned beds, then knits it. */
   const knitPlanned = (carrier: CarrierId, segment: PanelSegmentV1, row: PanelRowV1, next: readonly PanelSegmentV1[] | null) => {
@@ -345,12 +399,13 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
       segments.forEach((segment, index) => {
         const old = previous[index]!
         const carrier = carrierOf(index)
-        shapeOuterEdge('left', old.lo, segment.lo, carrier, sideOf(carrier) === 'left')
-        shapeOuterEdge('right', old.hi, segment.hi, carrier, sideOf(carrier) === 'right')
+        shapeOuterEdge('left', old.lo, segment.lo, carrier, sideOf(carrier) === 'left', row.increase)
+        shapeOuterEdge('right', old.hi, segment.hi, carrier, sideOf(carrier) === 'right', row.increase)
       })
       const plans = segments.map((segment) => planSegment(segment, row, next))
       setBeds(segments.flatMap((segment) => range(segment.lo, segment.hi)), (n) => bedFor(plans.find((plan) => plan.has(n))!.get(n)!, bedOf(n)))
-      segments.forEach((segment, index) => knitSegment(carrierOf(index), segment, row, plans[index]!))
+      const bars = barNeedles(segments, rows[r + 1])
+      segments.forEach((segment, index) => knitSegment(carrierOf(index), segment, row, plans[index]!, bars))
       drain()
     }
     for (const [index, segment] of segments.entries()) {
@@ -365,12 +420,13 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
    * Changes one outer edge from `from` to `to`: shifts for small changes, a
    * chain bind-off (only from the side the yarn is on) for three or more.
    */
-  function shapeOuterEdge(side: 'left' | 'right', from: number, to: number, carrier: CarrierId, yarnHere: boolean) {
+  function shapeOuterEdge(side: 'left' | 'right', from: number, to: number, carrier: CarrierId, yarnHere: boolean, increase: PanelIncreaseV1 = 'eyelet') {
     const decrease = side === 'left' ? to - from : from - to
     if (decrease === 0) return
     if (decrease < 0) {
       if (decrease < -1) fail(`the ${side} edge widens by ${-decrease}; increase one stitch per row at most`)
-      shiftEdge(side, from, -1)
+      // `edge`: the new needle simply knits in the row.
+      if (increase !== 'edge') shiftEdge(side, from, -1, increase === 'bar')
       return
     }
     if (decrease <= 2) { shiftEdge(side, from, decrease); return }
