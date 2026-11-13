@@ -2,12 +2,14 @@
 
 The operator fork at `da30721363879cd183fefe2968aac5d952ebb813` is integrated
 on `accumulate`, with its successful cast-on and historical trials preserved.
-This package is for the reviewer. No file has been sent to the operator,
-pushed, posted to #18 or knitted in this work package.
+Gate 2's independent review passed the swatch's software checks. The remaining
+handoff condition is confirmation of the same actual orange yarn. No file has
+been sent to the operator, pushed, posted to #18 or knitted in this work package.
 
 ## Candidate
 
 - [Instructions and increase pass table](development-trials/2026-11-13/split-increase/instructions.md)
+- [Run observation sheet](development-trials/2026-11-13/split-increase/observations.md)
 - [Machine file](development-trials/2026-11-13/split-increase/program.kc)
 - [Generated knitout](development-trials/2026-11-13/split-increase/program.k)
 - [Verification report](development-trials/2026-11-13/split-increase/verification.json)
@@ -27,6 +29,14 @@ The swatch's wider left edge needs idle feeders parked four needles farther
 left. After the first jersey row, the body retains speed 200, roller 450 and
 stitch 9. Use the same actual yarns as that trial; the record does not identify
 the orange cone sufficiently to substitute a new yarn confidently.
+
+The single float advisory has been read: C6's last stitch at pass 100 is
+51 needles from its return at pass 216 for top waste. It is a waste-yarn
+return across the completed body, not a C3 increase float. The observation
+sheet explicitly records strand behaviour and pickup at pass 216; software
+does not establish that the carry is harmless. No yarn-handling change is
+prescribed. Record both faces of all eight increase events (twelve tested
+edges), stops/interventions and the actual yarn identities.
 
 Rebuild with:
 
@@ -115,4 +125,5 @@ the diamond repair.
 The final proof reports `software-proven` with 3,268/3,268 mutants killed.
 `pnpm verify` passes and reports `software-proven · receipt current`; Chromium
 passes 54/54 tests. `git diff --check` is clean. These are software results,
-not physical machine acceptance. Gate 2 review is the next step.
+not physical machine acceptance. Gate 2 review subsequently passed; the
+unchanged swatch's yarn confirmation and physical knit remain outstanding.

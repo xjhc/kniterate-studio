@@ -15,7 +15,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { auditTraceV1, computeInputHash, emitShapedPanelV1, parseKnitoutProgram, traceRowsV1, writeKnitoutProgram, type PanelRowV1, type TraceSectionV1 } from '../../packages/machine-lib/src/browser.js';
+import { auditTraceV1, computeInputHash, deriveMachineTraceAdvisoriesV1, emitShapedPanelV1, KNITERATE_7GG_KCODE_PROFILE_V2, parseKnitoutProgram, traceRowsV1, writeKnitoutProgram, type PanelRowV1, type TraceSectionV1 } from '../../packages/machine-lib/src/browser.js';
 import { assessAuthoredCapacityV1, observeAuthoredCapacityV1 } from '../../packages/project-contract/src/index.js';
 import { compileKCodeArtifact } from '../../apps/studio/src/kcode/compileKCodeArtifact.js';
 import { withEdgeTrialCastOn } from './edge-trial-caston.js';
@@ -111,6 +111,10 @@ async function main() {
   const sections: TraceSectionV1[] = [{ name: 'waste', from: 1, to: firstBody - 1 }, { name: 'body', from: firstBody, to: lastBody }, { name: 'top', from: lastBody + 1, to: trace.passes.length }];
   const audit = auditTraceV1(trace, { sections });
   const listed = traceRowsV1(trace, sections);
+  const advisories = deriveMachineTraceAdvisoriesV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2).advisories.map(item => ({
+    carrier: item.carrier, fromPass: item.fromPassIndex === undefined ? null : item.fromPassIndex + 1,
+    pass: item.passIndex + 1, distance: item.distance, message: item.message,
+  }));
   const passesOf = (row: number) => (passOfRow.get(`row-${row}`) ?? []).map((index) => listed[index]!);
   const table = events.map((event) => {
     // The row before the increase holds the split; the increase's own row holds the transfers and then knits wider.
@@ -129,10 +133,10 @@ async function main() {
   const ok = kcode.ok && problems.length === 0 && audit.ok;
   const span = (part: number) => { const own = table.filter((event) => event.part === part); return `${own[0]!.splitPass}–${own.at(-1)!.knitPass}`; };
   const instructions = [
-    '# Split-increase swatch — Gate 2 review draft',
+    '# Split-increase swatch — observation package',
     '',
     `Candidate: \`program.kc\`, ${trace.passes.length} passes, ${Buffer.byteLength(kcode.kcText)} bytes, SHA-256 \`${kcode.kcHash}\`.`,
-    'Checked by software only. This file has not been knitted. Review draft; not approved for sending to the operator.',
+    'Software checks below apply to these bytes. This exact file has not been knitted. Operator handoff needs the reviewed candidate and confirmation of the trial yarn; no machine run is claimed.',
     '',
     `One piece of plain jersey: ${rows.length} body rows, starting at ${CAST_ON.hi - CAST_ON.lo + 1} stitches and widening to ${widest.hi - widest.lo + 1}. No decreases.`,
     '',
@@ -159,6 +163,8 @@ async function main() {
     '',
     '## What to record',
     '',
+    'Fill `observations.md` for this exact candidate. Blank or unknown observations do not count as success. Label left and right as viewed facing the machine and keep those labels when photographing the reverse face.',
+    '',
     'For each fault record these three facts:',
     '1. The pass number shown on the controller.',
     '2. The left or right edge.',
@@ -166,6 +172,11 @@ async function main() {
     '',
     'If the first split is refused or behaves unexpectedly, stop and record the pass. Stop for piled loops or a needle at risk. Record any stops, interventions and setting changes.',
     'Photograph both faces and each widening edge. Mark the affected part and pass. Compare Simple with Fashioned for holes, loose loops and edge appearance.',
+    '',
+    '## Waste-yarn return advisory',
+    '',
+    ...advisories.map(item => `- C${item.carrier}: ${item.distance} needles between passes ${item.fromPass ?? 'unknown'} and ${item.pass}. ${item.carrier === CARRIERS.waste && item.pass > lastBody ? 'C6 returns for top waste after remaining parked during the body. Observe its strand and first pickup for snagging, pulling or failure to catch. This is not an increase in the orange C3 body.' : 'Record the yarn path and any affected loops at this pass.'}`),
+    'The advisory is non-blocking software evidence, not a finding that the carry is harmless. Record what the machine actually does; no cutting or rethreading change is prescribed here.',
     '',
     '## Software checks',
     '',
@@ -179,7 +190,54 @@ async function main() {
   await writeFile(join(out, 'program.kc'), kcode.kcText);
   await writeFile(join(out, 'program.k'), knitoutText);
   await writeFile(join(out, 'instructions.md'), instructions);
-  const report = { ok, reviewOnly: true, castOn: 'operator edge trial full-needle start; widest-row feeder parking', bytes: Buffer.byteLength(kcode.kcText), passes: trace.passes.length, kcodeSha256: kcode.kcHash, knitoutSha256: createHash('sha256').update(knitoutText).digest('hex'), rows: rows.length, widest, events: table, problems, audit: summary, work: audit.work };
+  const observations = [
+    '# Split-increase swatch — run observations',
+    '',
+    `Candidate SHA-256: \`${kcode.kcHash}\`; ${trace.passes.length} passes. This form records a future run; nothing below is a recorded result yet.`,
+    'Keep unknowns explicit. An empty stop list or blank cell does not establish a clean run. Record each repeated run separately.',
+    '',
+    '## File, machine and yarn',
+    '',
+    '- Operator, date, start/end time and time zone: ___',
+    '- Machine serial / controller version: ___',
+    '- File copied to the card and verified SHA-256 (or unknown): ___',
+    '- File selected at the controller / displayed pass count: ___',
+    '- Loaded-file identity confirmation method (or unknown): ___',
+    '- C3: same actual orange cone as the successful 268-pass edge swatch? yes / no / unknown: ___',
+    '- C3 cone label photo, yarn identity, lot and strands: ___',
+    '- C6 waste yarn identity / strands; C1 draw thread identity: ___',
+    `- Encoded body settings: speed ${BODY_SETTINGS.speed}, roller ${BODY_SETTINGS.roller}, stitch ${BODY_SETTINGS.stitch}. Any machine override, value and first affected pass: ___`,
+    '- Cast-on: each yarn caught? Any missed loop, tangle, repair or stop? Include pass: ___',
+    '- C1/C6 stayed clear while the body widened? observed yes / no / unknown; details: ___',
+    '',
+    '## Increase observations',
+    '',
+    'Each line is one tested edge; paired lines share one simultaneous event. Pass numbers are 1-based. Record caught / missed / wrong needle / unclear; add the bed if visible. For appearance, record holes, loose or elongated loops, bulk, or no visible defect separately on both faces.',
+    '',
+    '| Part.step | Style | Edge | Split direction | Split pass → first wider row | Loop result | Front appearance | Reverse appearance | Photo IDs / notes |',
+    '|---|---|---|---|---|---|---|---|---|',
+    ...table.flatMap(event => event.edges.map(edge => `| ${event.part}.${event.step} | ${event.name} | ${edge.side} | ${event.splitDirection === '<<' ? 'right to left' : 'left to right'} | ${event.splitPass} → ${event.knitPass} | ___ | ___ | ___ | ___ |`)),
+    '',
+    '## C6 return and finish',
+    '',
+    ...advisories.filter(item => item.carrier === CARRIERS.waste && item.pass > lastBody).map(item => `- Pass ${item.pass}: C6 returns for top waste; the advisory measures ${item.distance} needles from its last stitch at pass ${item.fromPass}. Strand snagged or pulled the body? First pickup caught? observed / unknown; details and photo: ___`),
+    '- Top waste supported the final body loops? Any dropped stitch or finish intervention: ___',
+    '',
+    '## Stops, changes and photographs',
+    '',
+    '| Controller pass | Message / event | Edge and bed, if known | Action taken / setting changed | Restart pass | Photo ID |',
+    '|---|---|---|---|---|---|',
+    '| ___ | ___ | ___ | ___ | ___ | ___ |',
+    '',
+    '- Total stops and interventions: ___ / unknown. Write zero only if observed.',
+    '- Whole specimen: front photo ___; reverse photo ___; cast-on photo ___; top-waste return photo ___.',
+    '- Edge close-ups: label machine-left/right and part.step; include a ruler without stretching. Retain original photos.',
+    '- Overall outcome: completed / interrupted / unknown; unresolved observations: ___',
+    '- Simple versus Fashioned: observed differences by edge and direction: ___',
+    '',
+  ].join('\n');
+  await writeFile(join(out, 'observations.md'), observations);
+  const report = { ok, reviewOnly: true, castOn: 'operator edge trial full-needle start; widest-row feeder parking', bytes: Buffer.byteLength(kcode.kcText), passes: trace.passes.length, kcodeSha256: kcode.kcHash, knitoutSha256: createHash('sha256').update(knitoutText).digest('hex'), rows: rows.length, widest, events: table, advisories, problems, audit: summary, work: audit.work };
   await writeFile(join(out, 'verification.json'), `${JSON.stringify(report, null, 2)}\n`);
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
   process.exit(ok ? 0 : 1);

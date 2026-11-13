@@ -1,7 +1,7 @@
-# Split-increase swatch — Gate 2 review draft
+# Split-increase swatch — observation package
 
 Candidate: `program.kc`, 230 passes, 278708 bytes, SHA-256 `fb2cb6adcfb4320992dcec26e8b80e0cbdcb905b4d25548780f20b04b5c24de5`.
-Checked by software only. This file has not been knitted. Review draft; not approved for sending to the operator.
+Software checks below apply to these bytes. This exact file has not been knitted. Operator handoff needs the reviewed candidate and confirmation of the trial yarn; no machine run is claimed.
 
 One piece of plain jersey: 43 body rows, starting at 40 stitches and widening to 52. No decreases.
 
@@ -44,6 +44,8 @@ Paired entries with the same split pass are one simultaneous increase at both ed
 
 ## What to record
 
+Fill `observations.md` for this exact candidate. Blank or unknown observations do not count as success. Label left and right as viewed facing the machine and keep those labels when photographing the reverse face.
+
 For each fault record these three facts:
 1. The pass number shown on the controller.
 2. The left or right edge.
@@ -51,6 +53,11 @@ For each fault record these three facts:
 
 If the first split is refused or behaves unexpectedly, stop and record the pass. Stop for piled loops or a needle at risk. Record any stops, interventions and setting changes.
 Photograph both faces and each widening edge. Mark the affected part and pass. Compare Simple with Fashioned for holes, loose loops and edge appearance.
+
+## Waste-yarn return advisory
+
+- C6: 51 needles between passes 100 and 216. C6 returns for top waste after remaining parked during the body. Observe its strand and first pickup for snagging, pulling or failure to catch. This is not an increase in the orange C3 body.
+The advisory is non-blocking software evidence, not a finding that the carry is harmless. Record what the machine actually does; no cutting or rethreading change is prescribed here.
 
 ## Software checks
 

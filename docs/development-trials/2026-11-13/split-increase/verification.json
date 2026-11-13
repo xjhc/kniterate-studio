@@ -237,6 +237,15 @@
       "knitPass": 208
     }
   ],
+  "advisories": [
+    {
+      "carrier": "6",
+      "fromPass": 100,
+      "pass": 216,
+      "distance": 51,
+      "message": "Carrier 6 floats 51 needles from its last stitch in pass 100 to pass 216, 116 passes later (maximum 7). KCode does not encode carrier in/out, so a long gap may be a parked or cut yarn rather than a float."
+    }
+  ],
   "problems": [],
   "audit": [
     "start-hold 6/12 ok",

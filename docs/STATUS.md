@@ -11,8 +11,10 @@ is the [single-bed split swatch for Gate 2](SPLIT-INCREASE-GATE2.md): 230 passes
 43 body rows, Simple and Fashioned on both edges in both directions. It uses
 the successful edge trial's full-needle cast-on and body settings. Both-edge
 splits stay right-to-left because the simultaneous left-to-right case has no
-capture. **This candidate is not knitted and is awaiting review before any
-operator handoff.**
+capture. **Gate 2 software review passed. This candidate is not knitted;
+confirm the same actual orange yarn before operator handoff.** The package
+now includes per-edge, both-face observations and C6's top-waste pickup at
+pass 216 (the sole 51-needle carry advisory). Its machine bytes are unchanged.
 
 Integration also repairs the older reversible diamond's software failures:
 waste/draw cover its eventual full width, idle feeders park outside it, body
