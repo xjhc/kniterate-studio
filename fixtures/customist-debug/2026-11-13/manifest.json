@@ -1,0 +1,1219 @@
+{
+  "schemaVersion": 1,
+  "capturedLocalDate": "2026-11-13",
+  "source": "Customist production in Chrome",
+  "sourceDesign": "https://www.customist.com/studio/6af731f4143d30d33281e3f7",
+  "sourceDesignNote": "Mutable scratch design reused; raw local downloads, not current cloud title, are evidence. session cstack includes multiple canvases and exploratory cases. Select recorded canvasId.",
+  "inputsNote": "Authored command inputs derived from prior vendor cstack. Imported cached outputs/code are stale; regenerate. Inputs are not vendor machine output. Reversible refusal input uses style0; actual UI change to style2 is retained in downloaded stack. inputs/reversible-increase-refusal.json is a later replay input with style 2 already selected; it restored the browser review state.",
+  "captures": [
+    {
+      "id": "right-phase0-control",
+      "file": "raw/right-phase0-control.kc",
+      "bytes": 28906,
+      "sha256": "58c584661e883065f8ee6a96431170a91fbe4d6414b26467ae2451ee443d1df1",
+      "sourceDownload": "command (16).kc",
+      "input": "inputs/right-phase0-control.json",
+      "sourceStack": "raw/right-phase0-control.cstack.json",
+      "canvasId": "imported-2",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "machinePasses": 24,
+      "exportedDesignRows": 24,
+      "yarnFedTransferModePasses": [],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/right-phase0-control.json"
+    },
+    {
+      "id": "reversible-rectangle-open",
+      "file": "raw/reversible-rectangle-open.kc",
+      "bytes": 121198,
+      "sha256": "a074bc689151d1f691de27457a557c974fb175807958ab38a228ac8f7b8e6962",
+      "sourceDownload": "command (18).kc",
+      "input": "inputs/reversible-rectangle-open.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-3",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        }
+      ],
+      "machinePasses": 100,
+      "exportedDesignRows": 72,
+      "yarnFedTransferModePasses": [],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/reversible-rectangle-open.json"
+    },
+    {
+      "id": "reversible-shaped-open-control",
+      "file": "raw/reversible-shaped-open-control.kc",
+      "bytes": 121203,
+      "sha256": "6b57983f03f00010c0f9b094aae8895839b4fbbdbd11cd8cc6fca59602a70224",
+      "sourceDownload": "command (19).kc",
+      "input": "inputs/reversible-shaped-open-control.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-4",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "machinePasses": 100,
+      "exportedDesignRows": 72,
+      "yarnFedTransferModePasses": [],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/reversible-shaped-open-control.json"
+    },
+    {
+      "id": "reversible-increase-refusal",
+      "file": "raw/reversible-increase-refusal.kc",
+      "bytes": 121200,
+      "sha256": "3a320697f6c9f227b3f8f6fc215a4aa44126aa26064afaa72a58bfce734a2215",
+      "sourceDownload": "command (20).kc",
+      "input": "inputs/reversible-shaped-increase-test.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-5",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "machinePasses": 100,
+      "exportedDesignRows": 72,
+      "yarnFedTransferModePasses": [],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "REVERSABLE style 2 refused; export succeeds with unchanged control instructions",
+      "decoded": "decoded/reversible-increase-refusal.json"
+    },
+    {
+      "id": "right-phase1-control",
+      "file": "raw/right-phase1-control.kc",
+      "bytes": 28931,
+      "sha256": "6543f55289649ee53367656e754ebac39ca7a8fb196ea391c9609a53980939a2",
+      "sourceDownload": "command (21).kc",
+      "input": "inputs/right-phase1-control.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-12",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "machinePasses": 24,
+      "exportedDesignRows": 24,
+      "yarnFedTransferModePasses": [],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/right-phase1-control.json"
+    },
+    {
+      "id": "right-phase1-fashioned",
+      "file": "raw/right-phase1-fashioned.kc",
+      "bytes": 43653,
+      "sha256": "c14185dbfc39e1fb2112ca84597a3b11b369ff664c902c23e8eb1f14dcce33d8",
+      "sourceDownload": "command (22).kc",
+      "input": "inputs/right-phase1-fashioned.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-14",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "machinePasses": 36,
+      "exportedDesignRows": 28,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 9,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 23,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/right-phase1-fashioned.json"
+    },
+    {
+      "id": "left-phase0-simple",
+      "file": "raw/left-phase0-simple.kc",
+      "bytes": 43675,
+      "sha256": "48b768b8082365f09c1ccb2306cfb641f80d9d0275a85fd046cd4e92d899a0d1",
+      "sourceDownload": "command (23).kc",
+      "input": "inputs/left-phase0-simple.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-20",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "machinePasses": 36,
+      "exportedDesignRows": 28,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 8,
+          "direction": "<<",
+          "mode": "Tr-Rl",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 22,
+          "direction": "<<",
+          "mode": "Tr-Rl",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/left-phase0-simple.json"
+    },
+    {
+      "id": "left-phase0-fashioned",
+      "file": "raw/left-phase0-fashioned.kc",
+      "bytes": 48562,
+      "sha256": "da54dc94dcd0fdf6dc817e9148f037fbc2c45854248e16b11c355dd69533ac67",
+      "sourceDownload": "command (24).kc",
+      "input": "inputs/left-phase0-fashioned.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-21",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "machinePasses": 40,
+      "exportedDesignRows": 28,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 8,
+          "direction": "<<",
+          "mode": "Tr-Rl",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 24,
+          "direction": "<<",
+          "mode": "Tr-Rl",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/left-phase0-fashioned.json"
+    },
+    {
+      "id": "left-phase0-control",
+      "file": "raw/left-phase0-control.kc",
+      "bytes": 28930,
+      "sha256": "f2a36b6a3fe037e62e26c008492c0e26d9f5d044f199a1161d67621b75468486",
+      "sourceDownload": "command (25).kc",
+      "input": "inputs/left-phase0-control.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-22",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "machinePasses": 24,
+      "exportedDesignRows": 24,
+      "yarnFedTransferModePasses": [],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/left-phase0-control.json"
+    },
+    {
+      "id": "right-phase0-simple",
+      "file": "raw/right-phase0-simple.kc",
+      "bytes": 38750,
+      "sha256": "4e712946b55089fc84debc3b667d76ae761b5e7fe8974d02b81c5aeb50aa0457",
+      "sourceDownload": "command (26).kc",
+      "input": "inputs/right-phase0-simple.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-23",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "machinePasses": 32,
+      "exportedDesignRows": 28,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 8,
+          "direction": "<<",
+          "mode": "Tr-Rl",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 20,
+          "direction": "<<",
+          "mode": "Tr-Rl",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/right-phase0-simple.json"
+    },
+    {
+      "id": "right-phase0-fashioned",
+      "file": "raw/right-phase0-fashioned.kc",
+      "bytes": 38728,
+      "sha256": "d57df61c9e8fca4cba7592250446b683ad2a4e24ab4a6e0537d5bed780074f13",
+      "sourceDownload": "command (27).kc",
+      "input": "inputs/right-phase0-fashioned.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-24",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "machinePasses": 32,
+      "exportedDesignRows": 28,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 8,
+          "direction": "<<",
+          "mode": "Tr-Rl",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 20,
+          "direction": "<<",
+          "mode": "Tr-Rl",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/right-phase0-fashioned.json"
+    },
+    {
+      "id": "right-phase1-simple",
+      "file": "raw/right-phase1-simple.kc",
+      "bytes": 43675,
+      "sha256": "e66a069390a741ba00fd6461ee5eb66228688dcbfd531806c810f0611903290d",
+      "sourceDownload": "command (28).kc",
+      "input": "inputs/right-phase1-simple.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-25",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "machinePasses": 36,
+      "exportedDesignRows": 28,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 9,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 23,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/right-phase1-simple.json"
+    },
+    {
+      "id": "left-phase1-control",
+      "file": "raw/left-phase1-control.kc",
+      "bytes": 28923,
+      "sha256": "c5da000ee497f593ce0d553898ac1a6b4103f4ca49e06f55b91fa92d9b65a61e",
+      "sourceDownload": "command (29).kc",
+      "input": "inputs/left-phase1-control.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-26",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "machinePasses": 24,
+      "exportedDesignRows": 24,
+      "yarnFedTransferModePasses": [],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/left-phase1-control.json"
+    },
+    {
+      "id": "left-phase1-simple",
+      "file": "raw/left-phase1-simple.kc",
+      "bytes": 38752,
+      "sha256": "54d5776e9be38dd6ff951feb60cc350b43261bb511ba4097c19f7b84252900f5",
+      "sourceDownload": "command (30).kc",
+      "input": "inputs/left-phase1-simple.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-27",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "machinePasses": 32,
+      "exportedDesignRows": 28,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 9,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 21,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/left-phase1-simple.json"
+    },
+    {
+      "id": "left-phase1-fashioned",
+      "file": "raw/left-phase1-fashioned.kc",
+      "bytes": 38730,
+      "sha256": "9984338066ab44db4e3e657443341d1ab79405687f6bc9d08792e002c314191d",
+      "sourceDownload": "command (31).kc",
+      "input": "inputs/left-phase1-fashioned.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-28",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "machinePasses": 32,
+      "exportedDesignRows": 28,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 9,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 21,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/left-phase1-fashioned.json"
+    },
+    {
+      "id": "reversible-rectangle-closed",
+      "file": "raw/reversible-rectangle-closed.kc",
+      "bytes": 121200,
+      "sha256": "c8a7bfc28d8156067f0554f4d86f2a0a2b71af6875a9369bf5d012af9613ba61",
+      "sourceDownload": "command (32).kc",
+      "input": "inputs/reversible-rectangle-closed.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-29",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        }
+      ],
+      "machinePasses": 100,
+      "exportedDesignRows": 72,
+      "yarnFedTransferModePasses": [],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "exported",
+      "decoded": "decoded/reversible-rectangle-closed.json"
+    },
+    {
+      "id": "reversible-shaped-closed-control",
+      "file": "raw/reversible-shaped-closed-control.kc",
+      "bytes": 121205,
+      "sha256": "c512a97fe30f7c457e9f6db083663380de97dde0736b55fc457e63611589509f",
+      "sourceDownload": "command (33).kc",
+      "input": "inputs/reversible-shaped-closed-control.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-30",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "machinePasses": 100,
+      "exportedDesignRows": 72,
+      "yarnFedTransferModePasses": [],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "border-before-shaping: raster trim removes moving right join at narrow width",
+      "decoded": "decoded/reversible-shaped-closed-control.json"
+    },
+    {
+      "id": "feeder-retract-off",
+      "file": "raw/feeder-retract-off.kc",
+      "bytes": 181227,
+      "sha256": "74c67e86b028abe61db57dac507f8298861ae1c9a1163602bed9912551495824",
+      "sourceDownload": "command (34).kc",
+      "input": "inputs/feeder-retract-off.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-31",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        },
+        {
+          "name": "caston",
+          "version": "2.1.0"
+        }
+      ],
+      "machinePasses": 150,
+      "exportedDesignRows": 128,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 115,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 129,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "start/body/tail only; no top waste; off/on instructions identical",
+      "decoded": "decoded/feeder-retract-off.json"
+    },
+    {
+      "id": "feeder-retract-on",
+      "file": "raw/feeder-retract-on.kc",
+      "bytes": 181226,
+      "sha256": "6007521263aae9a67a08fc4bad10f3233a5e40c2eafc2b1e238c5b003431fcb4",
+      "sourceDownload": "command (35).kc",
+      "input": "inputs/feeder-retract-on.json",
+      "sourceStack": "raw/session.cstack.json",
+      "canvasId": "imported-32",
+      "commandVersions": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        },
+        {
+          "name": "caston",
+          "version": "2.1.0"
+        }
+      ],
+      "machinePasses": 150,
+      "exportedDesignRows": 128,
+      "yarnFedTransferModePasses": [
+        {
+          "pass": 115,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        },
+        {
+          "pass": 129,
+          "direction": ">>",
+          "mode": "Tr-Rr",
+          "carrier": 3,
+          "speed": 300,
+          "roller": 450
+        }
+      ],
+      "status": {
+        "captured": true,
+        "decoded": "Studio passes CLI",
+        "controllerAccepted": false,
+        "physicallyKnitted": false,
+        "canonicalCorpus": false
+      },
+      "outcome": "start/body/tail only; no top waste; off/on instructions identical",
+      "decoded": "decoded/feeder-retract-on.json"
+    }
+  ],
+  "rejected": [
+    {
+      "file": "rejected/one-needle-birdseye-insertion.kc",
+      "reason": "Initial image insertion selected one needle; not a valid two-bed shaped comparison."
+    },
+    {
+      "file": "rejected/second-caston-repeats-body.kc",
+      "reason": "Second Waste+cast-on creates C6 return but repeats body after it. Not the intended simple start/body/top-waste control. Opposite setting was not exported."
+    }
+  ],
+  "remaining": [
+    "Clean start/body/top-waste C6-return off/on pair",
+    "Fashion-Mark Width 2 versus 4",
+    "Physical tests and topology qualification"
+  ],
+  "files": [
+    {
+      "file": "decoded/feeder-retract-off.json",
+      "bytes": 87405,
+      "sha256": "5815372ae5774b6597c1cd80cf27d9e920471afc13f4373bb0cfcfacfc6b76b6"
+    },
+    {
+      "file": "decoded/feeder-retract-on.json",
+      "bytes": 87404,
+      "sha256": "3c831cb002d5e3b8a34f3a92ba01e7f3a3c15b4524a6432fd083265ecead61c9"
+    },
+    {
+      "file": "decoded/left-phase0-control.json",
+      "bytes": 13115,
+      "sha256": "557e5eeff207ca672cbaed74c04807349c42cad090bf95ca4aa6a247837820c4"
+    },
+    {
+      "file": "decoded/left-phase0-fashioned.json",
+      "bytes": 20883,
+      "sha256": "caf3c54d3a575f8972098cc7cbad9fd538affef4ed3ce500297a87ca792cba47"
+    },
+    {
+      "file": "decoded/left-phase0-simple.json",
+      "bytes": 18880,
+      "sha256": "ad54b87250cfcf50de6a3444b41b0a87c4fafcc15b652abff6ac8d7a04406b03"
+    },
+    {
+      "file": "decoded/left-phase1-control.json",
+      "bytes": 13115,
+      "sha256": "2f86fe14e100002a874c2556878d5803c06299adcd1c1eb2e982a95e10c1201f"
+    },
+    {
+      "file": "decoded/left-phase1-fashioned.json",
+      "bytes": 17235,
+      "sha256": "79fea8ea7ac07c704da3946b1a8c675dc1bcf535d21ada99965546420b14cd17"
+    },
+    {
+      "file": "decoded/left-phase1-simple.json",
+      "bytes": 17116,
+      "sha256": "9ba1f5c2aa5b4c7082bb895be3a5bb9c787d0ea56a5d28045aca2c2b825f8aef"
+    },
+    {
+      "file": "decoded/reversible-increase-refusal.json",
+      "bytes": 56014,
+      "sha256": "17a1eb01c86272e504bf70c3005b13a2fe7aeafde1e4b3473d76fde62f9f6a0d"
+    },
+    {
+      "file": "decoded/reversible-rectangle-closed.json",
+      "bytes": 55918,
+      "sha256": "43c2d585284b6e408af62ce662515ed067863660f6a88535892db16d5a85b113"
+    },
+    {
+      "file": "decoded/reversible-rectangle-open.json",
+      "bytes": 56012,
+      "sha256": "2a2ad81c411193af50b0f8b8942c657dd647213819108bc8ff76f8909354f43a"
+    },
+    {
+      "file": "decoded/reversible-shaped-closed-control.json",
+      "bytes": 55923,
+      "sha256": "611660df3243faa887c76cbc9f97361c8885db1bbbaff9f89c22814204097b26"
+    },
+    {
+      "file": "decoded/reversible-shaped-open-control.json",
+      "bytes": 56017,
+      "sha256": "e7810023857ab5bf949ce21ec75b6f8b794671d8fce933051997ca20be1c2db3"
+    },
+    {
+      "file": "decoded/right-phase0-control.json",
+      "bytes": 13116,
+      "sha256": "f7eb5b8ec35481ca336835584afcb6c6b2c72ba8c6d776bcd2f22605ce80267e"
+    },
+    {
+      "file": "decoded/right-phase0-fashioned.json",
+      "bytes": 17260,
+      "sha256": "c770ff18b7f5658ef24ca9a28b84e6504fd84ae2393c663a0c1b63f929c441b0"
+    },
+    {
+      "file": "decoded/right-phase0-simple.json",
+      "bytes": 17133,
+      "sha256": "bfb2e181081a9d2e6f66cb6a436d350ec36158d9b4a31cd118eaadb620c103c2"
+    },
+    {
+      "file": "decoded/right-phase1-control.json",
+      "bytes": 13116,
+      "sha256": "194063214b0db374a9c0254da16f88c444046dd89e6f5caf3b1bb38b751ea553"
+    },
+    {
+      "file": "decoded/right-phase1-fashioned.json",
+      "bytes": 19016,
+      "sha256": "00632b7edd915f643710066ad7ac6d2b5eb641ccc6ce830a4c8c12f30ae5bc1e"
+    },
+    {
+      "file": "decoded/right-phase1-simple.json",
+      "bytes": 18889,
+      "sha256": "5399810cc899e2e3a7dacae1a14901d21d0c78110a77b3d5c58ebdce676f5ff5"
+    },
+    {
+      "file": "evidence/feeder-retract-on.jpg",
+      "bytes": 103603,
+      "sha256": "795ad983c6a0ba3508d2acbe14346b99a2a52daec28e513c893945c0621858f0"
+    },
+    {
+      "file": "evidence/reversible-refusal.jpg",
+      "bytes": 112473,
+      "sha256": "99e090696565a88e2a85a924de7163a11266e680b15b25104c066e5d33fe7171"
+    },
+    {
+      "file": "inputs/feeder-cycle-off.json",
+      "bytes": 10549,
+      "sha256": "549508af99ce6ddd62820a7a74ff9d2b00f81550bea24751056adc38b72e3c5d"
+    },
+    {
+      "file": "inputs/feeder-cycle-on.json",
+      "bytes": 10546,
+      "sha256": "0b4ce91b58062bb791ee252c2ff79b46beec1e8765de84a3df423690ed131253"
+    },
+    {
+      "file": "inputs/feeder-retract-off.json",
+      "bytes": 9946,
+      "sha256": "cf4c0d75149528227b44740eb0be0279b4d21495bfb1cf8c829cc38afa165b92"
+    },
+    {
+      "file": "inputs/feeder-retract-on.json",
+      "bytes": 9945,
+      "sha256": "e8bb92d49e148cd2d5a7e1a92252c87af8ff15886b1b52f9a624944020cb1da7"
+    },
+    {
+      "file": "inputs/left-phase0-control.json",
+      "bytes": 6371,
+      "sha256": "abf0c0a62472373764700b9694c713d34764506999fffa0cb0d06ffb0ba54698"
+    },
+    {
+      "file": "inputs/left-phase0-fashioned.json",
+      "bytes": 8047,
+      "sha256": "8a23b5c058c980572747d3d404c7e0fa48e604351be4bd39d1b32b4991b2aab3"
+    },
+    {
+      "file": "inputs/left-phase0-simple.json",
+      "bytes": 8047,
+      "sha256": "648fcb4fea2aaf11fbc88b4d1cc28e2cbfe0ea7966262ab5e0e8d459d0d54c4c"
+    },
+    {
+      "file": "inputs/left-phase1-control.json",
+      "bytes": 6403,
+      "sha256": "36791328809260752ce23eddb7de057161d25acbfee2413c84aff8583430bafc"
+    },
+    {
+      "file": "inputs/left-phase1-fashioned.json",
+      "bytes": 8079,
+      "sha256": "794b6c637ed6832674e3b6f481fb604a34591ab9291d197aec84a7a6443a8cc3"
+    },
+    {
+      "file": "inputs/left-phase1-simple.json",
+      "bytes": 8079,
+      "sha256": "b480dbf32575eb21e3d6179f01e66a163cbd9d44473e8979e8a2a14cb5d466c1"
+    },
+    {
+      "file": "inputs/reversible-rectangle-closed.json",
+      "bytes": 7031,
+      "sha256": "86309900b041603c4fbd573d9ad6c2ec1e3681e25975fcc6db4e84fe16e0885a"
+    },
+    {
+      "file": "inputs/reversible-rectangle-open.json",
+      "bytes": 6158,
+      "sha256": "10f38200f378bc01ed6f824dcb9c5a8938290dc9d9c864619e59f9fb1eff647c"
+    },
+    {
+      "file": "inputs/reversible-shaped-closed-control.json",
+      "bytes": 9838,
+      "sha256": "41691ba10dd37e26cf1eeb8b9d69777e37dca62d0fd8ce06a0ba85f857fd6066"
+    },
+    {
+      "file": "inputs/reversible-shaped-increase-test.json",
+      "bytes": 10117,
+      "sha256": "b243538095fdeba9caac3d4a8b9f9f761a37ed1d237262d98f4798595eb77631"
+    },
+    {
+      "file": "inputs/reversible-shaped-open-control.json",
+      "bytes": 8441,
+      "sha256": "f490135fe1d485fdbfdfe3eab07486f43aead436bfaec56a5383cf060790d376"
+    },
+    {
+      "file": "inputs/right-phase0-control.json",
+      "bytes": 6371,
+      "sha256": "a9e8fd8f6632d0f258983a5e1c5f3586d2bdf6c11acc07c5e9469fbd4f9131d7"
+    },
+    {
+      "file": "inputs/right-phase0-fashioned.json",
+      "bytes": 8047,
+      "sha256": "aa6148fef8de901a5e9a465d3b798b29270d687fbd3c3b83491ae38b7027fdd2"
+    },
+    {
+      "file": "inputs/right-phase0-simple.json",
+      "bytes": 8047,
+      "sha256": "389ea0b39664af11d3d19cbc48c6998b830fc258affb54375cde9f4c81dc65f3"
+    },
+    {
+      "file": "inputs/right-phase1-control.json",
+      "bytes": 6403,
+      "sha256": "4bdc62ff39807b16134f7ff79148fa777a592acdb61457573916b9b842244737"
+    },
+    {
+      "file": "inputs/right-phase1-fashioned.json",
+      "bytes": 8079,
+      "sha256": "5960340bdcebed41d0a89425ab65f9a806942df616375802b905a7c7a2b130f0"
+    },
+    {
+      "file": "inputs/right-phase1-simple.json",
+      "bytes": 8079,
+      "sha256": "5c2bfef2b2ce87db25a9304cafdb1c9a02c1fbdb352af96f7d73c4b115966939"
+    },
+    {
+      "file": "inputs/two-colour-stepped.png",
+      "bytes": 115,
+      "sha256": "cd1cb6555ce0b696b0eab49f12e6497b331e7dbef744ef22829c8fd46ee7bdc2"
+    },
+    {
+      "file": "raw/feeder-retract-off.kc",
+      "bytes": 181227,
+      "sha256": "74c67e86b028abe61db57dac507f8298861ae1c9a1163602bed9912551495824"
+    },
+    {
+      "file": "raw/feeder-retract-on.kc",
+      "bytes": 181226,
+      "sha256": "6007521263aae9a67a08fc4bad10f3233a5e40c2eafc2b1e238c5b003431fcb4"
+    },
+    {
+      "file": "raw/left-phase0-control.kc",
+      "bytes": 28930,
+      "sha256": "f2a36b6a3fe037e62e26c008492c0e26d9f5d044f199a1161d67621b75468486"
+    },
+    {
+      "file": "raw/left-phase0-fashioned.kc",
+      "bytes": 48562,
+      "sha256": "da54dc94dcd0fdf6dc817e9148f037fbc2c45854248e16b11c355dd69533ac67"
+    },
+    {
+      "file": "raw/left-phase0-simple.kc",
+      "bytes": 43675,
+      "sha256": "48b768b8082365f09c1ccb2306cfb641f80d9d0275a85fd046cd4e92d899a0d1"
+    },
+    {
+      "file": "raw/left-phase1-control.kc",
+      "bytes": 28923,
+      "sha256": "c5da000ee497f593ce0d553898ac1a6b4103f4ca49e06f55b91fa92d9b65a61e"
+    },
+    {
+      "file": "raw/left-phase1-fashioned.kc",
+      "bytes": 38730,
+      "sha256": "9984338066ab44db4e3e657443341d1ab79405687f6bc9d08792e002c314191d"
+    },
+    {
+      "file": "raw/left-phase1-simple.kc",
+      "bytes": 38752,
+      "sha256": "54d5776e9be38dd6ff951feb60cc350b43261bb511ba4097c19f7b84252900f5"
+    },
+    {
+      "file": "raw/reversible-increase-refusal.kc",
+      "bytes": 121200,
+      "sha256": "3a320697f6c9f227b3f8f6fc215a4aa44126aa26064afaa72a58bfce734a2215"
+    },
+    {
+      "file": "raw/reversible-rectangle-closed.kc",
+      "bytes": 121200,
+      "sha256": "c8a7bfc28d8156067f0554f4d86f2a0a2b71af6875a9369bf5d012af9613ba61"
+    },
+    {
+      "file": "raw/reversible-rectangle-open.kc",
+      "bytes": 121198,
+      "sha256": "a074bc689151d1f691de27457a557c974fb175807958ab38a228ac8f7b8e6962"
+    },
+    {
+      "file": "raw/reversible-refusal.cstack.json",
+      "bytes": 15665,
+      "sha256": "9d691366701a2b1d53adfe05ee67d23eff1033d4418efa21c0877aed53f762cb"
+    },
+    {
+      "file": "raw/reversible-shaped-closed-control.kc",
+      "bytes": 121205,
+      "sha256": "c512a97fe30f7c457e9f6db083663380de97dde0736b55fc457e63611589509f"
+    },
+    {
+      "file": "raw/reversible-shaped-open-control.kc",
+      "bytes": 121203,
+      "sha256": "6b57983f03f00010c0f9b094aae8895839b4fbbdbd11cd8cc6fca59602a70224"
+    },
+    {
+      "file": "raw/right-phase0-control.cstack.json",
+      "bytes": 9743,
+      "sha256": "cab9a54fd29dca460f2717d815a52b05c1ac8ab4b9ad6e70451c8acd73199bf3"
+    },
+    {
+      "file": "raw/right-phase0-control.kc",
+      "bytes": 28906,
+      "sha256": "58c584661e883065f8ee6a96431170a91fbe4d6414b26467ae2451ee443d1df1"
+    },
+    {
+      "file": "raw/right-phase0-fashioned.kc",
+      "bytes": 38728,
+      "sha256": "d57df61c9e8fca4cba7592250446b683ad2a4e24ab4a6e0537d5bed780074f13"
+    },
+    {
+      "file": "raw/right-phase0-simple.kc",
+      "bytes": 38750,
+      "sha256": "4e712946b55089fc84debc3b667d76ae761b5e7fe8974d02b81c5aeb50aa0457"
+    },
+    {
+      "file": "raw/right-phase1-control.kc",
+      "bytes": 28931,
+      "sha256": "6543f55289649ee53367656e754ebac39ca7a8fb196ea391c9609a53980939a2"
+    },
+    {
+      "file": "raw/right-phase1-fashioned.kc",
+      "bytes": 43653,
+      "sha256": "c14185dbfc39e1fb2112ca84597a3b11b369ff664c902c23e8eb1f14dcce33d8"
+    },
+    {
+      "file": "raw/right-phase1-simple.kc",
+      "bytes": 43675,
+      "sha256": "e66a069390a741ba00fd6461ee5eb66228688dcbfd531806c810f0611903290d"
+    },
+    {
+      "file": "raw/session.cstack.json",
+      "bytes": 56503,
+      "sha256": "4dc610dd6d9e35be10100e431aad9ba7dcb7e9e24cfa86bda048772814048261"
+    },
+    {
+      "file": "rejected/one-needle-birdseye-insertion.cstack.json",
+      "bytes": 10259,
+      "sha256": "fd8d549ef262097a8a771225fafe5bccdd383200626d46c101796202fa239c47"
+    },
+    {
+      "file": "rejected/one-needle-birdseye-insertion.kc",
+      "bytes": 121195,
+      "sha256": "d7877b06d9d1d7b821b4a2e7dffc9a6edeccdc6f23b7eaa9e5bb9559a184f567"
+    },
+    {
+      "file": "rejected/second-caston-repeats-body.cstack.json",
+      "bytes": 58826,
+      "sha256": "cf42e3f17d1f452c6d55f4e6c07b7300fad53c0baf3752b9408d8d93c7081732"
+    },
+    {
+      "file": "rejected/second-caston-repeats-body.kc",
+      "bytes": 347695,
+      "sha256": "bc9fea1e6a35d496b57b05c11a597b80a09dc172d50899a8261061401368289c"
+    },
+    {
+      "file": "inputs/reversible-increase-refusal.json",
+      "bytes": 11759,
+      "sha256": "620f49b4974a60e653fd059849dd199a039de4949d5fb116449825e8c8d5be57"
+    }
+  ]
+}

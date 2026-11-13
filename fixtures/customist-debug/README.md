@@ -19,15 +19,14 @@ semantic or topology audit. There is no cast-on or bind-off. In particular,
 do not run these body-only files from an empty machine bed.
 
 The original buck and cstack downloads are now preserved beside each `.kc`,
-with hashes in the manifest. Re-import is not verified: Chrome's file upload
-stalled, then its native connection closed. The browser troubleshooting guide
-requires enabling **Allow access to file URLs** for the ChatGPT extension.
-The subsequent scratch reversible setup has not produced a valid test export;
-no reversible result should be inferred from the available menu option.
+with hashes in the manifest. Uploads resumed on November 13 after the user
+enabled file URL access for the Chrome extension. The full-selection controls
+below reproduce both original machine instruction streams exactly (excluding
+the filename comment).
 
 The selection was columns 2–24, rows 1–24; column 1 was excluded by the UI
-selection. The moving right boundary is included. A future full-selection
-control should check whether this matters. `command (14).kc` was byte-identical
+selection. The moving right boundary is included. The November 13 comparison
+found no instruction difference from full selection. `command (14).kc` was byte-identical
 to the Simple capture and is intentionally not duplicated here.
 
 ## Why these cases come next
@@ -48,9 +47,66 @@ Read the latest issue comments as well as the original brief:
   start/left-edge observations; do not schedule another bind-off-only physical
   trial by default.
 
-## Prioritized capture queue — not yet exported
+## Captured on 2026-11-13
 
-Use paired files changing one factor. Keep each base and command stack.
+`2026-11-13/manifest.json` pins **19 additional exports**, authored inputs,
+downloaded source stacks, screenshots and full pass reports from Studio's
+existing `passes --detail` decoder. Run `python fixtures/customist-debug/verify.py`
+to check artifact hashes and the controlled comparisons. This is capture and
+decoder evidence, not topology qualification, controller acceptance or knitting.
+
+| Family | Captures | Observed result |
+| --- | --- | --- |
+| Single bed | Left/right × phase 0/1 × untreated/Simple/Fashioned: 12 | Phase 0 uses yarn-fed `<< Tr-Rl`; shifting both events one row uses `>> Tr-Rr`. Extra passes depend on side and style; see manifest. |
+| Reversible baseline/borders | Rectangular/shaped × Close off/on: 4 | Genuine C3/C4 inverse colour assignments on both beds. Close changes edge bed ownership. |
+| Reversible increase | 1 refusal/fallback | Increase transfers v1.3.0, style `REVERSABLE` (2): **“Jacquard increase transfers not yet implemented.”** Export still reports success; every instruction equals the shaped untreated control. |
+| Feeder start/body | Retract Feeders off/on: 2 | Waste + cast on v2.1.0; C6 waste, C1 draw, C3 widening body. Checkbox state verified. Files differ only in filename comment. No top-waste section. |
+
+![Reversible command refusal alongside export-success toast](2026-11-13/evidence/reversible-refusal.jpg)
+
+The single-bed input is 24 rows wide at most 24 needles. Phase 0 has widths
+22/23/24 for 8/8/8 rows; phase 1 for 9/8/7 rows. Left cases mirror the cleared
+columns. Increase selection covers the full canvas; Fashioned uses default
+width 4. Front C3 defaults are speed 300, roller 450, stitch 6. The decoder uses
+zero-based needle coordinates; machine pass numbers are one-based.
+
+Reversible fixtures include a 24-row plain C3 prelude, then a 24-design-row
+inverse two-colour block (48 yarn rows, plus carrierless movement passes).
+The four central columns use C4 on front/C3 on rear; the background is inverse.
+The block uses speed 400, roller 450, stitch 7. Shaping clears needles after
+the birdseye command to make 22/23/24-needle bands. **Close runs before this
+trim**, so these captures do not establish a join following a moving edge:
+the trim removes the right join in the narrow band. The importer discarded
+PNG alpha; the PNG alone does not reproduce shaping.
+
+The downloaded `raw/session.cstack.json` contains multiple canvases, including
+exploratory ones. The manifest identifies the exact canvas for each capture;
+the earlier right-control snapshot is separate because that canvas was later
+edited. Import appends canvases. The scratch cloud design was repeatedly
+renamed and is mutable; local hashed files are the durable evidence.
+`inputs/` are authored variations of vendor commands, **not vendor exports**.
+Their cached `outputs`/`code` came from the original envelope and are stale:
+Customist reports a code mismatch during import, then regenerates the commands.
+Use the downloaded output files for analysis. The refusal input initially uses
+Simple; the UI selection of REVERSABLE is recorded in the downloaded stack.
+
+Two experiments remain under `rejected/`: a one-needle birdseye insertion,
+and a second Waste + cast on intended to add top waste. The latter returns C6
+but repeats body afterward, so it is not the intended clean lifecycle pair.
+Its off version was exported; its on input was only prepared. Neither belongs
+in the controlled set. No machine file here has a qualified finish or has
+been knitted; body-only files have no cast-on.
+
+Still open: clean start/body/top-waste C6-return off/on, Fashioned width 2
+versus 4, rear split primitives, and physical/both-face evidence. The refusal
+does not erase Kniterate's older reversible sleeve construction; it establishes
+that this current app command does not implement a reversible increase.
+
+## Capture queue and coverage
+
+Use paired files changing one factor. Keep each base and command stack. The
+November 13 section above records completed coverage and the remaining gaps;
+this table retains the rationale for the broader queue.
 
 | Priority | Case family | Controlled comparison and question |
 | --- | --- | --- |
