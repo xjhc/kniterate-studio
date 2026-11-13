@@ -734,6 +734,11 @@ export class CarriageSimulator {
    */
   split(c: CarrierId, dir: Direction, from: BedNeedle, to: BedNeedle): void {
     const state = this.requireActive(c);
+    // Vendor splits use zero base roller, not the ordinary knit setting.
+    // Consume the one-shot on this operation before inserting clearance
+    // passes: vendor self/other-carrier kicks always retain roller zero.
+    const splitRoller = this.pendingRollerAdd ?? 0;
+    this.pendingRollerAdd = undefined;
     const kicks = predictKickOthers(
       from,
       [c],
@@ -769,7 +774,7 @@ export class CarriageSimulator {
       isPark: false,
       gripper: state.pendingIn ? 'in' : undefined,
       speed: this.speed ?? 100,
-      roller: this.roller ?? 100,
+      roller: splitRoller,
       racking: this.racking,
       minSlot: slot,
       maxSlot: slot,
