@@ -5,18 +5,24 @@ was changed or generated for this design.** The loop states below were worked
 through by hand against the existing files and split semantics; they are not
 a new automated replay or a physical result.
 
-Recommend taking the reviewer's **two splits and one transfer, over two yarn
-cycles** to the next engineering gate, with an explicit alternating edge join.
+Keep the reviewer's **two splits and one transfer, over two yarn cycles** as
+the candidate for review, with an explicit alternating edge join.
 It replaces the baseline's two empty rear starts with supported loops. It
 does not promise an invisible increase: the rear receives a front-colour
 parent, and the edge keeps its alternating-colour border.
 
-**Revision 2:** the full-row schedules below replace the original eight local
-pass slots. They specify the baseline edge too, both first-split directions,
+**Revision 3 review:** the inward-first selections still give four supported
+loops without double knitting; their order is retained. This revision
+distinguishes a transferred old loop from the working yarn's running end,
+and traces the outer-edge join separately from the inboard split. The 450/0 commands
+remain a trial proposal: inward-first holds the first split's rear loop
+through substantially more work before B knits it, and split-first roller
+encoding still needs simulator/converter parity. Neither direction is
+physically qualified or approved for implementation by this note.
+
+The full-row schedules cover the control edge, both first-split directions,
 both old edge colours, carrier preparation and per-pass take-down. The paper
-trial is now 20 → 36 columns over 43 body cycles, with eight distinct cases.
-The inward-first schedule is a new extension for review, not an approved
-equivalent of the earlier outward-first sketch.
+comparison remains 20 → 36 columns over 43 body cycles, with eight cases.
 
 Review the [full-row tables](#full-row-schedules),
 [phase and lead-in ledger](#both-old-edge-colours-and-the-entry-ledger),
@@ -72,7 +78,12 @@ border can reverse a/b's colours. The loop moves remain the same; the emitter
 must inspect that phase, not assume every old front edge loop is A.
 
 A *cycle* means one planned knitting visit by each yarn. It is not necessarily
-two machine passes. A split pass can also knit selected front needles, but
+two machine passes. A *yarn anchor* below means the last formed stitch from
+which the running yarn leads to its feeder; it is not the feeder's stop or
+merely any loop of that colour. Empty moves do not form a new anchor. The
+backend's `carrier.last` is a scheduling field also updated by `miss`; it
+must not stand in for this physical yarn ledger after an empty return.
+A split pass can also knit selected front needles, but
 cannot include ordinary rear knitting in the current command contract/backend.
 
 For the right-edge candidate, outward-first means A starts on the left and
@@ -120,12 +131,14 @@ The same symbol in two rows is the same loop being held or transferred.
 | Cycle 1, B | a1 | — | c1 | d1 = B(b) | 3 |
 | Cycle 2, A rear visit, outward-first | a1 | — | c1 | d2 = A(d1) | 3 |
 | Cycle 2, A split, outward-first | a2 = A(a1) | a1 | c1 | d2 | 4 |
+| Cycle 2, A split, inward-first (from cycle 1 end) | a2 = A(a1) | a1 | c1 | d1 | 4 |
+| Cycle 2, A rear visit, inward-first | a2 | a1 | c1 | d2 = A(d1) | 4 |
 | Cycle 2, B, either direction | a2 | b2 = B(a1) | c2 = B(c1) | d2 | 4 |
 
-Inward-first reverses the two candidate operations in A's second cycle:
-after the split the state is `a2 / a1 / c1 / d1`, then the rear visit changes
-d1 to d2. The final state is identical. The different yarn route and pass
-fragmentation are explicitly included in schedule I below.
+The O and I rows are alternative routes from the cycle-1 end state, not
+successive operations. Inward-first splits F0 before visiting R1. Its final
+occupancy and parentage match outward-first; the order, yarn route and time
+under take-down do not. Schedule I below accounts for those differences.
 
 Every knit/split has an existing parent, every transfer/split destination
 is empty, and no needle holds a stack. The two splits add exactly two live
@@ -153,18 +166,23 @@ previous last stitch at F1; A returns rightward to F1. After inward-first,
 A's next visit starts leftward at F1 after its last stitch at R1. Both are
 cross-bed returns. The full-row section specifies the other edge as well.
 
-At the growth itself, c1 and d1 share b as a parent on the new column. At
-closure, a2 and b2 share a1. These are the proposed structural connections
-between the faces. At the growth itself a yarn's geometric turnaround can
-remain on the same bed, depending on the initial phase: the split's shared
-parent provides the proposed connection instead. This is an explicit
-exception to the ordinary cross-bed-turnaround description, not a reason
-to delete the existing join checks. The completion and normal-return paths
-below must be reviewed together with that split connection.
-This establishes a paper connection, not the size or appearance of an edge
-opening. In the illustrated initial colour phase, a grey parent may show on
-the orange rear face at R0; the new front edge can show its orange parent b.
-The alternating edge loops are intentional.
+At growth, the split connects new front c1 to rear b; B then makes d1 through
+that same b. **This is the proposed outer-edge connection.** At closure,
+a2 and b2 share a1 **one column inboard**. That second fork supports R0; it
+cannot substitute for joining the outer edge at e+1. The outer return is
+explicit: O6 takes A from c1 on F1 to d2 on R1; I11 takes B from its d1
+attachment at R1 to c2 on F1. Knitting through d1 in I10 does not move B's
+attachment to the front. The following normal cycle retains the cross-bed
+return described above.
+
+These are yarn/parent connections on paper, not proof of loop orientation,
+a closed-looking edge or freedom from holes. In particular, O4 and I4 carry
+B between R(e−1) and R(e+1), spanning two column intervals over the skipped
+R0. Filling R0 in cycle 2 does not retroactively knit that B course. Both
+faces and this rear yarn span need inspection even if every loop has a
+parent. In phase P a grey parent may show on the orange rear face at R0;
+the new front edge can show its orange parent b. The border alternation is
+intentional.
 
 The operation is **pending after cycle 1**. Current completed-row assertions
 expect both beds occupied, so an implementation must represent and test this
@@ -220,9 +238,11 @@ rightward fetch first. Its roller is 0 and neither yarn moves.
 
 Reset rack to 0 after Q8 in both schedules. All preparation rollers are 0.
 Q2/Q3 and Q5/Q6 are local re-parking pairs, not empty yarn trips across the
-piece. The last-stitch anchors do not change during those moves. Q7/Q8
-move whichever yarn's old rear loop is actually present; update that
-anchor's bed and column before checking clearance for the next operation.
+piece. The physical yarn anchors do not change during those moves. Q7/Q8
+move the old rear loops. Update a feeder's anchor only if that particular
+moved loop is its current attachment; owning the loop's colour is not enough.
+The other feeder can be attached at the far edge. Check the resulting bed
+and column before the next operation.
 Both carriers must clear the enlarged outline before Q7. C1/C6 remain idle.
 
 ### O: first A visit goes outward to the candidate
@@ -276,6 +296,14 @@ starting there first knits its new **rear** edge; its previous attachment
 was either an old front stitch or a rear stitch moved to the new front.
 That makes the control's growth return cross beds in either initial phase.
 
+In I1 the local order is **c1 at F1, then a1 at F0**. In I8–I10 it is
+**a2 at F0, then d2 at R1**, with the empty I9 return between them. I9
+does not knit F0 a second time or replace a split by a miss. I10 holds c1
+on F1; I11 then makes c2 at F1 before b2 at R0. This is the actual inward
+route, not a reversal of the O row labels. The I2/I7/I9 stops must later
+provide a feasible pickup and clearance for the next fragment without
+catching the held stitches or adding a new yarn anchor.
+
 ### Stitch counts, normal rows and left mirror
 
 For old width W, each cycle has W+2 active columns. In cycle 1, A forms W+2
@@ -322,15 +350,45 @@ actual loops before Q7/Q8, not to row-number parity or a palette label.
 | Parent moved into old rear in cycle 2 | a1 of A | a1 of A |
 | Final F0 / R0 / F1 / R1 colours | A / B / B / A | A / B / B / A |
 
-The same occupancy ledger works for both, but the visible parent colours
-and initial yarn turnarounds differ. In schedule O the yarn initially on
-the candidate side is B; in schedule I it is A. If its last loop was the
-old rear loop, Q8 moves that attachment to the front and the first split
-moves it back to the rear. If it was the old front loop, it stays at e
-until that loop is knitted through. Trace the attachment through these
-operations; do not infer it from the carrier's side alone. At growth, use
-the shared split parent to assess the connection; at completion and on
-normal rows, require the explicit cross-bed returns described above.
+### Attachment and join audit for both phases
+
+The same occupancy ledger works for both phases; their running-yarn paths
+differ. Follow the feeder already on the candidate/right side at entry:
+
+| Schedule / phase | Entry attachment | After Q8 | First candidate-side return |
+| --- | --- | --- | --- |
+| O / P | B at b, R0 | b at F1 | O3 moves b to R1 while B is idle. O4 knits d1 at R1: B's return stays rear-to-rear after the split. The shared parent b supplies the proposed join. |
+| O / Q | B at a, F0 | Unchanged | O3 knits a1 through a, leaving B's attachment in that front-column fabric. O4 makes d1 at R1: a front-to-rear diagonal. |
+| I / P | A at a, F0 | Unchanged | I1 makes c1 at F1, then a1 at F0: A's local path is a(F0) → c1(F1) → a1(F0). This front-only outward-and-back yarn path relies on the b split for the proposed join. |
+| I / Q | A at b, R0 | b at F1 | I1 moves b to R1 **and makes A's new running anchor c1 at F1**, then knits a1 at F0. The old parent ends at the rear; A's running end does not stay there. |
+
+For a split, a non-working yarn attached to the old loop follows that loop;
+the working yarn's new anchor is the newly formed **source/front** loop.
+The converter's split handler distinguishes these by moving matching old
+`last` locations, then setting the active yarn to the source. This does not
+make its `last` field a physical-yarn proof across subsequent misses.
+
+At the control/left edge the starting yarn is A in O and B in I. An old
+front attachment at l connects diagonally to its new rear stitch at l−1.
+An old rear attachment moves with Q7 to front l−1 and then connects to
+rear l−1. The other yarn may already have knitted through that parent;
+that does not move the attachment to the rear. Thus the control's growth
+return crosses beds in either phase, despite its unsupported rear starts.
+Its next returns are also explicit:
+
+| Schedule | Control return in cycle 2 | Control return on the next normal cycle |
+| --- | --- | --- |
+| O | B: O4 F(l−1) → O9 R(l−1) | A: O8 F(l−1) → R(l−1) |
+| I | A: I3 F(l−1) → I6 R(l−1) | B: I11 F(l−1) → R(l−1) |
+
+Keep ordinary cross-bed-turn checks. The current diamond test compares
+successive knitted endpoints without tracing a transferred attachment or
+split parent; that predicate alone cannot certify this growth event.
+Any later event-specific check must account for the b connection at the
+outer edge, these phase-specific yarn routes, the completion return and
+normal resumption at **both** edges. An occupied pair or the inboard a1
+fork alone is insufficient. The paper does not prove loop orientation or
+whether the front-only I/P route leaves a visible bar.
 
 ### Lead-in from the common cast-on
 
@@ -377,29 +435,80 @@ and finish settings, and record its transition into the settled lead-in.
 | Carrierless shaping transfers Q7/Q8 | 0 | 100 / transfer stitch 5, as the baseline | Move existing loops; keep the pinned converter's transfer policy |
 | Carrierless fetches, including inserted fetches | 0 | 600 / no stitch selection | Do not add pull while only the carriage moves |
 | Empty carrier returns/re-parking | 0 | 200 / no stitch selection | Keep returns from adding another pull |
-| Main A front/split fragment: O3, O8, I1, I8 | 450 | 200 / stitch 7 | One main front-working pull per cycle |
-| Additional A edge fragments: O1, O6, I3, I6, I10 | 0 | 200 / stitch 7 | Work the missing edge selections without another full body pull |
-| Full B visit: O4, O9, I4, I11 | 450 | 200 / stitch 7 | One second main pull per cycle |
+| Main A front/split fragment: O3, O8, I1, I8 | 450 | 200 / stitch 7 | One main A roller command per cycle |
+| Additional A edge fragments: O1, O6, I3, I6, I10 | 0 | 200 / stitch 7 | Work the missing edge selections without another positive roller command |
+| Full B visit: O4, O9, I4, I11 | 450 | 200 / stitch 7 | One second positive roller command per cycle |
 | First lead-in body cycle | 100 on each yarn's full pass | 100 / stitch 7 | Retain the historical first-body ramp |
 | Other normal body cycles | 450 on each yarn's full pass | 200 / stitch 7 | Same two positive-roller commands per cycle as the baseline |
 
 Thus every candidate cycle retains two commands at 450; fragmentation adds
-only zero-roller passes. This matches a **command pattern**, not a measured
+only zero-roller passes. The normal cycle before Q7/Q8 also stays at 450
+on each yarn pass: no unlisted pre-transfer adjustment or post-transfer tug
+is assumed. A zero roller command does not establish zero existing fabric
+or yarn tension. This matches a **command pattern**, not a measured
 force, distance or total take-down. Pass duration, knit coverage, yarn
 friction and held stitches can change the physical result even with the
 same numbers. In these tables at most one zero-roller loop-forming fragment
 occurs between positive-roller passes; the current safety envelope allows
-at most four. Extra compiler fragments must be counted from the final file.
+at most four. That coarse count does not measure the load on any held loop.
+Extra compiler fragments must be counted from the final file.
 
-**A backend detail must be pinned in the later implementation:** a split
-operation defaults to roller 0, and merged passes retain their first
-operation's roller. Merely setting the ordinary body roller to 450 is not
-enough for O8 or I1, which start with a split. The final serialized passes
-must have the table's values. Existing one-shot roller support can express
-this without changing the pinned converter; it has not been exercised on
-this proposed schedule. Mixed front-knit/split passes at roller 450 already
-appear in the unchanged Gate 2 file, for example pass 128. Do not confuse
-this yarn-working split setting with the carrierless transfer setting.
+### Held loops and timing
+
+The following are paper order comparisons, not measured take-down doses.
+An operation near a pass's start and one near its end do not have the same
+remaining work around them. Empty moves and stop extensions add time too.
+
+| Held loop / interval | Outward-first | Inward-first |
+| --- | --- | --- |
+| b on R1, from first split to B knitting d1 | Split at the end of O3; B reaches it first in O4 | Split at the start of I1; the remaining I1 front work (450), I3 (0), and nearly all I4 (450) precede its knit |
+| a1 on R0, from second split to B knitting b2 | Split at the start of O8; the remaining O8 front work (450) and most of O9 (450) precede its knit | Split at the end of I8; I10 (0) intervenes, then I11 reaches it just after F1 |
+| c1 on F1, until B knits c2 | O3 end → O9 end, including O4 and O8 at 450 | I1 start → I11 start, including the remaining I1 work, I4 and I8 at 450 |
+
+Inward-first is therefore not mechanically equivalent to outward-first,
+and it is not uniformly worse: the long receiving-loop wait moves from
+the second split to the first. Record the four candidate needles through
+both cycles, including a1's front hold before the second split. A passing
+zero-roller-run counter cannot settle any of these holds or whether the
+sparse I3/I6/I10 stitches clear correctly.
+
+For later physical evaluation, keep the proposed numbers identified as one
+recipe. Record the exact pass/needle of a drop, break, slack bar or failed
+clearance, distinguishing transfer, split, hold and next knit. A tuning
+revision should change one named pass role/setting and repeat the same
+side/phase/direction at the same width, with its control; comparing E1 to
+E8 would change several factors. The current paper supplies no measured
+basis for choosing a different numeric value.
+
+### Encoding checks still required after design approval
+
+O8 and I1 start with a split. The vendor split operation defaults to roller
+0, while merged passes retain their first operation's roller. Merely setting
+the ordinary body roller to 450 does not set these merged passes to 450.
+Moreover, `CarriageSimulator.split` starts from its ordinary roller setting;
+`pushLogical` adds a pending one-shot increment to the next logical pass.
+The vendor instead uses only the increment on the split. A static reading,
+assuming no preceding kick consumes the increment, gives:
+
+| Split-first input settings | Vendor split roller | Simulator split roller |
+| --- | ---: | ---: |
+| Ordinary roller 450, no increment | 0 | 450 |
+| Ordinary roller 450, one-shot increment 450 | 450 | 900 |
+
+This is a source-level warning, **not a newly executed parity test**. The
+mere existence of one-shot support does not establish an implementation of
+the table. A later implementation must demonstrate 450 in both paths,
+including merging and any self/other-feeder clearance moves, while those
+empty moves retain 0. Do not mask a mismatch or change the pinned converter
+as an incidental fix. Explicit carrierless parks and automatic fetches also
+need their own verified 600/0 settings; ordinary body settings are not proof
+of movement settings.
+
+Mixed front-knit/split passes at roller 450 already appear in unchanged
+Gate 2, for example pass 128. That knit-first pass does not exercise these
+split-first cases. Do not confuse a yarn-working split setting with the
+carrierless transfer setting. Numeric stops and roller parity remain
+implementation gates after paper approval, not results supplied here.
 
 Kniterate's roller guidance describes yarn/technique-dependent take-down
 and distinguishes dropping during transfers from breaking during transfers;
@@ -496,8 +605,10 @@ itself goes front-to-front. It does not satisfy the normal full-row
 cross-bed-turnaround description. Loop orientation, the backtracking yarn
 bar, local stop clearance and how to verify that join need separate review.
 **Do not substitute it for the preferred candidate without that review.**
-The two-cycle candidate avoids this extra yarn-path experiment while making
-the missing B knit and substituted A parent explicit.
+The two-cycle candidate avoids that extra working short return, but its
+I/P growth path also goes from the old front anchor to the new front column
+and back inward. Neither schedule earns a yarn-path or quality guarantee
+from the loop counts alone.
 
 ### Other starting points
 
@@ -534,6 +645,12 @@ ordinary cycles are **11–12, 15–17, 20–21, 24–25, 28–29, 32–34, 37�
 41–43**. Cycles 24–25 separate the bands; the three final cycles observe
 normal resumption before top waste. Every cycle is accounted for. No event starts
 with a pending increase.
+
+After cycle 43, width is 36 with 72 live loops, no pending split, front
+left edge A/right edge B, and inverse rear edge colours. A is left, B right,
+and the carriage is left. Check the eventual common finish against that
+exit state, including its first waste pickup and support for both layers;
+"same finish" does not excuse an incompatible entry state.
 
 For a manual cross-check of phase, after a right O event the front edge
 colours are left A/right B and A is on the left. After a right I event both
@@ -575,6 +692,15 @@ Both edges share the extra passes and global pull: this tests their loop
 constructions under a common schedule, not the old file's original feeding
 conditions. The preserved historical file remains a separate reference.
 
+The candidate and control also start with different colour phases in E4,
+E5 and E8. Treat colour-speck comparisons there as descriptive, not a
+matched colour test. The swapped bands occur at different widths and later
+in the same fabric; they help expose a side effect but are not independent
+repeats. A claimed improvement should name side, phase, direction and width,
+and any follow-up comparison should repeat that case before changing yarn
+or settings. The eight-case table intentionally starts with inward-first
+E1; it is coverage, not evidence that this is a qualified first machine run.
+
 Before knitting, require the successful single-bed split observation and
 independent software review of both mirrored candidates, both old edge
 colour phases, occupied targets, parentage, carrier clearance, completion
@@ -593,13 +719,21 @@ or extra passes cause feeding trouble.
 
 ## Review decision
 
+The paper review finds no empty candidate knit, duplicate working stitch
+or occupied transfer target in O/I, including both phases and the mirror.
+It retains the inward-first needle order. This is a manual result about
+the proposed selections, not Gate 3 approval or an executable-file verdict.
+
 Approve, revise or reject the **two-cycle candidate with its cycle-2 edge
-swap**, now including O and I, their whole-row selections, the temporary
-empty R0, the split-based connection at growth and the front-colour rear
-parent. Review the explicit 0/450 take-down assignment, especially split-first
-merged passes and sparse zero-roller fragments. The short-return alternative
-remains a separate option. Accept or revise the eight-case comparison and
-its common-schedule control limitation. No implementation or operator file
+swap** together with the phase-specific outer-edge connections, temporary
+empty R0 and front-colour rear parent. Accepting both directions also accepts
+different held-loop timing for evaluation, not equivalent physical behavior.
+Review the explicit 0/450 proposal and the unresolved split-first encoding
+parity, and accept or revise the eight-case comparison's common-schedule
+and unmatched-phase limits. The short-return alternative remains separate.
+The next implementation, if approved, must demonstrate the numeric stops,
+both yarn attachments, whole-row and start/finish coverage, and serialized
+settings without weakening the existing checks. No code or operator file
 is included with this note.
 
 Checks performed for this document: read the existing baseline passes
@@ -612,3 +746,13 @@ and manually accounts for both edges, all
 interior stitches, the eight phase transitions and the 43 body cycles.
 No new tests, proof run, matrix rebuild, controller acceptance or physical
 knit is claimed. The user's requested review stop still applies before code.
+
+Revision 3 independently re-reads the full O/I and event tables, the diamond
+endpoint assertions, vendor split/miss attachment handling and first-operation
+roller retention, simulator split/one-shot handling, and the canonical
+take-down counter. It also reads existing Gate 2 pass 128 and its knit-first
+source order, and rechecks Kniterate's split, roller and tensioning articles
+linked above. The paper fixes attachment bookkeeping, separates
+outer from inboard joins, adds both-phase/control return traces and held-loop
+timing, and records the roller parity requirement without executing a new
+schedule. The eight event phases, 43 cycles and 208 paper slots are unchanged.
