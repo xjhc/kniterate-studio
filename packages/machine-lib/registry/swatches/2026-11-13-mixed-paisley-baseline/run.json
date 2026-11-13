@@ -1,0 +1,52 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-run-observation-v1",
+  "schemaVersion": 1,
+  "operator": "not recorded",
+  "startedAt": null,
+  "endedAt": null,
+  "outcome": "partial",
+  "physicalPlacement": {
+    "verified": false,
+    "compilerCoordinateStart": 119,
+    "compilerCoordinateEnd": 139,
+    "physicalNeedleStart": null,
+    "physicalNeedleEnd": null,
+    "orientation": null,
+    "method": null,
+    "verifiedBy": null,
+    "verifiedAt": null
+  },
+  "artifact": {
+    "loadedKcodeSha256": null,
+    "displayedPassCount": null,
+    "manualProgramEdits": null
+  },
+  "manualInterventions": [],
+  "observations": {
+    "sections": {
+      "waste": "unknown",
+      "castOn": "unknown",
+      "drawThread": "unknown",
+      "carrierBringIn": "unknown",
+      "body": "unknown",
+      "backing": "unknown",
+      "leftEdge": "unknown",
+      "rightEdge": "unknown",
+      "bindOff": "unknown"
+    },
+    "stops": [],
+    "dimensionsCm": {
+      "offMachine": {
+        "status": "not-measured",
+        "reason": "not recorded"
+      },
+      "rested24h": {
+        "status": "not-measured",
+        "reason": "not recorded"
+      }
+    },
+    "photos": [],
+    "notes": "Historical baseline registered on 2026-11-13. The SD copy of the issued file was hash-verified and ejected. Association with the upper orange/grey specimen in IMG_1212.jpg is inferred from appearance and last-issued provenance, not a confirmed loaded-file hash. Exact run dates, controller pass count, setting changes, stops and interventions were not recorded. Empty event arrays mean no event records, not zero events. Partial denotes incomplete validation, not a claim the knit was interrupted. One face is visible; widened edges look loose/open, but individual missed loops and their cause are unconfirmed. See provenance.json and outcome.md."
+  }
+}

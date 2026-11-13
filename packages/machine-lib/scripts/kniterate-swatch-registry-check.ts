@@ -798,7 +798,8 @@ function validateYarn(
     for (const name of ['name', 'brand', 'line', 'lot', 'fiber', 'weight', 'color', 'coneSource'] as const) {
       if (!nonEmpty(record[name])) messages.push(`${path}.${name} must be a non-empty string`);
     }
-    if (!integer(record.ply, 1)) messages.push(`${path}.ply must be a positive integer`);
+    if (record.ply === null) promotionMessages.push(`${path}.ply is unknown`);
+    else if (!integer(record.ply, 1)) messages.push(`${path}.ply must be a positive integer or null`);
       yarnEvidence.push({ carrier: String(record.carrier), role: String(record.role) });
     });
   }

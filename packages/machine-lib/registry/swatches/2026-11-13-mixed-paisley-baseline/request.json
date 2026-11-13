@@ -1,0 +1,10 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-development-experiment",
+  "generator": "reversible-mixed-paisley-21x81-v1",
+  "description": "Historical mixed-paisley right-edge baseline, 8–21–8",
+  "reemitCommand": "node --import tsx scripts/experiments/reversible-right-edge-swatch.ts <directory> --wide21 --paisley --mixed-paisley",
+  "inputFiles": [
+    "motif.json"
+  ]
+}

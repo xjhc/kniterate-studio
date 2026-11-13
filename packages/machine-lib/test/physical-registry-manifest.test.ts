@@ -348,13 +348,14 @@ describe('generated physical registry manifest', { timeout: 30_000 }, () => {
     expect(compileRegistryRequestCurrent(dir, request).messages.join('; ')).toContain('21 by 81 binary grid')
   })
 
-  it.each(['ranAt', 'startedAt', 'endedAt', 'loadedKcodeSha256', 'manualProgramEdits', 'measuredOn', 'section'] as const)('records unknown %s as valid evidence that cannot promote', field => {
+  it.each(['ranAt', 'startedAt', 'endedAt', 'loadedKcodeSha256', 'manualProgramEdits', 'measuredOn', 'ply', 'section'] as const)('records unknown %s as valid evidence that cannot promote', field => {
     const { root } = registryFixture()
     const dir = writeCurrentEntry(root)
-    const file = field === 'ranAt' ? 'machine.json' : field === 'measuredOn' ? 'yarn.json' : 'run.json'
+    const file = field === 'ranAt' ? 'machine.json' : field === 'measuredOn' || field === 'ply' ? 'yarn.json' : 'run.json'
     const record = readObject(join(dir, file))
     if (field === 'loadedKcodeSha256' || field === 'manualProgramEdits') record.artifact[field] = null
     else if (field === 'measuredOn') record.tensionSwatch.measuredOn = null
+    else if (field === 'ply') record.yarns[0].ply = null
     else if (field === 'section') record.observations.sections.body = 'unknown'
     else record[field] = null
     writeObject(join(dir, file), record)

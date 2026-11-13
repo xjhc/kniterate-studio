@@ -214,7 +214,7 @@
         "lot": { "$ref": "#/$defs/nonEmptyString" },
         "fiber": { "$ref": "#/$defs/nonEmptyString" },
         "weight": { "$ref": "#/$defs/nonEmptyString" },
-        "ply": { "type": "integer", "minimum": 1 },
+        "ply": { "type": ["integer", "null"], "minimum": 1 },
         "color": { "$ref": "#/$defs/nonEmptyString" },
         "coneSource": { "$ref": "#/$defs/nonEmptyString" }
       },

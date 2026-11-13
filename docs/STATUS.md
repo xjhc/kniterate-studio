@@ -25,6 +25,14 @@ rear needles. This does **not** establish a clean reversible widening edge.
 No reversible split-increase design is implemented; that remains Gate 3.
 Previously knitted files and records are preserved unchanged.
 
+The [522-pass mixed-paisley baseline](../packages/machine-lib/registry/swatches/2026-11-13-mixed-paisley-baseline/outcome.md)
+is now registered through its fixed experiment generator; both output files
+still replay byte for byte. The SD receipt confirms issuance. Association
+with the one-face specimen photo remains inferred; loaded hash, run times,
+edit status and unobserved sections stay explicitly unknown. Experimental
+replay cannot grant Knit-proven. The older production diamond is a separate
+construction and does not replace this baseline.
+
 ## Trial update (2026-11-12)
 
 **Current spacing revision:** [mixed paisley with equal two-row gaps](physical-trials/2026-11-12/reversible-mixed-paisley-spaced/instructions.md). Previous unequal gaps (4 and1) corrected by moving only the original small end motifs; centre and all motif stitches unchanged. Gap equality, margins, loop/shaping and machine checks pass. Same 8→21→8,81 rows,522 passes; no SD copy/physical result.
@@ -54,7 +62,7 @@ Prepared the operator-requested **8 → 20 → 8**, 75-row two-colour reversible
   J-sleeve, set-in; crew, V, square or boat neck), one-colour scarves and
   blankets, and checking any `.kc` or `.k` file. Every machine file passes the
   blocking machine-safety envelope before it can be downloaded.
-- **Knitted:** four development runs are registered
+- **Knitted:** five development evidence entries are registered
   (`packages/machine-lib/registry/swatches/`). None is promotable, and nothing
   is Knit-proven. Joined-edge paisley completed successfully (operator report; 18.5 cm wide, 21 cm including top waste). The 16–48–16 paisley diamond produced a completed specimen, with open-looking increase edges and repeated CLUMP-like stops during idle-feeder shuffling; decreases looked satisfactory. A derived two-bed increase passes limited loop-accounting tests but remains export-blocked by unverified split encoding and incomplete whole-project validation. See `REVERSIBLE-INCREASE-RESEARCH.md`. Handoff 3 strip 2 completed with waste/left-edge defects; its incomplete
   physical evidence is preserved in `docs/physical-trials/2026-11-11/`.
