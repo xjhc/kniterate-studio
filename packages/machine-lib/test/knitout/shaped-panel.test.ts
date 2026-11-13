@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { emitShapedPanelV1, ShapedPanelError, type PanelRowV1, type PanelSegmentV1, type PanelStitchV1, type ShapedPanelInputV1 } from '../../src/knitout/passes/shaped-panel.js'
 import { writeKnitoutProgram } from '../../src/knitout/emitter.js'
@@ -6,6 +7,8 @@ import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../../src/knitout/kcode/machine-
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
 import { projectKCodeMachineTrace, type MachineTraceV1 } from '../../src/knitout/kcode/machine-trace.js'
 import { validateKCodeMachineTrace } from '../../src/knitout/kcode/machine-validator.js'
+import { validateKCodeMachineSafetyV1 } from '../../src/knitout/kcode/machine-safety.js'
+import { parseKc } from '../../src/knitout/sophie/loop-stack-sim.js'
 
 const CARRIERS = { mainCarrier: '3', secondCarrier: '4', wasteCarrier: '6', drawCarrier: '1' } as const
 
@@ -195,6 +198,61 @@ describe('shaped panel', () => {
     expect(bar).toMatchObject({ emptyInside: 0, emptyEdge: 0 })
     expect(bar.tuckPasses).toEqual([20, 21, 22, 23].map((knits) => ({ rack: -0.5, knits, tucks: 1 })))
     expect(bar.transfers).toBeGreaterThan(edge.transfers)
+  })
+
+  it('makes Kniterate\'s split increase with the passes of Customist\'s own exports, Simple and Fashioned', { timeout: 60_000 }, () => {
+    // Each pass of an increase, from its yarn-fed transfer pass to its last transfer, with needles counted from the edge stitch.
+    const increases = (kcode: string, carrier: string) => {
+      const passes = parseKc(kcode)
+      return passes.flatMap((pass, index) => {
+        if (pass.kind !== 'Tr-Rl' || pass.carrier !== carrier) return []
+        const edge = Math.max(...pass.f)
+        const out = [`${pass.dir} ${pass.kind} yarn rack ${pass.rack} knits ${pass.f.length} rear ${pass.r.map((n) => n - edge)}`]
+        for (const next of passes.slice(index + 1)) {
+          if (next.carrier !== '0' || next.f.length === 0) break
+          out.push(`${next.dir} ${next.kind} rack ${next.rack} front ${next.f.map((n) => n - edge)} rear ${next.r.map((n) => n - edge)}`)
+        }
+        return [out]
+      })
+    }
+    // Six plain rows, then three right-edge increases four rows apart; the row before each runs right to left.
+    const rows = (lead: number): PanelRowV1[] => Array.from({ length: lead + 12 }, (_, r) => {
+      const grown = r < lead ? 0 : Math.floor((r - lead) / 4) + 1
+      return { segments: [{ lo: 100, hi: 121 + grown }], stitch: () => 'k' as PanelStitchV1, settings: 'body' as const, ...(r >= lead && (r - lead) % 4 === 0 ? { increase: 'split' as const } : {}) }
+    })
+    for (const [fashion, file] of [[1, 'split-increase-simple.kc'], [4, 'split-increase-fashioned.kc']] as const) {
+      const reference = increases(readFileSync(new URL(`../../reference/customist-increase/${file}`, import.meta.url), 'utf8'), '3')
+      expect(reference).toHaveLength(2)
+      const input: ShapedPanelInputV1 = { rows: rows(6), ...CARRIERS, top: 'waste', fashion }
+      const converted = authoredKnitoutToKCodeWithTrace(writeKnitoutProgram(emitShapedPanelV1(input).program))
+      if (!converted.ok) throw new Error(converted.error)
+      // The fabric is 22 wide at the first increase, as in the exports, so the knit counts match too.
+      expect(increases(converted.kcode, '3').slice(0, 2)).toEqual(reference)
+      expect(increases(converted.kcode, '3')).toHaveLength(3)
+
+      const trace = expectMachineValid(input)
+      expect(validateKCodeMachineSafetyV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2).diagnostics).toEqual([])
+      // No needle knits empty once the jersey body has started, and each increase is one split.
+      const loops = new Set<string>()
+      let started = false
+      let empty = 0
+      let splits = 0
+      for (const pass of trace.passes) {
+        if (pass.carrier === '3' && pass.actions.length === 22 && pass.actions.every((action) => action.kind === 'knit' && action.at.bed === 'front')) started = true
+        for (const action of pass.actions) {
+          if (action.kind === 'knit' || action.kind === 'tuck') {
+            const k = `${action.at.bed}${action.at.traceCoordinate}`
+            if (started && pass.carrier === '3' && !loops.has(k)) empty++
+            loops.add(k)
+          } else if (action.kind === 'drop') loops.delete(`${action.at.bed}${action.at.traceCoordinate}`)
+          else if (action.kind === 'xfer') { loops.delete(`${action.source.bed}${action.source.traceCoordinate}`); loops.add(`${action.target.bed}${action.target.traceCoordinate}`) }
+          else if (action.kind === 'split') { splits++; loops.add(`${action.target.bed}${action.target.traceCoordinate}`) }
+        }
+      }
+      expect({ empty, splits }).toEqual({ empty: 0, splits: 3 })
+    }
+    // The splitting row must run right to left: one more plain row first puts the yarn on the wrong side.
+    expect(() => emitShapedPanelV1({ rows: rows(7), ...CARRIERS, top: 'waste', fashion: 1 })).toThrow(/must run right to left/)
   })
 
   it('narrows both edges two ways: the edge stitches together, or one loop per pass in Kniterate\'s order', { timeout: 60_000 }, () => {

@@ -781,10 +781,11 @@ ship," trust this file and the working tree instead.
     operated needle;
   - a carriage or carrier turning less than 2.5 past the outermost operated
     needle;
-  - a transfer with a carrier (a split stitch: Kniterate supports them, but no
-    reference program shows how one is encoded, so it stays refused until a
-    captured program does), and a carrierless tuck-family pass that selects
-    needles;
+  - a transfer with a carrier (a split stitch) in any form but the one two
+    Customist Increase Transfers exports show: front to rear, in a
+    right-to-left pass, at rack 0 (`reference/customist-increase/`; the shaped
+    panel's `split` increase writes it, not yet knitted), and a carrierless
+    tuck-family pass that selects needles;
   - a carrier that does not start at its home stop moving right, goes left of
     it, or is not home at the end (C1 −11.5, C2–C3 −9.5, C4–C6 −7.5);
   - speed outside 10–800, roller outside 0–999, more than four knitting passes

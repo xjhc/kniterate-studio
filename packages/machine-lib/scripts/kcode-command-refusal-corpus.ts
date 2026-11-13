@@ -257,7 +257,8 @@ const CASES: readonly RefusalCase[] = [
   {
     id: 'transfer-with-carrier',
     expectedBlockingRules: ['machine-safety.transfer-with-carrier'],
-    source: render([knitOut, { ...knitBack, operation: 'Tr-Rl', front: [100], rear: [100] }, goHome(97.5)]),
+    // A split at rack 1; only a front-to-rear split in a leftward pass at rack 0 is allowed.
+    source: render([knitOut, { ...knitBack, operation: 'Tr-Rl', rack: 1, front: [100], rear: [99] }, goHome(97.5)]),
   },
   {
     id: 'carrierless-tuck-pass',

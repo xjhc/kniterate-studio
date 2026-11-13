@@ -906,6 +906,23 @@ describe('KCode-native MachineTrace validation', () => {
       .toContain('machine-trace.action-operation')
   })
 
+  it('lets a yarn-fed transfer pass knit on its delivering bed only', () => {
+    const trace = compileTrace()
+    const splitIndex = trace.passes.findIndex((pass) => pass.actions.some((action) => action.kind === 'split'))
+    const splitPass = trace.passes[splitIndex]!
+    const splitAction = splitPass.actions.find((action) => action.kind === 'split')!
+    if (splitAction.kind !== 'split') throw new Error('Expected a split')
+    const withKnitAt = (at: MachineTraceSelectionV1) => {
+      const passes = [...trace.passes]
+      passes[splitIndex] = { ...splitPass, actions: [...splitPass.actions, { kind: 'knit', at }] }
+      return rules({ ...trace, passes })
+    }
+    // A front needle knitting beside the split is the pass Customist's Increase Transfers write.
+    expect(withKnitAt(splitAction.source)).not.toContain('machine-trace.action-operation')
+    // The receiving bed only receives.
+    expect(withKnitAt(splitAction.target)).toContain('machine-trace.action-operation')
+  })
+
   it('checks rack/bed pairing, stop containment, and programmed continuity', () => {
     const trace = compileTrace()
     const splitIndex = trace.passes.findIndex((pass) =>

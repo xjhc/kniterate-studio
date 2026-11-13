@@ -227,11 +227,12 @@ describe('V1 command-legality contract', () => {
             const expectedFacingNeedles = expected.family === 'regular'
               && Number.isInteger(rack)
               && SOURCE_COORDINATE - rack === SOURCE_COORDINATE + 1
-            // A transfer operation with a yarn carrier is a split, which the
-            // machine does not do.
+            // A transfer operation with a yarn carrier is a split, refused in every
+            // form but the one Kniterate's exports show: Tr-Rl at rack 0.
             const expectedTransferWithCarrier = expected.family === 'transfer'
               && carrier !== '0'
               && Number.isInteger(rack)
+              && !(operation === 'Tr-Rl' && rack === 0)
             for (const rail of LEGALITY_RAILS) {
               const parsed = rail.parse(source, {
                 profile: KNITERATE_7GG_KCODE_PROFILE_V2,
@@ -270,6 +271,45 @@ describe('V1 command-legality contract', () => {
     }
     expect(checked).toBe(LEGALITY_CORE_CASE_COUNT)
   }, 30_000)
+
+  it('reads a yarn-fed transfer pass that splits as knits around the split, as Customist\'s Increase Transfers write it', () => {
+    const read = (carrier: LegalityCarrier, front: readonly number[], rear: readonly number[]) => {
+      const source = renderDocument([
+        { rack: 0, direction: '>>', operation: 'Kn-Kn', carrier: '3', front: [100, 101, 102, 103], rear: [] },
+        { rack: 0, direction: '<<', operation: 'Tr-Rl', carrier, front, rear },
+      ])
+      const results = LEGALITY_RAILS.map((rail) => {
+        const parsed = rail.parse(source, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: 'knitout-vendor', strict: true })
+        if (!parsed.ok) throw new Error('the sample must parse')
+        const trace = rail.project(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2)
+        return {
+          actions: trace.passes[1]!.actions.map((action) => action.kind === 'knit'
+            ? `knit ${action.at.bed} ${action.at.kcodeColumn}`
+            : action.kind === 'split' || action.kind === 'xfer'
+              ? `${action.kind} ${action.source.bed} ${action.source.kcodeColumn} to ${action.target.bed} ${action.target.kcodeColumn}`
+              : action.kind === 'unknown' ? `unknown ${action.reason}` : action.kind),
+          conformance: rail.validate(trace, KNITERATE_7GG_KCODE_PROFILE_V2).profileConformance,
+        }
+      })
+      expect(results[1]).toEqual(results[0])
+      return results[0]!
+    }
+    // Every front needle of the row is selected and one rear needle: the needle facing it splits, the rest knit, in travel order.
+    expect(read('3', [100, 101, 102, 103], [101])).toEqual({
+      actions: ['knit front 103', 'knit front 102', 'split front 101 to rear 101', 'knit front 100'],
+      conformance: 'conformant',
+    })
+    // Without yarn the same selection is a transfer with three needles that have nowhere to go.
+    expect(read('0', [100, 101, 102, 103], [101])).toEqual({
+      actions: ['unknown unpaired-transfer-selection', 'unknown unpaired-transfer-selection', 'xfer front 101 to rear 101', 'unknown unpaired-transfer-selection'],
+      conformance: 'blocked',
+    })
+    // With yarn but no needle facing a receiver, nothing splits, so nothing is read as a knit.
+    expect(read('3', [100], [102])).toEqual({
+      actions: ['unknown unpaired-transfer-selection', 'unknown unpaired-transfer-selection'],
+      conformance: 'blocked',
+    })
+  })
 
   it('partitions selection, selector, transfer, marker, stop, and continuity boundaries', () => {
     const report = (source: string) => {

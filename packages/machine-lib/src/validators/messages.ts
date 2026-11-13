@@ -732,7 +732,7 @@ const ENTRIES: readonly ValidatorMessage[] = [
     rule: 'machine-safety.transfer-with-carrier',
     title: 'Transfer with a yarn carrier (split stitch)',
     explanation:
-      'A transfer pass has a yarn carrier assigned, which makes it a split stitch. Kniterate supports split stitches, but no Kniterate reference program shows how its software writes one in KCode, so Studio refuses them until that encoding is verified. Ordinary transfers carry no yarn. Blocks export.',
+      'A transfer pass has a yarn carrier assigned, which makes it a split stitch. Kniterate\'s own programs show a split in one form only: from the front bed to the rear, in a right-to-left pass, at rack 0. Studio refuses a split written any other way. Ordinary transfers carry no yarn. Blocks export.',
     severityHint: 'error',
   },
   {

@@ -87,7 +87,7 @@ export interface MachineSafetyEnvelopeV1 {
    * from every needle another pass operates.
    */
   readonly stoppingDistance: { readonly value: number; readonly evidence: KCodeEvidence }
-  /** A transfer with a carrier (a split stitch) until its encoding is verified. */
+  /** A transfer with a carrier (a split stitch): only the form Kniterate's own exports show. */
   readonly transferWithCarrier: { readonly evidence: KCodeEvidence }
   /** Carrierless passes that select needles are plain drops (Kn-Kn). */
   readonly carrierlessTuck: { readonly evidence: KCodeEvidence }
@@ -137,6 +137,7 @@ const MACHINE_MANUAL = 'https://support.kniterate.com/hc/article_attachments/360
 const CUSTOMIST_MANUAL = 'https://editor.kniterate.design/documentation'
 const PINNED_BACKEND = 'packages/machine-lib/src/knitout/vendor/knitout-to-kcode.cjs'
 const REFERENCE_CORPUS = 'packages/machine-lib/reference/*.kc'
+const SPLIT_INCREASE_EXPORTS = 'packages/machine-lib/reference/customist-increase/*.kc'
 
 const evidence = (
   confidence: KCodeEvidence['confidence'],
@@ -162,8 +163,8 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
       'Kniterate: "Never place a feeder over the needle bed. This can cause a collision between the needles and the feeder." The carrier stopping distance (default 2.5) keeps feeders clear of the knitting. Every reference program turns the carriage and carrier at least 2.5 past the outermost operated needle and rests idle carriers at least 2.5 from every operated needle.'),
   },
   transferWithCarrier: {
-    evidence: evidence('unverified', [SPLIT_ARTICLE, TRANSFERS_ARTICLE, PINNED_BACKEND, REFERENCE_CORPUS],
-      'Kniterate documents split stitches, a transfer whose delivering needle receives yarn at once, and ordinary transfer rows with no carrier. No reference program contains a split, so how Kniterate\'s software encodes one in KCode is unverified; the pinned backend\'s transfer-with-carrier encoding is refused until a captured program establishes it.'),
+    evidence: evidence('reference-corpus-observed', [SPLIT_ARTICLE, TRANSFERS_ARTICLE, PINNED_BACKEND, SPLIT_INCREASE_EXPORTS],
+      'Kniterate documents split stitches, a transfer whose delivering needle receives yarn at once. Two Customist exports made with its Increase Transfers command (Simple and Fashioned, 2026-11-12) each write the split as one leftward pass, `<< Tr-Rl` with the yarn carrier at rack 0: every front needle of the row is selected and knits, and the one rear needle selected receives the old loop of the front needle facing it. The pinned backend writes the same bytes for that pass. No Kniterate program shows a split in a rightward pass, from the rear bed, or at another racking, so those stay refused. The exports have not been knitted here.'),
   },
   carrierlessTuck: {
     evidence: evidence('reference-corpus-observed', [PINNED_BACKEND, REFERENCE_CORPUS],
@@ -436,9 +437,10 @@ export function validateKCodeMachineSafetyV1(
         pass, neighbour.sourceSpan)
     }
 
-    if (pass.actions.some((action) => action.kind === 'split')) {
+    // Kniterate's exports show one split form: front to rear in a leftward pass at rack 0.
+    if (pass.actions.some((action) => action.kind === 'split') && !(pass.operation === 'Tr-Rl' && pass.rack === 0)) {
       add('machine-safety.transfer-with-carrier',
-        `Pass ${pass.index + 1} transfers with carrier ${pass.carrier} (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified.`,
+        `Pass ${pass.index + 1} transfers with carrier ${pass.carrier} (a split stitch) as ${pass.operation} at rack ${pass.rack}. Kniterate's own programs show a split only from the front bed in a right-to-left pass at rack 0 (Tr-Rl), so any other form is refused.`,
         pass, pass.source.footer)
     }
 

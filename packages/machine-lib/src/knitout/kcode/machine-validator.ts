@@ -458,7 +458,8 @@ function expectedRegularKind(
 ): 'knit' | 'tuck' | 'drop' | null {
   const contract = kcodeOperationContractV1(profile, operation)
   if (contract === null) return null
-  if (contract.family === 'transfer') return null
+  // A yarn-fed transfer pass knits its delivering needles that have no receiving needle selected.
+  if (contract.family === 'transfer') return carrier !== '0' && contract.carrierAction === 'split' && bed === contract.sourceBed ? 'knit' : null
   if (carrier === '0') {
     return contract.carrierZeroAction === 'drop' ? 'drop' : null
   }

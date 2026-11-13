@@ -291,7 +291,7 @@ const RACK_VALUES = [
 const operationEvidence = evidence(
   'pinned-implementation',
   [OFFICIAL_KCODE_SPECS, OFFICIAL_MACHINE_MANUAL, PINNED_BACKEND, REFERENCE_CORPUS],
-  'The official KCode 1.0 specification defines Kn/Tu/Tr/Rr/Rl bed modes and Rr/Rl receive direction. Carrier-0 Kn-Kn drops and carrier-1..6 knit/tuck behavior are pinned-backend and corpus evidence, not an official controller-acceptance claim. Carrier-0 Tu-Tu/Kn-Tu/Tu-Kn selections and carrier-1..6 transfers (split) are pinned-backend only and never appear in the reference corpus; the machine-safety envelope refuses both. The machine manual describes physical transfer direction differently, so this contract proves serialized command conformance but does not translate a token into controller-observed physical motion.',
+  'The official KCode 1.0 specification defines Kn/Tu/Tr/Rr/Rl bed modes and Rr/Rl receive direction. Carrier-0 Kn-Kn drops and carrier-1..6 knit/tuck behavior are pinned-backend and corpus evidence, not an official controller-acceptance claim. Carrier-0 Tu-Tu/Kn-Tu/Tu-Kn selections are pinned-backend only and never appear in the reference corpus; the machine-safety envelope refuses them. Carrier-1..6 transfers (split) are pinned-backend evidence, and a front-to-rear split in a leftward pass at rack 0 (Tr-Rl, with its unpaired front needles knitting) also appears in two Customist Increase Transfers exports (reference/customist-increase); the machine-safety envelope refuses every other split. The machine manual describes physical transfer direction differently, so this contract proves serialized command conformance but does not translate a token into controller-observed physical motion.',
 )
 
 const regularOperation = (
