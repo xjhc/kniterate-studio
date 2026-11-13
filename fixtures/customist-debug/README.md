@@ -99,8 +99,20 @@ been knitted; body-only files have no cast-on.
 
 Still open: clean start/body/top-waste C6-return off/on, Fashioned width 2
 versus 4, rear split primitives, and physical/both-face evidence. The refusal
-does not erase Kniterate's older reversible sleeve construction; it establishes
-that this current app command does not implement a reversible increase.
+establishes only that REVERSABLE on this two-colour jacquard base fails.
+Fabric and style both changed from the working single-bed Simple case, so this
+does not isolate either variable. Simple on the same jacquard base and
+REVERSABLE on the single-bed base are the first follow-up controls. A one-colour
+two-bed base is also untested. Kniterate's older reversible sleeve construction
+remains separate evidence; no general absence of two-bed increases follows.
+
+Further captures: both edges widening in one row (Simple/Fashioned), and
+isolated left/right single-bed decreases followed by the jacquard decrease.
+
+The two screenshots have their top 48 pixels cropped to remove account details.
+Only the working-tree images are sanitized; the originals remain in commit
+`4174c8d`. A later crop commit does not remove them from Git history. Do not
+treat these branch commits as sanitized for public publication.
 
 ## Capture queue and coverage
 

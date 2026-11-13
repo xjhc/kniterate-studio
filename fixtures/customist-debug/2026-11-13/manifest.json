@@ -143,7 +143,7 @@
         "physicallyKnitted": false,
         "canonicalCorpus": false
       },
-      "outcome": "REVERSABLE style 2 refused; export succeeds with unchanged control instructions",
+      "outcome": "REVERSABLE style 2 on two-colour jacquard refused; export matches untreated control. Fabric and style are confounded; does not establish a general lack of two-bed increases.",
       "decoded": "decoded/reversible-increase-refusal.json"
     },
     {
@@ -860,6 +860,11 @@
     }
   ],
   "remaining": [
+    "Simple on the same two-colour jacquard base",
+    "REVERSABLE on the single-bed base",
+    "Increase on one-colour two-bed fabric if supported",
+    "Both-edge simultaneous increases: Simple and Fashioned",
+    "Single-bed left/right decreases and jacquard decrease",
     "Clean start/body/top-waste C6-return off/on pair",
     "Fashion-Mark Width 2 versus 4",
     "Physical tests and topology qualification"
@@ -962,13 +967,15 @@
     },
     {
       "file": "evidence/feeder-retract-on.jpg",
-      "bytes": 103603,
-      "sha256": "795ad983c6a0ba3508d2acbe14346b99a2a52daec28e513c893945c0621858f0"
+      "bytes": 93053,
+      "sha256": "751d7e16d6c12cf16d49a60fe226fba36774885d5862cc026283bceb84d97c39",
+      "privacyEdit": "Top 48 pixels cropped; original remains in Git commit 4174c8d."
     },
     {
       "file": "evidence/reversible-refusal.jpg",
-      "bytes": 112473,
-      "sha256": "99e090696565a88e2a85a924de7163a11266e680b15b25104c066e5d33fe7171"
+      "bytes": 101196,
+      "sha256": "34e8d487f5db1a2705ba4a49743e49c7de60c8ec975a990e88b322067ba2ca9c",
+      "privacyEdit": "Top 48 pixels cropped; original remains in Git commit 4174c8d."
     },
     {
       "file": "inputs/feeder-cycle-off.json",
