@@ -5,16 +5,98 @@ import { diamondRangesV1, auditTraceV1, parseKCodeDocument, projectKCodeMachineT
 import { runAuthoredPipeline } from './authoredPipeline';
 import { reversibleEdgeStatus } from './reversibleEdges';
 import { planProject } from './plan';
+import { measurementFormMarkdown, measurementTemplate } from './handoff';
+import { trialRevision } from './trials';
 
-function diamond(width = 20, tipStitches = 12, stripe: 'centre' | 'mostly-solid' | 'stripes' = 'centre', needleOffset = 70) {
-  const height = (width - tipStitches) * 2 + 3;
+function diamond(width = 20, tipStitches = 12, stripe: 'centre' | 'mostly-solid' | 'stripes' = 'centre', needleOffset = 70, rowsPerStep = 2) {
+  const height = (width - tipStitches) * rowsPerStep + 3;
   let p = createColorworkProjectV1({ kind: 'knitlab-colorwork-chart', version: 1, title: 'Diamond', width, height, rowNumbering: 'bottom-up', palette: [{ id: 'a', name: 'A', hex: '#DD6600' }, { id: 'b', name: 'B', hex: '#888888' }], cells: Array.from({ length: height }, (_, y) => Array.from({ length: width }, (_, x) => stripe === 'stripes' ? y % 2 : (stripe === 'centre' || y === 0) && x === width / 2 ? 1 : 0)) }, { id: 'diamond', needleOffset });
-  p = appendProjectEdit(p, { id: 'shape', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'complement', floatLimit: 7, diamond: { tipStitches, rowsPerStep: 2 } } } });
+  p = appendProjectEdit(p, { id: 'shape', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'complement', floatLimit: 7, diamond: { tipStitches, rowsPerStep } } } });
   const edit = reversibleEdgeStatus(materializeColorworkProject(p).state).edit!;
   return edit ? appendProjectEdit(p, { id: 'edges', source: 'human', edit }) : p;
 }
 
 describe('reversible diamond through Studio export', () => {
+  it('keeps diamond dimensions in supported measurement fields without labelling width as hat circumference', () => {
+    const project = diamond();
+    const plan = planProject(materializeColorworkProject(project).state);
+    const form = measurementFormMarkdown(project, plan, 'a'.repeat(64));
+    const record = measurementTemplate(project, 'a'.repeat(64), plan);
+    expect(form).toContain('Maximum body width');
+    expect(form).toContain('Body height');
+    expect(form).toContain('`notes`');
+    expect(form).not.toContain('Record a finished hat');
+    expect(record.candidate.predictedCm?.circumference).toBeNull();
+    record.outcome = 'issues';
+    record.notes = 'Maximum body width 12 cm; body height 18 cm; widening edge loose.';
+    const revision = trialRevision(project, record, { id: 'diamond-observation', recordedAt: '2026-11-13T12:00:00Z' });
+    const saved = revision.edits.reduce((current, edit, index) => appendProjectEdit(current, { id: `record-${index}`, source: 'human', edit }), project);
+    expect(materializeColorworkProject(saved).state.trials?.at(-1)?.notes).toBe(record.notes);
+    expect(revision.comparisons).toEqual([]);
+  });
+  it.each([[3, false], [3, true], [4, true]] as const)('preserves transfer destinations and inverse colour ownership at cadence %s, swapped carriers %s', async (cadence, swapped) => {
+    let project = diamond(20, 12, 'stripes', 70, cadence);
+    if (swapped) {
+      for (const [paletteId, carrier] of [['a', '3'], ['b', '2']] as const) project = appendProjectEdit(project, { id: `swap-${paletteId}`, source: 'human', edit: { kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName: paletteId } } });
+      const repair = reversibleEdgeStatus(materializeColorworkProject(project).state).edit;
+      if (repair) project = appendProjectEdit(project, { id: 'repair-after-swap', source: 'human', edit: repair });
+    }
+    const state = materializeColorworkProject(project).state;
+    const result = await runAuthoredPipeline(project);
+    expect(result.exportReady, JSON.stringify(result.compiled?.messages)).toBe(true);
+    const trace = result.kcode!.trace!;
+    const origin = result.kcode!.coordinateBridge!.kcodeColumn.start;
+    const ranges = diamondRangesV1(20, state.chart.height, state.strategy.diamond!);
+    const loops = new Map<string, number>();
+    const emptyRearByRow = new Map<number, number>();
+    const rowEnds = new Map(ranges.map((_, row) => [Math.max(...trace.passes.filter(pass => result.kcode!.passProvenance[pass.index]?.sourceRows.includes(row)).map(pass => pass.index)), row]));
+    const key = (at: { bed: string; kcodeColumn: number }) => `${at.bed}:${at.kcodeColumn}`;
+    for (const pass of trace.passes) {
+      const row = result.kcode!.passProvenance[pass.index]?.sourceRows[0];
+      for (const action of pass.actions) {
+        if (action.kind === 'xfer') {
+          loops.set(key(action.target), (loops.get(key(action.target)) ?? 0) + (loops.get(key(action.source)) ?? 0));
+          loops.delete(key(action.source));
+        } else if (action.kind === 'knit' || action.kind === 'tuck') {
+          if (row !== undefined && !(loops.get(key(action.at)) ?? 0)) {
+            expect(action.at.bed, `empty start at pass ${pass.index + 1}`).toBe('rear');
+            emptyRearByRow.set(row, (emptyRearByRow.get(row) ?? 0) + 1);
+          }
+          loops.set(key(action.at), action.kind === 'knit' ? 1 : (loops.get(key(action.at)) ?? 0) + 1);
+        } else if (action.kind === 'drop') loops.delete(key(action.at));
+        else if (action.kind === 'split') throw Error('The legacy diamond must not introduce a split');
+      }
+      expect(Math.max(0, ...loops.values())).toBeLessThanOrEqual(2);
+      const finishedRow = rowEnds.get(pass.index);
+      if (finishedRow !== undefined) for (let col = ranges[finishedRow]!.lo; col <= ranges[finishedRow]!.hi; col++) {
+        for (const bed of ['front', 'rear']) expect(loops.get(`${bed}:${origin + col}`), `row ${finishedRow + 1} ${bed} ${col}`).toBe(1);
+      }
+    }
+    for (let row = 0; row < ranges.length; row++) {
+      const passes = trace.passes.filter(pass => result.kcode!.passProvenance[pass.index]?.sourceRows.includes(row));
+      const { lo, hi } = ranges[row]!;
+      const previous = ranges[Math.max(0, row - 1)]!;
+      expect(emptyRearByRow.get(row) ?? 0, `row ${row + 1}: legacy increase has two empty rear starts per edge`).toBe(lo < previous.lo ? 4 : 0);
+      const transfers = passes.flatMap(pass => pass.actions.flatMap(action => action.kind === 'xfer' ? [`${action.source.bed}:${action.source.kcodeColumn-origin}>${action.target.bed}:${action.target.kcodeColumn-origin}`] : []));
+      const expected = lo < previous.lo ? [`rear:${previous.lo}>front:${lo}`, `rear:${previous.hi}>front:${hi}`]
+        : lo > previous.lo ? [`front:${previous.lo}>rear:${lo}`, `rear:${previous.lo}>front:${lo}`, `front:${previous.hi}>rear:${hi}`, `rear:${previous.hi}>front:${hi}`] : [];
+      expect(transfers.sort(), `row ${row + 1}`).toEqual(expected.sort());
+      const knitting = passes.filter(pass => pass.actions.some(action => action.kind === 'knit'));
+      expect(knitting).toHaveLength(2);
+      for (const pass of knitting) {
+        const knits = pass.actions.flatMap(action => action.kind === 'knit' ? [action] : []);
+        expect(knits).toHaveLength(hi - lo + 1);
+        for (const action of knits) {
+          const col = action.at.kcodeColumn - origin;
+          const paletteId = state.chart.palette[state.chart.cells[state.chart.height - 1 - row]![col]!]!.id;
+          const frontCarrier = state.machine.yarnAssignments.find(assignment => assignment.paletteId === paletteId)!.carrier;
+          expect(action.at.bed, `row ${row + 1}, column ${col}`).toBe(pass.carrier === frontCarrier ? 'front' : 'rear');
+        }
+      }
+    }
+    expect(auditTraceV1(trace).ok).toBe(true);
+    expect(result.kcode!.safety!.diagnostics).toEqual([]);
+  });
   it('rejects invalid geometry and incompatible backing', async () => {
     expect(() => diamondRangesV1(20, 18, { tipStitches: 12, rowsPerStep: 2 })).toThrow();
     expect(() => diamondRangesV1(21, 21, { tipStitches: 12, rowsPerStep: 2 })).toThrow();
@@ -22,7 +104,7 @@ describe('reversible diamond through Studio export', () => {
     expect((await runAuthoredPipeline(p)).exportReady).toBe(false);
   });
 
-  it.each([[20,12,'centre'],[48,16,'centre'],[20,12,'mostly-solid'],[20,12,'stripes']] as const)('knits inverse faces within moving bounds and retains both beds at width %s', async (width, tip, stripe) => {
+  it.each([[20,12,'centre'],[48,16,'centre'],[20,12,'mostly-solid'],[20,12,'stripes'],[21,9,'stripes']] as const)('knits inverse faces within moving bounds and retains both beds at width %s', async (width, tip, stripe) => {
     const p = diamond(width, tip, stripe);
     const state = materializeColorworkProject(p).state;
     const result = await runAuthoredPipeline(p);
@@ -104,7 +186,7 @@ describe('reversible diamond through Studio export', () => {
     expect((await runAuthoredPipeline(repaired)).exportReady).toBe(true);
   });
 
-  it.each([1, 6, 205])('keeps feeder parking and transfer clearance within the bed at offset %s', async needleOffset => {
+  it.each([1, 6, 9, 205])('keeps feeder parking and transfer clearance within the bed at offset %s', async needleOffset => {
     const result = await runAuthoredPipeline(diamond(48, 16, 'centre', needleOffset));
     expect(result.exportReady, JSON.stringify(result.compiled?.messages)).toBe(true);
     expect(result.kcode!.safety!.diagnostics).toEqual([]);

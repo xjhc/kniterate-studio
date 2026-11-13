@@ -133,7 +133,7 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
   const isCurrent = options.currentCandidateSha256 != null && options.currentCandidateSha256 === record.candidate.kcodeSha256;
   const comparisonBasis: TrialRevision['comparisonBasis'] = fromForm ? 'candidate-form' : isCurrent ? 'current-design' : 'unknown';
   const predicted: Record<keyof NonNullable<ProjectTrial['finishedCm']>, number | null> = fromForm ? { ...fromForm } : isCurrent ? {
-    circumference: before.predicted?.widthCm.value ?? null,
+    circumference: before.piece === 'beanie' ? before.predicted?.widthCm.value ?? null : null,
     cuffVisible: sections?.cuff?.visibleCm?.value ?? null,
     body: sections?.body.cm?.value ?? null,
     crown: sections?.crown?.cm?.value ?? null,

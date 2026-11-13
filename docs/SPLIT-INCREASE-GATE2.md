@@ -90,6 +90,12 @@ two rear loops without parent loops at each increase and may retain the loose
 widening edge. It is not the proposed reversible split design. Gate 3 still
 requires paper design and review before a new reversible increase is coded.
 
+The [focused post-merge diamond review](REVERSIBLE-DIAMOND-REVIEW.md) checks
+additional shaping intervals, carrier assignments and loop destinations. It
+fixes the measurement-form recording path without changing emitted passes.
+The separate 522-pass paisley baseline is now registered with its incomplete
+run identity explicit; see the review for the evidence boundary.
+
 ## Verification evidence
 
 Focused checks: 29 machine tests and 19 Studio tests pass. Controlled negative
