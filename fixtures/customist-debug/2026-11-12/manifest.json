@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "captures": [
+    {
+      "id": "increase-right-simple",
+      "file": "increase-right-simple.kc",
+      "sha256": "ac9bb10422e356c43d20e8a0ec9cd76177ed3207161535bee7ced65ba5306809",
+      "bytes": 38753,
+      "sourceDownload": "command (13).kc",
+      "sourceDesign": "https://www.customist.com/studio/xA34sBD",
+      "capturedLocalDate": "2026-11-12",
+      "command": "Increase transfers",
+      "commandVersion": "1.3.0",
+      "style": "SIMPLE",
+      "fashionMarkWidth": null,
+      "base": {
+        "bed": "front",
+        "carrier": 3,
+        "rows": 24,
+        "widthByRows": [
+          {
+            "fromRow": 1,
+            "toRow": 8,
+            "width": 22
+          },
+          {
+            "fromRow": 9,
+            "toRow": 16,
+            "width": 23
+          },
+          {
+            "fromRow": 17,
+            "toRow": 24,
+            "width": 24
+          }
+        ],
+        "selection": {
+          "fromColumn": 2,
+          "toColumn": 24,
+          "fromRow": 1,
+          "toRow": 24
+        }
+      },
+      "settings": {
+        "speed": 300,
+        "roller": 450,
+        "stitch": 6
+      },
+      "exportedDesignRows": 28,
+      "machinePasses": 32,
+      "yarnFedTrRlPasses": [
+        8,
+        20
+      ],
+      "castOnIncluded": false,
+      "bindOffIncluded": false,
+      "physicalStatus": "not knitted",
+      "promotionStatus": "capture only; not admitted to conformance corpus",
+      "editableSourceStatus": "cloud design saved; buck/cstack not yet captured"
+    },
+    {
+      "id": "increase-right-fashioned",
+      "file": "increase-right-fashioned.kc",
+      "sha256": "7d1a3ea6f2a906b29875fbc4499c9e4eed6210de5be897ae8c29a5a481c3e84d",
+      "bytes": 38731,
+      "sourceDownload": "command (15).kc",
+      "sourceDesign": "https://www.customist.com/studio/K4sPFCs",
+      "capturedLocalDate": "2026-11-12",
+      "command": "Increase transfers",
+      "commandVersion": "1.3.0",
+      "style": "FASHIONED",
+      "fashionMarkWidth": 4,
+      "base": {
+        "bed": "front",
+        "carrier": 3,
+        "rows": 24,
+        "widthByRows": [
+          {
+            "fromRow": 1,
+            "toRow": 8,
+            "width": 22
+          },
+          {
+            "fromRow": 9,
+            "toRow": 16,
+            "width": 23
+          },
+          {
+            "fromRow": 17,
+            "toRow": 24,
+            "width": 24
+          }
+        ],
+        "selection": {
+          "fromColumn": 2,
+          "toColumn": 24,
+          "fromRow": 1,
+          "toRow": 24
+        }
+      },
+      "settings": {
+        "speed": 300,
+        "roller": 450,
+        "stitch": 6
+      },
+      "exportedDesignRows": 28,
+      "machinePasses": 32,
+      "yarnFedTrRlPasses": [
+        8,
+        20
+      ],
+      "castOnIncluded": false,
+      "bindOffIncluded": false,
+      "physicalStatus": "not knitted",
+      "promotionStatus": "capture only; not admitted to conformance corpus",
+      "editableSourceStatus": "cloud design saved; buck/cstack not yet captured"
+    }
+  ]
+}
