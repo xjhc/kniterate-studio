@@ -179,7 +179,7 @@
         "$schema": { "$ref": "#/$defs/schemaPath" },
         "kind": { "const": "kniterate-machine-run-v1" },
         "schemaVersion": { "const": 1 },
-        "ranAt": { "$ref": "#/$defs/rfc3339DateTime" },
+        "ranAt": { "anyOf": [{ "$ref": "#/$defs/rfc3339DateTime" }, { "type": "null" }] },
         "machineSerial": { "$ref": "#/$defs/nonEmptyString" },
         "controlSoftwareVersion": { "$ref": "#/$defs/nonEmptyString" },
         "profile": { "$ref": "#/$defs/nonEmptyString" },
@@ -256,7 +256,7 @@
         "structure": { "$ref": "#/$defs/nonEmptyString" },
         "settings": { "$ref": "#/$defs/initialSettings" },
         "measuredBy": { "$ref": "#/$defs/nonEmptyString" },
-        "measuredOn": { "$ref": "#/$defs/isoDate" },
+        "measuredOn": { "anyOf": [{ "$ref": "#/$defs/isoDate" }, { "type": "null" }] },
         "measurements": {
           "type": "object",
           "required": ["offMachine", "rested24h", "steamed", "wetFinished"],
@@ -331,7 +331,7 @@
     "sectionName": {
       "enum": ["waste", "castOn", "drawThread", "carrierBringIn", "body", "backing", "leftEdge", "rightEdge", "bindOff"]
     },
-    "sectionStatus": { "enum": ["clean", "issue", "not-reached", "not-applicable"] },
+    "sectionStatus": { "enum": ["clean", "issue", "not-reached", "not-applicable", "unknown"] },
     "stop": {
       "type": "object",
       "required": ["section", "passIndex", "description"],
@@ -436,16 +436,16 @@
         "kind": { "const": "kniterate-run-observation-v1" },
         "schemaVersion": { "const": 1 },
         "operator": { "$ref": "#/$defs/nonEmptyString" },
-        "startedAt": { "$ref": "#/$defs/rfc3339DateTime" },
-        "endedAt": { "$ref": "#/$defs/rfc3339DateTime" },
+        "startedAt": { "anyOf": [{ "$ref": "#/$defs/rfc3339DateTime" }, { "type": "null" }] },
+        "endedAt": { "anyOf": [{ "$ref": "#/$defs/rfc3339DateTime" }, { "type": "null" }] },
         "outcome": { "enum": ["clean", "dropped", "jammed", "aborted", "partial"] },
         "artifact": {
           "type": "object",
           "required": ["loadedKcodeSha256", "displayedPassCount", "manualProgramEdits"],
           "properties": {
-            "loadedKcodeSha256": { "$ref": "#/$defs/sha256" },
+            "loadedKcodeSha256": { "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
             "displayedPassCount": { "type": ["integer", "null"], "minimum": 0 },
-            "manualProgramEdits": { "type": "boolean" }
+            "manualProgramEdits": { "type": ["boolean", "null"] }
           },
           "additionalProperties": false
         },
@@ -465,7 +465,7 @@
       "maxProperties": 2048,
       "properties": {
         "$schema": { "$ref": "#/$defs/schemaPath" },
-        "kind": { "enum": ["chart", "colorwork-blanket", "manual", "kniterate-studio-project"] },
+        "kind": { "enum": ["chart", "colorwork-blanket", "manual", "kniterate-studio-project", "kniterate-development-experiment"] },
         "inputFiles": {
           "type": "array",
           "maxItems": 64,

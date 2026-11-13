@@ -4,22 +4,26 @@ import { basename, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { readCleanV1KnitTrialReleaseSource } from './build-v1-knit-trial.js';
 import type { AuthoredKCodeCoordinateBridgeV1 } from '../packages/machine-lib/src/knitout/kcode/coordinate-bridge.js';
-import { compileRegistryRequestCurrent, computeCompilerFingerprint } from '../packages/machine-lib/scripts/registry-support.js';
+import { compileRegistryRequestCurrent, computeCompilerFingerprint, MIXED_PAISLEY_EXPERIMENT } from '../packages/machine-lib/scripts/registry-support.js';
 import { materializeColorworkProject, parseColorworkProjectV1 } from '../packages/project-contract/src/index.js';
 
 const GIT_COMMIT = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 
 /** `<short-name> [--package <dir>]`, in either order; without `--package` the fixed V1 rectangle trial is registered. */
-export function parseRegisterArguments(argv: readonly string[]): { shortName: string; packageDirectory: string | undefined } {
+export function parseRegisterArguments(argv: readonly string[]): { shortName: string; packageDirectory: string | undefined; experimentDirectory?: string } {
   const args = argv.filter((argument) => argument !== '--');
   const packageAt = args.indexOf('--package');
   const packageDirectory = packageAt >= 0 ? args[packageAt + 1] : undefined;
+  const experimentAt = args.indexOf('--experiment');
+  const experimentDirectory = experimentAt >= 0 ? args[experimentAt + 1] : undefined;
+  if (experimentAt >= 0 && (experimentDirectory === undefined || experimentDirectory.startsWith('--'))) throw new Error('--experiment needs the issued trial directory with motif.json and program.k/program.kc');
+  if (experimentAt >= 0 && packageAt >= 0) throw new Error('choose --package or --experiment, not both');
   if (packageAt >= 0 && (packageDirectory === undefined || packageDirectory.startsWith('--'))) throw new Error('--package needs a handoff package directory (pnpm studio -- package)');
-  const shortName = args.find((argument, index) => !argument.startsWith('--') && !(packageAt >= 0 && index === packageAt + 1));
+  const shortName = args.find((argument, index) => !argument.startsWith('--') && !(packageAt >= 0 && index === packageAt + 1) && !(experimentAt >= 0 && index === experimentAt + 1));
   if (!shortName || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(shortName)) {
     throw new Error('usage: pnpm release:register -- <short-kebab-name> [--package <handoff-package-dir>]');
   }
-  return { shortName, packageDirectory };
+  return { shortName, packageDirectory, ...(experimentDirectory ? { experimentDirectory } : {}) };
 }
 
 const COORDINATE_SYSTEM = 'compiler/project coordinates mapped to exact KCode/trace coordinates; physical needle labels unverified';
@@ -28,7 +32,8 @@ const COORDINATE_SYSTEM = 'compiler/project coordinates mapped to exact KCode/tr
 interface EntrySource {
   title: string;
   profile: string;
-  specKind: 'colorwork-blanket' | 'kniterate-studio-project';
+  specKind: 'colorwork-blanket' | 'kniterate-studio-project' | 'kniterate-development-experiment';
+  generator?: string;
   compileHash: string;
   compilerFingerprint: string;
   knitoutSha256: string;
@@ -55,6 +60,29 @@ interface EntrySource {
 }
 
 const sha256 = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+
+function experimentSource(directory: string): EntrySource {
+  const root = resolve(directory);
+  const release = readCleanV1KnitTrialReleaseSource();
+  const current = compileRegistryRequestCurrent(root, { kind: 'kniterate-development-experiment', generator: MIXED_PAISLEY_EXPERIMENT, inputFiles: ['motif.json'] });
+  if (!current.ok || !current.expectedMachine || !current.sourceFingerprint || !current.knitoutSha256 || !current.kcodeSha256) throw new Error(current.messages.join('; '));
+  for (const [name, text] of [['program.k', current.knitoutText], ['program.kc', current.kcodeText]] as const) {
+    if (readFileSync(resolve(root, name), 'utf8') !== text) throw new Error(`experiment ${name} does not re-emit byte for byte`);
+  }
+  const machine = current.expectedMachine;
+  return {
+    title: 'Historical mixed-paisley right-edge baseline, 8–21–8',
+    profile: machine.profile, specKind: 'kniterate-development-experiment', generator: MIXED_PAISLEY_EXPERIMENT,
+    compileHash: current.sourceFingerprint, compilerFingerprint: computeCompilerFingerprint(),
+    knitoutSha256: current.knitoutSha256, kcodeSha256: current.kcodeSha256, emitterCommit: release.commit,
+    machine: { coordinateSystem: COORDINATE_SYSTEM, compilerCoordinateStart: machine.compilerCoordinates.start, compilerCoordinateEnd: machine.compilerCoordinates.end, coordinateBridge: machine.coordinateBridge, program: machine.program },
+    wastePasses: machine.program.wastePasses, bindOff: machine.program.bindOff, technique: 'complement', rows: 81,
+    carriers: [...machine.carriers], sourceDirectory: root,
+    files: [['program.k', 'out.k'], ['program.kc', 'out.kc'], ['motif.json', 'motif.json']], inputFiles: ['motif.json'],
+    reemitCommand: 'node --import tsx scripts/experiments/reversible-right-edge-swatch.ts <directory> --wide21 --paisley --mixed-paisley',
+    notes: 'Fixed experimental replay; baseline evidence only, never eligible for Knit-proven. emitterCommit identifies this registration replay, not an independently confirmed original machine run.',
+  };
+}
 
 function packageSource(directory: string): EntrySource {
   const root = resolve(directory);
@@ -183,8 +211,8 @@ return {
 }
 
 function main(): void {
-  const { shortName, packageDirectory } = parseRegisterArguments(process.argv.slice(2));
-  const source = packageDirectory === undefined ? rectangleSource() : packageSource(packageDirectory);
+  const { shortName, packageDirectory, experimentDirectory } = parseRegisterArguments(process.argv.slice(2));
+  const source = experimentDirectory ? experimentSource(experimentDirectory) : packageDirectory === undefined ? rectangleSource() : packageSource(packageDirectory);
   const date = new Date().toISOString().slice(0, 10);
   const id = `${date}-${shortName}`;
   const registryRoot = resolve(process.env.KNITERATE_SWATCH_ROOT ?? 'packages/machine-lib/registry/swatches');
@@ -228,7 +256,8 @@ function main(): void {
   };
   const request = {
     $schema: '../_schema.json',
-    kind: 'kniterate-studio-project',
+    kind: source.specKind === 'kniterate-development-experiment' ? source.specKind : 'kniterate-studio-project',
+    ...(source.generator ? { generator: source.generator } : {}),
     description: source.title,
     reemitCommand: source.reemitCommand,
     inputFiles: source.inputFiles,

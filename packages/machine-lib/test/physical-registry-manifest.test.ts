@@ -28,6 +28,7 @@ import { knitoutToKCodeWithTrace } from '../src/knitout/kniterate/to-kcode.js'
 import {
   compileRegistryRequestCurrent,
   computeCompilerFingerprint,
+  MIXED_PAISLEY_EXPERIMENT,
   sha256Bytes,
 } from '../scripts/registry-support.js'
 
@@ -317,6 +318,53 @@ afterEach(() => {
 })
 
 describe('generated physical registry manifest', { timeout: 30_000 }, () => {
+  it('replays the historical experiment byte for byte through a fixed generator without executing command text', () => {
+    const { root } = registryFixture()
+    const dir = writeCurrentEntry(root)
+    const repo = resolve(import.meta.dirname, '../../..')
+    writeFileSync(join(dir, 'motif.json'), readFileSync(join(repo, 'fixtures/experiments/mixed-paisley-21x81.json')))
+    const request = { kind: 'kniterate-development-experiment', generator: MIXED_PAISLEY_EXPERIMENT, inputFiles: ['motif.json'], reemitCommand: 'must-never-execute' }
+    const current = compileRegistryRequestCurrent(dir, request)
+    expect(current.ok, current.messages.join('; ')).toBe(true)
+    expect(current.kcodeSha256).toBe('0be718de93c415b51ccb859d013a5578f4ff8c2e8cfffc0ce4bd380ee495acd3')
+    expect(current.expectedMachine?.emittedPassCount).toBe(522)
+    for (const [name, text] of [['program.k', current.knitoutText], ['program.kc', current.kcodeText]]) {
+      expect(text).toBe(readFileSync(join(repo, 'docs/physical-trials/2026-11-12/reversible-mixed-paisley-spaced', name!), 'utf8'))
+    }
+    writeObject(join(dir, 'request.json'), request)
+    const spec = readObject(join(dir, 'spec.json'))
+    Object.assign(spec, { sourceFingerprint: current.sourceFingerprint, knitoutSha256: current.knitoutSha256, kcodeSha256: current.kcodeSha256 })
+    writeObject(join(dir, 'spec.json'), spec)
+    writeFileSync(join(dir, 'out.k'), current.knitoutText!)
+    writeFileSync(join(dir, 'out.kc'), current.kcodeText!)
+    // Even an otherwise 'clean' run cannot promote this experimental generator.
+    const result = jsonReport(root).entries[0]!
+    expect(result.stale).toBe(false)
+    expect(result.knitProven).toBe(false)
+    expect(result.promotionMessages).toContain('development experiment replay is baseline evidence only and cannot grant Knit-proven')
+    expect(compileRegistryRequestCurrent(dir, { ...request, generator: '../../evil' }).supported).toBe(false)
+    expect(compileRegistryRequestCurrent(dir, { ...request, inputFiles: ['../motif.json'] }).ok).toBe(false)
+    writeObject(join(dir, 'motif.json'), { width: 21, height: 81, cells: [[0]] })
+    expect(compileRegistryRequestCurrent(dir, request).messages.join('; ')).toContain('21 by 81 binary grid')
+  })
+
+  it.each(['ranAt', 'startedAt', 'endedAt', 'loadedKcodeSha256', 'manualProgramEdits', 'measuredOn', 'section'] as const)('records unknown %s as valid evidence that cannot promote', field => {
+    const { root } = registryFixture()
+    const dir = writeCurrentEntry(root)
+    const file = field === 'ranAt' ? 'machine.json' : field === 'measuredOn' ? 'yarn.json' : 'run.json'
+    const record = readObject(join(dir, file))
+    if (field === 'loadedKcodeSha256' || field === 'manualProgramEdits') record.artifact[field] = null
+    else if (field === 'measuredOn') record.tensionSwatch.measuredOn = null
+    else if (field === 'section') record.observations.sections.body = 'unknown'
+    else record[field] = null
+    writeObject(join(dir, file), record)
+    const result = jsonReport(root).entries[0]!
+    expect(result.ok).toBe(true)
+    expect(result.stale).toBe(false)
+    expect(result.knitProven).toBe(false)
+    expect(result.promotionMessages.some(message => message.includes('unknown'))).toBe(true)
+  })
+
   it('publishes strict structured machine, yarn, and run templates with the exact outcome enum', () => {
     const root = resolve(import.meta.dirname, '../registry/swatches')
     const machine = readObject(join(root, '_template/machine.json'))

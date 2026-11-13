@@ -1,6 +1,7 @@
 /** Isolated physical trial; canonical frame/simulator/backend, no production recipe change. */
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {emitCustomistFairisleFrame} from '../../packages/machine-lib/src/knitout/passes/customist-fairisle-frame.js';
@@ -10,15 +11,19 @@ import {CarriageSimulator} from '../../packages/machine-lib/src/knitout/sim/carr
 import {ALL_CARRIERS,b,f,comment,type KnitoutOp,type KnitoutProgram,type CarrierId,type Direction} from '../../packages/machine-lib/src/knitout/types.js';
 import {writeKnitoutProgram} from '../../packages/machine-lib/src/knitout/emitter.js';
 import {knitoutToKCodeWithTrace} from '../../packages/machine-lib/src/knitout/kniterate/to-kcode.js';
-const mixed=process.argv.includes('--mixed-paisley');
-const originalSmall=process.argv.includes('--original-small');
-const wide=process.argv.includes('--wide21');
+export interface ReversibleRightEdgeOptions {
+  mixed?: boolean;
+  originalSmall?: boolean;
+  wide?: boolean;
+  paisley?: boolean;
+}
+
+/** Pure replay seam for the historical trial. No file I/O or process arguments. */
+export function buildReversibleRightEdgeSwatch(options: ReversibleRightEdgeOptions, motif: { cells: readonly (readonly number[])[] } | null) {
+const { mixed = false, originalSmall = false, wide = false, paisley = false } = options;
 const steps=wide?13:12,totalRows=3+6*steps,decStart=3+3*steps;
-const paisley=process.argv.includes('--paisley');
-const out=process.argv[2]??'../reversible-right-edge-swatch';
 assert(!(originalSmall||mixed)||(wide&&paisley),'Original small motif requires --wide21 --paisley');
-const motifFile=mixed?'fixtures/experiments/mixed-paisley-21x81.json':originalSmall?'fixtures/experiments/original-small-paisley-21x81.json':`fixtures/experiments/reversible-paisley-${wide?'21x81':'20x75'}.json`;
-const motif=paisley?JSON.parse(fs.readFileSync(motifFile,'utf8')):null;
+assert(!paisley || (motif?.cells.length === totalRows && motif.cells.every(row => row.length === (wide ? 21 : 20) && row.every(cell => cell === 0 || cell === 1))), 'Motif must contain the exact binary trial grid');
 const lo=119, initialHi=126;
 const frame=emitCustomistFairisleFrame({needleStart:lo,needleEnd:initialHi,wasteCarrier:'6',bodyCarriers:['3','4'],drawCarrier:'1',wastePasses:80,waste:FAIRISLE_PARK_WASTE_DEFAULTS,intro:FAIRISLE_CARRIER_INTRO_DEFAULTS,retainBackBed:true,catchNeedles:8});
 const ops:KnitoutOp[]=[{kind:'x-carrier-spacing',value:2},{kind:'x-carrier-stopping-distance',value:2.5},...frame.ops];
@@ -74,6 +79,21 @@ for(let n=lo;n<=hi;n++)sim.drop(f(n));for(let n=hi;n>=lo;n--)sim.drop(b(n));
 sim.setRoller(0);for(const c of ['1','3','4','6'] as CarrierId[])sim.out(c);drain();
 const program:KnitoutProgram={version:2,carriers:[...ALL_CARRIERS],machine:'kniterate',gauge:7,position:'Keep',yarns:{'3':'Orange single 2/14 acrylic','4':'Grey single 2/14 acrylic'},kniterate:{xferStyle:'four-pass'},ops};
 const source=writeKnitoutProgram(program),compiled=knitoutToKCodeWithTrace(source,'program.k');assert(compiled.ok,JSON.stringify(compiled));
+return { source, compiled, plan: { needleStart: lo, motif: mixed?'mixed-paisley':originalSmall?'original-small':paisley?'paisley':'solid', rows } };
+}
+
+function main() {
+const mixed=process.argv.includes('--mixed-paisley');
+const originalSmall=process.argv.includes('--original-small');
+const wide=process.argv.includes('--wide21');
+const paisley=process.argv.includes('--paisley');
+const out=process.argv[2]??'../reversible-right-edge-swatch';
+const motifFile=mixed?'fixtures/experiments/mixed-paisley-21x81.json':originalSmall?'fixtures/experiments/original-small-paisley-21x81.json':`fixtures/experiments/reversible-paisley-${wide?'21x81':'20x75'}.json`;
+const motif=paisley?JSON.parse(fs.readFileSync(motifFile,'utf8')):null;
+const { source, compiled, plan } = buildReversibleRightEdgeSwatch({ mixed, originalSmall, wide, paisley }, motif);
 fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,'program.k'),source);fs.writeFileSync(path.join(out,'program.kc'),compiled.kcode);
-fs.writeFileSync(path.join(out,'plan.json'),JSON.stringify({needleStart:lo,motif:mixed?'mixed-paisley':originalSmall?'original-small':paisley?'paisley':'solid',rows},null,2)+'\n');
-console.log(JSON.stringify({output:out,sha256:createHash('sha256').update(compiled.kcode).digest('hex'),bytes:Buffer.byteLength(compiled.kcode),rows:rows.length},null,2));
+fs.writeFileSync(path.join(out,'plan.json'),JSON.stringify(plan,null,2)+'\n');
+console.log(JSON.stringify({output:out,sha256:createHash('sha256').update(compiled.kcode).digest('hex'),bytes:Buffer.byteLength(compiled.kcode),rows:plan.rows.length},null,2));
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) main();
