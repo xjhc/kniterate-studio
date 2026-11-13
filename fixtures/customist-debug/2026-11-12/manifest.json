@@ -56,7 +56,23 @@
       "bindOffIncluded": false,
       "physicalStatus": "not knitted",
       "promotionStatus": "capture only; not admitted to conformance corpus",
-      "editableSourceStatus": "cloud design saved; buck/cstack not yet captured"
+      "editableSourceStatus": "buck and cstack captured; re-import not yet verified",
+      "editableSources": [
+        {
+          "file": "increase-right-simple.cstack.json",
+          "sha256": "b29b322652acae228dcaefdd4e0aeb55b4e9afef4dbe8c165c53d6aec5b75279",
+          "bytes": 9790,
+          "kind": "cstack",
+          "sourceDownload": "Split increase test - Simple.json"
+        },
+        {
+          "file": "increase-right-simple.buck",
+          "sha256": "ddc1d25ac7d99cc6755a8f81218dd565c8b2e18f0e52a99e5ed4d9d58efa8d5b",
+          "bytes": 6792,
+          "kind": "buck",
+          "sourceDownload": "Split increase test - Simple.buck"
+        }
+      ]
     },
     {
       "id": "increase-right-fashioned",
@@ -113,7 +129,23 @@
       "bindOffIncluded": false,
       "physicalStatus": "not knitted",
       "promotionStatus": "capture only; not admitted to conformance corpus",
-      "editableSourceStatus": "cloud design saved; buck/cstack not yet captured"
+      "editableSourceStatus": "buck and cstack captured; re-import not yet verified",
+      "editableSources": [
+        {
+          "file": "increase-right-fashioned.cstack.json",
+          "sha256": "95ffbf435672413d5eb60345f229696a547208ab908ebf91d21780bda1e8919b",
+          "bytes": 9762,
+          "kind": "cstack",
+          "sourceDownload": "Split increase test - Fashioned.json"
+        },
+        {
+          "file": "increase-right-fashioned.buck",
+          "sha256": "8be09b96cac90cdc1d48a4ba64970aa88a0bef8cd369091d2005fc4b8df70a8c",
+          "bytes": 6792,
+          "kind": "buck",
+          "sourceDownload": "Split increase test - Fashioned.buck"
+        }
+      ]
     }
   ]
 }

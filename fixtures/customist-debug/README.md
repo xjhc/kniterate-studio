@@ -18,6 +18,13 @@ row comments 7 and 17). These are useful encoding witnesses, not yet a complete
 semantic or topology audit. There is no cast-on or bind-off. In particular,
 do not run these body-only files from an empty machine bed.
 
+The original buck and cstack downloads are now preserved beside each `.kc`,
+with hashes in the manifest. Re-import is not verified: Chrome's file upload
+stalled, then its native connection closed. The browser troubleshooting guide
+requires enabling **Allow access to file URLs** for the ChatGPT extension.
+The subsequent scratch reversible setup has not produced a valid test export;
+no reversible result should be inferred from the available menu option.
+
 The selection was columns 2–24, rows 1–24; column 1 was excluded by the UI
 selection. The moving right boundary is included. A future full-selection
 control should check whether this matters. `command (14).kc` was byte-identical
