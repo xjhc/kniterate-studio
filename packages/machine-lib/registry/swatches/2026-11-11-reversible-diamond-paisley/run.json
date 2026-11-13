@@ -1,0 +1,52 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-run-observation-v1",
+  "schemaVersion": 1,
+  "operator": "not recorded",
+  "startedAt": "2026-11-11T00:00:00-08:00",
+  "endedAt": "2026-11-11T23:59:59-08:00",
+  "outcome": "partial",
+  "physicalPlacement": {
+    "verified": false,
+    "compilerCoordinateStart": 103,
+    "compilerCoordinateEnd": 150,
+    "physicalNeedleStart": null,
+    "physicalNeedleEnd": null,
+    "orientation": null,
+    "method": null,
+    "verifiedBy": null,
+    "verifiedAt": null
+  },
+  "artifact": {
+    "loadedKcodeSha256": "7217462cfe9297bbffbbe82f78d683f6bde09292f0d979e007039beb5d9c9540",
+    "displayedPassCount": null,
+    "manualProgramEdits": false
+  },
+  "manualInterventions": [],
+  "observations": {
+    "sections": {
+      "waste": "clean",
+      "castOn": "clean",
+      "drawThread": "clean",
+      "carrierBringIn": "issue",
+      "body": "issue",
+      "backing": "issue",
+      "leftEdge": "issue",
+      "rightEdge": "issue",
+      "bindOff": "not-applicable"
+    },
+    "stops": [],
+    "dimensionsCm": {
+      "offMachine": {
+        "status": "not-measured",
+        "reason": "not recorded"
+      },
+      "rested24h": {
+        "status": "not-measured",
+        "reason": "not recorded"
+      }
+    },
+    "photos": [],
+    "notes": "Report received 2026-11-11; exact run times not recorded; date fields bound the report day, not measured machine timestamps. Finished diamond visible in IMG_1185.HEIC and IMG_1186.HEIC supplied by operator; not a clean/promotable run. Repeated stops described as crump (likely CLUMP) during C1/C6 shuffling; pass numbers, count, contact cause, and interventions not recorded. Increase edges show open-looking loops, especially orange bars on grey face; decreases look satisfactory to operator. Sections marked clean had no defect reported, not independent verification. Photos remain local; publication not authorized for these two images. No diamond dimensions recorded. Outcome partial denotes incomplete validation/defective result, not an assertion that the machine stopped before finishing. Exact candidate re-emits byte-for-byte. SD hash was verified before ejection, but controller-loaded bytes not independently read back."
+  }
+}

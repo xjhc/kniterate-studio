@@ -1,0 +1,295 @@
+{
+  "kind": "kniterate-studio-split-gate2-regression-evidence",
+  "softwareOnly": true,
+  "preMergeHead": "4ff4ed26a51c0b986b929e020599bafaf33f463f",
+  "operatorFork": "da30721363879cd183fefe2968aac5d952ebb813",
+  "originalCasesUnchanged": 40,
+  "matrixCasesPassing": 47,
+  "changedMergedCases": [
+    "diamond-48.kc"
+  ],
+  "files": [
+    {
+      "file": "beanie-birdseye.kc",
+      "originalSha256": "50166ff0f4be855c0d37ee88404f53effb8adb62b72ff51a327d67c40932c5a7",
+      "mergedBeforeRepairSha256": "50166ff0f4be855c0d37ee88404f53effb8adb62b72ff51a327d67c40932c5a7",
+      "finalSha256": "50166ff0f4be855c0d37ee88404f53effb8adb62b72ff51a327d67c40932c5a7"
+    },
+    {
+      "file": "beanie-rib.kc",
+      "originalSha256": "871bfac1834616ec50771c08bb9350cd23eef9a0f46319d6ac1d57caff3aa2ea",
+      "mergedBeforeRepairSha256": "871bfac1834616ec50771c08bb9350cd23eef9a0f46319d6ac1d57caff3aa2ea",
+      "finalSha256": "871bfac1834616ec50771c08bb9350cd23eef9a0f46319d6ac1d57caff3aa2ea"
+    },
+    {
+      "file": "beanie-toque.kc",
+      "originalSha256": "4d6cec6dc91288407f0fcb36530999444c97a56e6a406ce1f29a2464e356452b",
+      "mergedBeforeRepairSha256": "4d6cec6dc91288407f0fcb36530999444c97a56e6a406ce1f29a2464e356452b",
+      "finalSha256": "4d6cec6dc91288407f0fcb36530999444c97a56e6a406ce1f29a2464e356452b"
+    },
+    {
+      "file": "chart-birdseye-12.kc",
+      "originalSha256": "43e0b1d0c580c000451ca5f2e73412558b72b571b903726866392c62429ff975",
+      "mergedBeforeRepairSha256": "43e0b1d0c580c000451ca5f2e73412558b72b571b903726866392c62429ff975",
+      "finalSha256": "43e0b1d0c580c000451ca5f2e73412558b72b571b903726866392c62429ff975"
+    },
+    {
+      "file": "chart-birdseye-19.kc",
+      "originalSha256": "ee36875ca2c1a36e83b37a27265dfd16ca05ab86638ac8c70a6b921ebcd0b1c7",
+      "mergedBeforeRepairSha256": "ee36875ca2c1a36e83b37a27265dfd16ca05ab86638ac8c70a6b921ebcd0b1c7",
+      "finalSha256": "ee36875ca2c1a36e83b37a27265dfd16ca05ab86638ac8c70a6b921ebcd0b1c7"
+    },
+    {
+      "file": "chart-birdseye-20.kc",
+      "originalSha256": "e99dfcf7f99a5ccd15203d650b48e3d989909dc5bd3bd72f8c86de77cf63f857",
+      "mergedBeforeRepairSha256": "e99dfcf7f99a5ccd15203d650b48e3d989909dc5bd3bd72f8c86de77cf63f857",
+      "finalSha256": "e99dfcf7f99a5ccd15203d650b48e3d989909dc5bd3bd72f8c86de77cf63f857"
+    },
+    {
+      "file": "chart-birdseye-21.kc",
+      "originalSha256": "1dfc90203effda5f5b8698d8dec036fee05d75008039064f0ac47fb5a3115891",
+      "mergedBeforeRepairSha256": "1dfc90203effda5f5b8698d8dec036fee05d75008039064f0ac47fb5a3115891",
+      "finalSha256": "1dfc90203effda5f5b8698d8dec036fee05d75008039064f0ac47fb5a3115891"
+    },
+    {
+      "file": "chart-birdseye-60.kc",
+      "originalSha256": "94cdca7aa48b73f8f76b7e2ac25ecdf5501672ac9255a6e1a2ef6deebd9e602d",
+      "mergedBeforeRepairSha256": "94cdca7aa48b73f8f76b7e2ac25ecdf5501672ac9255a6e1a2ef6deebd9e602d",
+      "finalSha256": "94cdca7aa48b73f8f76b7e2ac25ecdf5501672ac9255a6e1a2ef6deebd9e602d"
+    },
+    {
+      "file": "chart-birdseye-9.kc",
+      "originalSha256": "f4cd8c2e4ffc904d1d02fc44b8e9f69e4af699febd2fbe45e5b4fe765d70a094",
+      "mergedBeforeRepairSha256": "f4cd8c2e4ffc904d1d02fc44b8e9f69e4af699febd2fbe45e5b4fe765d70a094",
+      "finalSha256": "f4cd8c2e4ffc904d1d02fc44b8e9f69e4af699febd2fbe45e5b4fe765d70a094"
+    },
+    {
+      "file": "chart-complement-12.kc",
+      "originalSha256": null,
+      "mergedBeforeRepairSha256": "69d038f98d181871f2f5c0a90093505053ba67128caf9ea6eb22af36e35f71a7",
+      "finalSha256": "69d038f98d181871f2f5c0a90093505053ba67128caf9ea6eb22af36e35f71a7"
+    },
+    {
+      "file": "chart-complement-19.kc",
+      "originalSha256": null,
+      "mergedBeforeRepairSha256": "edddaa6f74445b7104875c6238986b8cbf39b30f0ca91bb2357756d4a6995b0c",
+      "finalSha256": "edddaa6f74445b7104875c6238986b8cbf39b30f0ca91bb2357756d4a6995b0c"
+    },
+    {
+      "file": "chart-complement-20.kc",
+      "originalSha256": null,
+      "mergedBeforeRepairSha256": "12305fbe90e335750ca75ec7d755bcdba9acbdf8e9974a0b73eea479ea38c3ab",
+      "finalSha256": "12305fbe90e335750ca75ec7d755bcdba9acbdf8e9974a0b73eea479ea38c3ab"
+    },
+    {
+      "file": "chart-complement-21.kc",
+      "originalSha256": null,
+      "mergedBeforeRepairSha256": "77aaaee89426a62455270c74c18269f7cab24ceb84cbdcd57b78e4e5d087d8f2",
+      "finalSha256": "77aaaee89426a62455270c74c18269f7cab24ceb84cbdcd57b78e4e5d087d8f2"
+    },
+    {
+      "file": "chart-complement-60.kc",
+      "originalSha256": null,
+      "mergedBeforeRepairSha256": "7379710c2abd849d1fd8b58f9ec9f714ed6a6de06fcfb32af2c954656e478e27",
+      "finalSha256": "7379710c2abd849d1fd8b58f9ec9f714ed6a6de06fcfb32af2c954656e478e27"
+    },
+    {
+      "file": "chart-complement-9.kc",
+      "originalSha256": null,
+      "mergedBeforeRepairSha256": "60e7f93b5118a9caa3b6aa8b968dbd0cb187d195dd955a916bb4d3df653489e6",
+      "finalSha256": "60e7f93b5118a9caa3b6aa8b968dbd0cb187d195dd955a916bb4d3df653489e6"
+    },
+    {
+      "file": "chart-fairisle-12.kc",
+      "originalSha256": "98e8a9723afc20dd4433241bb77a9ffecc0ec4f7c521ec15da53fac5ae0fb0ac",
+      "mergedBeforeRepairSha256": "98e8a9723afc20dd4433241bb77a9ffecc0ec4f7c521ec15da53fac5ae0fb0ac",
+      "finalSha256": "98e8a9723afc20dd4433241bb77a9ffecc0ec4f7c521ec15da53fac5ae0fb0ac"
+    },
+    {
+      "file": "chart-fairisle-19.kc",
+      "originalSha256": "bdadbd069cc24c89f66c402535a32a1a1cad464bd207f5a18d895b2c88afb877",
+      "mergedBeforeRepairSha256": "bdadbd069cc24c89f66c402535a32a1a1cad464bd207f5a18d895b2c88afb877",
+      "finalSha256": "bdadbd069cc24c89f66c402535a32a1a1cad464bd207f5a18d895b2c88afb877"
+    },
+    {
+      "file": "chart-fairisle-20.kc",
+      "originalSha256": "4510cbba02fd522ab3ac792e7506e5e6f205e731e32ed4d2b6ac1e70123c6206",
+      "mergedBeforeRepairSha256": "4510cbba02fd522ab3ac792e7506e5e6f205e731e32ed4d2b6ac1e70123c6206",
+      "finalSha256": "4510cbba02fd522ab3ac792e7506e5e6f205e731e32ed4d2b6ac1e70123c6206"
+    },
+    {
+      "file": "chart-fairisle-21.kc",
+      "originalSha256": "d0a8e7a081c6cfe7988d485818ebf8e13e5366a77f9dde6ffa6bd0bbcca5d533",
+      "mergedBeforeRepairSha256": "d0a8e7a081c6cfe7988d485818ebf8e13e5366a77f9dde6ffa6bd0bbcca5d533",
+      "finalSha256": "d0a8e7a081c6cfe7988d485818ebf8e13e5366a77f9dde6ffa6bd0bbcca5d533"
+    },
+    {
+      "file": "chart-fairisle-60.kc",
+      "originalSha256": "2722c74a2a4d8572a7474e705073cd9f8855e9b4820f8b1ea4731d18f5f13f49",
+      "mergedBeforeRepairSha256": "2722c74a2a4d8572a7474e705073cd9f8855e9b4820f8b1ea4731d18f5f13f49",
+      "finalSha256": "2722c74a2a4d8572a7474e705073cd9f8855e9b4820f8b1ea4731d18f5f13f49"
+    },
+    {
+      "file": "chart-fairisle-9.kc",
+      "originalSha256": "675e1f16df6e61b324134fcb629a9517f084350f1586c4189d0a7a6aa56bfd35",
+      "mergedBeforeRepairSha256": "675e1f16df6e61b324134fcb629a9517f084350f1586c4189d0a7a6aa56bfd35",
+      "finalSha256": "675e1f16df6e61b324134fcb629a9517f084350f1586c4189d0a7a6aa56bfd35"
+    },
+    {
+      "file": "diamond-48.kc",
+      "originalSha256": null,
+      "mergedBeforeRepairSha256": "ae2c98fac28c68468938870794b8bc2991fa9d0c11b62561681d68175b40b489",
+      "finalSha256": "b197be8722b4b405397a8e7b89daaaa7597e47d6c6d6c726aa41739654a6e668"
+    },
+    {
+      "file": "panel-narrow-panel.kc",
+      "originalSha256": "8b95ec6e9c810e266dc013399f5bc34453c8a3811c4b2f330e9c58101540f4af",
+      "mergedBeforeRepairSha256": "8b95ec6e9c810e266dc013399f5bc34453c8a3811c4b2f330e9c58101540f4af",
+      "finalSha256": "8b95ec6e9c810e266dc013399f5bc34453c8a3811c4b2f330e9c58101540f4af"
+    },
+    {
+      "file": "panel-scarf-panel.kc",
+      "originalSha256": "0b92d472b81129e30251124569b293ed5585168441b8217d0d4a6c05e1fa1520",
+      "mergedBeforeRepairSha256": "0b92d472b81129e30251124569b293ed5585168441b8217d0d4a6c05e1fa1520",
+      "finalSha256": "0b92d472b81129e30251124569b293ed5585168441b8217d0d4a6c05e1fa1520"
+    },
+    {
+      "file": "sweater-drop-shoulder-crew-back.kc",
+      "originalSha256": "b61ce1de7f40929a1a835b801a8983ec120202daeaeb8f75ec03f0264b0d2d5a",
+      "mergedBeforeRepairSha256": "b61ce1de7f40929a1a835b801a8983ec120202daeaeb8f75ec03f0264b0d2d5a",
+      "finalSha256": "b61ce1de7f40929a1a835b801a8983ec120202daeaeb8f75ec03f0264b0d2d5a"
+    },
+    {
+      "file": "sweater-drop-shoulder-crew-front.kc",
+      "originalSha256": "9059332af6e74f5ae62f40af1ccce00c78dd7c641d9275b10894d136944b9e9d",
+      "mergedBeforeRepairSha256": "9059332af6e74f5ae62f40af1ccce00c78dd7c641d9275b10894d136944b9e9d",
+      "finalSha256": "9059332af6e74f5ae62f40af1ccce00c78dd7c641d9275b10894d136944b9e9d"
+    },
+    {
+      "file": "sweater-drop-shoulder-crew-neckband.kc",
+      "originalSha256": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca",
+      "mergedBeforeRepairSha256": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca",
+      "finalSha256": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca"
+    },
+    {
+      "file": "sweater-drop-shoulder-crew-sleeve.kc",
+      "originalSha256": "387e166f619dd3a78e3cf3e73752f890575181bdb0ce45afb74726aa28987bb8",
+      "mergedBeforeRepairSha256": "387e166f619dd3a78e3cf3e73752f890575181bdb0ce45afb74726aa28987bb8",
+      "finalSha256": "387e166f619dd3a78e3cf3e73752f890575181bdb0ce45afb74726aa28987bb8"
+    },
+    {
+      "file": "sweater-j-sleeve-crew-back.kc",
+      "originalSha256": "eb0384bfb212022e55ef464ae4a8efadf307a290f00d5107e3e81666cdae2800",
+      "mergedBeforeRepairSha256": "eb0384bfb212022e55ef464ae4a8efadf307a290f00d5107e3e81666cdae2800",
+      "finalSha256": "eb0384bfb212022e55ef464ae4a8efadf307a290f00d5107e3e81666cdae2800"
+    },
+    {
+      "file": "sweater-j-sleeve-crew-front.kc",
+      "originalSha256": "f8b8122977f7302906303e6e2154dd457e5613d52540fb4516c95c3adc81ca81",
+      "mergedBeforeRepairSha256": "f8b8122977f7302906303e6e2154dd457e5613d52540fb4516c95c3adc81ca81",
+      "finalSha256": "f8b8122977f7302906303e6e2154dd457e5613d52540fb4516c95c3adc81ca81"
+    },
+    {
+      "file": "sweater-j-sleeve-crew-neckband.kc",
+      "originalSha256": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca",
+      "mergedBeforeRepairSha256": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca",
+      "finalSha256": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca"
+    },
+    {
+      "file": "sweater-j-sleeve-crew-sleeve.kc",
+      "originalSha256": "6190ab56e272eb4d7b2d90bb7e31637ddaf7a120b071954983fc71cfc66ca656",
+      "mergedBeforeRepairSha256": "6190ab56e272eb4d7b2d90bb7e31637ddaf7a120b071954983fc71cfc66ca656",
+      "finalSha256": "6190ab56e272eb4d7b2d90bb7e31637ddaf7a120b071954983fc71cfc66ca656"
+    },
+    {
+      "file": "sweater-set-in-boat-back.kc",
+      "originalSha256": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680",
+      "mergedBeforeRepairSha256": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680",
+      "finalSha256": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680"
+    },
+    {
+      "file": "sweater-set-in-boat-front.kc",
+      "originalSha256": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680",
+      "mergedBeforeRepairSha256": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680",
+      "finalSha256": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680"
+    },
+    {
+      "file": "sweater-set-in-boat-sleeve.kc",
+      "originalSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "mergedBeforeRepairSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "finalSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c"
+    },
+    {
+      "file": "sweater-set-in-crew-back.kc",
+      "originalSha256": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4",
+      "mergedBeforeRepairSha256": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4",
+      "finalSha256": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4"
+    },
+    {
+      "file": "sweater-set-in-crew-front.kc",
+      "originalSha256": "7f513ab2880cc2729918b3176fb064c6253db9d3e82d8c08cd0def877aa391d5",
+      "mergedBeforeRepairSha256": "7f513ab2880cc2729918b3176fb064c6253db9d3e82d8c08cd0def877aa391d5",
+      "finalSha256": "7f513ab2880cc2729918b3176fb064c6253db9d3e82d8c08cd0def877aa391d5"
+    },
+    {
+      "file": "sweater-set-in-crew-neckband.kc",
+      "originalSha256": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca",
+      "mergedBeforeRepairSha256": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca",
+      "finalSha256": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca"
+    },
+    {
+      "file": "sweater-set-in-crew-sleeve.kc",
+      "originalSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "mergedBeforeRepairSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "finalSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c"
+    },
+    {
+      "file": "sweater-set-in-square-back.kc",
+      "originalSha256": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4",
+      "mergedBeforeRepairSha256": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4",
+      "finalSha256": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4"
+    },
+    {
+      "file": "sweater-set-in-square-front.kc",
+      "originalSha256": "c156f027754a7a19014512c69c084b498b9bebf83ad739e03655222c2d4bd1ba",
+      "mergedBeforeRepairSha256": "c156f027754a7a19014512c69c084b498b9bebf83ad739e03655222c2d4bd1ba",
+      "finalSha256": "c156f027754a7a19014512c69c084b498b9bebf83ad739e03655222c2d4bd1ba"
+    },
+    {
+      "file": "sweater-set-in-square-neckband.kc",
+      "originalSha256": "bfab21efe29d96068d957ae943f035a5a38286a3929dce5359dc14a0a74e979a",
+      "mergedBeforeRepairSha256": "bfab21efe29d96068d957ae943f035a5a38286a3929dce5359dc14a0a74e979a",
+      "finalSha256": "bfab21efe29d96068d957ae943f035a5a38286a3929dce5359dc14a0a74e979a"
+    },
+    {
+      "file": "sweater-set-in-square-sleeve.kc",
+      "originalSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "mergedBeforeRepairSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "finalSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c"
+    },
+    {
+      "file": "sweater-set-in-v-back.kc",
+      "originalSha256": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4",
+      "mergedBeforeRepairSha256": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4",
+      "finalSha256": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4"
+    },
+    {
+      "file": "sweater-set-in-v-front.kc",
+      "originalSha256": "f30441ebd3fc6d419107a439316d9b354beafe15ede5a73a05f360be244b0bca",
+      "mergedBeforeRepairSha256": "f30441ebd3fc6d419107a439316d9b354beafe15ede5a73a05f360be244b0bca",
+      "finalSha256": "f30441ebd3fc6d419107a439316d9b354beafe15ede5a73a05f360be244b0bca"
+    },
+    {
+      "file": "sweater-set-in-v-neckband.kc",
+      "originalSha256": "3be7cf8ac242040b26883f2038f471013d967d140b17d61f175c5019f75c3197",
+      "mergedBeforeRepairSha256": "3be7cf8ac242040b26883f2038f471013d967d140b17d61f175c5019f75c3197",
+      "finalSha256": "3be7cf8ac242040b26883f2038f471013d967d140b17d61f175c5019f75c3197"
+    },
+    {
+      "file": "sweater-set-in-v-sleeve.kc",
+      "originalSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "mergedBeforeRepairSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "finalSha256": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c"
+    }
+  ]
+}

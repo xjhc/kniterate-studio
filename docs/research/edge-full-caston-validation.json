@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "reference": "swatch.kc",
+  "normalization": "80→40 columns, placement offset, body carrier C5→C3",
+  "matches": [
+    {
+      "trialPass": 106,
+      "referencePass": 98,
+      "actions": 80
+    },
+    {
+      "trialPass": 107,
+      "referencePass": 99,
+      "actions": 40
+    },
+    {
+      "trialPass": 108,
+      "referencePass": 100,
+      "actions": 40
+    },
+    {
+      "trialPass": 109,
+      "referencePass": 101,
+      "actions": 20
+    },
+    {
+      "trialPass": 110,
+      "referencePass": 102,
+      "actions": 20
+    },
+    {
+      "trialPass": 111,
+      "referencePass": 103,
+      "actions": 40
+    }
+  ],
+  "oldCastOnRejected": true,
+  "unchangedRemainingBodyPasses": 141,
+  "idleC1C6BodyPasses": 0,
+  "physicalValidation": false
+}

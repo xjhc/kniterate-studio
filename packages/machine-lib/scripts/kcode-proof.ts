@@ -84,6 +84,9 @@ const STUDIO_PROOF_TESTS = [
   'src/studioCli.test.ts',
   'src/parity.test.ts',
   'src/blanket/compileProject.test.ts',
+  'src/reversibleChart.test.ts',
+  'src/diamondChart.test.ts',
+  'src/splitSwatch.test.ts',
   'src/blanket/birdseyeBody.test.ts',
   'src/kcode/compileKCodeArtifact.test.ts',
   'src/kcode/MachineMovementView.test.tsx',
@@ -215,9 +218,14 @@ function collectFingerprintSources(root: string): string[] {
     ...filesUnder('test'),
     ...filesUnder('../../scripts'),
     ...filesUnder('../../fixtures/colorwork-chart-v1'),
-    // Bind captured machine files used by parity tests without promoting them into the reference
-    // corpus. Screenshots and editable Customist source stacks are not proof inputs.
-    ...filesUnder('../../fixtures/customist-debug').filter((path) => path.endsWith('.kc')),
+    '../../fixtures/experiments/edge-swatch-original.k',
+    // Only the eleven debug captures read by shaped-panel.test.ts. New, rejected, or reversible
+    // captures must not stale the receipt until a proof test actually uses them.
+    ...(['left', 'right'] as const).flatMap((side) => [0, 1].flatMap((phase) => ['simple', 'fashioned'].map((style) =>
+      `../../fixtures/customist-debug/2026-11-13/raw/${side}-phase${phase}-${style}.kc`))),
+    '../../fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-simple.kc',
+    '../../fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-fashioned.kc',
+    '../../fixtures/customist-debug/2026-11-13-followup/raw/fashioned-width2.kc',
     ...filesUnder('../../apps/studio/src'),
     ...filesUnder('../chart-contract/src'),
     ...filesUnder('../colorwork-core/src'),

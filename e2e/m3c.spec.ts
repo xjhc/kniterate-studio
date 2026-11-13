@@ -12,8 +12,8 @@ test('blanket setup persists intent and the Worker owns live compile verdicts', 
   await expect(page.getByLabel(/^Status: (File checks passed|1 thing to check)$/)).toBeVisible({ timeout: 15_000 });
   await openPanelSections(page);
   await expect(page.getByRole('button', { name: /Fairisle/ })).not.toContainText('Calculating', { timeout: 15_000 });
-  // Only backings with a Customist-matched reference program are offered.
-  await expect(page.locator('.strategy-segments button')).toHaveCount(2);
+  // Charts offer Fairisle, Birdseye and the reversible development construction.
+  await expect(page.locator('.strategy-segments button')).toHaveCount(3);
 
   await page.getByRole('button', { name: /Fairisle/ }).click();
   await page.getByLabel('Longest float', { exact: true }).fill('7');

@@ -32,15 +32,15 @@ function replay(trace: MachineTraceV1) {
   for (const pass of trace.passes) {
     rack = Math.max(rack, Math.abs(pass.rack))
     for (const action of pass.actions) {
-      if (action.kind === 'knit') { const k = key(action.at.bed, action.at.kcodeColumn); deepest = Math.max(deepest, loops.get(k) ?? 0); loops.set(k, 1) }
-      else if (action.kind === 'tuck') { const k = key(action.at.bed, action.at.kcodeColumn); loops.set(k, (loops.get(k) ?? 0) + 1); deepest = Math.max(deepest, loops.get(k)!) }
-      else if (action.kind === 'drop') loops.set(key(action.at.bed, action.at.kcodeColumn), 0)
-      else if (action.kind === 'xfer') {
-        const from = key(action.source.bed, action.source.kcodeColumn)
-        const to = key(action.target.bed, action.target.kcodeColumn)
+      if (action.kind === 'knit') { const k = key(action.at.bed, action.at.traceCoordinate); deepest = Math.max(deepest, loops.get(k) ?? 0); loops.set(k, 1) }
+      else if (action.kind === 'tuck') { const k = key(action.at.bed, action.at.traceCoordinate); loops.set(k, (loops.get(k) ?? 0) + 1); deepest = Math.max(deepest, loops.get(k)!) }
+      else if (action.kind === 'drop') loops.set(key(action.at.bed, action.at.traceCoordinate), 0)
+      else if (action.kind === 'xfer' || action.kind === 'split') {
+        const from = key(action.source.bed, action.source.traceCoordinate)
+        const to = key(action.target.bed, action.target.traceCoordinate)
         loops.set(to, (loops.get(to) ?? 0) + (loops.get(from) ?? 0))
         deepest = Math.max(deepest, loops.get(to)!)
-        loops.set(from, 0)
+        loops.set(from, action.kind === 'split' ? 1 : 0)
       }
     }
   }
@@ -91,6 +91,18 @@ function front(stitch: (n: number, r: number) => PanelStitchV1 = knit): PanelRow
 }
 
 describe('shaped panel', () => {
+  it('counts split loops in the same needle frame as carrierless transfers', () => {
+    // Two held loops move to the rear during the split; returning them onto the new front loop
+    // makes a deliberately excessive stack of three. Ignoring splits or the stroke offset misses it.
+    const converted = authoredKnitoutToKCodeWithTrace([
+      ';!knitout-2', ';;Machine: kniterate', ';;Carriers: 1 2 3 4 5 6',
+      'x-stitch-number 6', 'x-speed-number 300', 'x-roller-advance 450', 'in 3',
+      'tuck + f100 3', 'tuck - f100 3', 'split + f100 b100 3', 'xfer b100 f100', 'out 3', '',
+    ].join('\n'))
+    if (!converted.ok) throw new Error(converted.error)
+    expect(replay(traceOf(converted.kcode))).toEqual({ deepest: 3, rack: 0 })
+  })
+
   it('knits a jersey front with rib, armhole bind-offs and a split neck within machine limits', { timeout: 60_000 }, () => {
     const trace = expectMachineValid({ ...CARRIERS, rows: front(), top: 'bind-off' })
     // The right shoulder is knitted by the second yarn after the split.
@@ -251,9 +263,8 @@ describe('shaped panel', () => {
       })
       const reference = increases(traceOf(readFileSync(new URL(file, import.meta.url), 'utf8')))
       expect(reference).toHaveLength(2)
-      const trace = strictTrace({ rows, ...CARRIERS, top: 'waste', fashion })
+      const trace = expectMachineValid({ rows, ...CARRIERS, top: 'waste', fashion })
       expect(increases(trace)).toEqual(reference)
-      expect(validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2).diagnostics.filter((diagnostic) => diagnostic.severity === 'error')).toEqual([])
       expect(validateKCodeMachineSafetyV1(trace, KNITERATE_7GG_KCODE_PROFILE_V2).diagnostics).toEqual([])
       // No needle knits empty once the jersey body has started, and each increase is one split.
       const loops = new Set<string>()

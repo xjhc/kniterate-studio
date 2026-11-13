@@ -60,6 +60,8 @@ export interface JacquardComplementInput {
   needleStart: number;
   handoff: SimulatorHandoff;
   initialNextDirection?: Direction;
+  /** False for a reversible chart ending in supporting waste on both beds. */
+  homeBackBed?: boolean;
   /** Slow the first actual body row after cast-on, then restore body
    *  speed for row 1+. */
   firstRowSpeedOverride?: FirstRowSpeedOverride;
@@ -136,7 +138,7 @@ export function emitJacquardComplementWalk(
   // `linedBackBed` consolidation row consumes the resulting doubles.
   const homeCols: number[] = [];
   for (let c = 0; c < resolved.cols; c++) homeCols.push(needleStart + c);
-  if (homeCols.length > 0) {
+  if (input.homeBackBed !== false && homeCols.length > 0) {
     ops.push(comment('-- lined finish: home final-row lining b->f --'));
     ops.push(...emitNonAdjacentXferBatches(
       homeCols.map(needle => ({ needle, direction: 'b-to-f' as const })),

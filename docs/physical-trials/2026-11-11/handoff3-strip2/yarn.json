@@ -1,0 +1,80 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-yarn-evidence-v1",
+  "schemaVersion": 1,
+  "yarns": [
+    {
+      "carrier": "1",
+      "role": "draw",
+      "name": "not recorded",
+      "fiber": "not recorded",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "weight": "not recorded",
+      "ply": null,
+      "color": "not recorded",
+      "coneSource": "not recorded"
+    },
+    {
+      "carrier": "2",
+      "role": "pattern",
+      "name": "Main",
+      "fiber": "not recorded",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "weight": "not recorded",
+      "ply": null,
+      "color": "not recorded",
+      "coneSource": "not recorded"
+    },
+    {
+      "carrier": "6",
+      "role": "waste",
+      "name": "not recorded",
+      "fiber": "not recorded",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "weight": "not recorded",
+      "ply": null,
+      "color": "not recorded",
+      "coneSource": "not recorded"
+    }
+  ],
+  "tensionSwatch": {
+    "machineProfile": "kniterate-7gg-worsted-v1",
+    "structure": "not recorded",
+    "settings": {
+      "stitchNumber": 9,
+      "xferStitchNumber": 5,
+      "speedNumber": 200,
+      "rollerAdvance": 450,
+      "xferStyle": "four-pass",
+      "carrierSpacing": 2,
+      "carrierStoppingDistance": 2.5
+    },
+    "measuredBy": "not recorded",
+    "measuredOn": "1970-01-01",
+    "measurements": {
+      "offMachine": {
+        "status": "not-performed",
+        "reason": "not recorded"
+      },
+      "rested24h": {
+        "status": "not-performed",
+        "reason": "not recorded"
+      },
+      "steamed": {
+        "status": "not-performed",
+        "reason": "not recorded"
+      },
+      "wetFinished": {
+        "status": "not-performed",
+        "reason": "not recorded"
+      }
+    },
+    "notes": "not recorded"
+  }
+}

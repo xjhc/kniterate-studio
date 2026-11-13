@@ -1406,7 +1406,8 @@ function main(): void {
       for (const message of result.promotionMessages.slice(0, 8)) process.stdout.write(`      promotion: ${message}\n`);
     }
   }
-  if (!ok) process.exit(2);
+  // Let piped stdout drain before exiting; immediate exit can truncate JSON reports.
+  if (!ok) process.exitCode = 2;
 }
 
 main();

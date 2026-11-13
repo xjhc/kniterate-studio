@@ -96,7 +96,7 @@ describe('blanket project compiler', () => {
   });
 
   it('blocks backings without a Customist-matched reference program', () => {
-    for (const technique of ['ladder-back', 'lined', 'complement'] as const) {
+    for (const technique of ['ladder-back', 'lined'] as const) {
       let project = createColorworkProjectV1(chart, { id: `unmatched-${technique}` });
       project = appendProjectEdit(project, { id: 'strategy', source: 'human', edit: { kind: 'set-strategy', strategy: { technique, floatLimit: 5 } } });
       const artifact = compileColorworkProject(project);

@@ -1,3 +1,4 @@
+import { diamondRangesV1 } from '../../packages/machine-lib/src/colorwork/diamond-chart.js';
 import type { ProjectState } from '../../packages/project-contract/src/index.ts';
 import type { AuthoredPipelineResult } from '../../apps/studio/src/authoredPipeline.ts';
 import type { RgbaImage } from './png.ts';
@@ -55,7 +56,9 @@ function renderChart(state: ProjectState): RenderResult {
   const cell = cellSize(state, chart.width, chart.height);
   const image = blank(chart.width * cell.width, chart.height * cell.height);
   const colors = chart.palette.map((entry) => parseHex(entry.hex));
+  const bounds = state.strategy.diamond ? diamondRangesV1(chart.width, chart.height, state.strategy.diamond).reverse() : null;
   chart.cells.forEach((row, rowIndex) => row.forEach((paletteIndex, column) => {
+    if (bounds && (column < bounds[rowIndex]!.lo || column > bounds[rowIndex]!.hi)) return;
     fillRect(image, column * cell.width, rowIndex * cell.height, cell.width, cell.height, colors[paletteIndex] ?? BACKGROUND);
   }));
   return {

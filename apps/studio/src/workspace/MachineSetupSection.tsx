@@ -18,6 +18,7 @@ type Construction = keyof typeof CUSTOMIST_STANDARD_WASTE_PASSES_V1;
 export function wasteConstruction(state: ProjectState): Construction {
   if (state.object !== undefined) return 'flat';
   const colours = new Set(state.chart.cells.flat()).size;
+  if (state.object === undefined && state.strategy.technique === 'complement') return 'complement';
   return colours >= 2 && state.strategy.technique === 'birdseye' ? 'birdseye' : 'fairisle';
 }
 
@@ -41,6 +42,7 @@ type Standard = Required<SectionSettings>;
 /** The reference's body settings for this project, or null when it has no body to set (a beanie all in rib). */
 export function bodyStandard(state: ProjectState): Standard | null {
   if (state.object?.kind === 'beanie' && beanieObjectOf(state)?.construction !== 'rib-cuff-jersey-body') return null;
+  if (wasteConstruction(state) === 'complement') return CUSTOMIST_STANDARD_BODY_SETTINGS_V1.complement;
   const birdseye = state.object?.kind === 'beanie' ? state.strategy.technique === 'birdseye' : wasteConstruction(state) === 'birdseye';
   return CUSTOMIST_STANDARD_BODY_SETTINGS_V1[birdseye ? 'birdseye' : 'fairisle'];
 }
@@ -51,7 +53,7 @@ export function sectionStandards(state: ProjectState): { key: SetupSection; labe
   const body = bodyStandard(state);
   if (construction !== 'flat') return [
     { key: 'waste', label: 'Waste', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1[construction].waste },
-    ...(construction === 'fairisle' ? [{ key: 'castOn' as const, label: 'Cast-on', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1.fairisle.castOn, note: 'Stitch size and roller set the first zig-zag row; speed sets all three cast-on rows.' }] : []),
+    ...((construction === 'fairisle' || construction === 'complement') ? [{ key: 'castOn' as const, label: 'Cast-on', standard: CUSTOMIST_STANDARD_SECTION_SETTINGS_V1[construction === 'complement' ? 'complement' : 'fairisle'].castOn, note: 'Stitch size and roller set the first zig-zag row; speed sets all three cast-on rows.' }] : []),
     ...(body ? [{ key: 'body' as const, label: 'Body', standard: body }] : []),
   ];
   const flat = CUSTOMIST_STANDARD_SECTION_SETTINGS_V1.flat;
@@ -117,7 +119,7 @@ export function MachineSetupSection({ state, onChange, objectTop }: {
   // A chart's reference ends on closing waste; a sweater's or scarf's top is bound off unless set.
   const top: Top = objectTop?.value ?? state.setup?.top ?? 'waste';
   const topStandard = CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1[construction];
-  const topRows = state.setup?.topWasteRows === undefined ? topStandard : construction === 'flat' ? state.setup.topWasteRows : customistTopWasteRowsV1(state.setup.topWasteRows);
+  const topRows = state.setup?.topWasteRows === undefined ? topStandard : (construction === 'flat' || construction === 'complement') ? state.setup.topWasteRows : customistTopWasteRowsV1(state.setup.topWasteRows);
   const save = (next: MachineSetup, label: string) => onChange(Object.keys(next).length === 0 ? null : next, label);
   const setWaste = (rows: number | null) => {
     const { wasteRows: _drop, ...rest } = state.setup ?? {};
@@ -155,7 +157,8 @@ export function MachineSetupSection({ state, onChange, objectTop }: {
       <label className="check-label"><input type="checkbox" checked={words.drawThread} onChange={(event) => setDraw(event.currentTarget.checked)} />Draw thread (C1)</label>
       <p className="design-hint">{words.drawThread ? 'Pulled out after knitting to free your piece from the waste yarn.' : 'Without one, unravel or cut the waste yarn away after knitting.'}</p>
     </>}
-    {!beanie && <div className="field-row"><span>Top</span><Chips label="Top edge" value={top} options={[
+    {construction === 'complement' && <p className="design-hint">Top: supporting waste on both beds. Secure both sets of live stitches before removing it. Waste rows below are per bed.</p>}
+    {!beanie && construction !== 'complement' && <div className="field-row"><span>Top</span><Chips label="Top edge" value={top} options={[
       { id: 'bind-off', name: 'Bind off', note: objectTop ? 'The machine binds off the top.' : 'A machine chain bind-off. Kniterate\'s own chart files end on waste yarn.' },
       { id: 'waste', name: 'Waste yarn', note: 'Live stitches on waste yarn, to bind off or graft by hand.' },
     ]} onPick={setTop} /></div>}

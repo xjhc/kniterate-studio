@@ -77,9 +77,10 @@ describe('software and physical proof dependency closure', () => {
     expect(missingRuntimeInputs(clone.root)).toEqual([helper])
   })
 
-  it('binds root commands, chart fixtures and Customist captures, including added files', () => {
+  it('binds root commands, chart fixtures and only the Customist captures read by tests', () => {
     const clone = sourceClone()
     const baseline = collectContractFingerprint(clone.machine)
+    expect(baseline.files.filter(({ path }) => path.startsWith('../../fixtures/customist-debug/'))).toHaveLength(11)
     const changedInputs = [
       'scripts/studio.ts',
       'scripts/parity.ts',
@@ -95,13 +96,23 @@ describe('software and physical proof dependency closure', () => {
       expect(collectContractFingerprint(clone.machine).sha256, input).not.toBe(baseline.sha256)
       writeFileSync(path, original)
     }
-    for (const input of ['scripts/nested/new-command.ts', 'fixtures/colorwork-chart-v1/new-chart.json', 'fixtures/customist-debug/new-capture.kc']) {
+    for (const input of ['scripts/nested/new-command.ts', 'fixtures/colorwork-chart-v1/new-chart.json']) {
       const path = resolve(clone.root, input)
       mkdirSync(dirname(path), { recursive: true })
       writeFileSync(path, 'new source\n')
       expect(collectContractFingerprint(clone.machine).sha256, input).not.toBe(baseline.sha256)
       rmSync(path)
       expect(collectContractFingerprint(clone.machine).sha256).toBe(baseline.sha256)
+    }
+    for (const input of [
+      'fixtures/customist-debug/new-capture.kc',
+      'fixtures/customist-debug/2026-11-13-followup/raw/jacquard-simple.kc',
+      'fixtures/customist-debug/2026-11-13-followup/rejected/unused.kc',
+    ]) {
+      const path = resolve(clone.root, input)
+      mkdirSync(dirname(path), { recursive: true })
+      writeFileSync(path, 'unread capture\n')
+      expect(collectContractFingerprint(clone.machine).sha256, input).toBe(baseline.sha256)
     }
   })
 

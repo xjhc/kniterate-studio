@@ -54,6 +54,12 @@ interface RuleStory {
 }
 
 const RULE_STORIES: Record<string, RuleStory> = {
+  'track-a-shape-jacquard-preview': {
+    part: 'Shaping', problem: 'physical trial needed',
+    consequence: 'Software checks cannot establish how the increases, decreases and edge joins behave in this yarn.',
+    action: 'Knit the small shaping trial and inspect both faces, the moving side edges and the narrowed finish.',
+    target: () => 'backing',
+  },
   'gauge-assumed': {
     part: 'Fit',
     problem: 'sizes rest on a typical gauge',
@@ -337,6 +343,7 @@ export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectP
     '## What it knits',
     plan.piece === 'beanie' ? `Flat beanie, seamed afterwards: ${constructionLine(plan)}.` : `${constructionLine(plan)}.`,
     `Frame: ${result.compiled?.frame?.preset ?? 'unknown'}.`,
+    ...(state.strategy.diamond ? [`Diamond shaping trial: ${state.strategy.diamond.tipStitches} stitches at each flat tip, ${state.chart.width} at the widest row, ${state.chart.height} design rows. Increase one stitch per side every ${state.strategy.diamond.rowsPerStep} rows, then decrease symmetrically. Both beds remain active; alternating-colour joins follow the moving side edges, with opposite colours at the old and new edge on widening rows. The increase still starts empty rear needles, so a clean widening edge is not established. Waste and draw span the maximum width; the cast-on spans the tip. This construction needs physical validation; the tips are not closed points.`] : []),
     ...(head !== undefined ? [`Fit: ${head} cm head with ${Math.round(Math.abs(beanieObjectOf(state)?.ease ?? -0.1) * 100)}% ${(beanieObjectOf(state)?.ease ?? -0.1) < 0 ? 'negative' : 'positive'} ease.`] : []),
     plan.gauge ? `Body gauge: ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}).` : 'No gauge recorded: sizes in cm are unknown.',
     ...(state.object?.ribGauge ? [`Rib gauge: ${state.object.ribGauge.stitchesPer10cm} st / ${state.object.ribGauge.rowsPer10cm} rows per 10 cm (${state.object.ribGauge.source}).`] : []),
@@ -578,10 +585,15 @@ export function measurementFormMarkdown(project: ColorworkProjectV1, plan: Proje
     ...(sections?.cuff ? ['| Rib gauge | stitches and rows over 10 cm in the cuff, unstretched | — | ___ st / ___ rows |'] : []),
     ...(hat
       ? [`| Circumference | flat width at mid-body × 2, after seaming | ${predicted(plan.predicted?.widthCm)} | ___ cm |`]
-      : [
-        `| Width | straight across the middle | ${predicted(plan.predicted?.widthCm)} | ___ cm |`,
-        `| Length | from end to end, along the middle | ${predicted(plan.predicted?.heightCm)} | ___ cm |`,
-      ]),
+      : materializeColorworkProject(project).state.strategy.diamond
+        ? [
+          `| Maximum body width | across the widest body row, excluding waste | ${predicted(plan.predicted?.widthCm)} | ___ cm |`,
+          `| Body height | from first to last body row, excluding all waste | ${predicted(plan.predicted?.heightCm)} | ___ cm |`,
+        ]
+        : [
+          `| Width | straight across the middle | ${predicted(plan.predicted?.widthCm)} | ___ cm |`,
+          `| Length | from end to end, along the middle | ${predicted(plan.predicted?.heightCm)} | ___ cm |`,
+        ]),
     ...(sections?.cuff ? [`| Cuff | visible height${sections.cuff.folds ? ' when folded' : ''} | ${predicted(sections.cuff.visibleCm)} | ___ cm |`] : []),
     ...(sections ? [
       `| Body | cuff top to the first crown decrease | ${predicted(sections.body.cm)} | ___ cm |`,

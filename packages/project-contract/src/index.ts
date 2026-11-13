@@ -58,6 +58,7 @@ const StrategySchema = z.object({
   technique: z.enum(['fairisle', 'ladder-back', 'lined', 'birdseye', 'complement']),
   birdseyeMode: z.enum(['minimal', 'full']).optional(),
   floatLimit: z.number().int().min(1).max(30).default(5),
+  diamond: z.object({ tipStitches: z.number().int().min(8).max(250), rowsPerStep: z.number().int().min(2).max(12) }).optional(),
 });
 
 const FrameSchema = z.object({

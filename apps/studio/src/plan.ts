@@ -1,4 +1,5 @@
 import { BIRDSEYE_BODY_EXTRA_FRONT_ROWS, CUSTOMIST_RIB_CROWN_194_V1, CUSTOMIST_RIB_CROWN_WIDTH, planEightLineCrown } from '@kniterate-studio/machine-lib/browser';
+import { reversibleEdgeStatus } from './reversibleEdges';
 import { beanieObjectOf,
   AUTHORED_CAPACITY_LIMITS_V1,
   type ResolvedProjectPlacement,
@@ -34,7 +35,7 @@ export interface SizeCheck {
 }
 
 export interface PlanFinding {
-  rule: 'size-off-target' | 'size-needs-gauge' | 'gauge-assumed' | 'size-exceeds-capacity' | 'name-encodes-carrier' | 'cuff-off-target' | 'placement-size-off' | 'beanie-width-invalid';
+  rule: 'size-off-target' | 'size-needs-gauge' | 'gauge-assumed' | 'size-exceeds-capacity' | 'name-encodes-carrier' | 'cuff-off-target' | 'placement-size-off' | 'beanie-width-invalid' | 'reversible-open-edges';
   severity: 'error' | 'warning';
   path: string;
   message: string;
@@ -106,6 +107,7 @@ function newRowIds(state: ProjectState, count: number): string[] {
 function resizeEdits(state: ProjectState, dimension: 'width' | 'height', count: number): ProjectEdit[] | null {
   if (count < 1) return null;
   const beanie = state.object?.kind === 'beanie';
+
   if (dimension === 'width') {
     if (count > AUTHORED_CAPACITY_LIMITS_V1.chartWidth) return null;
     if (beanie && (count < BEANIE.minNeedles || count > BEANIE.maxNeedles)) return null;
@@ -179,6 +181,13 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
     : { ...state.target, widthCm: round1(head * (1 + ease)) };
   const findings: PlanFinding[] = [];
   const beanie = state.object?.kind === 'beanie';
+  if (!beanie && state.strategy.technique === 'complement') {
+    const edge = reversibleEdgeStatus(state);
+    if (!edge.closed) findings.push({ rule: 'reversible-open-edges', severity: 'error', path: 'chart.cells',
+      message: 'Reversible side edges need alternating colours at the active left and right boundaries (minimum 3 needles and 3 rows). This links the faces at yarn turnarounds.' + (state.strategy.diamond ? ' On widening rows, the old and new edge stitches also need different colours.' : ''),
+      fixes: edge.edit ? [{ label: state.strategy.diamond ? 'Repair shaped side edges' : 'Close side edges with one-stitch stripes', edits: [edge.edit] }] : [],
+    });
+  }
   // A cuff-and-body beanie: the height target is the body above the rib cuff.
   const beanieObject = beanieObjectOf(state);
   const cuffRows = beanieObject?.construction === 'rib-cuff-jersey-body' ? Math.min(beanieObject.cuffRows ?? 0, state.chart.height) : 0;
@@ -353,7 +362,7 @@ export function planProject(state: ProjectState, placements: readonly ResolvedPr
         ...(beanieObjectOf(state)?.cuffFold ? [`Fold the rib cuff up along its middle (the cuff is ${cuffRows} rows, so fold at row ${Math.floor(cuffRows / 2)}); the folded half shows the rib's reverse, which looks the same for 2x2 rib.`] : []),
         'Weave in the ends. Wash or steam as the yarn label says, then measure.',
       ]
-    : ['Pull the draw thread (C1) to separate the waste yarn from the cast-on edge.', 'Weave in the ends. Wash or steam as the yarn label says, then measure.'];
+    : state.strategy.technique === 'complement' ? ['Keep the supporting top waste attached while measuring. Secure the live stitches of BOTH faces on needles or lifelines before removing the top waste; bind off or graft by hand.', 'Pull C1 to remove the bottom waste. The cast-on colour forms the joining edge; alternating-colour side edges link the faces, while solid interior areas can separate into two layers.', 'Weave in the ends. Wash or steam as the yarn label says, then measure reversible-fabric gauge.'] : ['Pull the draw thread (C1) to separate the waste yarn from the cast-on edge.', 'Weave in the ends. Wash or steam as the yarn label says, then measure.'];
 
   let sections: BeanieSections | null = null;
   if (beanie) {

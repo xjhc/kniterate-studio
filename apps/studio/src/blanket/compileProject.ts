@@ -1,3 +1,5 @@
+import { projectDiamondColorworkChartV1 } from '@kniterate-studio/machine-lib/browser';
+import { reversibleEdgeStatus } from '../reversibleEdges';
 import {
   appendProjectEdit,
   assessAuthoredCapacityV1,
@@ -43,8 +45,8 @@ export interface CompiledFrame {
   frameCarriers: string[];
 }
 
-/** Backings Studio authors: each compiles through a Customist-matched configuration. */
-export const AUTHORED_TECHNIQUES = ['fairisle', 'birdseye'] as const satisfies readonly BackingTechnique[];
+/** Authored chart backings, including the reference-informed reversible development frame. */
+export const AUTHORED_TECHNIQUES = ['fairisle', 'birdseye', 'complement'] as const satisfies readonly BackingTechnique[];
 
 function isAuthoredTechnique(technique: BackingTechnique): technique is (typeof AUTHORED_TECHNIQUES)[number] {
   return (AUTHORED_TECHNIQUES as readonly BackingTechnique[]).includes(technique);
@@ -191,7 +193,13 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   const assignments = new Map(state.machine.yarnAssignments.map((assignment) => [assignment.paletteId, assignment]));
   const setupMessages: ValidationMessage[] = [];
 
+  if (state.strategy.diamond && state.strategy.technique !== 'complement') setupMessages.push(setupError('diamond-backing', 'The diamond trial requires Invert colours.'));
   if (!isAuthoredTechnique(state.strategy.technique)) setupMessages.push(setupError('project-technique-unmatched', `The ${state.strategy.technique} backing has no Customist-matched reference program yet; choose Fairisle or Birdseye.`));
+  if (state.strategy.technique === 'complement' && !reversibleEdgeStatus(state).closed) setupMessages.push(setupError('reversible-open-edges', state.strategy.diamond
+    ? 'Repair the shaped side edges in Backing before exporting: alternate the boundary colours and use different colours on the old and new edge stitches in widening rows.'
+    : 'Close the reversible side edges with one-stitch alternating-colour stripes in Backing before exporting (minimum 3 needles and 3 rows).'));
+  if (state.strategy.technique === 'complement' && usedPalette.length !== 2) setupMessages.push(setupError('project-reversible-colors', 'Invert colours needs exactly two used yarn colours.'));
+  if (state.strategy.technique === 'complement' && state.setup?.top === 'bind-off') setupMessages.push(setupError('project-reversible-finish', 'Invert colours needs waste support on both beds; choose a waste top.'));
   if (usedPalette.length > 4) setupMessages.push(setupError('project-pattern-color-limit', `This chart uses ${usedPalette.length} pattern colors; Kniterate Studio v1 supports at most four on reserved carriers C2-C5.`));
   for (const entry of usedPalette) {
     if (!assignments.has(entry.id)) setupMessages.push(setupError('project-yarn-assignment-required', `${entry.name} is used by the chart but has no pattern carrier assignment.`));
@@ -206,7 +214,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   for (const resolved of placements) if (resolved.status === 'conflict') setupMessages.push(setupError('project-placement-conflict', resolved.reason ?? `Placement ${resolved.placement.id} does not fit.`));
   // Settings that would take the machine outside its safety envelope never reach a program.
   if (isAuthoredTechnique(state.strategy.technique)) {
-    for (const error of machineSetupErrors(state.setup, usedPalette.length < 2 ? 'fairisle' : state.strategy.technique)) setupMessages.push(setupError(error.rule, error.message));
+    for (const error of machineSetupErrors(state.setup, usedPalette.length < 2 || state.strategy.technique === 'complement' ? 'fairisle' : state.strategy.technique)) setupMessages.push(setupError(error.rule, error.message));
   }
 
   const base = {
@@ -224,7 +232,7 @@ export function compileColorworkProject(project: ColorworkProjectV1): BlanketCom
   };
   if (setupMessages.length > 0 || !isAuthoredTechnique(state.strategy.technique)) return { ...base, ok: false, compileVerdict: 'blocked', inputHash: null, messages: setupMessages, knitoutText: null, passes: [], programOpSourceRows: [], rowProvenance: [], backFace: null, frame: null, diagnostics: setupMessages.map((message) => ({ ...message, opIndex: null, rowId: null, passIndices: [] })) };
 
-  const projected = projectColorworkChartV1(state.chart);
+  const projected = state.strategy.diamond ? projectDiamondColorworkChartV1(state.chart, state.strategy.diamond) : projectColorworkChartV1(state.chart);
   const yarnBindings: YarnBinding[] = usedPalette.map((entry) => {
     const assignment = assignments.get(entry.id)!;
     return { keyId: entry.id, carrier: assignment.carrier, name: assignment.yarnName };

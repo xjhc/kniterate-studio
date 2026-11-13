@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "unchanged": [
+    "startup source",
+    "finish source",
+    "75 row widths and events",
+    "carriage directions",
+    "edge ownership",
+    "increase old column ownership"
+  ],
+  "changedInteriorCells": 241
+}

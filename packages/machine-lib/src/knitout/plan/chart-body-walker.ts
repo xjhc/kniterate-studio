@@ -81,6 +81,7 @@ export interface ChooseChartBodyWalkerDispatchInput {
 }
 
 export interface EmitChartBodyWalkerInput extends ChooseChartBodyWalkerDispatchInput {
+  readonly retainComplementBeds?: boolean;
   readonly resolved: ResolvedChart;
   readonly projection: ResolvedChartProjection;
   readonly walkerProjection: ResolvedChartProjection<'knit-order'>;
@@ -219,8 +220,8 @@ const CHART_BODY_WALKER_RECORDS: readonly ChartBodyWalkerRecord[] = [
   },
   {
     kind: 'shaped-within-row-color',
-    matches: ({ patternCarrierCount, shapeMode, colorMode }) =>
-      patternCarrierCount > 1 && shapeMode && colorMode === 'within-row-multicolor',
+    matches: ({ patternCarrierCount, shapeMode, colorMode, backBedStyle, dbjBackingStrategy }) =>
+      patternCarrierCount > 1 && shapeMode && (colorMode === 'within-row-multicolor' || (backBedStyle === 'birdseye' && dbjBackingStrategy === 'complement')),
     technique: 'stockinette-shaped-jacquard',
     emit: (ctx) => {
       const input = ctx.input;
@@ -231,6 +232,7 @@ const CHART_BODY_WALKER_RECORDS: readonly ChartBodyWalkerRecord[] = [
         projection: input.walkerProjection,
         carrier: input.patternCarrier,
         colorBindings: ctx.bindingMap,
+        retainComplementBeds: input.retainComplementBeds,
         backBedStyle: input.backBedStyle === 'birdseye'
           ? (input.dbjBackingStrategy === 'complement' && input.patternCarrierCount === 2
             ? 'complement'
@@ -310,6 +312,7 @@ const CHART_BODY_WALKER_RECORDS: readonly ChartBodyWalkerRecord[] = [
     emit: (ctx) => {
       const input = ctx.input;
       ctx.appendWalkResult(emitJacquardComplementWalk({
+        homeBackBed: !input.retainComplementBeds,
         resolved: input.resolved,
         bindings: ctx.bindingMap,
         needleStart: input.needleStart,

@@ -1,3 +1,4 @@
+import { diamondRangesV1 } from '@kniterate-studio/machine-lib/browser';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { clear, copy, cut, paste, type MirrorAxes, type PixelClipboard, type Rect } from '@knitlab/colorwork-core';
 import { beanieObjectOf, AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, materializeColorworkProject, undoProjectEdit, type ColorworkProjectV1, type ProjectEdit, type ProjectPlacement, type ProjectState } from '@kniterate-studio/project-contract';
@@ -288,6 +289,10 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
   const tone: StatusTone = story === null ? (storyPending ? 'checking' : 'blocked') : storyTone(story.status);
   const cuffed = beanieObjectOf(materialized.state)?.construction === 'rib-cuff-jersey-body';
   const backing = projectBackingWords(materialized.state);
+  const activeRanges = useMemo(() => {
+    const shape = materialized.state.strategy.diamond;
+    try { return shape ? diamondRangesV1(chart.width, chart.height, shape).reverse() : null; } catch { return null; }
+  }, [chart.width, chart.height, materialized.state.strategy.diamond]);
   const swatch: SwatchStep | undefined = isGarment ? {
     gauges: [
       { name: cuffed ? `Body (${backing?.fabric ?? 'fairisle fabric'})` : '2x2 rib', measured: gauge?.source === 'measured' },
@@ -330,7 +335,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
       <div className="target-chart-stage">
         <PaletteRail chart={chart} carriers={paletteCarriers} active={activePaletteIndex} onSelect={setPaletteIndex} onAdd={canAddColour ? addColour : undefined} addLimit={addLimit ?? undefined} />
         <div className="canvas-stack">
-          <ColorworkCanvas chart={chart} tool={tool} paletteIndex={activePaletteIndex} brush={brush} mirror={mirror} mirrorBox={mirrorBox} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} fitRequest={fitRequest} fitScope={project.id} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={noPassCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => setFocusedRowId(rowIds[row]!)} firstNeedle={materialized.state.machine.needleOffset} highlightedNeedles={null} rowAspect={gauge ? gauge.stitchesPer10cm / gauge.rowsPer10cm : 1} piece={piece} placements={canvasPlacements} selectedPlacement={selectedPlacement} onPlacementPick={setSelectedPlacement} onPlacementMove={(id, columns, rows) => { const placement = materialized.state.placements?.find((item) => item.id === id); if (placement) operate(`Move ${id}`, [{ kind: 'set-placement', placement: movedPlacement(materialized.state, placement, columns, rows) }]); }} />
+          <ColorworkCanvas activeRanges={activeRanges} chart={chart} tool={tool} paletteIndex={activePaletteIndex} brush={brush} mirror={mirror} mirrorBox={mirrorBox} selection={selection} onSelection={setSelection} onCommit={commitMutation} zoom={zoom} onZoomChange={setZoom} fitRequest={fitRequest} fitScope={project.id} onInsertRow={(row) => commit({ kind: 'insert-row', rowId: makeRowId(), afterRowId: row === null ? null : rowIds[row]!, cells: Array(chart.width).fill(0) })} onDeleteRow={(row) => commit({ kind: 'delete-row', rowId: rowIds[row]! })} isDarkMode={isDarkMode} passCounts={noPassCounts} focusedRow={focusedRow !== null && focusedRow >= 0 ? focusedRow : null} onFocusRow={(row) => setFocusedRowId(rowIds[row]!)} firstNeedle={materialized.state.machine.needleOffset} highlightedNeedles={null} rowAspect={gauge ? gauge.stitchesPer10cm / gauge.rowsPer10cm : 1} piece={piece} placements={canvasPlacements} selectedPlacement={selectedPlacement} onPlacementPick={setSelectedPlacement} onPlacementMove={(id, columns, rows) => { const placement = materialized.state.placements?.find((item) => item.id === id); if (placement) operate(`Move ${id}`, [{ kind: 'set-placement', placement: movedPlacement(materialized.state, placement, columns, rows) }]); }} />
         </div>
       </div>
     </div>;
@@ -348,7 +353,7 @@ export function ChartWorkspace({ project, onProject, generation, plan, story, st
         onNeedles={(width) => Number.isInteger(width) && width > 0 && width <= AUTHORED_CAPACITY_LIMITS_V1.chartWidth && width !== chart.width && commit({ kind: 'set-width', width, fillPaletteIndex: activePaletteIndex })}
         onRows={(height) => { if (!Number.isInteger(height) || height < 1 || height > AUTHORED_CAPACITY_LIMITS_V1.chartHeight || height === chart.height) return; const count = Math.max(0, height - chart.height); commit({ kind: 'set-height', height, fillPaletteIndex: activePaletteIndex, newRowIds: Array.from({ length: count }, () => makeRowId()) }); }}
         onNeedleOffset={(needleOffset) => Number.isInteger(needleOffset) && needleOffset !== materialized.state.machine.needleOffset && commit({ kind: 'set-needle-offset', needleOffset })} />}
-      onStrategy={setBacking} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
+      onCloseEdges={(edit) => commit(edit)} onStrategy={setBacking} onFloatLimit={(floatLimit) => Number.isInteger(floatLimit) && floatLimit >= 1 && floatLimit <= 30 && floatLimit !== materialized.state.strategy.floatLimit && commit({ kind: 'set-strategy', strategy: { ...materialized.state.strategy, floatLimit } })} onAssignment={(paletteId, carrier, yarnName) => { const current = materialized.state.machine.yarnAssignments.find((item) => item.paletteId === paletteId); if (current?.carrier !== carrier || current.yarnName !== yarnName) commit({ kind: 'set-yarn-assignment', assignment: { paletteId, carrier, yarnName } }); }} />
     <section className="sweater-stage" aria-label={kindName}>
       <header className="stage-head">
         {isGarment

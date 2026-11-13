@@ -100,8 +100,8 @@ async function main() {
   if (!out) { process.stderr.write('usage: edge-swatch.ts <out-dir>\n'); process.exit(64); }
   const { rows, events, widest, knitoutText, kcode } = await buildEdgeSwatch();
   const problems = [
-    ...(kcode.validation?.issues ?? []).filter((issue) => issue.severity === 'error').map((issue) => `validator: ${issue.rule}: ${issue.message}`),
-    ...(kcode.safety?.findings ?? []).map((finding) => `safety: ${finding.rule}: ${finding.message}`),
+    ...(kcode.validation?.diagnostics ?? []).filter((issue) => issue.severity === 'error').map((issue) => `validator: ${issue.rule}: ${issue.message}`),
+    ...(kcode.safety?.diagnostics ?? []).map((finding) => `safety: ${finding.rule}: ${finding.message}`),
   ];
   const trace = kcode.trace!;
   const passOfRow = new Map(kcode.rowPasses.map((row) => [row.rowId, row.passIndices] as const));

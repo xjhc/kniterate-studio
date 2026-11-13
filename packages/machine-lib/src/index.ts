@@ -1,3 +1,4 @@
+export { diamondRangesV1, projectDiamondColorworkChartV1, type DiamondShapeV1 } from './colorwork/diamond-chart.js';
 export {
   compileChartToKnitout,
   type CompileChartInput,

@@ -52,6 +52,7 @@ export const COMPILER_FINGERPRINT_INPUTS = [
   'packages/project-contract/src',
   'apps/studio/src/authoredPipeline.ts',
   'apps/studio/src/blanket/compileProject.ts',
+  'apps/studio/src/reversibleEdges.ts',
   'apps/studio/src/engine.ts',
   'apps/studio/src/machineSetup.ts',
   'apps/studio/src/readiness.ts',

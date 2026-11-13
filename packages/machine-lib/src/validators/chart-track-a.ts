@@ -313,7 +313,7 @@ export function validateChartForTrackA(input: TrackAChartInput): ValidationMessa
     // jacquard back bed needed. Within-row multicolor still raises a
     // preview-grade warning since it lowers through the unified B5
     // shape+jacquard walker.
-    if (colorAnalysis.mode === 'within-row-multicolor') {
+    if (colorAnalysis.mode === 'within-row-multicolor' || dbjBackings.some(a => a.dbjStrategy === 'complement')) {
       // B5 full (post-2026-05-20): shape + within-row multicolor lowers
       // via the extended `emitShapedStockinetteWalk` with `colorBindings`,
       // emitting per-color front-bed passes over the active range with
@@ -322,7 +322,7 @@ export function validateChartForTrackA(input: TrackAChartInput): ValidationMessa
       messages.push({
         severity: 'warning',
         rule: 'track-a-shape-jacquard-preview',
-        message: `Shaped chart with within-row multicolor (true jacquard): lowered via the unified shape+jacquard walker (preview-grade). Floats are visible on the back unless 'birdseye' back-bed is enabled; swatch before committing to a full piece.`,
+        message: `Shaped chart with within-row multicolor (true jacquard): lowered via the unified shape+jacquard walker (preview-grade). The selected backing and shaped edges need a physical swatch before committing to a full piece.`,
       });
     } else if (colorAnalysis.mode === 'horizontal-stripes') {
       messages.push({

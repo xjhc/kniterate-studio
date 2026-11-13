@@ -1,0 +1,4 @@
+{
+  "passed": true,
+  "rule": "All motif pixels at columns 2 through width-4 (zero-based): blank space before left join and right two-column construction zone."
+}

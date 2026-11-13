@@ -4,16 +4,60 @@
 `pnpm verify` is the software gate. Full-gate status belongs to the exact
 current proof receipt, not this document's dates.
 
-## Now (2026-11-09)
+## Split-increase review (2026-11-13)
 
-- **Built, in the browser and the `studio` CLI:** colour charts (fairisle and
-  birdseye), cuffed and rib beanies, flat-panel sweaters (drop shoulder,
+The operator's fork through `da30721` is merged locally. The next knit candidate
+is the [single-bed split swatch for Gate 2](SPLIT-INCREASE-GATE2.md): 230 passes,
+43 body rows, Simple and Fashioned on both edges in both directions. It uses
+the successful edge trial's full-needle cast-on and body settings. Both-edge
+splits stay right-to-left because the simultaneous left-to-right case has no
+capture. **This candidate is not knitted and is awaiting review before any
+operator handoff.**
+
+Integration also repairs the older reversible diamond's software failures:
+waste/draw cover its eventual full width, idle feeders park outside it, body
+feeders clear new edges before transfers, and yarn order follows the carriage.
+The visible edge-colour repair assigns the two empty rear needles to different
+yarns on widening rows. The matrix diamond has zero idle-feeder moves and zero
+paired-empty-needle knits; movement-only passes per knit fall from 4.62 to 1.15.
+Its increase is still the older lining-borrow construction that knits empty
+rear needles. This does **not** establish a clean reversible widening edge.
+No reversible split-increase design is implemented; that remains Gate 3.
+Previously knitted files and records are preserved unchanged.
+
+## Trial update (2026-11-12)
+
+**Current spacing revision:** [mixed paisley with equal two-row gaps](physical-trials/2026-11-12/reversible-mixed-paisley-spaced/instructions.md). Previous unequal gaps (4 and1) corrected by moving only the original small end motifs; centre and all motif stitches unchanged. Gap equality, margins, loop/shaping and machine checks pass. Same 8→21→8,81 rows,522 passes; no SD copy/physical result.
+
+
+**Correction / current candidate:** [original small → simplified large → original small](physical-trials/2026-11-12/reversible-mixed-paisley/instructions.md). User clarified that centre should remain large; all-small interpretation was wrong. Exact original end tiles and exact earlier simplified centre verified. Same 8→21→8, 81 rows/522 passes, checked joins/margins; no SD copy or physical result.
+
+
+**Latest artwork choice:** operator declined widening and requested the original smaller paisley. [Current candidate](physical-trials/2026-11-12/reversible-original-small-paisley/instructions.md) retains 8→21→8 and uses three exact 7×13 original small motifs, including the centre. No scaling/redrawing. Exact-tile and margin verification plus machine checks pass; 81 design rows/522 passes. No physical run or SD copy.
+
+
+Current requested candidate: [8 → 21 → 8 paisley](physical-trials/2026-11-12/reversible-paisley-21/instructions.md), one extra right-side increase/decrease, 81 rows/522 passes. Motifs repositioned and middle slightly narrowed; blank-space margin verified on every row. Same simplified curves, not original stitch-identical artwork. Software checks pass; no physical run/SD copy. Supersedes the 20-column candidates below.
+
+
+Latest operator refinement: **small paisley at cast-on, one large in the middle, small at finish**. [Current candidate](physical-trials/2026-11-12/reversible-paisley-small-large-small/instructions.md), SHA `e813b6461f96678f22302292113d0783154369695e904b814090ebeb7f2731b3`. Same shape, edges and 494 passes; software checks pass, no physical result or SD copy. Earlier artwork revisions preserved.
+
+
+Operator subsequently requested paisley. [Paisley revision](physical-trials/2026-11-12/reversible-paisley-edge-candidate/instructions.md) adds 241 patterned interior cells using simplified original curves; exact startup/finish, row schedule, edge ownership and 494 passes retained. Strict checks and targeted verification pass; no physical run yet. Plain candidate remains preserved.
+
+
+Prepared the operator-requested **8 → 20 → 8**, 75-row two-colour reversible right-edge trial after the successful single-bed edge diagnostic. Fixed joined left edge; right increases/decreases every three design rows; official sleeve local increase colour choreography and existing paired cross-bed reversible decreases. Canonical frame/simulator/backend in an isolated experiment builder; production Studio emitter/UI unchanged. Strict source/KCode, safety, loop replay, yarn-path edge checks and negative control passed; 494 passes and zero C1/C6 body moves. **Not physically tested or Knit-proven.** Exact file, settings, pass map and limitations: [candidate](physical-trials/2026-11-12/reversible-right-edge-candidate/instructions.md).
+
+## Now (2026-11-11)
+
+- **Built, in the browser and the `studio` CLI:** colour charts (fairisle,
+  birdseye and two-colour reversible), cuffed and rib beanies, flat-panel sweaters (drop shoulder,
   J-sleeve, set-in; crew, V, square or boat neck), one-colour scarves and
   blankets, and checking any `.kc` or `.k` file. Every machine file passes the
   blocking machine-safety envelope before it can be downloaded.
-- **Knitted:** three development runs are registered
+- **Knitted:** four development runs are registered
   (`packages/machine-lib/registry/swatches/`). None is promotable, and nothing
-  is Knit-proven. Handoff 3 (two bind-off strips) is waiting to be knitted.
+  is Knit-proven. Joined-edge paisley completed successfully (operator report; 18.5 cm wide, 21 cm including top waste). The 16–48–16 paisley diamond produced a completed specimen, with open-looking increase edges and repeated CLUMP-like stops during idle-feeder shuffling; decreases looked satisfactory. A derived two-bed increase passes limited loop-accounting tests but remains export-blocked by unverified split encoding and incomplete whole-project validation. See `REVERSIBLE-INCREASE-RESEARCH.md`. Handoff 3 strip 2 completed with waste/left-edge defects; its incomplete
+  physical evidence is preserved in `docs/physical-trials/2026-11-11/`.
 - **Not built:** the in-app assistant, a swatch-registry UI, raglan sweaters,
   colourwork or stripes on sweater pieces. See "Not yet built".
 - **Next:** the checklist at the top of [`ROADMAP.md`](./ROADMAP.md).
@@ -45,6 +89,22 @@ ship," trust this file and the working tree instead.
   0 while some captures use 50. This is software evidence only; no Studio split
   file has been knitted. Reversible increase design and the operator swatch are
   separate review gates. Captures remain under `fixtures/customist-debug/`.
+
+- **Reversible side-edge correction (2026-11-11).** Invert colours now refuses
+  open side columns. Backing and the CLI plan offer an undoable one-stitch
+  alternating-colour selvedge on both sides. Emitted-yarn-path tests check
+  that each turnaround crosses beds. The updated paisley supersedes the
+  unjoined-edge file; physical edge quality is still unvalidated. This
+  requirement must survive future handoffs. See [trial details](REVERSIBLE-PAISLEY-TRIAL.md).
+
+- **Reversible chart development export (2026-11-11).** Exactly two used
+  colours can select Invert colours. The new frame retains both full beds
+  through the half-rack zigzag and tubular cast-on, knits complementary
+  faces, and supports both faces with top waste before dropping. Chain
+  bind-off is refused for this construction. This combines reference
+  construction elements with development yarn settings; it is not whole-file
+  reference parity or physical proof. See [the trial and UX notes](REVERSIBLE-PAISLEY-TRIAL.md).
+
 - **First physical runs and the flat start's fix (2026-11-07).** Issue #9's
   handoff was knitted on 2026-10-30 (runs 1–3; run 4 not yet). Runs 2 and 3
   are registered as development evidence (`registry/swatches/2026-11-07-*`),

@@ -61,6 +61,11 @@ export interface CustomistFairisleFrameInput {
   wastePasses: number
   waste: WasteMachineConfig
   intro: FairisleCarrierIntro
+  /** Keep the full two-bed cast-on for inverse jacquard; no rear-to-front collapse. */
+  retainBackBed?: boolean
+  /** Waste/draw envelope for a widening body; the cast-on stays at needleStart..needleEnd. */
+  wasteNeedleStart?: number
+  wasteNeedleEnd?: number
   /** Body transfer stitch to restore after the frame's transfers. */
   restoreXferStitch?: number
   /** Needles of Studio's yarn catch before each yarn's first row (`STUDIO_YARN_CATCH_NEEDLES_V1`); 0 or absent for the reference's start. */
@@ -76,7 +81,11 @@ export interface CustomistFairisleFrameResult {
 }
 
 export function emitCustomistFairisleFrame(input: CustomistFairisleFrameInput): CustomistFairisleFrameResult {
-  const { needleStart: lo, needleEnd: hi, wasteCarrier: waste, waste: mc, intro } = input
+  const { needleStart: castOnLo, needleEnd: castOnHi, wasteCarrier: waste, waste: mc, intro } = input
+  const lo = input.wasteNeedleStart ?? castOnLo
+  const hi = input.wasteNeedleEnd ?? castOnHi
+  const widerWaste = lo < castOnLo || hi > castOnHi
+  const castOnNeedle = (n: number) => n >= castOnLo && n <= castOnHi
   const primary = input.bodyCarriers[0]
   if (primary === undefined) throw new Error('customist fairisle frame requires at least one body carrier')
   const sim = new CarriageSimulator({
@@ -179,6 +188,12 @@ export function emitCustomistFairisleFrame(input: CustomistFairisleFrameInput): 
     interlock(carrier, '+', index % 2 === 0)
     tubularFiller(carrier === input.drawCarrier ? FRAME_CHOREOGRAPHY.fillerRowsAfterDraw : 2 * FRAME_CHOREOGRAPHY.fillerPairsAfterBodyYarn)
   })
+  if (widerWaste) {
+    // Extend the final waste row before the draw thread's final pass; moving
+    // it later would push the newly parked draw feeder aside again.
+    if (lo > 8) sim.miss(waste, '-', f(lo - 8))
+    else sim.out(waste) // no on-bed parking slot left of the piece; reuse via in at the finish
+  }
   drain()
 
   // Drop every rear loop, then the draw-final front row.
@@ -189,6 +204,13 @@ export function emitCustomistFairisleFrame(input: CustomistFairisleFrameInput): 
   for (let n = lo; n <= hi; n++) sim.drop(backBed(n))
   sim.setStitch(FRAME_CHOREOGRAPHY.drawFinalStitch)
   bedRow(input.drawCarrier, '-', 'f')
+  if (widerWaste) {
+    // Anchor both idle yarns outside the eventual body, not at the narrow
+    // tip. Parking alone leaves the draw strand across later working needles.
+    if (lo > 5) sim.miss(input.drawCarrier, '-', f(lo - 5))
+    else sim.out(input.drawCarrier)
+    for (const n of needles('+', (n) => !castOnNeedle(n))) sim.drop(f(n))
+  }
   drain()
 
   // Zig-zag cast-on at half rack, tubular front + rear, then transfers.
@@ -199,26 +221,29 @@ export function emitCustomistFairisleFrame(input: CustomistFairisleFrameInput): 
   sim.setSpeed(intro.castOnSpeed ?? intro.rampSpeed)
   sim.setRoller(intro.rampRoller)
   sim.setStitch(rampCastOn)
-  for (let n = hi; n >= lo; n--) {
+  for (let n = castOnHi; n >= castOnLo; n--) {
     sim.knit(primary, '-', backBed(n))
     sim.knit(primary, '-', f(n))
   }
   sim.setRoller(intro.tubularRoller ?? intro.introRoller)
   sim.setStitch(rampTubular)
-  bedRow(primary, '+', 'f')
-  sim.setRacking(0)
-  bedRow(primary, '-', 'b')
+  bedRow(primary, '+', 'f', castOnNeedle)
+  if (!input.retainBackBed) sim.setRacking(0)
+  bedRow(primary, '-', 'b', castOnNeedle)
+  if (input.retainBackBed) sim.setRacking(0)
   drain()
   // Even offsets, then odd (Customist's Rr-Tr / Rl-Tr pair). A rack(0)
   // relief between batches keeps adjacent sources out of one pass.
-  sim.setSpeed(FRAME_CHOREOGRAPHY.xferSpeed)
-  sim.setXferStitch(FRAME_CHOREOGRAPHY.xferStitch)
-  sim.xferBatch(needles('+', even).map((n) => ({ from: backBed(n), to: f(n) })))
-  sim.seedRacking(0)
-  sim.setRacking(0)
-  sim.xferBatch(needles('+', (n) => !even(n)).map((n) => ({ from: backBed(n), to: f(n) })))
-  if (input.restoreXferStitch !== undefined) sim.setXferStitch(input.restoreXferStitch)
-  drain()
+  if (!input.retainBackBed) {
+    sim.setSpeed(FRAME_CHOREOGRAPHY.xferSpeed)
+    sim.setXferStitch(FRAME_CHOREOGRAPHY.xferStitch)
+    sim.xferBatch(needles('+', even).map((n) => ({ from: backBed(n), to: f(n) })))
+    sim.seedRacking(0)
+    sim.setRacking(0)
+    sim.xferBatch(needles('+', (n) => !even(n)).map((n) => ({ from: backBed(n), to: f(n) })))
+    if (input.restoreXferStitch !== undefined) sim.setXferStitch(input.restoreXferStitch)
+    drain()
+  }
 
   ops.push(comment('--- END CUSTOMIST WASTE & CAST-ON ---'))
 
