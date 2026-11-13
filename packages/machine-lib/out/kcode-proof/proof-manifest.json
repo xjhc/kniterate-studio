@@ -30939,7 +30939,7 @@
     ]
   },
   "contract": {
-    "sha256": "23c6e168dcd33a553df04354948eb1acdf24273d44ab78d7ea3ce1b44a99510b",
+    "sha256": "9a8c158ebdf12e51cb34792ca16d54b2aa6fc9daedbd61454e2f9204e46d8a3a",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31188,8 +31188,8 @@
       },
       {
         "path": "../../apps/studio/src/diamondChart.test.ts",
-        "sha256": "6e04dd7f2a9a104740673d81b83d24a6b233ab81b15e0f38e24260e3f7c0b489",
-        "bytes": 8829
+        "sha256": "32d02ec1860dd0643b891dac0e9fad5c89a33c7f669425735e82f2d661a3ba4b",
+        "bytes": 14926
       },
       {
         "path": "../../apps/studio/src/engine.test.ts",
@@ -31318,8 +31318,8 @@
       },
       {
         "path": "../../apps/studio/src/handoff.ts",
-        "sha256": "bcd9955b51f15f64dc51a86233bd1f72858d4fc46434c6624653970269199573",
-        "bytes": 40839
+        "sha256": "fb6154ee840625587bed15ec5fca8245c421ed923fc4e2a391f01315f5e3a648",
+        "bytes": 41088
       },
       {
         "path": "../../apps/studio/src/imageChart.ts",
@@ -31698,8 +31698,8 @@
       },
       {
         "path": "../../apps/studio/src/trials.ts",
-        "sha256": "a1782191c624cbe8fd86816d4755d2b7fd8eba8d995a635e9a2fd37454688a88",
-        "bytes": 10201
+        "sha256": "93615b47a3966bdf546de194a7aee53f27524c27b4ca21b3871cb8c845a98667",
+        "bytes": 10218
       },
       {
         "path": "../../apps/studio/src/useSwatchFile.ts",
@@ -31948,13 +31948,13 @@
       },
       {
         "path": "../../scripts/experiments/reversible-right-edge-swatch.ts",
-        "sha256": "4c96204e2c214d548ea1bb40e1e6502ba14a18c0e2aa3d793330cb17bbd6cff6",
-        "bytes": 5898
+        "sha256": "387355c5678a2e7e07f39b24c47baefd6053e0455187ff49fb7ad262af0b9f4e",
+        "bytes": 6898
       },
       {
         "path": "../../scripts/experiments/split-swatch.ts",
-        "sha256": "75d0ebd3ebee31584f82147b6c22fe6590446e7fd486114f35d31159de90457c",
-        "bytes": 13663
+        "sha256": "5bc6f7ca1c189187eecfa48f03c183090d13805fddcc1af6d979550091a01036",
+        "bytes": 18544
       },
       {
         "path": "../../scripts/experiments/verify-edge-full-caston.ts",
@@ -31993,8 +31993,8 @@
       },
       {
         "path": "../../scripts/register-v1-knit-trial.ts",
-        "sha256": "c021697fd0169a18d06ce9137895f1f817b6e04209c2c132a3e7286364b2343e",
-        "bytes": 16648
+        "sha256": "a2d2507dd9cf49268a6f309e89fd410374a597b38947d4ba236f93896345aeb3",
+        "bytes": 19614
       },
       {
         "path": "../../scripts/studio.ts",
@@ -32168,7 +32168,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "55d60c946757867939fbf7490548a3deb1af1cabe1e88aec56ea5de551f72e36",
+        "sha256": "c45e925192803e65873ee36d06e559613c1b1006670798098fe5315c0481416c",
         "bytes": 179
       },
       {
@@ -32357,14 +32357,64 @@
         "bytes": 2601
       },
       {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/machine.json",
+        "sha256": "a2a774aa32d87e3a2a81ac053a41f375dbbbb97d13c20fd3a885d08b102e5818",
+        "bytes": 2464
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/motif.json",
+        "sha256": "41f9f40d58acd4f8f24ac1f67e0fef64b98cbe87a7427da0a42662d487f8ef65",
+        "bytes": 17816
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/out.k",
+        "sha256": "973205474e801d115b9305097b2aae3b9cd3a86ed73896f075d9ac2d4c65b0e8",
+        "bytes": 53554
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/out.kc",
+        "sha256": "0be718de93c415b51ccb859d013a5578f4ff8c2e8cfffc0ce4bd380ee495acd3",
+        "bytes": 635356
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/outcome.md",
+        "sha256": "a1a8a9ede082f2b5c360c693be3eacdecf1851a0eec9d694826dea77d561800b",
+        "bytes": 1856
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/provenance.json",
+        "sha256": "0f4253545cc519e2a910cb5ac62f710f924d00f2ca9470310b6081e5a6549c9a",
+        "bytes": 1412
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/request.json",
+        "sha256": "58b2472d05209419e367bcf221ff7111c74f3de0908e3563db5de1023d407847",
+        "bytes": 389
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/run.json",
+        "sha256": "7ab110480d94e76276fa09c2ea2326d2ac13eaf11241555a9a913cea0a804f6a",
+        "bytes": 1844
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/spec.json",
+        "sha256": "b19c920e4005944f0b3269bebd3a550f8bced0c566e701618d2dc9566798d008",
+        "bytes": 1782
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/yarn.json",
+        "sha256": "b317e09c22121635f58b900e7adc1c8c4f701d5aab62c984bdede754a9c82547",
+        "bytes": 2577
+      },
+      {
         "path": "registry/swatches/README.md",
-        "sha256": "d79b426205aa864f180492bd11c86b83f26c6b99a8e6fac3279e14a7d1abe2fb",
-        "bytes": 12010
+        "sha256": "7b280a118a1e5cf3fd0fca9be81c20c2ca419453fc00af5881b542c5fb03cf3a",
+        "bytes": 13212
       },
       {
         "path": "registry/swatches/_schema.json",
-        "sha256": "50598ad15d1d9530ecf35c8744ee86dafcfacada6bd4bc430aa6b15d76e63a1a",
-        "bytes": 18334
+        "sha256": "c7ee3bfb805c35947699e3efbf4d6c4996fc313c2bc449a53eed6e7c52a45c5c",
+        "bytes": 18576
       },
       {
         "path": "registry/swatches/_template/machine.json",
@@ -32478,8 +32528,8 @@
       },
       {
         "path": "scripts/kniterate-swatch-registry-check.ts",
-        "sha256": "182d6de44ad0396cc6540d48848175c8d6fc3a3cf33724f0f92a5d49f0a00aee",
-        "bytes": 77672
+        "sha256": "7045d993c2fceefbcc1910527f1efb340922ff321927d06727e448b13e8ddab6",
+        "bytes": 78626
       },
       {
         "path": "scripts/kniterate-topology-oracle.ts",
@@ -32493,8 +32543,8 @@
       },
       {
         "path": "scripts/registry-support.ts",
-        "sha256": "6506c407f5d8490ffa752bd5a5a1310f1650c2c8d65c24470ac61c3f5c894ca6",
-        "bytes": 25129
+        "sha256": "41d0eadb93b46d3bb30f9874d17cc62c6e49c0e269ef61628e22506c2909dfc4",
+        "bytes": 29051
       },
       {
         "path": "src/browser.ts",
@@ -33528,8 +33578,8 @@
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
-        "sha256": "1d0e024bbe74c5863a37970f65b2a09d822b9002268fdf810d02c270cd67cbcf",
-        "bytes": 37917
+        "sha256": "aa621d29fdef4b95858cf0fc690fc146612065425c71583f89154741874a8c18",
+        "bytes": 41298
       },
       {
         "path": "test/physical-registry.test.ts",
