@@ -1,5 +1,12 @@
 # Reversible increase research — 2026-11-11
 
+**2026-11-13 update:** this is the historical rear/racked-split derivation,
+not the current implementation plan. Gate 1 subsequently established
+front-to-rear split encoding at rack 0 in both directions; rear and racked
+splits remain refused. See the [Gate 3 paper design](REVERSIBLE-INCREASE-GATE3.md)
+for the current candidate and its separate review gate. The older evidence
+and results below are preserved as dated research.
+
 Status: **research candidate; export blocked; not a machine recipe.** No production emitter, UI option, safety rule, existing swatch, or SD file was changed. This investigation responds to the operator's request to research and validate before another swatch, and preserve the findings on GitHub #18.
 
 ## Physical finding and correction to earlier advice

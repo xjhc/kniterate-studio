@@ -24,7 +24,11 @@ yarns on widening rows. The matrix diamond has zero idle-feeder moves and zero
 paired-empty-needle knits; movement-only passes per knit fall from 4.62 to 1.15.
 Its increase is still the older lining-borrow construction that knits empty
 rear needles. This does **not** establish a clean reversible widening edge.
-No reversible split-increase design is implemented; that remains Gate 3.
+The [Gate 3 paper design](REVERSIBLE-INCREASE-GATE3.md) now proposes two
+front-bed splits over two yarn cycles, with no empty-needle knit in its manual
+loop ledger and an explicit alternating edge join. It includes a short-return
+alternative and a comparison swatch plan. **Awaiting design review; no
+reversible split emitter or machine file is implemented.**
 Previously knitted files and records are preserved unchanged.
 
 The [522-pass mixed-paisley baseline](../packages/machine-lib/registry/swatches/2026-11-13-mixed-paisley-baseline/outcome.md)
@@ -66,7 +70,7 @@ Prepared the operator-requested **8 → 20 → 8**, 75-row two-colour reversible
   blocking machine-safety envelope before it can be downloaded.
 - **Knitted:** five development evidence entries are registered
   (`packages/machine-lib/registry/swatches/`). None is promotable, and nothing
-  is Knit-proven. Joined-edge paisley completed successfully (operator report; 18.5 cm wide, 21 cm including top waste). The 16–48–16 paisley diamond produced a completed specimen, with open-looking increase edges and repeated CLUMP-like stops during idle-feeder shuffling; decreases looked satisfactory. A derived two-bed increase passes limited loop-accounting tests but remains export-blocked by unverified split encoding and incomplete whole-project validation. See `REVERSIBLE-INCREASE-RESEARCH.md`. Handoff 3 strip 2 completed with waste/left-edge defects; its incomplete
+  is Knit-proven. Joined-edge paisley completed successfully (operator report; 18.5 cm wide, 21 cm including top waste). The 16–48–16 paisley diamond produced a completed specimen, with open-looking increase edges and repeated CLUMP-like stops during idle-feeder shuffling; decreases looked satisfactory. The older two-bed derivation's rear/racked split forms remain refused; its synthetic loop checks are not physical proof. The current [Gate 3 design](REVERSIBLE-INCREASE-GATE3.md) uses the captured front/rack-zero forms and awaits paper review. Handoff 3 strip 2 completed with waste/left-edge defects; its incomplete
   physical evidence is preserved in `docs/physical-trials/2026-11-11/`.
 - **Not built:** the in-app assistant, a swatch-registry UI, raglan sweaters,
   colourwork or stripes on sweater pieces. See "Not yet built".
