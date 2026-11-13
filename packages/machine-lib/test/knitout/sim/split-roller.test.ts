@@ -25,7 +25,7 @@ function assertRollerParity(sim: CarriageSimulator) {
   sim.out('3');
   const source = writeKnitoutProgram({ version: 2, carriers: [...carriers], machine: 'kniterate', gauge: 7, position: 'Keep', yarns: {}, kniterate: {}, ops: sim.finalize() });
   const result = knitoutToKCode(source);
-  if (!result.ok) throw new Error(result.stderr);
+  if (!result.ok || result.kcode === undefined) throw new Error(result.stderr);
   const actual = parseKcPasses(result.kcode);
   expect(sim.predictedPasses().map(pass => ({
     direction: pass.direction, carrier: pass.carriers.join('') || '0', speed: pass.speed, roller: pass.roller,

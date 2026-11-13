@@ -33,6 +33,16 @@ authorized. Do not add more experiment-specific registry tooling. The
 reviewer did not review the separate diamond repair or baseline tooling
 beyond its promotion guard; this approval does not extend that evidence.
 
+**Implementation scheduling finding:** after O, the candidate's outer front
+is B and A is opposite it. Every normal cycle flips both colour and carrier
+side; returning to outward-first takes an even number of normal cycles and
+therefore returns to B. Changing candidate sides also reaches B after the
+required odd number of normal cycles. Waiting alone cannot repeat the P
+case in the old continuous-strip plan. The proposed resolution is one short
+file per candidate side, each starting with P then Q, and knitting each
+exact file twice. That format decision is pending; no new phase-reset
+construction is part of this implementation.
+
 ## Earlier paper and review evidence
 
 **Paper proposal only. No emitter, simulator, test, safety rule or machine file

@@ -34,6 +34,12 @@ placement. The 450/0 take-down plan is accepted for evaluation, not qualified
 by a knit. **Local implementation is authorized; stop with the generated
 comparison for review. No reversible split file goes to the operator before
 the single-bed split swatch has knitted.** No push or issue post is authorized.
+The simulator roller fix is local in `900eae8`; the experimental outward-first
+builder and its mirror now pass focused serialized-loop/edge checks. All 47
+existing construction outputs and the Gate 2 swatch remain byte-identical.
+The comparison layout awaits a user decision: waiting normal cycles cannot
+repeat old-front-A with outward-first on the same continuous strip. Two short
+P-then-Q files, each knitted twice, avoid introducing an unreviewed phase reset.
 Previously knitted files and records are preserved unchanged.
 
 The [522-pass mixed-paisley baseline](../packages/machine-lib/registry/swatches/2026-11-13-mixed-paisley-baseline/outcome.md)

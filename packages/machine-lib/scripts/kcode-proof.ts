@@ -73,6 +73,8 @@ const PROOF_TESTS = [
   'test/knitout/kc-diff.test.ts',
   'test/knitout/loop-stack-software-policy.test.ts',
   'test/knitout/predicted-vs-vendor.test.ts',
+  'test/knitout/sim/split-roller.test.ts',
+  'test/knitout/reversible-outward-increase.test.ts',
   'test/knitout/fairisle-parity.test.ts',
   'test/knitout/dbj-parity.test.ts',
   'test/knitout/kniterate-topology-oracle.test.ts',
