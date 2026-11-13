@@ -16,7 +16,8 @@ but `measurements.json` has hat-specific dimension fields. Panel width is no
 longer labelled as a circumference prediction. Instructions now put labelled
 panel dimensions in `notes` and gauge in `bodyGauge`, leaving `finishedCm`
 null. The existing measurement import retains those notes. Automated panel
-dimension comparison remains unavailable. A regression failed on the previous
+dimension comparison remains unavailable. Notes-only imports no longer claim
+that measured gauges agree when no gauge was supplied. A regression failed on the previous
 instructions before the correction. No machine output changed.
 
 ## Pass and loop checks

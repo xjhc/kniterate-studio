@@ -156,6 +156,6 @@ export function trialRevision(project: ColorworkProjectV1, record: MeasurementRe
   if (after.sections && before.sections && after.sections.body.rows !== before.sections.body.rows) changes.push(`Body rows ${before.sections.body.rows} → ${after.sections.body.rows}`);
   if (refreshed.length) changes.push(`Motifs re-converted at the measured gauge: ${refreshed.join(', ')}`);
   if (needsColorChoices.length) changes.push(`Motifs kept unchanged and need Refresh to choose a yarn or background for new colors: ${needsColorChoices.join('; ')}`);
-  if (changes.length === 0) changes.push('No size change: the measured gauges agree with the plan.');
+  if (changes.length === 0) changes.push('Recorded observations; no size change.');
   return { trial, edits, comparisons, comparisonBasis, changes };
 }
