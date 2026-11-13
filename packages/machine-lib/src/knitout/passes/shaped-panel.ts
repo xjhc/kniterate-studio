@@ -60,7 +60,7 @@ export interface PanelSegmentV1 {
  *           on its needle and leaves the old one on the rear needle opposite. The edge stitches and
  *           that old loop then move one needle outward. Every loop hangs from a stitch of the row
  *           below: no hole and no needle knitted empty. `fashion` 1 is Simple, 4 is Fashioned. The
- *           splitting row must run right to left, the only form Kniterate's exports show.
+ *           splitting row may run either way; both directions appear in Customist's captures.
  */
 export type PanelIncreaseV1 = 'eyelet' | 'edge' | 'bar' | 'split'
 
@@ -287,7 +287,7 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
    * The second half of a `split` increase: the row before left the split stitch's old loop on the
    * rear needle `fashion` in from `edge`. The edge stitches join it on the rear bed, and all of them
    * come back one needle outward (Customist's Increase Transfers: front to rear at rack 0, rear to
-   * front at rack 1). Customist rolls 50 on the way back; transfers here keep the piece's own setting.
+   * front at rack ±1). Customist sometimes rolls 50 on the way back; the pinned converter uses 0.
    */
   const splitEdgeOut = (side: 'left' | 'right', edge: number) => {
     const inward = side === 'left' ? 1 : -1
@@ -298,7 +298,11 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
     setBeds(sources, () => 'f')
     for (const n of sources) if ((loops.b.get(n) ?? 0) > 0) fail(`rear needle ${n} is not free for the ${side} edge shaping`)
     moveBatch(sources.map((n) => ({ from: 'f', fromNeedle: n, to: 'b', toNeedle: n })), 0)
-    moveBatch([held, ...sources].map((n) => ({ from: 'b', fromNeedle: n, to: 'f', toNeedle: n - inward })), -inward)
+    // Returning the edge loop triggers carrier re-parking and flushes earlier queued transfers.
+    // Customist queues it last on the left (inner returns, re-park, edge return), but first on
+    // the right (re-park, all returns). With the carrier away, both merge into one transfer batch.
+    const returns = side === 'left' ? [held, ...sources.slice(1), edge] : [...sources, held]
+    moveBatch(returns.map((n) => ({ from: 'b', fromNeedle: n, to: 'f', toNeedle: n - inward })), -inward)
   }
   /** The needle each `kind` increase into `nextRow` prepares while this row knits: the innermost stitch that will move for a lifted bar, the stitch inside it for a split. */
   const preparedNeedles = (kind: 'bar' | 'split', segments: readonly PanelSegmentV1[], nextRow: PanelRowV1 | undefined): { needle: number; side: 'left' | 'right' }[] => {
@@ -408,11 +412,10 @@ export function emitShapedPanelV1(input: ShapedPanelInputV1): ShapedPanelResultV
       loops.b.set(n, 1)
     }
     // A split increase next row: this row splits the stitch inside the ones that will move. One pass
-    // knits the front bed and splits to the rear, so the row must be plain knit, and it runs right to
-    // left: Kniterate's exports show a yarn-fed transfer pass only as `<< Tr-Rl`.
+    // knits the front bed and splits to the rear, so the row must be plain knit. Customist captures
+    // show both `<< Tr-Rl` and `>> Tr-Rr`, including two splits in the same row.
     const splitHere = new Set(splits.filter((item) => item.needle >= segment.lo && item.needle <= segment.hi).map((item) => item.needle))
     if (splitHere.size > 0) {
-      if (dir !== '-') fail('the row before a split increase must run right to left; the yarn is on the left')
       if ([...plan.values()].some((stitch) => stitch !== 'k')) fail('the row before a split increase must be plain knit: the same pass splits to the rear bed')
     }
     if (row.settings === 'rib') { sim.setSpeed(RIB.ribSpeed); sim.setRoller(RIB.ribRoller) }

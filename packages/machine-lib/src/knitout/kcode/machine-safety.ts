@@ -138,6 +138,8 @@ const CUSTOMIST_MANUAL = 'https://editor.kniterate.design/documentation'
 const PINNED_BACKEND = 'packages/machine-lib/src/knitout/vendor/knitout-to-kcode.cjs'
 const REFERENCE_CORPUS = 'packages/machine-lib/reference/*.kc'
 const SPLIT_INCREASE_EXPORTS = 'packages/machine-lib/reference/customist-increase/*.kc'
+const SPLIT_INCREASE_DIRECTIONS = 'fixtures/customist-debug/2026-11-13/raw/{left,right}-phase{0,1}-{simple,fashioned}.kc'
+const SPLIT_INCREASE_BOTH_EDGES = 'fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-{simple,fashioned}.kc'
 
 const evidence = (
   confidence: KCodeEvidence['confidence'],
@@ -163,8 +165,8 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
       'Kniterate: "Never place a feeder over the needle bed. This can cause a collision between the needles and the feeder." The carrier stopping distance (default 2.5) keeps feeders clear of the knitting. Every reference program turns the carriage and carrier at least 2.5 past the outermost operated needle and rests idle carriers at least 2.5 from every operated needle.'),
   },
   transferWithCarrier: {
-    evidence: evidence('reference-corpus-observed', [SPLIT_ARTICLE, TRANSFERS_ARTICLE, PINNED_BACKEND, SPLIT_INCREASE_EXPORTS],
-      'Kniterate documents split stitches, a transfer whose delivering needle receives yarn at once. Two Customist exports made with its Increase Transfers command (Simple and Fashioned, 2026-11-12) each write the split as one leftward pass, `<< Tr-Rl` with the yarn carrier at rack 0: every front needle of the row is selected and knits, and the one rear needle selected receives the old loop of the front needle facing it. The pinned backend writes the same bytes for that pass. No Kniterate program shows a split in a rightward pass, from the rear bed, or at another racking, so those stay refused. The exports have not been knitted here.'),
+    evidence: evidence('reference-corpus-observed', [SPLIT_ARTICLE, TRANSFERS_ARTICLE, PINNED_BACKEND, SPLIT_INCREASE_EXPORTS, SPLIT_INCREASE_DIRECTIONS, SPLIT_INCREASE_BOTH_EDGES],
+      'Kniterate documents split stitches, a transfer whose delivering needle receives yarn at once. Customist Increase Transfers captures (Simple and Fashioned, 2026-11-12 and 2026-11-13) write front-to-rear splits as `<< Tr-Rl` or `>> Tr-Rr` with the yarn carrier at rack 0. Every front needle of the row knits; each selected rear needle receives its facing front needle\'s old loop. The both-edges captures split two separated needles in one pass. The pinned backend writes the same split passes. Rear-bed and racked splits are not supported by these captures and stay refused. The exports have not been knitted here.'),
   },
   carrierlessTuck: {
     evidence: evidence('reference-corpus-observed', [PINNED_BACKEND, REFERENCE_CORPUS],
@@ -437,10 +439,10 @@ export function validateKCodeMachineSafetyV1(
         pass, neighbour.sourceSpan)
     }
 
-    // Kniterate's exports show one split form: front to rear in a leftward pass at rack 0.
-    if (pass.actions.some((action) => action.kind === 'split') && !(pass.operation === 'Tr-Rl' && pass.rack === 0)) {
+    // Customist's single-bed increases split front to rear in either direction, always at rack 0.
+    if (pass.actions.some((action) => action.kind === 'split') && !((pass.operation === 'Tr-Rl' || pass.operation === 'Tr-Rr') && pass.rack === 0)) {
       add('machine-safety.transfer-with-carrier',
-        `Pass ${pass.index + 1} transfers with carrier ${pass.carrier} (a split stitch) as ${pass.operation} at rack ${pass.rack}. Kniterate's own programs show a split only from the front bed in a right-to-left pass at rack 0 (Tr-Rl), so any other form is refused.`,
+        `Pass ${pass.index + 1} transfers with carrier ${pass.carrier} (a split stitch) as ${pass.operation} at rack ${pass.rack}. Kniterate's captured increases show splits only from the front bed at rack 0 (Tr-Rl or Tr-Rr), so any other form is refused.`,
         pass, pass.source.footer)
     }
 

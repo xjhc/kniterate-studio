@@ -77,13 +77,15 @@ describe('software and physical proof dependency closure', () => {
     expect(missingRuntimeInputs(clone.root)).toEqual([helper])
   })
 
-  it('binds root commands and chart fixtures, including files added after the first capture', () => {
+  it('binds root commands, chart fixtures and Customist captures, including added files', () => {
     const clone = sourceClone()
     const baseline = collectContractFingerprint(clone.machine)
     const changedInputs = [
       'scripts/studio.ts',
       'scripts/parity.ts',
       'fixtures/colorwork-chart-v1/customist-fairisle-reference.json',
+      'fixtures/customist-debug/2026-11-13/raw/left-phase1-fashioned.kc',
+      'fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-fashioned.kc',
     ]
     for (const input of changedInputs) {
       expect(baseline.files.some(({ path }) => path === `../../${input}`)).toBe(true)
@@ -93,7 +95,7 @@ describe('software and physical proof dependency closure', () => {
       expect(collectContractFingerprint(clone.machine).sha256, input).not.toBe(baseline.sha256)
       writeFileSync(path, original)
     }
-    for (const input of ['scripts/nested/new-command.ts', 'fixtures/colorwork-chart-v1/new-chart.json']) {
+    for (const input of ['scripts/nested/new-command.ts', 'fixtures/colorwork-chart-v1/new-chart.json', 'fixtures/customist-debug/new-capture.kc']) {
       const path = resolve(clone.root, input)
       mkdirSync(dirname(path), { recursive: true })
       writeFileSync(path, 'new source\n')

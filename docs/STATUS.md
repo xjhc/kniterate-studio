@@ -31,6 +31,20 @@ ship," trust this file and the working tree instead.
 
 ## Implemented in `apps/studio`
 
+- **Single-bed split increases, capture parity (2026-11-13).** The shaped-panel
+  emitter's opt-in `increase: 'split'` now supports preparing rows in either
+  direction. On the left it queues the edge loop last, returning the inner
+  Fashioned loops before re-parking the carrier; on the right it queues the
+  edge first, re-parking before all returns, as Customist does.
+  Thirteen Customist captures are compared pass by pass, including the empty
+  carrier moves and the first widened row: Simple and Fashioned on both edges
+  in both directions, both edges in one row, and Fashioned width 2. The trace
+  and validator already handle both directions. Safety now allows front-to-rear
+  splits at rack 0 as `Tr-Rl` or `Tr-Rr`; rear-bed, racked and adjacent splits
+  stay refused. Transfer roller differences remain: the pinned converter writes
+  0 while some captures use 50. This is software evidence only; no Studio split
+  file has been knitted. Reversible increase design and the operator swatch are
+  separate review gates. Captures remain under `fixtures/customist-debug/`.
 - **First physical runs and the flat start's fix (2026-11-07).** Issue #9's
   handoff was knitted on 2026-10-30 (runs 1–3; run 4 not yet). Runs 2 and 3
   are registered as development evidence (`registry/swatches/2026-11-07-*`),
@@ -781,10 +795,10 @@ ship," trust this file and the working tree instead.
     operated needle;
   - a carriage or carrier turning less than 2.5 past the outermost operated
     needle;
-  - a transfer with a carrier (a split stitch) in any form but the one two
-    Customist Increase Transfers exports show: front to rear, in a
-    right-to-left pass, at rack 0 (`reference/customist-increase/`; the shaped
-    panel's `split` increase writes it, not yet knitted), and a carrierless
+  - a transfer with a carrier (a split stitch) outside the captured Customist
+    Increase Transfers forms: front to rear, in either direction, at rack 0
+    (`reference/customist-increase/` and `fixtures/customist-debug/`; the shaped
+    panel's `split` increase writes them, not yet knitted), and a carrierless
     tuck-family pass that selects needles;
   - a carrier that does not start at its home stop moving right, goes left of
     it, or is not home at the end (C1 −11.5, C2–C3 −9.5, C4–C6 −7.5);

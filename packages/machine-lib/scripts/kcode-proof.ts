@@ -215,6 +215,9 @@ function collectFingerprintSources(root: string): string[] {
     ...filesUnder('test'),
     ...filesUnder('../../scripts'),
     ...filesUnder('../../fixtures/colorwork-chart-v1'),
+    // Bind captured machine files used by parity tests without promoting them into the reference
+    // corpus. Screenshots and editable Customist source stacks are not proof inputs.
+    ...filesUnder('../../fixtures/customist-debug').filter((path) => path.endsWith('.kc')),
     ...filesUnder('../../apps/studio/src'),
     ...filesUnder('../chart-contract/src'),
     ...filesUnder('../colorwork-core/src'),

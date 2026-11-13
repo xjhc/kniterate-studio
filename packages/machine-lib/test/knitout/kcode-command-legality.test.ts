@@ -228,11 +228,11 @@ describe('V1 command-legality contract', () => {
               && Number.isInteger(rack)
               && SOURCE_COORDINATE - rack === SOURCE_COORDINATE + 1
             // A transfer operation with a yarn carrier is a split, refused in every
-            // form but the one Kniterate's exports show: Tr-Rl at rack 0.
+            // form but those Kniterate's exports show: Tr-Rl or Tr-Rr at rack 0.
             const expectedTransferWithCarrier = expected.family === 'transfer'
               && carrier !== '0'
               && Number.isInteger(rack)
-              && !(operation === 'Tr-Rl' && rack === 0)
+              && !(['Tr-Rl', 'Tr-Rr'].includes(operation) && rack === 0)
             for (const rail of LEGALITY_RAILS) {
               const parsed = rail.parse(source, {
                 profile: KNITERATE_7GG_KCODE_PROFILE_V2,
