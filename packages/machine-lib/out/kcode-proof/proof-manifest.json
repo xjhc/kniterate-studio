@@ -30709,6 +30709,9 @@
     "../../apps/studio/src/studioCli.test.ts",
     "../../apps/studio/src/parity.test.ts",
     "../../apps/studio/src/blanket/compileProject.test.ts",
+    "../../apps/studio/src/reversibleChart.test.ts",
+    "../../apps/studio/src/diamondChart.test.ts",
+    "../../apps/studio/src/splitSwatch.test.ts",
     "../../apps/studio/src/blanket/birdseyeBody.test.ts",
     "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
     "../../apps/studio/src/kcode/MachineMovementView.test.tsx",
@@ -30772,7 +30775,7 @@
     },
     {
       "id": "studio-kcode-integration-tests",
-      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/authoredPipeline.test.ts src/studioCli.test.ts src/parity.test.ts src/blanket/compileProject.test.ts src/blanket/birdseyeBody.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/fabric/compileForeignFabricPreview.test.tsx src/chart/AuthoredMachinePanel.test.ts src/sweater/knitFile.test.ts src/foreignRunSheetFindings.test.tsx src/sourceWindow.test.tsx src/machine/readMachineFile.test.ts src/machine/import.worker.test.ts src/machine/inspectionCheckpoint.test.ts",
+      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/authoredPipeline.test.ts src/studioCli.test.ts src/parity.test.ts src/blanket/compileProject.test.ts src/reversibleChart.test.ts src/diamondChart.test.ts src/splitSwatch.test.ts src/blanket/birdseyeBody.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/fabric/compileForeignFabricPreview.test.tsx src/chart/AuthoredMachinePanel.test.ts src/sweater/knitFile.test.ts src/foreignRunSheetFindings.test.tsx src/sourceWindow.test.tsx src/machine/readMachineFile.test.ts src/machine/import.worker.test.ts src/machine/inspectionCheckpoint.test.ts",
       "status": "pass",
       "exitCode": 0
     },
@@ -30936,7 +30939,7 @@
     ]
   },
   "contract": {
-    "sha256": "223c74e1857178e41877fcb108f3b4d440bbd3198b7095f8ae3976223118554d",
+    "sha256": "23c6e168dcd33a553df04354948eb1acdf24273d44ab78d7ea3ce1b44a99510b",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31020,8 +31023,8 @@
       },
       {
         "path": "../../apps/studio/src/backing.ts",
-        "sha256": "1bdeb5ee58a0dc179d28f41ac8e59367c3dd2133cb400cda0ed6d8b108812755",
-        "bytes": 2580
+        "sha256": "ca208d32245669bd401b8e341179b99ded069f0d67e16ac93877d687fb0091f7",
+        "bytes": 3001
       },
       {
         "path": "../../apps/studio/src/beanie.ts",
@@ -31040,8 +31043,8 @@
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.tsx",
-        "sha256": "0fa6e0b7b57c50eed4df327fb2b67f0c0df6b69a84513a850183f5d408d7647e",
-        "bytes": 6145
+        "sha256": "d061bbae77280b7ae2d0e605703d8dcbf3a58cf8b1638581388f12a5dba8bafb",
+        "bytes": 6775
       },
       {
         "path": "../../apps/studio/src/blanket/birdseyeBody.test.ts",
@@ -31055,13 +31058,13 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.test.ts",
-        "sha256": "95d13cd31ef574babfe3f708ce47467ac5831f23b01e71ca5a82915f6edeedf5",
-        "bytes": 22769
+        "sha256": "76aacdcd023635f58cc9d7571902662f4bdaddad3f508371a016980208641527",
+        "bytes": 22755
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.ts",
-        "sha256": "49f251c6d34ed20fa6cee376889a8820e93b18074ee083937dbc9810c0449b95",
-        "bytes": 27656
+        "sha256": "267e95543f48f6b9fe46587ac9876d5c69b5397918bf779513d7afbc8f4a8d20",
+        "bytes": 29031
       },
       {
         "path": "../../apps/studio/src/blanket/useBlanketCompiler.ts",
@@ -31100,13 +31103,13 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "482f9a870e418e72b5cbee50517783d6294907775109737f756bf5d948d544e1",
-        "bytes": 32277
+        "sha256": "c9bda9468f0eb642c5e0fa34ee0bca49841ee36d4d51613c883b44f8ea614bb2",
+        "bytes": 32700
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
-        "sha256": "4cf48cc314a3ae3a60b50b509a2f56eb7203915e84dc013809283dc7f6ad80fc",
-        "bytes": 32892
+        "sha256": "411df1b91b12d66bed1c5afddc7b541f591e16ec9cdeafbb188650f45a4b6d5c",
+        "bytes": 33096
       },
       {
         "path": "../../apps/studio/src/chart/PaletteRail.tsx",
@@ -31182,6 +31185,11 @@
         "path": "../../apps/studio/src/chartViewModel.ts",
         "sha256": "b36f6ae1fd86c8d3bf260fcea738acf9725cb376ebe2da44822fe6fbb589ff38",
         "bytes": 478
+      },
+      {
+        "path": "../../apps/studio/src/diamondChart.test.ts",
+        "sha256": "6e04dd7f2a9a104740673d81b83d24a6b233ab81b15e0f38e24260e3f7c0b489",
+        "bytes": 8829
       },
       {
         "path": "../../apps/studio/src/engine.test.ts",
@@ -31310,8 +31318,8 @@
       },
       {
         "path": "../../apps/studio/src/handoff.ts",
-        "sha256": "2cb6067d9f617d56fa08ef841ae388ebfe0df0b5ed88b2426108ee32cf45af40",
-        "bytes": 39427
+        "sha256": "bcd9955b51f15f64dc51a86233bd1f72858d4fc46434c6624653970269199573",
+        "bytes": 40839
       },
       {
         "path": "../../apps/studio/src/imageChart.ts",
@@ -31480,13 +31488,23 @@
       },
       {
         "path": "../../apps/studio/src/plan.ts",
-        "sha256": "03445e5da7e976780f82b0408b88fbd766631506ce03a29a8dd8253fca698346",
-        "bytes": 24061
+        "sha256": "46a0e76a6151cd43ca1e3be40605912ed81c9c85dcfd3b7e6772d5c4ab8947fb",
+        "bytes": 25339
       },
       {
         "path": "../../apps/studio/src/readiness.ts",
         "sha256": "c1ff9b7432710136f623e97095757446df66ab918b6ce476a58cafad8158e91b",
         "bytes": 12140
+      },
+      {
+        "path": "../../apps/studio/src/reversibleChart.test.ts",
+        "sha256": "9d1a294267f1528fff4d1f38a1ffdde24768e69329a5ff7986122e7357eeddb8",
+        "bytes": 7599
+      },
+      {
+        "path": "../../apps/studio/src/reversibleEdges.ts",
+        "sha256": "deeceb9122120c3d3f65e4c75c21c10ac995664fe40dd97146eb290ae1dc6e1a",
+        "bytes": 2132
       },
       {
         "path": "../../apps/studio/src/sourceWindow.test.tsx",
@@ -31497,6 +31515,11 @@
         "path": "../../apps/studio/src/sourceWindow.ts",
         "sha256": "f8f7e4a117026a2eea5faba42904c0ff36c172d515af640b5581ff206c5a0b29",
         "bytes": 4170
+      },
+      {
+        "path": "../../apps/studio/src/splitSwatch.test.ts",
+        "sha256": "5290e0a2c920d89d52984ca9f31dfd0ce3b0803e9148cb26892b2f83549778d9",
+        "bytes": 5303
       },
       {
         "path": "../../apps/studio/src/start.css",
@@ -31690,8 +31713,8 @@
       },
       {
         "path": "../../apps/studio/src/workspace/MachineSetupSection.tsx",
-        "sha256": "194f45bc5bdc437105925d36e86be2f15ab73ad6087197a662b3d97599474892",
-        "bytes": 13004
+        "sha256": "0fe113ceb9f2f1db704c380dfd319982dcd7ff387c8197b4fe6f44ece0c80d4c",
+        "bytes": 13551
       },
       {
         "path": "../../apps/studio/src/workspace/MenuBar.tsx",
@@ -31784,19 +31807,9 @@
         "bytes": 298
       },
       {
-        "path": "../../fixtures/customist-debug/2026-11-12/increase-right-fashioned.kc",
-        "sha256": "7d1a3ea6f2a906b29875fbc4499c9e4eed6210de5be897ae8c29a5a481c3e84d",
-        "bytes": 38731
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-12/increase-right-simple.kc",
-        "sha256": "ac9bb10422e356c43d20e8a0ec9cd76177ed3207161535bee7ced65ba5306809",
-        "bytes": 38753
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-control.kc",
-        "sha256": "cb7832e2030367a0a4e10f801fecd43d3decc36022617c30138303b73b96f4c0",
-        "bytes": 28937
+        "path": "../../fixtures/colorwork-chart-v1/paisley-border.json",
+        "sha256": "07431f8915aabc6b44e73a64d89395c8a78e95d5ae39ea01dd51744cb74555ff",
+        "bytes": 19867
       },
       {
         "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-fashioned.kc",
@@ -31809,134 +31822,9 @@
         "bytes": 48574
       },
       {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-jacquard-control.kc",
-        "sha256": "8224303a9e6f719bd3b9e6fbb2a4c2b0d56b74431f25268098f9317ed3366830",
-        "bytes": 121201
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-jacquard-fashioned.kc",
-        "sha256": "246d807313c17b42518785857469543dc172b572d30f3bdb08d2f869d0ebc27f",
-        "bytes": 135915
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-jacquard-reversable.kc",
-        "sha256": "0ee2d473ac17f3c7909b83cb1eda0571d2dbf5c07497d63b98ee94a8fd0bd7ad",
-        "bytes": 126138
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-jacquard-simple.kc",
-        "sha256": "fca9f358a90d356ff9d0f57c8224e217f4a698c6abb4c9fa57cb2d44a22551da",
-        "bytes": 126118
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-left-control.kc",
-        "sha256": "fe9980aa3e09a3898d54b1387d37e1f2f5f2b58205344333a79e390174c84da1",
-        "bytes": 28928
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-left-fashioned.kc",
-        "sha256": "25d62ddf266ff8674e8c92ebc2ea6fe4a1dc656df718e9cd33a6052a8094e0b0",
-        "bytes": 43640
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-left-simple.kc",
-        "sha256": "4632d563a72fc8fe368432bd90a24d4619270d27480ea54238339e4c4697ea4b",
-        "bytes": 33845
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-right-control.kc",
-        "sha256": "99bb19f17ac6c3b7ef382a37baeeaf186e5f557aad9cd8924d1520f636dd1bf4",
-        "bytes": 28929
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-right-fashioned.kc",
-        "sha256": "0112ad25ff81447e403b48decbf1b59e948e8b92ba5d7ec842cdba62ec5d7a6b",
-        "bytes": 43643
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/decrease-right-simple.kc",
-        "sha256": "5ba2eacabc3d65ce580974abc905f30cf819cda33a91beea32ad41e2f1725a24",
-        "bytes": 33848
-      },
-      {
         "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/fashioned-width2.kc",
         "sha256": "a5646bdb980e495ada1cded8c32b337f5b315f419ce5d9d1fa14cc35d043eb63",
         "bytes": 38725
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/jacquard-simple.kc",
-        "sha256": "b37b9135ab5dcc611584f98f3f2db718e250c27aa71fabc8d8afa2fe726917ad",
-        "bytes": 140755
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/rib-full-control.kc",
-        "sha256": "65f09c544bf1eb6cea5b0ee4a1f201ef5fbcdc5e7c84de1f9d9a49771c02ea48",
-        "bytes": 28923
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/rib-full-reversable.kc",
-        "sha256": "a78621dcdeae3b339293e34c499740842cb726c8c24461a32f130f99a246f8b7",
-        "bytes": 28926
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/rib-full-simple.kc",
-        "sha256": "1f8f0f51b4090c20734f482995fac8cd28053d29cb5e1401808f7d16ec1c7210",
-        "bytes": 46047
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/singlebed-reversable.kc",
-        "sha256": "58a46ba368ef41af1b14e57ad77769a2c9b5666328b3383407fe29a12ed1dae5",
-        "bytes": 28927
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/top-waste-off.kc",
-        "sha256": "8567de495c0e754b61159847595df0897cb9064ccb57e1d0441f5926fa57546a",
-        "bytes": 190857
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/top-waste-on.kc",
-        "sha256": "c8a21f4671737ab55b62737eb56b1356544ca3a085d0aa9c385f5a980f7aa797",
-        "bytes": 190856
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/rejected/both-edges-control.kc",
-        "sha256": "1cf6ed8e1f66333986baf2691feaf156ff03fdccc4cc350f24cd66e7c9d2c65b",
-        "bytes": 28928
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/rejected/both-edges-fashioned.kc",
-        "sha256": "febce780d271b23923d1647634c664343199e35fb938ef86d0a2a41554205991",
-        "bytes": 28930
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/rejected/both-edges-simple.kc",
-        "sha256": "7b0d19dd4c1db6fff04109320718f4901a66ac64cf12318b702afa8fd4faf271",
-        "bytes": 28927
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/rejected/rib-control.kc",
-        "sha256": "0a7b2ff6bdc7cf75efe55ae0be743073592ec1df80ad59b5a6e1954b05eed24d",
-        "bytes": 28921
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13-followup/rejected/rib-simple.kc",
-        "sha256": "486b12583d2855161fabd445f04ef84a2f99215cd1f54175ca32dc8da36ed4b7",
-        "bytes": 28920
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/feeder-retract-off.kc",
-        "sha256": "74c67e86b028abe61db57dac507f8298861ae1c9a1163602bed9912551495824",
-        "bytes": 181227
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/feeder-retract-on.kc",
-        "sha256": "6007521263aae9a67a08fc4bad10f3233a5e40c2eafc2b1e238c5b003431fcb4",
-        "bytes": 181226
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/left-phase0-control.kc",
-        "sha256": "f2a36b6a3fe037e62e26c008492c0e26d9f5d044f199a1161d67621b75468486",
-        "bytes": 28930
       },
       {
         "path": "../../fixtures/customist-debug/2026-11-13/raw/left-phase0-fashioned.kc",
@@ -31949,11 +31837,6 @@
         "bytes": 43675
       },
       {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/left-phase1-control.kc",
-        "sha256": "c5da000ee497f593ce0d553898ac1a6b4103f4ca49e06f55b91fa92d9b65a61e",
-        "bytes": 28923
-      },
-      {
         "path": "../../fixtures/customist-debug/2026-11-13/raw/left-phase1-fashioned.kc",
         "sha256": "9984338066ab44db4e3e657443341d1ab79405687f6bc9d08792e002c314191d",
         "bytes": 38730
@@ -31962,36 +31845,6 @@
         "path": "../../fixtures/customist-debug/2026-11-13/raw/left-phase1-simple.kc",
         "sha256": "54d5776e9be38dd6ff951feb60cc350b43261bb511ba4097c19f7b84252900f5",
         "bytes": 38752
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/reversible-increase-refusal.kc",
-        "sha256": "3a320697f6c9f227b3f8f6fc215a4aa44126aa26064afaa72a58bfce734a2215",
-        "bytes": 121200
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/reversible-rectangle-closed.kc",
-        "sha256": "c8a7bfc28d8156067f0554f4d86f2a0a2b71af6875a9369bf5d012af9613ba61",
-        "bytes": 121200
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/reversible-rectangle-open.kc",
-        "sha256": "a074bc689151d1f691de27457a557c974fb175807958ab38a228ac8f7b8e6962",
-        "bytes": 121198
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/reversible-shaped-closed-control.kc",
-        "sha256": "c512a97fe30f7c457e9f6db083663380de97dde0736b55fc457e63611589509f",
-        "bytes": 121205
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/reversible-shaped-open-control.kc",
-        "sha256": "6b57983f03f00010c0f9b094aae8895839b4fbbdbd11cd8cc6fca59602a70224",
-        "bytes": 121203
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/right-phase0-control.kc",
-        "sha256": "58c584661e883065f8ee6a96431170a91fbe4d6414b26467ae2451ee443d1df1",
-        "bytes": 28906
       },
       {
         "path": "../../fixtures/customist-debug/2026-11-13/raw/right-phase0-fashioned.kc",
@@ -32004,11 +31857,6 @@
         "bytes": 38750
       },
       {
-        "path": "../../fixtures/customist-debug/2026-11-13/raw/right-phase1-control.kc",
-        "sha256": "6543f55289649ee53367656e754ebac39ca7a8fb196ea391c9609a53980939a2",
-        "bytes": 28931
-      },
-      {
         "path": "../../fixtures/customist-debug/2026-11-13/raw/right-phase1-fashioned.kc",
         "sha256": "c14185dbfc39e1fb2112ca84597a3b11b369ff664c902c23e8eb1f14dcce33d8",
         "bytes": 43653
@@ -32019,14 +31867,9 @@
         "bytes": 43675
       },
       {
-        "path": "../../fixtures/customist-debug/2026-11-13/rejected/one-needle-birdseye-insertion.kc",
-        "sha256": "d7877b06d9d1d7b821b4a2e7dffc9a6edeccdc6f23b7eaa9e5bb9559a184f567",
-        "bytes": 121195
-      },
-      {
-        "path": "../../fixtures/customist-debug/2026-11-13/rejected/second-caston-repeats-body.kc",
-        "sha256": "bc9fea1e6a35d496b57b05c11a597b80a09dc172d50899a8261061401368289c",
-        "bytes": 347695
+        "path": "../../fixtures/experiments/edge-swatch-original.k",
+        "sha256": "890992f60693ddb23e9baddf9fb9167ef72a248f6ea399f8f33aa841168a341a",
+        "bytes": 90277
       },
       {
         "path": "../../package.json",
@@ -32074,9 +31917,24 @@
         "bytes": 19705
       },
       {
+        "path": "../../scripts/experiments/draw-edge-paisley.py",
+        "sha256": "0335c47886f6ed91de5072bfcb22e1ca9743ac9eb9f0d60f325d80d4e2c0a084",
+        "bytes": 1447
+      },
+      {
+        "path": "../../scripts/experiments/edge-swatch-full-caston.ts",
+        "sha256": "2325fe9be00691951ba33c4093766b46b8ba50ac6b3ca75effbf9b1138c39c92",
+        "bytes": 1441
+      },
+      {
         "path": "../../scripts/experiments/edge-swatch.ts",
-        "sha256": "e1aa53f0357aaaf03fd9d65adf4ad215c44822a1557a6a13e4593341792028d0",
-        "bytes": 12484
+        "sha256": "beaa9e5757cf3d3a010aee1de485227cb627408efe20108fbe6533f7a55a1c72",
+        "bytes": 12492
+      },
+      {
+        "path": "../../scripts/experiments/edge-trial-caston.ts",
+        "sha256": "cc3f6034e8a23bf4e84e666fcdc3c9dfa9df69c83694166a3a6e7d84c7248407",
+        "bytes": 2530
       },
       {
         "path": "../../scripts/experiments/increase-swatch.ts",
@@ -32084,14 +31942,34 @@
         "bytes": 10270
       },
       {
+        "path": "../../scripts/experiments/reversible-increase-research.ts",
+        "sha256": "c7299a8d9e58fa4a6d82dacc8bb274f75ca00e43de3cc62bb52394be990f20b9",
+        "bytes": 6095
+      },
+      {
+        "path": "../../scripts/experiments/reversible-right-edge-swatch.ts",
+        "sha256": "4c96204e2c214d548ea1bb40e1e6502ba14a18c0e2aa3d793330cb17bbd6cff6",
+        "bytes": 5898
+      },
+      {
         "path": "../../scripts/experiments/split-swatch.ts",
-        "sha256": "3fa5f54cd336b6faa810c8120549475fff1739f07d58941ecc446851a7f4adc2",
-        "bytes": 12000
+        "sha256": "75d0ebd3ebee31584f82147b6c22fe6590446e7fd486114f35d31159de90457c",
+        "bytes": 13663
+      },
+      {
+        "path": "../../scripts/experiments/verify-edge-full-caston.ts",
+        "sha256": "758f2f8ca9fc204fbaa50b5f5fba73bc0955d4a2b1d43d5a76eb64ef1e6493ba",
+        "bytes": 2731
+      },
+      {
+        "path": "../../scripts/experiments/verify-reversible-right-edge.ts",
+        "sha256": "eee08b0e368ac7873b65ff42b51362bab08aeb2703eab0c6430347b7d95fe57f",
+        "bytes": 8359
       },
       {
         "path": "../../scripts/lib/machine-cli.ts",
-        "sha256": "aa7c81eac28327cb0425d637d8b565abe309e6404f3d1cb9ffc18a46badf019c",
-        "bytes": 24536
+        "sha256": "e1fe5304795e5a3d3175a0b822f6a71259fa39c6e10b8e51f266471088b19a3b",
+        "bytes": 25669
       },
       {
         "path": "../../scripts/lib/png.ts",
@@ -32100,8 +31978,8 @@
       },
       {
         "path": "../../scripts/lib/render.ts",
-        "sha256": "469e4f0f1d3afcab301c2880a33cbc03b7fe48088cb426e253889d32b1222e49",
-        "bytes": 7358
+        "sha256": "cb903f877af411ef603d762feb5ab72893459e276f3c484fd160351da259ffe7",
+        "bytes": 7670
       },
       {
         "path": "../../scripts/lib/sweater-cli.ts",
@@ -32185,8 +32063,8 @@
       },
       {
         "path": "../project-contract/src/index.ts",
-        "sha256": "3a94d53b389fe68af7ec766a5901a50cbf9693629be16e50ba0f89b4d9e0f88c",
-        "bytes": 81931
+        "sha256": "8c33518fe86d1be7a2f0afe9194efd8a48dd7ca53e6178b5b0e0f337664ea33f",
+        "bytes": 82060
       },
       {
         "path": "../project-contract/tsconfig.json",
@@ -32290,7 +32168,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "99c8242530faef9f6dd6c48b9ae5f4e87bda4d32e272ca61fd2e1541b6a6b0de",
+        "sha256": "55d60c946757867939fbf7490548a3deb1af1cabe1e88aec56ea5de551f72e36",
         "bytes": 179
       },
       {
@@ -32434,6 +32312,51 @@
         "bytes": 2608
       },
       {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/machine.json",
+        "sha256": "45dc98c1f00bf5b213e5512d8a3714eba421cb8f33a8e8784586d114a64cb444",
+        "bytes": 2498
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/out.k",
+        "sha256": "fb8398dcf8df715e994c58b676cc39e99b6eed66252e37c424cbba7dcd498997",
+        "bytes": 97884
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/out.kc",
+        "sha256": "7217462cfe9297bbffbbe82f78d683f6bde09292f0d979e007039beb5d9c9540",
+        "bytes": 2209885
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/outcome.md",
+        "sha256": "3cd1ed1edf4d0039e4bd3659c1092eca6c137aa6ab5588daae9cb0df799b5114",
+        "bytes": 1372
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/project.kniterate-studio.json",
+        "sha256": "e67a9257daada6863ebee372d827ede05cdada8745f684e9953203c98d99ec8e",
+        "bytes": 179318
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/request.json",
+        "sha256": "667dc0e76efe9e253646140d228a059c47b55fddcc58f474ee40892dff09d1ff",
+        "bytes": 287
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/run.json",
+        "sha256": "cc9118e8fce25315394abdb22085f194ca1de1c48834f6b2c4eff28f3b4e22df",
+        "bytes": 2228
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/spec.json",
+        "sha256": "d3578a3056ad7731f48698b62b187a7669e10dc3d52488fc024ea226be2e8738",
+        "bytes": 1465
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/yarn.json",
+        "sha256": "465e2bb7e9d20f61933ea37303a7f4c6ab8f49e016770934770d592520a82ceb",
+        "bytes": 2601
+      },
+      {
         "path": "registry/swatches/README.md",
         "sha256": "d79b426205aa864f180492bd11c86b83f26c6b99a8e6fac3279e14a7d1abe2fb",
         "bytes": 12010
@@ -32520,8 +32443,8 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "4ab711b2129c90a90a71925e188b62bc216cd88e4e3279ef9fd41473d67e5052",
-        "bytes": 24136
+        "sha256": "d6633da29d8139ac04159b44bd22456e035e54436e5f63a2445f2147afd815f6",
+        "bytes": 24660
       },
       {
         "path": "scripts/kcode-receipt-check.ts",
@@ -32555,8 +32478,8 @@
       },
       {
         "path": "scripts/kniterate-swatch-registry-check.ts",
-        "sha256": "abbeceb2aed7fa0a062d3e41f44907310814c4731752322537a4eb31a1ab6a1e",
-        "bytes": 77581
+        "sha256": "182d6de44ad0396cc6540d48848175c8d6fc3a3cf33724f0f92a5d49f0a00aee",
+        "bytes": 77672
       },
       {
         "path": "scripts/kniterate-topology-oracle.ts",
@@ -32570,13 +32493,13 @@
       },
       {
         "path": "scripts/registry-support.ts",
-        "sha256": "4f8cf5aa4d8cc9627684a9345a08f9fd4805034723fc661fcaac1f2a94598524",
-        "bytes": 25089
+        "sha256": "6506c407f5d8490ffa752bd5a5a1310f1650c2c8d65c24470ac61c3f5c894ca6",
+        "bytes": 25129
       },
       {
         "path": "src/browser.ts",
-        "sha256": "cefc74d1d626045e3b1ec3e849df93a9d7e2aa879a8b5d696aa42ea39590dea6",
-        "bytes": 9055
+        "sha256": "88d3bc52a58a0c9bb1baace763d8cc2b4ff5d7c452099296e9f09f45cda2e6fa",
+        "bytes": 9172
       },
       {
         "path": "src/chart-core/__row_space_canary__.ts",
@@ -32644,6 +32567,11 @@
         "bytes": 5733
       },
       {
+        "path": "src/colorwork/diamond-chart.ts",
+        "sha256": "91ea795166df74e30e0a63d25492064e6d6473c70ff0f8e4b2b05fd3886057dd",
+        "bytes": 2704
+      },
+      {
         "path": "src/colorwork/from-colorwork-chart.ts",
         "sha256": "4b9cc0d6be2a0b5fc9da6d732f434c8304dce707600ac7a2957d148747189c35",
         "bytes": 2040
@@ -32685,8 +32613,8 @@
       },
       {
         "path": "src/index.ts",
-        "sha256": "4552f0d528ccfa2006c08583299e01a770c607c61aecbeae906ec9f8fa5fb217",
-        "bytes": 9192
+        "sha256": "1fda3191ade553a28100159f99a3cf7a8c022340423a786e4c9025abaca8aba0",
+        "bytes": 9309
       },
       {
         "path": "src/knitout/back-face-projection.ts",
@@ -32920,8 +32848,8 @@
       },
       {
         "path": "src/knitout/passes/bind-off.ts",
-        "sha256": "48bd2b8b9a457406bce1ab7d650b46f0c4157b122b1ad11a4ccd1643d64ef373",
-        "bytes": 25710
+        "sha256": "71f957d475bdbae8f2cfa7cc131e835a7aa0a76474d4de1472e8d7b6bfcea6c6",
+        "bytes": 26188
       },
       {
         "path": "src/knitout/passes/cable-cross.ts",
@@ -32940,8 +32868,8 @@
       },
       {
         "path": "src/knitout/passes/customist-fairisle-frame.ts",
-        "sha256": "7e0cba17a1bfd1d2ed22b2df0ce5a564a4535391204bd0f0edd768ab29bed431",
-        "bytes": 10539
+        "sha256": "c4fac22d14159170abb696d88d67f7e2a67a29d293c1c8a3cd234516fa3d37af",
+        "bytes": 11853
       },
       {
         "path": "src/knitout/passes/customist-flat-start.ts",
@@ -32975,8 +32903,8 @@
       },
       {
         "path": "src/knitout/passes/jacquard-complement.ts",
-        "sha256": "6caf8f14556e60b7a4831a1d8e1e8dc89044266294d353cfcc7a32014121e962",
-        "bytes": 7602
+        "sha256": "2e44c1a427bf8dc5173666fb5b41a4172d30764897b34a6c92a348b23f44795d",
+        "bytes": 7737
       },
       {
         "path": "src/knitout/passes/jacquard-dbj-full.ts",
@@ -33035,8 +32963,8 @@
       },
       {
         "path": "src/knitout/passes/stockinette-shaped.ts",
-        "sha256": "73e93b00a6832d5a28ba39e017396b0056b7ee20f8002e9ff619e7691015cb34",
-        "bytes": 74236
+        "sha256": "0f8a21d3d8345d1ba80cd3ae6dc41186a080ae47d3f90ef4c6a6e2cf2804235d",
+        "bytes": 76090
       },
       {
         "path": "src/knitout/passes/stockinette-with-overrides.ts",
@@ -33070,13 +32998,13 @@
       },
       {
         "path": "src/knitout/plan/chart-body-walker.ts",
-        "sha256": "c36aab5c39a77d7c49af345f6affdca4180c9204412311eab6c2bf3774763bd3",
-        "bytes": 20891
+        "sha256": "0d1d28453ff0fb208f1e4500acae1c4fa738e6d924e4ea88b4e317ffca526c9e",
+        "bytes": 21150
       },
       {
         "path": "src/knitout/plan/compile-chart.ts",
-        "sha256": "fb6354a1bc5b03030e95f8f33e1078bf651f95549eed90d07e29790a60968fa1",
-        "bytes": 71599
+        "sha256": "e69c7efb089721029c77ec1463e333ad4b52c7c5f5a60f8b565480d335498b3e",
+        "bytes": 72009
       },
       {
         "path": "src/knitout/plan/kniterate-settings-ops.ts",
@@ -33085,8 +33013,8 @@
       },
       {
         "path": "src/knitout/plan/machine-settings-consumption.ts",
-        "sha256": "381374798366bed5659e6b06f3f02cd0293a8a401f2a151a628cf799eb10a5ff",
-        "bytes": 6632
+        "sha256": "6a4a3b09e69c16019224c2cc566a72f431397753db1d25114050fe862be99ff7",
+        "bytes": 6718
       },
       {
         "path": "src/knitout/plan/plan-to-knitout.ts",
@@ -33100,8 +33028,8 @@
       },
       {
         "path": "src/knitout/recipes/customist-matched.ts",
-        "sha256": "d81d5c1d65bec50a9481c715e21cbeeca42b43224a4d52b09b0fa76d13c205e4",
-        "bytes": 14517
+        "sha256": "c1d40576c58c79cc6e832a1c5c7a7cd3a9c1d399605c2144e30ddbc4b2cc024e",
+        "bytes": 16112
       },
       {
         "path": "src/knitout/recipes/customist-studio-birdseye-7gg.ts",
@@ -33270,8 +33198,8 @@
       },
       {
         "path": "src/validators/chart-track-a.ts",
-        "sha256": "bb17be322770d8f048982170a693f6a995cfc1fc5eef46c834afd995b117b324",
-        "bytes": 32917
+        "sha256": "221ec1b9f09871001419b2a160012cc0a6fd0f5016ec5eaf0666fa704d54d7e0",
+        "bytes": 32958
       },
       {
         "path": "src/validators/index.ts",
@@ -33580,8 +33508,8 @@
       },
       {
         "path": "test/knitout/shaped-panel.test.ts",
-        "sha256": "44daac7260b723c6de145387fb2196423b1ec2397a4c6c5fb431a4b68efa797d",
-        "bytes": 22493
+        "sha256": "02bd12cca1a0cf2d7329d59fce61735700d7e639fd892e99d00d9007348a0e43",
+        "bytes": 23162
       },
       {
         "path": "test/knitout/sim/kc-section.test.ts",
@@ -33610,13 +33538,13 @@
       },
       {
         "path": "test/proof-fingerprint.test.ts",
-        "sha256": "c5330107015d30e003ce19c7f5216db0323babfdae121ab1abb7a03446344b27",
-        "bytes": 7765
+        "sha256": "9eb5ae3d514fede7f3f493ca7ed5e3ada2c05c8161f6acab5af6094391a7be62",
+        "bytes": 8315
       },
       {
         "path": "test/public-api.test.ts",
-        "sha256": "86b8af7e63a20675c4316ac7c68bf7e054486491b93078aac648a803235f0148",
-        "bytes": 4054
+        "sha256": "a451caa71fe55bc50dfa53f71e1489d81f641bdb3e0193b01df7a474d7fa78ed",
+        "bytes": 4107
       },
       {
         "path": "tsconfig.json",
