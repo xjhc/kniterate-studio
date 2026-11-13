@@ -5,6 +5,13 @@ construction. These are raw observations, not approved machine trials or new
 members of the canonical `packages/machine-lib/reference/atlas.json` corpus.
 Do not edit the captured `.kc` bytes or infer physical success from an export.
 
+**Latest:** [21 additional controlled captures](2026-11-13-followup/README.md)
+separate increase style from fabric, test rib and simultaneous edge widening,
+capture decreases, Fashioned width 2, and complete the top-waste retraction pair.
+That follow-up supersedes the pending-capture lists below. In particular,
+Simple emits transfers on the tested two-bed bases; REVERSABLE increase refuses,
+while REVERSABLE decrease exports transfers on the tested jacquard base.
+
 ## Captured on 2026-11-12
 
 `2026-11-12/manifest.json` pins two files, their cloud designs, settings and
