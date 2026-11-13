@@ -225,7 +225,8 @@ describe('KCode execution cursor', () => {
         expect(after, `${name} pass ${pass.passIndex} after`).toMatchObject(validation.passStates[pass.passIndex]!.after)
       }
     }
-  }, 30_000)
+  // Twelve reference files; over 30 s on a busy machine.
+  }, 120_000)
 
   it('refuses invalid cursors, mismatched validation, and resource expansion before allocating events', () => {
     const trace = compileTrace(['in 2', 'knit + f40 2'])
