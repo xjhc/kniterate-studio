@@ -24,18 +24,16 @@ yarns on widening rows. The matrix diamond has zero idle-feeder moves and zero
 paired-empty-needle knits; movement-only passes per knit fall from 4.62 to 1.15.
 Its increase is still the older lining-borrow construction that knits empty
 rear needles. This does **not** establish a clean reversible widening edge.
-The [Gate 3 paper design](REVERSIBLE-INCREASE-GATE3.md) now proposes two
-front-bed splits over two yarn cycles, with no empty-needle knit in its manual
-loop ledger and an explicit alternating edge join. Its revised full-row
-schedules cover both first-split directions, both old edge colours, carrier
-preparation and a per-pass take-down plan. The paper comparison is now
-20 → 36 columns over 43 body cycles with eight distinct cases. Revision 3
-retains the inward-first selections after manual review, corrects running-yarn
-attachment tracking, and separates the outer-edge join from the inboard split.
-It documents the unequal held-loop timing and an unresolved split-first
-roller parity requirement; 450/0 remains an unknitted trial proposal. It also
-retains the separate short-return alternative. **Awaiting design approval; no
-reversible split emitter or machine file is implemented.**
+The user approved the [Gate 3 reviewer decisions](REVERSIBLE-INCREASE-GATE3.md#reviewer-decisions--approved-by-the-user-2026-11-13):
+implement the outward-first two-cycle split increase and its mirror only,
+after a separate simulator roller-prediction fix. The first comparison must
+cover left/right and old front A/B twice each; the prior eight-case O/I
+schedule is superseded. Terminal splits (first/last working needle) are the
+main physical unknown: the captured inset splits and Gate 2 do not test that
+placement. The 450/0 take-down plan is accepted for evaluation, not qualified
+by a knit. **Local implementation is authorized; stop with the generated
+comparison for review. No reversible split file goes to the operator before
+the single-bed split swatch has knitted.** No push or issue post is authorized.
 Previously knitted files and records are preserved unchanged.
 
 The [522-pass mixed-paisley baseline](../packages/machine-lib/registry/swatches/2026-11-13-mixed-paisley-baseline/outcome.md)

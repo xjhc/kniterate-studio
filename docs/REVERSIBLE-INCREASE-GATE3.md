@@ -1,5 +1,40 @@
 # Gate 3: reversible increase design for review — 2026-11-13
 
+## Reviewer decisions — approved by the user, 2026-11-13
+
+The user approved these four changes after the reviewer walked schedule O
+at both edges. This section governs the first implementation; the earlier
+O/I comparison and eight-case schedule below remain design history.
+
+1. **Outward-first only, including its mirror.** Exclude schedule I from
+   the first build and swatch. Wait for the correct carrier side rather
+   than add I's extra fragment, long first receiving-loop hold and front-only
+   out-and-back yarn route. A future piece using candidate increases at both
+   edges will need their growth cycles staggered and separately checked.
+2. **Four cases, each knitted twice:** left/right candidate, old front A/B,
+   with the opposite borrowed-loop control. Verify the actual phase and
+   carrier state; waiting also flips the edge colour. The old eight-case
+   event table and 208-slot total do not specify this new comparison.
+3. **Main physical unknown: a split at a pass boundary.** O3 splits on its
+   last working needle and O8 on its first. The reviewed Customist captures
+   and Gate 2 swatch have knitting on both sides of their inset splits.
+   Those files do not qualify this first/last-needle use. Gate 2 must knit
+   successfully before any reversible split file goes to the operator;
+   the subsequent reversible trial must establish this additional behavior.
+4. **Fix split-first roller prediction in the simulator first**, with a
+   regression against the actual converter and a separate commit. The
+   pinned converter stays unchanged. The reviewer accepts the proposed
+   450 on each main yarn pass and 0 on extra fragments for this trial;
+   this is acceptance of the plan, not physical qualification.
+
+Implementation may now proceed locally and must stop with the generated
+comparison package for review. No operator handoff, push or issue post is
+authorized. Do not add more experiment-specific registry tooling. The
+reviewer did not review the separate diamond repair or baseline tooling
+beyond its promotion guard; this approval does not extend that evidence.
+
+## Earlier paper and review evidence
+
 **Paper proposal only. No emitter, simulator, test, safety rule or machine file
 was changed or generated for this design.** The loop states below were worked
 through by hand against the existing files and split semantics; they are not
