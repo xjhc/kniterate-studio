@@ -26,8 +26,11 @@ Its increase is still the older lining-borrow construction that knits empty
 rear needles. This does **not** establish a clean reversible widening edge.
 The [Gate 3 paper design](REVERSIBLE-INCREASE-GATE3.md) now proposes two
 front-bed splits over two yarn cycles, with no empty-needle knit in its manual
-loop ledger and an explicit alternating edge join. It includes a short-return
-alternative and a comparison swatch plan. **Awaiting design review; no
+loop ledger and an explicit alternating edge join. Its revised full-row
+schedules cover both first-split directions, both old edge colours, carrier
+preparation and a per-pass take-down plan. The paper comparison is now
+20 → 36 columns over 43 body cycles with eight distinct cases. It also
+retains the separate short-return alternative. **Awaiting design review; no
 reversible split emitter or machine file is implemented.**
 Previously knitted files and records are preserved unchanged.
 
