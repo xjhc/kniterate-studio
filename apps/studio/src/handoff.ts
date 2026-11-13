@@ -577,7 +577,7 @@ export function measurementFormMarkdown(project: ColorworkProjectV1, plan: Proje
     `Candidate: KCode SHA-256 \`${kcodeSha256}\`. Measure only the piece knitted from this exact file.`,
     hat
       ? 'After finishing (waste yarn off, seamed, folded, washed or steamed as the label says, dried flat, rested 24 h), lay it flat without tension and use a rigid rule. Record the values in Studio with File → Record a finished hat, or fill `measurements.json` with them and record it with `pnpm studio -- measure <project.json> measurements.json`.'
-      : 'After finishing (waste yarn off, washed or steamed as the label says, dried flat, rested 24 h), lay it flat without tension and use a rigid rule. In `measurements.json`, put the measured width and height with their labels in `notes`, enter gauge in `bodyGauge`, and leave the hat-specific `finishedCm` fields null. Record it with `pnpm studio -- measure <project.json> measurements.json`. Panel dimensions are retained as notes; automated dimension comparisons are not available for this form.',
+      : 'After finishing (waste yarn off, washed or steamed as the label says, dried flat, rested 24 h), lay it flat without tension and use a rigid rule. In `measurements.json`, put the measured width and height with their labels in `notes`, enter gauge in `bodyGauge`, and leave the `finishedCm` fields null. Record it with `pnpm studio -- measure <project.json> measurements.json`. Panel dimensions are retained as notes; automated dimension comparisons are not available for this form.',
     '',
     '| Measure | How | Predicted | Measured |',
     '|---|---|---|---|',
