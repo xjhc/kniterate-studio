@@ -56,6 +56,13 @@ The full KCode proof and `pnpm verify` pass. The package records the initial
 Chromium timing failure and its successful isolated recheck without a limit change.
 Previously knitted files and records are preserved unchanged.
 
+Before publication, the user approved replacing two account-bearing capture
+screenshots in the unpublished history with their existing cropped versions.
+The current tree and every machine hash are unchanged. Earlier review and
+issue-post commit IDs refer to the pre-cleanup history; the
+[23-commit mapping](development-trials/2026-11-13/history-redaction.json) preserves
+their correspondence. A private local backup retains the original history.
+
 The [522-pass mixed-paisley baseline](../packages/machine-lib/registry/swatches/2026-11-13-mixed-paisley-baseline/outcome.md)
 is now registered through its fixed experiment generator; both output files
 still replay byte for byte. The SD receipt confirms issuance. Association

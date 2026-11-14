@@ -1,0 +1,116 @@
+{
+  "purpose": "Replace two account-bearing screenshot blobs with the existing cropped versions before first publication.",
+  "oldHead": "055afd47534b1e9c1c759a632512a3716c0cbf9a",
+  "newHead": "c0373d2c4e0ee3e3e8df64c6360f284f147bc062",
+  "publicBase": "fee02f4008e4a40eb855181df4e2fd579cdc1fdc",
+  "currentTreeUnchanged": true,
+  "forcePushRequired": false,
+  "replacementBlobs": {
+    "fe9ed642c564bf5f29a6ddd90c15f362771bda12": "6a7f993ade2dabc7f101bb8bb66ed5645e8179b6",
+    "bd1ff73fefb2587cc198066444a6247c4132287d": "94d12593ca4dc68e3c5ea88ef70ffaa0be947e50"
+  },
+  "changedHistoricalTrees": [
+    {
+      "oldCommit": "4174c8d40aca050e776f535f9bb500669f06447b",
+      "newCommit": "386b840482ab0bc0bc68c721f36dd9515729c203",
+      "paths": [
+        "fixtures/customist-debug/2026-11-13/evidence/feeder-retract-on.jpg",
+        "fixtures/customist-debug/2026-11-13/evidence/reversible-refusal.jpg"
+      ]
+    }
+  ],
+  "rewrittenCommits": [
+    {
+      "old": "4174c8d40aca050e776f535f9bb500669f06447b",
+      "new": "386b840482ab0bc0bc68c721f36dd9515729c203"
+    },
+    {
+      "old": "fffe86f7362969745cdb561558cd767ded0a861a",
+      "new": "ee2d941a5f1466a9b96ae83c069b1c1b258bb26b"
+    },
+    {
+      "old": "df0c8df42530948ffe5c914774d2e2a5f0bc81db",
+      "new": "efc9b848164e138afa0dad213b7e87542d7d8108"
+    },
+    {
+      "old": "f06ae46bda47dcf969e0484f979c375ae1ffeda5",
+      "new": "255e163d8337df4da57b79312c0ba38f040e63b4"
+    },
+    {
+      "old": "4ff4ed26a51c0b986b929e020599bafaf33f463f",
+      "new": "0f773af542d0ceea67dc8708b1d319437868fde6"
+    },
+    {
+      "old": "2fd796c4220689c2877bd60979ab836c850cd2dd",
+      "new": "129c4109aadc4ce9c0db9867a69ac33db47f47f7"
+    },
+    {
+      "old": "556ae3bfc056071a0b7269a1acdeb076d779d0f9",
+      "new": "fdee78ffdbea827bc34d4340ea56cd0b290782da"
+    },
+    {
+      "old": "12e22cd39b8f05ae484aa71fedd31fa3c5a545e5",
+      "new": "0fc52d83f8b4823d5da90810eb287c6af2ccfc79"
+    },
+    {
+      "old": "203cc015941e69f241d047d5ae3cf85e41a3bdce",
+      "new": "ceea114fa135d737be3616be9fe17d3e21441612"
+    },
+    {
+      "old": "2d90af066a85e7aaa676d3dd06ae38f61f8e5003",
+      "new": "405d41b9eb40aa7340910d7f77b2ea02d02a6119"
+    },
+    {
+      "old": "fdd6c3eb402c61c4e02ab1638b135f377e31eb17",
+      "new": "f342022453e498af51d29532888b36a9053689d3"
+    },
+    {
+      "old": "b9e0c7fc3ef1f96f1b77475edb7ba8f693e14a11",
+      "new": "e2e0968ac9ae19ae93661f65eeb26b72cb75f1d3"
+    },
+    {
+      "old": "24d7b14deb1d28de3f49a23d156332157619c0db",
+      "new": "afcb4e9dbeffc1df1ba23be53d4d89b7e90623dd"
+    },
+    {
+      "old": "8b73e87c1acd60b89438aec81493d5c6d4eaa63e",
+      "new": "2cd3f74d39b48f8e39bd0dfcdd7dc177b41dc4d9"
+    },
+    {
+      "old": "b8b0a7b859eeb6ab7483cfaaac4ff7c835a920f3",
+      "new": "4f4d29cb8006b32beee8564877927560ad8d21d1"
+    },
+    {
+      "old": "9c948af88ec821fec6f37db627e8c934e4cd4758",
+      "new": "6ee5d76961e4e83999ef968959e1dffdafefe83e"
+    },
+    {
+      "old": "acc58c9a758ea9d29fd2257bf39b662acf0ba763",
+      "new": "ef7ab9b354959e806c792bc71c2995bb18ce406a"
+    },
+    {
+      "old": "b5350df327532c1700b70793098f97b960050063",
+      "new": "46e283320136b52aa3fb71dfbebed7c542020ee5"
+    },
+    {
+      "old": "900eae85e7a70f0f259d5295d40356207ba87fd1",
+      "new": "19acf57a69b78a810c693f7d51ddb1385892ce22"
+    },
+    {
+      "old": "c1f46e91e7e64ee5693af45b511834d0aba9290c",
+      "new": "ac78350be6667bad74be2e0ce311780906e9b2f0"
+    },
+    {
+      "old": "9f132b20f0d440ccae04396934970b279cbc210d",
+      "new": "a3cad649222905b9293af62114902d428764cf4c"
+    },
+    {
+      "old": "b5a3d2a49b2babcfeb1d36259cad7a82da7f04d3",
+      "new": "878429b18a5bb58a68cec5799a5668fbd15c0a14"
+    },
+    {
+      "old": "055afd47534b1e9c1c759a632512a3716c0cbf9a",
+      "new": "c0373d2c4e0ee3e3e8df64c6360f284f147bc062"
+    }
+  ]
+}

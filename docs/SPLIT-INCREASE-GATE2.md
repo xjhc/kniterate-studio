@@ -101,8 +101,9 @@ changes among the merged forty-seven matrix files.
 
 This repairs software defects in the **old** construction. It still creates
 two rear loops without parent loops at each increase and may retain the loose
-widening edge. It is not the proposed reversible split design. Gate 3 still
-requires paper design and review before a new reversible increase is coded.
+widening edge. It is separate from the reversible split design. Gate 3's paper
+and implementation reviews have since passed; its comparison files remain
+held until the single-bed swatch knits successfully and the user releases them.
 
 The [focused post-merge diamond review](REVERSIBLE-DIAMOND-REVIEW.md) checks
 additional shaping intervals, carrier assignments and loop destinations. It

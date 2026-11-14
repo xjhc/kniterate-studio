@@ -117,9 +117,13 @@ Further captures: both edges widening in one row (Simple/Fashioned), and
 isolated left/right single-bed decreases followed by the jacquard decrease.
 
 The two screenshots have their top 48 pixels cropped to remove account details.
-Only the working-tree images are sanitized; the originals remain in commit
-`4174c8d`. A later crop commit does not remove them from Git history. Do not
-treat these branch commits as sanitized for public publication.
+With the user's approval, their original blobs were replaced with those same
+cropped versions throughout the unpublished history before publication. The
+two originals are no longer reachable from `accumulate`; a private local Git
+bundle preserves the prior history. The current file tree did not change.
+The [old-to-new commit map](../../docs/development-trials/2026-11-13/history-redaction.json)
+records the 23 changed commit IDs, including the original capture commit
+`4174c8d` and the review references written before this cleanup.
 
 ## Capture queue and coverage
 
