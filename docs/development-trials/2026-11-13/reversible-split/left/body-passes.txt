@@ -1,0 +1,62 @@
+cycle 1, plain: 111 >> c3 rack 0 speed 100 roller 100 stitch f7,r7 | knit front 2 (116..135), knit rear 18 (117..134) [body]; carriage {"left":113.5,"right":143.5}; feeder {"left":113.5,"right":137.5}
+cycle 1, plain: 112 << c4 rack 0 speed 100 roller 100 stitch f7,r7 | knit rear 2 (116..135), knit front 18 (117..134) [body]; carriage {"left":113.5,"right":143.5}; feeder {"left":113.5,"right":143.5}
+cycle 2, plain: 113 >> c4 rack 0 speed 200 roller 450 stitch f7 | knit front 20 (116..135) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":139.5}
+cycle 2, plain: 114 << c3 rack 0 speed 200 roller 450 stitch r7 | knit rear 20 (116..135) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":137.5}
+cycle 3, plain: 115 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 2 (116..135), knit rear 18 (117..134) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":137.5}
+cycle 3, plain: 116 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 2 (116..135), knit front 18 (117..134) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":139.5}
+cycle 4, plain: 117 >> c4 rack 0 speed 200 roller 450 stitch f7 | knit front 20 (116..135) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":139.5}
+cycle 4, plain: 118 << c3 rack 0 speed 200 roller 450 stitch r7 | knit rear 20 (116..135) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":137.5}
+cycle 5, plain: 119 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 2 (116..135), knit rear 18 (117..134) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":137.5}
+cycle 5, plain: 120 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 2 (116..135), knit front 18 (117..134) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":139.5}
+cycle 6, plain: 121 >> c4 rack 0 speed 200 roller 450 stitch f7 | knit front 20 (116..135) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":139.5}
+cycle 6, plain: 122 << c3 rack 0 speed 200 roller 450 stitch r7 | knit rear 20 (116..135) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":137.5}
+cycle 7, plain: 123 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 2 (116..135), knit rear 18 (117..134) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":137.5}
+cycle 7, plain: 124 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 2 (116..135), knit front 18 (117..134) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":139.5}
+cycle 8, plain: 125 >> c4 rack 0 speed 200 roller 450 stitch f7 | knit front 20 (116..135) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":139.5}
+cycle 8, plain: 126 << c3 rack 0 speed 200 roller 450 stitch r7 | knit rear 20 (116..135) [body]; carriage {"left":113.5,"right":139.5}; feeder {"left":113.5,"right":137.5}
+cycle 9, Q1: 127 >> c0 rack 0 speed 600 roller 0 | move [body]; carriage {"left":113.5,"right":139.5}; feeder null
+cycle 9, Q2: 128 << c4 rack 0 speed 200 roller 0 | move [body]; carriage {"left":132.5,"right":139.5}; feeder {"left":132.5,"right":139.5}
+cycle 9, Q3: 129 >> c4 rack 0 speed 200 roller 0 | move [body]; carriage {"left":132.5,"right":138.5}; feeder {"left":132.5,"right":138.5}
+cycle 9, Q4: 130 << c0 rack 0 speed 600 roller 0 | move [body]; carriage {"left":113.5,"right":138.5}; feeder null
+cycle 9, Q5: 131 >> c3 rack 0 speed 200 roller 0 | move [body]; carriage {"left":113.5,"right":118.5}; feeder {"left":113.5,"right":118.5}
+cycle 9, Q6: 132 << c3 rack 0 speed 200 roller 0 | move [body]; carriage {"left":112.5,"right":118.5}; feeder {"left":112.5,"right":118.5}
+cycle 9, Q7: 133 >> c0 rack 1 speed 100 roller 0 | xfer rear>front 1 (135..135) [body]; carriage {"left":112.5,"right":137.5}; feeder null
+cycle 9, Q8: 134 << c0 rack -1 speed 100 roller 0 | xfer rear>front 1 (116..116) [body]; carriage {"left":113.5,"right":137.5}; feeder null
+cycle 9, Q9: 135 >> c0 rack 0 speed 600 roller 0 | move [body]; carriage {"left":113.5,"right":138.5}; feeder null
+cycle 9, O1: 136 << c4 rack 0 speed 200 roller 0 stitch r7 | knit rear 1 (136..136) [body]; carriage {"left":133.5,"right":138.5}; feeder {"left":133.5,"right":138.5}
+cycle 9, O2: 137 >> c4 rack 0 speed 200 roller 0 | move [body]; carriage {"left":133.5,"right":138.5}; feeder {"left":133.5,"right":138.5}
+cycle 9, O3: 138 << c4 rack 0 speed 200 roller 450 stitch f7 | knit front 20 (115..135), split front>rear 1 (115..135) [body]; carriage {"left":110.5,"right":138.5}; feeder {"left":110.5,"right":138.5}
+cycle 9, O4: 139 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 20 (115..135), knit front 1 (136..136) [body]; carriage {"left":110.5,"right":138.5}; feeder {"left":112.5,"right":138.5}
+cycle 10, O5: 140 << c0 rack 0 speed 600 roller 0 | move [body]; carriage {"left":110.5,"right":138.5}; feeder null
+cycle 10, O6: 141 >> c4 rack 0 speed 200 roller 0 stitch r7 | knit rear 1 (115..115) [body]; carriage {"left":110.5,"right":117.5}; feeder {"left":110.5,"right":117.5}
+cycle 10, O7: 142 << c4 rack 0 speed 200 roller 0 | move [body]; carriage {"left":112.5,"right":117.5}; feeder {"left":112.5,"right":117.5}
+cycle 10, O8: 143 >> c4 rack 0 speed 200 roller 450 stitch f7 | split front>rear 1 (116..136), knit front 20 (116..136) [body]; carriage {"left":112.5,"right":140.5}; feeder {"left":112.5,"right":140.5}
+cycle 10, O9: 144 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 21 (116..136), knit front 1 (115..115) [body]; carriage {"left":112.5,"right":140.5}; feeder {"left":112.5,"right":138.5}
+cycle 11, plain: 145 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 21 (115..135), knit front 1 (136..136) [body]; carriage {"left":112.5,"right":140.5}; feeder {"left":112.5,"right":138.5}
+cycle 11, plain: 146 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (136..136), knit front 21 (115..135) [body]; carriage {"left":112.5,"right":140.5}; feeder {"left":112.5,"right":140.5}
+cycle 12, plain: 147 >> c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (115..115), knit front 21 (116..136) [body]; carriage {"left":112.5,"right":140.5}; feeder {"left":112.5,"right":140.5}
+cycle 12, plain: 148 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 21 (116..136), knit front 1 (115..115) [body]; carriage {"left":112.5,"right":140.5}; feeder {"left":112.5,"right":138.5}
+cycle 13, Q1: 149 >> c0 rack 0 speed 600 roller 0 | move [body]; carriage {"left":112.5,"right":140.5}; feeder null
+cycle 13, Q2: 150 << c4 rack 0 speed 200 roller 0 | move [body]; carriage {"left":133.5,"right":140.5}; feeder {"left":133.5,"right":140.5}
+cycle 13, Q3: 151 >> c4 rack 0 speed 200 roller 0 | move [body]; carriage {"left":133.5,"right":139.5}; feeder {"left":133.5,"right":139.5}
+cycle 13, Q4: 152 << c0 rack 0 speed 600 roller 0 | move [body]; carriage {"left":112.5,"right":139.5}; feeder null
+cycle 13, Q5: 153 >> c3 rack 0 speed 200 roller 0 | move [body]; carriage {"left":112.5,"right":117.5}; feeder {"left":112.5,"right":117.5}
+cycle 13, Q6: 154 << c3 rack 0 speed 200 roller 0 | move [body]; carriage {"left":111.5,"right":117.5}; feeder {"left":111.5,"right":117.5}
+cycle 13, Q7: 155 >> c0 rack 1 speed 100 roller 0 | xfer rear>front 1 (136..136) [body]; carriage {"left":111.5,"right":138.5}; feeder null
+cycle 13, Q8: 156 << c0 rack -1 speed 100 roller 0 | xfer rear>front 1 (115..115) [body]; carriage {"left":112.5,"right":138.5}; feeder null
+cycle 13, Q9: 157 >> c0 rack 0 speed 600 roller 0 | move [body]; carriage {"left":112.5,"right":139.5}; feeder null
+cycle 13, O1: 158 << c4 rack 0 speed 200 roller 0 stitch r7 | knit rear 1 (137..137) [body]; carriage {"left":134.5,"right":139.5}; feeder {"left":134.5,"right":139.5}
+cycle 13, O2: 159 >> c4 rack 0 speed 200 roller 0 | move [body]; carriage {"left":134.5,"right":139.5}; feeder {"left":134.5,"right":139.5}
+cycle 13, O3: 160 << c4 rack 0 speed 200 roller 450 stitch f7 | knit front 22 (114..136), split front>rear 1 (114..136) [body]; carriage {"left":109.5,"right":139.5}; feeder {"left":109.5,"right":139.5}
+cycle 13, O4: 161 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 22 (114..136), knit front 1 (137..137) [body]; carriage {"left":109.5,"right":139.5}; feeder {"left":111.5,"right":139.5}
+cycle 14, O5: 162 << c0 rack 0 speed 600 roller 0 | move [body]; carriage {"left":109.5,"right":139.5}; feeder null
+cycle 14, O6: 163 >> c4 rack 0 speed 200 roller 0 stitch r7 | knit rear 1 (114..114) [body]; carriage {"left":109.5,"right":116.5}; feeder {"left":109.5,"right":116.5}
+cycle 14, O7: 164 << c4 rack 0 speed 200 roller 0 | move [body]; carriage {"left":111.5,"right":116.5}; feeder {"left":111.5,"right":116.5}
+cycle 14, O8: 165 >> c4 rack 0 speed 200 roller 450 stitch f7 | split front>rear 1 (115..137), knit front 22 (115..137) [body]; carriage {"left":111.5,"right":141.5}; feeder {"left":111.5,"right":141.5}
+cycle 14, O9: 166 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 23 (115..137), knit front 1 (114..114) [body]; carriage {"left":111.5,"right":141.5}; feeder {"left":111.5,"right":139.5}
+cycle 15, plain: 167 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 23 (114..136), knit front 1 (137..137) [body]; carriage {"left":111.5,"right":141.5}; feeder {"left":111.5,"right":139.5}
+cycle 15, plain: 168 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (137..137), knit front 23 (114..136) [body]; carriage {"left":111.5,"right":141.5}; feeder {"left":111.5,"right":141.5}
+cycle 16, plain: 169 >> c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (114..114), knit front 23 (115..137) [body]; carriage {"left":111.5,"right":141.5}; feeder {"left":111.5,"right":141.5}
+cycle 16, plain: 170 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 23 (115..137), knit front 1 (114..114) [body]; carriage {"left":111.5,"right":141.5}; feeder {"left":111.5,"right":139.5}
+cycle 17, plain: 171 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 23 (114..136), knit front 1 (137..137) [body]; carriage {"left":111.5,"right":141.5}; feeder {"left":111.5,"right":139.5}
+cycle 17, plain: 172 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (137..137), knit front 23 (114..136) [body]; carriage {"left":103.5,"right":141.5}; feeder {"left":111.5,"right":141.5}

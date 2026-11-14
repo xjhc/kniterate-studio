@@ -37,9 +37,13 @@ the single-bed split swatch has knitted.** No push or issue post is authorized.
 The simulator roller fix is local in `900eae8`; the experimental outward-first
 builder and its mirror now pass focused serialized-loop/edge checks. All 47
 existing construction outputs and the Gate 2 swatch remain byte-identical.
-The comparison layout awaits a user decision: waiting normal cycles cannot
-repeat old-front-A with outward-first on the same continuous strip. Two short
-P-then-Q files, each knitted twice, avoid introducing an unreviewed phase reset.
+The user approved the [two-file comparison](development-trials/2026-11-13/reversible-split/README.md):
+left and right, each P then Q and intended to be knitted twice. Waiting normal
+cycles cannot repeat old-front-A with outward-first on the same continuous
+strip; these files avoid introducing an unreviewed phase reset. The 222/226-pass
+files are held for implementation review, with pass maps and blank observations.
+The full KCode proof and `pnpm verify` pass. The package records the initial
+Chromium timing failure and its successful isolated recheck without a limit change.
 Previously knitted files and records are preserved unchanged.
 
 The [522-pass mixed-paisley baseline](../packages/machine-lib/registry/swatches/2026-11-13-mixed-paisley-baseline/outcome.md)
@@ -81,7 +85,7 @@ Prepared the operator-requested **8 → 20 → 8**, 75-row two-colour reversible
   blocking machine-safety envelope before it can be downloaded.
 - **Knitted:** five development evidence entries are registered
   (`packages/machine-lib/registry/swatches/`). None is promotable, and nothing
-  is Knit-proven. Joined-edge paisley completed successfully (operator report; 18.5 cm wide, 21 cm including top waste). The 16–48–16 paisley diamond produced a completed specimen, with open-looking increase edges and repeated CLUMP-like stops during idle-feeder shuffling; decreases looked satisfactory. The older two-bed derivation's rear/racked split forms remain refused; its synthetic loop checks are not physical proof. The current [Gate 3 design](REVERSIBLE-INCREASE-GATE3.md) uses the captured front/rack-zero forms and awaits paper review. Handoff 3 strip 2 completed with waste/left-edge defects; its incomplete
+  is Knit-proven. Joined-edge paisley completed successfully (operator report; 18.5 cm wide, 21 cm including top waste). The 16–48–16 paisley diamond produced a completed specimen, with open-looking increase edges and repeated CLUMP-like stops during idle-feeder shuffling; decreases looked satisfactory. The older two-bed derivation's rear/racked split forms remain refused; its synthetic loop checks are not physical proof. The current [Gate 3 design](REVERSIBLE-INCREASE-GATE3.md) uses the captured front/rack-zero forms; its approved outward-first implementation is held for review as described above. Handoff 3 strip 2 completed with waste/left-edge defects; its incomplete
   physical evidence is preserved in `docs/physical-trials/2026-11-11/`.
 - **Not built:** the in-app assistant, a swatch-registry UI, raglan sweaters,
   colourwork or stripes on sweater pieces. See "Not yet built".

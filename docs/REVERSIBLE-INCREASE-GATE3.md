@@ -38,10 +38,12 @@ is B and A is opposite it. Every normal cycle flips both colour and carrier
 side; returning to outward-first takes an even number of normal cycles and
 therefore returns to B. Changing candidate sides also reaches B after the
 required odd number of normal cycles. Waiting alone cannot repeat the P
-case in the old continuous-strip plan. The proposed resolution is one short
-file per candidate side, each starting with P then Q, and knitting each
-exact file twice. That format decision is pending; no new phase-reset
-construction is part of this implementation.
+case in the old continuous-strip plan. **The user approved two short files,
+one per candidate side, each starting with P then Q, with each exact file
+intended to be knitted twice.** No new phase-reset construction is part of
+this implementation. The generated [comparison package](development-trials/2026-11-13/reversible-split/README.md)
+is now the implementation-review artifact; the physical handoff gate above
+still applies.
 
 ## Earlier paper and review evidence
 

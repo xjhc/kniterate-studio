@@ -1,0 +1,2975 @@
+{
+  "passed": true,
+  "softwareOnly": true,
+  "physicalValidation": false,
+  "side": "right",
+  "sha256": "44d663f1121e272ca086c14e78d889cff561193ec1df36629a4c4e185c78dd20",
+  "bytes": 272879,
+  "passes": 226,
+  "bodyPasses": [
+    111,
+    175
+  ],
+  "cycles": 18,
+  "events": [
+    {
+      "row": 10,
+      "side": "right",
+      "phase": "P",
+      "lo": 117,
+      "hi": 136,
+      "passes": [
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147
+      ],
+      "splitPasses": [
+        141,
+        146
+      ],
+      "supportedCandidateStarts": true,
+      "outerAndControlYarnReturns": true,
+      "loopLedger": {
+        "a": {
+          "id": 2631,
+          "carrier": "4",
+          "pass": 128,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 135
+          },
+          "parents": [
+            2591
+          ],
+          "previousYarnLoop": 2590
+        },
+        "b": {
+          "id": 2630,
+          "carrier": "3",
+          "pass": 127,
+          "location": {
+            "bed": "rear",
+            "traceCoordinate": 135
+          },
+          "parents": [
+            2590
+          ],
+          "previousYarnLoop": 2629
+        },
+        "a1": {
+          "id": 2671,
+          "carrier": "4",
+          "pass": 141,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 135
+          },
+          "parents": [
+            2631
+          ],
+          "previousYarnLoop": 2670
+        },
+        "c1": {
+          "id": 2672,
+          "carrier": "4",
+          "pass": 141,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 136
+          },
+          "parents": [
+            2630
+          ],
+          "previousYarnLoop": 2671
+        },
+        "d1": {
+          "id": 2673,
+          "carrier": "3",
+          "pass": 142,
+          "location": {
+            "bed": "rear",
+            "traceCoordinate": 136
+          },
+          "parents": [
+            2630
+          ],
+          "previousYarnLoop": 2630
+        },
+        "a2": {
+          "id": 2695,
+          "carrier": "4",
+          "pass": 146,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 135
+          },
+          "parents": [
+            2671
+          ],
+          "previousYarnLoop": 2694
+        },
+        "b2": {
+          "id": 2736,
+          "carrier": "3",
+          "pass": 147,
+          "location": {
+            "bed": "rear",
+            "traceCoordinate": 135
+          },
+          "parents": [
+            2671
+          ],
+          "previousYarnLoop": 2735
+        },
+        "c2": {
+          "id": 2737,
+          "carrier": "3",
+          "pass": 147,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 136
+          },
+          "parents": [
+            2672
+          ],
+          "previousYarnLoop": 2736
+        },
+        "d2": {
+          "id": 2694,
+          "carrier": "4",
+          "pass": 144,
+          "location": {
+            "bed": "rear",
+            "traceCoordinate": 136
+          },
+          "parents": [
+            2673
+          ],
+          "previousYarnLoop": 2672
+        }
+      }
+    },
+    {
+      "row": 14,
+      "side": "right",
+      "phase": "Q",
+      "lo": 116,
+      "hi": 137,
+      "passes": [
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169
+      ],
+      "splitPasses": [
+        163,
+        168
+      ],
+      "supportedCandidateStarts": true,
+      "outerAndControlYarnReturns": true,
+      "loopLedger": {
+        "a": {
+          "id": 2825,
+          "carrier": "3",
+          "pass": 151,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 136
+          },
+          "parents": [
+            2781
+          ],
+          "previousYarnLoop": 2824
+        },
+        "b": {
+          "id": 2782,
+          "carrier": "4",
+          "pass": 150,
+          "location": {
+            "bed": "rear",
+            "traceCoordinate": 136
+          },
+          "parents": [
+            2738
+          ],
+          "previousYarnLoop": 2781
+        },
+        "a1": {
+          "id": 2848,
+          "carrier": "4",
+          "pass": 163,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 136
+          },
+          "parents": [
+            2825
+          ],
+          "previousYarnLoop": 2847
+        },
+        "c1": {
+          "id": 2849,
+          "carrier": "4",
+          "pass": 163,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 137
+          },
+          "parents": [
+            2782
+          ],
+          "previousYarnLoop": 2848
+        },
+        "d1": {
+          "id": 2850,
+          "carrier": "3",
+          "pass": 164,
+          "location": {
+            "bed": "rear",
+            "traceCoordinate": 137
+          },
+          "parents": [
+            2782
+          ],
+          "previousYarnLoop": 2825
+        },
+        "a2": {
+          "id": 2874,
+          "carrier": "4",
+          "pass": 168,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 136
+          },
+          "parents": [
+            2848
+          ],
+          "previousYarnLoop": 2873
+        },
+        "b2": {
+          "id": 2919,
+          "carrier": "3",
+          "pass": 169,
+          "location": {
+            "bed": "rear",
+            "traceCoordinate": 136
+          },
+          "parents": [
+            2848
+          ],
+          "previousYarnLoop": 2918
+        },
+        "c2": {
+          "id": 2920,
+          "carrier": "3",
+          "pass": 169,
+          "location": {
+            "bed": "front",
+            "traceCoordinate": 137
+          },
+          "parents": [
+            2849
+          ],
+          "previousYarnLoop": 2919
+        },
+        "d2": {
+          "id": 2873,
+          "carrier": "4",
+          "pass": 166,
+          "location": {
+            "bed": "rear",
+            "traceCoordinate": 137
+          },
+          "parents": [
+            2850
+          ],
+          "previousYarnLoop": 2849
+        }
+      }
+    }
+  ],
+  "audit": {
+    "passCount": 226,
+    "roles": {
+      "waste": "6",
+      "draw": "1"
+    },
+    "startEnd": 110,
+    "ok": true,
+    "checks": [
+      {
+        "id": "start-hold",
+        "severity": "issue",
+        "ok": true,
+        "value": 7,
+        "limit": 12,
+        "meaning": "The longest a loop made in the start (waste yarn, yarn catches, draw thread) waits before a stitch is knitted through it. A long-held loop is pulled by the rollers the whole time; handoff 2 held one for 90 passes at the corner where the main yarn broke.",
+        "kniterate": "fairisle, jacquard, dbj, the swatches, the baby beanie and the sophie samples wait at most 5 passes, 2x2-rib-beanie 7; the reversible sleeves.kc holds one rear edge loop 75.",
+        "at": [
+          "b122 from pass 80 (c6) to 87 (c6)"
+        ]
+      },
+      {
+        "id": "waste-through-body-loops",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 0,
+        "meaning": "The waste yarn or draw thread knits through two or more loops that include body yarn: the body's loops are joined only by yarn that is removed, and come off the machine live (a two-layer top without its joining row).",
+        "kniterate": "None of Kniterate's reference files does this."
+      },
+      {
+        "id": "unsupported-body-drops",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 0,
+        "meaning": "Body-yarn loops dropped from the needles without a waste row knitted through them first, so they can ladder. A chain bind-off's last loop is not counted.",
+        "kniterate": "fairisle, jacquard, dbj, the swatches, the baby beanie and the sophie samples drop none; 2x2-rib-beanie.kc releases its 25 crown loops for gathering by hand, and the reversible front.kc and back.kc release each shoulder live (59 loops). Studio ends on waste yarn instead."
+      },
+      {
+        "id": "loops-left",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 1,
+        "meaning": "Loops still on the needles when the file ends (one is a chain bind-off's last loop, finished by hand).",
+        "kniterate": "Most of Kniterate's files leave none; color-swatch-bindoff.kc and sophie_stripe.kc leave a chain's last loop, sophie2.kc 12."
+      },
+      {
+        "id": "max-stack",
+        "severity": "issue",
+        "ok": true,
+        "value": 1,
+        "limit": 3,
+        "meaning": "The most loops on one needle at once.",
+        "kniterate": "Kniterate's files stack at most 3; its app warns about more than 2 parents and advises never more than 4.",
+        "at": [
+          "pass 136 f115"
+        ]
+      },
+      {
+        "id": "idle-feeder-moves",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 0,
+        "meaning": "Carriage passes that only push the waste or draw feeder aside while the piece is being knitted. A feeder parked inside the width the piece later reaches is moved again at every increase: each move is an extra carriage pass, and issue #18 reports the machine stopping (clump sensor) during them.",
+        "kniterate": "None of Kniterate's reference files moves either feeder after the start; the widening sleeves.kc sends both to the left home on their last start rows."
+      },
+      {
+        "id": "movement-per-knit",
+        "severity": "issue",
+        "ok": true,
+        "value": 0.53,
+        "limit": 1.5,
+        "meaning": "Carriage passes that knit and transfer nothing, for each pass that knits, from the end of the start to the piece's last row (21 movement-only, 40 knitting, 4 transfer passes). The carriage fetches one feeder at a time, so some are needed; many more than Kniterate's files means feeders are being shuffled, which costs time and is where issue #18's stops happened.",
+        "kniterate": "The reversible front.kc is the busiest at 1.48; back.kc 0.98, sleeves.kc 0.94; every other reference file is at or under 0.49."
+      },
+      {
+        "id": "paired-empty-knits",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 0,
+        "meaning": "A body yarn knits two or more neighbouring empty needles in one pass, among needles that already hold loops. Neighbouring empty needles cannot form stitches from one strand: the yarn lies across them as a float and leaves a hole (the open increases reported on issue #18).",
+        "kniterate": "None of Kniterate's reference files does this outside a cast-on row. Its reversible increase gives each of the two empty needles to a different yarn, in separate passes."
+      },
+      {
+        "id": "inside-empty-front-knits",
+        "severity": "note",
+        "ok": true,
+        "value": 0,
+        "limit": null,
+        "meaning": "A body yarn knits a front needle that holds no loop while both neighbours do: a small eyelet in the face. Fashioned increases do this on purpose; anywhere else it is a hole.",
+        "kniterate": "The sophie samples do it 48 to 58 times at their fashioned increases; Kniterate's unshaped files never."
+      }
+    ],
+    "longestHolds": [
+      {
+        "passes": 15,
+        "needle": "b136",
+        "from": {
+          "pass": 127,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 142,
+          "carrier": "3"
+        },
+        "section": "body"
+      },
+      {
+        "passes": 15,
+        "needle": "b134",
+        "from": {
+          "pass": 127,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 142,
+          "carrier": "3"
+        },
+        "section": "body"
+      },
+      {
+        "passes": 15,
+        "needle": "b133",
+        "from": {
+          "pass": 127,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 142,
+          "carrier": "3"
+        },
+        "section": "body"
+      },
+      {
+        "passes": 15,
+        "needle": "b132",
+        "from": {
+          "pass": 127,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 142,
+          "carrier": "3"
+        },
+        "section": "body"
+      },
+      {
+        "passes": 15,
+        "needle": "b131",
+        "from": {
+          "pass": 127,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 142,
+          "carrier": "3"
+        },
+        "section": "body"
+      }
+    ],
+    "work": {
+      "knitting": 40,
+      "transfers": 4,
+      "movementOnly": 21
+    },
+    "emptyNeedleKnits": {
+      "front": {
+        "edge": 0,
+        "inside": 0
+      },
+      "rear": {
+        "edge": 22,
+        "inside": 2
+      }
+    }
+  },
+  "advisories": [
+    {
+      "rule": "machine-advisory.float-distance",
+      "passIndex": 85,
+      "fromPassIndex": 79,
+      "carrier": "6",
+      "distance": 23,
+      "actionIndex": 0,
+      "sourceSpan": {
+        "start": {
+          "offset": 102590,
+          "line": 775,
+          "column": 160
+        },
+        "end": {
+          "offset": 102591,
+          "line": 775,
+          "column": 161
+        }
+      },
+      "message": "Carrier 6 floats 23 needles from its last stitch in pass 80 to pass 86, 6 passes later (maximum 7). KCode does not encode carrier in/out, so a long gap may be a parked or cut yarn rather than a float."
+    }
+  ],
+  "bodySchedule": [
+    {
+      "row": 1,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 143.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "pass": 111,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 100,
+      "roller": 100,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 1,
+        "knit rear": 19
+      },
+      "needles": {
+        "front": [
+          116,
+          116
+        ],
+        "rear": [
+          117,
+          135
+        ]
+      },
+      "text": "111 >> c3 rack 0 speed 100 roller 100 stitch f7,r7 | knit front 1 (116..116), knit rear 19 (117..135) [body]"
+    },
+    {
+      "row": 1,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 143.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 143.5
+      },
+      "pass": 112,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 100,
+      "roller": 100,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 19,
+        "knit rear": 1
+      },
+      "needles": {
+        "front": [
+          117,
+          135
+        ],
+        "rear": [
+          116,
+          116
+        ]
+      },
+      "text": "112 << c4 rack 0 speed 100 roller 100 stitch f7,r7 | knit front 19 (117..135), knit rear 1 (116..116) [body]"
+    },
+    {
+      "row": 2,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "pass": 113,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 19,
+        "knit rear": 1
+      },
+      "needles": {
+        "front": [
+          116,
+          134
+        ],
+        "rear": [
+          135,
+          135
+        ]
+      },
+      "text": "113 >> c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 19 (116..134), knit rear 1 (135..135) [body]"
+    },
+    {
+      "row": 2,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "pass": 114,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 1,
+        "knit rear": 19
+      },
+      "needles": {
+        "front": [
+          135,
+          135
+        ],
+        "rear": [
+          116,
+          134
+        ]
+      },
+      "text": "114 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 1 (135..135), knit rear 19 (116..134) [body]"
+    },
+    {
+      "row": 3,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "pass": 115,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 1,
+        "knit rear": 19
+      },
+      "needles": {
+        "front": [
+          116,
+          116
+        ],
+        "rear": [
+          117,
+          135
+        ]
+      },
+      "text": "115 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 1 (116..116), knit rear 19 (117..135) [body]"
+    },
+    {
+      "row": 3,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "pass": 116,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 19,
+        "knit rear": 1
+      },
+      "needles": {
+        "front": [
+          117,
+          135
+        ],
+        "rear": [
+          116,
+          116
+        ]
+      },
+      "text": "116 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 19 (117..135), knit rear 1 (116..116) [body]"
+    },
+    {
+      "row": 4,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "pass": 117,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 19,
+        "knit rear": 1
+      },
+      "needles": {
+        "front": [
+          116,
+          134
+        ],
+        "rear": [
+          135,
+          135
+        ]
+      },
+      "text": "117 >> c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 19 (116..134), knit rear 1 (135..135) [body]"
+    },
+    {
+      "row": 4,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "pass": 118,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 1,
+        "knit rear": 19
+      },
+      "needles": {
+        "front": [
+          135,
+          135
+        ],
+        "rear": [
+          116,
+          134
+        ]
+      },
+      "text": "118 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 1 (135..135), knit rear 19 (116..134) [body]"
+    },
+    {
+      "row": 5,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "pass": 119,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 1,
+        "knit rear": 19
+      },
+      "needles": {
+        "front": [
+          116,
+          116
+        ],
+        "rear": [
+          117,
+          135
+        ]
+      },
+      "text": "119 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 1 (116..116), knit rear 19 (117..135) [body]"
+    },
+    {
+      "row": 5,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "pass": 120,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 19,
+        "knit rear": 1
+      },
+      "needles": {
+        "front": [
+          117,
+          135
+        ],
+        "rear": [
+          116,
+          116
+        ]
+      },
+      "text": "120 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 19 (117..135), knit rear 1 (116..116) [body]"
+    },
+    {
+      "row": 6,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "pass": 121,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 19,
+        "knit rear": 1
+      },
+      "needles": {
+        "front": [
+          116,
+          134
+        ],
+        "rear": [
+          135,
+          135
+        ]
+      },
+      "text": "121 >> c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 19 (116..134), knit rear 1 (135..135) [body]"
+    },
+    {
+      "row": 6,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "pass": 122,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 1,
+        "knit rear": 19
+      },
+      "needles": {
+        "front": [
+          135,
+          135
+        ],
+        "rear": [
+          116,
+          134
+        ]
+      },
+      "text": "122 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 1 (135..135), knit rear 19 (116..134) [body]"
+    },
+    {
+      "row": 7,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "pass": 123,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 1,
+        "knit rear": 19
+      },
+      "needles": {
+        "front": [
+          116,
+          116
+        ],
+        "rear": [
+          117,
+          135
+        ]
+      },
+      "text": "123 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 1 (116..116), knit rear 19 (117..135) [body]"
+    },
+    {
+      "row": 7,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "pass": 124,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 19,
+        "knit rear": 1
+      },
+      "needles": {
+        "front": [
+          117,
+          135
+        ],
+        "rear": [
+          116,
+          116
+        ]
+      },
+      "text": "124 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 19 (117..135), knit rear 1 (116..116) [body]"
+    },
+    {
+      "row": 8,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "pass": 125,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 19,
+        "knit rear": 1
+      },
+      "needles": {
+        "front": [
+          116,
+          134
+        ],
+        "rear": [
+          135,
+          135
+        ]
+      },
+      "text": "125 >> c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 19 (116..134), knit rear 1 (135..135) [body]"
+    },
+    {
+      "row": 8,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "pass": 126,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 1,
+        "knit rear": 19
+      },
+      "needles": {
+        "front": [
+          135,
+          135
+        ],
+        "rear": [
+          116,
+          134
+        ]
+      },
+      "text": "126 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 1 (135..135), knit rear 19 (116..134) [body]"
+    },
+    {
+      "row": 9,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "pass": 127,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 1,
+        "knit rear": 19
+      },
+      "needles": {
+        "front": [
+          116,
+          116
+        ],
+        "rear": [
+          117,
+          135
+        ]
+      },
+      "text": "127 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 1 (116..116), knit rear 19 (117..135) [body]"
+    },
+    {
+      "row": 9,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "pass": 128,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit front": 19,
+        "knit rear": 1
+      },
+      "needles": {
+        "front": [
+          117,
+          135
+        ],
+        "rear": [
+          116,
+          116
+        ]
+      },
+      "text": "128 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit front 19 (117..135), knit rear 1 (116..116) [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q0",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": null,
+      "pass": 129,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "129 >> c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q1",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 139.5
+      },
+      "carrierStops": null,
+      "pass": 130,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "130 << c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q2",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 118.5
+      },
+      "carrierStops": {
+        "left": 113.5,
+        "right": 118.5
+      },
+      "pass": 131,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "131 >> c4 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q3",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 118.5
+      },
+      "carrierStops": {
+        "left": 112.5,
+        "right": 118.5
+      },
+      "pass": 132,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "132 << c4 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q4",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 137.5
+      },
+      "carrierStops": null,
+      "pass": 133,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "133 >> c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q5",
+      "carriageStops": {
+        "left": 132.5,
+        "right": 137.5
+      },
+      "carrierStops": {
+        "left": 132.5,
+        "right": 137.5
+      },
+      "pass": 134,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "134 << c3 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q6",
+      "carriageStops": {
+        "left": 132.5,
+        "right": 138.5
+      },
+      "carrierStops": {
+        "left": 132.5,
+        "right": 138.5
+      },
+      "pass": 135,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "135 >> c3 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q7",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 138.5
+      },
+      "carrierStops": null,
+      "pass": 136,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": -1,
+      "speed": 100,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          116,
+          116
+        ]
+      },
+      "text": "136 << c0 rack -1 speed 100 roller 0 | xfer rear>front 1 (116..116) [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q8",
+      "carriageStops": {
+        "left": 113.5,
+        "right": 137.5
+      },
+      "carrierStops": null,
+      "pass": 137,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 1,
+      "speed": 100,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          135,
+          135
+        ]
+      },
+      "text": "137 >> c0 rack 1 speed 100 roller 0 | xfer rear>front 1 (135..135) [body]"
+    },
+    {
+      "row": 10,
+      "slot": "Q9",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 137.5
+      },
+      "carrierStops": null,
+      "pass": 138,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "138 << c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "row": 10,
+      "slot": "O1",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 117.5
+      },
+      "carrierStops": {
+        "left": 112.5,
+        "right": 117.5
+      },
+      "pass": 139,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          115,
+          115
+        ]
+      },
+      "text": "139 >> c4 rack 0 speed 200 roller 0 stitch r7 | knit rear 1 (115..115) [body]"
+    },
+    {
+      "row": 10,
+      "slot": "O2",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 117.5
+      },
+      "carrierStops": {
+        "left": 112.5,
+        "right": 117.5
+      },
+      "pass": 140,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "140 << c4 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 10,
+      "slot": "O3",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 140.5
+      },
+      "carrierStops": {
+        "left": 112.5,
+        "right": 140.5
+      },
+      "pass": 141,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 20,
+        "split front>rear": 1
+      },
+      "needles": {
+        "front": [
+          116,
+          136
+        ],
+        "rear": null
+      },
+      "text": "141 >> c4 rack 0 speed 200 roller 450 stitch f7 | knit front 20 (116..136), split front>rear 1 (116..136) [body]"
+    },
+    {
+      "row": 10,
+      "slot": "O4",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 140.5
+      },
+      "carrierStops": {
+        "left": 112.5,
+        "right": 138.5
+      },
+      "pass": 142,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 20,
+        "knit front": 1
+      },
+      "needles": {
+        "front": [
+          115,
+          115
+        ],
+        "rear": [
+          116,
+          136
+        ]
+      },
+      "text": "142 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 20 (116..136), knit front 1 (115..115) [body]"
+    },
+    {
+      "row": 11,
+      "slot": "O5",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 140.5
+      },
+      "carrierStops": null,
+      "pass": 143,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "143 >> c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "row": 11,
+      "slot": "O6",
+      "carriageStops": {
+        "left": 133.5,
+        "right": 140.5
+      },
+      "carrierStops": {
+        "left": 133.5,
+        "right": 140.5
+      },
+      "pass": 144,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          136,
+          136
+        ]
+      },
+      "text": "144 << c4 rack 0 speed 200 roller 0 stitch r7 | knit rear 1 (136..136) [body]"
+    },
+    {
+      "row": 11,
+      "slot": "O7",
+      "carriageStops": {
+        "left": 133.5,
+        "right": 138.5
+      },
+      "carrierStops": {
+        "left": 133.5,
+        "right": 138.5
+      },
+      "pass": 145,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "145 >> c4 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 11,
+      "slot": "O8",
+      "carriageStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "carrierStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "pass": 146,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": []
+      },
+      "actions": {
+        "split front>rear": 1,
+        "knit front": 20
+      },
+      "needles": {
+        "front": [
+          115,
+          135
+        ],
+        "rear": null
+      },
+      "text": "146 << c4 rack 0 speed 200 roller 450 stitch f7 | split front>rear 1 (115..135), knit front 20 (115..135) [body]"
+    },
+    {
+      "row": 11,
+      "slot": "O9",
+      "carriageStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "carrierStops": {
+        "left": 112.5,
+        "right": 138.5
+      },
+      "pass": 147,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 21,
+        "knit front": 1
+      },
+      "needles": {
+        "front": [
+          136,
+          136
+        ],
+        "rear": [
+          115,
+          135
+        ]
+      },
+      "text": "147 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 21 (115..135), knit front 1 (136..136) [body]"
+    },
+    {
+      "row": 12,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "carrierStops": {
+        "left": 112.5,
+        "right": 138.5
+      },
+      "pass": 148,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 21,
+        "knit front": 1
+      },
+      "needles": {
+        "front": [
+          115,
+          115
+        ],
+        "rear": [
+          116,
+          136
+        ]
+      },
+      "text": "148 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 21 (116..136), knit front 1 (115..115) [body]"
+    },
+    {
+      "row": 12,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "carrierStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "pass": 149,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 1,
+        "knit front": 21
+      },
+      "needles": {
+        "front": [
+          116,
+          136
+        ],
+        "rear": [
+          115,
+          115
+        ]
+      },
+      "text": "149 >> c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (115..115), knit front 21 (116..136) [body]"
+    },
+    {
+      "row": 13,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "carrierStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "pass": 150,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 1,
+        "knit front": 21
+      },
+      "needles": {
+        "front": [
+          115,
+          135
+        ],
+        "rear": [
+          136,
+          136
+        ]
+      },
+      "text": "150 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (136..136), knit front 21 (115..135) [body]"
+    },
+    {
+      "row": 13,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "carrierStops": {
+        "left": 112.5,
+        "right": 138.5
+      },
+      "pass": 151,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 21,
+        "knit front": 1
+      },
+      "needles": {
+        "front": [
+          136,
+          136
+        ],
+        "rear": [
+          115,
+          135
+        ]
+      },
+      "text": "151 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 21 (115..135), knit front 1 (136..136) [body]"
+    },
+    {
+      "row": 14,
+      "slot": "Q1",
+      "carriageStops": {
+        "left": 110.5,
+        "right": 138.5
+      },
+      "carrierStops": null,
+      "pass": 152,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "152 << c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "row": 14,
+      "slot": "Q2",
+      "carriageStops": {
+        "left": 110.5,
+        "right": 117.5
+      },
+      "carrierStops": {
+        "left": 110.5,
+        "right": 117.5
+      },
+      "pass": 153,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "153 >> c4 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 14,
+      "slot": "Q3",
+      "carriageStops": {
+        "left": 111.5,
+        "right": 117.5
+      },
+      "carrierStops": {
+        "left": 111.5,
+        "right": 117.5
+      },
+      "pass": 154,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "154 << c4 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 14,
+      "slot": "Q4",
+      "carriageStops": {
+        "left": 111.5,
+        "right": 138.5
+      },
+      "carrierStops": null,
+      "pass": 155,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "155 >> c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "row": 14,
+      "slot": "Q5",
+      "carriageStops": {
+        "left": 133.5,
+        "right": 138.5
+      },
+      "carrierStops": {
+        "left": 133.5,
+        "right": 138.5
+      },
+      "pass": 156,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "156 << c3 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 14,
+      "slot": "Q6",
+      "carriageStops": {
+        "left": 133.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 133.5,
+        "right": 139.5
+      },
+      "pass": 157,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "157 >> c3 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 14,
+      "slot": "Q7",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 139.5
+      },
+      "carrierStops": null,
+      "pass": 158,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": -1,
+      "speed": 100,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          115,
+          115
+        ]
+      },
+      "text": "158 << c0 rack -1 speed 100 roller 0 | xfer rear>front 1 (115..115) [body]"
+    },
+    {
+      "row": 14,
+      "slot": "Q8",
+      "carriageStops": {
+        "left": 112.5,
+        "right": 138.5
+      },
+      "carrierStops": null,
+      "pass": 159,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 1,
+      "speed": 100,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          136,
+          136
+        ]
+      },
+      "text": "159 >> c0 rack 1 speed 100 roller 0 | xfer rear>front 1 (136..136) [body]"
+    },
+    {
+      "row": 14,
+      "slot": "Q9",
+      "carriageStops": {
+        "left": 111.5,
+        "right": 138.5
+      },
+      "carrierStops": null,
+      "pass": 160,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "160 << c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "row": 14,
+      "slot": "O1",
+      "carriageStops": {
+        "left": 111.5,
+        "right": 116.5
+      },
+      "carrierStops": {
+        "left": 111.5,
+        "right": 116.5
+      },
+      "pass": 161,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          114,
+          114
+        ]
+      },
+      "text": "161 >> c4 rack 0 speed 200 roller 0 stitch r7 | knit rear 1 (114..114) [body]"
+    },
+    {
+      "row": 14,
+      "slot": "O2",
+      "carriageStops": {
+        "left": 111.5,
+        "right": 116.5
+      },
+      "carrierStops": {
+        "left": 111.5,
+        "right": 116.5
+      },
+      "pass": 162,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "162 << c4 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 14,
+      "slot": "O3",
+      "carriageStops": {
+        "left": 111.5,
+        "right": 141.5
+      },
+      "carrierStops": {
+        "left": 111.5,
+        "right": 141.5
+      },
+      "pass": 163,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 22,
+        "split front>rear": 1
+      },
+      "needles": {
+        "front": [
+          115,
+          137
+        ],
+        "rear": null
+      },
+      "text": "163 >> c4 rack 0 speed 200 roller 450 stitch f7 | knit front 22 (115..137), split front>rear 1 (115..137) [body]"
+    },
+    {
+      "row": 14,
+      "slot": "O4",
+      "carriageStops": {
+        "left": 111.5,
+        "right": 141.5
+      },
+      "carrierStops": {
+        "left": 111.5,
+        "right": 139.5
+      },
+      "pass": 164,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 22,
+        "knit front": 1
+      },
+      "needles": {
+        "front": [
+          114,
+          114
+        ],
+        "rear": [
+          115,
+          137
+        ]
+      },
+      "text": "164 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 22 (115..137), knit front 1 (114..114) [body]"
+    },
+    {
+      "row": 15,
+      "slot": "O5",
+      "carriageStops": {
+        "left": 111.5,
+        "right": 141.5
+      },
+      "carrierStops": null,
+      "pass": 165,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "165 >> c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "row": 15,
+      "slot": "O6",
+      "carriageStops": {
+        "left": 134.5,
+        "right": 141.5
+      },
+      "carrierStops": {
+        "left": 134.5,
+        "right": 141.5
+      },
+      "pass": 166,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          137,
+          137
+        ]
+      },
+      "text": "166 << c4 rack 0 speed 200 roller 0 stitch r7 | knit rear 1 (137..137) [body]"
+    },
+    {
+      "row": 15,
+      "slot": "O7",
+      "carriageStops": {
+        "left": 134.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 134.5,
+        "right": 139.5
+      },
+      "pass": 167,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "carrier-move",
+      "rack": 0,
+      "speed": 200,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "167 >> c4 rack 0 speed 200 roller 0 | move [body]"
+    },
+    {
+      "row": 15,
+      "slot": "O8",
+      "carriageStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "pass": 168,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": []
+      },
+      "actions": {
+        "split front>rear": 1,
+        "knit front": 22
+      },
+      "needles": {
+        "front": [
+          114,
+          136
+        ],
+        "rear": null
+      },
+      "text": "168 << c4 rack 0 speed 200 roller 450 stitch f7 | split front>rear 1 (114..136), knit front 22 (114..136) [body]"
+    },
+    {
+      "row": 15,
+      "slot": "O9",
+      "carriageStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 111.5,
+        "right": 139.5
+      },
+      "pass": 169,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 23,
+        "knit front": 1
+      },
+      "needles": {
+        "front": [
+          137,
+          137
+        ],
+        "rear": [
+          114,
+          136
+        ]
+      },
+      "text": "169 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 23 (114..136), knit front 1 (137..137) [body]"
+    },
+    {
+      "row": 16,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 111.5,
+        "right": 139.5
+      },
+      "pass": 170,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 23,
+        "knit front": 1
+      },
+      "needles": {
+        "front": [
+          114,
+          114
+        ],
+        "rear": [
+          115,
+          137
+        ]
+      },
+      "text": "170 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 23 (115..137), knit front 1 (114..114) [body]"
+    },
+    {
+      "row": 16,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "pass": 171,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 1,
+        "knit front": 23
+      },
+      "needles": {
+        "front": [
+          115,
+          137
+        ],
+        "rear": [
+          114,
+          114
+        ]
+      },
+      "text": "171 >> c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (114..114), knit front 23 (115..137) [body]"
+    },
+    {
+      "row": 17,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "pass": 172,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 1,
+        "knit front": 23
+      },
+      "needles": {
+        "front": [
+          114,
+          136
+        ],
+        "rear": [
+          137,
+          137
+        ]
+      },
+      "text": "172 << c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (137..137), knit front 23 (114..136) [body]"
+    },
+    {
+      "row": 17,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 111.5,
+        "right": 139.5
+      },
+      "pass": 173,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 23,
+        "knit front": 1
+      },
+      "needles": {
+        "front": [
+          137,
+          137
+        ],
+        "rear": [
+          114,
+          136
+        ]
+      },
+      "text": "173 >> c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 23 (114..136), knit front 1 (137..137) [body]"
+    },
+    {
+      "row": 18,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 111.5,
+        "right": 139.5
+      },
+      "pass": 174,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 23,
+        "knit front": 1
+      },
+      "needles": {
+        "front": [
+          114,
+          114
+        ],
+        "rear": [
+          115,
+          137
+        ]
+      },
+      "text": "174 << c3 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 23 (115..137), knit front 1 (114..114) [body]"
+    },
+    {
+      "row": 18,
+      "slot": "plain",
+      "carriageStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "carrierStops": {
+        "left": 109.5,
+        "right": 139.5
+      },
+      "pass": 175,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "4",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 200,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          7
+        ],
+        "rear": [
+          7
+        ]
+      },
+      "actions": {
+        "knit rear": 1,
+        "knit front": 23
+      },
+      "needles": {
+        "front": [
+          115,
+          137
+        ],
+        "rear": [
+          114,
+          114
+        ]
+      },
+      "text": "175 >> c4 rack 0 speed 200 roller 450 stitch f7,r7 | knit rear 1 (114..114), knit front 23 (115..137) [body]"
+    }
+  ]
+}
