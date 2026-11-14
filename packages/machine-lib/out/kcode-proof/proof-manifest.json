@@ -30701,6 +30701,8 @@
     "test/knitout/kc-diff.test.ts",
     "test/knitout/loop-stack-software-policy.test.ts",
     "test/knitout/predicted-vs-vendor.test.ts",
+    "test/knitout/sim/split-roller.test.ts",
+    "test/knitout/reversible-outward-increase.test.ts",
     "test/knitout/fairisle-parity.test.ts",
     "test/knitout/dbj-parity.test.ts",
     "test/knitout/kniterate-topology-oracle.test.ts",
@@ -30751,7 +30753,7 @@
     },
     {
       "id": "deterministic-kcode-proof-tests",
-      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/proof-fingerprint.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/kcode-mutation-policy.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-safety.test.ts test/knitout/kcode-machine-safety-corpus.test.ts test/knitout/kcode-machine-safety-oracle.test.ts test/knitout/kcode-command-legality.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-machine-topology.test.ts test/knitout/kcode-machine-topology-window.test.ts test/knitout/kcode-machine-execution.test.ts test/knitout/kcode-coordinate-bridge.test.ts test/knitout/kcode-pass-metrics.test.ts test/knitout/kcode-machine-advisories.test.ts test/knitout/kcode-knitted-faces.test.ts test/knitout/kcode-programmed-motion.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts test/knitout/dbj-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
+      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/proof-fingerprint.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/kcode-mutation-policy.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-safety.test.ts test/knitout/kcode-machine-safety-corpus.test.ts test/knitout/kcode-machine-safety-oracle.test.ts test/knitout/kcode-command-legality.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-machine-topology.test.ts test/knitout/kcode-machine-topology-window.test.ts test/knitout/kcode-machine-execution.test.ts test/knitout/kcode-coordinate-bridge.test.ts test/knitout/kcode-pass-metrics.test.ts test/knitout/kcode-machine-advisories.test.ts test/knitout/kcode-knitted-faces.test.ts test/knitout/kcode-programmed-motion.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/sim/split-roller.test.ts test/knitout/reversible-outward-increase.test.ts test/knitout/fairisle-parity.test.ts test/knitout/dbj-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
       "status": "pass",
       "exitCode": 0
     },
@@ -30939,7 +30941,7 @@
     ]
   },
   "contract": {
-    "sha256": "9a8c158ebdf12e51cb34792ca16d54b2aa6fc9daedbd61454e2f9204e46d8a3a",
+    "sha256": "a8e886ccde6e2724d6e58a047efa7fb5987d10dd47390d41a5099faf621788b2",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31952,6 +31954,11 @@
         "bytes": 6898
       },
       {
+        "path": "../../scripts/experiments/reversible-split-swatch.ts",
+        "sha256": "c4f23bdba0814d1030cf8dea8c57dd177b052a37bac74e651dc85db21b2d506d",
+        "bytes": 10057
+      },
+      {
         "path": "../../scripts/experiments/split-swatch.ts",
         "sha256": "5bc6f7ca1c189187eecfa48f03c183090d13805fddcc1af6d979550091a01036",
         "bytes": 18544
@@ -31965,6 +31972,11 @@
         "path": "../../scripts/experiments/verify-reversible-right-edge.ts",
         "sha256": "eee08b0e368ac7873b65ff42b51362bab08aeb2703eab0c6430347b7d95fe57f",
         "bytes": 8359
+      },
+      {
+        "path": "../../scripts/experiments/verify-reversible-split.ts",
+        "sha256": "ecf9e5b9831a23a4e2d8b4560bafc8215ada35af1764ca92f037153118439ac8",
+        "bytes": 11259
       },
       {
         "path": "../../scripts/lib/machine-cli.ts",
@@ -32073,8 +32085,8 @@
       },
       {
         "path": "package.json",
-        "sha256": "10e4439ff02ec284d2f95855db48bf83fd696d56d1a63b2c5a9fe903f7282f06",
-        "bytes": 4441
+        "sha256": "9cd66d8a406a8091b059f6a6bec44685bd1d555a6263bf5132d458cefe753286",
+        "bytes": 4528
       },
       {
         "path": "reference/2x2-rib-beanie.kc",
@@ -32168,7 +32180,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "c45e925192803e65873ee36d06e559613c1b1006670798098fe5315c0481416c",
+        "sha256": "1777903e66d198e73f8086de20ab1d36fb5dfbe2a52eeca5943c60faa466db2d",
         "bytes": 179
       },
       {
@@ -32493,8 +32505,8 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "d6633da29d8139ac04159b44bd22456e035e54436e5f63a2445f2147afd815f6",
-        "bytes": 24660
+        "sha256": "d1ee4bcb16ccadd9ea57a980cc056024d82dcb47cf9ccb13048d74821e8edf34",
+        "bytes": 24757
       },
       {
         "path": "scripts/kcode-receipt-check.ts",
@@ -32987,6 +32999,11 @@
         "bytes": 5075
       },
       {
+        "path": "src/knitout/passes/reversible-outward-increase.ts",
+        "sha256": "f2f3e51fbe3243c6e07f6c3b12eea51f7510d96172e0531b7a4fd455436de3d0",
+        "bytes": 4744
+      },
+      {
         "path": "src/knitout/passes/rib-crown-plan.ts",
         "sha256": "36c7d4e4566fbda0a51f6afb268412cf3571a1c691a2cb7271af0995ae69a693",
         "bytes": 9276
@@ -33128,8 +33145,8 @@
       },
       {
         "path": "src/knitout/sim/carriage-simulator.ts",
-        "sha256": "560711b7d636d03cfe346df53380be29415323f2e31e7821b0457481a90ddf82",
-        "bytes": 52544
+        "sha256": "9563e4f667091f870df715ea270a71fbf868a24046f99457e3910a73774df3a8",
+        "bytes": 52849
       },
       {
         "path": "src/knitout/sim/icord-from-kc.ts",
@@ -33557,6 +33574,11 @@
         "bytes": 5658
       },
       {
+        "path": "test/knitout/reversible-outward-increase.test.ts",
+        "sha256": "6a7f09685136fb64920f5e2f51e35a0b5e584d154824c322ed2f1c8eb12b76bf",
+        "bytes": 3312
+      },
+      {
         "path": "test/knitout/shaped-panel.test.ts",
         "sha256": "02bd12cca1a0cf2d7329d59fce61735700d7e639fd892e99d00d9007348a0e43",
         "bytes": 23162
@@ -33565,6 +33587,11 @@
         "path": "test/knitout/sim/kc-section.test.ts",
         "sha256": "9ab9b8eec74a270c3aeb7ce86079e550f1a3d4545772cefedafa75a6c60d3e4f",
         "bytes": 1913
+      },
+      {
+        "path": "test/knitout/sim/split-roller.test.ts",
+        "sha256": "fe04929769131fb468063e4d8d57a51e3741d0b1aeac36dc3c7b274e4343272c",
+        "bytes": 3777
       },
       {
         "path": "test/knitout/strict-kcode-document.test.ts",
