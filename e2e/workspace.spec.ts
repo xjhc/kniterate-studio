@@ -14,8 +14,8 @@ test('every project has one layout: a menu bar, Design / Schematic / Machine fil
   for (const name of ['Design', 'Schematic', 'Machine file']) await expect(page.getByRole('tab', { name, exact: true })).toBeVisible();
   for (const jargon of ['Machine truth', 'Compiler intent', 'Design intent']) await expect(page.getByText(jargon)).toHaveCount(0);
 
-  // What you are making on the left; its backings are the two Customist-matched ones.
-  await expect(page.locator('.strategy-segments button')).toHaveCount(2);
+  // What you are making on the left; its chart backings include the reversible construction.
+  await expect(page.locator('.strategy-segments button')).toHaveCount(3);
   await page.getByRole('button', { name: /^Fairisle/ }).click();
   await page.getByRole('button', { name: /^Birdseye/ }).click();
   await openStatusDisclosure(page, 'Files and printing');

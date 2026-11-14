@@ -16,6 +16,7 @@ import { KNITERATE_7GG_KCODE_PROFILE_V2 } from '../src/knitout/kcode/machine-pro
 import { projectKCodeMachineTrace } from '../src/knitout/kcode/machine-trace.js';
 import { parseKCodeDocument } from '../src/knitout/kcode/parser.js';
 import { compareScheduledPassesToMachineTrace } from '../src/knitout/kcode/scheduled-trace-diff.js';
+import { buildReversibleRightEdgeSwatch } from '../../../scripts/experiments/reversible-right-edge-swatch.js';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
@@ -52,6 +53,7 @@ export const COMPILER_FINGERPRINT_INPUTS = [
   'packages/project-contract/src',
   'apps/studio/src/authoredPipeline.ts',
   'apps/studio/src/blanket/compileProject.ts',
+  'apps/studio/src/reversibleEdges.ts',
   'apps/studio/src/engine.ts',
   'apps/studio/src/machineSetup.ts',
   'apps/studio/src/readiness.ts',
@@ -69,6 +71,7 @@ export const COMPILER_FINGERPRINT_INPUTS = [
   'scripts/build-v1-knit-trial.ts',
   'scripts/check-v1-physical-release.ts',
   'scripts/register-v1-knit-trial.ts',
+  'scripts/experiments/reversible-right-edge-swatch.ts',
   'packages/machine-lib/scripts/registry-support.ts',
   'packages/machine-lib/scripts/kniterate-swatch-registry-check.ts',
   'packages/machine-lib/registry/swatches/_schema.json',
@@ -471,6 +474,9 @@ export function compileRegistryRequestCurrent(
   requestValue: unknown,
 ): CurrentRegistryCompileResult {
   const request = asRecord(requestValue);
+  if (request?.kind === 'kniterate-development-experiment') {
+    return compileDevelopmentExperiment(entryRoot, request);
+  }
   if (request?.kind !== 'kniterate-studio-project') {
     return failedCurrentCompile(false, `request kind ${JSON.stringify(request?.kind ?? null)} has no fixed current recompiler`);
   }
@@ -543,5 +549,57 @@ export function compileRegistryRequestCurrent(
     };
   } catch (error) {
     return failedCurrentCompile(true, `current request could not be compiled: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+export const MIXED_PAISLEY_EXPERIMENT = 'reversible-mixed-paisley-21x81-v1';
+
+/** Fixed, bounded replay of the issued 522-pass experiment. Never a promotion path. */
+function compileDevelopmentExperiment(entryRoot: string, request: Record<string, unknown>): CurrentRegistryCompileResult {
+  if (request.generator !== MIXED_PAISLEY_EXPERIMENT) return failedCurrentCompile(false, 'unsupported development experiment generator');
+  if (JSON.stringify(request.inputFiles) !== JSON.stringify(['motif.json'])) return failedCurrentCompile(true, 'experiment inputFiles must be exactly ["motif.json"]');
+  try {
+    const motifPath = resolve(entryRoot, 'motif.json');
+    if (statSync(motifPath).size > 64 * 1024) return failedCurrentCompile(true, 'experiment motif exceeds the 64 KiB input limit');
+    const motifText = readFileSync(motifPath, 'utf8');
+    const motif = asRecord(JSON.parse(motifText));
+    const cells = motif?.cells;
+    if (motif?.width !== 21 || motif.height !== 81 || !Array.isArray(cells)
+      || cells.length !== 81 || !cells.every(row => Array.isArray(row) && row.length === 21 && row.every(cell => cell === 0 || cell === 1))) {
+      return failedCurrentCompile(true, 'experiment motif must be a 21 by 81 binary grid');
+    }
+    const { source, compiled } = buildReversibleRightEdgeSwatch({ mixed: true, wide: true, paisley: true }, { cells });
+    const parsed = parseKCodeDocument(compiled.kcode, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: KNITERATE_7GG_KCODE_PROFILE_V2.dialect, strict: true });
+    if (!parsed.ok) return failedCurrentCompile(true, 'experiment emission failed strict KCode parsing');
+    const trace = projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
+    const coordinateBridge = createAuthoredKCodeCoordinateBridgeV1({
+      artifactKcodeSha256: sha256Bytes(compiled.kcode), compilerCoordinateStart: 119, compilerCoordinateEnd: 139,
+      lowering: compiled.coordinateMapping, trace,
+      scheduledTraceComparison: compareScheduledPassesToMachineTrace(compiled.scheduledPasses, trace),
+      profile: KNITERATE_7GG_KCODE_PROFILE_V2,
+    });
+    return {
+      supported: true, ok: true, messages: compiled.warnings,
+      sourceFingerprint: sha256Bytes(`${MIXED_PAISLEY_EXPERIMENT}\0${motifText}`),
+      knitoutText: source, kcodeText: compiled.kcode,
+      knitoutSha256: sha256Bytes(source), kcodeSha256: sha256Bytes(compiled.kcode),
+      expectedMachine: {
+        profile: 'kniterate-7gg-worsted-v1', compilerCoordinates: { start: 119, end: 139 }, coordinateBridge,
+        emittedPassCount: trace.passes.length,
+        carriers: [{ carrier: '1', role: 'draw' }, { carrier: '3', role: 'pattern' }, { carrier: '4', role: 'pattern' }, { carrier: '6', role: 'waste' }],
+        program: {
+          gauge: 7, position: 'Keep', wastePasses: 80, bindOff: 'waste-and-drop',
+          initialSettings: {
+            stitchNumber: requiredNumericSetting(source, /^x-stitch-number\s+([0-9.]+)\s*$/m, 'stitch number'),
+            xferStitchNumber: requiredNumericSetting(source, /^x-xfer-stitch-number\s+([0-9.]+)\s*$/m, 'transfer stitch number'),
+            speedNumber: requiredNumericSetting(source, /^x-speed-number\s+([0-9.]+)\s*$/m, 'speed number'),
+            rollerAdvance: requiredNumericSetting(source, /^x-roller-advance\s+([0-9.]+)\s*$/m, 'roller advance'),
+            xferStyle: 'four-pass', carrierSpacing: 2, carrierStoppingDistance: 2.5,
+          },
+        },
+      },
+    };
+  } catch (error) {
+    return failedCurrentCompile(true, `experiment replay failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }

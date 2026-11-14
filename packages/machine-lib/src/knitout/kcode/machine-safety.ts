@@ -87,7 +87,7 @@ export interface MachineSafetyEnvelopeV1 {
    * from every needle another pass operates.
    */
   readonly stoppingDistance: { readonly value: number; readonly evidence: KCodeEvidence }
-  /** A transfer with a carrier (a split stitch) until its encoding is verified. */
+  /** A transfer with a carrier (a split stitch): only the form Kniterate's own exports show. */
   readonly transferWithCarrier: { readonly evidence: KCodeEvidence }
   /** Carrierless passes that select needles are plain drops (Kn-Kn). */
   readonly carrierlessTuck: { readonly evidence: KCodeEvidence }
@@ -137,6 +137,9 @@ const MACHINE_MANUAL = 'https://support.kniterate.com/hc/article_attachments/360
 const CUSTOMIST_MANUAL = 'https://editor.kniterate.design/documentation'
 const PINNED_BACKEND = 'packages/machine-lib/src/knitout/vendor/knitout-to-kcode.cjs'
 const REFERENCE_CORPUS = 'packages/machine-lib/reference/*.kc'
+const SPLIT_INCREASE_EXPORTS = 'packages/machine-lib/reference/customist-increase/*.kc'
+const SPLIT_INCREASE_DIRECTIONS = 'fixtures/customist-debug/2026-11-13/raw/{left,right}-phase{0,1}-{simple,fashioned}.kc'
+const SPLIT_INCREASE_BOTH_EDGES = 'fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-{simple,fashioned}.kc'
 
 const evidence = (
   confidence: KCodeEvidence['confidence'],
@@ -162,8 +165,8 @@ export const KNITERATE_7GG_MACHINE_SAFETY_ENVELOPE_V1: MachineSafetyEnvelopeV1 =
       'Kniterate: "Never place a feeder over the needle bed. This can cause a collision between the needles and the feeder." The carrier stopping distance (default 2.5) keeps feeders clear of the knitting. Every reference program turns the carriage and carrier at least 2.5 past the outermost operated needle and rests idle carriers at least 2.5 from every operated needle.'),
   },
   transferWithCarrier: {
-    evidence: evidence('unverified', [SPLIT_ARTICLE, TRANSFERS_ARTICLE, PINNED_BACKEND, REFERENCE_CORPUS],
-      'Kniterate documents split stitches, a transfer whose delivering needle receives yarn at once, and ordinary transfer rows with no carrier. No reference program contains a split, so how Kniterate\'s software encodes one in KCode is unverified; the pinned backend\'s transfer-with-carrier encoding is refused until a captured program establishes it.'),
+    evidence: evidence('reference-corpus-observed', [SPLIT_ARTICLE, TRANSFERS_ARTICLE, PINNED_BACKEND, SPLIT_INCREASE_EXPORTS, SPLIT_INCREASE_DIRECTIONS, SPLIT_INCREASE_BOTH_EDGES],
+      'Kniterate documents split stitches, a transfer whose delivering needle receives yarn at once. Customist Increase Transfers captures (Simple and Fashioned, 2026-11-12 and 2026-11-13) write front-to-rear splits as `<< Tr-Rl` or `>> Tr-Rr` with the yarn carrier at rack 0. Every front needle of the row knits; each selected rear needle receives its facing front needle\'s old loop. The both-edges captures split two separated needles in one pass. The pinned backend writes the same split passes. Rear-bed and racked splits are not supported by these captures and stay refused. The exports have not been knitted here.'),
   },
   carrierlessTuck: {
     evidence: evidence('reference-corpus-observed', [PINNED_BACKEND, REFERENCE_CORPUS],
@@ -436,9 +439,10 @@ export function validateKCodeMachineSafetyV1(
         pass, neighbour.sourceSpan)
     }
 
-    if (pass.actions.some((action) => action.kind === 'split')) {
+    // Customist's single-bed increases split front to rear in either direction, always at rack 0.
+    if (pass.actions.some((action) => action.kind === 'split') && !((pass.operation === 'Tr-Rl' || pass.operation === 'Tr-Rr') && pass.rack === 0)) {
       add('machine-safety.transfer-with-carrier',
-        `Pass ${pass.index + 1} transfers with carrier ${pass.carrier} (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified.`,
+        `Pass ${pass.index + 1} transfers with carrier ${pass.carrier} (a split stitch) as ${pass.operation} at rack ${pass.rack}. Kniterate's captured increases show splits only from the front bed at rack 0 (Tr-Rl or Tr-Rr), so any other form is refused.`,
         pass, pass.source.footer)
     }
 

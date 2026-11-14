@@ -13,6 +13,7 @@ import {
   projectKCodeMachineTrace,
 } from '../../src/knitout/kcode/machine-trace.js'
 import { parseKCodeDocument } from '../../src/knitout/kcode/parser.js'
+import { validateKCodeMachineTrace } from '../../src/knitout/kcode/machine-validator.js'
 import { knitoutToKCodeWithTrace } from '../../src/knitout/kniterate/to-kcode.js'
 
 const knitoutWithMoveAndTransfer = [
@@ -418,6 +419,38 @@ describe('MachineTraceV1 KCode projection', () => {
     for (const selection of selections) {
       expect(selection).not.toHaveProperty('physicalNeedle')
     }
+  })
+
+  it.each([
+    { name: 'left phase0 Fashioned', direction: '<<', width: 22, splitNeedles: [4] },
+    { name: 'left phase1 Fashioned', direction: '>>', width: 22, splitNeedles: [4] },
+    { name: 'right phase1 Simple', direction: '>>', width: 22, splitNeedles: [20] },
+    { name: 'both edges Fashioned', direction: '<<', width: 20, splitNeedles: [4, 15] },
+  ])('projects and validates a mixed knit/split row: $name', ({ direction, width, splitNeedles }) => {
+    // The captured forms, kept self-contained for Stryker's machine-lib sandbox. The full captured
+    // files, transfers and carrier moves are compared in shaped-panel.test.ts.
+    const ascending = Array.from({ length: width }, (_, n) => n)
+    const ordered = Array.from({ length: width }, (_, n) => direction === '>>' ? n : width - 1 - n)
+    const dir = direction === '>>' ? '+' : '-'
+    const { trace } = compileAndParse('knitout-vendor', [
+      ';!knitout-2', ';;Machine: kniterate', ';;Carriers: 1 2 3 4 5 6',
+      'x-stitch-number 6', 'x-speed-number 300', 'x-roller-advance 450', 'in 3',
+      ...ascending.map((n) => `knit + f${100 + n} 3`),
+      ...[...ascending].reverse().map((n) => `knit - f${100 + n} 3`),
+      ...(dir === '-' ? ascending.map((n) => `knit + f${100 + n} 3`) : []),
+      ...ordered.map((n) => splitNeedles.includes(n) ? `split ${dir} f${100 + n} b${100 + n} 3` : `knit ${dir} f${100 + n} 3`),
+      'out 3', '',
+    ].join('\n'))
+    const pass = trace.passes.find((pass) => pass.carrier === '3' && pass.operation === (direction === '>>' ? 'Tr-Rr' : 'Tr-Rl'))!
+    expect(pass.rack).toBe(0)
+    const edge = Math.min(...pass.selections.front.map((selection) => selection.traceCoordinate))
+    expect(pass.actions.map((action) => action.kind === 'split'
+      ? { kind: action.kind, carrier: action.carrier, source: [action.source.bed, action.source.traceCoordinate - edge], target: [action.target.bed, action.target.traceCoordinate - edge] }
+      : action.kind === 'knit' ? { kind: action.kind, at: [action.at.bed, action.at.traceCoordinate - edge] } : action.kind,
+    )).toEqual(ordered.map((n) => splitNeedles.includes(n)
+      ? { kind: 'split', carrier: '3', source: ['front', n], target: ['rear', n] }
+      : { kind: 'knit', at: ['front', n] }))
+    expect(validateKCodeMachineTrace(trace, KNITERATE_7GG_KCODE_PROFILE_V2).diagnostics.filter((diagnostic) => diagnostic.severity === 'error')).toEqual([])
   })
 
   it('makes every carrier and empty-selection contract field affect projection', () => {

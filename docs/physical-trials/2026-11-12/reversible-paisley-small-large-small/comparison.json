@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "baseline": "paisley edge candidate ce7c60d",
+  "unchanged": [
+    "startup",
+    "finish",
+    "shaping schedule",
+    "directions",
+    "edge ownership",
+    "increase old column"
+  ],
+  "motifs": "small / large / small, bottom-up"
+}

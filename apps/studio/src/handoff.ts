@@ -54,6 +54,12 @@ interface RuleStory {
 }
 
 const RULE_STORIES: Record<string, RuleStory> = {
+  'track-a-shape-jacquard-preview': {
+    part: 'Shaping', problem: 'physical trial needed',
+    consequence: 'Software checks cannot establish how the increases, decreases and edge joins behave in this yarn.',
+    action: 'Knit the small shaping trial and inspect both faces, the moving side edges and the narrowed finish.',
+    target: () => 'backing',
+  },
   'gauge-assumed': {
     part: 'Fit',
     problem: 'sizes rest on a typical gauge',
@@ -337,6 +343,7 @@ export function instructionsMarkdown(project: ColorworkProjectV1, plan: ProjectP
     '## What it knits',
     plan.piece === 'beanie' ? `Flat beanie, seamed afterwards: ${constructionLine(plan)}.` : `${constructionLine(plan)}.`,
     `Frame: ${result.compiled?.frame?.preset ?? 'unknown'}.`,
+    ...(state.strategy.diamond ? [`Diamond shaping trial: ${state.strategy.diamond.tipStitches} stitches at each flat tip, ${state.chart.width} at the widest row, ${state.chart.height} design rows. Increase one stitch per side every ${state.strategy.diamond.rowsPerStep} rows, then decrease symmetrically. Both beds remain active; alternating-colour joins follow the moving side edges, with opposite colours at the old and new edge on widening rows. The increase still starts empty rear needles, so a clean widening edge is not established. Waste and draw span the maximum width; the cast-on spans the tip. This construction needs physical validation; the tips are not closed points.`] : []),
     ...(head !== undefined ? [`Fit: ${head} cm head with ${Math.round(Math.abs(beanieObjectOf(state)?.ease ?? -0.1) * 100)}% ${(beanieObjectOf(state)?.ease ?? -0.1) < 0 ? 'negative' : 'positive'} ease.`] : []),
     plan.gauge ? `Body gauge: ${plan.gauge.stitchesPer10cm} st / ${plan.gauge.rowsPer10cm} rows per 10 cm (${plan.gauge.source}).` : 'No gauge recorded: sizes in cm are unknown.',
     ...(state.object?.ribGauge ? [`Rib gauge: ${state.object.ribGauge.stitchesPer10cm} st / ${state.object.ribGauge.rowsPer10cm} rows per 10 cm (${state.object.ribGauge.source}).`] : []),
@@ -510,7 +517,7 @@ export interface MeasurementRecord {
 /** What a plan predicts for the measurements a knitter returns. */
 export function predictedCm(plan: ProjectPlan): PredictedCm {
   return {
-    circumference: plan.predicted?.widthCm.value ?? null,
+    circumference: plan.piece === 'beanie' ? plan.predicted?.widthCm.value ?? null : null,
     cuffVisible: plan.sections?.cuff?.visibleCm?.value ?? null,
     body: plan.sections?.body.cm?.value ?? null,
     crown: plan.sections?.crown?.cm?.value ?? null,
@@ -563,17 +570,30 @@ export function runRecordMarkdown(file: KnitFile, carriers: KnitFileCarriers, he
 export function measurementFormMarkdown(project: ColorworkProjectV1, plan: ProjectPlan, kcodeSha256: string, run?: { file: KnitFile; carriers: KnitFileCarriers } | null): string {
   const sections = plan.sections;
   const predicted = (value: Valued<number> | null | undefined) => (value ? `${value.value} cm` : '—');
+  const hat = plan.piece === 'beanie';
   return `${[
     `# Measurement form: ${project.title}`,
     '',
     `Candidate: KCode SHA-256 \`${kcodeSha256}\`. Measure only the piece knitted from this exact file.`,
-    'After finishing (waste yarn off, seamed, folded, washed or steamed as the label says, dried flat, rested 24 h), lay it flat without tension and use a rigid rule. Record the values in Studio with File → Record a finished hat, or fill `measurements.json` with them and record it with `pnpm studio -- measure <project.json> measurements.json`.',
+    hat
+      ? 'After finishing (waste yarn off, seamed, folded, washed or steamed as the label says, dried flat, rested 24 h), lay it flat without tension and use a rigid rule. Record the values in Studio with File → Record a finished hat, or fill `measurements.json` with them and record it with `pnpm studio -- measure <project.json> measurements.json`.'
+      : 'After finishing (waste yarn off, washed or steamed as the label says, dried flat, rested 24 h), lay it flat without tension and use a rigid rule. In `measurements.json`, put the measured width and height with their labels in `notes`, enter gauge in `bodyGauge`, and leave the `finishedCm` fields null. Record it with `pnpm studio -- measure <project.json> measurements.json`. Panel dimensions are retained as notes; automated dimension comparisons are not available for this form.',
     '',
     '| Measure | How | Predicted | Measured |',
     '|---|---|---|---|',
-    '| Body gauge | stitches and rows over 10 cm in a plain area of the body, face side | — | ___ st / ___ rows |',
+    `| ${hat ? 'Body gauge' : 'Gauge'} | stitches and rows over 10 cm in a plain area${hat ? ' of the body' : ''}, face side | — | ___ st / ___ rows |`,
     ...(sections?.cuff ? ['| Rib gauge | stitches and rows over 10 cm in the cuff, unstretched | — | ___ st / ___ rows |'] : []),
-    `| Circumference | flat width at mid-body × 2, after seaming | ${predicted(plan.predicted?.widthCm)} | ___ cm |`,
+    ...(hat
+      ? [`| Circumference | flat width at mid-body × 2, after seaming | ${predicted(plan.predicted?.widthCm)} | ___ cm |`]
+      : materializeColorworkProject(project).state.strategy.diamond
+        ? [
+          `| Maximum body width | across the widest body row, excluding waste | ${predicted(plan.predicted?.widthCm)} | ___ cm |`,
+          `| Body height | from first to last body row, excluding all waste | ${predicted(plan.predicted?.heightCm)} | ___ cm |`,
+        ]
+        : [
+          `| Width | straight across the middle | ${predicted(plan.predicted?.widthCm)} | ___ cm |`,
+          `| Length | from end to end, along the middle | ${predicted(plan.predicted?.heightCm)} | ___ cm |`,
+        ]),
     ...(sections?.cuff ? [`| Cuff | visible height${sections.cuff.folds ? ' when folded' : ''} | ${predicted(sections.cuff.visibleCm)} | ___ cm |`] : []),
     ...(sections ? [
       `| Body | cuff top to the first crown decrease | ${predicted(sections.body.cm)} | ___ cm |`,
@@ -581,7 +601,7 @@ export function measurementFormMarkdown(project: ColorworkProjectV1, plan: Proje
       `| Total | brim to top, flat | ${predicted(sections.finishedHeightCm)} | ___ cm |`,
     ] : []),
     '',
-    'Also: outcome (clean / issues / failed), every machine stop and what was done, and photographs of the front, the inside, the crown and any defect with a ruler in frame.',
+    `Also: outcome (clean / issues / failed), every machine stop and what was done, and photographs of ${hat ? 'the front, the inside, the crown' : 'both faces'} and any defect with a ruler in frame.`,
     ...(run ? ['', ...runRecordMarkdown(run.file, run.carriers)] : []),
   ].join('\n')}\n`;
 }

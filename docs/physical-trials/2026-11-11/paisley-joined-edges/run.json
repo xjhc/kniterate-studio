@@ -1,0 +1,52 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-run-observation-v1",
+  "schemaVersion": 1,
+  "operator": "TODO: operator name or stable id",
+  "startedAt": "1970-01-01T00:00:00Z",
+  "endedAt": "1970-01-01T00:00:00Z",
+  "outcome": "TODO: clean | dropped | jammed | aborted | partial",
+  "physicalPlacement": {
+    "verified": false,
+    "compilerCoordinateStart": 93,
+    "compilerCoordinateEnd": 160,
+    "physicalNeedleStart": null,
+    "physicalNeedleEnd": null,
+    "orientation": null,
+    "method": "TODO: documented machine/vendor datum procedure used",
+    "verifiedBy": "TODO: independent verifier",
+    "verifiedAt": null
+  },
+  "artifact": {
+    "loadedKcodeSha256": "8de9d5e3a9bbd0c1eaaf40bce21a28f434682c21ed8bbcce887c1305f33f1c36",
+    "displayedPassCount": null,
+    "manualProgramEdits": false
+  },
+  "manualInterventions": [],
+  "observations": {
+    "sections": {
+      "waste": "not-reached",
+      "castOn": "not-reached",
+      "drawThread": "not-reached",
+      "carrierBringIn": "not-reached",
+      "body": "not-reached",
+      "backing": "not-reached",
+      "leftEdge": "not-reached",
+      "rightEdge": "not-reached",
+      "bindOff": "not-reached"
+    },
+    "stops": [],
+    "dimensionsCm": {
+      "offMachine": {
+        "status": "not-measured",
+        "reason": "TODO: measure or explain"
+      },
+      "rested24h": {
+        "status": "not-measured",
+        "reason": "TODO: measure or explain"
+      }
+    },
+    "photos": [],
+    "notes": ""
+  }
+}

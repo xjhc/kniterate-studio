@@ -45,7 +45,7 @@
     "rackValues": 17,
     "kcodeNativeRefusalCases": 28,
     "oracle": "test/knitout/kcode-legality-spec.ts",
-    "contractSha256": "20bbc9b3930fc470dd44cae542e6a827fae5aa48cd6d5115b23bd8ac7e601d67",
+    "contractSha256": "ca17d433168318841b1a85ba41b0a1fa9a0eb7bc87a1b528cc482d650ec4a2c9",
     "oracleSha256": "eae502e4a399eea38e2fa82299fe68bea0e11912b5f9e10087941ca2d71a9532",
     "ruleCoverage": {
       "kind": "kniterate-kcode-rule-coverage-ledger",
@@ -22557,7 +22557,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "raw-kcode-parser",
@@ -24402,7 +24402,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "raw-kcode-parser",
@@ -24476,7 +24476,7 @@
               "rail": "raw-kcode-parser",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -24550,7 +24550,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -25437,7 +25437,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -25472,7 +25472,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25505,7 +25505,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25562,7 +25562,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25595,7 +25595,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25628,7 +25628,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -25643,7 +25643,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -25678,7 +25678,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -25693,7 +25693,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -25727,7 +25727,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25783,7 +25783,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25816,7 +25816,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25849,7 +25849,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25882,7 +25882,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25915,7 +25915,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25948,7 +25948,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -25981,7 +25981,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -26060,7 +26060,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -26141,7 +26141,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -26222,7 +26222,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -26255,7 +26255,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -26270,7 +26270,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -26327,7 +26327,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -26342,7 +26342,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -26400,7 +26400,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -26415,7 +26415,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -26472,7 +26472,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -26487,7 +26487,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -26568,7 +26568,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -26647,7 +26647,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -26662,7 +26662,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -26719,7 +26719,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -26734,7 +26734,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -26792,7 +26792,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -26848,7 +26848,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -26863,7 +26863,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -26921,7 +26921,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -26936,7 +26936,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -26970,7 +26970,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -27002,7 +27002,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27017,7 +27017,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27051,7 +27051,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27066,7 +27066,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27100,7 +27100,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -27132,7 +27132,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -27177,7 +27177,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27192,7 +27192,7 @@
               "rail": "machine-trace-validator",
               "severity": "warning",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": []
@@ -27208,7 +27208,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27265,7 +27265,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27281,13 +27281,13 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
               "severity": "warning",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27346,7 +27346,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -27451,7 +27451,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27466,7 +27466,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27500,7 +27500,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27515,7 +27515,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27549,7 +27549,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27564,7 +27564,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27598,7 +27598,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27613,7 +27613,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27647,7 +27647,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -27679,7 +27679,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -27724,7 +27724,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27739,7 +27739,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27773,7 +27773,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -27828,7 +27828,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27843,7 +27843,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27877,7 +27877,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -27892,7 +27892,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -27949,7 +27949,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28004,7 +28004,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28036,7 +28036,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28091,7 +28091,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -28106,7 +28106,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -28140,7 +28140,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28172,7 +28172,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28204,7 +28204,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28236,7 +28236,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28268,7 +28268,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28300,7 +28300,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28332,7 +28332,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28364,7 +28364,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28396,7 +28396,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28428,7 +28428,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28506,7 +28506,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28584,7 +28584,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -28662,7 +28662,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -28677,7 +28677,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -28734,7 +28734,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -28749,7 +28749,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -28783,7 +28783,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -28798,7 +28798,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -28832,7 +28832,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -28847,7 +28847,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -28929,7 +28929,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -29009,7 +29009,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29024,7 +29024,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29081,7 +29081,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29096,7 +29096,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29155,7 +29155,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29170,7 +29170,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29229,7 +29229,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -29286,7 +29286,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29301,7 +29301,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29335,7 +29335,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29350,7 +29350,7 @@
               "rail": "machine-trace-validator",
               "severity": "warning",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": []
@@ -29366,7 +29366,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29400,7 +29400,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29415,7 +29415,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29449,7 +29449,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29464,7 +29464,7 @@
               "rail": "machine-trace-validator",
               "severity": "warning",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": []
@@ -29480,7 +29480,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29514,7 +29514,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29529,7 +29529,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29586,7 +29586,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -29618,7 +29618,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -29650,7 +29650,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             },
             {
               "rail": "machine-trace-validator",
@@ -29729,7 +29729,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29744,7 +29744,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29825,7 +29825,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29840,7 +29840,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29898,7 +29898,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29913,7 +29913,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -29971,7 +29971,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -29986,7 +29986,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -30021,7 +30021,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -30036,7 +30036,7 @@
               "rail": "machine-trace-validator",
               "severity": "error",
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ],
           "targetedWitnesses": [
@@ -30071,7 +30071,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-validator.test.ts",
-              "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18"
+              "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110"
             }
           ]
         },
@@ -30086,7 +30086,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30101,7 +30101,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30116,7 +30116,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30135,7 +30135,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30150,7 +30150,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30169,7 +30169,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30184,7 +30184,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30199,7 +30199,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30214,7 +30214,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30229,7 +30229,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30244,7 +30244,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30259,7 +30259,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30274,7 +30274,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30289,7 +30289,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30304,7 +30304,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30319,7 +30319,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30334,7 +30334,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30353,7 +30353,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30368,7 +30368,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30383,7 +30383,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30398,7 +30398,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30413,7 +30413,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30428,7 +30428,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30443,7 +30443,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30458,7 +30458,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30485,7 +30485,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30500,7 +30500,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30515,7 +30515,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30530,7 +30530,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30545,7 +30545,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30560,7 +30560,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30575,7 +30575,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30590,7 +30590,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30605,7 +30605,7 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         },
@@ -30620,7 +30620,7 @@
               "rail": "machine-safety",
               "severity": "error",
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ],
           "targetedWitnesses": [
@@ -30635,17 +30635,17 @@
                 }
               ],
               "path": "test/knitout/kcode-machine-safety.test.ts",
-              "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add"
+              "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e"
             }
           ]
         }
       ]
     },
-    "profileSha256": "2e60f2f5435393faddb6e5853f3df40ce1a5fff102f5aecfa603125e405053da"
+    "profileSha256": "07d4686bcfe51b942dcf70aca02cb030ab2834792a0854d70bf24a2664673993"
   },
   "machineSafety": {
     "envelope": "kniterate-7gg-machine-safety@1",
-    "envelopeSha256": "9f331fb2d7dc27a0601855e472540f4d6f97c6b574dcc947029005283a5ab3cb",
+    "envelopeSha256": "6d7bdae765ddd099545878380bbcbeaffeaedf8fdbd456788af52ed950377b28",
     "rules": [
       "machine-safety.facing-needles",
       "machine-safety.unsafe-bed-range",
@@ -30701,6 +30701,8 @@
     "test/knitout/kc-diff.test.ts",
     "test/knitout/loop-stack-software-policy.test.ts",
     "test/knitout/predicted-vs-vendor.test.ts",
+    "test/knitout/sim/split-roller.test.ts",
+    "test/knitout/reversible-outward-increase.test.ts",
     "test/knitout/fairisle-parity.test.ts",
     "test/knitout/dbj-parity.test.ts",
     "test/knitout/kniterate-topology-oracle.test.ts",
@@ -30709,6 +30711,9 @@
     "../../apps/studio/src/studioCli.test.ts",
     "../../apps/studio/src/parity.test.ts",
     "../../apps/studio/src/blanket/compileProject.test.ts",
+    "../../apps/studio/src/reversibleChart.test.ts",
+    "../../apps/studio/src/diamondChart.test.ts",
+    "../../apps/studio/src/splitSwatch.test.ts",
     "../../apps/studio/src/blanket/birdseyeBody.test.ts",
     "../../apps/studio/src/kcode/compileKCodeArtifact.test.ts",
     "../../apps/studio/src/kcode/MachineMovementView.test.tsx",
@@ -30748,7 +30753,7 @@
     },
     {
       "id": "deterministic-kcode-proof-tests",
-      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/proof-fingerprint.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/kcode-mutation-policy.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-safety.test.ts test/knitout/kcode-machine-safety-corpus.test.ts test/knitout/kcode-machine-safety-oracle.test.ts test/knitout/kcode-command-legality.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-machine-topology.test.ts test/knitout/kcode-machine-topology-window.test.ts test/knitout/kcode-machine-execution.test.ts test/knitout/kcode-coordinate-bridge.test.ts test/knitout/kcode-pass-metrics.test.ts test/knitout/kcode-machine-advisories.test.ts test/knitout/kcode-knitted-faces.test.ts test/knitout/kcode-programmed-motion.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/fairisle-parity.test.ts test/knitout/dbj-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
+      "command": "pnpm exec vitest run test/public-api.test.ts test/physical-registry-manifest.test.ts test/proof-fingerprint.test.ts test/browser-kcode-converter.test.ts test/knitout/browser-converter-source.test.ts test/knitout/kcode-machine-profile.test.ts test/knitout/kcode-mutation-policy.test.ts test/knitout/strict-kcode-document.test.ts test/knitout/kcode-byte-roundtrip.test.ts test/knitout/kcode-document-adversarial.test.ts test/knitout/kcode-document-property.test.ts test/knitout/kcode-machine-trace.test.ts test/knitout/kcode-machine-validator.test.ts test/knitout/kcode-machine-safety.test.ts test/knitout/kcode-machine-safety-corpus.test.ts test/knitout/kcode-machine-safety-oracle.test.ts test/knitout/kcode-command-legality.test.ts test/knitout/kcode-machine-scene.test.ts test/knitout/kcode-machine-topology.test.ts test/knitout/kcode-machine-topology-window.test.ts test/knitout/kcode-machine-execution.test.ts test/knitout/kcode-coordinate-bridge.test.ts test/knitout/kcode-pass-metrics.test.ts test/knitout/kcode-machine-advisories.test.ts test/knitout/kcode-knitted-faces.test.ts test/knitout/kcode-programmed-motion.test.ts test/knitout/kcode-independent-oracle.test.ts test/knitout/kcode-scheduled-differential.test.ts test/knitout/kcode-scheduled-trace-diff.test.ts test/knitout/kc-diff.test.ts test/knitout/loop-stack-software-policy.test.ts test/knitout/predicted-vs-vendor.test.ts test/knitout/sim/split-roller.test.ts test/knitout/reversible-outward-increase.test.ts test/knitout/fairisle-parity.test.ts test/knitout/dbj-parity.test.ts test/knitout/kniterate-topology-oracle.test.ts",
       "status": "pass",
       "exitCode": 0
     },
@@ -30772,7 +30777,7 @@
     },
     {
       "id": "studio-kcode-integration-tests",
-      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/authoredPipeline.test.ts src/studioCli.test.ts src/parity.test.ts src/blanket/compileProject.test.ts src/blanket/birdseyeBody.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/fabric/compileForeignFabricPreview.test.tsx src/chart/AuthoredMachinePanel.test.ts src/sweater/knitFile.test.ts src/foreignRunSheetFindings.test.tsx src/sourceWindow.test.tsx src/machine/readMachineFile.test.ts src/machine/import.worker.test.ts src/machine/inspectionCheckpoint.test.ts",
+      "command": "pnpm --dir ../../apps/studio exec vitest run src/engine.test.ts src/authoredPipeline.test.ts src/studioCli.test.ts src/parity.test.ts src/blanket/compileProject.test.ts src/reversibleChart.test.ts src/diamondChart.test.ts src/splitSwatch.test.ts src/blanket/birdseyeBody.test.ts src/kcode/compileKCodeArtifact.test.ts src/kcode/MachineMovementView.test.tsx src/fabric/compileForeignFabricPreview.test.tsx src/chart/AuthoredMachinePanel.test.ts src/sweater/knitFile.test.ts src/foreignRunSheetFindings.test.tsx src/sourceWindow.test.tsx src/machine/readMachineFile.test.ts src/machine/import.worker.test.ts src/machine/inspectionCheckpoint.test.ts",
       "status": "pass",
       "exitCode": 0
     },
@@ -30936,7 +30941,7 @@
     ]
   },
   "contract": {
-    "sha256": "7959af30198551a0ebe748dd9e151f2ae5cb336192347e73fbb98617425f67bb",
+    "sha256": "a8e886ccde6e2724d6e58a047efa7fb5987d10dd47390d41a5099faf621788b2",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31020,8 +31025,8 @@
       },
       {
         "path": "../../apps/studio/src/backing.ts",
-        "sha256": "1bdeb5ee58a0dc179d28f41ac8e59367c3dd2133cb400cda0ed6d8b108812755",
-        "bytes": 2580
+        "sha256": "ca208d32245669bd401b8e341179b99ded069f0d67e16ac93877d687fb0091f7",
+        "bytes": 3001
       },
       {
         "path": "../../apps/studio/src/beanie.ts",
@@ -31040,8 +31045,8 @@
       },
       {
         "path": "../../apps/studio/src/blanket/BlanketSetupRail.tsx",
-        "sha256": "0fa6e0b7b57c50eed4df327fb2b67f0c0df6b69a84513a850183f5d408d7647e",
-        "bytes": 6145
+        "sha256": "d061bbae77280b7ae2d0e605703d8dcbf3a58cf8b1638581388f12a5dba8bafb",
+        "bytes": 6775
       },
       {
         "path": "../../apps/studio/src/blanket/birdseyeBody.test.ts",
@@ -31055,13 +31060,13 @@
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.test.ts",
-        "sha256": "95d13cd31ef574babfe3f708ce47467ac5831f23b01e71ca5a82915f6edeedf5",
-        "bytes": 22769
+        "sha256": "76aacdcd023635f58cc9d7571902662f4bdaddad3f508371a016980208641527",
+        "bytes": 22755
       },
       {
         "path": "../../apps/studio/src/blanket/compileProject.ts",
-        "sha256": "49f251c6d34ed20fa6cee376889a8820e93b18074ee083937dbc9810c0449b95",
-        "bytes": 27656
+        "sha256": "267e95543f48f6b9fe46587ac9876d5c69b5397918bf779513d7afbc8f4a8d20",
+        "bytes": 29031
       },
       {
         "path": "../../apps/studio/src/blanket/useBlanketCompiler.ts",
@@ -31100,13 +31105,13 @@
       },
       {
         "path": "../../apps/studio/src/chart/ChartWorkspace.tsx",
-        "sha256": "482f9a870e418e72b5cbee50517783d6294907775109737f756bf5d948d544e1",
-        "bytes": 32277
+        "sha256": "c9bda9468f0eb642c5e0fa34ee0bca49841ee36d4d51613c883b44f8ea614bb2",
+        "bytes": 32700
       },
       {
         "path": "../../apps/studio/src/chart/ColorworkCanvas.tsx",
-        "sha256": "4cf48cc314a3ae3a60b50b509a2f56eb7203915e84dc013809283dc7f6ad80fc",
-        "bytes": 32892
+        "sha256": "411df1b91b12d66bed1c5afddc7b541f591e16ec9cdeafbb188650f45a4b6d5c",
+        "bytes": 33096
       },
       {
         "path": "../../apps/studio/src/chart/PaletteRail.tsx",
@@ -31184,9 +31189,14 @@
         "bytes": 478
       },
       {
+        "path": "../../apps/studio/src/diamondChart.test.ts",
+        "sha256": "32d02ec1860dd0643b891dac0e9fad5c89a33c7f669425735e82f2d661a3ba4b",
+        "bytes": 14926
+      },
+      {
         "path": "../../apps/studio/src/engine.test.ts",
-        "sha256": "b6f64500f86cbdb55aa6ccfeab1b4c6d9b88719d04ec374f313b404e0d39f10b",
-        "bytes": 45246
+        "sha256": "5601fba296d9d347a087f0281dbe7c631565e847e6d64ad9594215b4fce6db91",
+        "bytes": 45247
       },
       {
         "path": "../../apps/studio/src/engine.ts",
@@ -31310,8 +31320,8 @@
       },
       {
         "path": "../../apps/studio/src/handoff.ts",
-        "sha256": "968a5628459f93842bf7cc824a3249d1eab0c8118f1ae68e55de5d23a09eb7c2",
-        "bytes": 38794
+        "sha256": "fb6154ee840625587bed15ec5fca8245c421ed923fc4e2a391f01315f5e3a648",
+        "bytes": 41088
       },
       {
         "path": "../../apps/studio/src/imageChart.ts",
@@ -31475,18 +31485,28 @@
       },
       {
         "path": "../../apps/studio/src/plan.test.ts",
-        "sha256": "b1499e5baf272fbe0548676a831da8b2b03510d52d8261725c98e4060f6dd51f",
-        "bytes": 15141
+        "sha256": "53765da293f1d66f154fa3b1856d59854f0ae7858aef3602f22ce103418dd4c2",
+        "bytes": 15735
       },
       {
         "path": "../../apps/studio/src/plan.ts",
-        "sha256": "03445e5da7e976780f82b0408b88fbd766631506ce03a29a8dd8253fca698346",
-        "bytes": 24061
+        "sha256": "46a0e76a6151cd43ca1e3be40605912ed81c9c85dcfd3b7e6772d5c4ab8947fb",
+        "bytes": 25339
       },
       {
         "path": "../../apps/studio/src/readiness.ts",
         "sha256": "c1ff9b7432710136f623e97095757446df66ab918b6ce476a58cafad8158e91b",
         "bytes": 12140
+      },
+      {
+        "path": "../../apps/studio/src/reversibleChart.test.ts",
+        "sha256": "9d1a294267f1528fff4d1f38a1ffdde24768e69329a5ff7986122e7357eeddb8",
+        "bytes": 7599
+      },
+      {
+        "path": "../../apps/studio/src/reversibleEdges.ts",
+        "sha256": "deeceb9122120c3d3f65e4c75c21c10ac995664fe40dd97146eb290ae1dc6e1a",
+        "bytes": 2132
       },
       {
         "path": "../../apps/studio/src/sourceWindow.test.tsx",
@@ -31497,6 +31517,11 @@
         "path": "../../apps/studio/src/sourceWindow.ts",
         "sha256": "f8f7e4a117026a2eea5faba42904c0ff36c172d515af640b5581ff206c5a0b29",
         "bytes": 4170
+      },
+      {
+        "path": "../../apps/studio/src/splitSwatch.test.ts",
+        "sha256": "5290e0a2c920d89d52984ca9f31dfd0ce3b0803e9148cb26892b2f83549778d9",
+        "bytes": 5303
       },
       {
         "path": "../../apps/studio/src/start.css",
@@ -31675,8 +31700,8 @@
       },
       {
         "path": "../../apps/studio/src/trials.ts",
-        "sha256": "a1782191c624cbe8fd86816d4755d2b7fd8eba8d995a635e9a2fd37454688a88",
-        "bytes": 10201
+        "sha256": "93615b47a3966bdf546de194a7aee53f27524c27b4ca21b3871cb8c845a98667",
+        "bytes": 10218
       },
       {
         "path": "../../apps/studio/src/useSwatchFile.ts",
@@ -31690,8 +31715,8 @@
       },
       {
         "path": "../../apps/studio/src/workspace/MachineSetupSection.tsx",
-        "sha256": "194f45bc5bdc437105925d36e86be2f15ab73ad6087197a662b3d97599474892",
-        "bytes": 13004
+        "sha256": "0fe113ceb9f2f1db704c380dfd319982dcd7ff387c8197b4fe6f44ece0c80d4c",
+        "bytes": 13551
       },
       {
         "path": "../../apps/studio/src/workspace/MenuBar.tsx",
@@ -31769,71 +31794,6 @@
         "bytes": 323
       },
       {
-        "path": "../../e2e/beanie-workflow.spec.ts",
-        "sha256": "62ac5d82ac607bb79034cdb87d577d2c01a794e409f10c95a9a022763756371d",
-        "bytes": 36463
-      },
-      {
-        "path": "../../e2e/execution-inspector.spec.ts",
-        "sha256": "98e29232c074e8ab0d906b6e5e87864e91fc52642cf15f81f10635cbc1e96494",
-        "bytes": 7721
-      },
-      {
-        "path": "../../e2e/launch-polish.spec.ts",
-        "sha256": "60d18af4378849ffbdefccf32b5a9663993c6651eacd50d1f1851673e875d523",
-        "bytes": 15204
-      },
-      {
-        "path": "../../e2e/m2.spec.ts",
-        "sha256": "c508f5684a92d2ebeb1c746f03a1b6becd9abfc133112d31e0b0eff72ab11850",
-        "bytes": 6301
-      },
-      {
-        "path": "../../e2e/m3b.spec.ts",
-        "sha256": "6a0be00c0d3f412ac06317be6ff33eae7292c13fc72cee141039dbc3eb2f84ac",
-        "bytes": 10438
-      },
-      {
-        "path": "../../e2e/m3c.spec.ts",
-        "sha256": "053a52b0042f738d9bbaff0146c1bde611754d62616101238e3725d83922109b",
-        "bytes": 2862
-      },
-      {
-        "path": "../../e2e/m3d.spec.ts",
-        "sha256": "993080516dd14c814a3e7777699ebb5f1da6f8b1f71545daefc3d929bb99b0e7",
-        "bytes": 7806
-      },
-      {
-        "path": "../../e2e/menu.ts",
-        "sha256": "62d4050f2c4968f8e50f651ffba9f2e1bfccad5afc651958a66cff4a752ea169",
-        "bytes": 2353
-      },
-      {
-        "path": "../../e2e/panel-workflow.spec.ts",
-        "sha256": "b19c3d90c6599626f9f028ae7c66b3ba1ac224e34f03af311fd0f88337c1ef2d",
-        "bytes": 4124
-      },
-      {
-        "path": "../../e2e/reference-patterns.spec.ts",
-        "sha256": "c8cfa68c6d4e29afe65187a857a6c751b3319791757771a306b8ea97778fd4a9",
-        "bytes": 5193
-      },
-      {
-        "path": "../../e2e/states.spec.ts",
-        "sha256": "5315728727ffd189daeb8a38f903dc6c10ece17e9b66788b51b908fb4e65494d",
-        "bytes": 8257
-      },
-      {
-        "path": "../../e2e/sweater-workflow.spec.ts",
-        "sha256": "e24b7f263b4307de7029c9c91a08cf6092ce2095cd50846a6051ed4ff549c9ed",
-        "bytes": 16334
-      },
-      {
-        "path": "../../e2e/workspace.spec.ts",
-        "sha256": "206afa2b8f15071d4d2780fa02fdcd6a3dc9f82dc31acc64f587272eb97efc16",
-        "bytes": 3543
-      },
-      {
         "path": "../../fixtures/colorwork-chart-v1/customist-fairisle-reference.json",
         "sha256": "510006aaa71b63fc7a027e42e88a0df2457918a764aa881ade98f408c2ab9fdb",
         "bytes": 6762
@@ -31847,6 +31807,71 @@
         "path": "../../fixtures/colorwork-chart-v1/one-color.json",
         "sha256": "b6883232629c20b6dbc397310179ee158ee6fa407d78981ead760a6bfca4c031",
         "bytes": 298
+      },
+      {
+        "path": "../../fixtures/colorwork-chart-v1/paisley-border.json",
+        "sha256": "07431f8915aabc6b44e73a64d89395c8a78e95d5ae39ea01dd51744cb74555ff",
+        "bytes": 19867
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-fashioned.kc",
+        "sha256": "8d089b545b3ffb9437d8370613c068b57bbcacbb817aa105d0fbd57fa1e3c93f",
+        "bytes": 58367
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-simple.kc",
+        "sha256": "a385b9d031cbdc06c6eb51ebd15123a8f63c6ce51736f09a911f0511e5d61e8f",
+        "bytes": 48574
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13-followup/raw/fashioned-width2.kc",
+        "sha256": "a5646bdb980e495ada1cded8c32b337f5b315f419ce5d9d1fa14cc35d043eb63",
+        "bytes": 38725
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13/raw/left-phase0-fashioned.kc",
+        "sha256": "da54dc94dcd0fdf6dc817e9148f037fbc2c45854248e16b11c355dd69533ac67",
+        "bytes": 48562
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13/raw/left-phase0-simple.kc",
+        "sha256": "48b768b8082365f09c1ccb2306cfb641f80d9d0275a85fd046cd4e92d899a0d1",
+        "bytes": 43675
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13/raw/left-phase1-fashioned.kc",
+        "sha256": "9984338066ab44db4e3e657443341d1ab79405687f6bc9d08792e002c314191d",
+        "bytes": 38730
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13/raw/left-phase1-simple.kc",
+        "sha256": "54d5776e9be38dd6ff951feb60cc350b43261bb511ba4097c19f7b84252900f5",
+        "bytes": 38752
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13/raw/right-phase0-fashioned.kc",
+        "sha256": "d57df61c9e8fca4cba7592250446b683ad2a4e24ab4a6e0537d5bed780074f13",
+        "bytes": 38728
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13/raw/right-phase0-simple.kc",
+        "sha256": "4e712946b55089fc84debc3b667d76ae761b5e7fe8974d02b81c5aeb50aa0457",
+        "bytes": 38750
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13/raw/right-phase1-fashioned.kc",
+        "sha256": "c14185dbfc39e1fb2112ca84597a3b11b369ff664c902c23e8eb1f14dcce33d8",
+        "bytes": 43653
+      },
+      {
+        "path": "../../fixtures/customist-debug/2026-11-13/raw/right-phase1-simple.kc",
+        "sha256": "e66a069390a741ba00fd6461ee5eb66228688dcbfd531806c810f0611903290d",
+        "bytes": 43675
+      },
+      {
+        "path": "../../fixtures/experiments/edge-swatch-original.k",
+        "sha256": "890992f60693ddb23e9baddf9fb9167ef72a248f6ea399f8f33aa841168a341a",
+        "bytes": 90277
       },
       {
         "path": "../../package.json",
@@ -31894,9 +31919,69 @@
         "bytes": 19705
       },
       {
+        "path": "../../scripts/experiments/draw-edge-paisley.py",
+        "sha256": "0335c47886f6ed91de5072bfcb22e1ca9743ac9eb9f0d60f325d80d4e2c0a084",
+        "bytes": 1447
+      },
+      {
+        "path": "../../scripts/experiments/edge-swatch-full-caston.ts",
+        "sha256": "2325fe9be00691951ba33c4093766b46b8ba50ac6b3ca75effbf9b1138c39c92",
+        "bytes": 1441
+      },
+      {
+        "path": "../../scripts/experiments/edge-swatch.ts",
+        "sha256": "beaa9e5757cf3d3a010aee1de485227cb627408efe20108fbe6533f7a55a1c72",
+        "bytes": 12492
+      },
+      {
+        "path": "../../scripts/experiments/edge-trial-caston.ts",
+        "sha256": "cc3f6034e8a23bf4e84e666fcdc3c9dfa9df69c83694166a3a6e7d84c7248407",
+        "bytes": 2530
+      },
+      {
+        "path": "../../scripts/experiments/increase-swatch.ts",
+        "sha256": "39838bbcfbb475e77e3ee3bc44c4d7da413d44711b51a9daf3e2213152aac4d6",
+        "bytes": 10270
+      },
+      {
+        "path": "../../scripts/experiments/reversible-increase-research.ts",
+        "sha256": "c7299a8d9e58fa4a6d82dacc8bb274f75ca00e43de3cc62bb52394be990f20b9",
+        "bytes": 6095
+      },
+      {
+        "path": "../../scripts/experiments/reversible-right-edge-swatch.ts",
+        "sha256": "387355c5678a2e7e07f39b24c47baefd6053e0455187ff49fb7ad262af0b9f4e",
+        "bytes": 6898
+      },
+      {
+        "path": "../../scripts/experiments/reversible-split-swatch.ts",
+        "sha256": "c4f23bdba0814d1030cf8dea8c57dd177b052a37bac74e651dc85db21b2d506d",
+        "bytes": 10057
+      },
+      {
+        "path": "../../scripts/experiments/split-swatch.ts",
+        "sha256": "5bc6f7ca1c189187eecfa48f03c183090d13805fddcc1af6d979550091a01036",
+        "bytes": 18544
+      },
+      {
+        "path": "../../scripts/experiments/verify-edge-full-caston.ts",
+        "sha256": "758f2f8ca9fc204fbaa50b5f5fba73bc0955d4a2b1d43d5a76eb64ef1e6493ba",
+        "bytes": 2731
+      },
+      {
+        "path": "../../scripts/experiments/verify-reversible-right-edge.ts",
+        "sha256": "eee08b0e368ac7873b65ff42b51362bab08aeb2703eab0c6430347b7d95fe57f",
+        "bytes": 8359
+      },
+      {
+        "path": "../../scripts/experiments/verify-reversible-split.ts",
+        "sha256": "ecf9e5b9831a23a4e2d8b4560bafc8215ada35af1764ca92f037153118439ac8",
+        "bytes": 11259
+      },
+      {
         "path": "../../scripts/lib/machine-cli.ts",
-        "sha256": "4727cc8ef72cbb12b548e8ca58b212496fbf01e2601033721a40dacdcc4d1c84",
-        "bytes": 24512
+        "sha256": "e1fe5304795e5a3d3175a0b822f6a71259fa39c6e10b8e51f266471088b19a3b",
+        "bytes": 25669
       },
       {
         "path": "../../scripts/lib/png.ts",
@@ -31905,8 +31990,8 @@
       },
       {
         "path": "../../scripts/lib/render.ts",
-        "sha256": "469e4f0f1d3afcab301c2880a33cbc03b7fe48088cb426e253889d32b1222e49",
-        "bytes": 7358
+        "sha256": "cb903f877af411ef603d762feb5ab72893459e276f3c484fd160351da259ffe7",
+        "bytes": 7670
       },
       {
         "path": "../../scripts/lib/sweater-cli.ts",
@@ -31920,8 +32005,8 @@
       },
       {
         "path": "../../scripts/register-v1-knit-trial.ts",
-        "sha256": "c021697fd0169a18d06ce9137895f1f817b6e04209c2c132a3e7286364b2343e",
-        "bytes": 16648
+        "sha256": "a2d2507dd9cf49268a6f309e89fd410374a597b38947d4ba236f93896345aeb3",
+        "bytes": 19614
       },
       {
         "path": "../../scripts/studio.ts",
@@ -31990,8 +32075,8 @@
       },
       {
         "path": "../project-contract/src/index.ts",
-        "sha256": "3a94d53b389fe68af7ec766a5901a50cbf9693629be16e50ba0f89b4d9e0f88c",
-        "bytes": 81931
+        "sha256": "8c33518fe86d1be7a2f0afe9194efd8a48dd7ca53e6178b5b0e0f337664ea33f",
+        "bytes": 82060
       },
       {
         "path": "../project-contract/tsconfig.json",
@@ -32000,8 +32085,8 @@
       },
       {
         "path": "package.json",
-        "sha256": "10e4439ff02ec284d2f95855db48bf83fd696d56d1a63b2c5a9fe903f7282f06",
-        "bytes": 4441
+        "sha256": "9cd66d8a406a8091b059f6a6bec44685bd1d555a6263bf5132d458cefe753286",
+        "bytes": 4528
       },
       {
         "path": "reference/2x2-rib-beanie.kc",
@@ -32022,6 +32107,16 @@
         "path": "reference/color-swatch-bindoff.kc",
         "sha256": "1584c39f268f63189905582ddd16baa8866046ab1c8b0b8c25f70b6509a62fb8",
         "bytes": 556629
+      },
+      {
+        "path": "reference/customist-increase/split-increase-fashioned.kc",
+        "sha256": "7d1a3ea6f2a906b29875fbc4499c9e4eed6210de5be897ae8c29a5a481c3e84d",
+        "bytes": 38731
+      },
+      {
+        "path": "reference/customist-increase/split-increase-simple.kc",
+        "sha256": "ac9bb10422e356c43d20e8a0ec9cd76177ed3207161535bee7ced65ba5306809",
+        "bytes": 38753
       },
       {
         "path": "reference/dbj.kc",
@@ -32085,7 +32180,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "b3cf9ba35528fa941d276c9d1dc1c7468131c35318a1985cb595db980d4beb34",
+        "sha256": "1777903e66d198e73f8086de20ab1d36fb5dfbe2a52eeca5943c60faa466db2d",
         "bytes": 179
       },
       {
@@ -32229,14 +32324,109 @@
         "bytes": 2608
       },
       {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/machine.json",
+        "sha256": "45dc98c1f00bf5b213e5512d8a3714eba421cb8f33a8e8784586d114a64cb444",
+        "bytes": 2498
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/out.k",
+        "sha256": "fb8398dcf8df715e994c58b676cc39e99b6eed66252e37c424cbba7dcd498997",
+        "bytes": 97884
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/out.kc",
+        "sha256": "7217462cfe9297bbffbbe82f78d683f6bde09292f0d979e007039beb5d9c9540",
+        "bytes": 2209885
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/outcome.md",
+        "sha256": "3cd1ed1edf4d0039e4bd3659c1092eca6c137aa6ab5588daae9cb0df799b5114",
+        "bytes": 1372
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/project.kniterate-studio.json",
+        "sha256": "e67a9257daada6863ebee372d827ede05cdada8745f684e9953203c98d99ec8e",
+        "bytes": 179318
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/request.json",
+        "sha256": "667dc0e76efe9e253646140d228a059c47b55fddcc58f474ee40892dff09d1ff",
+        "bytes": 287
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/run.json",
+        "sha256": "cc9118e8fce25315394abdb22085f194ca1de1c48834f6b2c4eff28f3b4e22df",
+        "bytes": 2228
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/spec.json",
+        "sha256": "d3578a3056ad7731f48698b62b187a7669e10dc3d52488fc024ea226be2e8738",
+        "bytes": 1465
+      },
+      {
+        "path": "registry/swatches/2026-11-11-reversible-diamond-paisley/yarn.json",
+        "sha256": "465e2bb7e9d20f61933ea37303a7f4c6ab8f49e016770934770d592520a82ceb",
+        "bytes": 2601
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/machine.json",
+        "sha256": "a2a774aa32d87e3a2a81ac053a41f375dbbbb97d13c20fd3a885d08b102e5818",
+        "bytes": 2464
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/motif.json",
+        "sha256": "41f9f40d58acd4f8f24ac1f67e0fef64b98cbe87a7427da0a42662d487f8ef65",
+        "bytes": 17816
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/out.k",
+        "sha256": "973205474e801d115b9305097b2aae3b9cd3a86ed73896f075d9ac2d4c65b0e8",
+        "bytes": 53554
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/out.kc",
+        "sha256": "0be718de93c415b51ccb859d013a5578f4ff8c2e8cfffc0ce4bd380ee495acd3",
+        "bytes": 635356
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/outcome.md",
+        "sha256": "a1a8a9ede082f2b5c360c693be3eacdecf1851a0eec9d694826dea77d561800b",
+        "bytes": 1856
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/provenance.json",
+        "sha256": "0f4253545cc519e2a910cb5ac62f710f924d00f2ca9470310b6081e5a6549c9a",
+        "bytes": 1412
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/request.json",
+        "sha256": "58b2472d05209419e367bcf221ff7111c74f3de0908e3563db5de1023d407847",
+        "bytes": 389
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/run.json",
+        "sha256": "7ab110480d94e76276fa09c2ea2326d2ac13eaf11241555a9a913cea0a804f6a",
+        "bytes": 1844
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/spec.json",
+        "sha256": "b19c920e4005944f0b3269bebd3a550f8bced0c566e701618d2dc9566798d008",
+        "bytes": 1782
+      },
+      {
+        "path": "registry/swatches/2026-11-13-mixed-paisley-baseline/yarn.json",
+        "sha256": "b317e09c22121635f58b900e7adc1c8c4f701d5aab62c984bdede754a9c82547",
+        "bytes": 2577
+      },
+      {
         "path": "registry/swatches/README.md",
-        "sha256": "d79b426205aa864f180492bd11c86b83f26c6b99a8e6fac3279e14a7d1abe2fb",
-        "bytes": 12010
+        "sha256": "7b280a118a1e5cf3fd0fca9be81c20c2ca419453fc00af5881b542c5fb03cf3a",
+        "bytes": 13212
       },
       {
         "path": "registry/swatches/_schema.json",
-        "sha256": "50598ad15d1d9530ecf35c8744ee86dafcfacada6bd4bc430aa6b15d76e63a1a",
-        "bytes": 18334
+        "sha256": "c7ee3bfb805c35947699e3efbf4d6c4996fc313c2bc449a53eed6e7c52a45c5c",
+        "bytes": 18576
       },
       {
         "path": "registry/swatches/_template/machine.json",
@@ -32300,8 +32490,8 @@
       },
       {
         "path": "scripts/kcode-command-refusal-corpus.ts",
-        "sha256": "2885e7478b509dd2f8b5dfd6a71aac5a0f9417b5ffe3abaa301c220f6218c66d",
-        "bytes": 16689
+        "sha256": "42271c522dc3f7abefefe49405dd3733df0dddf011540ebcdbcca258957c21ad",
+        "bytes": 16793
       },
       {
         "path": "scripts/kcode-mutation.ts",
@@ -32315,8 +32505,8 @@
       },
       {
         "path": "scripts/kcode-proof.ts",
-        "sha256": "55c6187a45d57c8367d3cd34a864ab5ec899d696220dd1bc8ccb391115e61bab",
-        "bytes": 23728
+        "sha256": "d1ee4bcb16ccadd9ea57a980cc056024d82dcb47cf9ccb13048d74821e8edf34",
+        "bytes": 24757
       },
       {
         "path": "scripts/kcode-receipt-check.ts",
@@ -32350,8 +32540,8 @@
       },
       {
         "path": "scripts/kniterate-swatch-registry-check.ts",
-        "sha256": "abbeceb2aed7fa0a062d3e41f44907310814c4731752322537a4eb31a1ab6a1e",
-        "bytes": 77581
+        "sha256": "7045d993c2fceefbcc1910527f1efb340922ff321927d06727e448b13e8ddab6",
+        "bytes": 78626
       },
       {
         "path": "scripts/kniterate-topology-oracle.ts",
@@ -32365,13 +32555,13 @@
       },
       {
         "path": "scripts/registry-support.ts",
-        "sha256": "4f8cf5aa4d8cc9627684a9345a08f9fd4805034723fc661fcaac1f2a94598524",
-        "bytes": 25089
+        "sha256": "41d0eadb93b46d3bb30f9874d17cc62c6e49c0e269ef61628e22506c2909dfc4",
+        "bytes": 29051
       },
       {
         "path": "src/browser.ts",
-        "sha256": "cefc74d1d626045e3b1ec3e849df93a9d7e2aa879a8b5d696aa42ea39590dea6",
-        "bytes": 9055
+        "sha256": "88d3bc52a58a0c9bb1baace763d8cc2b4ff5d7c452099296e9f09f45cda2e6fa",
+        "bytes": 9172
       },
       {
         "path": "src/chart-core/__row_space_canary__.ts",
@@ -32439,6 +32629,11 @@
         "bytes": 5733
       },
       {
+        "path": "src/colorwork/diamond-chart.ts",
+        "sha256": "91ea795166df74e30e0a63d25492064e6d6473c70ff0f8e4b2b05fd3886057dd",
+        "bytes": 2704
+      },
+      {
         "path": "src/colorwork/from-colorwork-chart.ts",
         "sha256": "4b9cc0d6be2a0b5fc9da6d732f434c8304dce707600ac7a2957d148747189c35",
         "bytes": 2040
@@ -32480,8 +32675,8 @@
       },
       {
         "path": "src/index.ts",
-        "sha256": "4552f0d528ccfa2006c08583299e01a770c607c61aecbeae906ec9f8fa5fb217",
-        "bytes": 9192
+        "sha256": "1fda3191ade553a28100159f99a3cf7a8c022340423a786e4c9025abaca8aba0",
+        "bytes": 9309
       },
       {
         "path": "src/knitout/back-face-projection.ts",
@@ -32595,13 +32790,13 @@
       },
       {
         "path": "src/knitout/kcode/machine-profile.ts",
-        "sha256": "489b273236308c786e5b97e23ddd014cfeaf58350cfbee4ce460c1dc1f9657f6",
-        "bytes": 21698
+        "sha256": "0cfc8b86d40c7a8c0589a14f0c48a3b2769d03a6798065351ac6001a0650431b",
+        "bytes": 21972
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "sha256": "6ae7810412f4374ba87f1003122f562556842c3cc8640924b89fca7ebeee8777",
-        "bytes": 37474
+        "sha256": "81105b3e11d41c9d489821dc53a2227210aa237dfa274c9170d4b66208cd7b04",
+        "bytes": 38410
       },
       {
         "path": "src/knitout/kcode/machine-scene.ts",
@@ -32625,13 +32820,13 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "sha256": "3e5a22a3979244dec355c839ad38811040c9998c53b067e895c37f90e2e82d7e",
-        "bytes": 23264
+        "sha256": "fe7f70322e41fe0402bfe7ab277e00d74df87e38c0a05716bf96fb702a60adbc",
+        "bytes": 23814
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "sha256": "dae44550a85ef78e1be847bc729f0cc7ab0fd756e731b05237a37fd2b284c5f9",
-        "bytes": 51967
+        "sha256": "cd94b85d9b70a55b18b2ef2445e0dc3e7d7026559ca90e124acd17e66f564036",
+        "bytes": 52161
       },
       {
         "path": "src/knitout/kcode/parser.ts",
@@ -32655,8 +32850,8 @@
       },
       {
         "path": "src/knitout/kcode/trace-audit.ts",
-        "sha256": "8ba4aa4c7715a0f592274bc68e5735faf77b2242ab62f2d2c2265ef4bf74756b",
-        "bytes": 26597
+        "sha256": "d4f84583e9fb01c732a0eb9f268bb5637ddcfde17301b3b948e7edfac68957c5",
+        "bytes": 31319
       },
       {
         "path": "src/knitout/kcode/trace-stitch-diff.ts",
@@ -32715,8 +32910,8 @@
       },
       {
         "path": "src/knitout/passes/bind-off.ts",
-        "sha256": "48bd2b8b9a457406bce1ab7d650b46f0c4157b122b1ad11a4ccd1643d64ef373",
-        "bytes": 25710
+        "sha256": "71f957d475bdbae8f2cfa7cc131e835a7aa0a76474d4de1472e8d7b6bfcea6c6",
+        "bytes": 26188
       },
       {
         "path": "src/knitout/passes/cable-cross.ts",
@@ -32735,13 +32930,13 @@
       },
       {
         "path": "src/knitout/passes/customist-fairisle-frame.ts",
-        "sha256": "7e0cba17a1bfd1d2ed22b2df0ce5a564a4535391204bd0f0edd768ab29bed431",
-        "bytes": 10539
+        "sha256": "c4fac22d14159170abb696d88d67f7e2a67a29d293c1c8a3cd234516fa3d37af",
+        "bytes": 11853
       },
       {
         "path": "src/knitout/passes/customist-flat-start.ts",
-        "sha256": "c7f85c38527637cbd8c3f22abcaad5190fcdfde87538c13dc5c0c0d77d328607",
-        "bytes": 16067
+        "sha256": "0b75838c7b57288efc662f2faf420b8924130a90a4b3be2e608d821628035999",
+        "bytes": 17104
       },
       {
         "path": "src/knitout/passes/customist-rib-beanie-crown.ts",
@@ -32770,8 +32965,8 @@
       },
       {
         "path": "src/knitout/passes/jacquard-complement.ts",
-        "sha256": "6caf8f14556e60b7a4831a1d8e1e8dc89044266294d353cfcc7a32014121e962",
-        "bytes": 7602
+        "sha256": "2e44c1a427bf8dc5173666fb5b41a4172d30764897b34a6c92a348b23f44795d",
+        "bytes": 7737
       },
       {
         "path": "src/knitout/passes/jacquard-dbj-full.ts",
@@ -32804,14 +32999,19 @@
         "bytes": 5075
       },
       {
+        "path": "src/knitout/passes/reversible-outward-increase.ts",
+        "sha256": "f2f3e51fbe3243c6e07f6c3b12eea51f7510d96172e0531b7a4fd455436de3d0",
+        "bytes": 4744
+      },
+      {
         "path": "src/knitout/passes/rib-crown-plan.ts",
         "sha256": "36c7d4e4566fbda0a51f6afb268412cf3571a1c691a2cb7271af0995ae69a693",
         "bytes": 9276
       },
       {
         "path": "src/knitout/passes/shaped-panel.ts",
-        "sha256": "1062ff356d48fe4f9c84355d79026cda6ebd0483131793f6bc91c593927f057f",
-        "bytes": 22820
+        "sha256": "7e6a49a40cb3887bbad62fbdb6bb1140598330fb477ac25b4dd72865a095553e",
+        "bytes": 33470
       },
       {
         "path": "src/knitout/passes/shaped-tube.ts",
@@ -32830,8 +33030,8 @@
       },
       {
         "path": "src/knitout/passes/stockinette-shaped.ts",
-        "sha256": "73e93b00a6832d5a28ba39e017396b0056b7ee20f8002e9ff619e7691015cb34",
-        "bytes": 74236
+        "sha256": "0f8a21d3d8345d1ba80cd3ae6dc41186a080ae47d3f90ef4c6a6e2cf2804235d",
+        "bytes": 76090
       },
       {
         "path": "src/knitout/passes/stockinette-with-overrides.ts",
@@ -32865,13 +33065,13 @@
       },
       {
         "path": "src/knitout/plan/chart-body-walker.ts",
-        "sha256": "c36aab5c39a77d7c49af345f6affdca4180c9204412311eab6c2bf3774763bd3",
-        "bytes": 20891
+        "sha256": "0d1d28453ff0fb208f1e4500acae1c4fa738e6d924e4ea88b4e317ffca526c9e",
+        "bytes": 21150
       },
       {
         "path": "src/knitout/plan/compile-chart.ts",
-        "sha256": "fb6354a1bc5b03030e95f8f33e1078bf651f95549eed90d07e29790a60968fa1",
-        "bytes": 71599
+        "sha256": "e69c7efb089721029c77ec1463e333ad4b52c7c5f5a60f8b565480d335498b3e",
+        "bytes": 72009
       },
       {
         "path": "src/knitout/plan/kniterate-settings-ops.ts",
@@ -32880,8 +33080,8 @@
       },
       {
         "path": "src/knitout/plan/machine-settings-consumption.ts",
-        "sha256": "381374798366bed5659e6b06f3f02cd0293a8a401f2a151a628cf799eb10a5ff",
-        "bytes": 6632
+        "sha256": "6a4a3b09e69c16019224c2cc566a72f431397753db1d25114050fe862be99ff7",
+        "bytes": 6718
       },
       {
         "path": "src/knitout/plan/plan-to-knitout.ts",
@@ -32895,8 +33095,8 @@
       },
       {
         "path": "src/knitout/recipes/customist-matched.ts",
-        "sha256": "d81d5c1d65bec50a9481c715e21cbeeca42b43224a4d52b09b0fa76d13c205e4",
-        "bytes": 14517
+        "sha256": "c1d40576c58c79cc6e832a1c5c7a7cd3a9c1d399605c2144e30ddbc4b2cc024e",
+        "bytes": 16112
       },
       {
         "path": "src/knitout/recipes/customist-studio-birdseye-7gg.ts",
@@ -32945,8 +33145,8 @@
       },
       {
         "path": "src/knitout/sim/carriage-simulator.ts",
-        "sha256": "560711b7d636d03cfe346df53380be29415323f2e31e7821b0457481a90ddf82",
-        "bytes": 52544
+        "sha256": "9563e4f667091f870df715ea270a71fbf868a24046f99457e3910a73774df3a8",
+        "bytes": 52849
       },
       {
         "path": "src/knitout/sim/icord-from-kc.ts",
@@ -33065,8 +33265,8 @@
       },
       {
         "path": "src/validators/chart-track-a.ts",
-        "sha256": "bb17be322770d8f048982170a693f6a995cfc1fc5eef46c834afd995b117b324",
-        "bytes": 32917
+        "sha256": "221ec1b9f09871001419b2a160012cc0a6fd0f5016ec5eaf0666fa704d54d7e0",
+        "bytes": 32958
       },
       {
         "path": "src/validators/index.ts",
@@ -33080,8 +33280,8 @@
       },
       {
         "path": "src/validators/messages.ts",
-        "sha256": "921da6ed3b135b6108caa5f2641249ea5cdd982ad69f7025779928bce8b6eb6e",
-        "bytes": 46908
+        "sha256": "ef26f82368c0d4e94b5cd26f713339b134efe3c3255bc5eb1b06198b63ffe74d",
+        "bytes": 46909
       },
       {
         "path": "src/validators/tile-conservation.ts",
@@ -33215,8 +33415,8 @@
       },
       {
         "path": "test/knitout/kcode-command-legality.test.ts",
-        "sha256": "9f8505d348e5a686bf3131ce893aa62df6051a8448dd2030981d0bf0a75c0b14",
-        "bytes": 16737
+        "sha256": "f639ec84ca198418769733e48ef08f554da9e11982058079e8d067cf10dec5e2",
+        "bytes": 19275
       },
       {
         "path": "test/knitout/kcode-coordinate-bridge.test.ts",
@@ -33255,8 +33455,8 @@
       },
       {
         "path": "test/knitout/kcode-machine-execution.test.ts",
-        "sha256": "cda87c842af9bdc03333babb9f3e17179ea5e67088f76ed96e67e7674dccce91",
-        "bytes": 15593
+        "sha256": "11b2e4dc7b9a2ce81f5e413e4c703d148c115c2ebbe621ab874d455af69b8f34",
+        "bytes": 15652
       },
       {
         "path": "test/knitout/kcode-machine-profile.test.ts",
@@ -33275,8 +33475,8 @@
       },
       {
         "path": "test/knitout/kcode-machine-safety.test.ts",
-        "sha256": "5dc23f215a0cdbf812afdc72db294d4276d9be4b0fe0f0f0085ae719275b1add",
-        "bytes": 69770
+        "sha256": "1b48d0946044f9e2f904e4674313c9c94a59f89dfa004a3f5dd4fd1357c7dc2e",
+        "bytes": 71241
       },
       {
         "path": "test/knitout/kcode-machine-scene.test.ts",
@@ -33285,8 +33485,8 @@
       },
       {
         "path": "test/knitout/kcode-machine-topology-window.test.ts",
-        "sha256": "c385b20fd758a8cbbca85ff4cf2b33cc82de6752241dd5e31e5ff03b189e6e01",
-        "bytes": 4137
+        "sha256": "749aad0f39b5b1862ca640eb9fa4b05754693a0111c4f7f3a4937103f408c813",
+        "bytes": 4263
       },
       {
         "path": "test/knitout/kcode-machine-topology.test.ts",
@@ -33295,13 +33495,13 @@
       },
       {
         "path": "test/knitout/kcode-machine-trace.test.ts",
-        "sha256": "2dafcd3fce81f7189aa5eb73e995d76603f690e62504f7132598e8b6c174afb4",
-        "bytes": 25839
+        "sha256": "3bedcc1bf15cef8bde69129b91fe1249c6866cdd4f55e3a79bc5d4ea6bf8d0c9",
+        "bytes": 28345
       },
       {
         "path": "test/knitout/kcode-machine-validator.test.ts",
-        "sha256": "36f0f1e5daa3ecbe66f98e29172e9f4596b31e954c7889afb602593ca7252d18",
-        "bytes": 62431
+        "sha256": "e426dd638164fb1b196dae2f3021482296d07a0594de585db43246a452833110",
+        "bytes": 63426
       },
       {
         "path": "test/knitout/kcode-mutation-policy.test.ts",
@@ -33374,14 +33574,24 @@
         "bytes": 5658
       },
       {
+        "path": "test/knitout/reversible-outward-increase.test.ts",
+        "sha256": "6a7f09685136fb64920f5e2f51e35a0b5e584d154824c322ed2f1c8eb12b76bf",
+        "bytes": 3312
+      },
+      {
         "path": "test/knitout/shaped-panel.test.ts",
-        "sha256": "24221fd7af0d58d04c580e00f76e7be62a1b59d837d3830a585361a0b2237561",
-        "bytes": 10043
+        "sha256": "02bd12cca1a0cf2d7329d59fce61735700d7e639fd892e99d00d9007348a0e43",
+        "bytes": 23162
       },
       {
         "path": "test/knitout/sim/kc-section.test.ts",
         "sha256": "9ab9b8eec74a270c3aeb7ce86079e550f1a3d4545772cefedafa75a6c60d3e4f",
         "bytes": 1913
+      },
+      {
+        "path": "test/knitout/sim/split-roller.test.ts",
+        "sha256": "fe04929769131fb468063e4d8d57a51e3741d0b1aeac36dc3c7b274e4343272c",
+        "bytes": 3777
       },
       {
         "path": "test/knitout/strict-kcode-document.test.ts",
@@ -33390,13 +33600,13 @@
       },
       {
         "path": "test/knitout/trace-audit.test.ts",
-        "sha256": "a295e308bd16796f1c169d4f824ba308797eedfad7880ab0f99428aaa0b69dc7",
-        "bytes": 9755
+        "sha256": "8e15cc700d38c9acf9ac6f4ae4182a44e79133431e32fcfbcaa24070544a0515",
+        "bytes": 16121
       },
       {
         "path": "test/physical-registry-manifest.test.ts",
-        "sha256": "1d0e024bbe74c5863a37970f65b2a09d822b9002268fdf810d02c270cd67cbcf",
-        "bytes": 37917
+        "sha256": "aa621d29fdef4b95858cf0fc690fc146612065425c71583f89154741874a8c18",
+        "bytes": 41298
       },
       {
         "path": "test/physical-registry.test.ts",
@@ -33405,13 +33615,13 @@
       },
       {
         "path": "test/proof-fingerprint.test.ts",
-        "sha256": "eee948b6ef60aaf66d541928e67afbcd8fd44f6a4f34eafa209fcc75f1b74ad5",
-        "bytes": 7565
+        "sha256": "9eb5ae3d514fede7f3f493ca7ed5e3ada2c05c8161f6acab5af6094391a7be62",
+        "bytes": 8315
       },
       {
         "path": "test/public-api.test.ts",
-        "sha256": "86b8af7e63a20675c4316ac7c68bf7e054486491b93078aac648a803235f0148",
-        "bytes": 4054
+        "sha256": "a451caa71fe55bc50dfa53f71e1489d81f641bdb3e0193b01df7a474d7fa78ed",
+        "bytes": 4107
       },
       {
         "path": "tsconfig.json",
@@ -33453,9 +33663,9 @@
   "mutationEvidence": {
     "inputGrammarAndDiffMutations": true,
     "implementationSourceMutationScoring": true,
-    "receiptSha256": "390a04032fc60fea0b707807595b7048267b5a543760a636d377f5cfe4e006b9",
+    "receiptSha256": "e4eb2d605b05172c37da8f4bbded1446c069f5cc2b70e933399a6d5ae010ba93",
     "counts": {
-      "Killed": 3213,
+      "Killed": 3268,
       "Survived": 0,
       "Timeout": 0,
       "NoCoverage": 0,
@@ -33472,15 +33682,15 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "sha256": "3e5a22a3979244dec355c839ad38811040c9998c53b067e895c37f90e2e82d7e"
+        "sha256": "fe7f70322e41fe0402bfe7ab277e00d74df87e38c0a05716bf96fb702a60adbc"
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "sha256": "dae44550a85ef78e1be847bc729f0cc7ab0fd756e731b05237a37fd2b284c5f9"
+        "sha256": "cd94b85d9b70a55b18b2ef2445e0dc3e7d7026559ca90e124acd17e66f564036"
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "sha256": "6ae7810412f4374ba87f1003122f562556842c3cc8640924b89fca7ebeee8777"
+        "sha256": "81105b3e11d41c9d489821dc53a2227210aa237dfa274c9170d4b66208cd7b04"
       },
       {
         "path": "src/knitout/kcode/scheduled-trace-diff.ts",
@@ -33490,7 +33700,7 @@
     "diagnosticProseExclusions": [
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "line": 653,
+        "line": 657,
         "column": 16,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -33546,7 +33756,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 570,
+        "line": 580,
         "column": 5,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -33554,7 +33764,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1074,
+        "line": 1075,
         "column": 15,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -33562,7 +33772,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1141,
+        "line": 1142,
         "column": 13,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -33570,7 +33780,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1237,
+        "line": 1238,
         "column": 15,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -33578,7 +33788,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1237,
+        "line": 1238,
         "column": 96,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -33586,7 +33796,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1435,
+        "line": 1436,
         "column": 16,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -33594,7 +33804,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1435,
+        "line": 1436,
         "column": 232,
         "mutator": "StringLiteral",
         "replacement": "\"Stryker was here!\"",
@@ -33602,7 +33812,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1435,
+        "line": 1436,
         "column": 237,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -33610,7 +33820,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 787,
+        "line": 788,
         "column": 148,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -33618,7 +33828,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 787,
+        "line": 788,
         "column": 25,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -33626,7 +33836,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 787,
+        "line": 788,
         "column": 48,
         "mutator": "StringLiteral",
         "replacement": "\"\"",
@@ -33634,7 +33844,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 787,
+        "line": 788,
         "column": 9,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -33642,7 +33852,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 860,
+        "line": 861,
         "column": 11,
         "mutator": "StringLiteral",
         "replacement": "``",
@@ -33713,11 +33923,11 @@
         "reason": "Diagnostic prose only; occurrences and severity are asserted independently."
       }
     ],
-    "diagnosticProseExclusionsSha256": "8f94301a95db9b620538922cef502132e0849f9328006c5052604c1f1cbd0630",
+    "diagnosticProseExclusionsSha256": "110ce0b0d81e6ab81b1401ba8a7599b926d5cb206448dd9918c38cc44c582893",
     "equivalentMutantSuppressions": [
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "line": 387,
+        "line": 390,
         "column": 57,
         "mutator": "MethodExpression",
         "replacement": "[...formed, passIndex]",
@@ -33725,7 +33935,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "line": 496,
+        "line": 500,
         "column": 13,
         "mutator": "EqualityOperator",
         "replacement": "loop.coordinate <= action.at.traceCoordinate",
@@ -33733,7 +33943,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "line": 496,
+        "line": 500,
         "column": 13,
         "mutator": "EqualityOperator",
         "replacement": "loop.coordinate >= action.at.traceCoordinate",
@@ -33765,23 +33975,23 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 443,
-        "column": 28,
+        "line": 441,
+        "column": 58,
         "mutator": "ArithmeticOperator",
         "replacement": "selection.traceCoordinate - rack * contract.targetRackMultiplier",
         "reason": "Equivalent mutant: the V1 rack multiplier is always +/-1, whose product and quotient are equal."
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "line": 443,
-        "column": 56,
+        "line": 441,
+        "column": 86,
         "mutator": "ArithmeticOperator",
         "replacement": "rack / contract.targetRackMultiplier",
         "reason": "Equivalent mutant: the V1 rack multiplier is always +/-1, whose product and quotient are equal."
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 1024,
+        "line": 1025,
         "column": 13,
         "mutator": "ArithmeticOperator",
         "replacement": "selection.kcodeColumn - dialectContract.markerFreeTraceOffset",
@@ -33861,7 +34071,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 480,
+        "line": 481,
         "column": 10,
         "mutator": "ArithmeticOperator",
         "replacement": "source.traceCoordinate - rack * contract.targetRackMultiplier",
@@ -33869,7 +34079,7 @@
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "line": 480,
+        "line": 481,
         "column": 35,
         "mutator": "ArithmeticOperator",
         "replacement": "rack / contract.targetRackMultiplier",
@@ -34004,7 +34214,7 @@
         "reason": "Equivalent mutant: global matching reaches this final no-newline alternative only after all terminated lines, so the end anchor is redundant."
       }
     ],
-    "equivalentMutantSuppressionsSha256": "61da205bdc79e32f69dae2f9786953860552c371da8edf8ebe6666e8685e7e01",
+    "equivalentMutantSuppressionsSha256": "ca5a18d312a97c013461b7953d29c17706fca8d250f74d1f8a33dbf4e754c5d9",
     "globallyExcludedMutations": [],
     "diagnosticProseDirectiveAudit": [
       {
@@ -34093,56 +34303,56 @@
       },
       {
         "path": "src/knitout/kcode/machine-trace.ts",
-        "startLine": 570,
-        "endLine": 570,
+        "startLine": 580,
+        "endLine": 580,
         "reason": "Diagnostic prose only; the rear-bed field label does not affect decoded structure."
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "startLine": 787,
-        "endLine": 787,
+        "startLine": 788,
+        "endLine": 788,
         "reason": "Diagnostic prose only; family-specific rules and allowed-direction membership remain mutation-tested."
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "startLine": 860,
-        "endLine": 860,
+        "startLine": 861,
+        "endLine": 861,
         "reason": "Diagnostic prose only; exact rule, severity, class, and source location remain mutation-tested."
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "startLine": 1074,
-        "endLine": 1074,
+        "startLine": 1075,
+        "endLine": 1075,
         "reason": "Diagnostic prose only; selector bounds, severity, class, and stable rule remain mutation-tested."
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "startLine": 1141,
-        "endLine": 1141,
+        "startLine": 1142,
+        "endLine": 1142,
         "reason": "Diagnostic prose only; exact rule, severity, class, action index, and source location remain mutation-tested."
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "startLine": 1201,
-        "endLine": 1201,
+        "startLine": 1202,
+        "endLine": 1202,
         "reason": "Diagnostic prose only; the alternate stable rule identifier remains mutation-tested."
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "startLine": 1237,
-        "endLine": 1237,
+        "startLine": 1238,
+        "endLine": 1238,
         "reason": "Diagnostic prose only; expected-kind control flow and the stable rule remain mutation-tested."
       },
       {
         "path": "src/knitout/kcode/machine-validator.ts",
-        "startLine": 1435,
-        "endLine": 1435,
+        "startLine": 1436,
+        "endLine": 1436,
         "reason": "Diagnostic prose only; exact rule, severity, class, occurrence count, and totals remain mutation-tested."
       },
       {
         "path": "src/knitout/kcode/machine-safety.ts",
-        "startLine": 653,
-        "endLine": 653,
+        "startLine": 657,
+        "endLine": 657,
         "reason": "Diagnostic prose only; the rule, occurrence count and totals remain mutation-tested."
       }
     ],

@@ -1,0 +1,642 @@
+{
+  "status": "BLOCKED_NOT_FOR_MACHINE",
+  "scope": "synthetic loop accounting and pinned-backend serialization only",
+  "cases": [
+    {
+      "side": "left",
+      "firstSplitDirection": "+",
+      "frontCarrier": "3",
+      "repeats": 4,
+      "passes": 86,
+      "liveLoops": 40,
+      "maxStack": 1,
+      "splitParentsVerified": true,
+      "occupiedTargets": 0,
+      "emptySources": 0,
+      "safetyDiagnostics": [
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 5 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 8 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 19 works needle 121, 15 needles past carrier 4's last stitch at 136, under its yarn to where it rests at 118.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 25 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 28 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 39 works needle 120, 16 needles past carrier 4's last stitch at 136, under its yarn to where it rests at 117.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 45 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 48 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 59 works needle 119, 17 needles past carrier 4's last stitch at 136, under its yarn to where it rests at 116.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 65 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 68 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 79 works needle 118, 18 needles past carrier 4's last stitch at 136, under its yarn to where it rests at 115.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        }
+      ],
+      "safetyErrors": {
+        "machine-safety.transfer-with-carrier": 8,
+        "machine-safety.attached-yarn": 4
+      }
+    },
+    {
+      "side": "left",
+      "firstSplitDirection": "+",
+      "frontCarrier": "4",
+      "repeats": 4,
+      "passes": 86,
+      "liveLoops": 40,
+      "maxStack": 1,
+      "splitParentsVerified": true,
+      "occupiedTargets": 0,
+      "emptySources": 0,
+      "safetyDiagnostics": [
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 5 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 8 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 19 works needle 121, 15 needles past carrier 3's last stitch at 136, under its yarn to where it rests at 118.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 25 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 28 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 39 works needle 120, 16 needles past carrier 3's last stitch at 136, under its yarn to where it rests at 117.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 45 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 48 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 59 works needle 119, 17 needles past carrier 3's last stitch at 136, under its yarn to where it rests at 116.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 65 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 68 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 79 works needle 118, 18 needles past carrier 3's last stitch at 136, under its yarn to where it rests at 115.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        }
+      ],
+      "safetyErrors": {
+        "machine-safety.transfer-with-carrier": 8,
+        "machine-safety.attached-yarn": 4
+      }
+    },
+    {
+      "side": "left",
+      "firstSplitDirection": "-",
+      "frontCarrier": "3",
+      "repeats": 4,
+      "passes": 78,
+      "liveLoops": 40,
+      "maxStack": 1,
+      "splitParentsVerified": true,
+      "occupiedTargets": 0,
+      "emptySources": 0,
+      "safetyDiagnostics": [
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 4 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 9 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 9 turns the carriage at 116.5..121.5, less than 2.5 past the operated needles 121..121."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 9 turns the carrier 4 at 116.5..121.5, less than 2.5 past the operated needles 121..121."
+        },
+        {
+          "rule": "machine-safety.feeder-clearance",
+          "message": "Pass 13 operates needle 121 while carrier 4 rests at 121.5, closer than 2.5; a feeder over the needles collides with them."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 17 works needle 122, 14 needles past carrier 4's last stitch at 136, under its yarn to where it rests at 118.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 22 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 27 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 27 turns the carriage at 115.5..120.5, less than 2.5 past the operated needles 120..120."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 27 turns the carrier 4 at 115.5..120.5, less than 2.5 past the operated needles 120..120."
+        },
+        {
+          "rule": "machine-safety.feeder-clearance",
+          "message": "Pass 31 operates needle 120 while carrier 4 rests at 120.5, closer than 2.5; a feeder over the needles collides with them."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 35 works needle 121, 15 needles past carrier 4's last stitch at 136, under its yarn to where it rests at 117.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 40 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 45 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 45 turns the carriage at 114.5..119.5, less than 2.5 past the operated needles 119..119."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 45 turns the carrier 4 at 114.5..119.5, less than 2.5 past the operated needles 119..119."
+        },
+        {
+          "rule": "machine-safety.feeder-clearance",
+          "message": "Pass 49 operates needle 119 while carrier 4 rests at 119.5, closer than 2.5; a feeder over the needles collides with them."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 53 works needle 120, 16 needles past carrier 4's last stitch at 136, under its yarn to where it rests at 116.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 58 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 63 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 63 turns the carriage at 113.5..118.5, less than 2.5 past the operated needles 118..118."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 63 turns the carrier 4 at 113.5..118.5, less than 2.5 past the operated needles 118..118."
+        },
+        {
+          "rule": "machine-safety.feeder-clearance",
+          "message": "Pass 67 operates needle 118 while carrier 4 rests at 118.5, closer than 2.5; a feeder over the needles collides with them."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 71 works needle 119, 17 needles past carrier 4's last stitch at 136, under its yarn to where it rests at 115.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        }
+      ],
+      "safetyErrors": {
+        "machine-safety.feeder-clearance": 4,
+        "machine-safety.stop-overrun": 8,
+        "machine-safety.transfer-with-carrier": 8,
+        "machine-safety.attached-yarn": 4
+      }
+    },
+    {
+      "side": "left",
+      "firstSplitDirection": "-",
+      "frontCarrier": "4",
+      "repeats": 4,
+      "passes": 78,
+      "liveLoops": 40,
+      "maxStack": 1,
+      "splitParentsVerified": true,
+      "occupiedTargets": 0,
+      "emptySources": 0,
+      "safetyDiagnostics": [
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 4 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 9 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 9 turns the carriage at 116.5..121.5, less than 2.5 past the operated needles 121..121."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 9 turns the carrier 3 at 116.5..121.5, less than 2.5 past the operated needles 121..121."
+        },
+        {
+          "rule": "machine-safety.feeder-clearance",
+          "message": "Pass 13 operates needle 121 while carrier 3 rests at 121.5, closer than 2.5; a feeder over the needles collides with them."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 17 works needle 122, 14 needles past carrier 3's last stitch at 136, under its yarn to where it rests at 118.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 22 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 27 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 27 turns the carriage at 115.5..120.5, less than 2.5 past the operated needles 120..120."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 27 turns the carrier 3 at 115.5..120.5, less than 2.5 past the operated needles 120..120."
+        },
+        {
+          "rule": "machine-safety.feeder-clearance",
+          "message": "Pass 31 operates needle 120 while carrier 3 rests at 120.5, closer than 2.5; a feeder over the needles collides with them."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 35 works needle 121, 15 needles past carrier 3's last stitch at 136, under its yarn to where it rests at 117.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 40 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 45 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 45 turns the carriage at 114.5..119.5, less than 2.5 past the operated needles 119..119."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 45 turns the carrier 3 at 114.5..119.5, less than 2.5 past the operated needles 119..119."
+        },
+        {
+          "rule": "machine-safety.feeder-clearance",
+          "message": "Pass 49 operates needle 119 while carrier 3 rests at 119.5, closer than 2.5; a feeder over the needles collides with them."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 53 works needle 120, 16 needles past carrier 3's last stitch at 136, under its yarn to where it rests at 116.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 58 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 63 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 63 turns the carriage at 113.5..118.5, less than 2.5 past the operated needles 118..118."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 63 turns the carrier 3 at 113.5..118.5, less than 2.5 past the operated needles 118..118."
+        },
+        {
+          "rule": "machine-safety.feeder-clearance",
+          "message": "Pass 67 operates needle 118 while carrier 3 rests at 118.5, closer than 2.5; a feeder over the needles collides with them."
+        },
+        {
+          "rule": "machine-safety.attached-yarn",
+          "message": "Pass 71 works needle 119, 17 needles past carrier 3's last stitch at 136, under its yarn to where it rests at 115.5. KCode cannot say the yarn was cut, so the needles can catch it; take the carrier out after a leftward pass or at the end of the job."
+        }
+      ],
+      "safetyErrors": {
+        "machine-safety.feeder-clearance": 4,
+        "machine-safety.stop-overrun": 8,
+        "machine-safety.transfer-with-carrier": 8,
+        "machine-safety.attached-yarn": 4
+      }
+    },
+    {
+      "side": "right",
+      "firstSplitDirection": "+",
+      "frontCarrier": "3",
+      "repeats": 4,
+      "passes": 102,
+      "liveLoops": 40,
+      "maxStack": 1,
+      "splitParentsVerified": true,
+      "occupiedTargets": 0,
+      "emptySources": 0,
+      "safetyDiagnostics": [
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 7 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 12 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 12 turns the carriage at 130.5..135.5, less than 2.5 past the operated needles 131..131."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 12 turns the carrier 4 at 130.5..135.5, less than 2.5 past the operated needles 131..131."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 31 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 36 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 36 turns the carriage at 131.5..136.5, less than 2.5 past the operated needles 132..132."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 36 turns the carrier 4 at 131.5..136.5, less than 2.5 past the operated needles 132..132."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 55 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 60 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 60 turns the carriage at 132.5..137.5, less than 2.5 past the operated needles 133..133."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 60 turns the carrier 4 at 132.5..137.5, less than 2.5 past the operated needles 133..133."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 79 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 84 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 84 turns the carriage at 133.5..138.5, less than 2.5 past the operated needles 134..134."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 84 turns the carrier 4 at 133.5..138.5, less than 2.5 past the operated needles 134..134."
+        }
+      ],
+      "safetyErrors": {
+        "machine-safety.stop-overrun": 8,
+        "machine-safety.transfer-with-carrier": 8
+      }
+    },
+    {
+      "side": "right",
+      "firstSplitDirection": "+",
+      "frontCarrier": "4",
+      "repeats": 4,
+      "passes": 102,
+      "liveLoops": 40,
+      "maxStack": 1,
+      "splitParentsVerified": true,
+      "occupiedTargets": 0,
+      "emptySources": 0,
+      "safetyDiagnostics": [
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 7 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 12 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 12 turns the carriage at 130.5..135.5, less than 2.5 past the operated needles 131..131."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 12 turns the carrier 3 at 130.5..135.5, less than 2.5 past the operated needles 131..131."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 31 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 36 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 36 turns the carriage at 131.5..136.5, less than 2.5 past the operated needles 132..132."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 36 turns the carrier 3 at 131.5..136.5, less than 2.5 past the operated needles 132..132."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 55 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 60 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 60 turns the carriage at 132.5..137.5, less than 2.5 past the operated needles 133..133."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 60 turns the carrier 3 at 132.5..137.5, less than 2.5 past the operated needles 133..133."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 79 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 84 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 84 turns the carriage at 133.5..138.5, less than 2.5 past the operated needles 134..134."
+        },
+        {
+          "rule": "machine-safety.stop-overrun",
+          "message": "Pass 84 turns the carrier 3 at 133.5..138.5, less than 2.5 past the operated needles 134..134."
+        }
+      ],
+      "safetyErrors": {
+        "machine-safety.stop-overrun": 8,
+        "machine-safety.transfer-with-carrier": 8
+      }
+    },
+    {
+      "side": "right",
+      "firstSplitDirection": "-",
+      "frontCarrier": "3",
+      "repeats": 4,
+      "passes": 102,
+      "liveLoops": 40,
+      "maxStack": 1,
+      "splitParentsVerified": true,
+      "occupiedTargets": 0,
+      "emptySources": 0,
+      "safetyDiagnostics": [
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 6 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 9 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 30 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 33 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 54 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 57 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 78 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 81 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        }
+      ],
+      "safetyErrors": {
+        "machine-safety.transfer-with-carrier": 8
+      }
+    },
+    {
+      "side": "right",
+      "firstSplitDirection": "-",
+      "frontCarrier": "4",
+      "repeats": 4,
+      "passes": 102,
+      "liveLoops": 40,
+      "maxStack": 1,
+      "splitParentsVerified": true,
+      "occupiedTargets": 0,
+      "emptySources": 0,
+      "safetyDiagnostics": [
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 6 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 9 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 30 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 33 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 54 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 57 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 78 transfers with carrier 4 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        },
+        {
+          "rule": "machine-safety.transfer-with-carrier",
+          "message": "Pass 81 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified."
+        }
+      ],
+      "safetyErrors": {
+        "machine-safety.transfer-with-carrier": 8
+      }
+    }
+  ],
+  "negativeControls": {
+    "naiveSplitOccupiedTargets": 1,
+    "currentBorrowEmptyRearKnits": 2
+  },
+  "limitations": [
+    "No vendor split KCode reference; machine-safety gate remains blocking",
+    "No physical cast-on, finish, idle-feeder lifecycle, or whole-project integration",
+    "No physical yarn-path, latch clearance, take-down, loop-size, or appearance validation",
+    "Extra local knitting and colour/edge-join scheduling remain to be designed"
+  ]
+}

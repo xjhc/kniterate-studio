@@ -392,15 +392,36 @@ describe('KCode machine-safety envelope', () => {
   })
 
   describe('transfers', () => {
-    it('refuses a transfer with a carrier once per pass', () => {
-      const report = safety(job(
+    it('allows a split only as Kniterate writes it, and refuses any other once per pass', () => {
+      const splitPass = (rack: number, operation: 'Tr-Rl' | 'Rl-Tr') => safety(job(
         OUT,
-        { direction: '<<', carrier: '3', operation: 'Tr-Rl', carriage: { left: 97.5, right: 105.5 }, actions: [split(103, 103, '3'), split(100, 100, '3')] },
+        { direction: '<<', carrier: '3', operation, rack, carriage: { left: 97.5, right: 105.5 }, actions: [split(103, 103 - rack, '3'), split(100, 100 - rack, '3')] },
         HOME,
       ))
+      // Customist's Increase Transfers: front to rear in either direction, rack 0.
+      expect(splitPass(0, 'Tr-Rl').diagnostics).toEqual([])
+      expect(splitPass(0, 'Rl-Tr').counts['machine-safety.transfer-with-carrier']).toBe(1)
+      const rightward = (rack: number, rear = false) => safety(job(
+        OUT, BACK,
+        {
+          direction: '>>', carrier: '3', operation: rear ? 'Rr-Tr' : 'Tr-Rr', rack,
+          carriage: { left: 97.5, right: 105.5 },
+          actions: [100, 103].map((n) => rear
+            ? { kind: 'split', source: at('rear', n), target: at('front', n + rack), carrier: '3' }
+            : split(n, n - rack, '3')),
+        },
+        BACK, HOME,
+      ))
+      expect(rightward(0).diagnostics).toEqual([])
+      expect(rightward(0, true).counts['machine-safety.transfer-with-carrier']).toBe(1)
+      for (const rack of [-1, 0.5, 1]) {
+        expect(rightward(rack).counts['machine-safety.transfer-with-carrier']).toBe(1)
+        expect(splitPass(rack, 'Tr-Rl').counts['machine-safety.transfer-with-carrier']).toBe(1)
+      }
+      const report = splitPass(1, 'Tr-Rl')
       expectTargeted('transfer-with-carrier', 'machine-safety.transfer-with-carrier', report)
       expect(messages(report)).toEqual([
-        'Pass 2 transfers with carrier 3 (a split stitch). No Kniterate reference program shows how a split is encoded, so it is refused until that is verified.',
+        'Pass 2 transfers with carrier 3 (a split stitch) as Tr-Rl at rack 1. Kniterate\'s captured increases show splits only from the front bed at rack 0 (Tr-Rl or Tr-Rr), so any other form is refused.',
       ])
       expect(report.diagnostics[0]).toMatchObject({ passIndex: 1, sourceSpan: span(17) })
     })
@@ -885,9 +906,9 @@ describe('KCode machine-safety envelope', () => {
           fourHome(112.5),
         ))
         expect(attached(report)).toBe(0)
-        // Split encoding remains independently refused; its presence still
+        // This split is the form Kniterate writes, so nothing refuses it; its presence
         // establishes that the earlier pass was not the final yarn-forming use.
-        expect(report.counts['machine-safety.transfer-with-carrier']).toBe(next.kind === 'split' ? 1 : 0)
+        expect(report.counts['machine-safety.transfer-with-carrier']).toBe(0)
       }
     })
 
@@ -1146,7 +1167,7 @@ describe('KCode machine-safety envelope', () => {
       facingNeedles: ['official-documented', [racking, checks, customist]],
       bedRange: ['official-documented', [checks, customist, corpus]],
       stoppingDistance: ['official-documented', [feeder, customist, backend, corpus]],
-      transferWithCarrier: ['unverified', [split, transfers, backend, corpus]],
+      transferWithCarrier: ['reference-corpus-observed', [split, transfers, backend, 'packages/machine-lib/reference/customist-increase/*.kc', 'fixtures/customist-debug/2026-11-13/raw/{left,right}-phase{0,1}-{simple,fashioned}.kc', 'fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-{simple,fashioned}.kc']],
       carrierlessTuck: ['reference-corpus-observed', [backend, corpus]],
       carrierHomeStops: ['official-documented', [checks, customist, backend, corpus]],
       speed: ['official-documented', [customist]],

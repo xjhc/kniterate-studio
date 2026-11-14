@@ -145,6 +145,8 @@ export const FAIRISLE_PARK_BINDOFF_DEFAULTS: FairisleParkConfig = Object.freeze(
 });
 
 export interface BindOffInput {
+  /** Keep inverse-jacquard loops on both beds; alternate tubular waste before dropping. */
+  tubularWaste?: boolean;
   style: BindOffStyle;
   needleStart: number;
   needleEnd: number;
@@ -588,6 +590,8 @@ function emitFairisleParkBindoff(input: BindOffInput): {
     const dir: Direction = side === 'left' ? '+' : '-';
     if (dir === '+') {
       sim.frontBedRow(config.closingWasteCarrier, '+', needleStart, needleEnd);
+    } else if (input.tubularWaste) {
+      sim.knitRow(config.closingWasteCarrier, '-', 'b', needleEnd, needleStart);
     } else {
       sim.frontBedRow(config.closingWasteCarrier, '-', needleEnd, needleStart);
     }
@@ -604,6 +608,9 @@ function emitFairisleParkBindoff(input: BindOffInput): {
   sim.setRoller(config.parkRoller);
   sim.setStitch(config.parkStitch);
   for (let n = needleStart; n <= needleEnd; n++) sim.drop(f(n));
+  // Group by bed so the converter emits two full-width drops, not one
+  // direction reversal per column. Both layers already have waste support.
+  if (input.tubularWaste) for (let n = needleEnd; n >= needleStart; n--) sim.drop(backBed(n));
 
   // Presser settings for the auto-move that the vendor inserts between
   // the park pass and the first carrier-out Tu-Tu. Reference: speed 600,

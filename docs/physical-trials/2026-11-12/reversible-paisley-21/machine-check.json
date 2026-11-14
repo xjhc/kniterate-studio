@@ -1,0 +1,77 @@
+{
+  "kind": "kniterate-machine-check",
+  "schemaVersion": 1,
+  "input": {
+    "filename": "program.kc",
+    "format": "kc",
+    "byteCount": 635356,
+    "sha256": "972789a80a34743a573f87e5a54e63289199c39a0525eaf188dea2595a153b0b",
+    "profile": "kniterate-7gg-kcode@2",
+    "dialect": "knitout-vendor"
+  },
+  "verdict": {
+    "state": "surface",
+    "label": "Surface-proven (imported)",
+    "annotation": "Strict KCode parsing, conformance to the V1 operation, direction, carrier, rack, selection, transfer, stop, and continuity contract, and the machine-safety envelope passed. Controller acceptance, settings for this yarn, and physical knitting remain unproven."
+  },
+  "stats": {
+    "passCount": 522,
+    "loopFormingPassCount": 288,
+    "authoredRowCount": null,
+    "passMetricProvenance": "strict-kcode-trace",
+    "authoredRowProvenance": "unavailable-for-foreign-machine-file",
+    "programmedMotion": {
+      "schemaVersion": 1,
+      "coordinateMetric": {
+        "programmedTravelUnits": 9534,
+        "unit": "encoded-stop-coordinate-unit",
+        "provenance": "exact-machine-trace"
+      },
+      "assumptionModel": {
+        "status": "available",
+        "assumedPitchMmPerCoordinateUnit": 3.63,
+        "assumedTravelMm": 34608.42,
+        "idealizedSeconds": 173.8165,
+        "unavailableReason": null,
+        "assumptions": {
+          "distance": "one-stop-coordinate-unit-equals-one-needle-pitch",
+          "speed": "encoded-footer-speed-is-constant-mm-per-second",
+          "claimBoundary": "assumption-derived-not-physical-duration-or-lower-bound"
+        }
+      }
+    },
+    "passRoles": {
+      "loop-forming": 288,
+      "transfer": 39,
+      "drop": 3,
+      "carrier-move": 82,
+      "carriage-move": 110,
+      "unclassified": 0
+    },
+    "carriers": [
+      "1",
+      "3",
+      "4",
+      "6"
+    ],
+    "needleSpan": "K-code 118-138",
+    "rackRange": "-1 to 1",
+    "infoCount": 0,
+    "warningCount": 0,
+    "errorCount": 0
+  },
+  "evidence": {
+    "exactInputBytes": "preserved-kcode-bytes",
+    "sourceCarrierLifecycle": "not-encoded-by-kcode",
+    "backendScheduleDifferential": "not-available-for-direct-kcode",
+    "physicalAcceptance": "not-established"
+  },
+  "diagnostics": [],
+  "diagnosticDetailsOmitted": 0,
+  "disclosure": [
+    "KCode bytes do not encode Knitout carrier in/out lifecycle or prove who produced them; checks begin at encoded KCode semantics.",
+    "Programmed travel is exact only in encoded stop-coordinate units. Millimetres and the constant-speed time term assume one coordinate unit equals one 3.63 mm needle pitch and encoded speed is constant mm/s; they are not physical duration or lower-bound claims.",
+    "Surface-proven remains software evidence; controller acceptance and physical knitting are separate gates.",
+    "Every check assumes the job starts with an empty needle bed and every yarn feeder parked at home on the left; the file cannot show either, so check both at the machine."
+  ]
+}

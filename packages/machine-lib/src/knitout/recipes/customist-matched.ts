@@ -26,7 +26,7 @@ import { CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE } from './customist-studio-fairisl
 import { STUDIO_YARN_CATCH_NEEDLES_V1, FAIRISLE_CARRIER_INTRO_DEFAULTS } from '../passes/carrier-intro.js'
 import { STUDIO_FIRST_ROW_AFTER_TRANSFERS_ROLLER_V1 } from '../passes/first-row-speed.js'
 
-export type CustomistMatchedTechniqueV1 = 'fairisle' | 'birdseye'
+export type CustomistMatchedTechniqueV1 = 'fairisle' | 'birdseye' | 'complement'
 
 /**
  * `frameCarriers`: carriers the matched frame brings in besides the pattern
@@ -34,6 +34,7 @@ export type CustomistMatchedTechniqueV1 = 'fairisle' | 'birdseye'
  * compiled program has no declared yarn and must be refused by the caller.
  */
 export const CUSTOMIST_MATCHED_PRESETS_V1 = {
+  complement: { id: 'studio-reversible-7gg', reference: 'reference/jacquard.kc (cast-on); reference/sleeves.kc (inverse body)', frameCarriers: ['1'] },
   fairisle: { id: 'customist-studio-fairisle-7gg', reference: 'reference/fairisle.kc', frameCarriers: ['1'] },
   birdseye: { id: 'customist-studio-birdseye-7gg', reference: 'reference/dbj.kc', frameCarriers: ['1'] },
 } as const satisfies Record<CustomistMatchedTechniqueV1, { id: string, reference: string, frameCarriers: readonly string[] }>
@@ -87,6 +88,7 @@ const FLAT_STEADY_WASTE_PASS = FLAT.wasteRampPasses + 1 - (FLAT.wasteRampPasses 
  * the top rows'.
  */
 export const CUSTOMIST_STANDARD_SECTION_SETTINGS_V1 = {
+  complement: { waste: { stitch: referenceWaste('fairisle').stitchNumber!, speed: referenceWaste('fairisle').wasteSpeed!, roller: referenceWaste('fairisle').rampRollerLeft! }, castOn: { stitch: 3, speed: 100, roller: 450 } },
   fairisle: {
     waste: { stitch: referenceWaste('fairisle').stitchNumber!, speed: referenceWaste('fairisle').wasteSpeed!, roller: referenceWaste('fairisle').rampRollerLeft! },
     castOn: { stitch: FAIRISLE_CARRIER_INTRO_DEFAULTS.rampStitches[0]!, speed: FAIRISLE_CARRIER_INTRO_DEFAULTS.rampSpeed, roller: FAIRISLE_CARRIER_INTRO_DEFAULTS.rampRoller },
@@ -108,6 +110,7 @@ export const CUSTOMIST_STANDARD_SECTION_SETTINGS_V1 = {
  * every flat piece and of a beanie with a fairisle back.
  */
 export const CUSTOMIST_STANDARD_BODY_SETTINGS_V1 = {
+  complement: { stitch: 7, speed: 200, roller: 450 },
   fairisle: {
     speed: CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE.sections.body.speedNumber,
     roller: CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE.sections.body.rollerAdvance,
@@ -129,6 +132,7 @@ function referencePark(technique: CustomistMatchedTechniqueV1) {
 
 /** The reference's rows of waste yarn on top: what a project finishes on unless it sets its own. */
 export const CUSTOMIST_STANDARD_TOP_WASTE_ROWS_V1 = {
+  complement: 8, // rows per bed
   fairisle: referencePark('fairisle').closingWasteStitchRamp!.length,
   birdseye: referencePark('birdseye').closingWasteStitchRamp!.length,
   /** Sweater pieces, scarves and blankets, when their top is waste. */
@@ -145,6 +149,7 @@ export function customistTopWasteRowsV1(requested: number): number {
 
 /** The reference's waste interlock passes for each construction: what a project knits unless it sets its own. */
 export const CUSTOMIST_STANDARD_WASTE_PASSES_V1 = {
+  complement: CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE.sections.start.wastePasses,
   fairisle: CUSTOMIST_STUDIO_FAIRISLE_7GG_RECIPE.sections.start.wastePasses,
   birdseye: CUSTOMIST_STUDIO_BIRDSEYE_7GG_OVERRIDES.start!.wastePasses!,
   /** Beanies, sweaters, scarves and blankets: the shared flat start. */
@@ -175,6 +180,21 @@ export const CUSTOMIST_MIN_WASTE_PASSES_V1 = 70
 export const CUSTOMIST_RIB_STITCH_STEP_V1 = FLAT.ribStitchFront - FLAT.ribStitchRear
 
 export function buildCustomistMatchedCompileInputV1(request: CustomistMatchedCompileRequestV1): CompileChartInput {
+  if (request.technique === 'complement') {
+    if (request.yarnBindings.length !== 2) throw new Error('Reversible charts require exactly two yarns');
+    if (request.top === 'bind-off') throw new Error('Reversible charts require supporting waste on both beds');
+    // Use the repaired Studio waste/introduction. Keep the full-bed zigzag and
+    // tubular rows, as jacquard.kc does, instead of collapsing the rear bed.
+    const base = buildCustomistMatchedCompileInputV1({ ...request, technique: 'fairisle',
+      body: { stitch: 7, speed: 200, roller: 450, ...request.body },
+      castOn: { stitch: 3, speed: 100, roller: 450, tubularRoller: 200, ...request.castOn },
+      topWasteRows: 2 * (request.topWasteRows ?? 8),
+    });
+    return { ...base, backBedStyle: 'birdseye', dbjBackingStrategy: 'complement',
+      floatPolicy: undefined,
+      fairisleParkConfig: { ...base.fairisleParkConfig, closingWasteStitchRamp: Array(2 * (request.topWasteRows ?? 8)).fill(7), closingWasteSpeed: 200, closingWasteRoller: 450 },
+    };
+  }
   const chart: KnitlabChartState = request.technique === 'birdseye'
     ? {
         ...request.chart,

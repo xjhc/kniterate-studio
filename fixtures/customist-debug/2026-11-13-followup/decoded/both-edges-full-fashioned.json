@@ -1,0 +1,1253 @@
+{
+  "kind": "kniterate-studio-passes",
+  "file": "both-edges-full-fashioned.kc",
+  "source": "file",
+  "passCount": 48,
+  "kcodeSha256": "8d089b545b3ffb9437d8370613c068b57bbcacbb817aa105d0fbd57fa1e3c93f",
+  "yarnRoles": {
+    "waste": "6",
+    "draw": "1"
+  },
+  "sections": [
+    "body 1-48"
+  ],
+  "sectionSource": "automatic",
+  "range": {
+    "from": 1,
+    "to": 48
+  },
+  "passes": [
+    {
+      "pass": 1,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 20
+      },
+      "needles": {
+        "front": [
+          2,
+          21
+        ],
+        "rear": null
+      },
+      "text": "1 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 20 (2..21) [body]"
+    },
+    {
+      "pass": 2,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 20
+      },
+      "needles": {
+        "front": [
+          2,
+          21
+        ],
+        "rear": null
+      },
+      "text": "2 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 20 (2..21) [body]"
+    },
+    {
+      "pass": 3,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 20
+      },
+      "needles": {
+        "front": [
+          2,
+          21
+        ],
+        "rear": null
+      },
+      "text": "3 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 20 (2..21) [body]"
+    },
+    {
+      "pass": 4,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 20
+      },
+      "needles": {
+        "front": [
+          2,
+          21
+        ],
+        "rear": null
+      },
+      "text": "4 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 20 (2..21) [body]"
+    },
+    {
+      "pass": 5,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 20
+      },
+      "needles": {
+        "front": [
+          2,
+          21
+        ],
+        "rear": null
+      },
+      "text": "5 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 20 (2..21) [body]"
+    },
+    {
+      "pass": 6,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 20
+      },
+      "needles": {
+        "front": [
+          2,
+          21
+        ],
+        "rear": null
+      },
+      "text": "6 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 20 (2..21) [body]"
+    },
+    {
+      "pass": 7,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 20
+      },
+      "needles": {
+        "front": [
+          2,
+          21
+        ],
+        "rear": null
+      },
+      "text": "7 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 20 (2..21) [body]"
+    },
+    {
+      "pass": 8,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 18,
+        "split front>rear": 2
+      },
+      "needles": {
+        "front": [
+          2,
+          21
+        ],
+        "rear": null
+      },
+      "text": "8 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 18 (2..21), split front>rear 2 (2..21) [body]"
+    },
+    {
+      "pass": 9,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 0,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer front>rear": 2
+      },
+      "needles": {
+        "front": [
+          2,
+          4
+        ],
+        "rear": null
+      },
+      "text": "9 >> c0 rack 0 speed 120 roller 0 | xfer front>rear 2 (2..4) [body]"
+    },
+    {
+      "pass": 10,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 0,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer front>rear": 2
+      },
+      "needles": {
+        "front": [
+          3,
+          5
+        ],
+        "rear": null
+      },
+      "text": "10 << c0 rack 0 speed 120 roller 0 | xfer front>rear 2 (3..5) [body]"
+    },
+    {
+      "pass": 11,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 2
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          3,
+          5
+        ]
+      },
+      "text": "11 >> c0 rack -1 speed 120 roller 0 | xfer rear>front 2 (3..5) [body]"
+    },
+    {
+      "pass": 12,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 2
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          4,
+          6
+        ]
+      },
+      "text": "12 << c0 rack -1 speed 120 roller 0 | xfer rear>front 2 (4..6) [body]"
+    },
+    {
+      "pass": 13,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "carrier-move",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "13 >> c3 rack -1 speed 120 roller 0 | move [body]"
+    },
+    {
+      "pass": 14,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "carrier-move",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "14 << c3 rack -1 speed 120 roller 0 | move [body]"
+    },
+    {
+      "pass": 15,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          2,
+          2
+        ]
+      },
+      "text": "15 >> c0 rack -1 speed 120 roller 0 | xfer rear>front 1 (2..2) [body]"
+    },
+    {
+      "pass": 16,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 0,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer front>rear": 2
+      },
+      "needles": {
+        "front": [
+          18,
+          20
+        ],
+        "rear": null
+      },
+      "text": "16 << c0 rack 0 speed 120 roller 0 | xfer front>rear 2 (18..20) [body]"
+    },
+    {
+      "pass": 17,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 0,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer front>rear": 2
+      },
+      "needles": {
+        "front": [
+          19,
+          21
+        ],
+        "rear": null
+      },
+      "text": "17 >> c0 rack 0 speed 120 roller 0 | xfer front>rear 2 (19..21) [body]"
+    },
+    {
+      "pass": 18,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 1,
+      "speed": 120,
+      "roller": 50,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 3
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          17,
+          21
+        ]
+      },
+      "text": "18 << c0 rack 1 speed 120 roller 50 | xfer rear>front 3 (17..21) [body]"
+    },
+    {
+      "pass": 19,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 1,
+      "speed": 120,
+      "roller": 50,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 2
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          18,
+          20
+        ]
+      },
+      "text": "19 >> c0 rack 1 speed 120 roller 50 | xfer rear>front 2 (18..20) [body]"
+    },
+    {
+      "pass": 20,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "20 << c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "pass": 21,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 22
+      },
+      "needles": {
+        "front": [
+          1,
+          22
+        ],
+        "rear": null
+      },
+      "text": "21 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 22 (1..22) [body]"
+    },
+    {
+      "pass": 22,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 22
+      },
+      "needles": {
+        "front": [
+          1,
+          22
+        ],
+        "rear": null
+      },
+      "text": "22 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 22 (1..22) [body]"
+    },
+    {
+      "pass": 23,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 22
+      },
+      "needles": {
+        "front": [
+          1,
+          22
+        ],
+        "rear": null
+      },
+      "text": "23 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 22 (1..22) [body]"
+    },
+    {
+      "pass": 24,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 22
+      },
+      "needles": {
+        "front": [
+          1,
+          22
+        ],
+        "rear": null
+      },
+      "text": "24 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 22 (1..22) [body]"
+    },
+    {
+      "pass": 25,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 22
+      },
+      "needles": {
+        "front": [
+          1,
+          22
+        ],
+        "rear": null
+      },
+      "text": "25 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 22 (1..22) [body]"
+    },
+    {
+      "pass": 26,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 22
+      },
+      "needles": {
+        "front": [
+          1,
+          22
+        ],
+        "rear": null
+      },
+      "text": "26 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 22 (1..22) [body]"
+    },
+    {
+      "pass": 27,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 22
+      },
+      "needles": {
+        "front": [
+          1,
+          22
+        ],
+        "rear": null
+      },
+      "text": "27 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 22 (1..22) [body]"
+    },
+    {
+      "pass": 28,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 20,
+        "split front>rear": 2
+      },
+      "needles": {
+        "front": [
+          1,
+          22
+        ],
+        "rear": null
+      },
+      "text": "28 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 20 (1..22), split front>rear 2 (1..22) [body]"
+    },
+    {
+      "pass": 29,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 0,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer front>rear": 2
+      },
+      "needles": {
+        "front": [
+          1,
+          3
+        ],
+        "rear": null
+      },
+      "text": "29 >> c0 rack 0 speed 120 roller 0 | xfer front>rear 2 (1..3) [body]"
+    },
+    {
+      "pass": 30,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 0,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer front>rear": 2
+      },
+      "needles": {
+        "front": [
+          2,
+          4
+        ],
+        "rear": null
+      },
+      "text": "30 << c0 rack 0 speed 120 roller 0 | xfer front>rear 2 (2..4) [body]"
+    },
+    {
+      "pass": 31,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 2
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          2,
+          4
+        ]
+      },
+      "text": "31 >> c0 rack -1 speed 120 roller 0 | xfer rear>front 2 (2..4) [body]"
+    },
+    {
+      "pass": 32,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 2
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          3,
+          5
+        ]
+      },
+      "text": "32 << c0 rack -1 speed 120 roller 0 | xfer rear>front 2 (3..5) [body]"
+    },
+    {
+      "pass": 33,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "carrier-move",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "33 >> c3 rack -1 speed 120 roller 0 | move [body]"
+    },
+    {
+      "pass": 34,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "carrier-move",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "34 << c3 rack -1 speed 120 roller 0 | move [body]"
+    },
+    {
+      "pass": 35,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": -1,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          1,
+          1
+        ]
+      },
+      "text": "35 >> c0 rack -1 speed 120 roller 0 | xfer rear>front 1 (1..1) [body]"
+    },
+    {
+      "pass": 36,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 0,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer front>rear": 2
+      },
+      "needles": {
+        "front": [
+          19,
+          21
+        ],
+        "rear": null
+      },
+      "text": "36 << c0 rack 0 speed 120 roller 0 | xfer front>rear 2 (19..21) [body]"
+    },
+    {
+      "pass": 37,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 0,
+      "speed": 120,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer front>rear": 2
+      },
+      "needles": {
+        "front": [
+          20,
+          22
+        ],
+        "rear": null
+      },
+      "text": "37 >> c0 rack 0 speed 120 roller 0 | xfer front>rear 2 (20..22) [body]"
+    },
+    {
+      "pass": 38,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 1,
+      "speed": 120,
+      "roller": 50,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 3
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          18,
+          22
+        ]
+      },
+      "text": "38 << c0 rack 1 speed 120 roller 50 | xfer rear>front 3 (18..22) [body]"
+    },
+    {
+      "pass": 39,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "0",
+      "role": "transfer",
+      "rack": 1,
+      "speed": 120,
+      "roller": 50,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "xfer rear>front": 2
+      },
+      "needles": {
+        "front": null,
+        "rear": [
+          19,
+          21
+        ]
+      },
+      "text": "39 >> c0 rack 1 speed 120 roller 50 | xfer rear>front 2 (19..21) [body]"
+    },
+    {
+      "pass": 40,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "0",
+      "role": "carriage-move",
+      "rack": 0,
+      "speed": 600,
+      "roller": 0,
+      "stitch": {
+        "front": [],
+        "rear": []
+      },
+      "actions": {
+        "move": 1
+      },
+      "needles": {
+        "front": null,
+        "rear": null
+      },
+      "text": "40 << c0 rack 0 speed 600 roller 0 | move [body]"
+    },
+    {
+      "pass": 41,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 24
+      },
+      "needles": {
+        "front": [
+          0,
+          23
+        ],
+        "rear": null
+      },
+      "text": "41 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 24 (0..23) [body]"
+    },
+    {
+      "pass": 42,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 24
+      },
+      "needles": {
+        "front": [
+          0,
+          23
+        ],
+        "rear": null
+      },
+      "text": "42 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 24 (0..23) [body]"
+    },
+    {
+      "pass": 43,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 24
+      },
+      "needles": {
+        "front": [
+          0,
+          23
+        ],
+        "rear": null
+      },
+      "text": "43 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 24 (0..23) [body]"
+    },
+    {
+      "pass": 44,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 24
+      },
+      "needles": {
+        "front": [
+          0,
+          23
+        ],
+        "rear": null
+      },
+      "text": "44 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 24 (0..23) [body]"
+    },
+    {
+      "pass": 45,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 24
+      },
+      "needles": {
+        "front": [
+          0,
+          23
+        ],
+        "rear": null
+      },
+      "text": "45 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 24 (0..23) [body]"
+    },
+    {
+      "pass": 46,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 24
+      },
+      "needles": {
+        "front": [
+          0,
+          23
+        ],
+        "rear": null
+      },
+      "text": "46 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 24 (0..23) [body]"
+    },
+    {
+      "pass": 47,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 24
+      },
+      "needles": {
+        "front": [
+          0,
+          23
+        ],
+        "rear": null
+      },
+      "text": "47 >> c3 rack 0 speed 300 roller 450 stitch f6 | knit front 24 (0..23) [body]"
+    },
+    {
+      "pass": 48,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": []
+      },
+      "actions": {
+        "knit front": 24
+      },
+      "needles": {
+        "front": [
+          0,
+          23
+        ],
+        "rear": null
+      },
+      "text": "48 << c3 rack 0 speed 300 roller 450 stitch f6 | knit front 24 (0..23) [body]"
+    }
+  ]
+}

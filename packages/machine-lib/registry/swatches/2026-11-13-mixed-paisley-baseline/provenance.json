@@ -1,0 +1,37 @@
+{
+  "kind": "kniterate-development-baseline-provenance",
+  "schemaVersion": 1,
+  "registeredOn": "2026-11-13",
+  "issuedKcodeSha256": "0be718de93c415b51ccb859d013a5578f4ff8c2e8cfffc0ce4bd380ee495acd3",
+  "issuedPasses": 522,
+  "issuedBytes": 635356,
+  "controllerLoadedFileConfirmed": false,
+  "photoAssociation": "inferred from appearance and last-issued file; not operator-confirmed by run hash",
+  "replayArguments": [
+    "--wide21",
+    "--paisley",
+    "--mixed-paisley"
+  ],
+  "sources": [
+    {
+      "role": "issued-machine-file",
+      "repositoryPath": "docs/physical-trials/2026-11-12/reversible-mixed-paisley-spaced/program.kc",
+      "sha256": "0be718de93c415b51ccb859d013a5578f4ff8c2e8cfffc0ce4bd380ee495acd3"
+    },
+    {
+      "role": "sd-copy-receipt",
+      "repositoryPath": "docs/physical-trials/2026-11-12/two-samples-feedback/sd-copy-record.json",
+      "sha256": "cd2938930c9d61e0602c57577e38255bfbc08f09b4a83f70d27c9479d7776069"
+    },
+    {
+      "role": "reported-observations",
+      "repositoryPath": "docs/physical-trials/2026-11-12/two-samples-feedback/README.md",
+      "sha256": "dbca3bf54232d5041e67fe85545e3a6d9e346c49b6af9667b35c358bb8ed25e0"
+    },
+    {
+      "role": "one-face-photo",
+      "repositoryPath": "docs/physical-trials/2026-11-12/two-samples-feedback/IMG_1212.jpg",
+      "sha256": "28cdd52532f5bd537f8879daa9326466614e363cc45a6ab83113a9516c6cf9a1"
+    }
+  ]
+}

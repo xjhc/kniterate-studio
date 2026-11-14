@@ -42,7 +42,7 @@ const RFC3339 = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|[+
 const OUTCOMES = ['clean', 'dropped', 'jammed', 'aborted', 'partial'] as const;
 const ROLES = ['draw', 'pattern', 'waste'] as const;
 const SECTIONS = ['waste', 'castOn', 'drawThread', 'carrierBringIn', 'body', 'backing', 'leftEdge', 'rightEdge', 'bindOff'] as const;
-const SECTION_STATUSES = ['clean', 'issue', 'not-reached', 'not-applicable'] as const;
+const SECTION_STATUSES = ['clean', 'issue', 'not-reached', 'not-applicable', 'unknown'] as const;
 const PHOTO_VIEWS = ['front', 'back', 'cast-on', 'left-edge', 'right-edge', 'bind-off'] as const;
 const INTERVENTION_KINDS = ['restart', 'yarn-rethread', 'loop-repair', 'needle-repair', 'setting-change', 'carrier-change', 'source-edit', 'other'] as const;
 const INITIAL_SETTING_KEYS = ['stitchNumber', 'xferStitchNumber', 'speedNumber', 'rollerAdvance', 'xferStyle', 'carrierSpacing', 'carrierStoppingDistance'] as const;
@@ -337,6 +337,7 @@ function validateEntryResourceSizes(dir: string, messages: string[]): { ok: bool
     'run.json': LIMITS.jsonBytes,
     'project.kniterate-studio.json': LIMITS.jsonBytes,
     'chart.colorwork.json': LIMITS.jsonBytes,
+    'motif.json': 64 * 1024,
     'outcome.md': LIMITS.narrativeBytes,
     'out.k': LIMITS.knitoutBytes,
     'out.kc': LIMITS.kcodeBytes,
@@ -632,7 +633,8 @@ function validateMachine(
 ): MachineEvidenceValidation {
   exactKeys(machine, ['$schema', 'kind', 'schemaVersion', 'ranAt', 'machineSerial', 'controlSoftwareVersion', 'profile', 'program', 'carriers', 'deviationsFromCompile'], 'machine.json', messages);
   requireHeader(machine, 'machine.json', 'kniterate-machine-run-v1', messages);
-  if (!validDateTime(machine.ranAt)) messages.push('machine.json.ranAt must be an RFC3339 date-time');
+  if (machine.ranAt === null) promotionMessages.push('machine.json.ranAt is unknown');
+  else if (!validDateTime(machine.ranAt)) messages.push('machine.json.ranAt must be an RFC3339 date-time or null');
   for (const name of ['machineSerial', 'controlSoftwareVersion', 'profile'] as const) {
     if (!nonEmpty(machine[name])) messages.push(`machine.json.${name} must be a non-empty string`);
   }
@@ -796,7 +798,8 @@ function validateYarn(
     for (const name of ['name', 'brand', 'line', 'lot', 'fiber', 'weight', 'color', 'coneSource'] as const) {
       if (!nonEmpty(record[name])) messages.push(`${path}.${name} must be a non-empty string`);
     }
-    if (!integer(record.ply, 1)) messages.push(`${path}.ply must be a positive integer`);
+    if (record.ply === null) promotionMessages.push(`${path}.ply is unknown`);
+    else if (!integer(record.ply, 1)) messages.push(`${path}.ply must be a positive integer or null`);
       yarnEvidence.push({ carrier: String(record.carrier), role: String(record.role) });
     });
   }
@@ -808,7 +811,8 @@ function validateYarn(
     for (const name of ['machineProfile', 'structure', 'measuredBy'] as const) {
       if (!nonEmpty(tension[name])) messages.push(`yarn.json.tensionSwatch.${name} must be non-empty`);
     }
-    if (!validDate(tension.measuredOn)) messages.push('yarn.json.tensionSwatch.measuredOn must be YYYY-MM-DD');
+    if (tension.measuredOn === null) promotionMessages.push('yarn.json.tensionSwatch.measuredOn is unknown');
+    else if (!validDate(tension.measuredOn)) messages.push('yarn.json.tensionSwatch.measuredOn must be YYYY-MM-DD or null');
     if (typeof tension.notes !== 'string') messages.push('yarn.json.tensionSwatch.notes must be a string');
     const settings = validateInitialSettings(tension.settings, 'yarn.json.tensionSwatch.settings', messages);
     if (expected !== null) {
@@ -877,8 +881,10 @@ function validateRun(
   exactKeys(run, ['$schema', 'kind', 'schemaVersion', 'operator', 'startedAt', 'endedAt', 'outcome', 'artifact', 'physicalPlacement', 'manualInterventions', 'observations'], 'run.json', messages);
   requireHeader(run, 'run.json', 'kniterate-run-observation-v1', messages);
   if (!nonEmpty(run.operator)) messages.push('run.json.operator must be a non-empty string');
-  if (!validDateTime(run.startedAt)) messages.push('run.json.startedAt must be an RFC3339 date-time');
-  if (!validDateTime(run.endedAt)) messages.push('run.json.endedAt must be an RFC3339 date-time');
+  for (const key of ['startedAt', 'endedAt'] as const) {
+    if (run[key] === null) promotionMessages.push(`run.json.${key} is unknown`);
+    else if (!validDateTime(run[key])) messages.push(`run.json.${key} must be an RFC3339 date-time or null`);
+  }
   if (validDateTime(run.startedAt) && validDateTime(run.endedAt) && Date.parse(run.endedAt) < Date.parse(run.startedAt)) messages.push('run.json.endedAt must not precede startedAt');
   if (
     validDateTime(machineRanAt)
@@ -896,11 +902,13 @@ function validateRun(
   if (artifact === null) messages.push('run.json.artifact must be an object');
   else {
     exactKeys(artifact, ['loadedKcodeSha256', 'displayedPassCount', 'manualProgramEdits'], 'run.json.artifact', messages);
-    if (typeof artifact.loadedKcodeSha256 !== 'string' || !SHA256.test(artifact.loadedKcodeSha256)) messages.push('run.json.artifact.loadedKcodeSha256 must be SHA-256');
+    if (artifact.loadedKcodeSha256 === null) promotionMessages.push('run.json.artifact.loadedKcodeSha256 is unknown; issuance is not a confirmed run');
+    else if (typeof artifact.loadedKcodeSha256 !== 'string' || !SHA256.test(artifact.loadedKcodeSha256)) messages.push('run.json.artifact.loadedKcodeSha256 must be SHA-256 or null');
     else loadedKcodeSha256 = artifact.loadedKcodeSha256;
     if (artifact.displayedPassCount !== null && !integer(artifact.displayedPassCount, 0)) messages.push('run.json.artifact.displayedPassCount must be a nonnegative integer or null');
     else if (integer(artifact.displayedPassCount, 0)) displayedPassCount = artifact.displayedPassCount;
-    if (typeof artifact.manualProgramEdits !== 'boolean') messages.push('run.json.artifact.manualProgramEdits must be boolean');
+    if (artifact.manualProgramEdits === null) promotionMessages.push('run.json.artifact.manualProgramEdits is unknown');
+    else if (typeof artifact.manualProgramEdits !== 'boolean') messages.push('run.json.artifact.manualProgramEdits must be boolean or null');
     if (currentKcodeSha256 !== null) compareExactValue(artifact.loadedKcodeSha256, currentKcodeSha256, 'run.json.artifact.loadedKcodeSha256', promotionMessages);
     if (expected !== null) compareExactValue(artifact.displayedPassCount, expected.emittedPassCount, 'run.json.artifact.displayedPassCount', promotionMessages);
     if (artifact.manualProgramEdits === true) promotionMessages.push('run.json records manual edits to the machine program');
@@ -1151,7 +1159,10 @@ function validateEntry(root: string, id: string, currentCompilerFingerprint: str
     && placeholderScan.limitMessage === null
     && requestInputsWithinLimit
     && resources.readable.has('request.json')
-    && resources.readable.has('project.kniterate-studio.json');
+    && resources.readable.has(request.kind === 'kniterate-development-experiment' ? 'motif.json' : 'project.kniterate-studio.json');
+  if (request.kind === 'kniterate-development-experiment') {
+    promotionMessages.push('development experiment replay is baseline evidence only and cannot grant Knit-proven');
+  }
   const current = canCompileCurrent ? compileRegistryRequestCurrent(dir, request) : null;
   if (current === null) {
     currentnessMessages.push('current recompile was skipped because evidence parsing or resource limits failed');
@@ -1406,7 +1417,8 @@ function main(): void {
       for (const message of result.promotionMessages.slice(0, 8)) process.stdout.write(`      promotion: ${message}\n`);
     }
   }
-  if (!ok) process.exit(2);
+  // Let piped stdout drain before exiting; immediate exit can truncate JSON reports.
+  if (!ok) process.exitCode = 2;
 }
 
 main();

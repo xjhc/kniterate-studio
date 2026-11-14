@@ -1,0 +1,52 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-run-observation-v1",
+  "schemaVersion": 1,
+  "operator": "areumjo",
+  "startedAt": "2026-11-11T00:00:00-08:00",
+  "endedAt": "2026-11-11T23:59:59-08:00",
+  "outcome": "partial",
+  "physicalPlacement": {
+    "verified": false,
+    "compilerCoordinateStart": 112,
+    "compilerCoordinateEnd": 141,
+    "physicalNeedleStart": null,
+    "physicalNeedleEnd": null,
+    "orientation": null,
+    "method": null,
+    "verifiedBy": null,
+    "verifiedAt": null
+  },
+  "artifact": {
+    "loadedKcodeSha256": "8fd76ea382c082c318eb6e975576989186a95761dea6f48eeac5d3f3458140c6",
+    "displayedPassCount": null,
+    "manualProgramEdits": false
+  },
+  "manualInterventions": [],
+  "observations": {
+    "sections": {
+      "waste": "issue",
+      "castOn": "clean",
+      "drawThread": "clean",
+      "carrierBringIn": "clean",
+      "body": "issue",
+      "backing": "not-applicable",
+      "leftEdge": "issue",
+      "rightEdge": "clean",
+      "bindOff": "clean"
+    },
+    "stops": [],
+    "dimensionsCm": {
+      "offMachine": {
+        "status": "not-measured",
+        "reason": "not recorded"
+      },
+      "rested24h": {
+        "status": "not-measured",
+        "reason": "not recorded"
+      }
+    },
+    "photos": [],
+    "notes": "Completed without apparent cast-on or bind-off breaks. Early waste missed around displayed row 3 (exact pass unknown); persistent left-edge stitch failed to establish during body. Sections marked clean mean no issue reported, not independent inspection. No interventions or times recorded; timestamps bound reported calendar day. Yarn specifications and machine/controller ID not reconfirmed. Operator requests no further bind-off-only trials. Evidence: https://github.com/xjhc/kniterate-studio/issues/9#issuecomment-6801571939"
+  }
+}

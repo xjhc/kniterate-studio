@@ -70,6 +70,38 @@ describe('loop audit', () => {
     expect(check(audit, 'max-stack')).toMatchObject({ ok: false, value: 4 })
   })
 
+  it('flags the waste or draw feeder being pushed aside while the piece knits, but not in the start or after the last body row', () => {
+    const built = trace([row('6', 'front', 1, 4), { carrier: '6', acts: [] }, row('3', 'front', 1, 4), { carrier: '6', acts: [] }, { carrier: '1', acts: [] }, { carrier: '3', acts: [] }, row('3', 'front', 1, 6), { carrier: '6', acts: [] }, row('6', 'front', 1, 6)])
+    const moved = { ...built, passes: built.passes.map((pass) => (pass.actions.length === 0 ? { ...pass, actions: [{ kind: 'move', carrier: pass.carrier }] } : pass)) } as never
+    const audit = auditTraceV1(moved, { sections: [{ name: 'waste', from: 1, to: 2 }, { name: 'body', from: 3, to: 7 }, { name: 'top', from: 8, to: 9 }] })
+    expect(check(audit, 'idle-feeder-moves')).toMatchObject({ severity: 'issue', ok: false, value: 2, at: ['passes 4, 5'] })
+    expect(audit.ok).toBe(false)
+  })
+
+  it('flags two neighbouring empty needles knitted in one pass, but not one empty needle or a whole-row pick-up', () => {
+    const sections: TraceSectionV1[] = [{ name: 'body', from: 1, to: 3 }]
+    // Needles 1-4 hold loops; the next row also knits 5 and 6, both empty: a float, not two stitches.
+    const paired = auditTraceV1(trace([row('3', 'front', 1, 4), row('3', 'front', 1, 6)]), { sections })
+    expect(check(paired, 'paired-empty-knits')).toMatchObject({ severity: 'issue', ok: false, value: 1, at: ['pass 2 f5..6 c3'] })
+    // One new needle a row, as Kniterate's increases do; and a first row on the rear bed, every needle empty.
+    const single = auditTraceV1(trace([row('3', 'front', 1, 4), row('3', 'front', 1, 5), row('3', 'rear', 1, 5)]), { sections })
+    expect(check(single, 'paired-empty-knits')).toMatchObject({ ok: true, value: 0 })
+  })
+
+  it('counts movement-only passes against knitting passes, and fails a file that mostly shuffles feeders', () => {
+    const move = (carrier: string) => ({ carrier, acts: [] as Act[] })
+    const withMoves = (passes: { carrier: string; acts: Act[] }[]) => {
+      const built = trace(passes)
+      return { ...built, passes: built.passes.map((pass) => (pass.actions.length === 0 ? { ...pass, actions: [{ kind: 'move', carrier: pass.carrier }] } : pass)) } as never
+    }
+    const sections: TraceSectionV1[] = [{ name: 'body', from: 1, to: 9 }]
+    const calm = auditTraceV1(withMoves([row('3', 'front', 1, 4), move('4'), row('4', 'front', 1, 4), row('3', 'front', 1, 4)]), { sections })
+    expect(calm.work).toEqual({ knitting: 3, transfers: 0, movementOnly: 1 })
+    expect(check(calm, 'movement-per-knit')).toMatchObject({ ok: true, value: 0.33 })
+    const busy = auditTraceV1(withMoves([row('3', 'front', 1, 4), move('4'), move('5'), move('4'), move('5'), row('3', 'front', 1, 4)]), { sections })
+    expect(check(busy, 'movement-per-knit')).toMatchObject({ severity: 'issue', ok: false, value: 2, limit: 1.5 })
+  })
+
   it('counts a waste carrier as body yarn inside a body section (Kniterate\'s sweater knits its rib with C6)', () => {
     const passes = [row('3', 'front', 1, 4), row('6', 'front', 1, 4), row('6', 'front', 1, 4)]
     const audit = auditTraceV1(trace(passes), { sections: [{ name: 'rib', from: 1, to: 3 }] })
@@ -145,5 +177,53 @@ describe('reference atlas (Kniterate\'s own files)', () => {
     const rows = traceRowsV1(referenceTrace(entry), entry.sections)
     expect(rows[105]!.text).toBe('106 << c0 rack 0 speed 300 roller 450 | drop rear 70 (92..161) [draw]')
     expect(rows[109]!).toMatchObject({ pass: 110, section: 'cast-on', rack: 0.5, carrier: '3', stitch: { front: [3], rear: [3] }, actions: { 'knit front': 70, 'knit rear': 70 } })
+  })
+  /**
+   * Kniterate's own reversible (inverse-colour) increase, measured from sleeves.kc (124 needles widening
+   * to 162). The rear edge loop, always the back-face yarn's, crosses at rack ∓1 to the new front needle.
+   * On the next row each yarn knits one empty rear needle, in its own pass: the back-face yarn (C3) the new
+   * column's, the front-face yarn (C4) the vacated one. So the old edge column swaps colours for that row,
+   * which is what joins the two faces at the increase. One side widens at a time, never sooner than three
+   * design rows after that side's last increase. Any reversible increase Studio emits is compared with this.
+   */
+  it('records how Kniterate\'s reversible sleeve widens: one borrowed rear loop, one empty needle per yarn, sides in turn', { timeout: 60_000 }, () => {
+    const entry = atlas.find((item) => item.name === 'sleeves')!
+    const passes = referenceTrace(entry).passes
+    const body = entry.sections.find((section) => section.name === 'body')!
+    const loops = { front: new Map<number, string>(), rear: new Map<number, string>() }
+    const knitsAt = (pass: (typeof passes)[number], bed: Bed, n: number) => pass.actions.some((action) => action.kind === 'knit' && action.at.bed === bed && action.at.traceCoordinate === n)
+    const recipes: Record<string, number> = {}
+    const lastRow: Record<string, number> = {}
+    let row = 0
+    let closest = Infinity
+    passes.forEach((pass, index) => {
+      if (pass.carrier === '3' && pass.actions.filter((action) => action.kind === 'knit').length > 20) row++
+      const moves = pass.actions.flatMap((action) => (action.kind === 'xfer' ? [action] : []))
+      const move = moves[0]
+      if (index + 1 >= body.from && index + 1 <= body.to && moves.length === 1 && move!.source.bed === 'rear' && move!.target.bed === 'front') {
+        const from = move!.source.traceCoordinate
+        const to = move!.target.traceCoordinate
+        if (Math.abs(from - to) === 1 && !loops.front.has(to) && !loops.rear.has(to)) {
+          const side = to < from ? 'left' : 'right'
+          if (lastRow[side] !== undefined) closest = Math.min(closest, row - lastRow[side]!)
+          lastRow[side] = row
+          const next = passes.slice(index + 1).filter((later) => later.actions.some((action) => action.kind === 'knit')).slice(0, 2)
+          const who = (bed: Bed, n: number) => next.filter((later) => knitsAt(later, bed, n)).map((later) => `c${later.carrier}`).join('+')
+          const recipe = `moved c${loops.rear.get(from)}; new rear ${who('rear', to)}, vacated rear ${who('rear', from)}, new front ${who('front', to)}, old front ${who('front', from)}`
+          recipes[recipe] = (recipes[recipe] ?? 0) + 1
+        }
+      }
+      for (const action of pass.actions) {
+        if (action.kind === 'knit' || action.kind === 'tuck') loops[action.at.bed as Bed].set(action.at.traceCoordinate, pass.carrier)
+        else if (action.kind === 'drop') loops[action.at.bed as Bed].delete(action.at.traceCoordinate)
+        else if (action.kind === 'xfer') {
+          const carrier = loops[action.source.bed as Bed].get(action.source.traceCoordinate)!
+          loops[action.source.bed as Bed].delete(action.source.traceCoordinate)
+          loops[action.target.bed as Bed].set(action.target.traceCoordinate, carrier)
+        }
+      }
+    })
+    expect(recipes).toEqual({ 'moved c3; new rear c3, vacated rear c4, new front c4, old front c3': 37 })
+    expect(closest).toBe(3)
   })
 })

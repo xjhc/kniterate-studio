@@ -2,7 +2,8 @@ import { beanieObjectOf, type ProjectState } from '@kniterate-studio/project-con
 
 /** The backings a colourwork body is knitted with: each has a Customist-matched reference program. */
 export const BACKINGS = ['fairisle', 'birdseye'] as const;
-export type Backing = (typeof BACKINGS)[number];
+export const CHART_BACKINGS = [...BACKINGS, 'complement'] as const;
+export type Backing = (typeof CHART_BACKINGS)[number];
 
 export interface BackingWords {
   name: string;
@@ -12,11 +13,12 @@ export interface BackingWords {
 }
 
 const COLOURWORK: Record<Backing, BackingWords> = {
+  complement: { name: 'Invert colours', fabric: 'reversible jacquard', help: 'Two yarn colours, reversed on the back. One-stitch striped side edges link the faces; solid interior areas can separate. Closed cast-on, waste support on both beds. This construction has not been physically validated.' },
   fairisle: { name: 'Fairisle', fabric: 'fairisle fabric', help: 'Light. Unused colours float behind the work.' },
   birdseye: { name: 'Birdseye', fabric: 'birdseye fabric', help: 'Thicker and warmer. No long floats, so thin lines and logos work.' },
 };
 /** One yarn has nothing to float or catch: a beanie body is then one layer of stockinette, or two (birdseye knits the back layer in the same yarn). */
-const ONE_YARN: Record<Backing, BackingWords> = {
+const ONE_YARN: Partial<Record<Backing, BackingWords>> = {
   fairisle: { name: 'Single layer', fabric: 'single-layer fabric', help: 'Light. One layer of stockinette.' },
   birdseye: { name: 'Double layer', fabric: 'double-layer fabric', help: 'Thick and warm. The yarn knits a second layer behind.' },
 };
@@ -39,13 +41,13 @@ export function colourworkColours(state: ProjectState): number | null {
  */
 export function backingWords(technique: Backing, colours: number, beanie: boolean): BackingWords | null {
   if (colours >= 2) return COLOURWORK[technique];
-  return beanie ? ONE_YARN[technique] : null;
+  return beanie ? ONE_YARN[technique] ?? null : null;
 }
 
 /** The project's backing in plain words, or null when it has no choice of backing. */
 export function projectBackingWords(state: ProjectState): BackingWords | null {
   const colours = colourworkColours(state);
   const technique = state.strategy.technique;
-  if (colours === null || (technique !== 'fairisle' && technique !== 'birdseye')) return null;
+  if (colours === null || (technique !== 'fairisle' && technique !== 'birdseye' && technique !== 'complement')) return null;
   return backingWords(technique, colours, state.object?.kind === 'beanie');
 }

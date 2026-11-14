@@ -1,0 +1,505 @@
+{
+  "passed": true,
+  "sha256": "aaffbfb3045449e151abb7efa44589e21b6557f6b876ea3dc3de8d6e12fc32bd",
+  "passes": 494,
+  "bodyPasses": [
+    115,
+    468
+  ],
+  "bodyKnittingPasses": 156,
+  "bodyMovementPasses": 162,
+  "movementToKnittingRatio": 1.0384615384615385,
+  "idleC1C6BodyPasses": 0,
+  "rows": 75,
+  "increases": 12,
+  "decreases": 12,
+  "emptyNeedlesPerIncrease": "two rear needles, exactly one per carrier; none elsewhere",
+  "loopCounts": "two live loops per width column after every row",
+  "edgeJoins": {
+    "left": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75
+    ],
+    "right": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75
+    ]
+  },
+  "reference": "sleeves.kc passes 169,172,173: local transfer and old/new column yarn/bed selection; directions alternate in trial, settings not claimed identical",
+  "events": [
+    {
+      "row": 4,
+      "event": "increase",
+      "width": 9,
+      "transferPasses": [
+        123
+      ],
+      "knitPasses": [
+        126,
+        127
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 7,
+      "event": "increase",
+      "width": 10,
+      "transferPasses": [
+        135
+      ],
+      "knitPasses": [
+        139,
+        143,
+        146
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 10,
+      "event": "increase",
+      "width": 11,
+      "transferPasses": [
+        153
+      ],
+      "knitPasses": [
+        156,
+        157
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 13,
+      "event": "increase",
+      "width": 12,
+      "transferPasses": [
+        165
+      ],
+      "knitPasses": [
+        169,
+        173,
+        176
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 16,
+      "event": "increase",
+      "width": 13,
+      "transferPasses": [
+        183
+      ],
+      "knitPasses": [
+        186,
+        187
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 19,
+      "event": "increase",
+      "width": 14,
+      "transferPasses": [
+        195
+      ],
+      "knitPasses": [
+        199,
+        203,
+        206
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 22,
+      "event": "increase",
+      "width": 15,
+      "transferPasses": [
+        213
+      ],
+      "knitPasses": [
+        216,
+        217
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 25,
+      "event": "increase",
+      "width": 16,
+      "transferPasses": [
+        225
+      ],
+      "knitPasses": [
+        229,
+        233,
+        236
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 28,
+      "event": "increase",
+      "width": 17,
+      "transferPasses": [
+        243
+      ],
+      "knitPasses": [
+        246,
+        247
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 31,
+      "event": "increase",
+      "width": 18,
+      "transferPasses": [
+        255
+      ],
+      "knitPasses": [
+        259,
+        263,
+        266
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 34,
+      "event": "increase",
+      "width": 19,
+      "transferPasses": [
+        273
+      ],
+      "knitPasses": [
+        276,
+        277
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 37,
+      "event": "increase",
+      "width": 20,
+      "transferPasses": [
+        285
+      ],
+      "knitPasses": [
+        289,
+        293,
+        296
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 40,
+      "event": "decrease",
+      "width": 19,
+      "transferPasses": [
+        303,
+        304
+      ],
+      "knitPasses": [
+        306,
+        307
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 43,
+      "event": "decrease",
+      "width": 18,
+      "transferPasses": [
+        314,
+        317
+      ],
+      "knitPasses": [
+        321,
+        322
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 46,
+      "event": "decrease",
+      "width": 17,
+      "transferPasses": [
+        329,
+        331
+      ],
+      "knitPasses": [
+        334,
+        335
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 49,
+      "event": "decrease",
+      "width": 16,
+      "transferPasses": [
+        342,
+        345
+      ],
+      "knitPasses": [
+        349,
+        350
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 52,
+      "event": "decrease",
+      "width": 15,
+      "transferPasses": [
+        357,
+        359
+      ],
+      "knitPasses": [
+        362,
+        363
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 55,
+      "event": "decrease",
+      "width": 14,
+      "transferPasses": [
+        370,
+        373
+      ],
+      "knitPasses": [
+        377,
+        378
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 58,
+      "event": "decrease",
+      "width": 13,
+      "transferPasses": [
+        385,
+        387
+      ],
+      "knitPasses": [
+        390,
+        391
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 61,
+      "event": "decrease",
+      "width": 12,
+      "transferPasses": [
+        398,
+        401
+      ],
+      "knitPasses": [
+        405,
+        406
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 64,
+      "event": "decrease",
+      "width": 11,
+      "transferPasses": [
+        413,
+        415
+      ],
+      "knitPasses": [
+        418,
+        419
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 67,
+      "event": "decrease",
+      "width": 10,
+      "transferPasses": [
+        426,
+        429
+      ],
+      "knitPasses": [
+        433,
+        434
+      ],
+      "direction": "+"
+    },
+    {
+      "row": 70,
+      "event": "decrease",
+      "width": 9,
+      "transferPasses": [
+        441,
+        443
+      ],
+      "knitPasses": [
+        446,
+        447
+      ],
+      "direction": "-"
+    },
+    {
+      "row": 73,
+      "event": "decrease",
+      "width": 8,
+      "transferPasses": [
+        454,
+        457
+      ],
+      "knitPasses": [
+        461,
+        462
+      ],
+      "direction": "+"
+    }
+  ],
+  "physicalValidation": false
+}

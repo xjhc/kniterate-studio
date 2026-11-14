@@ -1,0 +1,35 @@
+{
+  "softwareOnly": true,
+  "files": [
+    {
+      "file": "left/program.k",
+      "byteIdentical": true,
+      "sha256": "2daa39d191405a537045f9af05048d556fc097a50ae1cb4bd704d1f825267fc5"
+    },
+    {
+      "file": "left/program.kc",
+      "byteIdentical": true,
+      "sha256": "9f778ff0817456639f004c2a6b6d786c998a6350233e7dfba82e6256788ff51d"
+    },
+    {
+      "file": "left/verification.json",
+      "byteIdentical": true,
+      "sha256": "53614b571f3564028d251fdd2d591d78b5443c7f27ac5865fe82676ebc66cae1"
+    },
+    {
+      "file": "right/program.k",
+      "byteIdentical": true,
+      "sha256": "4064ad5dbe153cbe1b8aa6fe376b7db6737a30602ad52b1cdf1fd463f8cce7ff"
+    },
+    {
+      "file": "right/program.kc",
+      "byteIdentical": true,
+      "sha256": "44d663f1121e272ca086c14e78d889cff561193ec1df36629a4c4e185c78dd20"
+    },
+    {
+      "file": "right/verification.json",
+      "byteIdentical": true,
+      "sha256": "b944b20fec01878aa2330e8b9d8c64711ec4fb919f13741cf97be498db87e7ea"
+    }
+  ]
+}

@@ -96,7 +96,8 @@ test('a file that is not a project says so on the start screen, with another try
 test('the same project open in two tabs: a change in either is taken up by the other, so neither saves over it', async ({ page, context }) => {
   test.setTimeout(120_000);
   const errors: string[] = [];
-  page.on('pageerror', (error) => errors.push(error.message));
+  const collect = (error: Error) => errors.push(error.message);
+  page.on('pageerror', collect);
   await page.goto('/?theme=light');
   await page.getByRole('button', { name: /^Beanie/ }).click();
   const create = page.getByRole('dialog', { name: 'New project' });
@@ -119,7 +120,11 @@ test('the same project open in two tabs: a change in either is taken up by the o
   await expect(other.locator('.app-shell')).toHaveAttribute('data-autosave', 'saved');
 
   // Both changes are kept, in one project: there is no other to open.
+  // WebKit reports a worker script still loading when the page reloads as a page error
+  // ("… due to access control checks"); it belongs to the page being left, so it is not collected.
+  page.off('pageerror', collect);
   await page.reload();
+  page.on('pageerror', collect);
   await expect(page.getByLabel('Head circumference')).toHaveValue('60');
   await expect(page.getByLabel('Cuff height')).toHaveValue('9');
   await page.getByRole('navigation', { name: 'Menu' }).getByRole('button', { name: 'File', exact: true }).click();

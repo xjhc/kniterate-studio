@@ -19,6 +19,7 @@
 
 import { b as backBed, f, type CarrierId, type Direction, type KnitoutOp } from '../types.js'
 import type { CarriageSimulator } from '../sim/carriage-simulator.js'
+import { KNITERATE_NEEDLE_COUNT } from '../kniterate/constants.js'
 import { STUDIO_YARN_CATCH_NEEDLES_V1 } from './carrier-intro.js'
 
 /** A section's machine settings where a piece sets its own; anything left out is the reference's. */
@@ -228,6 +229,17 @@ export interface CustomistFlatStartInput {
   wastePasses?: number
   /** The piece's settings for the start (`flatStartSettingsV1`; default Studio's). */
   settings?: FlatStartSettingsV1
+  /**
+   * The outermost needles the piece ever works, when it grows wider than its
+   * cast-on. The waste and draw feeders are parked beyond them instead of
+   * beside the cast-on: a feeder left inside the piece's later width is moved
+   * aside again at every increase (60 extra carriage passes for each feeder in
+   * a set-in sleeve; issue #18 reports the machine stopping during them).
+   * Kniterate's widening sleeves.kc sends both feeders to the left home on
+   * their last start rows and never moves them in the body, as do all its
+   * reference files.
+   */
+  widest?: { readonly lo: number; readonly hi: number }
 }
 
 /** Customist's waste, inserts, draw thread and 1×1 cast-on, ending with the body yarn parked on the left. */
@@ -235,6 +247,9 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
   const { lo, hi, width, offsets, row, settings, xfers, drain } = kit
   const { bodyCarrier: body, wasteCarrier: waste, drawCarrier: draw } = input
   const s = input.settings ?? STUDIO_FLAT_START_SETTINGS_V1
+  // Where the idle feeders park: beyond the cast-on, or beyond the piece's widest row when it grows.
+  const parkLo = Math.max(1, Math.min(lo, input.widest?.lo ?? lo) - DRAW_PARK_BEYOND_EDGE)
+  const parkHi = Math.min(KNITERATE_NEEDLE_COUNT, Math.max(hi, input.widest?.hi ?? hi) + WASTE_PARK_BEYOND_EDGE)
   const even = (o: number) => o % 2 === 0
   const none = () => false
   const all = () => true
@@ -328,14 +343,14 @@ export function emitCustomistFlatStart(sim: CarriageSimulator, kit: FlatPieceKit
   // Carry the waste yarn clear of the right edge so the body yarn's
   // leftward cast-on does not have to kick it aside (the reference parks it
   // past the body yarn).
-  sim.miss(waste, '+', f(hi + WASTE_PARK_BEYOND_EDGE))
+  sim.miss(waste, '+', f(Math.max(hi + WASTE_PARK_BEYOND_EDGE, parkHi)))
   // Drop every rear waste loop, then the draw yarn's final front row.
   settings(s.castOnSpeed, s.castOnRoller)
   for (const o of offsets('+', (x) => !even(x))) sim.drop(backBed(lo + o))
   if (draw !== null) {
     settings(s.tubeSpeed, s.tubeRoller, s.drawFinalStitch)
     row(draw, '-', even, none)
-    sim.miss(draw, '-', f(lo - DRAW_PARK_BEYOND_EDGE))
+    sim.miss(draw, '-', f(Math.min(lo - DRAW_PARK_BEYOND_EDGE, parkLo)))
   }
   drain()
 

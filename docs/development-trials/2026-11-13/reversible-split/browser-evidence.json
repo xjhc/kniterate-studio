@@ -1,0 +1,40 @@
+{
+  "initialChromiumRun": {
+    "workers": 4,
+    "passed": 53,
+    "failed": 1,
+    "failure": {
+      "test": "opens the two 150k-selection corpus files without overflow or page errors",
+      "maximumGapMs": 2141,
+      "limitMs": 2000
+    },
+    "overlappedProofWork": true
+  },
+  "isolatedRecheck": {
+    "workers": 1,
+    "checks": [
+      {
+        "title": "opens the two 150k-selection corpus files without overflow or page errors",
+        "project": "chromium",
+        "status": "expected",
+        "results": [
+          {
+            "status": "passed",
+            "durationMs": 15483,
+            "audit": [
+              {
+                "maximumGapMs": 683.3999999761581,
+                "liveWorkers": 1,
+                "imported": 2,
+                "terminated": 1,
+                "timer": 1
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "testLimitUnchanged": true,
+  "sourceChangesBetweenRuns": false
+}

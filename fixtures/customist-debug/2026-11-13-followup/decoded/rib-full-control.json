@@ -1,0 +1,813 @@
+{
+  "kind": "kniterate-studio-passes",
+  "file": "rib-full-control.kc",
+  "source": "file",
+  "passCount": 24,
+  "kcodeSha256": "65f09c544bf1eb6cea5b0ee4a1f201ef5fbcdc5e7c84de1f9d9a49771c02ea48",
+  "yarnRoles": {
+    "waste": "6",
+    "draw": "1"
+  },
+  "sections": [
+    "body 1-24"
+  ],
+  "sectionSource": "automatic",
+  "range": {
+    "from": 1,
+    "to": 24
+  },
+  "passes": [
+    {
+      "pass": 1,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 11,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          20
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "1 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 11 (0..20), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 2,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit rear": 11,
+        "knit front": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          20
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "2 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit rear 11 (1..21), knit front 11 (0..20) [body]"
+    },
+    {
+      "pass": 3,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 11,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          20
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "3 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 11 (0..20), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 4,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit rear": 11,
+        "knit front": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          20
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "4 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit rear 11 (1..21), knit front 11 (0..20) [body]"
+    },
+    {
+      "pass": 5,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 11,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          20
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "5 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 11 (0..20), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 6,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit rear": 11,
+        "knit front": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          20
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "6 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit rear 11 (1..21), knit front 11 (0..20) [body]"
+    },
+    {
+      "pass": 7,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 11,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          20
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "7 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 11 (0..20), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 8,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit rear": 11,
+        "knit front": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          20
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "8 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit rear 11 (1..21), knit front 11 (0..20) [body]"
+    },
+    {
+      "pass": 9,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "9 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 10,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "10 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 11,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "11 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 12,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "12 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 13,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "13 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 14,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "14 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 15,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "15 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 16,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 11
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          21
+        ]
+      },
+      "text": "16 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 11 (1..21) [body]"
+    },
+    {
+      "pass": 17,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 12
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          23
+        ]
+      },
+      "text": "17 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 12 (1..23) [body]"
+    },
+    {
+      "pass": 18,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit rear": 12,
+        "knit front": 12
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          23
+        ]
+      },
+      "text": "18 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit rear 12 (1..23), knit front 12 (0..22) [body]"
+    },
+    {
+      "pass": 19,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 12
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          23
+        ]
+      },
+      "text": "19 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 12 (1..23) [body]"
+    },
+    {
+      "pass": 20,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit rear": 12,
+        "knit front": 12
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          23
+        ]
+      },
+      "text": "20 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit rear 12 (1..23), knit front 12 (0..22) [body]"
+    },
+    {
+      "pass": 21,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 12
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          23
+        ]
+      },
+      "text": "21 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 12 (1..23) [body]"
+    },
+    {
+      "pass": 22,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit rear": 12,
+        "knit front": 12
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          23
+        ]
+      },
+      "text": "22 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit rear 12 (1..23), knit front 12 (0..22) [body]"
+    },
+    {
+      "pass": 23,
+      "section": "body",
+      "direction": ">>",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit front": 12,
+        "knit rear": 12
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          23
+        ]
+      },
+      "text": "23 >> c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit front 12 (0..22), knit rear 12 (1..23) [body]"
+    },
+    {
+      "pass": 24,
+      "section": "body",
+      "direction": "<<",
+      "carrier": "3",
+      "role": "loop-forming",
+      "rack": 0,
+      "speed": 300,
+      "roller": 450,
+      "stitch": {
+        "front": [
+          6
+        ],
+        "rear": [
+          6
+        ]
+      },
+      "actions": {
+        "knit rear": 12,
+        "knit front": 12
+      },
+      "needles": {
+        "front": [
+          0,
+          22
+        ],
+        "rear": [
+          1,
+          23
+        ]
+      },
+      "text": "24 << c3 rack 0 speed 300 roller 450 stitch f6,r6 | knit rear 12 (1..23), knit front 12 (0..22) [body]"
+    }
+  ]
+}

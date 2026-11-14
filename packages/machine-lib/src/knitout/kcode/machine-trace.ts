@@ -437,13 +437,23 @@ function transferActions(
   const source = orderedSelections(contract.sourceBed === 'front' ? front : rear, direction)
   const remainingTargets = [...(contract.targetBed === 'front' ? front : rear)]
 
+  // Stryker disable next-line ArithmeticOperator: Equivalent mutant: the V1 rack multiplier is always +/-1, whose product and quotient are equal.
+  const facing = (selection: MachineTraceSelectionV1) => selection.traceCoordinate + rack * contract.targetRackMultiplier
+  // A yarn-fed transfer pass that splits at least one needle knits its other delivering needles:
+  // Customist's Increase Transfers write one such pass, every front needle and one rear needle.
+  const knitsUnpaired = carrier !== '0'
+    && source.some((selection) => remainingTargets.some((candidate) => candidate.traceCoordinate === facing(selection)))
+
   const actions: MachineTraceActionV1[] = []
   for (const selection of source) {
-    // Stryker disable next-line ArithmeticOperator: Equivalent mutant: the V1 rack multiplier is always +/-1, whose product and quotient are equal.
-    const expectedTarget = selection.traceCoordinate + rack * contract.targetRackMultiplier
+    const expectedTarget = facing(selection)
     const targetIndex = remainingTargets.findIndex(
       (candidate) => candidate.traceCoordinate === expectedTarget,
     )
+    if (targetIndex === -1 && knitsUnpaired) {
+      actions.push({ kind: 'knit', at: selection })
+      continue
+    }
     if (targetIndex === -1) {
       actions.push({
         kind: 'unknown',

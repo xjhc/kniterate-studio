@@ -71,7 +71,8 @@ function rectContains(rect: Rect, point: Point): boolean {
   return point.column >= rect.left && point.column <= rect.right && point.row >= rect.top && point.row <= rect.bottom;
 }
 
-export function ColorworkCanvas({ chart, tool, paletteIndex, brush = 1, mirror = NO_MIRROR, mirrorBox = null, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow, firstNeedle, highlightedNeedles, placements = [], selectedPlacement = null, onPlacementPick, onPlacementMove, rowAspect = 1, piece = null }: {
+export function ColorworkCanvas({ chart, tool, paletteIndex, brush = 1, mirror = NO_MIRROR, mirrorBox = null, selection, onSelection, onCommit, zoom, onZoomChange, fitRequest, fitScope, onInsertRow, onDeleteRow, isDarkMode, passCounts, focusedRow, onFocusRow, firstNeedle, highlightedNeedles, placements = [], selectedPlacement = null, onPlacementPick, onPlacementMove, rowAspect = 1, piece = null, activeRanges = null }: {
+  activeRanges?: readonly { lo: number; hi: number }[] | null;
   chart: ColorworkChartV1;
   tool: ChartTool;
   paletteIndex: number;
@@ -224,6 +225,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, brush = 1, mirror =
     context.fillRect(0, 0, Math.min(GUTTER, width), height);
     for (let row = top; row <= bottom; row += 1) {
       for (let column = left; column <= right; column += 1) {
+        if (activeRanges && (column < activeRanges[row]!.lo || column > activeRanges[row]!.hi)) continue;
         context.fillStyle = chart.palette[chart.cells[row]![column]!]!.hex;
         context.fillRect(GUTTER + column * cell - scroll.left, rowY(row), cell + .5, rowH + .5);
       }
@@ -403,7 +405,7 @@ export function ColorworkCanvas({ chart, tool, paletteIndex, brush = 1, mirror =
     overlay.globalAlpha = 1;
   };
 
-  useLayoutEffect(drawBase, [chart, scroll, zoom, viewportSize, isDarkMode, passCounts, focusedRow, rowAspect, piece]);
+  useLayoutEffect(drawBase, [chart, scroll, zoom, viewportSize, isDarkMode, passCounts, focusedRow, rowAspect, piece, activeRanges]);
   const drawRuler = () => {
     const canvas = rulerLayer.current;
     if (!canvas || viewportSize.width === 0) return;

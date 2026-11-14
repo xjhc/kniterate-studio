@@ -1,0 +1,1348 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-13",
+  "source": "Customist production Chrome UI",
+  "sourceDesign": "https://www.customist.com/studio/6af731f4143d30d33281e3f7",
+  "sourceNote": "Mutable scratch reused. Raw source stacks can contain multiple canvases and rejected experiments. Use each capture canvasId; five captures use the final session stack because individual source download was absent. Authored inputs carry stale caches; commands were regenerated in Customist. Sources may compress arrays with $lz; verifier expands them for comparison.",
+  "captures": [
+    {
+      "id": "both-edges-full-control",
+      "file": "raw/both-edges-full-control.kc",
+      "bytes": 28937,
+      "sha256": "cb7832e2030367a0a4e10f801fecd43d3decc36022617c30138303b73b96f4c0",
+      "sourceDownloads": [
+        "command (48).kc"
+      ],
+      "sourceStack": "raw/both-edges-full-control.cstack.json",
+      "canvasId": "imported-52",
+      "input": "inputs/both-edges-full-control.json",
+      "decoded": "decoded/both-edges-full-control.json",
+      "machinePasses": 24,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "both-edges-full-fashioned",
+      "file": "raw/both-edges-full-fashioned.kc",
+      "bytes": 58367,
+      "sha256": "8d089b545b3ffb9437d8370613c068b57bbcacbb817aa105d0fbd57fa1e3c93f",
+      "sourceDownloads": [
+        "command (50).kc"
+      ],
+      "sourceStack": "raw/both-edges-full-fashioned.cstack.json",
+      "canvasId": "imported-54",
+      "input": "inputs/both-edges-full-fashioned.json",
+      "decoded": "decoded/both-edges-full-fashioned.json",
+      "machinePasses": 48,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "splitPasses": [
+        {
+          "pass": 8,
+          "direction": "<<",
+          "carrier": "3",
+          "actions": {
+            "knit front": 18,
+            "split front>rear": 2
+          }
+        },
+        {
+          "pass": 28,
+          "direction": "<<",
+          "carrier": "3",
+          "actions": {
+            "knit front": 20,
+            "split front>rear": 2
+          }
+        }
+      ],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "both-edges-full-simple",
+      "file": "raw/both-edges-full-simple.kc",
+      "bytes": 48574,
+      "sha256": "a385b9d031cbdc06c6eb51ebd15123a8f63c6ce51736f09a911f0511e5d61e8f",
+      "sourceDownloads": [
+        "command (49).kc"
+      ],
+      "sourceStack": "raw/both-edges-full-simple.cstack.json",
+      "canvasId": "imported-53",
+      "input": "inputs/both-edges-full-simple.json",
+      "decoded": "decoded/both-edges-full-simple.json",
+      "machinePasses": 40,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "splitPasses": [
+        {
+          "pass": 8,
+          "direction": "<<",
+          "carrier": "3",
+          "actions": {
+            "knit front": 18,
+            "split front>rear": 2
+          }
+        },
+        {
+          "pass": 24,
+          "direction": "<<",
+          "carrier": "3",
+          "actions": {
+            "knit front": 20,
+            "split front>rear": 2
+          }
+        }
+      ],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-jacquard-control",
+      "file": "raw/decrease-jacquard-control.kc",
+      "bytes": 121201,
+      "sha256": "8224303a9e6f719bd3b9e6fbb2a4c2b0d56b74431f25268098f9317ed3366830",
+      "sourceDownloads": [
+        "command (57).kc"
+      ],
+      "sourceStack": "raw/top-waste-on.cstack.json",
+      "canvasId": "imported-61",
+      "input": "inputs/decrease-jacquard-control.json",
+      "decoded": "decoded/decrease-jacquard-control.json",
+      "machinePasses": 100,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-jacquard-fashioned",
+      "file": "raw/decrease-jacquard-fashioned.kc",
+      "bytes": 135915,
+      "sha256": "246d807313c17b42518785857469543dc172b572d30f3bdb08d2f869d0ebc27f",
+      "sourceDownloads": [
+        "command (59).kc"
+      ],
+      "sourceStack": "raw/top-waste-on.cstack.json",
+      "canvasId": "imported-63",
+      "input": "inputs/decrease-jacquard-fashioned.json",
+      "decoded": "decoded/decrease-jacquard-fashioned.json",
+      "machinePasses": 112,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "decrease-transfers",
+          "version": "2.3.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-jacquard-reversable",
+      "file": "raw/decrease-jacquard-reversable.kc",
+      "bytes": 126138,
+      "sha256": "0ee2d473ac17f3c7909b83cb1eda0571d2dbf5c07497d63b98ee94a8fd0bd7ad",
+      "sourceDownloads": [
+        "command (60).kc"
+      ],
+      "sourceStack": "raw/top-waste-on.cstack.json",
+      "canvasId": "imported-64",
+      "input": "inputs/decrease-jacquard-reversable.json",
+      "decoded": "decoded/decrease-jacquard-reversable.json",
+      "machinePasses": 104,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "decrease-transfers",
+          "version": "2.3.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-jacquard-simple",
+      "file": "raw/decrease-jacquard-simple.kc",
+      "bytes": 126118,
+      "sha256": "fca9f358a90d356ff9d0f57c8224e217f4a698c6abb4c9fa57cb2d44a22551da",
+      "sourceDownloads": [
+        "command (58).kc"
+      ],
+      "sourceStack": "raw/decrease-jacquard-simple.cstack.json",
+      "canvasId": "imported-62",
+      "input": "inputs/decrease-jacquard-simple.json",
+      "decoded": "decoded/decrease-jacquard-simple.json",
+      "machinePasses": 104,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "decrease-transfers",
+          "version": "2.3.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-left-control",
+      "file": "raw/decrease-left-control.kc",
+      "bytes": 28928,
+      "sha256": "fe9980aa3e09a3898d54b1387d37e1f2f5f2b58205344333a79e390174c84da1",
+      "sourceDownloads": [
+        "command (51).kc"
+      ],
+      "sourceStack": "raw/decrease-left-control.cstack.json",
+      "canvasId": "imported-55",
+      "input": "inputs/decrease-left-control.json",
+      "decoded": "decoded/decrease-left-control.json",
+      "machinePasses": 24,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-left-fashioned",
+      "file": "raw/decrease-left-fashioned.kc",
+      "bytes": 43640,
+      "sha256": "25d62ddf266ff8674e8c92ebc2ea6fe4a1dc656df718e9cd33a6052a8094e0b0",
+      "sourceDownloads": [
+        "command (53).kc"
+      ],
+      "sourceStack": "raw/decrease-left-fashioned.cstack.json",
+      "canvasId": "imported-57",
+      "input": "inputs/decrease-left-fashioned.json",
+      "decoded": "decoded/decrease-left-fashioned.json",
+      "machinePasses": 36,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "decrease-transfers",
+          "version": "2.3.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-left-simple",
+      "file": "raw/decrease-left-simple.kc",
+      "bytes": 33845,
+      "sha256": "4632d563a72fc8fe368432bd90a24d4619270d27480ea54238339e4c4697ea4b",
+      "sourceDownloads": [
+        "command (52).kc"
+      ],
+      "sourceStack": "raw/decrease-left-simple.cstack.json",
+      "canvasId": "imported-56",
+      "input": "inputs/decrease-left-simple.json",
+      "decoded": "decoded/decrease-left-simple.json",
+      "machinePasses": 28,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "decrease-transfers",
+          "version": "2.3.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-right-control",
+      "file": "raw/decrease-right-control.kc",
+      "bytes": 28929,
+      "sha256": "99bb19f17ac6c3b7ef382a37baeeaf186e5f557aad9cd8924d1520f636dd1bf4",
+      "sourceDownloads": [
+        "command (54).kc"
+      ],
+      "sourceStack": "raw/decrease-right-control.cstack.json",
+      "canvasId": "imported-58",
+      "input": "inputs/decrease-right-control.json",
+      "decoded": "decoded/decrease-right-control.json",
+      "machinePasses": 24,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-right-fashioned",
+      "file": "raw/decrease-right-fashioned.kc",
+      "bytes": 43643,
+      "sha256": "0112ad25ff81447e403b48decbf1b59e948e8b92ba5d7ec842cdba62ec5d7a6b",
+      "sourceDownloads": [
+        "command (56).kc"
+      ],
+      "sourceStack": "raw/top-waste-on.cstack.json",
+      "canvasId": "imported-60",
+      "input": "inputs/decrease-right-fashioned.json",
+      "decoded": "decoded/decrease-right-fashioned.json",
+      "machinePasses": 36,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "decrease-transfers",
+          "version": "2.3.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "decrease-right-simple",
+      "file": "raw/decrease-right-simple.kc",
+      "bytes": 33848,
+      "sha256": "5ba2eacabc3d65ce580974abc905f30cf819cda33a91beea32ad41e2f1725a24",
+      "sourceDownloads": [
+        "command (55).kc"
+      ],
+      "sourceStack": "raw/decrease-right-simple.cstack.json",
+      "canvasId": "imported-59",
+      "input": "inputs/decrease-right-simple.json",
+      "decoded": "decoded/decrease-right-simple.json",
+      "machinePasses": 28,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "decrease-transfers",
+          "version": "2.3.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "fashioned-width2",
+      "file": "raw/fashioned-width2.kc",
+      "bytes": 38725,
+      "sha256": "a5646bdb980e495ada1cded8c32b337f5b315f419ce5d9d1fa14cc35d043eb63",
+      "sourceDownloads": [
+        "command (39).kc"
+      ],
+      "sourceStack": "raw/fashioned-width2.cstack.json",
+      "canvasId": "imported-42",
+      "input": "inputs/fashioned-width2.json",
+      "decoded": "decoded/fashioned-width2.json",
+      "machinePasses": 32,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "splitPasses": [
+        {
+          "pass": 8,
+          "direction": "<<",
+          "carrier": "3",
+          "actions": {
+            "knit front": 21,
+            "split front>rear": 1
+          }
+        },
+        {
+          "pass": 20,
+          "direction": "<<",
+          "carrier": "3",
+          "actions": {
+            "knit front": 22,
+            "split front>rear": 1
+          }
+        }
+      ],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "jacquard-simple",
+      "file": "raw/jacquard-simple.kc",
+      "bytes": 140755,
+      "sha256": "b37b9135ab5dcc611584f98f3f2db718e250c27aa71fabc8d8afa2fe726917ad",
+      "sourceDownloads": [
+        "command (37).kc"
+      ],
+      "sourceStack": "raw/jacquard-simple.cstack.json",
+      "canvasId": "imported-41",
+      "input": "inputs/jacquard-simple.json",
+      "decoded": "decoded/jacquard-simple.json",
+      "machinePasses": 116,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "birdseye-block",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "splitPasses": [
+        {
+          "pass": 50,
+          "direction": "<<",
+          "carrier": "4",
+          "actions": {
+            "split front>rear": 1
+          }
+        },
+        {
+          "pass": 82,
+          "direction": "<<",
+          "carrier": "4",
+          "actions": {
+            "split front>rear": 1
+          }
+        }
+      ],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "rib-full-control",
+      "file": "raw/rib-full-control.kc",
+      "bytes": 28923,
+      "sha256": "65f09c544bf1eb6cea5b0ee4a1f201ef5fbcdc5e7c84de1f9d9a49771c02ea48",
+      "sourceDownloads": [
+        "command (45).kc"
+      ],
+      "sourceStack": "raw/rib-full-control.cstack.json",
+      "canvasId": "imported-49",
+      "input": "inputs/rib-full-control.json",
+      "decoded": "decoded/rib-full-control.json",
+      "machinePasses": 24,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "rib-full-reversable",
+      "file": "raw/rib-full-reversable.kc",
+      "bytes": 28926,
+      "sha256": "a78621dcdeae3b339293e34c499740842cb726c8c24461a32f130f99a246f8b7",
+      "sourceDownloads": [
+        "command (47).kc"
+      ],
+      "sourceStack": "raw/rib-full-reversable.cstack.json",
+      "canvasId": "imported-51",
+      "input": "inputs/rib-full-reversable.json",
+      "decoded": "decoded/rib-full-reversable.json",
+      "machinePasses": 24,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "rib-full-simple",
+      "file": "raw/rib-full-simple.kc",
+      "bytes": 46047,
+      "sha256": "1f8f0f51b4090c20734f482995fac8cd28053d29cb5e1401808f7d16ec1c7210",
+      "sourceDownloads": [
+        "command (46).kc"
+      ],
+      "sourceStack": "raw/rib-full-simple.cstack.json",
+      "canvasId": "imported-50",
+      "input": "inputs/rib-full-simple.json",
+      "decoded": "decoded/rib-full-simple.json",
+      "machinePasses": 38,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "splitPasses": [
+        {
+          "pass": 10,
+          "direction": "<<",
+          "carrier": "3",
+          "actions": {
+            "split front>rear": 1
+          }
+        },
+        {
+          "pass": 24,
+          "direction": "<<",
+          "carrier": "3",
+          "actions": {
+            "knit front": 2,
+            "split front>rear": 1
+          }
+        }
+      ],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "singlebed-reversable",
+      "file": "raw/singlebed-reversable.kc",
+      "bytes": 28927,
+      "sha256": "58a46ba368ef41af1b14e57ad77769a2c9b5666328b3383407fe29a12ed1dae5",
+      "sourceDownloads": [
+        "command (38).kc"
+      ],
+      "sourceStack": "raw/singlebed-reversable.cstack.json",
+      "canvasId": "imported-42",
+      "input": "inputs/singlebed-reversable.json",
+      "decoded": "decoded/singlebed-reversable.json",
+      "machinePasses": 24,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        }
+      ],
+      "splitPasses": [],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "top-waste-off",
+      "file": "raw/top-waste-off.kc",
+      "bytes": 190857,
+      "sha256": "8567de495c0e754b61159847595df0897cb9064ccb57e1d0441f5926fa57546a",
+      "sourceDownloads": [
+        "command (61).kc"
+      ],
+      "sourceStack": "raw/top-waste-on.cstack.json",
+      "canvasId": "imported-65",
+      "input": "inputs/top-waste-off.json",
+      "decoded": "decoded/top-waste-off.json",
+      "machinePasses": 158,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        },
+        {
+          "name": "caston",
+          "version": "2.1.0"
+        }
+      ],
+      "splitPasses": [
+        {
+          "pass": 115,
+          "direction": ">>",
+          "carrier": "3",
+          "actions": {
+            "knit front": 21,
+            "split front>rear": 1
+          }
+        },
+        {
+          "pass": 129,
+          "direction": ">>",
+          "carrier": "3",
+          "actions": {
+            "knit front": 22,
+            "split front>rear": 1
+          }
+        }
+      ],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    },
+    {
+      "id": "top-waste-on",
+      "file": "raw/top-waste-on.kc",
+      "bytes": 190856,
+      "sha256": "c8a21f4671737ab55b62737eb56b1356544ca3a085d0aa9c385f5a980f7aa797",
+      "sourceDownloads": [
+        "command (62).kc"
+      ],
+      "sourceStack": "raw/top-waste-on.cstack.json",
+      "canvasId": "imported-66",
+      "input": "inputs/top-waste-on.json",
+      "decoded": "decoded/top-waste-on.json",
+      "machinePasses": 158,
+      "commands": [
+        {
+          "name": "create-image",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "raster-edit",
+          "version": "1.0.0"
+        },
+        {
+          "name": "increase-transfers",
+          "version": "1.3.0"
+        },
+        {
+          "name": "caston",
+          "version": "2.1.0"
+        }
+      ],
+      "splitPasses": [
+        {
+          "pass": 115,
+          "direction": ">>",
+          "carrier": "3",
+          "actions": {
+            "knit front": 21,
+            "split front>rear": 1
+          }
+        },
+        {
+          "pass": 129,
+          "direction": ">>",
+          "carrier": "3",
+          "actions": {
+            "knit front": 22,
+            "split front>rear": 1
+          }
+        }
+      ],
+      "status": "captured and decoded; not controller-accepted or physically knitted"
+    }
+  ],
+  "rejectedNote": "Initial both-edges and rib inputs retained length=24 while containing more sparse edits. They did not reproduce intended geometry. Five exports are excluded. Some prepared separate-edge and rib-REVERSABLE inputs were never exported; none are evidence.",
+  "artifacts": [
+    {
+      "file": "README.md",
+      "bytes": 6209,
+      "sha256": "c69ea5ca8c4687600c6827419ebf4d0e5f949d624c44857dd998943110e1048f"
+    },
+    {
+      "file": "decoded/both-edges-full-control.json",
+      "bytes": 13119,
+      "sha256": "c2e5e187a93eb4c7873060d32087a1f92f055fdbfb7f4f027f958cd58fc6cdef"
+    },
+    {
+      "file": "decoded/both-edges-full-fashioned.json",
+      "bytes": 24899,
+      "sha256": "9a61d23c4f5a8889583a789db2d64b45595f44bda8dee95955453fd8ee968948"
+    },
+    {
+      "file": "decoded/both-edges-full-simple.json",
+      "bytes": 21016,
+      "sha256": "678a30e7e9d96b593f721b6875097a7d97ae1457e4cf9034fb00d08134af2a9d"
+    },
+    {
+      "file": "decoded/decrease-jacquard-control.json",
+      "bytes": 56012,
+      "sha256": "952f5b9f49fe99179bd3c2cc411e6926e76bc884888869672aed757d9459f9f7"
+    },
+    {
+      "file": "decoded/decrease-jacquard-fashioned.json",
+      "bytes": 61944,
+      "sha256": "7f6389c1a54ebc7037d7e6ea16f36914635707e7a797939b072ec3ddb5f4357c"
+    },
+    {
+      "file": "decoded/decrease-jacquard-reversable.json",
+      "bytes": 58041,
+      "sha256": "bee91453f80315a60a04338aafc516e46669b00e0b83cadb2b62bba882594277"
+    },
+    {
+      "file": "decoded/decrease-jacquard-simple.json",
+      "bytes": 58033,
+      "sha256": "d0eb60ab0b6ac3a2eaf8c617d65e4ae95d2edf838a59380f91687107be6ac89e"
+    },
+    {
+      "file": "decoded/decrease-left-control.json",
+      "bytes": 13117,
+      "sha256": "e21e2ca0e039074205aaa99e5cca02bbc4784c9b4578fd51e633b5a1877c56c9"
+    },
+    {
+      "file": "decoded/decrease-left-fashioned.json",
+      "bytes": 18983,
+      "sha256": "b439f6b186fd0aabb05ff005b31a1b39f26d2ee76e96bc49ecf9d74cd4db63dc"
+    },
+    {
+      "file": "decoded/decrease-left-simple.json",
+      "bytes": 15112,
+      "sha256": "d1fa0752da93bfec2cb0f3801cde6672121718d695e1c8f17a231848f21219d3"
+    },
+    {
+      "file": "decoded/decrease-right-control.json",
+      "bytes": 13118,
+      "sha256": "25fefdf5abf41c15bb131705df08e38d47c52c1877749e2d344e62cc322f3375"
+    },
+    {
+      "file": "decoded/decrease-right-fashioned.json",
+      "bytes": 19032,
+      "sha256": "b136ec57e291a7765b33c3c3c5dd7370a100b1e270744dfb3efdc3775b73d789"
+    },
+    {
+      "file": "decoded/decrease-right-simple.json",
+      "bytes": 15133,
+      "sha256": "58560e0c2c4a95caadb4e18865853ba49dec61b3b7eb89a31aeb42e8a9c2d8e5"
+    },
+    {
+      "file": "decoded/fashioned-width2.json",
+      "bytes": 17254,
+      "sha256": "26ca7109f927c747db7a9220ed33d9ff8c480fce075ce6cdf8d8839a45f8d1e1"
+    },
+    {
+      "file": "decoded/jacquard-simple.json",
+      "bytes": 63774,
+      "sha256": "76d3a6c33d8f3b55cd7df1ac6559267ad4ea72e6e7c36159986ca21f44f2972c"
+    },
+    {
+      "file": "decoded/rib-full-control.json",
+      "bytes": 15608,
+      "sha256": "8264bb2db79a21df8ac8ebc25f4f8944c267300ffb2d888e7d86f7697761e73b"
+    },
+    {
+      "file": "decoded/rib-full-reversable.json",
+      "bytes": 15611,
+      "sha256": "bdc4a5fcd33662b37f2130bc430a10fbb06bbfca83199dc3b8c01cde6f210cf7"
+    },
+    {
+      "file": "decoded/rib-full-simple.json",
+      "bytes": 22456,
+      "sha256": "6b58905993e110fd5378f124405fecb03874e4a7199a54c7a912b17d4ed0b5b2"
+    },
+    {
+      "file": "decoded/singlebed-reversable.json",
+      "bytes": 13116,
+      "sha256": "45a238a603d68e64bd0061f3576e4f92d8a56b4f142addad578d0b7b05370b74"
+    },
+    {
+      "file": "decoded/top-waste-off.json",
+      "bytes": 91649,
+      "sha256": "ea97a62c360b249b6aaf5ef7296b92574efd935b857317e90e76415cedede651"
+    },
+    {
+      "file": "decoded/top-waste-on.json",
+      "bytes": 91648,
+      "sha256": "bee0abd55d8c83e5fb1ba663c86cf593aca76d04065605f71fd46db59f67e969"
+    },
+    {
+      "file": "evidence/fashioned-width2.jpg",
+      "bytes": 84356,
+      "sha256": "96a42013ddfe0fb34e353f7145c9333128e55c3b91e82d310da174daf54ce6a4"
+    },
+    {
+      "file": "evidence/singlebed-reversable.jpg",
+      "bytes": 108466,
+      "sha256": "1e5f1c3a1bb1c3df6ac3eedb563f51306bb14f8536e4906dbf0687cc4ff53de1"
+    },
+    {
+      "file": "evidence/top-waste-retract-on.jpg",
+      "bytes": 150759,
+      "sha256": "bd48528eedc9bc368f6f5ddbe500fbfbc2be23536ce0fc0fc8b2b9a9aa588d66"
+    },
+    {
+      "file": "inputs/both-edges-full-control.json",
+      "bytes": 7741,
+      "sha256": "c72aa83551654f164a9b411854380dce916e9f621a8341803a71182d93a10c72"
+    },
+    {
+      "file": "inputs/both-edges-full-fashioned.json",
+      "bytes": 9661,
+      "sha256": "215c890165097123ff99f749290ab3eb2d427002318d3380572cc181f618b60a"
+    },
+    {
+      "file": "inputs/both-edges-full-simple.json",
+      "bytes": 9661,
+      "sha256": "97b38928c67c2a69de93c91192dbef20846c2ef9b90b6e4e5f66929f94e0f699"
+    },
+    {
+      "file": "inputs/decrease-jacquard-control.json",
+      "bytes": 9839,
+      "sha256": "7eae84f91e210cbe0434b0560fbd722a084171341093286ee5e5926d56ac8dba"
+    },
+    {
+      "file": "inputs/decrease-jacquard-fashioned.json",
+      "bytes": 11677,
+      "sha256": "d2d63b7a8cb704bc3893fa33650a69aeaf0086cb865a3fdf21fed53d78003bc2"
+    },
+    {
+      "file": "inputs/decrease-jacquard-reversable.json",
+      "bytes": 11677,
+      "sha256": "8070329966ed556bba338d6e1a83872d475774ce397f227f932c7367574f27e1"
+    },
+    {
+      "file": "inputs/decrease-jacquard-simple.json",
+      "bytes": 11677,
+      "sha256": "3fd57e88bedb73173a00377330dbcc75bbc5e62084d3a8ad31b051eff5a94229"
+    },
+    {
+      "file": "inputs/decrease-left-control.json",
+      "bytes": 7421,
+      "sha256": "71114b1bac9b6981278e427ef857a41f17abbe22f47ab0513c2cc8cc2765b527"
+    },
+    {
+      "file": "inputs/decrease-left-fashioned.json",
+      "bytes": 9259,
+      "sha256": "47efaeedc4bcae9eaa6902bf977ddead32fc1fa6047b337cdf8a17288c1135af"
+    },
+    {
+      "file": "inputs/decrease-left-simple.json",
+      "bytes": 9259,
+      "sha256": "06627d7ee1eddb3aee6c9c3424ae80cad2d4a311b027b4ba9499e726751ccc04"
+    },
+    {
+      "file": "inputs/decrease-right-control.json",
+      "bytes": 7421,
+      "sha256": "66f5820d911a4e2aff5dd7cdede026556898a92be1d7da251bf38285c706157a"
+    },
+    {
+      "file": "inputs/decrease-right-fashioned.json",
+      "bytes": 9259,
+      "sha256": "424595cadac9328e54fd7758717ba3dab3753de664de8d1014524009edab2a08"
+    },
+    {
+      "file": "inputs/decrease-right-simple.json",
+      "bytes": 9259,
+      "sha256": "998c10917597348985b5d425b135199c82d1d08096ba7b22a3772f957e8ede40"
+    },
+    {
+      "file": "inputs/fashioned-width2.json",
+      "bytes": 9372,
+      "sha256": "51e6b12b16110cd8cedcbc18e45cb3b6fb488ddffa9f796e53e0b9e1a0225785"
+    },
+    {
+      "file": "inputs/jacquard-simple.json",
+      "bytes": 11759,
+      "sha256": "37d31e3ef149082371b6bbd65aa817d51317fba1c87a48945e6baf99ef704173"
+    },
+    {
+      "file": "inputs/rib-full-control.json",
+      "bytes": 11055,
+      "sha256": "e11967ed4dfd0592116905ba6202a5a15f93cc8bd17213439c7a757755883146"
+    },
+    {
+      "file": "inputs/rib-full-reversable.json",
+      "bytes": 12975,
+      "sha256": "be348280af85f8ff0834cc0c209ba0b895a66b5baf123be16f4ba9361fce8cca"
+    },
+    {
+      "file": "inputs/rib-full-simple.json",
+      "bytes": 12975,
+      "sha256": "534d0b573c1c9c4612cfd8492729bef881d28bf83ecec945adb3843b12f5193a"
+    },
+    {
+      "file": "inputs/singlebed-reversable.json",
+      "bytes": 9341,
+      "sha256": "679e1150a8b8fe2da8f1b05e14a412969f1e5569867227e3f9bc24da919846f7"
+    },
+    {
+      "file": "inputs/top-waste-off.json",
+      "bytes": 12491,
+      "sha256": "edcc02f607e3dd21ae3d0cf30bc30ecab3cd856ad50c42a0f7a517e136c5f2d8"
+    },
+    {
+      "file": "inputs/top-waste-on.json",
+      "bytes": 12490,
+      "sha256": "7a5497fe87fa9225019f965fa41a9fd300bb4e36b6dd37442d4a33dd705390d7"
+    },
+    {
+      "file": "raw/both-edges-full-control.cstack.json",
+      "bytes": 110434,
+      "sha256": "8a5f43dbe767594b571893c2d8bdea14f7523a4deb55f18a82ca4ff48b60cd5c"
+    },
+    {
+      "file": "raw/both-edges-full-control.kc",
+      "bytes": 28937,
+      "sha256": "cb7832e2030367a0a4e10f801fecd43d3decc36022617c30138303b73b96f4c0"
+    },
+    {
+      "file": "raw/both-edges-full-fashioned.cstack.json",
+      "bytes": 114084,
+      "sha256": "997ade541062512528f90e56950450e4d17648faffbdad6b698e4124605ff717"
+    },
+    {
+      "file": "raw/both-edges-full-fashioned.kc",
+      "bytes": 58367,
+      "sha256": "8d089b545b3ffb9437d8370613c068b57bbcacbb817aa105d0fbd57fa1e3c93f"
+    },
+    {
+      "file": "raw/both-edges-full-simple.cstack.json",
+      "bytes": 112259,
+      "sha256": "782a1a19e818334454d2b82bcf1b6b36231a9efc7e2e04f29f6215966f00d4d2"
+    },
+    {
+      "file": "raw/both-edges-full-simple.kc",
+      "bytes": 48574,
+      "sha256": "a385b9d031cbdc06c6eb51ebd15123a8f63c6ce51736f09a911f0511e5d61e8f"
+    },
+    {
+      "file": "raw/decrease-jacquard-control.kc",
+      "bytes": 121201,
+      "sha256": "8224303a9e6f719bd3b9e6fbb2a4c2b0d56b74431f25268098f9317ed3366830"
+    },
+    {
+      "file": "raw/decrease-jacquard-fashioned.kc",
+      "bytes": 135915,
+      "sha256": "246d807313c17b42518785857469543dc172b572d30f3bdb08d2f869d0ebc27f"
+    },
+    {
+      "file": "raw/decrease-jacquard-reversable.kc",
+      "bytes": 126138,
+      "sha256": "0ee2d473ac17f3c7909b83cb1eda0571d2dbf5c07497d63b98ee94a8fd0bd7ad"
+    },
+    {
+      "file": "raw/decrease-jacquard-simple.cstack.json",
+      "bytes": 127237,
+      "sha256": "6ccf7d3867be50f8148bcb00b09f0d4504567755634d2f1005a301667ed82ea0"
+    },
+    {
+      "file": "raw/decrease-jacquard-simple.kc",
+      "bytes": 126118,
+      "sha256": "fca9f358a90d356ff9d0f57c8224e217f4a698c6abb4c9fa57cb2d44a22551da"
+    },
+    {
+      "file": "raw/decrease-left-control.cstack.json",
+      "bytes": 115302,
+      "sha256": "b3d6a700b0607fb95e43211ca2301fd5bea5784b55241853af233b97795a32b8"
+    },
+    {
+      "file": "raw/decrease-left-control.kc",
+      "bytes": 28928,
+      "sha256": "fe9980aa3e09a3898d54b1387d37e1f2f5f2b58205344333a79e390174c84da1"
+    },
+    {
+      "file": "raw/decrease-left-fashioned.cstack.json",
+      "bytes": 118432,
+      "sha256": "7c812b105270d4a6774d3f34e46ff5c78b11441aeba12f4f1973cd19a4e33183"
+    },
+    {
+      "file": "raw/decrease-left-fashioned.kc",
+      "bytes": 43640,
+      "sha256": "25d62ddf266ff8674e8c92ebc2ea6fe4a1dc656df718e9cd33a6052a8094e0b0"
+    },
+    {
+      "file": "raw/decrease-left-simple.cstack.json",
+      "bytes": 116867,
+      "sha256": "ecd3a75ecd4bf68b76c0705ab0c44f933d9e7872d138a505190521f046cef1d8"
+    },
+    {
+      "file": "raw/decrease-left-simple.kc",
+      "bytes": 33845,
+      "sha256": "4632d563a72fc8fe368432bd90a24d4619270d27480ea54238339e4c4697ea4b"
+    },
+    {
+      "file": "raw/decrease-right-control.cstack.json",
+      "bytes": 119650,
+      "sha256": "0f8cb2e7f8dcaba8e6249df773f6ffa90557f6749858a4d2778a9eea38b93cf7"
+    },
+    {
+      "file": "raw/decrease-right-control.kc",
+      "bytes": 28929,
+      "sha256": "99bb19f17ac6c3b7ef382a37baeeaf186e5f557aad9cd8924d1520f636dd1bf4"
+    },
+    {
+      "file": "raw/decrease-right-fashioned.kc",
+      "bytes": 43643,
+      "sha256": "0112ad25ff81447e403b48decbf1b59e948e8b92ba5d7ec842cdba62ec5d7a6b"
+    },
+    {
+      "file": "raw/decrease-right-simple.cstack.json",
+      "bytes": 121215,
+      "sha256": "ba68ec915ad1f0aa9b98dc5ca00d66e7b64135d866ebd9733d189a932c106f1b"
+    },
+    {
+      "file": "raw/decrease-right-simple.kc",
+      "bytes": 33848,
+      "sha256": "5ba2eacabc3d65ce580974abc905f30cf819cda33a91beea32ad41e2f1725a24"
+    },
+    {
+      "file": "raw/decrease-schema.cstack.json",
+      "bytes": 108202,
+      "sha256": "c031bcee853b2a9c4ccadc2bfd62b58375c6102b3a9296660a9d828d0947f027"
+    },
+    {
+      "file": "raw/fashioned-width2.cstack.json",
+      "bytes": 78272,
+      "sha256": "e9e80db34ba4e75376caf28822ef2b70576e2ee7e56dd37c65dda959955280fd"
+    },
+    {
+      "file": "raw/fashioned-width2.kc",
+      "bytes": 38725,
+      "sha256": "a5646bdb980e495ada1cded8c32b337f5b315f419ce5d9d1fa14cc35d043eb63"
+    },
+    {
+      "file": "raw/jacquard-simple.cstack.json",
+      "bytes": 76746,
+      "sha256": "44660d700b0f1fcaf4905ae2830e7581b743ca4ddcec11fab5739617756d1482"
+    },
+    {
+      "file": "raw/jacquard-simple.kc",
+      "bytes": 140755,
+      "sha256": "b37b9135ab5dcc611584f98f3f2db718e250c27aa71fabc8d8afa2fe726917ad"
+    },
+    {
+      "file": "raw/rear-knit-schema.cstack.json",
+      "bytes": 78495,
+      "sha256": "f5e55c10e8d16c36bd742c5043c27e88995b28de7b09f48c03bb02be1744aef9"
+    },
+    {
+      "file": "raw/rib-full-control.cstack.json",
+      "bytes": 99619,
+      "sha256": "f617f81c5d9b44dada11e66e2a79498d3f69034b1b1641c698fda872d4d7efee"
+    },
+    {
+      "file": "raw/rib-full-control.kc",
+      "bytes": 28923,
+      "sha256": "65f09c544bf1eb6cea5b0ee4a1f201ef5fbcdc5e7c84de1f9d9a49771c02ea48"
+    },
+    {
+      "file": "raw/rib-full-reversable.cstack.json",
+      "bytes": 107877,
+      "sha256": "1c9b85fc94dd39824e13d3f6bedbd0fbe343d4e767ae3a8726d0fffeaec450e1"
+    },
+    {
+      "file": "raw/rib-full-reversable.kc",
+      "bytes": 28926,
+      "sha256": "a78621dcdeae3b339293e34c499740842cb726c8c24461a32f130f99a246f8b7"
+    },
+    {
+      "file": "raw/rib-full-simple.cstack.json",
+      "bytes": 103748,
+      "sha256": "f84a30a237f6dcafcd4888cb9e83643dbb71b6b842316bada3a3bf6fdb7ded86"
+    },
+    {
+      "file": "raw/rib-full-simple.kc",
+      "bytes": 46047,
+      "sha256": "1f8f0f51b4090c20734f482995fac8cd28053d29cb5e1401808f7d16ec1c7210"
+    },
+    {
+      "file": "raw/row-yarn-schema.cstack.json",
+      "bytes": 108896,
+      "sha256": "63dac050e9f390f678254aedb4fcaadefcef3a86b872818f8c718450e3223d55"
+    },
+    {
+      "file": "raw/singlebed-reversable.cstack.json",
+      "bytes": 78251,
+      "sha256": "ea654c543e14a5b11647f07941e720691a1fd7358af549feff45ab4a97527e87"
+    },
+    {
+      "file": "raw/singlebed-reversable.kc",
+      "bytes": 28927,
+      "sha256": "58a46ba368ef41af1b14e57ad77769a2c9b5666328b3383407fe29a12ed1dae5"
+    },
+    {
+      "file": "raw/top-waste-off.kc",
+      "bytes": 190857,
+      "sha256": "8567de495c0e754b61159847595df0897cb9064ccb57e1d0441f5926fa57546a"
+    },
+    {
+      "file": "raw/top-waste-on.cstack.json",
+      "bytes": 136920,
+      "sha256": "2852686db9885901c906fe28f2712c744610e434eb97a1a5241c362790af0e9c"
+    },
+    {
+      "file": "raw/top-waste-on.kc",
+      "bytes": 190856,
+      "sha256": "c8a21f4671737ab55b62737eb56b1356544ca3a085d0aa9c385f5a980f7aa797"
+    },
+    {
+      "file": "rejected/both-edges-control.cstack.json",
+      "bytes": 80033,
+      "sha256": "aa330b5c63cf6470444d56c912911ded5d1b8b9bb564c3206c3d2621ddcf8080"
+    },
+    {
+      "file": "rejected/both-edges-control.json",
+      "bytes": 13114,
+      "sha256": "0acfbd41fee50f371b9f01b4e0f7c970c987b95ba74050e2a0a2d0809050d2a2"
+    },
+    {
+      "file": "rejected/both-edges-control.kc",
+      "bytes": 28928,
+      "sha256": "1cf6ed8e1f66333986baf2691feaf156ff03fdccc4cc350f24cd66e7c9d2c65b"
+    },
+    {
+      "file": "rejected/both-edges-fashioned.cstack.json",
+      "bytes": 83683,
+      "sha256": "422e22681069bcc4993e023b1246074c9b54f5285b38a8e3f29fa8b76bbb7fc9"
+    },
+    {
+      "file": "rejected/both-edges-fashioned.jpg",
+      "bytes": 116512,
+      "sha256": "9748fa07119cd61b0ac49a33289a5b974c329da5e56a4ba9b9e15ca986b4bf52"
+    },
+    {
+      "file": "rejected/both-edges-fashioned.json",
+      "bytes": 13116,
+      "sha256": "de7c0fb378483bec5a1fe1b3ce018e04068f7aa90748608dd986e284d3dd9d91"
+    },
+    {
+      "file": "rejected/both-edges-fashioned.kc",
+      "bytes": 28930,
+      "sha256": "febce780d271b23923d1647634c664343199e35fb938ef86d0a2a41554205991"
+    },
+    {
+      "file": "rejected/both-edges-simple.cstack.json",
+      "bytes": 81858,
+      "sha256": "3593e3be2bfb6a648a7efe91c7de1b139cf354d8141374203b77bb2c3798562e"
+    },
+    {
+      "file": "rejected/both-edges-simple.json",
+      "bytes": 13113,
+      "sha256": "0868a0ae9e5c5900469b94ef5a5f0e47b56b7978dae1880933b5c67e1bf3b2ad"
+    },
+    {
+      "file": "rejected/both-edges-simple.kc",
+      "bytes": 28927,
+      "sha256": "7b0d19dd4c1db6fff04109320718f4901a66ac64cf12318b702afa8fd4faf271"
+    },
+    {
+      "file": "rejected/inputs/both-edges-control.json",
+      "bytes": 7741,
+      "sha256": "c97a331502ffc72d15da2b16cc1baaaea3196852f4c37189fc63df5375202d77"
+    },
+    {
+      "file": "rejected/inputs/both-edges-fashioned.json",
+      "bytes": 9661,
+      "sha256": "19f6c700db473ac9af3c2b3c777959ecc7dc2f2b663a250913902330f15118e9"
+    },
+    {
+      "file": "rejected/inputs/both-edges-full-separate-fashioned.json",
+      "bytes": 11580,
+      "sha256": "251a381c45e4e0f2b6fb32232e7a982199cd10b7dbbd235310ef829b6d7db9ad"
+    },
+    {
+      "file": "rejected/inputs/both-edges-full-separate-simple.json",
+      "bytes": 11577,
+      "sha256": "01ff12b7181b8f24eb5ce4538ee8bd8968894f3b0afa1447d7c082f511493677"
+    },
+    {
+      "file": "rejected/inputs/both-edges-separate-fashioned.json",
+      "bytes": 11580,
+      "sha256": "b1fee683335a9141c44752cb58aadd8e516ad6316e74d597981677c9c5350bf5"
+    },
+    {
+      "file": "rejected/inputs/both-edges-separate-simple.json",
+      "bytes": 11577,
+      "sha256": "5c2b7bff16dc4b35093c1def88849243e2bb1712c274292175a5a2b5ef1d2f1d"
+    },
+    {
+      "file": "rejected/inputs/both-edges-simple.json",
+      "bytes": 9661,
+      "sha256": "acdb9284bd34f7311029fe0ff112f5b012c35de14229028dd5034ae40a71f88b"
+    },
+    {
+      "file": "rejected/inputs/rib-control.json",
+      "bytes": 11053,
+      "sha256": "bd9d6c8b46e2691e25b946959e3ae40a9cc97d521f74e4e52d338f7f1490af01"
+    },
+    {
+      "file": "rejected/inputs/rib-reversable.json",
+      "bytes": 12973,
+      "sha256": "00504588a45053b4eef04a049bc6b06526cb7cb1f21cc863f11a26157f6a9121"
+    },
+    {
+      "file": "rejected/inputs/rib-simple.json",
+      "bytes": 12973,
+      "sha256": "9aa2e1adaf8fbb0b525410139e908fa33d5f1f101e28c6fa1058e54af690e653"
+    },
+    {
+      "file": "rejected/rib-control.cstack.json",
+      "bytes": 87523,
+      "sha256": "471781257cc1fb5a9683e4f3f195a5d654e2ec15ac0268505bfd9773c794c165"
+    },
+    {
+      "file": "rejected/rib-control.json",
+      "bytes": 13315,
+      "sha256": "bc180509d35ce227eec9cde1c9995796d7086399b74155e39bfd340c2379f6bc"
+    },
+    {
+      "file": "rejected/rib-control.kc",
+      "bytes": 28921,
+      "sha256": "0a7b2ff6bdc7cf75efe55ae0be743073592ec1df80ad59b5a6e1954b05eed24d"
+    },
+    {
+      "file": "rejected/rib-simple.cstack.json",
+      "bytes": 91650,
+      "sha256": "700d7c895f722d7df6fba5d869bac65f5ae23990e90ebcd8158557f1d0e232f8"
+    },
+    {
+      "file": "rejected/rib-simple.kc",
+      "bytes": 28920,
+      "sha256": "486b12583d2855161fabd445f04ef84a2f99215cd1f54175ca32dc8da36ed4b7"
+    },
+    {
+      "file": "verify.py",
+      "bytes": 6428,
+      "sha256": "893cc96c699ddc54bb47aeaa6292ac700b8d785dbe5d05c9636763c359912412"
+    }
+  ]
+}

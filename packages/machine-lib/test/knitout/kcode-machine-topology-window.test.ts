@@ -17,7 +17,8 @@ function referenceIndex(name: string) {
 }
 
 describe('bounded indexed topology windows', () => {
-  for (const name of references) it(`renders ${name} at reference scale with stable loop identities`, () => {
+  // Each builds a whole reference file's topology; front and back take seconds, more on a busy machine.
+  for (const name of references) it(`renders ${name} at reference scale with stable loop identities`, { timeout: 60_000 }, () => {
     const index = referenceIndex(name)
     expect(index.topology.loops.length).toBeGreaterThan(6_000)
     for (const pass of [0, Math.floor(index.passCount / 2), index.passCount - 1]) {

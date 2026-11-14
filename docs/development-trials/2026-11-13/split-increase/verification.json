@@ -1,0 +1,266 @@
+{
+  "ok": true,
+  "reviewOnly": true,
+  "castOn": "operator edge trial full-needle start; widest-row feeder parking",
+  "bytes": 278708,
+  "passes": 230,
+  "kcodeSha256": "fb2cb6adcfb4320992dcec26e8b80e0cbdcb905b4d25548780f20b04b5c24de5",
+  "knitoutSha256": "7b05b5a963cf68a5414914af206ad5ec3fa0611e8531c637e61836eaf168a008",
+  "rows": 43,
+  "widest": {
+    "lo": 101,
+    "hi": 152
+  },
+  "events": [
+    {
+      "row": 7,
+      "part": 1,
+      "step": 1,
+      "name": "Simple",
+      "fashion": 1,
+      "side": "both",
+      "splitDirection": "<<",
+      "edges": [
+        {
+          "side": "left",
+          "splitNeedle": 108,
+          "newNeedle": 106
+        },
+        {
+          "side": "right",
+          "splitNeedle": 145,
+          "newNeedle": 147
+        }
+      ],
+      "splitPass": 116,
+      "transfers": [
+        117,
+        118,
+        121,
+        122,
+        123,
+        124
+      ],
+      "knitPass": 125
+    },
+    {
+      "row": 11,
+      "part": 1,
+      "step": 2,
+      "name": "Simple",
+      "fashion": 1,
+      "side": "both",
+      "splitDirection": "<<",
+      "edges": [
+        {
+          "side": "left",
+          "splitNeedle": 107,
+          "newNeedle": 105
+        },
+        {
+          "side": "right",
+          "splitNeedle": 146,
+          "newNeedle": 148
+        }
+      ],
+      "splitPass": 128,
+      "transfers": [
+        129,
+        130,
+        133,
+        134,
+        135,
+        136
+      ],
+      "knitPass": 137
+    },
+    {
+      "row": 16,
+      "part": 2,
+      "step": 1,
+      "name": "Simple",
+      "fashion": 1,
+      "side": "left",
+      "splitDirection": ">>",
+      "edges": [
+        {
+          "side": "left",
+          "splitNeedle": 106,
+          "newNeedle": 104
+        }
+      ],
+      "splitPass": 141,
+      "transfers": [
+        142,
+        143,
+        144
+      ],
+      "knitPass": 146
+    },
+    {
+      "row": 20,
+      "part": 3,
+      "step": 1,
+      "name": "Simple",
+      "fashion": 1,
+      "side": "right",
+      "splitDirection": ">>",
+      "edges": [
+        {
+          "side": "right",
+          "splitNeedle": 147,
+          "newNeedle": 149
+        }
+      ],
+      "splitPass": 149,
+      "transfers": [
+        150,
+        154,
+        155
+      ],
+      "knitPass": 156
+    },
+    {
+      "row": 25,
+      "part": 4,
+      "step": 1,
+      "name": "Fashioned",
+      "fashion": 4,
+      "side": "both",
+      "splitDirection": "<<",
+      "edges": [
+        {
+          "side": "left",
+          "splitNeedle": 108,
+          "newNeedle": 103
+        },
+        {
+          "side": "right",
+          "splitNeedle": 145,
+          "newNeedle": 150
+        }
+      ],
+      "splitPass": 160,
+      "transfers": [
+        161,
+        162,
+        163,
+        164,
+        167,
+        168,
+        169,
+        170,
+        171
+      ],
+      "knitPass": 173
+    },
+    {
+      "row": 29,
+      "part": 4,
+      "step": 2,
+      "name": "Fashioned",
+      "fashion": 4,
+      "side": "both",
+      "splitDirection": "<<",
+      "edges": [
+        {
+          "side": "left",
+          "splitNeedle": 107,
+          "newNeedle": 102
+        },
+        {
+          "side": "right",
+          "splitNeedle": 146,
+          "newNeedle": 151
+        }
+      ],
+      "splitPass": 176,
+      "transfers": [
+        177,
+        178,
+        179,
+        180,
+        183,
+        184,
+        185,
+        186,
+        187
+      ],
+      "knitPass": 189
+    },
+    {
+      "row": 34,
+      "part": 5,
+      "step": 1,
+      "name": "Fashioned",
+      "fashion": 4,
+      "side": "left",
+      "splitDirection": ">>",
+      "edges": [
+        {
+          "side": "left",
+          "splitNeedle": 106,
+          "newNeedle": 101
+        }
+      ],
+      "splitPass": 193,
+      "transfers": [
+        194,
+        195,
+        196,
+        197
+      ],
+      "knitPass": 198
+    },
+    {
+      "row": 38,
+      "part": 6,
+      "step": 1,
+      "name": "Fashioned",
+      "fashion": 4,
+      "side": "right",
+      "splitDirection": ">>",
+      "edges": [
+        {
+          "side": "right",
+          "splitNeedle": 147,
+          "newNeedle": 152
+        }
+      ],
+      "splitPass": 201,
+      "transfers": [
+        202,
+        203,
+        206,
+        207
+      ],
+      "knitPass": 208
+    }
+  ],
+  "advisories": [
+    {
+      "carrier": "6",
+      "fromPass": 100,
+      "pass": 216,
+      "distance": 51,
+      "message": "Carrier 6 floats 51 needles from its last stitch in pass 100 to pass 216, 116 passes later (maximum 7). KCode does not encode carrier in/out, so a long gap may be a parked or cut yarn rather than a float."
+    }
+  ],
+  "problems": [],
+  "audit": [
+    "start-hold 6/12 ok",
+    "waste-through-body-loops 0/0 ok",
+    "unsupported-body-drops 0/0 ok",
+    "loops-left 0/1 ok",
+    "max-stack 2/3 ok",
+    "idle-feeder-moves 0/0 ok",
+    "movement-per-knit 0.37/1.5 ok",
+    "paired-empty-knits 0/0 ok",
+    "inside-empty-front-knits 0 ok"
+  ],
+  "work": {
+    "knitting": 43,
+    "transfers": 44,
+    "movementOnly": 16
+  }
+}

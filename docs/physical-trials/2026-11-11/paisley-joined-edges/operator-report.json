@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-11",
+  "operatorReport": "this was successful",
+  "candidateSha256": "8de9d5e3a9bbd0c1eaaf40bce21a28f434682c21ed8bbcce887c1305f33f1c36",
+  "passCountProgrammed": 426,
+  "completed": true,
+  "outcome": "operator-reported success",
+  "measurements": {
+    "widthCm": 18.5,
+    "heightCm": 21,
+    "heightIncludes": "pattern and top waste; excludes bottom waste",
+    "operatorWording": "starting from pattern and wast yarn on top, 21cm height 18.5 cm width. doesn't include waste on bottom",
+    "derivedWidthStitchesPer10cm": 36.75675675675676,
+    "bodyRowGauge": "not established: top waste included"
+  },
+  "stopsOrInterventions": "not individually reported",
+  "photoFiles": [
+    "IMG_1183.jpg",
+    "IMG_1184.jpg"
+  ],
+  "formalPromotion": "Incomplete machine/yarn/measurement evidence; not Knit-proven"
+}

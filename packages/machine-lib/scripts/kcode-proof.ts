@@ -73,6 +73,8 @@ const PROOF_TESTS = [
   'test/knitout/kc-diff.test.ts',
   'test/knitout/loop-stack-software-policy.test.ts',
   'test/knitout/predicted-vs-vendor.test.ts',
+  'test/knitout/sim/split-roller.test.ts',
+  'test/knitout/reversible-outward-increase.test.ts',
   'test/knitout/fairisle-parity.test.ts',
   'test/knitout/dbj-parity.test.ts',
   'test/knitout/kniterate-topology-oracle.test.ts',
@@ -84,6 +86,9 @@ const STUDIO_PROOF_TESTS = [
   'src/studioCli.test.ts',
   'src/parity.test.ts',
   'src/blanket/compileProject.test.ts',
+  'src/reversibleChart.test.ts',
+  'src/diamondChart.test.ts',
+  'src/splitSwatch.test.ts',
   'src/blanket/birdseyeBody.test.ts',
   'src/kcode/compileKCodeArtifact.test.ts',
   'src/kcode/MachineMovementView.test.tsx',
@@ -203,6 +208,8 @@ function listFilesRecursively(root: string, baseDirectory: string): string[] {
   return visit(absoluteRoot)
 }
 
+// Only what a gate reads, runs or builds is bound. The Playwright specs in e2e/ are run by CI,
+// not by any gate here, so editing one does not stale the receipt.
 function collectFingerprintSources(root: string): string[] {
   const filesUnder = (path: string) => listFilesRecursively(path, root)
   return [...new Set<string>([
@@ -213,13 +220,20 @@ function collectFingerprintSources(root: string): string[] {
     ...filesUnder('test'),
     ...filesUnder('../../scripts'),
     ...filesUnder('../../fixtures/colorwork-chart-v1'),
+    '../../fixtures/experiments/edge-swatch-original.k',
+    // Only the eleven debug captures read by shaped-panel.test.ts. New, rejected, or reversible
+    // captures must not stale the receipt until a proof test actually uses them.
+    ...(['left', 'right'] as const).flatMap((side) => [0, 1].flatMap((phase) => ['simple', 'fashioned'].map((style) =>
+      `../../fixtures/customist-debug/2026-11-13/raw/${side}-phase${phase}-${style}.kc`))),
+    '../../fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-simple.kc',
+    '../../fixtures/customist-debug/2026-11-13-followup/raw/both-edges-full-fashioned.kc',
+    '../../fixtures/customist-debug/2026-11-13-followup/raw/fashioned-width2.kc',
     ...filesUnder('../../apps/studio/src'),
     ...filesUnder('../chart-contract/src'),
     ...filesUnder('../colorwork-core/src'),
     ...filesUnder('../project-contract/src'),
     ...filesUnder('reference'),
     ...filesUnder('registry/swatches'),
-    ...filesUnder('../../e2e'),
   ])].sort()
 }
 

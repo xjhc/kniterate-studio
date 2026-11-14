@@ -1,0 +1,9 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-studio-project",
+  "description": "Wild Rag paisley — reversible development swatch",
+  "reemitCommand": "pnpm studio -- package project.kniterate-studio.json -o <directory>",
+  "inputFiles": [
+    "project.kniterate-studio.json"
+  ]
+}

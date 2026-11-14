@@ -216,7 +216,7 @@ export interface TraceHoldV1 {
 }
 
 export interface TraceAuditCheckV1 {
-  readonly id: 'start-hold' | 'waste-through-body-loops' | 'unsupported-body-drops' | 'loops-left' | 'max-stack' | 'inside-empty-front-knits'
+  readonly id: 'start-hold' | 'waste-through-body-loops' | 'unsupported-body-drops' | 'loops-left' | 'max-stack' | 'idle-feeder-moves' | 'movement-per-knit' | 'paired-empty-knits' | 'inside-empty-front-knits'
   /** `issue` fails the audit; `note` is for a person to judge (e.g. fashioned increases leave eyelets by design). */
   readonly severity: 'issue' | 'note'
   readonly ok: boolean
@@ -236,6 +236,8 @@ export interface TraceAuditV1 {
   readonly checks: readonly TraceAuditCheckV1[]
   /** The longest waits anywhere, for a person to read (bind-offs and held shoulders wait long by design). */
   readonly longestHolds: readonly TraceHoldV1[]
+  /** Carriage passes from the end of the start to the last row of the piece, by what they do. */
+  readonly work: { readonly knitting: number; readonly transfers: number; readonly movementOnly: number }
   readonly emptyNeedleKnits: {
     readonly front: { readonly edge: number; readonly inside: number }
     readonly rear: { readonly edge: number; readonly inside: number }
@@ -254,6 +256,8 @@ const BODY_SECTIONS: ReadonlySet<string> = new Set(['body', 'rib', 'cast-on', 's
 
 /** Studio's limit on how long a start loop may wait to be knitted again. */
 export const TRACE_START_HOLD_LIMIT_V1 = 12
+/** Kniterate's busiest reference file (the reversible front.kc, four yarns) makes 1.48 movement-only passes per knitting pass. */
+export const TRACE_MOVEMENT_PER_KNIT_LIMIT_V1 = 1.5
 /** Kniterate's app warns about more than 2 parents and advises never more than 4 loops; its own files stack at most 3. */
 export const TRACE_MAX_STACK_LIMIT_V1 = 3
 
@@ -286,6 +290,8 @@ export function auditTraceV1(trace: Trace, options: TraceAuditOptionsV1 = {}): T
   let maxStackAt = ''
   const empty = { front: { edge: 0, inside: 0 }, rear: { edge: 0, inside: 0 } }
   const insideFront: string[] = []
+  const pairedEmpty: string[] = []
+  let pairedEmptyCount = 0
   const passes = trace.passes
   // A chain bind-off step knits one or two needles; the loop it leaves may be dropped as the chain's tail.
   const chainStep = (index: number) => {
@@ -295,6 +301,23 @@ export function auditTraceV1(trace: Trace, options: TraceAuditOptionsV1 = {}): T
   passes.forEach((pass, index) => {
     const n1 = index + 1
     const body = bodyYarn(pass.carrier, n1)
+    // Neighbouring empty needles one pass knits, when they are only part of what it knits on that bed
+    // (a whole-row pick-up, as after a rib, is a cast-on row and holds).
+    if (body && traceSectionOfV1(sections, n1) !== 'cast-on' && n1 > (startEnd ?? 0)) {
+      for (const bed of ['front', 'rear'] as const) {
+        const knitted = pass.actions.flatMap((action) => (action.kind === 'knit' && action.at.bed === bed ? [action.at.traceCoordinate] : [])).sort((x, y) => x - y)
+        const emptyNeedles = knitted.filter((n) => (needles.get(key(bed, n))?.length ?? 0) === 0)
+        let run = 1
+        for (let i = 1; i <= emptyNeedles.length; i++) {
+          if (emptyNeedles[i] === emptyNeedles[i - 1]! + 1) { run++; continue }
+          if (run >= 2 && run < knitted.length) {
+            pairedEmptyCount++
+            if (pairedEmpty.length < 5) pairedEmpty.push(`pass ${n1} ${bedOf(bed)}${emptyNeedles[i - run]}..${emptyNeedles[i - 1]} c${pass.carrier}`)
+          }
+          run = 1
+        }
+      }
+    }
     for (const action of pass.actions) {
       if (action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'drop') {
         const k = key(action.at.bed, action.at.traceCoordinate)
@@ -348,6 +371,23 @@ export function auditTraceV1(trace: Trace, options: TraceAuditOptionsV1 = {}): T
       }
     }
   })
+  // Passes that only move the waste or draw feeder while the piece itself is being knitted.
+  let lastBodyKnit = -1
+  passes.forEach((pass, index) => { if (bodyYarn(pass.carrier, index + 1) && knits(pass)) lastBodyKnit = index })
+  const idleMoves: number[] = []
+  passes.forEach((pass, index) => {
+    if (index + 1 <= (startEnd ?? 0) || index >= lastBodyKnit) return
+    if (pass.carrier !== roles.waste && pass.carrier !== roles.draw) return
+    if (pass.actions.length > 0 && pass.actions.every((action) => action.kind === 'move')) idleMoves.push(index + 1)
+  })
+  const work = { knitting: 0, transfers: 0, movementOnly: 0 }
+  passes.forEach((pass, index) => {
+    if (index + 1 <= (startEnd ?? 0) || index > lastBodyKnit) return
+    if (knits(pass)) work.knitting++
+    else if (pass.actions.some((action) => action.kind !== 'move')) work.transfers++
+    else work.movementOnly++
+  })
+  const movementPerKnit = work.knitting === 0 ? 0 : Math.round((work.movementOnly / work.knitting) * 100) / 100
   const loopsLeft = [...needles.values()].reduce((sum, loops) => sum + loops.length, 0)
   const longestHolds = holds
   const startHoldValue = longest.start
@@ -383,6 +423,23 @@ export function auditTraceV1(trace: Trace, options: TraceAuditOptionsV1 = {}): T
       ...(maxStackAt ? { at: [maxStackAt] } : {}),
     },
     {
+      id: 'idle-feeder-moves', severity: 'issue', ok: idleMoves.length === 0, value: idleMoves.length, limit: 0,
+      meaning: 'Carriage passes that only push the waste or draw feeder aside while the piece is being knitted. A feeder parked inside the width the piece later reaches is moved again at every increase: each move is an extra carriage pass, and issue #18 reports the machine stopping (clump sensor) during them.',
+      kniterate: 'None of Kniterate\'s reference files moves either feeder after the start; the widening sleeves.kc sends both to the left home on their last start rows.',
+      ...(idleMoves.length ? { at: [`passes ${idleMoves.slice(0, 8).join(', ')}${idleMoves.length > 8 ? ', …' : ''}`] } : {}),
+    },
+    {
+      id: 'movement-per-knit', severity: 'issue', ok: movementPerKnit <= TRACE_MOVEMENT_PER_KNIT_LIMIT_V1, value: movementPerKnit, limit: TRACE_MOVEMENT_PER_KNIT_LIMIT_V1,
+      meaning: `Carriage passes that knit and transfer nothing, for each pass that knits, from the end of the start to the piece's last row (${work.movementOnly} movement-only, ${work.knitting} knitting, ${work.transfers} transfer passes). The carriage fetches one feeder at a time, so some are needed; many more than Kniterate's files means feeders are being shuffled, which costs time and is where issue #18's stops happened.`,
+      kniterate: 'The reversible front.kc is the busiest at 1.48; back.kc 0.98, sleeves.kc 0.94; every other reference file is at or under 0.49.',
+    },
+    {
+      id: 'paired-empty-knits', severity: 'issue', ok: pairedEmptyCount === 0, value: pairedEmptyCount, limit: 0,
+      meaning: 'A body yarn knits two or more neighbouring empty needles in one pass, among needles that already hold loops. Neighbouring empty needles cannot form stitches from one strand: the yarn lies across them as a float and leaves a hole (the open increases reported on issue #18).',
+      kniterate: 'None of Kniterate\'s reference files does this outside a cast-on row. Its reversible increase gives each of the two empty needles to a different yarn, in separate passes.',
+      ...(pairedEmpty.length ? { at: pairedEmpty } : {}),
+    },
+    {
       id: 'inside-empty-front-knits', severity: 'note', ok: empty.front.inside === 0, value: empty.front.inside, limit: null,
       meaning: 'A body yarn knits a front needle that holds no loop while both neighbours do: a small eyelet in the face. Fashioned increases do this on purpose; anywhere else it is a hole.',
       kniterate: 'The sophie samples do it 48 to 58 times at their fashioned increases; Kniterate\'s unshaped files never.',
@@ -396,6 +453,7 @@ export function auditTraceV1(trace: Trace, options: TraceAuditOptionsV1 = {}): T
     ok: checks.every((check) => check.ok || check.severity === 'note'),
     checks,
     longestHolds,
+    work,
     emptyNeedleKnits: empty,
   }
 }

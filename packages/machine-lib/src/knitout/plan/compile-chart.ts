@@ -649,7 +649,8 @@ export function compileChartToKniteratePlan(
   );
   const dbjBackingStrategy = input.dbjBackingStrategy ?? dbjBacking?.dbjStrategy;
   const wantsDbjFull = input.backBedStyle === 'birdseye' && dbjBackingStrategy === 'full';
-  const wantsIntro = input.backBedStyle === 'floats' && !!input.fairisleCarrierIntro;
+  const reversibleFrame = input.backBedStyle === 'birdseye' && dbjBackingStrategy === 'complement' && patternCarriers.length === 2 && !!input.fairisleCarrierIntro;
+  const wantsIntro = (input.backBedStyle === 'floats' || reversibleFrame) && !!input.fairisleCarrierIntro;
   const wantsContinuousWaste = wantsIntro || wantsDbjFull;
 
   // Which body walker this chart dispatches to, decided up-front so the waste
@@ -694,6 +695,8 @@ export function compileChartToKniteratePlan(
   const customistDrawCarrier = customistIntro.cameoCarriers.find((carrier) => !patternCarriers.includes(carrier));
   const customistFrame = wantsIntro && customistDrawCarrier !== undefined
     ? emitCustomistFairisleFrame({
+      retainBackBed: reversibleFrame,
+      ...(reversibleFrame && shapeMode ? { wasteNeedleStart: needleStart, wasteNeedleEnd: needleEnd } : {}),
       needleStart: wastePlan.needleStart,
       needleEnd: wastePlan.needleEnd,
       wasteCarrier,
@@ -902,6 +905,7 @@ export function compileChartToKniteratePlan(
     colorMode: multiColorAnalysis?.mode,
     backBedStyle: input.backBedStyle,
     dbjBackingStrategy,
+    retainComplementBeds: reversibleFrame,
     resolved,
     projection,
     walkerProjection,
@@ -992,6 +996,7 @@ export function compileChartToKniteratePlan(
   // above; defaults to patternCarrier) so the bind-off addresses the
   // carrier that actually holds the live stitches.
   const bindResult = emitBindOff({
+    tubularWaste: reversibleFrame,
     style: settings.bindOff,
     needleStart: bindOffNeedleStart,
     needleEnd: bindOffNeedleEnd,

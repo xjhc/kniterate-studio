@@ -1,0 +1,93 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-yarn-evidence-v1",
+  "schemaVersion": 1,
+  "yarns": [
+    {
+      "carrier": "1",
+      "role": "draw",
+      "name": "TODO: draw",
+      "fiber": "TODO: wool | cotton | alpaca | acrylic | blend",
+      "brand": "TODO: manufacturer",
+      "line": "TODO: yarn line",
+      "lot": "TODO: dye lot or batch id",
+      "weight": "TODO: e.g. 2/12 Nm",
+      "ply": null,
+      "color": "TODO: color",
+      "coneSource": "TODO: vendor + lot or batch id"
+    },
+    {
+      "carrier": "3",
+      "role": "pattern",
+      "name": "Orange — one strand 2/14 acrylic",
+      "fiber": "TODO: wool | cotton | alpaca | acrylic | blend",
+      "brand": "TODO: manufacturer",
+      "line": "TODO: yarn line",
+      "lot": "TODO: dye lot or batch id",
+      "weight": "TODO: e.g. 2/12 Nm",
+      "ply": null,
+      "color": "#172436",
+      "coneSource": "TODO: vendor + lot or batch id"
+    },
+    {
+      "carrier": "4",
+      "role": "pattern",
+      "name": "Grey — one strand 2/14 acrylic",
+      "fiber": "TODO: wool | cotton | alpaca | acrylic | blend",
+      "brand": "TODO: manufacturer",
+      "line": "TODO: yarn line",
+      "lot": "TODO: dye lot or batch id",
+      "weight": "TODO: e.g. 2/12 Nm",
+      "ply": null,
+      "color": "#E9DCA6",
+      "coneSource": "TODO: vendor + lot or batch id"
+    },
+    {
+      "carrier": "6",
+      "role": "waste",
+      "name": "TODO: waste",
+      "fiber": "TODO: wool | cotton | alpaca | acrylic | blend",
+      "brand": "TODO: manufacturer",
+      "line": "TODO: yarn line",
+      "lot": "TODO: dye lot or batch id",
+      "weight": "TODO: e.g. 2/12 Nm",
+      "ply": null,
+      "color": "TODO: color",
+      "coneSource": "TODO: vendor + lot or batch id"
+    }
+  ],
+  "tensionSwatch": {
+    "machineProfile": "kniterate-7gg-worsted-v1",
+    "structure": "TODO: tension-swatch structure",
+    "settings": {
+      "stitchNumber": 7,
+      "xferStitchNumber": 5,
+      "speedNumber": 200,
+      "rollerAdvance": 450,
+      "xferStyle": "four-pass",
+      "carrierSpacing": 2,
+      "carrierStoppingDistance": 2.5
+    },
+    "measuredBy": "TODO: who measured",
+    "measuredOn": "1970-01-01",
+    "measurements": {
+      "offMachine": {
+        "status": "not-performed",
+        "reason": "TODO: measure this stage or explain why it was not performed"
+      },
+      "rested24h": {
+        "status": "not-performed",
+        "reason": "TODO: measure this stage or explain why it was not performed"
+      },
+      "steamed": {
+        "status": "not-performed",
+        "reason": "TODO: measure this stage or explain why it was not performed"
+      },
+      "wetFinished": {
+        "status": "not-performed",
+        "reason": "TODO: measure this stage or explain why it was not performed"
+      }
+    },
+    "notes": "TODO: drape, hand, and weight observations"
+  }
+}

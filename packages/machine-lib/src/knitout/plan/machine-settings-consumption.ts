@@ -71,7 +71,7 @@ const MACHINE_SETTING_CONSUMPTION_RULES: readonly MachineSettingConsumptionRule[
   {
     prefix: 'fairisleCarrierIntro',
     consumedBy: 'floats fairisle carrier intro',
-    isActive: ({ input }) => input.backBedStyle === 'floats' && input.fairisleCarrierIntro !== undefined,
+    isActive: ({ input }) => (input.backBedStyle === 'floats' || (input.backBedStyle === 'birdseye' && input.dbjBackingStrategy === 'complement')) && input.fairisleCarrierIntro !== undefined,
   },
 ];
 

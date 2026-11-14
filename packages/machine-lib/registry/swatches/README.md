@@ -63,6 +63,28 @@ verification, interventions, section observations, stops, dimensions, and six
 photo receipts. `outcome.md` explains what happened but never supplies proof by
 prose parsing.
 
+Historical evidence may record unknown run times, loaded-file hash, manual-edit
+status and gauge-measurement date as `null`, and unobserved sections as
+`unknown`. Each blocks promotion. A copied-to-SD hash belongs in the issuance
+evidence; do not put it in `loadedKcodeSha256` without run confirmation. Empty
+stop/intervention arrays mean no events were recorded, not a verified zero.
+
+The fixed `kniterate-development-experiment` request currently supports only
+`reversible-mixed-paisley-21x81-v1`. It replays the historical experiment in
+process from the entry's bounded `motif.json` (21 × 81 binary cells), comparing
+both output files byte for byte. Stored command strings never execute.
+This request kind **cannot grant Knit-proven**, even with a clean run record.
+From a clean checkout, scaffold it with:
+
+```sh
+pnpm release:register -- mixed-paisley-baseline --experiment <issued-directory>
+```
+
+The directory must contain the original `program.k`, `program.kc` and
+`motif.json`. The ID fixes the generator options to `--wide21 --paisley
+--mixed-paisley`; it is not an arbitrary script runner. Complete the historical
+observations and retain their uncertainty before committing the entry.
+
 Generated authored artifacts retain the backend's actual placement offset and
 map compiler/project endpoints to marker-free KCode columns and normalized trace
 coordinates. The bridge is bound to the exact KCode SHA-256 and remains labeled
@@ -74,7 +96,7 @@ placement is a hard promotion block.
 
 ## Evidence invariants and limits
 
-All date-times must be valid RFC 3339 with an explicit zone: for example,
+Recorded date-times must be valid RFC 3339 with an explicit zone: for example,
 `2026-08-25T14:03:00Z` or `2026-08-25T07:03:00-07:00`. A local timestamp with
 no `Z` or numeric offset is invalid. Fractional seconds are allowed.
 `yarn.json.tensionSwatch.measuredOn` is the one date-only field and must be a

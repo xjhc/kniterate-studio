@@ -1,0 +1,2 @@
+Negative control: restored unswapped old edge column on first increase in BOTH source and plan, recompiled, ran verifier. Expected rejection: both newly empty rear needles are knitted by C3 (instead of old C4/new C3). Assertion failed at verify-reversible-right-edge.ts:43.
+Production candidate remains unchanged.

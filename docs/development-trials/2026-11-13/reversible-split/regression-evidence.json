@@ -1,0 +1,241 @@
+{
+  "matrixCasesUnchanged": 47,
+  "gate2Sha256": "fb2cb6adcfb4320992dcec26e8b80e0cbdcb905b4d25548780f20b04b5c24de5",
+  "files": [
+    {
+      "file": "beanie-birdseye.kc",
+      "before": "50166ff0f4be855c0d37ee88404f53effb8adb62b72ff51a327d67c40932c5a7",
+      "after": "50166ff0f4be855c0d37ee88404f53effb8adb62b72ff51a327d67c40932c5a7"
+    },
+    {
+      "file": "beanie-rib.kc",
+      "before": "871bfac1834616ec50771c08bb9350cd23eef9a0f46319d6ac1d57caff3aa2ea",
+      "after": "871bfac1834616ec50771c08bb9350cd23eef9a0f46319d6ac1d57caff3aa2ea"
+    },
+    {
+      "file": "beanie-toque.kc",
+      "before": "4d6cec6dc91288407f0fcb36530999444c97a56e6a406ce1f29a2464e356452b",
+      "after": "4d6cec6dc91288407f0fcb36530999444c97a56e6a406ce1f29a2464e356452b"
+    },
+    {
+      "file": "chart-birdseye-12.kc",
+      "before": "43e0b1d0c580c000451ca5f2e73412558b72b571b903726866392c62429ff975",
+      "after": "43e0b1d0c580c000451ca5f2e73412558b72b571b903726866392c62429ff975"
+    },
+    {
+      "file": "chart-birdseye-19.kc",
+      "before": "ee36875ca2c1a36e83b37a27265dfd16ca05ab86638ac8c70a6b921ebcd0b1c7",
+      "after": "ee36875ca2c1a36e83b37a27265dfd16ca05ab86638ac8c70a6b921ebcd0b1c7"
+    },
+    {
+      "file": "chart-birdseye-20.kc",
+      "before": "e99dfcf7f99a5ccd15203d650b48e3d989909dc5bd3bd72f8c86de77cf63f857",
+      "after": "e99dfcf7f99a5ccd15203d650b48e3d989909dc5bd3bd72f8c86de77cf63f857"
+    },
+    {
+      "file": "chart-birdseye-21.kc",
+      "before": "1dfc90203effda5f5b8698d8dec036fee05d75008039064f0ac47fb5a3115891",
+      "after": "1dfc90203effda5f5b8698d8dec036fee05d75008039064f0ac47fb5a3115891"
+    },
+    {
+      "file": "chart-birdseye-60.kc",
+      "before": "94cdca7aa48b73f8f76b7e2ac25ecdf5501672ac9255a6e1a2ef6deebd9e602d",
+      "after": "94cdca7aa48b73f8f76b7e2ac25ecdf5501672ac9255a6e1a2ef6deebd9e602d"
+    },
+    {
+      "file": "chart-birdseye-9.kc",
+      "before": "f4cd8c2e4ffc904d1d02fc44b8e9f69e4af699febd2fbe45e5b4fe765d70a094",
+      "after": "f4cd8c2e4ffc904d1d02fc44b8e9f69e4af699febd2fbe45e5b4fe765d70a094"
+    },
+    {
+      "file": "chart-complement-12.kc",
+      "before": "69d038f98d181871f2f5c0a90093505053ba67128caf9ea6eb22af36e35f71a7",
+      "after": "69d038f98d181871f2f5c0a90093505053ba67128caf9ea6eb22af36e35f71a7"
+    },
+    {
+      "file": "chart-complement-19.kc",
+      "before": "edddaa6f74445b7104875c6238986b8cbf39b30f0ca91bb2357756d4a6995b0c",
+      "after": "edddaa6f74445b7104875c6238986b8cbf39b30f0ca91bb2357756d4a6995b0c"
+    },
+    {
+      "file": "chart-complement-20.kc",
+      "before": "12305fbe90e335750ca75ec7d755bcdba9acbdf8e9974a0b73eea479ea38c3ab",
+      "after": "12305fbe90e335750ca75ec7d755bcdba9acbdf8e9974a0b73eea479ea38c3ab"
+    },
+    {
+      "file": "chart-complement-21.kc",
+      "before": "77aaaee89426a62455270c74c18269f7cab24ceb84cbdcd57b78e4e5d087d8f2",
+      "after": "77aaaee89426a62455270c74c18269f7cab24ceb84cbdcd57b78e4e5d087d8f2"
+    },
+    {
+      "file": "chart-complement-60.kc",
+      "before": "7379710c2abd849d1fd8b58f9ec9f714ed6a6de06fcfb32af2c954656e478e27",
+      "after": "7379710c2abd849d1fd8b58f9ec9f714ed6a6de06fcfb32af2c954656e478e27"
+    },
+    {
+      "file": "chart-complement-9.kc",
+      "before": "60e7f93b5118a9caa3b6aa8b968dbd0cb187d195dd955a916bb4d3df653489e6",
+      "after": "60e7f93b5118a9caa3b6aa8b968dbd0cb187d195dd955a916bb4d3df653489e6"
+    },
+    {
+      "file": "chart-fairisle-12.kc",
+      "before": "98e8a9723afc20dd4433241bb77a9ffecc0ec4f7c521ec15da53fac5ae0fb0ac",
+      "after": "98e8a9723afc20dd4433241bb77a9ffecc0ec4f7c521ec15da53fac5ae0fb0ac"
+    },
+    {
+      "file": "chart-fairisle-19.kc",
+      "before": "bdadbd069cc24c89f66c402535a32a1a1cad464bd207f5a18d895b2c88afb877",
+      "after": "bdadbd069cc24c89f66c402535a32a1a1cad464bd207f5a18d895b2c88afb877"
+    },
+    {
+      "file": "chart-fairisle-20.kc",
+      "before": "4510cbba02fd522ab3ac792e7506e5e6f205e731e32ed4d2b6ac1e70123c6206",
+      "after": "4510cbba02fd522ab3ac792e7506e5e6f205e731e32ed4d2b6ac1e70123c6206"
+    },
+    {
+      "file": "chart-fairisle-21.kc",
+      "before": "d0a8e7a081c6cfe7988d485818ebf8e13e5366a77f9dde6ffa6bd0bbcca5d533",
+      "after": "d0a8e7a081c6cfe7988d485818ebf8e13e5366a77f9dde6ffa6bd0bbcca5d533"
+    },
+    {
+      "file": "chart-fairisle-60.kc",
+      "before": "2722c74a2a4d8572a7474e705073cd9f8855e9b4820f8b1ea4731d18f5f13f49",
+      "after": "2722c74a2a4d8572a7474e705073cd9f8855e9b4820f8b1ea4731d18f5f13f49"
+    },
+    {
+      "file": "chart-fairisle-9.kc",
+      "before": "675e1f16df6e61b324134fcb629a9517f084350f1586c4189d0a7a6aa56bfd35",
+      "after": "675e1f16df6e61b324134fcb629a9517f084350f1586c4189d0a7a6aa56bfd35"
+    },
+    {
+      "file": "diamond-48.kc",
+      "before": "b197be8722b4b405397a8e7b89daaaa7597e47d6c6d6c726aa41739654a6e668",
+      "after": "b197be8722b4b405397a8e7b89daaaa7597e47d6c6d6c726aa41739654a6e668"
+    },
+    {
+      "file": "panel-narrow-panel.kc",
+      "before": "8b95ec6e9c810e266dc013399f5bc34453c8a3811c4b2f330e9c58101540f4af",
+      "after": "8b95ec6e9c810e266dc013399f5bc34453c8a3811c4b2f330e9c58101540f4af"
+    },
+    {
+      "file": "panel-scarf-panel.kc",
+      "before": "0b92d472b81129e30251124569b293ed5585168441b8217d0d4a6c05e1fa1520",
+      "after": "0b92d472b81129e30251124569b293ed5585168441b8217d0d4a6c05e1fa1520"
+    },
+    {
+      "file": "sweater-drop-shoulder-crew-back.kc",
+      "before": "b61ce1de7f40929a1a835b801a8983ec120202daeaeb8f75ec03f0264b0d2d5a",
+      "after": "b61ce1de7f40929a1a835b801a8983ec120202daeaeb8f75ec03f0264b0d2d5a"
+    },
+    {
+      "file": "sweater-drop-shoulder-crew-front.kc",
+      "before": "9059332af6e74f5ae62f40af1ccce00c78dd7c641d9275b10894d136944b9e9d",
+      "after": "9059332af6e74f5ae62f40af1ccce00c78dd7c641d9275b10894d136944b9e9d"
+    },
+    {
+      "file": "sweater-drop-shoulder-crew-neckband.kc",
+      "before": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca",
+      "after": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca"
+    },
+    {
+      "file": "sweater-drop-shoulder-crew-sleeve.kc",
+      "before": "387e166f619dd3a78e3cf3e73752f890575181bdb0ce45afb74726aa28987bb8",
+      "after": "387e166f619dd3a78e3cf3e73752f890575181bdb0ce45afb74726aa28987bb8"
+    },
+    {
+      "file": "sweater-j-sleeve-crew-back.kc",
+      "before": "eb0384bfb212022e55ef464ae4a8efadf307a290f00d5107e3e81666cdae2800",
+      "after": "eb0384bfb212022e55ef464ae4a8efadf307a290f00d5107e3e81666cdae2800"
+    },
+    {
+      "file": "sweater-j-sleeve-crew-front.kc",
+      "before": "f8b8122977f7302906303e6e2154dd457e5613d52540fb4516c95c3adc81ca81",
+      "after": "f8b8122977f7302906303e6e2154dd457e5613d52540fb4516c95c3adc81ca81"
+    },
+    {
+      "file": "sweater-j-sleeve-crew-neckband.kc",
+      "before": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca",
+      "after": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca"
+    },
+    {
+      "file": "sweater-j-sleeve-crew-sleeve.kc",
+      "before": "6190ab56e272eb4d7b2d90bb7e31637ddaf7a120b071954983fc71cfc66ca656",
+      "after": "6190ab56e272eb4d7b2d90bb7e31637ddaf7a120b071954983fc71cfc66ca656"
+    },
+    {
+      "file": "sweater-set-in-boat-back.kc",
+      "before": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680",
+      "after": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680"
+    },
+    {
+      "file": "sweater-set-in-boat-front.kc",
+      "before": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680",
+      "after": "f291f528434eb4f78d7958bf77814841790ba3596c05a6b31dfbf29374a5d680"
+    },
+    {
+      "file": "sweater-set-in-boat-sleeve.kc",
+      "before": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "after": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c"
+    },
+    {
+      "file": "sweater-set-in-crew-back.kc",
+      "before": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4",
+      "after": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4"
+    },
+    {
+      "file": "sweater-set-in-crew-front.kc",
+      "before": "7f513ab2880cc2729918b3176fb064c6253db9d3e82d8c08cd0def877aa391d5",
+      "after": "7f513ab2880cc2729918b3176fb064c6253db9d3e82d8c08cd0def877aa391d5"
+    },
+    {
+      "file": "sweater-set-in-crew-neckband.kc",
+      "before": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca",
+      "after": "47a488366aac3093428f9eab3011e784d728e364bf9bd5157fae9b971f5f5eca"
+    },
+    {
+      "file": "sweater-set-in-crew-sleeve.kc",
+      "before": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "after": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c"
+    },
+    {
+      "file": "sweater-set-in-square-back.kc",
+      "before": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4",
+      "after": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4"
+    },
+    {
+      "file": "sweater-set-in-square-front.kc",
+      "before": "c156f027754a7a19014512c69c084b498b9bebf83ad739e03655222c2d4bd1ba",
+      "after": "c156f027754a7a19014512c69c084b498b9bebf83ad739e03655222c2d4bd1ba"
+    },
+    {
+      "file": "sweater-set-in-square-neckband.kc",
+      "before": "bfab21efe29d96068d957ae943f035a5a38286a3929dce5359dc14a0a74e979a",
+      "after": "bfab21efe29d96068d957ae943f035a5a38286a3929dce5359dc14a0a74e979a"
+    },
+    {
+      "file": "sweater-set-in-square-sleeve.kc",
+      "before": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "after": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c"
+    },
+    {
+      "file": "sweater-set-in-v-back.kc",
+      "before": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4",
+      "after": "9503fd965030bbdd35661293ef6830a01d3640cfb0df67194311eda1b4ea91e4"
+    },
+    {
+      "file": "sweater-set-in-v-front.kc",
+      "before": "f30441ebd3fc6d419107a439316d9b354beafe15ede5a73a05f360be244b0bca",
+      "after": "f30441ebd3fc6d419107a439316d9b354beafe15ede5a73a05f360be244b0bca"
+    },
+    {
+      "file": "sweater-set-in-v-neckband.kc",
+      "before": "3be7cf8ac242040b26883f2038f471013d967d140b17d61f175c5019f75c3197",
+      "after": "3be7cf8ac242040b26883f2038f471013d967d140b17d61f175c5019f75c3197"
+    },
+    {
+      "file": "sweater-set-in-v-sleeve.kc",
+      "before": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c",
+      "after": "7b278466aa3395dc7ff6c97be35cee269f041e71e1a23eb65aeeb3f59d6d4f3c"
+    }
+  ]
+}

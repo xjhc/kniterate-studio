@@ -1,0 +1,34 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-development-experiment",
+  "sourceFingerprint": "2d1bcc786d063bc857fa8e2176d5ea1e4a49ebb99dc7621819469c34a712fbc8",
+  "compilerFingerprint": "57d539045cac6976942f3bbea3b3f3fa00e0bde8382ebc334f60573dead9b8f7",
+  "knitoutSha256": "973205474e801d115b9305097b2aae3b9cd3a86ed73896f075d9ac2d4c65b0e8",
+  "kcodeSha256": "0be718de93c415b51ccb859d013a5578f4ff8c2e8cfffc0ce4bd380ee495acd3",
+  "emitterCommit": "12e22cd39b8f05ae484aa71fedd31fa3c5a545e5",
+  "compiledAt": "2026-11-13T19:34:21.374Z",
+  "studioVersion": "1.0.0-rc.1",
+  "compileResultOk": true,
+  "request": {
+    "path": "request.json",
+    "reemitCommand": "node --import tsx scripts/experiments/reversible-right-edge-swatch.ts <directory> --wide21 --paisley --mixed-paisley"
+  },
+  "reemitCheck": {
+    "status": "not-run",
+    "checkedAt": null,
+    "currentCommit": null,
+    "notes": "Historical operator note only. The registry checker independently recompiles and byte-compares current out.k/out.kc in-process."
+  },
+  "compileMessages": [],
+  "planSummary": {
+    "technique": "complement",
+    "coordinateSystem": "compiler/project coordinates mapped to exact KCode/trace coordinates; physical needle labels unverified",
+    "compilerCoordinateStart": 119,
+    "compilerCoordinateEnd": 139,
+    "rows": 81,
+    "wastePasses": 80,
+    "bindOff": "waste-and-drop",
+    "profile": "kniterate-7gg-worsted-v1"
+  },
+  "notes": "Fixed experimental replay; baseline evidence only, never eligible for Knit-proven. emitterCommit identifies this registration replay, not an independently confirmed original machine run. Original issuance and photographed-sample association are recorded separately in provenance.json; unknown observations are not promoted into run facts."
+}

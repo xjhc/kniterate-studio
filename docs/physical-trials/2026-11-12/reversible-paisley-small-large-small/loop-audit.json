@@ -1,0 +1,106 @@
+{
+  "kind": "kniterate-studio-audit",
+  "ok": true,
+  "files": [
+    {
+      "file": "../reversible-paisley-small-large-small/program.kc",
+      "source": "file",
+      "passCount": 494,
+      "kcodeSha256": "e813b6461f96678f22302292113d0783154369695e904b814090ebeb7f2731b3",
+      "yarnRoles": {
+        "waste": "6",
+        "draw": "1"
+      },
+      "sections": [
+        "waste 1-104",
+        "draw 105-106",
+        "cast-on 107-110",
+        "body 111-468",
+        "top 469-486",
+        "carriers-out 487-494"
+      ],
+      "sectionSource": "automatic",
+      "ok": true,
+      "summary": "start-hold 6/12 ok, waste-through-body-loops 0/0 ok, unsupported-body-drops 0/0 ok, loops-left 0/1 ok, max-stack 2/3 ok, inside-empty-front-knits 0 ok",
+      "checks": [
+        {
+          "id": "start-hold",
+          "severity": "issue",
+          "ok": true,
+          "value": 6,
+          "limit": 12,
+          "meaning": "The longest a loop made in the start (waste yarn, yarn catches, draw thread) waits before a stitch is knitted through it. A long-held loop is pulled by the rollers the whole time; handoff 2 held one for 90 passes at the corner where the main yarn broke.",
+          "kniterate": "fairisle, jacquard, dbj, the swatches, the baby beanie and the sophie samples wait at most 5 passes, 2x2-rib-beanie 7; the reversible sleeves.kc holds one rear edge loop 75.",
+          "at": [
+            "f125 from pass 2 (c6) to 8 (c6)"
+          ]
+        },
+        {
+          "id": "waste-through-body-loops",
+          "severity": "issue",
+          "ok": true,
+          "value": 0,
+          "limit": 0,
+          "meaning": "The waste yarn or draw thread knits through two or more loops that include body yarn: the body's loops are joined only by yarn that is removed, and come off the machine live (a two-layer top without its joining row).",
+          "kniterate": "None of Kniterate's reference files does this."
+        },
+        {
+          "id": "unsupported-body-drops",
+          "severity": "issue",
+          "ok": true,
+          "value": 0,
+          "limit": 0,
+          "meaning": "Body-yarn loops dropped from the needles without a waste row knitted through them first, so they can ladder. A chain bind-off's last loop is not counted.",
+          "kniterate": "fairisle, jacquard, dbj, the swatches, the baby beanie and the sophie samples drop none; 2x2-rib-beanie.kc releases its 25 crown loops for gathering by hand, and the reversible front.kc and back.kc release each shoulder live (59 loops). Studio ends on waste yarn instead."
+        },
+        {
+          "id": "loops-left",
+          "severity": "issue",
+          "ok": true,
+          "value": 0,
+          "limit": 1,
+          "meaning": "Loops still on the needles when the file ends (one is a chain bind-off's last loop, finished by hand).",
+          "kniterate": "Most of Kniterate's files leave none; color-swatch-bindoff.kc and sophie_stripe.kc leave a chain's last loop, sophie2.kc 12."
+        },
+        {
+          "id": "max-stack",
+          "severity": "issue",
+          "ok": true,
+          "value": 2,
+          "limit": 3,
+          "meaning": "The most loops on one needle at once.",
+          "kniterate": "Kniterate's files stack at most 3; its app warns about more than 2 parents and advises never more than 4.",
+          "at": [
+            "pass 303 b136"
+          ]
+        },
+        {
+          "id": "inside-empty-front-knits",
+          "severity": "note",
+          "ok": true,
+          "value": 0,
+          "limit": null,
+          "meaning": "A body yarn knits a front needle that holds no loop while both neighbours do: a small eyelet in the face. Fashioned increases do this on purpose; anywhere else it is a hole.",
+          "kniterate": "The sophie samples do it 48 to 58 times at their fashioned increases; Kniterate's unshaped files never."
+        }
+      ],
+      "longestHolds": [
+        "14 passes on f127: made by c3 at pass 132 (body), knitted by c4 at 146",
+        "14 passes on b118: made by c3 at pass 132 (body), knitted by c4 at 146",
+        "14 passes on f129: made by c3 at pass 162 (body), knitted by c4 at 176",
+        "14 passes on f122: made by c3 at pass 162 (body), knitted by c4 at 176",
+        "14 passes on b118: made by c3 at pass 162 (body), knitted by c4 at 176"
+      ],
+      "emptyNeedleKnits": {
+        "front": {
+          "edge": 0,
+          "inside": 0
+        },
+        "rear": {
+          "edge": 20,
+          "inside": 12
+        }
+      }
+    }
+  ]
+}

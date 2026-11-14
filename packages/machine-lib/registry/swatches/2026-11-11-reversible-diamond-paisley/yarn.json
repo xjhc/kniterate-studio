@@ -1,0 +1,93 @@
+{
+  "$schema": "../_schema.json",
+  "kind": "kniterate-yarn-evidence-v1",
+  "schemaVersion": 1,
+  "yarns": [
+    {
+      "carrier": "1",
+      "role": "draw",
+      "name": "Existing thin draw thread",
+      "fiber": "not recorded",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "weight": "not recorded",
+      "ply": 1,
+      "color": "not recorded",
+      "coneSource": "not recorded"
+    },
+    {
+      "carrier": "3",
+      "role": "pattern",
+      "name": "Orange 2/14 acrylic",
+      "fiber": "acrylic",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "weight": "2/14",
+      "ply": 1,
+      "color": "#DF610B",
+      "coneSource": "not recorded"
+    },
+    {
+      "carrier": "4",
+      "role": "pattern",
+      "name": "Grey 2/14 acrylic",
+      "fiber": "acrylic",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "weight": "2/14",
+      "ply": 1,
+      "color": "#888A89",
+      "coneSource": "not recorded"
+    },
+    {
+      "carrier": "6",
+      "role": "waste",
+      "name": "Previous waste pair, two strands of 2/30",
+      "fiber": "not recorded",
+      "brand": "not recorded",
+      "line": "not recorded",
+      "lot": "not recorded",
+      "weight": "2/30",
+      "ply": 2,
+      "color": "not recorded",
+      "coneSource": "not recorded"
+    }
+  ],
+  "tensionSwatch": {
+    "machineProfile": "kniterate-7gg-worsted-v1",
+    "structure": "not recorded",
+    "settings": {
+      "stitchNumber": 7,
+      "xferStitchNumber": 5,
+      "speedNumber": 200,
+      "rollerAdvance": 450,
+      "xferStyle": "four-pass",
+      "carrierSpacing": 2,
+      "carrierStoppingDistance": 2.5
+    },
+    "measuredBy": "not recorded",
+    "measuredOn": "2026-11-11",
+    "measurements": {
+      "offMachine": {
+        "status": "not-performed",
+        "reason": "not recorded"
+      },
+      "rested24h": {
+        "status": "not-performed",
+        "reason": "not recorded"
+      },
+      "steamed": {
+        "status": "not-performed",
+        "reason": "not recorded"
+      },
+      "wetFinished": {
+        "status": "not-performed",
+        "reason": "not recorded"
+      }
+    },
+    "notes": "No gauge measured for this diamond. Earlier rectangle measurements must not be reused as this specimen\u2019s measurements. Ply fields record strands fed here, not confirmed yarn construction. The measuredOn date is evidence-record date only; no measurement occurred. Machine/run dates use report-day bounds because the schema requires dates."
+  }
+}
