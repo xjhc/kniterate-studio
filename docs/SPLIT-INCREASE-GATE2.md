@@ -2,9 +2,13 @@
 
 The operator fork at `da30721363879cd183fefe2968aac5d952ebb813` is integrated
 on `accumulate`, with its successful cast-on and historical trials preserved.
-Gate 2's independent review passed the swatch's software checks. The remaining
-handoff condition is confirmation of the same actual orange yarn. No file has
-been sent to the operator, pushed, posted to #18 or knitted in this work package.
+Gate 2's independent review passed the swatch's software checks. On 13 November
+2026 the single-bed package was [posted to #18](https://github.com/xjhc/kniterate-studio/issues/18#issuecomment-6868628611),
+with [files in a secret gist](https://gist.github.com/xjhc/e1761c44a79473647020f48b30c386d5).
+All four downloaded files match this committed package byte for byte. The
+post asks the operator to use the same actual orange cone as the successful
+12 November edge swatch and record its identity. The yarn confirmation and
+physical knit are still outstanding; the reversible files were not posted.
 
 ## Candidate
 
@@ -126,4 +130,5 @@ The final proof reports `software-proven` with 3,268/3,268 mutants killed.
 `pnpm verify` passes and reports `software-proven · receipt current`; Chromium
 passes 54/54 tests. `git diff --check` is clean. These are software results,
 not physical machine acceptance. Gate 2 review subsequently passed; the
-unchanged swatch's yarn confirmation and physical knit remain outstanding.
+unchanged swatch has since been posted, with yarn confirmation and its physical
+knit still outstanding.

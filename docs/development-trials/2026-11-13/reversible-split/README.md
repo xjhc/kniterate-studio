@@ -1,7 +1,7 @@
 # Gate 3 outward-first comparison — implementation review
 
-**Local software evidence only. These files are held for review, not released
-to the operator.** The user approved outward-first and its mirror, then approved
+**Implementation review passed on 13 November 2026; local software evidence
+only. These files remain held, not released to the operator.** The user approved outward-first and its mirror, then approved
 two short files, each intended to be knitted twice. The single-bed Gate 2
 swatch must knit successfully before any reversible split file is sent.
 
@@ -40,6 +40,11 @@ There are two ordinary cycles between events and three after the last event.
 Both starts use the repaired common two-bed frame at the full eventual width,
 with different documented lead-in edge colours to establish P at the named
 side. They do not use the single-bed swatch's cast-on.
+
+**The start is also unknitted:** unlike the recorded paisley start, it uses
+24-needle waste/draw around a 20-needle cast-on, drops four outer draw loops
+at pass 107, and parks C1/C6 within their last passes rather than separate
+moves; record a start fault separately from an increase fault.
 
 ## Loop and yarn changes to review
 
@@ -138,14 +143,18 @@ The 522-pass baseline also re-emits byte for byte. Full proof and repository
 verification results are recorded in [verification.md](verification.md);
 the current proof receipt, not a static claim here, governs software status.
 
-## Stop for review
+## Implementation review passed; physical hold remains
 
-Review the emitted schedules, both P/Q loop ledgers, mirrored feeder stops,
-terminal split placements, and take-down encoding. The [observation form](observations.md)
+The reviewer reproduced both hashes, checked the first increase's raw needle
+rows on each side, checked the second increase from the pass lists, and passed
+both loop audits. The simulator fix was read but not independently re-tested;
+the matrix, full verification and browser results were accepted from the
+existing receipt and implementation report. The [observation form](observations.md)
 is blank and prepared for a later authorized trial: left ×2 and right ×2.
 It distinguishes the candidate and control, both faces, both colour phases,
 terminal split operation, edge joining and take-down effects.
 
-Approval of the implementation review does not by itself settle the Gate 2
-physical dependency or actual yarn setup. No file has been sent to the
-operator; nothing is Knit-proven. No push or issue post is part of this work.
+The [single-bed swatch is posted to #18](https://github.com/xjhc/kniterate-studio/issues/18#issuecomment-6868628611).
+Implementation approval does not settle that physical dependency or actual
+yarn setup. No reversible file has been sent to the operator; nothing is
+Knit-proven. Publishing the repository is not authorization to knit these files.

@@ -27,11 +27,21 @@ O/I comparison and eight-case schedule below remain design history.
    450 on each main yarn pass and 0 on extra fragments for this trial;
    this is acceptance of the plan, not physical qualification.
 
-Implementation may now proceed locally and must stop with the generated
-comparison package for review. No operator handoff, push or issue post is
-authorized. Do not add more experiment-specific registry tooling. The
+The initial approval allowed local implementation followed by review of the
+generated comparison package; it did not authorize an operator handoff, push
+or issue post. Do not add more experiment-specific registry tooling. The
 reviewer did not review the separate diamond repair or baseline tooling
 beyond its promotion guard; this approval does not extend that evidence.
+
+**Implementation review update, 13 November 2026:** the two generated files
+passed review, including reproducibility, the first increase's raw needle rows
+on both sides, the second increase's pass lists and both loop audits. The
+simulator fix was read, not independently re-tested; the reviewer relied on
+the existing matrix, full verification and browser evidence. The single-bed
+swatch is now posted to #18. The user has authorized branch publication and
+merge, but the reversible files stay held until that swatch has knitted and
+the user releases the next trial. Their revised start is also unknitted;
+see the [comparison package](development-trials/2026-11-13/reversible-split/README.md).
 
 **Implementation scheduling finding:** after O, the candidate's outer front
 is B and A is opposite it. Every normal cycle flips both colour and carrier
