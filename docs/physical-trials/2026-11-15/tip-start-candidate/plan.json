@@ -1,0 +1,1201 @@
+{
+  "lo": 119,
+  "rows": [
+    {
+      "id": 1,
+      "section": "starter",
+      "row": 1,
+      "width": 8,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 2,
+      "section": "starter",
+      "row": 2,
+      "width": 8,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 3,
+      "section": "starter",
+      "row": 3,
+      "width": 8,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 4,
+      "section": "starter",
+      "row": 4,
+      "width": 7,
+      "kind": "decrease",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 5,
+      "section": "starter",
+      "row": 5,
+      "width": 7,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 6,
+      "section": "starter",
+      "row": 6,
+      "width": 7,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 7,
+      "section": "starter",
+      "row": 7,
+      "width": 6,
+      "kind": "decrease",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 8,
+      "section": "starter",
+      "row": 8,
+      "width": 6,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 9,
+      "section": "starter",
+      "row": 9,
+      "width": 6,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 10,
+      "section": "starter",
+      "row": 10,
+      "width": 5,
+      "kind": "decrease",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 11,
+      "section": "starter",
+      "row": 11,
+      "width": 5,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 12,
+      "section": "starter",
+      "row": 12,
+      "width": 5,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 13,
+      "section": "starter",
+      "row": 13,
+      "width": 4,
+      "kind": "decrease",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 14,
+      "section": "starter",
+      "row": 14,
+      "width": 4,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 15,
+      "section": "starter",
+      "row": 15,
+      "width": 4,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 16,
+      "section": "starter",
+      "row": 16,
+      "width": 3,
+      "kind": "decrease",
+      "front": [
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 17,
+      "section": "starter",
+      "row": 17,
+      "width": 3,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 18,
+      "section": "starter",
+      "row": 18,
+      "width": 3,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 19,
+      "section": "starter",
+      "row": 19,
+      "width": 2,
+      "kind": "decrease",
+      "front": [
+        "3",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 20,
+      "section": "starter",
+      "row": 20,
+      "width": 2,
+      "kind": "plain",
+      "front": [
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 21,
+      "section": "starter",
+      "row": 21,
+      "width": 2,
+      "kind": "half",
+      "front": [
+        "3",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3"
+      ]
+    },
+    {
+      "id": 22,
+      "section": "piece",
+      "row": 1,
+      "width": 2,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 23,
+      "section": "piece",
+      "row": 2,
+      "width": 2,
+      "kind": "plain",
+      "front": [
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 24,
+      "section": "piece",
+      "row": 3,
+      "width": 2,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 25,
+      "section": "piece",
+      "row": 4,
+      "width": 3,
+      "kind": "growth",
+      "front": [
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": 120,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 26,
+      "section": "piece",
+      "row": 5,
+      "width": 3,
+      "kind": "completion",
+      "front": [
+        "3",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 27,
+      "section": "piece",
+      "row": 6,
+      "width": 3,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 28,
+      "section": "piece",
+      "row": 7,
+      "width": 4,
+      "kind": "growth",
+      "front": [
+        "3",
+        "4",
+        "3",
+        "3"
+      ],
+      "emptyRear": 121,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 29,
+      "section": "piece",
+      "row": 8,
+      "width": 4,
+      "kind": "completion",
+      "front": [
+        "4",
+        "4",
+        "3",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 30,
+      "section": "piece",
+      "row": 9,
+      "width": 4,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 31,
+      "section": "piece",
+      "row": 10,
+      "width": 5,
+      "kind": "growth",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": 122,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 32,
+      "section": "piece",
+      "row": 11,
+      "width": 5,
+      "kind": "completion",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 33,
+      "section": "piece",
+      "row": 12,
+      "width": 5,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 34,
+      "section": "piece",
+      "row": 13,
+      "width": 6,
+      "kind": "growth",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "3",
+        "3"
+      ],
+      "emptyRear": 123,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 35,
+      "section": "piece",
+      "row": 14,
+      "width": 6,
+      "kind": "completion",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "3",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 36,
+      "section": "piece",
+      "row": 15,
+      "width": 6,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 37,
+      "section": "piece",
+      "row": 16,
+      "width": 7,
+      "kind": "growth",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": 124,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 38,
+      "section": "piece",
+      "row": 17,
+      "width": 7,
+      "kind": "completion",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 39,
+      "section": "piece",
+      "row": 18,
+      "width": 7,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 40,
+      "section": "piece",
+      "row": 19,
+      "width": 8,
+      "kind": "growth",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3",
+        "3"
+      ],
+      "emptyRear": 125,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 41,
+      "section": "piece",
+      "row": 20,
+      "width": 8,
+      "kind": "completion",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 42,
+      "section": "piece",
+      "row": 21,
+      "width": 8,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 43,
+      "section": "piece",
+      "row": 22,
+      "width": 8,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 44,
+      "section": "piece",
+      "row": 23,
+      "width": 8,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 45,
+      "section": "piece",
+      "row": 24,
+      "width": 8,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 46,
+      "section": "piece",
+      "row": 25,
+      "width": 7,
+      "kind": "decrease",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 47,
+      "section": "piece",
+      "row": 26,
+      "width": 7,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 48,
+      "section": "piece",
+      "row": 27,
+      "width": 7,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 49,
+      "section": "piece",
+      "row": 28,
+      "width": 6,
+      "kind": "decrease",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 50,
+      "section": "piece",
+      "row": 29,
+      "width": 6,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 51,
+      "section": "piece",
+      "row": 30,
+      "width": 6,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 52,
+      "section": "piece",
+      "row": 31,
+      "width": 5,
+      "kind": "decrease",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 53,
+      "section": "piece",
+      "row": 32,
+      "width": 5,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 54,
+      "section": "piece",
+      "row": 33,
+      "width": 5,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 55,
+      "section": "piece",
+      "row": 34,
+      "width": 4,
+      "kind": "decrease",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 56,
+      "section": "piece",
+      "row": 35,
+      "width": 4,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 57,
+      "section": "piece",
+      "row": 36,
+      "width": 4,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 58,
+      "section": "piece",
+      "row": 37,
+      "width": 3,
+      "kind": "decrease",
+      "front": [
+        "3",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 59,
+      "section": "piece",
+      "row": 38,
+      "width": 3,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 60,
+      "section": "piece",
+      "row": 39,
+      "width": 3,
+      "kind": "plain",
+      "front": [
+        "3",
+        "4",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 61,
+      "section": "piece",
+      "row": 40,
+      "width": 2,
+      "kind": "decrease",
+      "front": [
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    },
+    {
+      "id": 62,
+      "section": "piece",
+      "row": 41,
+      "width": 2,
+      "kind": "plain",
+      "front": [
+        "3",
+        "3"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "4",
+        "3"
+      ]
+    },
+    {
+      "id": 63,
+      "section": "piece",
+      "row": 42,
+      "width": 2,
+      "kind": "plain",
+      "front": [
+        "4",
+        "4"
+      ],
+      "emptyRear": null,
+      "knits": [
+        "3",
+        "4"
+      ]
+    }
+  ]
+}

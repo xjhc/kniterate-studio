@@ -1,0 +1,611 @@
+{
+  "passed": true,
+  "sha256": "3ea65875e829afc7b406a6a12d3270cc33e16c6f498af6c921dab04ef357b5c1",
+  "bytes": 458343,
+  "passes": 378,
+  "starterRows": 21,
+  "pieceRows": 42,
+  "neckPasses": [
+    168,
+    169,
+    170,
+    171,
+    172,
+    173,
+    174
+  ],
+  "firstBodyPass": 115,
+  "lastBodyPass": 349,
+  "events": [
+    {
+      "row": 4,
+      "section": "starter",
+      "kind": "decrease",
+      "width": 7,
+      "passes": [
+        121,
+        122,
+        123,
+        124
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 7,
+      "section": "starter",
+      "kind": "decrease",
+      "width": 6,
+      "passes": [
+        129,
+        130,
+        131,
+        132
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 10,
+      "section": "starter",
+      "kind": "decrease",
+      "width": 5,
+      "passes": [
+        137,
+        138,
+        139,
+        140
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 13,
+      "section": "starter",
+      "kind": "decrease",
+      "width": 4,
+      "passes": [
+        145,
+        146,
+        147,
+        148
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 16,
+      "section": "starter",
+      "kind": "decrease",
+      "width": 3,
+      "passes": [
+        153,
+        154,
+        155,
+        156
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 19,
+      "section": "starter",
+      "kind": "decrease",
+      "width": 2,
+      "passes": [
+        161,
+        162,
+        163,
+        164
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 21,
+      "section": "starter",
+      "kind": "half",
+      "width": 2,
+      "passes": [
+        167
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 25,
+      "section": "piece",
+      "kind": "growth",
+      "width": 3,
+      "passes": [
+        181,
+        182,
+        183,
+        184,
+        185,
+        186
+      ],
+      "splitPasses": [
+        185
+      ]
+    },
+    {
+      "row": 26,
+      "section": "piece",
+      "kind": "completion",
+      "width": 3,
+      "passes": [
+        187,
+        188,
+        189,
+        190,
+        191,
+        192,
+        193
+      ],
+      "splitPasses": [
+        190
+      ]
+    },
+    {
+      "row": 28,
+      "section": "piece",
+      "kind": "growth",
+      "width": 4,
+      "passes": [
+        196,
+        197,
+        198,
+        199,
+        200,
+        201,
+        202
+      ],
+      "splitPasses": [
+        201
+      ]
+    },
+    {
+      "row": 29,
+      "section": "piece",
+      "kind": "completion",
+      "width": 4,
+      "passes": [
+        203,
+        204,
+        205,
+        206,
+        207,
+        208,
+        209
+      ],
+      "splitPasses": [
+        206
+      ]
+    },
+    {
+      "row": 31,
+      "section": "piece",
+      "kind": "growth",
+      "width": 5,
+      "passes": [
+        212,
+        213,
+        214,
+        215,
+        216
+      ],
+      "splitPasses": [
+        215
+      ]
+    },
+    {
+      "row": 32,
+      "section": "piece",
+      "kind": "completion",
+      "width": 5,
+      "passes": [
+        217,
+        218,
+        219,
+        220,
+        221,
+        222,
+        223
+      ],
+      "splitPasses": [
+        220
+      ]
+    },
+    {
+      "row": 34,
+      "section": "piece",
+      "kind": "growth",
+      "width": 6,
+      "passes": [
+        226,
+        227,
+        228,
+        229,
+        230,
+        231,
+        232
+      ],
+      "splitPasses": [
+        231
+      ]
+    },
+    {
+      "row": 35,
+      "section": "piece",
+      "kind": "completion",
+      "width": 6,
+      "passes": [
+        233,
+        234,
+        235,
+        236,
+        237,
+        238,
+        239
+      ],
+      "splitPasses": [
+        236
+      ]
+    },
+    {
+      "row": 37,
+      "section": "piece",
+      "kind": "growth",
+      "width": 7,
+      "passes": [
+        242,
+        243,
+        244,
+        245,
+        246
+      ],
+      "splitPasses": [
+        245
+      ]
+    },
+    {
+      "row": 38,
+      "section": "piece",
+      "kind": "completion",
+      "width": 7,
+      "passes": [
+        247,
+        248,
+        249,
+        250,
+        251,
+        252,
+        253
+      ],
+      "splitPasses": [
+        250
+      ]
+    },
+    {
+      "row": 40,
+      "section": "piece",
+      "kind": "growth",
+      "width": 8,
+      "passes": [
+        256,
+        257,
+        258,
+        259,
+        260,
+        261,
+        262
+      ],
+      "splitPasses": [
+        261
+      ]
+    },
+    {
+      "row": 41,
+      "section": "piece",
+      "kind": "completion",
+      "width": 8,
+      "passes": [
+        263,
+        264,
+        265,
+        266,
+        267,
+        268,
+        269
+      ],
+      "splitPasses": [
+        266
+      ]
+    },
+    {
+      "row": 46,
+      "section": "piece",
+      "kind": "decrease",
+      "width": 7,
+      "passes": [
+        278,
+        279,
+        280,
+        281,
+        282,
+        283,
+        284,
+        285
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 49,
+      "section": "piece",
+      "kind": "decrease",
+      "width": 6,
+      "passes": [
+        290,
+        291,
+        292,
+        293,
+        294,
+        295,
+        296,
+        297
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 52,
+      "section": "piece",
+      "kind": "decrease",
+      "width": 5,
+      "passes": [
+        302,
+        303,
+        304,
+        305,
+        306,
+        307,
+        308,
+        309
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 55,
+      "section": "piece",
+      "kind": "decrease",
+      "width": 4,
+      "passes": [
+        314,
+        315,
+        316,
+        317,
+        318,
+        319,
+        320,
+        321
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 58,
+      "section": "piece",
+      "kind": "decrease",
+      "width": 3,
+      "passes": [
+        326,
+        327,
+        328,
+        329,
+        330,
+        331,
+        332,
+        333
+      ],
+      "splitPasses": []
+    },
+    {
+      "row": 61,
+      "section": "piece",
+      "kind": "decrease",
+      "width": 2,
+      "passes": [
+        338,
+        339,
+        340,
+        341,
+        342,
+        343,
+        344,
+        345
+      ],
+      "splitPasses": []
+    }
+  ],
+  "advisories": {
+    "schemaVersion": 1,
+    "maxFloatDistance": 7,
+    "counts": {
+      "machine-advisory.float-distance": 0
+    },
+    "advisories": []
+  },
+  "audit": {
+    "passCount": 378,
+    "roles": {
+      "waste": "6",
+      "draw": "1"
+    },
+    "startEnd": 114,
+    "ok": true,
+    "checks": [
+      {
+        "id": "start-hold",
+        "severity": "issue",
+        "ok": true,
+        "value": 7,
+        "limit": 12,
+        "meaning": "The longest a loop made in the start (waste yarn, yarn catches, draw thread) waits before a stitch is knitted through it. A long-held loop is pulled by the rollers the whole time; handoff 2 held one for 90 passes at the corner where the main yarn broke.",
+        "kniterate": "fairisle, jacquard, dbj, the swatches, the baby beanie and the sophie samples wait at most 5 passes, 2x2-rib-beanie 7; the reversible sleeves.kc holds one rear edge loop 75.",
+        "at": [
+          "f125 from pass 109 (c3) to 116 (c4)"
+        ]
+      },
+      {
+        "id": "waste-through-body-loops",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 0,
+        "meaning": "The waste yarn or draw thread knits through two or more loops that include body yarn: the body's loops are joined only by yarn that is removed, and come off the machine live (a two-layer top without its joining row).",
+        "kniterate": "None of Kniterate's reference files does this."
+      },
+      {
+        "id": "unsupported-body-drops",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 0,
+        "meaning": "Body-yarn loops dropped from the needles without a waste row knitted through them first, so they can ladder. A chain bind-off's last loop is not counted.",
+        "kniterate": "fairisle, jacquard, dbj, the swatches, the baby beanie and the sophie samples drop none; 2x2-rib-beanie.kc releases its 25 crown loops for gathering by hand, and the reversible front.kc and back.kc release each shoulder live (59 loops). Studio ends on waste yarn instead."
+      },
+      {
+        "id": "loops-left",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 1,
+        "meaning": "Loops still on the needles when the file ends (one is a chain bind-off's last loop, finished by hand).",
+        "kniterate": "Most of Kniterate's files leave none; color-swatch-bindoff.kc and sophie_stripe.kc leave a chain's last loop, sophie2.kc 12."
+      },
+      {
+        "id": "max-stack",
+        "severity": "issue",
+        "ok": true,
+        "value": 2,
+        "limit": 3,
+        "meaning": "The most loops on one needle at once.",
+        "kniterate": "Kniterate's files stack at most 3; its app warns about more than 2 parents and advises never more than 4.",
+        "at": [
+          "pass 121 b124"
+        ]
+      },
+      {
+        "id": "idle-feeder-moves",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 0,
+        "meaning": "Carriage passes that only push the waste or draw feeder aside while the piece is being knitted. A feeder parked inside the width the piece later reaches is moved again at every increase: each move is an extra carriage pass, and issue #18 reports the machine stopping (clump sensor) during them.",
+        "kniterate": "None of Kniterate's reference files moves either feeder after the start; the widening sleeves.kc sends both to the left home on their last start rows."
+      },
+      {
+        "id": "movement-per-knit",
+        "severity": "issue",
+        "ok": true,
+        "value": 0.41,
+        "limit": 1.5,
+        "meaning": "Carriage passes that knit and transfer nothing, for each pass that knits, from the end of the start to the piece's last row (60 movement-only, 145 knitting, 30 transfer passes). The carriage fetches one feeder at a time, so some are needed; many more than Kniterate's files means feeders are being shuffled, which costs time and is where issue #18's stops happened.",
+        "kniterate": "The reversible front.kc is the busiest at 1.48; back.kc 0.98, sleeves.kc 0.94; every other reference file is at or under 0.49."
+      },
+      {
+        "id": "paired-empty-knits",
+        "severity": "issue",
+        "ok": true,
+        "value": 0,
+        "limit": 0,
+        "meaning": "A body yarn knits two or more neighbouring empty needles in one pass, among needles that already hold loops. Neighbouring empty needles cannot form stitches from one strand: the yarn lies across them as a float and leaves a hole (the open increases reported on issue #18).",
+        "kniterate": "None of Kniterate's reference files does this outside a cast-on row. Its reversible increase gives each of the two empty needles to a different yarn, in separate passes."
+      },
+      {
+        "id": "inside-empty-front-knits",
+        "severity": "note",
+        "ok": true,
+        "value": 0,
+        "limit": null,
+        "meaning": "A body yarn knits a front needle that holds no loop while both neighbours do: a small eyelet in the face. Fashioned increases do this on purpose; anywhere else it is a hole.",
+        "kniterate": "The sophie samples do it 48 to 58 times at their fashioned increases; Kniterate's unshaped files never."
+      }
+    ],
+    "longestHolds": [
+      {
+        "passes": 10,
+        "needle": "f118",
+        "from": {
+          "pass": 199,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 209,
+          "carrier": "4"
+        },
+        "section": "body"
+      },
+      {
+        "passes": 10,
+        "needle": "b120",
+        "from": {
+          "pass": 199,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 209,
+          "carrier": "4"
+        },
+        "section": "body"
+      },
+      {
+        "passes": 10,
+        "needle": "f118",
+        "from": {
+          "pass": 229,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 239,
+          "carrier": "4"
+        },
+        "section": "body"
+      },
+      {
+        "passes": 10,
+        "needle": "b122",
+        "from": {
+          "pass": 229,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 239,
+          "carrier": "4"
+        },
+        "section": "body"
+      },
+      {
+        "passes": 10,
+        "needle": "f118",
+        "from": {
+          "pass": 259,
+          "carrier": "3"
+        },
+        "to": {
+          "pass": 269,
+          "carrier": "4"
+        },
+        "section": "body"
+      }
+    ],
+    "work": {
+      "knitting": 145,
+      "transfers": 30,
+      "movementOnly": 60
+    },
+    "emptyNeedleKnits": {
+      "front": {
+        "edge": 0,
+        "inside": 0
+      },
+      "rear": {
+        "edge": 8,
+        "inside": 0
+      }
+    }
+  },
+  "physicalValidation": false
+}
