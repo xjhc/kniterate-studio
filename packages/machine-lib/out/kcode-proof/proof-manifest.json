@@ -30941,7 +30941,7 @@
     ]
   },
   "contract": {
-    "sha256": "a8e886ccde6e2724d6e58a047efa7fb5987d10dd47390d41a5099faf621788b2",
+    "sha256": "d87aed0085d4d5d6a5f6874c70dde446c4ecb8b312b15f3d23ce1f37c0b412b9",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31919,6 +31919,16 @@
         "bytes": 19705
       },
       {
+        "path": "../../scripts/experiments/colour-preserving-increase.test.ts",
+        "sha256": "d340dc21ca02cdb2ceb333e414d5db487bc18660eb87faae41d94e22e1fccb7a",
+        "bytes": 1803
+      },
+      {
+        "path": "../../scripts/experiments/colour-preserving-increase.ts",
+        "sha256": "6cd5f5e0040ee80d234bc44fd57c44de070624b9ab2a0f1b4213d4d499cc2de9",
+        "bytes": 5901
+      },
+      {
         "path": "../../scripts/experiments/draw-edge-paisley.py",
         "sha256": "0335c47886f6ed91de5072bfcb22e1ca9743ac9eb9f0d60f325d80d4e2c0a084",
         "bytes": 1447
@@ -31944,6 +31954,16 @@
         "bytes": 10270
       },
       {
+        "path": "../../scripts/experiments/paisley-split-swatch.test.ts",
+        "sha256": "f29efed7fc532ee6fdd691a54f93e99a662806791799fb14e5509adb8da507a0",
+        "bytes": 3666
+      },
+      {
+        "path": "../../scripts/experiments/paisley-split-swatch.ts",
+        "sha256": "aa1c998b604e1b8db1cc13bc96d145a563d13f02db6e3b5bcfbefa54883065e1",
+        "bytes": 7301
+      },
+      {
         "path": "../../scripts/experiments/reversible-increase-research.ts",
         "sha256": "c7299a8d9e58fa4a6d82dacc8bb274f75ca00e43de3cc62bb52394be990f20b9",
         "bytes": 6095
@@ -31964,9 +31984,19 @@
         "bytes": 18544
       },
       {
+        "path": "../../scripts/experiments/verify-colour-preserving.ts",
+        "sha256": "ab29ec22d333c83a5fb94e9860699e6b2c8d4f92918572574d5d26756bd2fc59",
+        "bytes": 6235
+      },
+      {
         "path": "../../scripts/experiments/verify-edge-full-caston.ts",
         "sha256": "758f2f8ca9fc204fbaa50b5f5fba73bc0955d4a2b1d43d5a76eb64ef1e6493ba",
         "bytes": 2731
+      },
+      {
+        "path": "../../scripts/experiments/verify-paisley-split.ts",
+        "sha256": "84335f4617e28571baacac56c34f4b0b5be23d53170c8bd438fd62818ca545e0",
+        "bytes": 7261
       },
       {
         "path": "../../scripts/experiments/verify-reversible-right-edge.ts",
