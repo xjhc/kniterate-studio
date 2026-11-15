@@ -30941,7 +30941,7 @@
     ]
   },
   "contract": {
-    "sha256": "d87aed0085d4d5d6a5f6874c70dde446c4ecb8b312b15f3d23ce1f37c0b412b9",
+    "sha256": "798e8d8b0906b86431b33b864aaeb466443ca00253e8c8613a4cce490117c762",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31955,13 +31955,13 @@
       },
       {
         "path": "../../scripts/experiments/paisley-split-swatch.test.ts",
-        "sha256": "f29efed7fc532ee6fdd691a54f93e99a662806791799fb14e5509adb8da507a0",
-        "bytes": 3666
+        "sha256": "e2828a4cf7bb32037940b5f3084601172cd0c89b2a9438370ad8fe3bd5261078",
+        "bytes": 5232
       },
       {
         "path": "../../scripts/experiments/paisley-split-swatch.ts",
-        "sha256": "aa1c998b604e1b8db1cc13bc96d145a563d13f02db6e3b5bcfbefa54883065e1",
-        "bytes": 7301
+        "sha256": "c5320355cc19d52694d2257371e75fb439ae25faccbaa230e64a95708624fbcb",
+        "bytes": 8327
       },
       {
         "path": "../../scripts/experiments/reversible-increase-research.ts",
@@ -31995,8 +31995,8 @@
       },
       {
         "path": "../../scripts/experiments/verify-paisley-split.ts",
-        "sha256": "84335f4617e28571baacac56c34f4b0b5be23d53170c8bd438fd62818ca545e0",
-        "bytes": 7261
+        "sha256": "d4c98c0c74e8031b83cd664b5541dadeb23deb561dfbabcbfc332507424aaad7",
+        "bytes": 7536
       },
       {
         "path": "../../scripts/experiments/verify-reversible-right-edge.ts",
