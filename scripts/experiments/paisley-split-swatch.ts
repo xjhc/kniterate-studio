@@ -16,9 +16,12 @@ import { verifyPaisleySplit } from './verify-paisley-split.js';
  * yarn is on the left. 'grey' keeps C4 (the grey face's yarn) as the splitting yarn at every
  * increase. The yarns swap sides on every plain row and not across an increase, so that needs an
  * even number of plain rows between increases: they start two, then four rows apart.
+ * 'open' is 'grey' with the two faces left unjoined at the widening edge through row 42, for
+ * linking off the machine: no yarn crosses beds there, so every face stitch has its face's
+ * colour. The faces still share a parent loop at each split. The narrowing half is as knitted.
  */
-export type PaisleySplitVariant='alternating'|'grey';
-export const paisleyIncreaseStarts=(variant:PaisleySplitVariant)=>Array.from({length:37},(_,i)=>i+3).filter(r=>variant==='grey'?r%6===3||r%6===5:r%3===0);
+export type PaisleySplitVariant='alternating'|'grey'|'open';
+export const paisleyIncreaseStarts=(variant:PaisleySplitVariant)=>Array.from({length:37},(_,i)=>i+3).filter(r=>variant==='alternating'?r%3===0:r%6===3||r%6===5);
 export function buildPaisleySplit(variant:PaisleySplitVariant='alternating') {
  const increaseStarts=new Set(paisleyIncreaseStarts(variant));
  const motif=JSON.parse(fs.readFileSync('fixtures/experiments/mixed-paisley-21x81.json','utf8'));
@@ -39,7 +42,7 @@ export function buildPaisleySplit(variant:PaisleySplitVariant='alternating') {
  const knit=(c:CarrierId,d:Direction,n:number,front:CarrierId[])=>sim.knit(c,d,front[n-lo]===c?f(n):b(n));
  for(let r=0;r<81;r++) {
   if(increaseStarts.has(r)){
-   const A:CarrierId=variant==='grey'||sim.positionOf('4')?.side==='left'?'4':'3', B=other(A),old=hi;
+   const A:CarrierId=variant!=='alternating'||sim.positionOf('4')?.side==='left'?'4':'3', B=other(A),old=hi;
    assert.equal(sim.positionOf(A)?.side,'left');assert.equal(sim.positionOf(B)?.side,'right');
    slot(r,'prepare',()=>{sim.setSpeed(200);sim.setRoller(0);sim.miss(B,'-',f(old));sim.miss(B,'+',f(old+1));sim.setSpeed(100);sim.setXferStitch(5);sim.setRacking(1);sim.xferBatch([{from:b(old),to:f(old+1)}]);sim.setRacking(0);});
    hi++;
@@ -48,6 +51,15 @@ export function buildPaisleySplit(variant:PaisleySplitVariant='alternating') {
    slot(r,'growth-B',()=>{settings(r);sim.knit(B,'-',b(hi));for(let n=old-1;n>=lo;n--)knit(B,'-',n,growth);});
    rows.push({row:r+1,width:hi-lo+1,kind:'growth',front:growth,emptyRear:old,A});
    r++;
+   if(variant==='open'){
+    // No outer join: A knits the new front needle on its way back, so the second split has a
+    // knitted needle outside it, and B stays on the rear bed.
+    const complete=colours(r);complete[old-lo]=A;complete[hi-lo]=A;
+    slot(r,'completion-A',()=>{settings(r);sim.knit(A,'-',f(hi));sim.split(A,'-',f(old),b(old));sim.setRoller(0);for(let n=old-1;n>=lo;n--)knit(A,'-',n,complete);});
+    slot(r,'completion-B',()=>{settings(r);for(let n=lo;n<=old;n++)knit(B,'+',n,complete);sim.knit(B,'+',b(hi));});
+    rows.push({row:r+1,width:hi-lo+1,kind:'completion',front:complete,emptyRear:null,A});rightFront=A;
+    continue;
+   }
    const complete=colours(r);complete[old-lo]=A;complete[hi-lo]=B;
    slot(r,'outer-join',()=>{settings(r,0);sim.knit(A,'-',b(hi));});
    slot(r,'return',()=>{sim.setSpeed(200);sim.setRoller(0);sim.miss(A,'+',f(hi));});
@@ -58,7 +70,7 @@ export function buildPaisleySplit(variant:PaisleySplitVariant='alternating') {
   }
   const decrease=r>=42&&r<=78&&r%3===0;
   if(decrease)slot(r,'decrease',()=>{sim.setSpeed(100);sim.setRoller(0);sim.setXferStitch(5);sim.setRacking(1);sim.xferBatch([{from:f(hi),to:b(hi-1)}]);sim.setRacking(-1);sim.xferBatch([{from:b(hi),to:f(hi-1)}]);sim.setRacking(0);hi--;});
-  const front=colours(r);if(r>0)rightFront=other(rightFront);front[hi-lo]=rightFront;
+  const front=colours(r);if(variant==='open'&&r<42)rightFront='4';else if(r>0)rightFront=other(rightFront);front[hi-lo]=rightFront;
   slot(r,'plain',()=>{settings(r);const firstSide=sim.finalNextDirection()==='+'?'left':'right';const first:CarrierId=sim.positionOf('3')?.side===firstSide?'3':'4';for(const c of [first,other(first)]){const d:Direction=sim.positionOf(c)?.side==='left'?'+':'-';const ns=Array.from({length:hi-lo+1},(_,i)=>lo+i);if(d==='-')ns.reverse();for(const n of ns)knit(c,d,n,front);}});
   rows.push({row:r+1,width:hi-lo+1,kind:decrease?'decrease':'plain',front,emptyRear:null});
  }
@@ -70,7 +82,7 @@ export function buildPaisleySplit(variant:PaisleySplitVariant='alternating') {
  return {source,compiled,rows,lo,motif,variant};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
- const variant=process.argv[3]??'alternating';assert(variant==='alternating'||variant==='grey','usage: paisley-split-swatch.ts <out-dir> [alternating|grey]');
+ const variant=process.argv[3]??'alternating';assert(variant==='alternating'||variant==='grey'||variant==='open','usage: paisley-split-swatch.ts <out-dir> [alternating|grey|open]');
  const built=buildPaisleySplit(variant),report=verifyPaisleySplit(built),out=process.argv[2]??'../paisley-split-swatch';
  fs.mkdirSync(out,{recursive:true});for(const [name,data] of Object.entries({'program.k':built.source,'program.kc':built.compiled.kcode,'plan.json':JSON.stringify({lo:built.lo,rows:built.rows},null,2),'verification.json':JSON.stringify(report,null,2)}))fs.writeFileSync(path.join(out,name),data);
  console.log(JSON.stringify(report,null,2));

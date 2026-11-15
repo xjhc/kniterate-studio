@@ -47,10 +47,13 @@ export function verifyPaisleySplit(built:ReturnType<typeof buildPaisleySplit>){
   }
   if(row.kind!=='plain')events.push({row:row.row,kind:row.kind,width:row.width,passes:passes.map(p=>p.index+1),splitPasses:split.map(p=>p.index+1)});
  }
- for(const side of ['left','right'] as const)for(let start=1;start<=78;start++)assert([...joins[side]].some(r=>r>=start&&r<=start+3),`${side} join missing rows${start}..${start+3}`);
+ // The open variant leaves the widening edge unjoined through row 42: no yarn may cross beds there.
+ const open=built.variant==='open';
+ if(open)assert.deepEqual([...joins.right].filter(r=>r<=42),[],'Open widening edge has no yarn crossing');
+ for(const side of ['left','right'] as const)for(let start=open&&side==='right'?43:1;start<=78;start++)assert([...joins[side]].some(r=>r>=start&&r<=start+3),`${side} join missing rows${start}..${start+3}`);
  assert.equal(built.rows.length,81);assert.equal(built.rows.filter(r=>r.kind==='growth').length,13);assert.equal(built.rows.filter(r=>r.kind==='decrease').length,13);
  const starts=paisleyIncreaseStarts(built.variant);
  for(const row of built.rows)assert.equal(row.width,8+Math.min(starts.filter(r=>r<row.row).length,Math.floor((81-row.row)/3)),'Width schedule');
- if(built.variant==='grey')for(const row of built.rows)if(row.A)assert.equal(row.A,'4','Grey makes every split');
+ if(built.variant!=='alternating')for(const row of built.rows)if(row.A)assert.equal(row.A,'4','Grey makes every split');
  return {passed:true,sha256:createHash('sha256').update(built.compiled.kcode).digest('hex'),bytes:Buffer.byteLength(built.compiled.kcode),passes:trace.passes.length,rows:81,increases:13,decreases:13,emptyBodyKnits:0,idleBodyMoves:0,events,advisories:deriveMachineTraceAdvisoriesV1(trace,profile),audit,joins:{left:[...joins.left],right:[...joins.right]},physicalValidation:false};
 }

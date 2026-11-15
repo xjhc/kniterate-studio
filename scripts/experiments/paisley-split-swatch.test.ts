@@ -43,3 +43,23 @@ test('grey variant: artwork, start and decrease half are those of the knitted fi
  assert.equal(body(grey.source),body(built.source));
  assert.equal(grey.source.slice(0,grey.source.indexOf('; PAISLEY ROW 6 ')),built.source.slice(0,built.source.indexOf('; PAISLEY ROW 6 ')));
 });
+// Open variant: the hedge. The grey variant with the widening edge left unjoined for linking.
+const open=buildPaisleySplit('open');
+test('open variant: the widening edge is unjoined and both edge columns of the grey face are grey',()=>{
+ const r=verifyPaisleySplit(open);assert.equal(r.increases,13);assert.equal(r.decreases,13);
+ assert.deepEqual(r.joins.right.filter(row=>row<=42),[]);
+ assert(verifyPaisleySplit(grey).joins.right.some(row=>row<=42),'The joined variant does cross yarns at this edge');
+ for(const row of open.rows)if(row.row<=42)assert.deepEqual(row.front.slice(-2),['4','4']);
+ const splits=[...open.source.matchAll(/^split [+-] f\d+ b\d+ ([34])$/gm)].map(m=>m[1]);
+ assert.equal(splits.length,26);assert(splits.every(c=>c==='4'));
+});
+test('open variant: the second split has a knitted needle outside it and there is no outer-join pass',()=>{
+ assert(!open.source.includes(' outer-join'));assert(grey.source.includes(' outer-join'));
+ const second=[...open.source.matchAll(/^knit - f(\d+) 4\nsplit - f(\d+) b\d+ 4$/gm)];
+ assert.equal(second.length,13);for(const m of second)assert.equal(+m[1],+m[2]+1);
+});
+test('open variant: widths, artwork and the narrowing half are those of the grey variant',()=>{
+ for(const row of open.rows){const joined=grey.rows[row.row-1];assert.equal(row.width,joined.width);for(let x=1;x<row.width-2;x++)assert.equal(row.front[x],joined.front[x]);if(row.row>42)assert.deepEqual(row,joined);}
+ const tail=(s:string)=>s.slice(s.indexOf('; PAISLEY ROW 43 '));
+ assert.equal(tail(open.source),tail(built.source));
+});
