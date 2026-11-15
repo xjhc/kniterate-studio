@@ -21,3 +21,25 @@ test('reject lost fixed-side joins even with valid per-row loop counts',()=>{
  const source=built.source.replace(/^(knit [+-]) ([fb])119 ([34])$/gm,(_,op,bed,c)=>`${op} ${c==='3'?'f':'b'}119 ${c}`);
  const candidate=mutated(source);assert.throws(()=>verifyPaisleySplit(candidate));
 });
+// Grey variant: one change from the knitted 514-pass file. C4 makes every split, which needs
+// increases two then four rows apart; the start, the decreases and the artwork stay as knitted.
+const grey=buildPaisleySplit('grey');
+test('grey variant: C4 makes every split and the serialized checks pass',()=>{
+ const r=verifyPaisleySplit(grey);assert.equal(r.increases,13);assert.equal(r.decreases,13);
+ const splits=[...grey.source.matchAll(/^split [+-] f\d+ b\d+ ([34])$/gm)].map(m=>m[1]);
+ assert.equal(splits.length,26);assert(splits.every(c=>c==='4'));
+ assert(/^split [+-] f\d+ b\d+ 3$/m.test(built.source),'The knitted alternating file does split with C3');
+});
+test('grey variant: an increase puts one orange stitch on the grey face, in the outer column of its second row',()=>{
+ for(const row of grey.rows){
+  if(row.kind==='growth')assert.deepEqual(row.front.slice(-2),['4','4']);
+  if(row.kind==='completion')assert.deepEqual(row.front.slice(-2),['4','3']);
+ }
+ assert(built.rows.some(row=>row.kind==='growth'&&row.front.slice(-2).join('')==='33'),'The knitted alternating file has orange increase rows');
+});
+test('grey variant: artwork, start and decrease half are those of the knitted file',()=>{
+ for(const row of grey.rows){const previous=built.rows[row.row-1];assert(row.width===previous.width||row.width===previous.width+1);for(let x=1;x<previous.width-2;x++)assert.equal(row.front[x],previous.front[x]);if(row.row>42)assert.deepEqual(row,previous);}
+ const body=(s:string)=>s.slice(s.indexOf('; PAISLEY ROW 43 '));
+ assert.equal(body(grey.source),body(built.source));
+ assert.equal(grey.source.slice(0,grey.source.indexOf('; PAISLEY ROW 6 ')),built.source.slice(0,built.source.indexOf('; PAISLEY ROW 6 ')));
+});

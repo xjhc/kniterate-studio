@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { auditTraceV1,compareScheduledPassesToMachineTrace,deriveMachineTraceAdvisoriesV1,KNITERATE_7GG_KCODE_PROFILE_V2 as profile,parseKCodeDocument,projectKCodeMachineTrace,projectMachineTopologyV1,validateKCodeMachineSafetyV1,validateKCodeMachineTrace } from '../../packages/machine-lib/src/browser.js';
-import type { buildPaisleySplit } from './paisley-split-swatch.js';
+import { paisleyIncreaseStarts,type buildPaisleySplit } from './paisley-split-swatch.js';
 export function verifyPaisleySplit(built:ReturnType<typeof buildPaisleySplit>){
  const p=parseKCodeDocument(built.compiled.kcode,{profile,dialect:'knitout-vendor',strict:true});assert(p.ok);
  const trace=projectKCodeMachineTrace(p.document,profile),validation=validateKCodeMachineTrace(trace,profile),safety=validateKCodeMachineSafetyV1(trace,profile);
@@ -49,6 +49,8 @@ export function verifyPaisleySplit(built:ReturnType<typeof buildPaisleySplit>){
  }
  for(const side of ['left','right'] as const)for(let start=1;start<=78;start++)assert([...joins[side]].some(r=>r>=start&&r<=start+3),`${side} join missing rows${start}..${start+3}`);
  assert.equal(built.rows.length,81);assert.equal(built.rows.filter(r=>r.kind==='growth').length,13);assert.equal(built.rows.filter(r=>r.kind==='decrease').length,13);
- for(const row of built.rows)assert.equal(row.width,8+Math.min(13,Math.floor((row.row-1)/3),Math.floor((81-row.row)/3)),'Original width schedule');
+ const starts=paisleyIncreaseStarts(built.variant);
+ for(const row of built.rows)assert.equal(row.width,8+Math.min(starts.filter(r=>r<row.row).length,Math.floor((81-row.row)/3)),'Width schedule');
+ if(built.variant==='grey')for(const row of built.rows)if(row.A)assert.equal(row.A,'4','Grey makes every split');
  return {passed:true,sha256:createHash('sha256').update(built.compiled.kcode).digest('hex'),bytes:Buffer.byteLength(built.compiled.kcode),passes:trace.passes.length,rows:81,increases:13,decreases:13,emptyBodyKnits:0,idleBodyMoves:0,events,advisories:deriveMachineTraceAdvisoriesV1(trace,profile),audit,joins:{left:[...joins.left],right:[...joins.right]},physicalValidation:false};
 }

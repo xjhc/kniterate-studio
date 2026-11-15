@@ -11,7 +11,16 @@ import { ALL_CARRIERS,b,f,comment,type KnitoutOp,type KnitoutProgram,type Carrie
 import { writeKnitoutProgram } from '../../packages/machine-lib/src/knitout/emitter.js';
 import { knitoutToKCodeWithTrace } from '../../packages/machine-lib/src/knitout/kniterate/to-kcode.js';
 import { verifyPaisleySplit } from './verify-paisley-split.js';
-export function buildPaisleySplit() {
+/**
+ * 'alternating' is the knitted 514-pass file: an increase every three rows, split by whichever
+ * yarn is on the left. 'grey' keeps C4 (the grey face's yarn) as the splitting yarn at every
+ * increase. The yarns swap sides on every plain row and not across an increase, so that needs an
+ * even number of plain rows between increases: they start two, then four rows apart.
+ */
+export type PaisleySplitVariant='alternating'|'grey';
+export const paisleyIncreaseStarts=(variant:PaisleySplitVariant)=>Array.from({length:37},(_,i)=>i+3).filter(r=>variant==='grey'?r%6===3||r%6===5:r%3===0);
+export function buildPaisleySplit(variant:PaisleySplitVariant='alternating') {
+ const increaseStarts=new Set(paisleyIncreaseStarts(variant));
  const motif=JSON.parse(fs.readFileSync('fixtures/experiments/mixed-paisley-21x81.json','utf8'));
  const lo=119, initialHi=126;
  const frame=emitCustomistFairisleFrame({needleStart:lo,needleEnd:initialHi,wasteCarrier:'6',bodyCarriers:['3','4'],drawCarrier:'1',wastePasses:80,waste:FAIRISLE_PARK_WASTE_DEFAULTS,intro:FAIRISLE_CARRIER_INTRO_DEFAULTS,retainBackBed:true,catchNeedles:8});
@@ -29,8 +38,8 @@ export function buildPaisleySplit() {
  const settings=(r:number,roller=450)=>{sim.setSpeed(r===0?100:200);sim.setStitch(7);sim.setRoller(r===0?100:roller);};
  const knit=(c:CarrierId,d:Direction,n:number,front:CarrierId[])=>sim.knit(c,d,front[n-lo]===c?f(n):b(n));
  for(let r=0;r<81;r++) {
-  if(r>=3&&r<=39&&r%3===0){
-   const A:CarrierId=sim.positionOf('4')?.side==='left'?'4':'3', B=other(A),old=hi;
+  if(increaseStarts.has(r)){
+   const A:CarrierId=variant==='grey'||sim.positionOf('4')?.side==='left'?'4':'3', B=other(A),old=hi;
    assert.equal(sim.positionOf(A)?.side,'left');assert.equal(sim.positionOf(B)?.side,'right');
    slot(r,'prepare',()=>{sim.setSpeed(200);sim.setRoller(0);sim.miss(B,'-',f(old));sim.miss(B,'+',f(old+1));sim.setSpeed(100);sim.setXferStitch(5);sim.setRacking(1);sim.xferBatch([{from:b(old),to:f(old+1)}]);sim.setRacking(0);});
    hi++;
@@ -58,10 +67,11 @@ export function buildPaisleySplit() {
  sim.setSpeed(150);sim.setStitch(4);for(let n=lo;n<=hi;n++){sim.drop(f(n));sim.drop(b(n));}sim.setRoller(0);for(const c of ['1','3','4','6'] as CarrierId[])sim.out(c);drain();
  const program:KnitoutProgram={version:2,carriers:[...ALL_CARRIERS],machine:'kniterate',gauge:7,position:'Keep',yarns:{'3':'Orange single 2/14 acrylic','4':'Grey single 2/14 acrylic'},kniterate:{xferStyle:'four-pass'},ops};
  const source=writeKnitoutProgram(program),compiled=knitoutToKCodeWithTrace(source,'program.k');assert(compiled.ok,JSON.stringify(compiled));
- return {source,compiled,rows,lo,motif};
+ return {source,compiled,rows,lo,motif,variant};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
- const built=buildPaisleySplit(),report=verifyPaisleySplit(built),out=process.argv[2]??'../paisley-split-swatch';
+ const variant=process.argv[3]??'alternating';assert(variant==='alternating'||variant==='grey','usage: paisley-split-swatch.ts <out-dir> [alternating|grey]');
+ const built=buildPaisleySplit(variant),report=verifyPaisleySplit(built),out=process.argv[2]??'../paisley-split-swatch';
  fs.mkdirSync(out,{recursive:true});for(const [name,data] of Object.entries({'program.k':built.source,'program.kc':built.compiled.kcode,'plan.json':JSON.stringify({lo:built.lo,rows:built.rows},null,2),'verification.json':JSON.stringify(report,null,2)}))fs.writeFileSync(path.join(out,name),data);
  console.log(JSON.stringify(report,null,2));
 }
