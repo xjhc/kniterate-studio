@@ -30941,7 +30941,7 @@
     ]
   },
   "contract": {
-    "sha256": "798e8d8b0906b86431b33b864aaeb466443ca00253e8c8613a4cce490117c762",
+    "sha256": "b6cb55ccd88496144e4d273b163e76065196f6b19d90467c442172dcb84e3fd7",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31982,6 +31982,16 @@
         "path": "../../scripts/experiments/split-swatch.ts",
         "sha256": "5bc6f7ca1c189187eecfa48f03c183090d13805fddcc1af6d979550091a01036",
         "bytes": 18544
+      },
+      {
+        "path": "../../scripts/experiments/tip-swatch.test.ts",
+        "sha256": "4dfa1678b7efd4a885f5a0b6db7369da1dd7e885ab2468ae4b2996189691d5d5",
+        "bytes": 2138
+      },
+      {
+        "path": "../../scripts/experiments/tip-swatch.ts",
+        "sha256": "a3ad6cef4dc57b04fdc25f5962e20535cd007bca28338f781a93c4db36c21cd6",
+        "bytes": 19992
       },
       {
         "path": "../../scripts/experiments/verify-colour-preserving.ts",
