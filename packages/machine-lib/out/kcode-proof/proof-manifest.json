@@ -30941,7 +30941,7 @@
     ]
   },
   "contract": {
-    "sha256": "7f0216d522fcc81163c553d63aac142bf18f2eeba610c3900bcd723a0e86277a",
+    "sha256": "21f1082b4fcdab26bd24a7029abd93a3f3b64fb156056c5efdf3139f3569f715",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31205,8 +31205,8 @@
       },
       {
         "path": "../../apps/studio/src/engineMatrix.test.ts",
-        "sha256": "e37fc1aca6667348c5ce8333560771ba9330fb06f24a2e56a242355595d57581",
-        "bytes": 1451
+        "sha256": "7408df77aaa5f44b89534752662e9ca9d25744bb8a9a416f28ac783183236796",
+        "bytes": 1607
       },
       {
         "path": "../../apps/studio/src/explain.ts",
@@ -31400,8 +31400,8 @@
       },
       {
         "path": "../../apps/studio/src/knitLog.test.ts",
-        "sha256": "5449e4d0a8838a4c5a7b94e315da5c7f8cb7a759c7606073d6e8569af8f15a99",
-        "bytes": 5319
+        "sha256": "836cd5ffd87c973ea8dedcfefdcb46ba4f5a65a301e257c604165d6a81086b1a",
+        "bytes": 10203
       },
       {
         "path": "../../apps/studio/src/machine/executionCapacity.test.ts",
@@ -32025,13 +32025,13 @@
       },
       {
         "path": "../../scripts/lib/knit-log.ts",
-        "sha256": "3fdb9c57eeb0a3a2340b31bc50028cdd1ae531943b5260d5397fdaadd3c1e268",
-        "bytes": 14139
+        "sha256": "ea43198030e65b46e0d712be0c4d0ad543c9293dfa34b9107e61c26c2a432aec",
+        "bytes": 19690
       },
       {
         "path": "../../scripts/lib/machine-cli.ts",
-        "sha256": "cbcc80a69b3d33fc792d81d77cc11005081f9a981bc6fb5485648101e97d3d7d",
-        "bytes": 27738
+        "sha256": "d8f1bc987c5ca003c6fee8485b245043a8c5ac50040bcb03d8075c9768ade06a",
+        "bytes": 28208
       },
       {
         "path": "../../scripts/lib/machine-files.ts",
@@ -32235,7 +32235,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "504be6a8c0f7b5bf42904f4f604e19e919cf611cefabe16eb1862f38f8de94b9",
+        "sha256": "19ec3d7b224b3b5b5aae5c6bafd092583b811bb8dbed01ccefb526b1dfaf0919",
         "bytes": 179
       },
       {
@@ -32830,8 +32830,8 @@
       },
       {
         "path": "src/knitout/kcode/knit-evidence.ts",
-        "sha256": "a295db9a5f9370ee2e61d8726a1eb0a2bf83c89fabcd6c4bc0664955a5c27e59",
-        "bytes": 26141
+        "sha256": "c535e8e6a7962cc7d121ade1db11c29d3ea268ab1018964a8d8397ee28fdeb3f",
+        "bytes": 28088
       },
       {
         "path": "src/knitout/kcode/knitted-faces.ts",
@@ -33590,8 +33590,8 @@
       },
       {
         "path": "test/knitout/knit-evidence.test.ts",
-        "sha256": "1783beea675822d3bd21fbe2e6eaabbe2a33feb63eb621e78574a4e5dafad77f",
-        "bytes": 14356
+        "sha256": "ddf484d841273bd2bcbfb4c2471100a63b1e5f4d07e85c600317c5d3723d8efe",
+        "bytes": 21247
       },
       {
         "path": "test/knitout/kniterate-topology-oracle.test.ts",
