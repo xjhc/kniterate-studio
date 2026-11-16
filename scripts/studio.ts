@@ -32,7 +32,7 @@ import { decodePng, encodePng } from './lib/png.ts';
 import { SWEATER_USAGE, SweaterUsageError, isSweaterProject, sweaterCheck, sweaterCommand, sweaterPlanJson, type SweaterCliIo } from './lib/sweater-cli.ts';
 import { planSweater } from '../apps/studio/src/sweater/sweater.ts';
 import { RENDER_VIEWS, renderView, type RenderView } from './lib/render.ts';
-import { MachineUsageError, auditCommand, compareCommand, loadMachineInput, matrixCommand, passesCommand, referenceCommand } from './lib/machine-cli.ts';
+import { MachineUsageError, auditCommand, compareCommand, knittedCommand, loadMachineInput, matrixCommand, passesCommand, referenceCommand } from './lib/machine-cli.ts';
 
 const USAGE = `Usage: pnpm --silent studio -- <command> [args]
 
@@ -127,6 +127,13 @@ handoff package folder. Passes are numbered from 1, as in run records and on the
       body stitches dropped with nothing to hold them, loops left on the needles, stacks, and eyelets
       from knitting onto empty needles. Each check says what Kniterate's own files show. Exit 1 on an
       issue.
+  knitted [<file>] [--piece <id>] [--waste <carrier>] [--draw <carrier>|none]
+      Which passes of the file have been on the machine before. Each pass is matched, by what it does
+      at the fabric's edges, its yarn's role and its settings, against every file in the knit log
+      (packages/machine-lib/registry/knit-log.json): passes that knitted with no fault reported, passes
+      with a fault on record, passes that only knitted on a wider or narrower fabric, and passes that
+      are new on the machine, each new one with the knitted pass closest to it and how it differs.
+      Without a file: the knit log, one line per knit. After a knit comes back, add it to the log.
   compare <file-a> <file-b> [--section <name> | --passes <from>-<to>[,<from>-<to>]] [--carriers 2=4,3=3]
       Stitch by stitch: carrier, direction, racking, speed, roller, and every stitch (needles counted
       from each range's left edge, so different bed positions line up). Without a range, a summary
@@ -515,6 +522,11 @@ async function main(): Promise<number> {
       const { result, ok } = auditCommand(await loadMachineInput(positional(parsed, 0, '<file>'), parsed.options, readProject), parsed.options);
       print(result);
       return ok ? 0 : 1;
+    }
+    case 'knitted': {
+      const input = parsed.positionals[0];
+      print(knittedCommand(input === undefined ? null : await loadMachineInput(input, parsed.options, readProject), parsed.options));
+      return 0;
     }
     case 'compare': {
       const pickOne = (pieces: Awaited<ReturnType<typeof loadMachineInput>>, label: string) => {

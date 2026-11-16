@@ -19,11 +19,18 @@ fill `run.json`, `outcome.md`, `machine.json`, `yarn.json` from the report
 `CLAUDE.md` and `docs/mockups/ui-ux-proposal.html` aside and back (never commit
 or delete them). Then `pnpm --dir packages/machine-lib kniterate:swatches`.
 
+Then add the knit to the knit log (`packages/machine-lib/registry/knit-log.json`;
+fields and rules in the README beside it): the exact file and its hash, the
+operator's words, and each fault or note with the passes it belongs to. Every
+knit goes in, whatever its result. A pass number from the machine is worth more
+than a description: ask for one for every stop, drop and repair.
+
 ## 2. Locate the problem in the file
 
 ```bash
 pnpm --silent studio -- passes <package-or-project> 110-125          # what the machine did around the reported pass
 pnpm --silent studio -- audit <package-or-project>                   # loop replay; each check states Kniterate's own figure
+pnpm --silent studio -- knitted <package-or-project>                 # which passes have knitted before, faulted before, or are new on the machine
 pnpm --silent studio -- reference                                    # Kniterate's files: ref:fairisle, ref:dbj, ref:sleeves, ...
 pnpm --silent studio -- compare <package> ref:fairisle --carriers 2=4                   # section summary
 pnpm --silent studio -- compare <package> ref:fairisle --carriers 2=4 --section cast-on # every differing pass
@@ -80,6 +87,12 @@ Commit the change, then the refreshed
 `packages/machine-lib/out/kcode-proof/proof-manifest.json` and
 `packages/machine-lib/registry/knit-proven.json` as a separate `chore(kcode-proof)` commit. Stage only
 your paths.
+
+Before a file goes to the operator, run `studio knitted` on it. Put what is new
+on the machine, and any pass with a fault on record, in the instructions with
+their pass numbers: those are the passes to watch. `matrix` prints the same
+count for every construction; the reversible chart with Studio's edges must
+stay at zero new passes.
 
 ## 6. Report
 

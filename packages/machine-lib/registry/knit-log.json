@@ -1,0 +1,204 @@
+{
+  "kind": "kniterate-knit-log",
+  "schemaVersion": 1,
+  "about": "Every machine file that has been on the machine, with what the operator reported and where. `studio knitted` reads new files against it. See README.md beside this file.",
+  "yarns": {
+    "acrylic-2-14": "2/14 acrylic, one strand",
+    "acrylic-2-30-x1": "2/30 acrylic, one strand",
+    "acrylic-2-30-x2": "2/30 acrylic, two strands",
+    "draw-thin": "The thin draw thread on the machine; not identified",
+    "not-recorded": "Not recorded"
+  },
+  "knits": [
+    {
+      "id": "2026-10-30-kniterate-fairisle",
+      "date": "2026-10-30",
+      "what": "Kniterate's own fairisle.kc, knitted as a control (issue #9 run 1)",
+      "file": "packages/machine-lib/reference/fairisle.kc",
+      "sha256": "0dba85bca3f3251030bd2302a539b26a14870692261313c948007fb99ccae8e7",
+      "yarns": { "1": "draw-thin", "3": "acrylic-2-14", "4": "acrylic-2-30-x2", "6": "acrylic-2-30-x1" },
+      "report": "Run 1 — completed, with transition defects",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/9#issuecomment-6711473394",
+      "caveat": "The two pattern yarns differed in thickness and the waste was a single thin strand; neither is established as the cause.",
+      "events": [
+        { "kind": "fault", "passes": [114, 117], "approximate": true, "what": "The black yarn (C4) broke at the start of the fairisle rows; the transition has large openings." },
+        { "kind": "fault", "what": "The black yarn broke in several more places afterwards; the report does not say where." }
+      ]
+    },
+    {
+      "id": "2026-10-30-studio-fairisle",
+      "date": "2026-10-30",
+      "what": "Studio's fairisle chart, 64 columns (issue #9 run 2)",
+      "file": "packages/machine-lib/registry/swatches/2026-11-07-run2-studio-fairisle/out.kc",
+      "sha256": "3607b0ff3081980203f7fbb73916543e8dee64e93f35f0ea196003385489b8a1",
+      "yarns": { "1": "draw-thin", "2": "acrylic-2-14", "3": "acrylic-2-14", "6": "acrylic-2-30-x2" },
+      "report": "Run 2 — completed, better matching stitches, startup/transition problems remain",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/9#issuecomment-6711473394",
+      "record": "packages/machine-lib/registry/swatches/2026-11-07-run2-studio-fairisle",
+      "events": [
+        { "kind": "fault", "passes": [1, 2], "approximate": true, "what": "The waste yarn's first row did not catch; the second row caught the loose span and tangled. The operator paused, cleared it and carried on." },
+        { "kind": "fault", "passes": [97, 97], "approximate": true, "what": "The draw thread sometimes missed its whole first pass; later passes worked." },
+        { "kind": "fault", "passes": [114, 117], "approximate": true, "what": "Yarn broke at the first fairisle row." }
+      ]
+    },
+    {
+      "id": "2026-10-30-mini-bird-toque",
+      "date": "2026-10-30",
+      "what": "Mini toque with a bird, as issued (issue #9 run 3); stopped at the start",
+      "file": "packages/machine-lib/registry/swatches/2026-11-07-run3-mini-bird-toque/out.kc",
+      "sha256": "a5000f5f7f93d29a25419676bb5030f8fa89bb036f76662b4af8b41bc6f60c45",
+      "yarns": { "1": "draw-thin", "3": "acrylic-2-14", "4": "acrylic-2-14", "6": "acrylic-2-30-x2" },
+      "knittedThrough": { "section": "waste" },
+      "report": "The original faster Run 3 attempt had missed knitting near the beginning needles and waste-yarn tangling during C3/C4 introduction.",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/9#issuecomment-6711473394",
+      "record": "packages/machine-lib/registry/swatches/2026-11-07-run3-mini-bird-toque",
+      "caveat": "The pass it stopped at was not recorded; the waste section is taken as the furthest it got. The run that completed used a hand-edited copy at speed 100, which is a different file and is not in this log.",
+      "events": [
+        { "kind": "fault", "section": "waste", "what": "Stitches were missed near the first needles and the waste yarn tangled while the two body yarns were brought in. The run was stopped." }
+      ]
+    },
+    {
+      "id": "2026-11-08-studio-fairisle-handoff-2",
+      "date": "2026-11-08",
+      "what": "Studio's fairisle chart with the yarn catch, 64 columns (issue #9 handoff 2, run 2)",
+      "file": "packages/machine-lib/registry/swatches/2026-11-09-handoff2-run2-studio-fairisle/out.kc",
+      "sha256": "092076f4a15dca100f27f444c2bf5875aec7505ec9df00a638d969f50a2189fb",
+      "yarns": { "1": "draw-thin", "2": "acrylic-2-14", "3": "acrylic-2-14", "6": "acrylic-2-30-x2" },
+      "report": "Knitted to the end; the operator called it the best fabric so far.",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/9#issuecomment-6728033787",
+      "record": "packages/machine-lib/registry/swatches/2026-11-09-handoff2-run2-studio-fairisle",
+      "events": [
+        { "kind": "fault", "section": "cast-on", "what": "On the first main-yarn row after the waste, the yarn looked cut or broken and frayed at the bottom-left corner." },
+        { "kind": "note", "what": "The edge where a carrier turns looks a little loose." }
+      ]
+    },
+    {
+      "id": "2026-11-11-bind-off-strip-2",
+      "date": "2026-11-11",
+      "what": "One-colour strip ending in a chain bind-off (issue #9 handoff 3, strip 2)",
+      "file": "docs/physical-trials/2026-11-11/handoff3-strip2/out.kc",
+      "sha256": "8fd76ea382c082c318eb6e975576989186a95761dea6f48eeac5d3f3458140c6",
+      "yarns": { "1": "not-recorded", "2": "not-recorded", "6": "not-recorded" },
+      "report": "Completed without apparent cast-on or bind-off breaks.",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/9#issuecomment-6801571939",
+      "record": "docs/physical-trials/2026-11-11/handoff3-strip2",
+      "events": [
+        { "kind": "fault", "passes": [1, 5], "approximate": true, "what": "The waste missed early, around the third row shown on the machine." },
+        { "kind": "fault", "section": "body", "what": "A stitch at the left edge failed to establish through the body." }
+      ]
+    },
+    {
+      "id": "2026-11-11-joined-edge-paisley",
+      "date": "2026-11-11",
+      "what": "Reversible two-colour rectangle with paisleys, 68 columns, from Studio's normal export",
+      "file": "docs/physical-trials/2026-11-11/paisley-joined-edges/out.kc",
+      "sha256": "8de9d5e3a9bbd0c1eaaf40bce21a28f434682c21ed8bbcce887c1305f33f1c36",
+      "yarns": { "1": "not-recorded", "3": "acrylic-2-14", "4": "acrylic-2-14", "6": "not-recorded" },
+      "report": "this was successful",
+      "record": "docs/physical-trials/2026-11-11/paisley-joined-edges",
+      "caveat": "Stops and interventions were not individually reported.",
+      "events": []
+    },
+    {
+      "id": "2026-11-11-reversible-diamond",
+      "date": "2026-11-11",
+      "what": "Reversible diamond 16 to 48 to 16 columns, with the older increase",
+      "file": "packages/machine-lib/registry/swatches/2026-11-11-reversible-diamond-paisley/out.kc",
+      "sha256": "7217462cfe9297bbffbbe82f78d683f6bde09292f0d979e007039beb5d9c9540",
+      "yarns": { "1": "draw-thin", "3": "acrylic-2-14", "4": "acrylic-2-14", "6": "acrylic-2-30-x2" },
+      "report": "A finished diamond; not a clean run.",
+      "record": "packages/machine-lib/registry/swatches/2026-11-11-reversible-diamond-paisley",
+      "events": [
+        { "kind": "fault", "what": "Repeated stops, reported as 'crump' (likely CLUMP), while the waste and draw feeders were being moved. The passes were not recorded." },
+        { "kind": "note", "what": "Increase edges look open, with orange bars on the grey face; decreases look satisfactory." }
+      ]
+    },
+    {
+      "id": "2026-11-12-edge-swatch",
+      "date": "2026-11-12",
+      "what": "One-colour jersey swatch, 40 columns, narrowing and widening at both edges",
+      "file": "docs/physical-trials/2026-11-12/edge-full-caston-success/program.kc",
+      "sha256": "2c5ef66ef99610d933f9fbdf7998d6dad242e67402ad06ba61201684ee72a8ac",
+      "yarns": { "1": "not-recorded", "3": "not-recorded", "6": "not-recorded" },
+      "report": "this test knit was successuful on dec/inc and main yarn cast on part",
+      "record": "docs/physical-trials/2026-11-12/edge-full-caston-success",
+      "caveat": "No stop or intervention log was supplied.",
+      "events": []
+    },
+    {
+      "id": "2026-11-12-mixed-paisley",
+      "date": "2026-11-12",
+      "what": "Reversible paisley 8 to 21 to 8 columns, with the older increase",
+      "file": "packages/machine-lib/registry/swatches/2026-11-13-mixed-paisley-baseline/out.kc",
+      "sha256": "0be718de93c415b51ccb859d013a5578f4ff8c2e8cfffc0ce4bd380ee495acd3",
+      "yarns": { "1": "not-recorded", "3": "acrylic-2-14", "4": "acrylic-2-14", "6": "not-recorded" },
+      "report": "A finished piece with all three motifs; no ladder or run visible on the face photographed.",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/18#issuecomment-6842455924",
+      "record": "packages/machine-lib/registry/swatches/2026-11-13-mixed-paisley-baseline",
+      "caveat": "That this file is the piece photographed is inferred from the photo and the last file issued. Stops and interventions were not recorded.",
+      "events": [
+        { "kind": "note", "what": "The widening edge is stepped, with open or stretched-looking loops." }
+      ]
+    },
+    {
+      "id": "2026-11-14-single-bed-split",
+      "date": "2026-11-14",
+      "what": "One-colour jersey swatch widening with split stitches, 40 to 52 columns",
+      "file": "docs/development-trials/2026-11-13/split-increase/program.kc",
+      "sha256": "fb2cb6adcfb4320992dcec26e8b80e0cbdcb905b4d25548780f20b04b5c24de5",
+      "yarns": { "1": "not-recorded", "3": "not-recorded", "6": "not-recorded" },
+      "report": "this looks better. the right side is better than left. Asked whether it finished without stops, repairs or setting changes: yes it worked well.",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/18#issuecomment-6885277445",
+      "record": "docs/development-trials/2026-11-13/split-increase",
+      "events": [
+        { "kind": "note", "what": "The right edge looks better than the left; not explained." }
+      ]
+    },
+    {
+      "id": "2026-11-14-right-edge-comparison",
+      "date": "2026-11-14",
+      "what": "Reversible strip 20 to 24 columns: split increase on the right edge, the older increase on the left",
+      "file": "docs/development-trials/2026-11-13/reversible-split/right/program.kc",
+      "sha256": "44d663f1121e272ca086c14e78d889cff561193ec1df36629a4c4e185c78dd20",
+      "yarns": { "1": "not-recorded", "3": "acrylic-2-14", "4": "acrylic-2-14", "6": "not-recorded" },
+      "report": "here. the right side is better, but im not sure that's what you are calling right?",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/18#issuecomment-6885277445",
+      "record": "docs/physical-trials/2026-11-14/reversible-right-split-feedback",
+      "caveat": "Whether it ran without stops was not confirmed for this run. Only the grey face was photographed.",
+      "events": [
+        { "kind": "note", "what": "The split edge looks more compact and regular than the older increase on the other edge." }
+      ]
+    },
+    {
+      "id": "2026-11-14-split-paisley",
+      "date": "2026-11-14",
+      "what": "Reversible paisley 8 to 21 to 8 columns with split increases (514 passes)",
+      "file": "docs/physical-trials/2026-11-14/paisley-supported-split-candidate/program.kc",
+      "sha256": "2868d508005e90eab60d2ac609609870bba8f9b2fb13661f5e927a50f481aa1d",
+      "yarns": { "1": "draw-thin", "3": "acrylic-2-14", "4": "acrylic-2-14", "6": "acrylic-2-30-x2" },
+      "report": "definitely better but not perfect",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/18#issuecomment-6885746770",
+      "record": "docs/physical-trials/2026-11-14/paisley-supported-split-candidate",
+      "events": [
+        { "kind": "fault", "passes": [80, 93], "approximate": true, "what": "Waste stitches dropped twice while orange and grey were first brought in, before the rear waste loops are released." },
+        { "kind": "note", "passes": [[141, 141], [146, 146], [171, 171], [176, 176], [203, 203], [208, 208], [235, 235], [240, 240], [265, 265], [270, 270], [297, 297], [302, 302]], "what": "Orange shows on the grey face at every other increase. Placing it at the splits orange makes is our reading, not the operator's." },
+        { "kind": "note", "what": "The increase looks less compact than the decrease." }
+      ]
+    },
+    {
+      "id": "2026-11-14-colour-preserving-increase",
+      "date": "2026-11-14",
+      "what": "Reversible strip 16 to 18 columns with a same-colour increase (234 passes)",
+      "file": "docs/development-trials/2026-11-14/colour-preserving-increase/program.kc",
+      "sha256": "912b9bc66264396cb5a79a079f23d969a46083f1c928ac0eeb2feca355cf7a18",
+      "yarns": { "1": "draw-thin", "3": "acrylic-2-14", "4": "acrylic-2-14", "6": "acrylic-2-30-x2" },
+      "report": "the last increase did not seem to work very well. it looks bad. the prev was better. can you see it? i think you tried to make it gray but it didnt quite knit",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/18#issuecomment-6887518553",
+      "record": "docs/development-trials/2026-11-14/colour-preserving-increase",
+      "caveat": "No failing pass was confirmed, and the photos supplied show an earlier piece.",
+      "events": [
+        { "kind": "fault", "passes": [[132, 143], [160, 171]], "approximate": true, "what": "The increase looked bad and the grey loop 'didnt quite knit'. The passes are the two increases in the file, not a pass the operator read off." }
+      ]
+    }
+  ]
+}

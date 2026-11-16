@@ -15,18 +15,13 @@ import { reversibleEdgeStatus } from '../../apps/studio/src/reversibleEdges.js';
  * Passes are numbered from 1, as in run records and on the machine.
  */
 
-import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { basename, dirname, join, resolve as resolvePath } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { basename, join } from 'node:path';
 
 import {
-  KNITERATE_7GG_KCODE_PROFILE_V2,
   auditTraceV1,
   compareTraceRangesV1,
-  parseKCodeDocument,
-  projectKCodeMachineTrace,
   traceAutoSectionsV1,
   traceRowsV1,
   type MachineTraceV1,
@@ -44,25 +39,10 @@ import { createPanelProject } from '../../apps/studio/src/sweater/panel.js';
 import { createSweaterProject } from '../../apps/studio/src/sweater/sweater.js';
 import { runSweaterPipeline } from '../../apps/studio/src/sweater/sweaterPipeline.js';
 import { summarizeSweaterRun } from '../../apps/studio/src/sweater/sweaterRun.js';
+import { KNIT_LOG_PATH, knitLogSummary, knittedCounts, knittedReport } from './knit-log.js';
+import { MachineUsageError, REFERENCE_DIR, atlas, sha256, traceOf, type AtlasEntry } from './machine-files.js';
 
-export class MachineUsageError extends Error {}
-
-const REFERENCE_DIR = resolvePath(dirname(fileURLToPath(import.meta.url)), '../../packages/machine-lib/reference');
-
-interface AtlasEntry {
-  name: string;
-  file: string;
-  sha256: string;
-  dialect: 'app' | 'knitout-vendor';
-  what: string;
-  roles: { waste: string; draw: string | null };
-  sections: TraceSectionV1[];
-  notes: string;
-}
-
-function atlas(): AtlasEntry[] {
-  return (JSON.parse(readFileSync(join(REFERENCE_DIR, 'atlas.json'), 'utf8')) as { references: AtlasEntry[] }).references;
-}
+export { MachineUsageError };
 
 /** One machine file with what we know about it. */
 export interface MachinePiece {
@@ -76,16 +56,6 @@ export interface MachinePiece {
   sectionSource: 'reference atlas' | 'project' | 'automatic';
   roles: TraceYarnRolesV1;
   notes?: string;
-}
-
-const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
-
-function traceOf(kcText: string, dialect?: 'app' | 'knitout-vendor'): MachineTraceV1 {
-  for (const candidate of dialect ? [dialect] : (['knitout-vendor', 'app'] as const)) {
-    const parsed = parseKCodeDocument(kcText, { profile: KNITERATE_7GG_KCODE_PROFILE_V2, dialect: candidate, strict: true });
-    if (parsed.ok) return projectKCodeMachineTrace(parsed.document, KNITERATE_7GG_KCODE_PROFILE_V2);
-  }
-  throw new MachineUsageError('Not a strict Kniterate KCode file (it does not parse in either dialect).');
 }
 
 /** Sections from Studio's own reading of a compiled file (the names run records use), 1-based. */
@@ -253,6 +223,19 @@ export function auditCommand(pieces: MachinePiece[], options: Map<string, string
   return { result: { kind: 'kniterate-studio-audit', ok: files.every((file) => file.ok), files }, ok: files.every((file) => file.ok) };
 }
 
+const KNITTED_ABOUT = `Read against the knit log (${KNIT_LOG_PATH}): every file that has been on the machine and what the operator reported. A pass is matched by what it does at the fabric's edges, its yarn's role and its settings; the artwork, the width and the place on the bed are left out. The reports are an operator's, not measurements, and a match is not proof that a pass will knit.`;
+
+/** knitted [<input>] [--piece <id>] [--waste C] [--draw C|none] */
+export function knittedCommand(pieces: MachinePiece[] | null, options: Map<string, string>) {
+  if (pieces === null) return { kind: 'kniterate-studio-knit-log', about: `Every file that has been on the machine (${KNIT_LOG_PATH}). Give a file to read it against these: knitted <file>.`, knits: knitLogSummary() };
+  const chosen = options.has('--piece') ? [pick(pieces, options, 'knitted')] : pieces;
+  const files = chosen.map((piece) => {
+    const roles = options.has('--waste') || options.has('--draw') ? rolesFrom(options, piece.roles) : piece.roles;
+    return { ...header(piece), ...knittedReport(piece.trace, roles, piece.sections) };
+  });
+  return { kind: 'kniterate-studio-knitted', about: KNITTED_ABOUT, files };
+}
+
 /** compare <a> <b> [--section <name> | --passes <a-range>[,<b-range>]] [--carriers 2=4,3=3] */
 export function compareCommand(aInput: MachinePiece, bInput: MachinePiece, options: Map<string, string>) {
   // Both files are cut into sections by the same rule (traceAutoSectionsV1), so a Studio file and one of
@@ -303,6 +286,9 @@ export function referenceCommand(name: string | undefined) {
   return { kind: 'kniterate-studio-reference', ...header(piece), file: join('packages/machine-lib/reference', entry.file), dialect: entry.dialect, audit: auditSummary(audit) };
 }
 
+/** The matrix construction held to the knit log: nothing in it may be new on the machine. */
+export const KNITTED_DEFAULT_CONSTRUCTION = 'reversible chart, edges closed by Studio';
+
 /** The constructions `matrix` builds: every product Studio offers, including the narrow and odd widths where the start fixes live. */
 async function* constructions(quick: boolean): AsyncGenerator<{ name: string; pieces: () => Promise<{ name: string; piece: string | null; kcText: string | null; verdict: string; sections: TraceSectionV1[] | null }[]> }> {
   const options = (id: string) => ({ id, source: 'human' as const, group: 'create' });
@@ -344,6 +330,18 @@ async function* constructions(quick: boolean): AsyncGenerator<{ name: string; pi
     project = appendProjectEdit(project, { id: 'edges', source: 'human', edit });
     yield { name: 'reversible diamond 16–48–16', pieces: () => authored(project) };
   }
+  {
+    // A reversible chart as a person makes one in Studio: a motif inside plain rows, and the side edges
+    // closed by Studio's own fix. It is the one fabric from the normal export that has knitted with no
+    // fault reported, so it must stay free of passes that are new on the machine (engineMatrix.test.ts).
+    const width = 60, height = 30;
+    const cells = Array.from({ length: height }, (_, y) => Array.from({ length: width }, (_, x) => (y >= 3 && y < height - 3 && x >= 4 && x < width - 4 && (x * 3 + y * 5) % 11 < 3 ? 1 : 0)));
+    let project = createColorworkProjectV1({ kind: 'knitlab-colorwork-chart', version: 1, title: 'Reversible chart', width, height, rowNumbering: 'bottom-up', palette: [{ id: 'a', name: 'Orange', hex: '#DD6600' }, { id: 'b', name: 'Grey', hex: '#888888' }], cells }, { id: 'reversible-60' });
+    project = appendProjectEdit(project, { id: 'strategy', source: 'human', edit: { kind: 'set-strategy', strategy: { technique: 'complement', floatLimit: 7 } } });
+    const edit = reversibleEdgeStatus(materializeColorworkProject(project).state).edit!;
+    project = appendProjectEdit(project, { id: 'edges', source: 'human', edit });
+    yield { name: KNITTED_DEFAULT_CONSTRUCTION, pieces: () => authored(project) };
+  }
   const hats = [
     createBeanieProject({ title: 'Toque', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: gauge, cuffCm: 7, ribGauge, fold: true, main: { name: 'Black', hex: '#111111' }, accent: { name: 'White', hex: '#F2F2F2' } }, options('beanie-toque')),
     createBeanieProject({ title: 'Rib hat', headCircumferenceCm: 56, bodyCm: 13, bodyGauge: ribGauge, main: { name: 'Black', hex: '#111111' } }, options('beanie-rib')),
@@ -365,7 +363,8 @@ async function* constructions(quick: boolean): AsyncGenerator<{ name: string; pi
 /** matrix -o <dir> [--quick] */
 export async function matrixCommand(out: string | null, quick: boolean) {
   if (out !== null) await mkdir(out, { recursive: true });
-  const rows: { construction: string; file: string; verdict: string; audit: string; ok: boolean; issues: string[] }[] = [];
+  // `knitted` reads each file against the knit log: how much of what Studio makes by default has been on the machine.
+  const rows: { construction: string; file: string; verdict: string; audit: string; ok: boolean; issues: string[]; knitted?: string; passes?: number; newPasses?: number; faultedPasses?: number }[] = [];
   for await (const construction of constructions(quick)) {
     for (const piece of await construction.pieces()) {
       if (piece.kcText === null) { rows.push({ construction: piece.piece === null ? construction.name : `${construction.name} · ${piece.piece}`, file: piece.name, verdict: piece.verdict, audit: 'no machine file', ok: false, issues: [`no exportable program (${piece.verdict})`] }); continue; }
@@ -373,9 +372,11 @@ export async function matrixCommand(out: string | null, quick: boolean) {
       const trace = traceOf(piece.kcText, 'knitout-vendor');
       const audit = auditTraceV1(trace, { sections: piece.sections ?? traceAutoSectionsV1(trace) });
       const issues = audit.checks.filter((check) => !check.ok && check.severity === 'issue').map((check) => `${check.id} ${check.value}${check.at?.[0] ? `: ${check.at[0]}` : ''}`);
-      rows.push({ construction: piece.piece === null ? construction.name : `${construction.name} · ${piece.piece}`, file: out !== null ? join(out, `${piece.name}.kc`) : piece.name, verdict: piece.verdict, audit: auditSummary(audit), ok: issues.length === 0, issues });
+      const counts = knittedCounts(trace);
+      const passes = trace.passes.length;
+      rows.push({ construction: piece.piece === null ? construction.name : `${construction.name} · ${piece.piece}`, file: out !== null ? join(out, `${piece.name}.kc`) : piece.name, verdict: piece.verdict, audit: auditSummary(audit), ok: issues.length === 0, issues, knitted: `${counts.new} of ${passes} passes new on the machine, ${counts.faulted} with a fault on record`, passes, newPasses: counts.new, faultedPasses: counts.faulted });
     }
   }
   const ok = rows.every((row) => row.ok);
-  return { result: { kind: 'kniterate-studio-matrix', quick, ok, files: rows.length, failing: rows.filter((row) => !row.ok).length, rows }, ok };
+  return { result: { kind: 'kniterate-studio-matrix', quick, ok, files: rows.length, failing: rows.filter((row) => !row.ok).length, nothingNewOnTheMachine: rows.filter((row) => row.newPasses === 0).map((row) => row.construction), rows }, ok };
 }

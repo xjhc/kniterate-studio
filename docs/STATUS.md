@@ -4,6 +4,43 @@
 `pnpm verify` is the software gate. Full-gate status belongs to the exact
 current proof receipt, not this document's dates.
 
+## Knit log: which passes have been on the machine (2026-11-16)
+
+`pnpm --silent studio -- knitted <file>` reads any machine file against every
+file that has been knitted
+([`knit-log.json`](../packages/machine-lib/registry/knit-log.json), 13 knits
+from 30 October to 14 November, described in the
+[registry README](../packages/machine-lib/registry/README.md)). It says which
+passes have knitted with no fault reported, which have a fault on record,
+which have only knitted at another width, and which are new on the machine,
+with the knitted pass closest to each new one and how the two differ. A pass
+is matched by what it does at the fabric's edges, its yarn's role and its
+settings; artwork, width and bed position are left out. `matrix` now prints
+the same count for every construction Studio makes.
+
+**Software only. The evidence is operator reports, not measurements; a match
+is not proof a pass will knit, and Knit-proven is unchanged.** No emitter or
+setting changed, so no machine file changes. The matrix gains one construction
+(48 files).
+
+What it shows today:
+
+- One default has nothing new on the machine: the reversible two-colour chart
+  with its side edges closed by Studio's own fix (`engineMatrix.test.ts` now
+  fails if a compiler change gives it a pass the machine has not run). Every
+  other construction has new passes: fairisle charts 29 to 135 of 192,
+  beanies 154 to 228, sweater pieces 407 to 740.
+- A reversible chart whose edge stripes are painted by hand in the other
+  phase is accepted by Studio but is not what knitted (48 of 214 passes new).
+- Of the three files waiting on the operator, the 510-pass grey paisley has
+  no new pass, the 484-pass open-edge paisley has 13, and the 378-pass tip
+  swatch has 76, with 159 more that have only knitted on a wider fabric.
+- All three carry the same seven start passes (81 to 91) where waste stitches
+  dropped while the body yarns were brought in on 14 November.
+
+Not built: the same report in the browser and in handoff instructions, and
+settings and gauge kept per yarn.
+
 ## Split-increase review (2026-11-13)
 
 The operator's fork through `da30721` is merged locally. The next knit candidate

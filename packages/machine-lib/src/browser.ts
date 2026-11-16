@@ -119,6 +119,21 @@ export {
   type TraceYarnRolesV1,
 } from './knitout/kcode/trace-audit.js';
 export {
+  buildKnitEvidenceV1,
+  checkTraceAgainstKnitsV1,
+  describeTracePassesV1,
+  type FacetDifferenceV1,
+  type KnitEventRefV1,
+  type KnitEvidenceV1,
+  type KnitReferenceV1,
+  type KnitRunEventV1,
+  type KnitRunV1,
+  type KnittedCheckV1,
+  type KnittedStatusV1,
+  type PassDescriptionV1,
+  type PassEvidenceV1,
+} from './knitout/kcode/knit-evidence.js';
+export {
   CUSTOMIST_MATCHED_PRESETS_V1,
   CUSTOMIST_MIN_WASTE_PASSES_V1,
   CUSTOMIST_RIB_STITCH_STEP_V1,

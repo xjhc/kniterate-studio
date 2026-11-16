@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matrixCommand } from '../../../scripts/lib/machine-cli';
+import { KNITTED_DEFAULT_CONSTRUCTION, matrixCommand } from '../../../scripts/lib/machine-cli';
 
 /**
  * Every construction Studio makes, built and audited loop by loop: fairisle and
@@ -14,5 +14,10 @@ describe('engine matrix', () => {
     const { result } = await matrixCommand(null, false);
     expect(result.rows.filter((row) => !row.ok).map((row) => `${row.construction}: ${row.issues.join('; ')}`)).toEqual([]);
     expect(result.files).toBeGreaterThanOrEqual(40);
+    // The reversible chart is the one default that has knitted with no fault reported. A compiler change
+    // that gives it a pass the machine has not run fails here: knit the new pass first, or keep the old one.
+    const held = result.rows.find((row) => row.construction === KNITTED_DEFAULT_CONSTRUCTION)!;
+    expect(held.knitted).toMatch(/^0 of \d+ passes new on the machine/);
+    expect(result.nothingNewOnTheMachine).toContain(KNITTED_DEFAULT_CONSTRUCTION);
   });
 });
