@@ -30941,7 +30941,7 @@
     ]
   },
   "contract": {
-    "sha256": "b6cb55ccd88496144e4d273b163e76065196f6b19d90467c442172dcb84e3fd7",
+    "sha256": "7f0216d522fcc81163c553d63aac142bf18f2eeba610c3900bcd723a0e86277a",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31205,8 +31205,8 @@
       },
       {
         "path": "../../apps/studio/src/engineMatrix.test.ts",
-        "sha256": "02607fd453aa56f621595a3a405087d939c91b3c3f29d3a3c27b337143691ce9",
-        "bytes": 953
+        "sha256": "e37fc1aca6667348c5ce8333560771ba9330fb06f24a2e56a242355595d57581",
+        "bytes": 1451
       },
       {
         "path": "../../apps/studio/src/explain.ts",
@@ -31397,6 +31397,11 @@
         "path": "../../apps/studio/src/kcode/useMachineExecution.ts",
         "sha256": "44d8651bc419e61c4c183cf3ac1c11b5d4106050510d89c0a8b7a5ad75ca9059",
         "bytes": 4000
+      },
+      {
+        "path": "../../apps/studio/src/knitLog.test.ts",
+        "sha256": "5449e4d0a8838a4c5a7b94e315da5c7f8cb7a759c7606073d6e8569af8f15a99",
+        "bytes": 5319
       },
       {
         "path": "../../apps/studio/src/machine/executionCapacity.test.ts",
@@ -32019,9 +32024,19 @@
         "bytes": 11259
       },
       {
+        "path": "../../scripts/lib/knit-log.ts",
+        "sha256": "3fdb9c57eeb0a3a2340b31bc50028cdd1ae531943b5260d5397fdaadd3c1e268",
+        "bytes": 14139
+      },
+      {
         "path": "../../scripts/lib/machine-cli.ts",
-        "sha256": "e1fe5304795e5a3d3175a0b822f6a71259fa39c6e10b8e51f266471088b19a3b",
-        "bytes": 25669
+        "sha256": "cbcc80a69b3d33fc792d81d77cc11005081f9a981bc6fb5485648101e97d3d7d",
+        "bytes": 27738
+      },
+      {
+        "path": "../../scripts/lib/machine-files.ts",
+        "sha256": "545377afff482bdb237d1e50fcce308a48fc91f904e50c44eb1c2b7d4c5790f3",
+        "bytes": 1788
       },
       {
         "path": "../../scripts/lib/png.ts",
@@ -32050,8 +32065,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "5902039321cffadbb88b9f450ef71f9e6a53e09724bed0f289d142ed3820350a",
-        "bytes": 46380
+        "sha256": "70c1970f40443f9bed2fa44b24f079f9806260f801f0e530171616beb5b7b873",
+        "bytes": 47299
       },
       {
         "path": "../../tsconfig.base.json",
@@ -32220,7 +32235,7 @@
       },
       {
         "path": "registry/knit-proven.json",
-        "sha256": "1777903e66d198e73f8086de20ab1d36fb5dfbe2a52eeca5943c60faa466db2d",
+        "sha256": "504be6a8c0f7b5bf42904f4f604e19e919cf611cefabe16eb1862f38f8de94b9",
         "bytes": 179
       },
       {
@@ -32600,8 +32615,8 @@
       },
       {
         "path": "src/browser.ts",
-        "sha256": "88d3bc52a58a0c9bb1baace763d8cc2b4ff5d7c452099296e9f09f45cda2e6fa",
-        "bytes": 9172
+        "sha256": "19990f10ff7ff1d3eb3e853dec9c3a75143a7f2fbc33d007a70e6a4b2ffec373",
+        "bytes": 9533
       },
       {
         "path": "src/chart-core/__row_space_canary__.ts",
@@ -32715,8 +32730,8 @@
       },
       {
         "path": "src/index.ts",
-        "sha256": "1fda3191ade553a28100159f99a3cf7a8c022340423a786e4c9025abaca8aba0",
-        "bytes": 9309
+        "sha256": "5ae7de03d5916fc278b787546d45def85f0b6f595618af1899f53540ac379823",
+        "bytes": 9670
       },
       {
         "path": "src/knitout/back-face-projection.ts",
@@ -32812,6 +32827,11 @@
         "path": "src/knitout/kcode/export-eligibility.ts",
         "sha256": "1938535892a62de2c8ef00a8bb780c4965726850825e4dca8ee4b0ad9b1a623b",
         "bytes": 1128
+      },
+      {
+        "path": "src/knitout/kcode/knit-evidence.ts",
+        "sha256": "a295db9a5f9370ee2e61d8726a1eb0a2bf83c89fabcd6c4bc0664955a5c27e59",
+        "bytes": 26141
       },
       {
         "path": "src/knitout/kcode/knitted-faces.ts",
@@ -33569,6 +33589,11 @@
         "bytes": 5373
       },
       {
+        "path": "test/knitout/knit-evidence.test.ts",
+        "sha256": "1783beea675822d3bd21fbe2e6eaabbe2a33feb63eb621e78574a4e5dafad77f",
+        "bytes": 14356
+      },
+      {
         "path": "test/knitout/kniterate-topology-oracle.test.ts",
         "sha256": "1bb7cd2fd6e9d9d888247f818bc277c6013f1909fc92c5a5e96edf26de26f4bb",
         "bytes": 2188
@@ -33660,8 +33685,8 @@
       },
       {
         "path": "test/public-api.test.ts",
-        "sha256": "a451caa71fe55bc50dfa53f71e1489d81f641bdb3e0193b01df7a474d7fa78ed",
-        "bytes": 4107
+        "sha256": "bf95df235ccbabd890289ae89eb0227c713e9652a6ec0379871aa65aec5353ef",
+        "bytes": 4183
       },
       {
         "path": "tsconfig.json",
