@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { buildKnitEvidenceV1, checkTraceAgainstKnitsV1, describeTracePassesV1, type MachineTraceV1 } from '../../src/browser.js'
 
 type Bed = 'front' | 'rear'
-type Act = ['knit' | 'tuck' | 'drop', Bed, number] | ['xfer', Bed, number, Bed, number]
-interface Row { carrier: string; acts: Act[]; roller?: number; stops?: [number, number] }
+type Act = ['knit' | 'tuck' | 'drop', Bed, number] | ['xfer' | 'split', Bed, number, Bed, number]
+interface Row { carrier: string; acts: Act[]; roller?: number; stops?: [number, number]; rack?: number }
 const at = (bed: Bed, n: number) => ({ bed, traceCoordinate: n, stitchSelector: { encodedValue: 7 } })
 /** A hand-built trace: one entry per pass, alternating direction from left to right. */
 function trace(rows: Row[]): MachineTraceV1 {
@@ -16,9 +16,9 @@ function trace(rows: Row[]): MachineTraceV1 {
       speed: 200,
       roller: row.roller ?? 450,
       carrierStops: row.stops ? { left: row.stops[0], right: row.stops[1] } : null,
-      actions: row.acts.map((act) => (act[0] === 'xfer' ? { kind: 'xfer', source: at(act[1], act[2]), target: at(act[3], act[4]) } : { kind: act[0], at: at(act[1], act[2]) })),
+      actions: row.acts.map((act) => (act[0] === 'xfer' || act[0] === 'split' ? { kind: act[0], source: at(act[1], act[2]), target: at(act[3], act[4]), carrier: row.carrier } : { kind: act[0], at: at(act[1], act[2]) })),
     })),
-    rackCommands: [],
+    rackCommands: rows.flatMap((row, index) => (row.rack === undefined ? [] : [{ beforePassIndex: index, value: row.rack }])),
   } as never
 }
 const span = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i)
@@ -69,6 +69,44 @@ describe('pass descriptions', () => {
     expect(passes[4]!.facets['knit f']).toBe('stitch 7 at L0 R0/2 in:all')
   })
 
+  it('read a full row beside one stacked needle as a full row, and tell three loops from two', () => {
+    const row = (n: number[]) => ({ carrier: '3', acts: n.map((needle) => ['knit', 'front', needle] as Act) })
+    const stackOnto = (target: number, times: number): Row[] => Array.from({ length: times }, () => ({ carrier: '3', acts: [['tuck', 'front', target] as Act] }))
+    const two = describeTracePassesV1(trace([row(span(10, 29)), ...stackOnto(11, 1), row(span(10, 29))])).at(-1)!
+    const three = describeTracePassesV1(trace([row(span(10, 29)), ...stackOnto(11, 2), row(span(10, 29))])).at(-1)!
+    expect(two.facets['knit f']).toBe('stitch 7 at L0 L1/2 R0 in:all')
+    expect(three.facets['knit f']).toBe('stitch 7 at L0 L1/3 R0 in:all')
+    // A tuck adds a loop; a drop takes the needle's loops away, and the next knit there is on an empty needle.
+    const dropped = describeTracePassesV1(trace([row(span(10, 29)), { carrier: '0', acts: [['drop', 'front', 12]] }, row(span(10, 29))]))
+    expect(dropped[1]!.facets['drop f']).toBe('in:some')
+    expect(dropped[2]!.facets['knit f']).toBe('stitch 7 at L0 L2/0 R0 in:all')
+  })
+
+  it('describe a split and the racking it is made at', () => {
+    const rows: Row[] = [
+      { carrier: '3', acts: span(10, 19).map((n) => ['knit', 'front', n] as Act) },
+      // The edge loop goes to the rear while a new one is knitted in its place.
+      { carrier: '3', acts: [...span(10, 18).map((n) => ['knit', 'front', n] as Act), ['split', 'front', 19, 'rear', 19]], rack: 1 },
+    ]
+    const split = describeTracePassesV1(trace(rows))[1]!
+    expect(split.facets.rack).toBe('1')
+    expect(split.facets['split f>b']).toBe('stitch 7 at R0>R0/1>0')
+    expect(split.facets['knit f']).toBe('stitch 7 at L0 in:all')
+    expect(describeTracePassesV1(trace(rows.map((row) => ({ ...row, rack: undefined }))))[1]!.text).not.toBe(split.text)
+  })
+
+  it('keep every-other-needle rows reading the same on a narrow fabric', () => {
+    const interlock = (from: number, to: number): Row[] => [
+      { carrier: '6', acts: span(from, to).flatMap((n) => [['knit', 'front', n], ['knit', 'rear', n]] as Act[]) },
+      { carrier: '6', acts: span(from, to).filter((n) => (n - from) % 2 === 0).map((n) => ['knit', 'front', n] as Act) },
+    ]
+    expect(describeTracePassesV1(trace(interlock(10, 17)))[1]!.facets['knit f']).toBe('stitch 7 at L0 in:alternate')
+    expect(describeTracePassesV1(trace(interlock(10, 49)))[1]!.text).toBe(describeTracePassesV1(trace(interlock(110, 117)))[1]!.text)
+    // Needles that merely share a parity are artwork, not every other needle.
+    const scattered: Row[] = [interlock(10, 49)[0]!, { carrier: '6', acts: [10, 14, 16, 22, 30, 49].map((n) => ['knit', 'front', n] as Act) }]
+    expect(describeTracePassesV1(trace(scattered))[1]!.facets['knit f']).toBe('stitch 7 at L0 R0 in:some')
+  })
+
   it('say whether the carrier arrives from near the fabric or from far away', () => {
     const near = describeTracePassesV1(trace([{ carrier: '3', acts: span(100, 119).map((n) => ['knit', 'front', n] as Act), stops: [97.5, 121.5] }]))[0]!
     const far = describeTracePassesV1(trace([{ carrier: '3', acts: span(100, 119).map((n) => ['knit', 'front', n] as Act), stops: [-9.5, 121.5] }]))[0]!
@@ -94,6 +132,19 @@ describe('pass descriptions', () => {
     ]
     expect(describeTracePassesV1(trace(rows))[1]!.facets.gaps).toBe('6 or more')
   })
+
+  it('count the fabric a yarn crosses before its first stitch and after its last', () => {
+    const base: Row = { carrier: '3', acts: span(10, 29).map((n) => ['knit', 'front', n] as Act) }
+    // Yarn 4 travels the whole fabric but only knits needles 20 to 29: ten needles of float first.
+    const late = describeTracePassesV1(trace([base, { carrier: '4', acts: span(20, 29).map((n) => ['knit', 'front', n] as Act), stops: [7.5, 31.5] }]))[1]!
+    expect(late.facets.gaps).toBe('6 or more')
+    // The same stitches with the carrier starting beside them: no float.
+    const beside = describeTracePassesV1(trace([base, { carrier: '4', acts: span(20, 29).map((n) => ['knit', 'front', n] as Act), stops: [19.5, 31.5] }]))[1]!
+    expect(beside.facets.gaps).toBeUndefined()
+    // A carrier that only crosses the fabric carries its yarn over all of it.
+    const crossing = describeTracePassesV1(trace([base, { carrier: '6', acts: [], stops: [7.5, 31.5] }]))[1]!
+    expect(crossing.facets.gaps).toBe('6 or more')
+  })
 })
 
 describe('knit evidence', () => {
@@ -118,7 +169,28 @@ describe('knit evidence', () => {
     expect(check.counts.new).toBe(1)
     expect(check.fresh).toHaveLength(1)
     expect(check.fresh[0]!.passes).toEqual([4])
-    expect(check.fresh[0]!.closest).toEqual({ knits: ['rectangle'], faulted: false, differences: [{ facet: 'roller', known: '450', here: '100' }] })
+    expect(check.fresh[0]!.closest).toEqual({ knits: ['rectangle'], standing: 'knitted', differences: [{ facet: 'roller', known: '450', here: '100' }] })
+  })
+
+  it('says where the closest pass stands when it has a fault on record', () => {
+    // The first yarn's rows (passes 2, 4 and 6) all knit at a slack roller.
+    const slack = knitted.map((row, index) => (index % 2 === 1 ? { ...row, roller: 100 } : row))
+    const evidence = buildKnitEvidenceV1([
+      { id: 'clean', trace: trace(slack), events: [] },
+      { id: 'dropped', trace: trace(slack), events: [{ kind: 'fault', passes: [[4, 4]], what: 'dropped a stitch' }] },
+    ])
+    const slower = knitted.map((row, index) => (index % 2 === 1 ? { ...row, roller: 50 } : row))
+    const closest = checkTraceAgainstKnitsV1(trace(slower), evidence).fresh[0]!.closest!
+    // It knitted once and then faulted: the closest pass is one with a fault on record.
+    expect(closest).toMatchObject({ standing: 'faulted', knits: ['clean', 'dropped'], differences: [{ facet: 'roller', known: '100', here: '50' }] })
+  })
+
+  it('marks a pass that only knitted on a narrower fabric', () => {
+    const evidence = buildKnitEvidenceV1([{ id: 'rectangle', trace: trace(knitted), events: [] }])
+    const wide = reversible(10, 69, 2, (n) => n === 10 || n === 69)
+    const check = checkTraceAgainstKnitsV1(trace(wide), evidence)
+    expect(check.counts).toMatchObject({ new: 0, 'other-width': 4, knitted: 1 })
+    expect(check.otherWidth[0]).toMatchObject({ width: [60, 60], knittedAt: [20, 20] })
   })
 
   it('marks a pass that only knitted on a wider fabric', () => {
@@ -182,6 +254,25 @@ describe('knit evidence', () => {
     expect(cleared.cleared).toMatchObject([{ passes: [2, 4, 6], knittedSinceFault: 2, faults: [{ knit: 'dropped' }] }])
     // A new fault counts again.
     expect(second([fault, clean('after'), clean('again'), { ...fault, id: 'dropped again' }]).statuses[1]).toBe('faulted')
+  })
+
+  it('does not let a knit nobody reported on clear a fault', () => {
+    const fault = { id: 'dropped', trace: trace(knitted), events: [{ kind: 'fault' as const, passes: [[2, 2] as const], what: 'dropped the right edge stitch' }] }
+    const photoOnly = (id: string) => ({ id, trace: trace(knitted), clears: false, events: [] })
+    const check = checkTraceAgainstKnitsV1(trace(knitted), buildKnitEvidenceV1([fault, photoOnly('photo 1'), photoOnly('photo 2'), photoOnly('photo 3')]))
+    expect(check.statuses[1]).toBe('faulted')
+    expect(check.faulted[0]).toMatchObject({ knittedSinceFault: 0, knitted: ['photo 1', 'photo 2', 'photo 3'] })
+    // Where there was no fault, those knits still show the pass has been on the machine.
+    expect(check.statuses[0]).toBe('knitted')
+  })
+
+  it('treats a fault placed after an early stop as a fault with no place', () => {
+    const later = knitted.map((row, index) => (index > 2 ? { ...row, roller: 100 } : row))
+    const evidence = buildKnitEvidenceV1([{ id: 'stopped', trace: trace(later), knittedThrough: 3, events: [{ kind: 'fault', passes: [[5, 5]], what: 'a break somewhere later' }] }])
+    const check = checkTraceAgainstKnitsV1(trace(later), evidence)
+    // The fault is not dropped: nothing in the knit counts as knitted.
+    expect(check.statuses.slice(0, 3)).toEqual(['unclear', 'unclear', 'unclear'])
+    expect(check.statuses.slice(3)).toEqual(['new', 'new', 'new', 'new'])
   })
 
   it('does not count passes after an early stop, or a knit whose fault has no place', () => {

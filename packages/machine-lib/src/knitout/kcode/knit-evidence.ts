@@ -50,12 +50,19 @@ export interface PassDescriptionV1 {
 
 const FACET_ORDER = ['yarn', 'direction', 'cams', 'rack', 'speed', 'roller', 'loops on', 'carrier from', 'carrier to', 'gaps']
 
-/** How a set of needles fills the stretch `from..to`: every needle, every other needle, or neither. */
-function regularity(needles: readonly number[], from: number, to: number): 'all' | 'alternate' | 'some' {
-  const sorted = [...new Set(needles)].sort((a, b) => a - b)
-  if (sorted.length >= to - from + 1) return 'all'
-  const everyOther = sorted.length >= 2 && sorted.every((n, i) => i === 0 || n - sorted[i - 1]! === 2)
-  return everyOther && sorted[0]! - from <= 1 && to - sorted[sorted.length - 1]! <= 1 ? 'alternate' : 'some'
+/**
+ * How a set of needles fills the stretch `from..to`: every needle, every other needle, or neither.
+ * `skip` are needles the same action handles another way (an unusual loop named on its own), so a
+ * full row beside one stacked needle still reads as a full row.
+ */
+function regularity(needles: readonly number[], from: number, to: number, skip: ReadonlySet<number>): 'all' | 'alternate' | 'some' {
+  const worked = new Set(needles)
+  const stretch: number[] = []
+  for (let n = from; n <= to; n++) if (!skip.has(n)) stretch.push(n)
+  if (stretch.every((n) => worked.has(n))) return 'all'
+  const parity = Math.abs(needles[0]!) % 2
+  const everyOther = needles.every((n) => Math.abs(n) % 2 === parity) && stretch.every((n) => Math.abs(n) % 2 !== parity || worked.has(n))
+  return everyOther ? 'alternate' : 'some'
 }
 
 /** One description per pass, replaying the loops so each action knows what its needle held. */
@@ -106,17 +113,18 @@ export function describeTracePassesV1(trace: Trace, roles: TraceYarnRolesV1 = DE
       if (fromLeft === fromRight) return `L${fromLeft}R${fromRight}`
       return fromLeft < fromRight ? `L${fromLeft}` : `R${fromRight}`
     }
-    const stack = (count: number) => (count >= 2 ? 2 : count)
+    // Kniterate's own files stack at most three loops; more than that is all one case.
+    const stack = (count: number) => (count >= 3 ? 3 : count)
     // A loop that has waited longer than Studio lets a start loop wait: the rollers have pulled on it all that time.
     const waited = (bed: Bed, n: number) => held(bed, n) > 0 && index - (born.get(`${bed}${n}`) ?? index) > TRACE_START_HOLD_LIMIT_V1
 
     // Needles away from the edges are summarised: `inside` holds them by what they held, to say whether
     // the pass works every needle there, every other one, or some (which is the artwork).
-    interface Group { sizes: Set<number>; tokens: Set<string>; inside: Map<string, { needles: number[]; exact: boolean }> }
+    interface Group { sizes: Set<number>; tokens: Set<string>; needles: number[]; inside: Map<string, { needles: number[]; exact: boolean }> }
     const groups = new Map<string, Group>()
     const group = (name: string): Group => {
       let found = groups.get(name)
-      if (!found) { found = { sizes: new Set(), tokens: new Set(), inside: new Map() }; groups.set(name, found) }
+      if (!found) { found = { sizes: new Set(), tokens: new Set(), needles: [], inside: new Map() }; groups.set(name, found) }
       return found
     }
     const inside = (target: Group, suffix: string, n: number, exact: boolean) => {
@@ -133,6 +141,7 @@ export function describeTracePassesV1(trace: Trace, roles: TraceYarnRolesV1 = DE
         const target = group(`${action.kind} ${bed}`)
         const unusual = count !== 1 || waited(bed, n)
         const suffix = `${count === 1 ? '' : `/${count}`}${waited(bed, n) ? '/held' : ''}`
+        target.needles.push(n)
         if (action.kind !== 'drop') { target.sizes.add(action.at.stitchSelector.encodedValue); worked.push(n) }
         const where = place(n, unusual)
         if (where === 'in') inside(target, suffix, n, unusual)
@@ -143,6 +152,7 @@ export function describeTracePassesV1(trace: Trace, roles: TraceYarnRolesV1 = DE
         const source = action.source.traceCoordinate
         const destination = action.target.traceCoordinate
         const target = group(`${action.kind} ${from}>${to}`)
+        target.needles.push(source)
         if (action.kind === 'split') { target.sizes.add(action.source.stitchSelector.encodedValue); worked.push(source) }
         const counts = `${stack(held(from, source))}>${stack(held(to, destination))}${waited(from, source) ? '/held' : ''}`
         const [fromPlace, toPlace] = [place(source, true), place(destination, true)]
@@ -166,13 +176,24 @@ export function describeTracePassesV1(trace: Trace, roles: TraceYarnRolesV1 = DE
       facets['carrier from'] = stop(from)
       facets['carrier to'] = stop(to)
     }
+    // The longest run of needles the yarn passes without a stitch: between its stitches, and across the
+    // fabric before its first and after its last, as far as the carrier travels.
     const columns = [...new Set(worked)].sort((a, b) => a - b)
-    const gap = columns.reduce((longest, n, i) => (i === 0 ? 0 : Math.max(longest, n - columns[i - 1]! - 1)), 0)
+    let gap = columns.reduce((longest, n, i) => (i === 0 ? 0 : Math.max(longest, n - columns[i - 1]! - 1)), 0)
+    if (pass.carrierStops && span) {
+      const from = Math.max(left, Math.ceil(Math.min(pass.carrierStops.left, pass.carrierStops.right)))
+      const to = Math.min(right, Math.floor(Math.max(pass.carrierStops.left, pass.carrierStops.right)))
+      if (from <= to) gap = columns.length === 0 ? to - from + 1 : Math.max(gap, columns[0]! - from, to - columns[columns.length - 1]!)
+    }
     if (gap > 0) facets.gaps = gap < LONG_GAP_NEEDLES ? `up to ${LONG_GAP_NEEDLES - 1}` : `${LONG_GAP_NEEDLES} or more`
     for (const [name, found] of [...groups].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
       const tokens = [...found.tokens]
       // Needles named exactly near an edge are not part of the stretch the rest is measured against.
-      for (const [suffix, { needles, exact }] of found.inside) tokens.push(`in${suffix}:${regularity(needles, left + (exact ? EDGE_NEEDLES : 1), right - (exact ? EDGE_NEEDLES : 1))}`)
+      for (const [suffix, { needles, exact }] of found.inside) {
+        const mine = new Set(needles)
+        const skip = new Set(found.needles.filter((n) => !mine.has(n)))
+        tokens.push(`in${suffix}:${regularity(needles, left + (exact ? EDGE_NEEDLES : 1), right - (exact ? EDGE_NEEDLES : 1), skip)}`)
+      }
       const sizes = [...found.sizes].sort((a, b) => a - b)
       facets[name] = [sizes.length > 0 ? `stitch ${sizes.join(',')}` : '', tokens.sort().join(' ')].filter(Boolean).join(' at ') || 'yes'
     }
@@ -216,6 +237,11 @@ export interface KnitRunV1 {
   readonly roles?: TraceYarnRolesV1
   /** The last pass knitted, when the run stopped early. Passes after it are not evidence. */
   readonly knittedThrough?: number | null
+  /**
+   * False when nobody said how the run went (a piece known only from a photo, say). Its passes have
+   * still been on the machine, but they do not count towards clearing an earlier fault. Default true.
+   */
+  readonly clears?: boolean
   readonly events: readonly KnitRunEventV1[]
 }
 
@@ -237,7 +263,7 @@ export interface PassEvidenceV1 {
   readonly description: PassDescriptionV1
   /** Knits that ran this pass with no fault reported on it, oldest first. */
   readonly knitted: readonly string[]
-  /** Knits that have run it with no fault reported since the last fault; null when it has never faulted. */
+  /** Knits that have run it with no fault reported since the last fault, counting only knits whose run was reported on; null when it has never faulted. */
   readonly knittedSinceFault: number | null
   /** Faults reported on this pass, or on a stretch that contains it. */
   readonly faults: readonly KnitEventRefV1[]
@@ -290,7 +316,7 @@ export function buildKnitEvidenceV1(runs: readonly KnitRunV1[], references: read
   for (const run of runs) {
     const described = describeTracePassesV1(run.trace, run.roles)
     const through = Math.max(0, Math.min(run.knittedThrough ?? described.length, described.length))
-    const unlocatedFault = run.events.some((event) => event.kind === 'fault' && event.passes === null)
+    let unplacedFault = run.events.some((event) => event.kind === 'fault' && event.passes === null)
     const seen = new Map<string, { description: PassDescriptionV1; faults: Set<KnitRunEventV1>; notes: Set<KnitRunEventV1>; widths: number[] }>()
     for (let index = 0; index < through; index++) {
       const description = described[index]!
@@ -305,6 +331,8 @@ export function buildKnitEvidenceV1(runs: readonly KnitRunV1[], references: read
       const inside = new Set<string>()
       const elsewhere = new Set<string>()
       for (let index = 0; index < through; index++) (spans.some(([from, to]) => index + 1 >= from && index + 1 <= to) ? inside : elsewhere).add(described[index]!.text)
+      // Placed where nothing was knitted (past an early stop): the fault is real but has no place.
+      if (inside.size === 0) { if (event.kind === 'fault') unplacedFault = true; continue }
       let blamed = [...inside]
       if (event.approximate) {
         const novel = blamed.filter((text) => (passes.get(text)?.knitted.length ?? 0) === 0)
@@ -320,10 +348,10 @@ export function buildKnitEvidenceV1(runs: readonly KnitRunV1[], references: read
       if (here.faults.size > 0) {
         for (const event of here.faults) found.faults.push({ ...event, knit: run.id })
         found.knittedSinceFault = 0
-      } else if (unlocatedFault) found.unclear.push(run.id)
+      } else if (unplacedFault) found.unclear.push(run.id)
       else {
         found.knitted.push(run.id)
-        if (found.knittedSinceFault !== null) found.knittedSinceFault++
+        if (found.knittedSinceFault !== null && run.clears !== false) found.knittedSinceFault++
         const widths: [number, number] = [Math.min(...here.widths), Math.max(...here.widths)]
         found.width = found.width ? [Math.min(found.width[0], widths[0]), Math.max(found.width[1], widths[1])] : widths
       }
@@ -368,7 +396,7 @@ export interface KnittedCheckV1 {
     /** Kniterate's own files that contain this pass. */
     readonly kniterate: readonly string[]
     /** The most similar pass that has been on the machine, and how it differs. */
-    readonly closest: { readonly knits: readonly string[]; readonly faulted: boolean; readonly differences: readonly FacetDifferenceV1[] } | null
+    readonly closest: { readonly knits: readonly string[]; readonly standing: 'knitted' | 'faulted' | 'unclear'; readonly differences: readonly FacetDifferenceV1[] } | null
   }[]
   readonly otherWidth: readonly { readonly passes: readonly number[]; readonly width: readonly [number, number]; readonly knittedAt: readonly [number, number]; readonly knits: readonly string[] }[]
   readonly faulted: readonly { readonly passes: readonly number[]; readonly faults: readonly KnitEventRefV1[]; readonly knitted: readonly string[]; readonly knittedSinceFault: number }[]
@@ -381,6 +409,13 @@ export interface KnittedCheckV1 {
   readonly placement: { readonly here: readonly [number, number] | null; readonly knitted: readonly [number, number] | null }
 }
 
+/** Where a pass stands on the evidence, before width is considered. */
+function standing(found: PassEvidenceV1 | undefined): 'knitted' | 'faulted' | 'unclear' | 'new' {
+  if (!found || found.knitted.length + found.faults.length + found.unclear.length === 0) return 'new'
+  if (found.knittedSinceFault !== null && found.knittedSinceFault < KNITS_TO_CLEAR_A_FAULT_V1) return 'faulted'
+  return found.knitted.length === 0 ? 'unclear' : 'knitted'
+}
+
 function differences(known: PassDescriptionV1, here: PassDescriptionV1): FacetDifferenceV1[] {
   const names = [...new Set([...Object.keys(known.facets), ...Object.keys(here.facets)])]
   return names.filter((name) => known.facets[name] !== here.facets[name]).map((facet) => ({ facet, known: known.facets[facet] ?? null, here: here.facets[facet] ?? null }))
@@ -390,10 +425,9 @@ export function checkTraceAgainstKnitsV1(trace: Trace, evidence: KnitEvidenceV1,
   const descriptions = describeTracePassesV1(trace, roles)
   const statusOf = (description: PassDescriptionV1): KnittedStatusV1 => {
     const found = evidence.passes.get(description.text)
-    if (!found || found.knitted.length + found.faults.length + found.unclear.length === 0) return 'new'
-    if (found.knittedSinceFault !== null && found.knittedSinceFault < KNITS_TO_CLEAR_A_FAULT_V1) return 'faulted'
-    if (found.knitted.length === 0) return 'unclear'
-    return description.width < found.width![0] || description.width > found.width![1] ? 'other-width' : 'knitted'
+    const stands = standing(found)
+    if (stands !== 'knitted') return stands
+    return description.width < found!.width![0] || description.width > found!.width![1] ? 'other-width' : 'knitted'
   }
   const statuses = descriptions.map(statusOf)
   const counts: Record<KnittedStatusV1, number> = { knitted: 0, 'other-width': 0, faulted: 0, unclear: 0, new: 0 }
@@ -410,17 +444,17 @@ export function checkTraceAgainstKnitsV1(trace: Trace, evidence: KnitEvidenceV1,
     })
     return [...found.values()]
   }
-  const onMachine = [...evidence.passes.values()].filter((found) => found.knitted.length + found.faults.length + found.unclear.length > 0)
+  const onMachine = [...evidence.passes.values()].flatMap((found) => { const stands = standing(found); return stands === 'new' ? [] : [{ found, stands }] })
   const fresh = byText('new').map(({ description, passes }) => {
     let closest: KnittedCheckV1['fresh'][number]['closest'] = null
     let best = Infinity
-    for (const known of onMachine) {
+    for (const { found: known, stands } of onMachine) {
       const differs = differences(known.description, description)
-      // Prefer a pass that knitted with no fault reported over one that only faulted.
-      const score = differs.length * 2 + (known.knitted.length > 0 ? 0 : 1)
+      // Prefer a pass that stands as knitted over one with a fault on record.
+      const score = differs.length * 2 + (stands === 'knitted' ? 0 : 1)
       if (score >= best) continue
       best = score
-      closest = { knits: known.knitted.length > 0 ? known.knitted : [...new Set([...known.faults.map((fault) => fault.knit), ...known.unclear])], faulted: known.knitted.length === 0, differences: differs }
+      closest = { knits: [...new Set([...known.knitted, ...known.faults.map((fault) => fault.knit), ...known.unclear])], standing: stands, differences: differs }
     }
     return { passes, description, kniterate: evidence.passes.get(description.text)?.kniterate ?? [], closest }
   })

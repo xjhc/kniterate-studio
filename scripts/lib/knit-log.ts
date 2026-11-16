@@ -40,10 +40,12 @@ type PassSpan = [number, number];
 
 interface KnitLogEventJson {
   kind: 'fault' | 'note';
-  /** One stretch of passes, or several. Leave out, with `section`, when the report does not say where. */
+  /** One stretch of passes, or several. */
   passes?: PassSpan | PassSpan[];
   /** A section of the file instead of pass numbers (waste, draw, cast-on, body, bind-off, top). */
   section?: string;
+  /** Every pass after the cast-on that only moves one of these carriers ("it stopped while the waste feeder was being moved"). */
+  carrierMoves?: string[];
   approximate?: boolean;
   what: string;
 }
@@ -60,6 +62,8 @@ export interface KnitLogEntry {
   yarns: Record<string, string>;
   /** The last pass knitted, or the section it stopped in, when the run did not finish. */
   knittedThrough?: number | { section: string };
+  /** The operator said how the run went: what went wrong, or that it went well. Only such a knit clears an earlier fault. */
+  operatorSaidHowItRan?: boolean;
   report?: string;
   source?: string;
   record?: string;
@@ -85,52 +89,93 @@ export interface LoggedKnit {
 
 export class KnitLogError extends Error {}
 
+const ENTRY_KEYS = new Set(['id', 'date', 'what', 'file', 'sha256', 'roles', 'yarns', 'knittedThrough', 'operatorSaidHowItRan', 'report', 'source', 'record', 'caveat', 'events']);
+const EVENT_KEYS = new Set(['kind', 'passes', 'section', 'carrierMoves', 'approximate', 'what']);
+const START_SECTIONS = new Set(['waste', 'draw', 'cast-on']);
+const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isSpan = (value: unknown): value is PassSpan => Array.isArray(value) && value.length === 2 && value.every((n) => Number.isInteger(n));
+const isDate = (value: unknown): value is string => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
 
-/** Read and check the log: every file present with its recorded hash, every pass and section inside its file. */
+/**
+ * Read and check the log. It is refused, with the entry named, when a file is missing or is not the
+ * bytes recorded, a pass or section is not in its file, an event sits after the pass the run stopped
+ * at, a key is misspelt, or the knits are not oldest first (the order decides which knits come after
+ * a fault).
+ */
 export function readKnitLog(root = REPOSITORY_ROOT): { yarns: Record<string, string>; knits: LoggedKnit[] } {
   const log = JSON.parse(readFileSync(join(root, KNIT_LOG_PATH), 'utf8')) as KnitLogFile;
-  if (log.kind !== 'kniterate-knit-log' || log.schemaVersion !== 1) throw new KnitLogError(`${KNIT_LOG_PATH}: not a version 1 knit log.`);
+  if (!isRecord(log) || log.kind !== 'kniterate-knit-log' || log.schemaVersion !== 1) throw new KnitLogError(`${KNIT_LOG_PATH}: not a version 1 knit log.`);
+  if (!isRecord(log.yarns) || !Array.isArray(log.knits)) throw new KnitLogError(`${KNIT_LOG_PATH}: needs \`yarns\` and a \`knits\` list.`);
   const seen = new Set<string>();
-  const knits = log.knits.map((entry): LoggedKnit => {
-    const fail = (message: string): never => { throw new KnitLogError(`${KNIT_LOG_PATH}, knit "${entry.id}": ${message}`); };
-    if (!/^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(entry.id ?? '')) fail('the id is a date and a short name, like 2026-11-14-split-paisley.');
+  let previousDate = '';
+  const knits = log.knits.map((entry, position): LoggedKnit => {
+    const name = isRecord(entry) && typeof entry.id === 'string' ? `knit "${entry.id}"` : `knit number ${position + 1}`;
+    const fail = (message: string): never => { throw new KnitLogError(`${KNIT_LOG_PATH}, ${name}: ${message}`); };
+    if (!isRecord(entry)) fail('an entry is an object.');
+    for (const key of Object.keys(entry)) if (!ENTRY_KEYS.has(key)) fail(`"${key}" is not a field of a knit. Fields: ${[...ENTRY_KEYS].join(', ')}.`);
+    if (typeof entry.id !== 'string' || !/^\d{4}-\d{2}-\d{2}-[a-z0-9-]+$/.test(entry.id)) fail('the id is a date and a short name, like 2026-11-14-split-paisley.');
     if (seen.has(entry.id)) fail('the id is used twice.');
     seen.add(entry.id);
+    if (!isDate(entry.date)) fail(`the date "${String(entry.date)}" is not a real YYYY-MM-DD date.`);
     if (!entry.id.startsWith(entry.date)) fail(`the id does not start with its date ${entry.date}.`);
-    if (!entry.what) fail('say what the piece is in `what`.');
+    if (entry.date < previousDate) fail(`it is dated ${entry.date} but comes after a knit dated ${previousDate}. List knits oldest first, and same-day knits in the order they were knitted.`);
+    previousDate = entry.date;
+    if (typeof entry.what !== 'string' || entry.what === '') fail('say what the piece is in `what`.');
+    for (const key of ['report', 'source', 'record', 'caveat'] as const) if (entry[key] !== undefined && typeof entry[key] !== 'string') fail(`\`${key}\` is text.`);
+    if (entry.operatorSaidHowItRan !== undefined && typeof entry.operatorSaidHowItRan !== 'boolean') fail('`operatorSaidHowItRan` is true or false.');
+    if (typeof entry.file !== 'string' || entry.file.startsWith('/') || entry.file.split('/').includes('..')) fail('`file` is a path inside the repository.');
+    if (typeof entry.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(entry.sha256)) fail('`sha256` is 64 hex digits.');
     const path = join(root, entry.file);
     if (!existsSync(path)) fail(`${entry.file} does not exist.`);
     const bytes = readFileSync(path);
     const hash = createHash('sha256').update(bytes).digest('hex');
     if (hash !== entry.sha256) fail(`${entry.file} has SHA-256 ${hash}, not the recorded ${entry.sha256}. The log must point at the exact file that was knitted.`);
-    for (const [carrier, yarn] of Object.entries(entry.yarns ?? {})) if (!(yarn in log.yarns)) fail(`carrier ${carrier} names the yarn "${yarn}", which is not in the log's yarns.`);
+    if (!isRecord(entry.yarns)) fail('`yarns` maps each carrier to a yarn.');
+    for (const [carrier, yarn] of Object.entries(entry.yarns)) if (typeof yarn !== 'string' || !(yarn in log.yarns)) fail(`carrier ${carrier} names the yarn "${String(yarn)}", which is not in the log's yarns.`);
+    if (entry.roles !== undefined && (!isRecord(entry.roles) || typeof entry.roles.waste !== 'string' || (entry.roles.draw !== null && typeof entry.roles.draw !== 'string'))) fail('`roles` is { "waste": carrier, "draw": carrier or null }.');
     const roles = entry.roles ?? DEFAULT_TRACE_YARN_ROLES_V1;
     const trace = traceOf(bytes.toString('latin1'));
     const sections = traceAutoSectionsV1(trace, roles);
     const count = trace.passes.length;
-    const sectionSpan = (name: string): PassSpan => {
-      const found = sections.filter((section) => section.name === name);
-      if (found.length === 0) return fail(`the file has no "${name}" section. Its sections: ${[...new Set(sections.map((section) => section.name))].join(', ')}.`);
-      return [Math.min(...found.map((section) => section.from)), Math.max(...found.map((section) => section.to))];
+    const sectionSpan = (section: unknown): PassSpan => {
+      const found = sections.filter((candidate) => candidate.name === section);
+      if (found.length === 0) return fail(`the file has no "${String(section)}" section. Its sections: ${[...new Set(sections.map((candidate) => candidate.name))].join(', ')}.`);
+      return [Math.min(...found.map((candidate) => candidate.from)), Math.max(...found.map((candidate) => candidate.to))];
     };
     const inFile = (span: PassSpan): PassSpan => (span[0] >= 1 && span[0] <= span[1] && span[1] <= count ? span : fail(`passes ${span[0]}-${span[1]} are outside the file's 1-${count}.`));
-    const through = entry.knittedThrough;
-    const knittedThrough = through === undefined ? null : typeof through === 'number' ? inFile([through, through])[1] : sectionSpan(through.section)[1];
-    const events = (entry.events ?? []).flatMap((event): KnitRunEventV1[] => {
-      if (event.kind !== 'fault' && event.kind !== 'note') fail(`an event is a "fault" or a "note", not "${String(event.kind)}".`);
-      if (!event.what) fail('every event says what was seen in `what`.');
-      if (event.passes !== undefined && event.section !== undefined) fail('an event gives passes or a section, not both.');
-      if (event.section !== undefined) return [{ kind: event.kind, passes: [sectionSpan(event.section)], approximate: true, what: event.what }];
-      if (event.passes === undefined) return [{ kind: event.kind, passes: null, what: event.what }];
-      const spans = isSpan(event.passes) ? [event.passes] : event.passes;
-      if (!Array.isArray(spans) || spans.length === 0 || !spans.every(isSpan)) fail('`passes` is [from, to] or a list of such pairs.');
-      return [{ kind: event.kind, passes: spans.map(inFile), ...(event.approximate ? { approximate: true } : {}), what: event.what }];
+    const through: unknown = entry.knittedThrough;
+    const knittedThrough = through === undefined ? null
+      : Number.isInteger(through) ? inFile([through as number, through as number])[1]
+        : isRecord(through) && Object.keys(through).join() === 'section' ? sectionSpan(through.section)[1]
+          : fail('`knittedThrough` is a pass number or { "section": name }; leave it out when the run finished.');
+    if (!Array.isArray(entry.events)) fail('`events` is a list; write [] when nothing was reported.');
+    const startEnd = Math.max(0, ...sections.filter((section) => START_SECTIONS.has(section.name)).map((section) => section.to));
+    const events = entry.events.map((event: unknown): KnitRunEventV1 => {
+      if (!isRecord(event)) return fail('an event is an object.');
+      for (const key of Object.keys(event)) if (!EVENT_KEYS.has(key)) fail(`"${key}" is not a field of an event. Fields: ${[...EVENT_KEYS].join(', ')}.`);
+      const kind = event.kind === 'fault' || event.kind === 'note' ? event.kind : fail(`an event is a "fault" or a "note", not "${String(event.kind)}".`);
+      const what = typeof event.what === 'string' && event.what !== '' ? event.what : fail('every event says what was seen in `what`.');
+      if (event.approximate !== undefined && typeof event.approximate !== 'boolean') fail('`approximate` is true or false.');
+      if ([event.passes, event.section, event.carrierMoves].filter((value) => value !== undefined).length > 1) fail('an event gives one of `passes`, `section` or `carrierMoves`.');
+      let spans: PassSpan[] | null = null;
+      let approximate = event.approximate === true;
+      if (event.section !== undefined) { spans = [sectionSpan(event.section)]; approximate = true; }
+      else if (event.carrierMoves !== undefined) {
+        const carriers = Array.isArray(event.carrierMoves) && event.carrierMoves.length > 0 && event.carrierMoves.every((carrier) => typeof carrier === 'string') ? event.carrierMoves as string[] : fail('`carrierMoves` is a list of carriers, like ["1", "6"].');
+        spans = trace.passes.flatMap((pass, index): PassSpan[] => (index + 1 > startEnd && carriers.includes(pass.carrier) && pass.actions.length > 0 && pass.actions.every((action) => action.kind === 'move') ? [[index + 1, index + 1]] : []));
+        if (spans.length === 0) fail(`no pass after the cast-on only moves carrier ${carriers.join(' or ')}.`);
+        approximate = true;
+      } else if (event.passes !== undefined) {
+        const given = isSpan(event.passes) ? [event.passes] : event.passes;
+        if (!Array.isArray(given) || given.length === 0 || !given.every(isSpan)) fail('`passes` is [from, to] or a list of such pairs.');
+        spans = (given as PassSpan[]).map(inFile);
+      }
+      if (spans !== null && knittedThrough !== null && spans.some((span) => span[0] > knittedThrough)) fail(`an event is placed after pass ${knittedThrough}, the last pass knitted.`);
+      return { kind, passes: spans, ...(approximate ? { approximate: true } : {}), what };
     });
-    return { entry, trace, roles, sections, knittedThrough, events };
+    return { entry: entry as unknown as KnitLogEntry, trace, roles, sections, knittedThrough, events };
   });
-  // Oldest first: a fault stops counting once later knits have run the same pass cleanly.
-  return { yarns: log.yarns, knits: knits.map((knit, index) => ({ knit, index })).sort((a, b) => a.knit.entry.date.localeCompare(b.knit.entry.date) || a.index - b.index).map(({ knit }) => knit) };
+  return { yarns: log.yarns, knits };
 }
 
 let cached: { evidence: KnitEvidenceV1; knits: LoggedKnit[]; yarns: Record<string, string> } | null = null;
@@ -145,7 +190,7 @@ export function loadKnitEvidence(): { evidence: KnitEvidenceV1; knits: LoggedKni
 }
 
 export function evidenceFrom(knits: readonly LoggedKnit[], references: Parameters<typeof buildKnitEvidenceV1>[1] = []): KnitEvidenceV1 {
-  return buildKnitEvidenceV1(knits.map((knit) => ({ id: knit.entry.id, trace: knit.trace, roles: knit.roles, knittedThrough: knit.knittedThrough, events: knit.events })), references);
+  return buildKnitEvidenceV1(knits.map((knit) => ({ id: knit.entry.id, trace: knit.trace, roles: knit.roles, knittedThrough: knit.knittedThrough, clears: knit.entry.operatorSaidHowItRan === true, events: knit.events })), references);
 }
 
 /** `3, 5-7, 12` for a list of pass numbers. */
@@ -217,7 +262,7 @@ export function knittedReport(trace: MachineTraceV1, roles: TraceYarnRolesV1, se
       ...(found.closest ? {
         closest: {
           knits: found.closest.knits,
-          ...(found.closest.faulted ? { faultedThere: true } : {}),
+          ...(found.closest.standing !== 'knitted' ? { standingThere: found.closest.standing === 'faulted' ? 'a fault is on record for it' : 'only ran in a knit whose fault has no place' } : {}),
           differs: found.closest.differences.map((difference) => `${difference.facet}: ${difference.known ?? 'nothing'} there, ${difference.here ?? 'nothing'} here`),
         },
       } : {}),
@@ -239,7 +284,7 @@ export function knittedReport(trace: MachineTraceV1, roles: TraceYarnRolesV1, se
       faults: first.faults.map(fault),
       knittedWithNoFaultSince: first.knittedSinceFault,
     })),
-    unclear: grouped(check.unclear, (found) => found.knits.join(','), (found) => found.passes).map(({ first, passes }) => ({ passes: passRanges(passes), count: passes.length, knits: first.knits })),
+    unclear: grouped(check.unclear, (found) => found.knits.join(','), (found) => found.passes).map(({ first, passes }) => ({ passes: passRanges(passes), count: passes.length, knits: first.knits.map((id) => ({ knit: id, unplacedFaults: unplaced(id, 'fault') })) })),
     notes: grouped(check.notes, (found) => JSON.stringify(found.notes), (found) => found.passes).map(({ first, passes }) => ({ passes: passRanges(passes), count: passes.length, notes: first.notes.map(fault) })),
     placement: {
       needles: here ? `${here[0]}-${here[1]}` : 'none',
@@ -249,7 +294,12 @@ export function knittedReport(trace: MachineTraceV1, roles: TraceYarnRolesV1, se
   };
 }
 
-/** The log itself: one line per knit. */
+/** What one knit reported without a place, for the passes that are unclear because of it. */
+function unplaced(id: string, kind: 'fault' | 'note'): string[] {
+  return loadKnitEvidence().knits.find((knit) => knit.entry.id === id)?.events.filter((event) => event.kind === kind && event.passes === null).map((event) => event.what) ?? [];
+}
+
+/** The log itself: each knit with everything reported about it. */
 export function knitLogSummary() {
   const { knits, yarns } = loadKnitEvidence();
   return knits.map((knit) => ({
@@ -258,8 +308,12 @@ export function knitLogSummary() {
     file: knit.entry.file,
     passes: knit.trace.passes.length,
     ...(knit.knittedThrough !== null ? { knittedThrough: knit.knittedThrough } : {}),
-    faults: knit.events.filter((event) => event.kind === 'fault').length,
-    notes: knit.events.filter((event) => event.kind === 'note').length,
+    operatorSaidHowItRan: knit.entry.operatorSaidHowItRan === true,
+    events: knit.events.map((event) => ({
+      kind: event.kind,
+      where: event.passes === null ? 'not placed' : `passes ${passRanges(event.passes.flatMap(([from, to]) => Array.from({ length: to - from + 1 }, (_, offset) => from + offset)))}${event.approximate ? ' (where the report points)' : ''}`,
+      what: event.what,
+    })),
     yarns: Object.fromEntries(Object.entries(knit.entry.yarns).map(([carrier, yarn]) => [`C${carrier}`, yarns[yarn]])),
     ...(knit.entry.report ? { report: knit.entry.report } : {}),
     ...(knit.entry.caveat ? { caveat: knit.entry.caveat } : {}),

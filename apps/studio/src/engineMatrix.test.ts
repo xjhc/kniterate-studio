@@ -16,8 +16,9 @@ describe('engine matrix', () => {
     expect(result.files).toBeGreaterThanOrEqual(40);
     // The reversible chart is the one default that has knitted with no fault reported. A compiler change
     // that gives it a pass the machine has not run fails here: knit the new pass first, or keep the old one.
+    // Faults on record come from the knit log and change as knits come back; they are not asserted here.
     const held = result.rows.find((row) => row.construction === KNITTED_DEFAULT_CONSTRUCTION)!;
-    expect(held.knitted).toMatch(/^0 of \d+ passes new on the machine/);
-    expect(result.nothingNewOnTheMachine).toContain(KNITTED_DEFAULT_CONSTRUCTION);
+    expect({ construction: held.construction, new: held.newPasses, unclear: held.unclearPasses, knitted: held.knitted }).toMatchObject({ new: 0, unclear: 0 });
+    expect(held.passes).toBeGreaterThan(200);
   });
 });

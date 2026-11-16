@@ -364,7 +364,7 @@ async function* constructions(quick: boolean): AsyncGenerator<{ name: string; pi
 export async function matrixCommand(out: string | null, quick: boolean) {
   if (out !== null) await mkdir(out, { recursive: true });
   // `knitted` reads each file against the knit log: how much of what Studio makes by default has been on the machine.
-  const rows: { construction: string; file: string; verdict: string; audit: string; ok: boolean; issues: string[]; knitted?: string; passes?: number; newPasses?: number; faultedPasses?: number }[] = [];
+  const rows: { construction: string; file: string; verdict: string; audit: string; ok: boolean; issues: string[]; knitted?: string; passes?: number; newPasses?: number; faultedPasses?: number; unclearPasses?: number }[] = [];
   for await (const construction of constructions(quick)) {
     for (const piece of await construction.pieces()) {
       if (piece.kcText === null) { rows.push({ construction: piece.piece === null ? construction.name : `${construction.name} · ${piece.piece}`, file: piece.name, verdict: piece.verdict, audit: 'no machine file', ok: false, issues: [`no exportable program (${piece.verdict})`] }); continue; }
@@ -372,9 +372,16 @@ export async function matrixCommand(out: string | null, quick: boolean) {
       const trace = traceOf(piece.kcText, 'knitout-vendor');
       const audit = auditTraceV1(trace, { sections: piece.sections ?? traceAutoSectionsV1(trace) });
       const issues = audit.checks.filter((check) => !check.ok && check.severity === 'issue').map((check) => `${check.id} ${check.value}${check.at?.[0] ? `: ${check.at[0]}` : ''}`);
-      const counts = knittedCounts(trace);
       const passes = trace.passes.length;
-      rows.push({ construction: piece.piece === null ? construction.name : `${construction.name} · ${piece.piece}`, file: out !== null ? join(out, `${piece.name}.kc`) : piece.name, verdict: piece.verdict, audit: auditSummary(audit), ok: issues.length === 0, issues, knitted: `${counts.new} of ${passes} passes new on the machine, ${counts.faulted} with a fault on record`, passes, newPasses: counts.new, faultedPasses: counts.faulted });
+      // The audit decides `ok`; a knit log that cannot be read is reported beside it, not as an audit failure.
+      let knitted: { knitted: string; newPasses?: number; faultedPasses?: number; unclearPasses?: number };
+      try {
+        const counts = knittedCounts(trace);
+        knitted = { knitted: `${counts.new} of ${passes} passes new on the machine, ${counts.faulted} with a fault on record`, newPasses: counts.new, faultedPasses: counts.faulted, unclearPasses: counts.unclear };
+      } catch (error) {
+        knitted = { knitted: `knit log not readable: ${error instanceof Error ? error.message : String(error)}` };
+      }
+      rows.push({ construction: piece.piece === null ? construction.name : `${construction.name} · ${piece.piece}`, file: out !== null ? join(out, `${piece.name}.kc`) : piece.name, verdict: piece.verdict, audit: auditSummary(audit), ok: issues.length === 0, issues, passes, ...knitted });
     }
   }
   const ok = rows.every((row) => row.ok);

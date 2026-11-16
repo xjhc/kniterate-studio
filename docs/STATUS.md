@@ -7,8 +7,8 @@ current proof receipt, not this document's dates.
 ## Knit log: which passes have been on the machine (2026-11-16)
 
 `pnpm --silent studio -- knitted <file>` reads any machine file against every
-file that has been knitted
-([`knit-log.json`](../packages/machine-lib/registry/knit-log.json), 13 knits
+knit whose exact file is in the repository
+([`knit-log.json`](../packages/machine-lib/registry/knit-log.json), 18 knits
 from 30 October to 14 November, described in the
 [registry README](../packages/machine-lib/registry/README.md)). It says which
 passes have knitted with no fault reported, which have a fault on record,
@@ -23,20 +23,33 @@ is not proof a pass will knit, and Knit-proven is unchanged.** No emitter or
 setting changed, so no machine file changes. The matrix gains one construction
 (48 files).
 
+Five knits were added to the repository so the log could point at them: the
+538-pass increase strip stopped on 11 November, the operator's run 4B and two
+reversible rectangles from their records pull request (#14), and the speed-100
+toque of 30 October, rebuilt from the issued file to the hash the operator
+reported.
+
 What it shows today:
 
 - One default has nothing new on the machine: the reversible two-colour chart
   with its side edges closed by Studio's own fix (`engineMatrix.test.ts` now
   fails if a compiler change gives it a pass the machine has not run). Every
   other construction has new passes: fairisle charts 29 to 135 of 192,
-  beanies 154 to 228, sweater pieces 407 to 740.
+  birdseye charts 194 to 234 of 280, beanies 147 to 222, sweater pieces 292
+  to 734.
 - A reversible chart whose edge stripes are painted by hand in the other
   phase is accepted by Studio but is not what knitted (48 of 214 passes new).
 - Of the three files waiting on the operator, the 510-pass grey paisley has
   no new pass, the 484-pass open-edge paisley has 13, and the 378-pass tip
-  swatch has 76, with 159 more that have only knitted on a wider fabric.
-- All three carry the same seven start passes (81 to 91) where waste stitches
-  dropped while the body yarns were brought in on 14 November.
+  swatch has 80, with 153 more that have only knitted on a wider fabric.
+- All three carry a fault on record at the start: passes 81 to 104, where
+  waste stitches dropped while the body yarns were brought in on 14 November.
+
+An independent review of the first version found a fault placed after an
+early stop being dropped, knits missing from the log, thinly reported knits
+clearing faults, and several pass ranges that did not match their records.
+All are fixed, each with a test. Known limits are listed in the registry
+README.
 
 Not built: the same report in the browser and in handoff instructions, and
 settings and gauge kept per yarn.
