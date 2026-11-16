@@ -24,6 +24,18 @@ describe('knit log', () => {
     expect(knits.every((found) => found.entry.events.length === found.events.length)).toBe(true);
   });
 
+  it('does not invent a completed first band for the stopped increase strip', () => {
+    const stopped = knit('2026-11-11-increase-strip');
+    const body = stopped.sections.find((section) => section.name === 'body')!;
+    expect(stopped.entry.knittedThrough).toEqual({ section: 'body' });
+    expect(stopped.knittedThrough).toBe(body.from - 1);
+    const alone = evidenceFrom([stopped]);
+    const check = checkTraceAgainstKnitsV1(stopped.trace, alone, stopped.roles);
+    // These decreases were previously credited solely from an estimated stop at pass 194.
+    for (const pass of [183, 185, 189, 191, 193]) expect(check.statuses[pass - 1], `pass ${pass}`).toBe('new');
+    expect(stopped.events[0]!.what).toContain('stopped');
+  });
+
   it('places the dropped waste stitches between the first yarn brought in and the release of the rear loops', () => {
     // The report: waste stitches dropped twice while orange and grey were first brought in, before the release at pass 105.
     const paisley = knit('2026-11-14-split-paisley');
@@ -74,6 +86,8 @@ describe('knit log', () => {
     const evidence = evidenceFrom(upTo('2026-11-14-colour-preserving-increase'));
     const grey = knittedReport(file('docs/physical-trials/2026-11-14/paisley-grey-split-candidate/program.kc'), ROLES, [], evidence);
     expect(grey.counts.new).toBe(0);
+    // Width 10 was previously interpolated from observations at 9, 11 and 17.
+    expect(grey.otherWidth.find((group) => group.passes.startsWith('137-138'))?.knittedOnColumns).toBe('9, 11, 17');
     const tip = checkTraceAgainstKnitsV1(file('docs/physical-trials/2026-11-15/tip-start-candidate/program.kc'), evidence, ROLES);
     // The draw thread's round at the neck and the cast-on over it, on four needles.
     const fresh = tip.fresh.flatMap((group) => group.passes);
@@ -105,6 +119,19 @@ describe('knit log loader', () => {
     ]);
   });
 
+  it('credits only the prefix before a section when the stop pass is unknown', () => {
+    const { knits: loaded } = load([entry({ knittedThrough: { section: 'body' }, events: [{ kind: 'fault', section: 'body', what: 'stopped somewhere in the body' }] })]);
+    const body = loaded[0]!.sections.find((section) => section.name === 'body')!;
+    expect(loaded[0]!.knittedThrough).toBe(body.from - 1);
+    expect(loaded[0]!.stopWithin).toEqual([body.from, body.to]);
+    expect(loaded[0]!.events[0]!.passes).toEqual([[body.from, body.to]]);
+    const report = knittedReport(loaded[0]!.trace, ROLES, [], evidenceFrom(loaded));
+    expect(report.unclear[0]!.unresolvedFaults[0]!.what).toBe('stopped somewhere in the body');
+    const startup = load([entry({ knittedThrough: { section: 'waste' }, events: [{ kind: 'fault', section: 'waste', what: 'aborted during waste' }] })]);
+    expect(startup.knits[0]!.knittedThrough).toBe(0);
+    expect(evidenceFrom(startup.knits).passes.size).toBe(0);
+  });
+
   it.each([
     ['a file that is not the bytes recorded', entry({ sha256: 'a'.repeat(64) }), /not the recorded/],
     ['a misspelt field', entry({ knittedThru: 90 }), /"knittedThru" is not a field/],
@@ -118,6 +145,7 @@ describe('knit log loader', () => {
     ['a stop that is not a whole pass', entry({ knittedThrough: 90.5 }), /`knittedThrough` is a pass number/],
     ['a stop written as null', entry({ knittedThrough: null }), /`knittedThrough` is a pass number/],
     ['a fault after the pass the run stopped at', entry({ knittedThrough: 90, events: [{ kind: 'fault', passes: [91, 91], what: 'x' }] }), /after pass 90, the last pass knitted/],
+    ['a fault after the uncertain stop section', entry({ knittedThrough: { section: 'body' }, events: [{ kind: 'fault', passes: [268, 268], what: 'x' }] }), /the latest possible stop/],
     ['approximate written as text', entry({ events: [{ kind: 'fault', passes: [3, 3], approximate: 'false', what: 'x' }] }), /`approximate` is true or false/],
     ['an unknown yarn', entry({ yarns: { '3': 'silk' } }), /not in the log's yarns/],
     ['carrier moves the file does not have', entry({ events: [{ kind: 'fault', carrierMoves: ['5'], what: 'x' }] }), /no pass after the cast-on only moves carrier 5/],

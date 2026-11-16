@@ -42,7 +42,7 @@ export interface PassDescriptionV1 {
   readonly text: string
   /** The same content by name, for saying how two descriptions differ. */
   readonly facets: Readonly<Record<string, string>>
-  /** Columns from the leftmost to the rightmost loop before the pass; 0 on an empty bed. */
+  /** Span of the loops before the pass, or of the selected needles on an empty bed; 0 when neither exists. */
   readonly width: number
   /** The needles those loops span (trace coordinates), or null on an empty bed. */
   readonly span: readonly [number, number] | null
@@ -120,17 +120,22 @@ export function describeTracePassesV1(trace: Trace, roles: TraceYarnRolesV1 = DE
 
     // Needles away from the edges are summarised: `inside` holds them by what they held, to say whether
     // the pass works every needle there, every other one, or some (which is the artwork).
-    interface Group { sizes: Set<number>; tokens: Set<string>; needles: number[]; inside: Map<string, { needles: number[]; exact: boolean }> }
+    interface Mark { where: string; suffix: string; size?: number }
+    interface Group { sizes: Set<number>; tokens: Map<string, Mark>; needles: number[]; inside: Map<string, { needles: number[]; exact: boolean; suffix: string; size?: number }> }
     const groups = new Map<string, Group>()
     const group = (name: string): Group => {
       let found = groups.get(name)
-      if (!found) { found = { sizes: new Set(), tokens: new Set(), needles: [], inside: new Map() }; groups.set(name, found) }
+      if (!found) { found = { sizes: new Set(), tokens: new Map(), needles: [], inside: new Map() }; groups.set(name, found) }
       return found
     }
-    const inside = (target: Group, suffix: string, n: number, exact: boolean) => {
-      const found = target.inside.get(suffix) ?? { needles: [], exact }
+    const mark = (target: Group, where: string, suffix: string, size?: number) => {
+      target.tokens.set(`${where}${suffix}:${size ?? ''}`, { where, suffix, size })
+    }
+    const inside = (target: Group, suffix: string, n: number, exact: boolean, size?: number) => {
+      const key = `${suffix}:${size ?? ''}`
+      const found = target.inside.get(key) ?? { needles: [], exact, suffix, size }
       found.needles.push(n)
-      target.inside.set(suffix, found)
+      target.inside.set(key, found)
     }
     const worked: number[] = []
     for (const action of pass.actions) {
@@ -142,10 +147,11 @@ export function describeTracePassesV1(trace: Trace, roles: TraceYarnRolesV1 = DE
         const unusual = count !== 1 || waited(bed, n)
         const suffix = `${count === 1 ? '' : `/${count}`}${waited(bed, n) ? '/held' : ''}`
         target.needles.push(n)
-        if (action.kind !== 'drop') { target.sizes.add(action.at.stitchSelector.encodedValue); worked.push(n) }
+        const size = action.kind === 'drop' ? undefined : action.at.stitchSelector.encodedValue
+        if (size !== undefined) { target.sizes.add(size); worked.push(n) }
         const where = place(n, unusual)
-        if (where === 'in') inside(target, suffix, n, unusual)
-        else target.tokens.add(`${where}${suffix}`)
+        if (where === 'in') inside(target, suffix, n, unusual, size)
+        else mark(target, where, suffix, size)
       } else if (action.kind === 'xfer' || action.kind === 'split') {
         const from = bedOf(action.source.bed)
         const to = bedOf(action.target.bed)
@@ -153,11 +159,12 @@ export function describeTracePassesV1(trace: Trace, roles: TraceYarnRolesV1 = DE
         const destination = action.target.traceCoordinate
         const target = group(`${action.kind} ${from}>${to}`)
         target.needles.push(source)
-        if (action.kind === 'split') { target.sizes.add(action.source.stitchSelector.encodedValue); worked.push(source) }
+        const size = action.kind === 'split' ? action.source.stitchSelector.encodedValue : undefined
+        if (size !== undefined) { target.sizes.add(size); worked.push(source) }
         const counts = `${stack(held(from, source))}>${stack(held(to, destination))}${waited(from, source) ? '/held' : ''}`
         const [fromPlace, toPlace] = [place(source, true), place(destination, true)]
-        if (fromPlace === 'in' && toPlace === 'in') inside(target, `/${counts}`, source, true)
-        else target.tokens.add(`${fromPlace}>${toPlace}/${counts}`)
+        if (fromPlace === 'in' && toPlace === 'in') inside(target, `/${counts}`, source, true, size)
+        else mark(target, `${fromPlace}>${toPlace}`, `/${counts}`, size)
       } else group(action.kind)
     }
 
@@ -187,14 +194,16 @@ export function describeTracePassesV1(trace: Trace, roles: TraceYarnRolesV1 = DE
     }
     if (gap > 0) facets.gaps = gap < LONG_GAP_NEEDLES ? `up to ${LONG_GAP_NEEDLES - 1}` : `${LONG_GAP_NEEDLES} or more`
     for (const [name, found] of [...groups].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
-      const tokens = [...found.tokens]
+      const sizes = [...found.sizes].sort((a, b) => a - b)
+      // A uniform selector can be factored out; mixed selectors must stay attached to their locations.
+      const suffixAt = (suffix: string, size?: number) => `${suffix}${sizes.length > 1 && size !== undefined ? `/stitch${size}` : ''}`
+      const tokens = [...found.tokens.values()].map(({ where, suffix, size }) => `${where}${suffixAt(suffix, size)}`)
       // Needles named exactly near an edge are not part of the stretch the rest is measured against.
-      for (const [suffix, { needles, exact }] of found.inside) {
+      for (const { suffix, needles, exact, size } of found.inside.values()) {
         const mine = new Set(needles)
         const skip = new Set(found.needles.filter((n) => !mine.has(n)))
-        tokens.push(`in${suffix}:${regularity(needles, left + (exact ? EDGE_NEEDLES : 1), right - (exact ? EDGE_NEEDLES : 1), skip)}`)
+        tokens.push(`in${suffixAt(suffix, size)}:${regularity(needles, left + (exact ? EDGE_NEEDLES : 1), right - (exact ? EDGE_NEEDLES : 1), skip)}`)
       }
-      const sizes = [...found.sizes].sort((a, b) => a - b)
       facets[name] = [sizes.length > 0 ? `stitch ${sizes.join(',')}` : '', tokens.sort().join(' ')].filter(Boolean).join(' at ') || 'yes'
     }
     const names = [...FACET_ORDER.filter((name) => name in facets), ...Object.keys(facets).filter((name) => !FACET_ORDER.includes(name)).sort()]
@@ -215,7 +224,7 @@ export function describeTracePassesV1(trace: Trace, roles: TraceYarnRolesV1 = DE
         else { loops.delete(source); born.delete(source) }
       }
     }
-    return { text, facets, width: span ? span[1] - span[0] + 1 : 0, span }
+    return { text, facets, width: frame ? frame[1] - frame[0] + 1 : 0, span }
   })
 }
 
@@ -235,7 +244,7 @@ export interface KnitRunV1 {
   readonly id: string
   readonly trace: Trace
   readonly roles?: TraceYarnRolesV1
-  /** The last pass knitted, when the run stopped early. Passes after it are not evidence. */
+  /** Last confirmed pass when the run stopped early; 0 if none is confirmed. Later passes are not execution evidence. */
   readonly knittedThrough?: number | null
   /**
    * False when nobody said how the run went (a piece known only from a photo, say). Its passes have
@@ -267,12 +276,15 @@ export interface PassEvidenceV1 {
   readonly knittedSinceFault: number | null
   /** Faults reported on this pass, or on a stretch that contains it. */
   readonly faults: readonly KnitEventRefV1[]
-  /** Knits that ran this pass and reported a fault without saying where. */
+  /** Knits that ran this pass but whose reported faults could not be ruled out for it. */
   readonly unclear: readonly string[]
+  readonly unclearFaults: readonly KnitEventRefV1[]
   /** Notes on how the fabric looked at this pass. */
   readonly notes: readonly KnitEventRefV1[]
   /** Narrowest and widest fabric it knitted on with no fault reported; null when it never has. */
   readonly width: readonly [number, number] | null
+  /** Exact observed widths with no fault reported. The envelope above does not fill gaps in this set. */
+  readonly widths: readonly number[]
   /** Kniterate's own files that contain the same pass. */
   readonly kniterate: readonly string[]
 }
@@ -290,8 +302,10 @@ interface MutableEvidence {
   knittedSinceFault: number | null
   faults: KnitEventRefV1[]
   unclear: string[]
+  unclearFaults: KnitEventRefV1[]
   notes: KnitEventRefV1[]
   width: [number, number] | null
+  widths: number[]
   kniterate: string[]
 }
 
@@ -301,27 +315,28 @@ interface MutableEvidence {
  * A fault or note read off the machine counts against every pass in its range. One placed on a stretch
  * the report only points to is narrowed to where it most plausibly belongs:
  *   1. the passes of the stretch that had not knitted before that knit, if there are any;
- *   2. otherwise the passes the same knit runs nowhere else (a row that knitted forty more times in
- *      that knit with nothing reported is not what the report is about);
+ *   2. otherwise the passes the same knit runs nowhere else (unique passes rank ahead of repeated
+ *      ones, without establishing that those repeated passes ran cleanly);
  *   3. otherwise every pass of the stretch.
+ * Passes excluded by that ranking remain uncertain: the report is not evidence that they ran cleanly.
  */
 export function buildKnitEvidenceV1(runs: readonly KnitRunV1[], references: readonly KnitReferenceV1[] = []): KnitEvidenceV1 {
   const passes = new Map<string, MutableEvidence>()
   const entry = (description: PassDescriptionV1): MutableEvidence => {
     let found = passes.get(description.text)
-    if (!found) { found = { description, knitted: [], knittedSinceFault: null, faults: [], unclear: [], notes: [], width: null, kniterate: [] }; passes.set(description.text, found) }
+    if (!found) { found = { description, knitted: [], knittedSinceFault: null, faults: [], unclear: [], unclearFaults: [], notes: [], width: null, widths: [], kniterate: [] }; passes.set(description.text, found) }
     return found
   }
   let span: [number, number] | null = null
   for (const run of runs) {
     const described = describeTracePassesV1(run.trace, run.roles)
     const through = Math.max(0, Math.min(run.knittedThrough ?? described.length, described.length))
-    let unplacedFault = run.events.some((event) => event.kind === 'fault' && event.passes === null)
-    const seen = new Map<string, { description: PassDescriptionV1; faults: Set<KnitRunEventV1>; notes: Set<KnitRunEventV1>; widths: number[] }>()
+    const unplacedFaults = new Set(run.events.filter((event) => event.kind === 'fault' && event.passes === null))
+    const seen = new Map<string, { description: PassDescriptionV1; faults: Set<KnitRunEventV1>; uncertain: Set<KnitRunEventV1>; notes: Set<KnitRunEventV1>; widths: number[] }>()
     for (let index = 0; index < through; index++) {
       const description = described[index]!
       let here = seen.get(description.text)
-      if (!here) { here = { description, faults: new Set(), notes: new Set(), widths: [] }; seen.set(description.text, here) }
+      if (!here) { here = { description, faults: new Set(), uncertain: new Set(), notes: new Set(), widths: [] }; seen.set(description.text, here) }
       here.widths.push(description.width)
       if (description.span) span = span ? [Math.min(span[0], description.span[0]), Math.max(span[1], description.span[1])] : [description.span[0], description.span[1]]
     }
@@ -332,13 +347,17 @@ export function buildKnitEvidenceV1(runs: readonly KnitRunV1[], references: read
       const elsewhere = new Set<string>()
       for (let index = 0; index < through; index++) (spans.some(([from, to]) => index + 1 >= from && index + 1 <= to) ? inside : elsewhere).add(described[index]!.text)
       // Placed where nothing was knitted (past an early stop): the fault is real but has no place.
-      if (inside.size === 0) { if (event.kind === 'fault') unplacedFault = true; continue }
+      if (inside.size === 0) { if (event.kind === 'fault') unplacedFaults.add(event); continue }
       let blamed = [...inside]
       if (event.approximate) {
         const novel = blamed.filter((text) => (passes.get(text)?.knitted.length ?? 0) === 0)
         const own = blamed.filter((text) => !elsewhere.has(text))
         if (novel.length > 0) blamed = novel
         else if (own.length > 0) blamed = own
+        if (event.kind === 'fault') {
+          const likely = new Set(blamed)
+          for (const text of inside) if (!likely.has(text)) seen.get(text)!.uncertain.add(event)
+        }
       }
       for (const text of blamed) (event.kind === 'fault' ? seen.get(text)!.faults : seen.get(text)!.notes).add(event)
     }
@@ -348,12 +367,15 @@ export function buildKnitEvidenceV1(runs: readonly KnitRunV1[], references: read
       if (here.faults.size > 0) {
         for (const event of here.faults) found.faults.push({ ...event, knit: run.id })
         found.knittedSinceFault = 0
-      } else if (unplacedFault) found.unclear.push(run.id)
-      else {
+      } else if (unplacedFaults.size > 0 || here.uncertain.size > 0) {
+        found.unclear.push(run.id)
+        for (const event of new Set([...unplacedFaults, ...here.uncertain])) found.unclearFaults.push({ ...event, knit: run.id })
+      } else {
         found.knitted.push(run.id)
         if (found.knittedSinceFault !== null && run.clears !== false) found.knittedSinceFault++
         const widths: [number, number] = [Math.min(...here.widths), Math.max(...here.widths)]
         found.width = found.width ? [Math.min(found.width[0], widths[0]), Math.max(found.width[1], widths[1])] : widths
+        found.widths = [...new Set([...found.widths, ...here.widths])].sort((a, b) => a - b)
       }
     }
   }
@@ -370,8 +392,8 @@ export function buildKnitEvidenceV1(runs: readonly KnitRunV1[], references: read
  * knitted      ran in a knit with no fault reported on it, at this width
  * other-width  the same, but only on a wider or a narrower fabric
  * faulted      a fault was reported on it, and fewer than `KNITS_TO_CLEAR_A_FAULT_V1` knits have run it cleanly since
- * unclear      only ran in knits that reported a fault without saying where
- * new          has not been on the machine
+ * unclear      only ran in knits whose faults could not be ruled out for this pass
+ * new          no confirmed execution on the machine
  */
 export type KnittedStatusV1 = 'knitted' | 'other-width' | 'faulted' | 'unclear' | 'new'
 
@@ -389,7 +411,7 @@ export interface KnittedCheckV1 {
   /** One status per pass, in order. */
   readonly statuses: readonly KnittedStatusV1[]
   readonly descriptions: readonly PassDescriptionV1[]
-  /** Passes that have not been on the machine, one entry per distinct pass. */
+  /** Passes without confirmed execution on the machine, one entry per distinct description. */
   readonly fresh: readonly {
     readonly passes: readonly number[]
     readonly description: PassDescriptionV1
@@ -398,11 +420,11 @@ export interface KnittedCheckV1 {
     /** The most similar pass that has been on the machine, and how it differs. */
     readonly closest: { readonly knits: readonly string[]; readonly standing: 'knitted' | 'faulted' | 'unclear'; readonly differences: readonly FacetDifferenceV1[] } | null
   }[]
-  readonly otherWidth: readonly { readonly passes: readonly number[]; readonly width: readonly [number, number]; readonly knittedAt: readonly [number, number]; readonly knits: readonly string[] }[]
+  readonly otherWidth: readonly { readonly passes: readonly number[]; readonly width: readonly [number, number]; readonly knittedAt: readonly number[]; readonly knits: readonly string[] }[]
   readonly faulted: readonly { readonly passes: readonly number[]; readonly faults: readonly KnitEventRefV1[]; readonly knitted: readonly string[]; readonly knittedSinceFault: number }[]
   /** Passes whose earlier faults no longer count against them: later knits ran them with none reported. */
   readonly cleared: readonly { readonly passes: readonly number[]; readonly faults: readonly KnitEventRefV1[]; readonly knittedSinceFault: number }[]
-  readonly unclear: readonly { readonly passes: readonly number[]; readonly knits: readonly string[] }[]
+  readonly unclear: readonly { readonly passes: readonly number[]; readonly knits: readonly string[]; readonly faults: readonly KnitEventRefV1[] }[]
   /** Notes from earlier knits on passes this file contains. */
   readonly notes: readonly { readonly passes: readonly number[]; readonly notes: readonly KnitEventRefV1[] }[]
   /** Where this file's fabric sits on the bed, and the needles earlier knits covered. */
@@ -427,7 +449,7 @@ export function checkTraceAgainstKnitsV1(trace: Trace, evidence: KnitEvidenceV1,
     const found = evidence.passes.get(description.text)
     const stands = standing(found)
     if (stands !== 'knitted') return stands
-    return description.width < found!.width![0] || description.width > found!.width![1] ? 'other-width' : 'knitted'
+    return found!.widths.includes(description.width) ? 'knitted' : 'other-width'
   }
   const statuses = descriptions.map(statusOf)
   const counts: Record<KnittedStatusV1, number> = { knitted: 0, 'other-width': 0, faulted: 0, unclear: 0, new: 0 }
@@ -461,7 +483,7 @@ export function checkTraceAgainstKnitsV1(trace: Trace, evidence: KnitEvidenceV1,
   const otherWidth = byText('other-width').map(({ description, passes }) => {
     const found = evidence.passes.get(description.text)!
     const widths = passes.map((pass) => descriptions[pass - 1]!.width)
-    return { passes, width: [Math.min(...widths), Math.max(...widths)] as const, knittedAt: found.width!, knits: found.knitted }
+    return { passes, width: [Math.min(...widths), Math.max(...widths)] as const, knittedAt: found.widths, knits: found.knitted }
   })
   const faulted = byText('faulted').map(({ description, passes }) => {
     const found = evidence.passes.get(description.text)!
@@ -475,7 +497,10 @@ export function checkTraceAgainstKnitsV1(trace: Trace, evidence: KnitEvidenceV1,
     group.passes.push(index + 1)
     clearedByText.set(description.text, group)
   })
-  const unclear = byText('unclear').map(({ description, passes }) => ({ passes, knits: evidence.passes.get(description.text)!.unclear }))
+  const unclear = byText('unclear').map(({ description, passes }) => {
+    const found = evidence.passes.get(description.text)!
+    return { passes, knits: found.unclear, faults: found.unclearFaults }
+  })
   const noted = new Map<string, { passes: number[]; notes: readonly KnitEventRefV1[] }>()
   descriptions.forEach((description, index) => {
     const found = evidence.passes.get(description.text)

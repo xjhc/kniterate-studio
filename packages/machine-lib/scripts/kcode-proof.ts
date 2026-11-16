@@ -41,6 +41,7 @@ interface GateResult {
 }
 
 const PROOF_TESTS = [
+  'test/knitout/knit-evidence.test.ts',
   'test/public-api.test.ts',
   'test/physical-registry-manifest.test.ts',
   'test/proof-fingerprint.test.ts',
@@ -81,6 +82,8 @@ const PROOF_TESTS = [
 ] as const
 
 const STUDIO_PROOF_TESTS = [
+  'src/knitLog.test.ts',
+  'src/engineMatrix.test.ts',
   'src/engine.test.ts',
   'src/authoredPipeline.test.ts',
   'src/studioCli.test.ts',
@@ -158,6 +161,7 @@ const CONTRACT_SOURCES = [
   '../../apps/studio/src/chart/AuthoredMachinePanel.tsx',
   '../../apps/studio/src/chart/ChartWorkspace.tsx',
   'registry/knit-proven.json',
+  'registry/knit-log.json',
 ] as const
 
 const PROOF_HARNESS_SOURCES = [

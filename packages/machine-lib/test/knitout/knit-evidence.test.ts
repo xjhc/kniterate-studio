@@ -3,8 +3,8 @@ import { buildKnitEvidenceV1, checkTraceAgainstKnitsV1, describeTracePassesV1, t
 
 type Bed = 'front' | 'rear'
 type Act = ['knit' | 'tuck' | 'drop', Bed, number] | ['xfer' | 'split', Bed, number, Bed, number]
-interface Row { carrier: string; acts: Act[]; roller?: number; stops?: [number, number]; rack?: number }
-const at = (bed: Bed, n: number) => ({ bed, traceCoordinate: n, stitchSelector: { encodedValue: 7 } })
+interface Row { carrier: string; acts: Act[]; roller?: number; stops?: [number, number]; rack?: number; sizes?: Record<number, number> }
+const at = (bed: Bed, n: number, size = 7) => ({ bed, traceCoordinate: n, stitchSelector: { encodedValue: size } })
 /** A hand-built trace: one entry per pass, alternating direction from left to right. */
 function trace(rows: Row[]): MachineTraceV1 {
   return {
@@ -16,7 +16,7 @@ function trace(rows: Row[]): MachineTraceV1 {
       speed: 200,
       roller: row.roller ?? 450,
       carrierStops: row.stops ? { left: row.stops[0], right: row.stops[1] } : null,
-      actions: row.acts.map((act) => (act[0] === 'xfer' || act[0] === 'split' ? { kind: act[0], source: at(act[1], act[2]), target: at(act[3], act[4]), carrier: row.carrier } : { kind: act[0], at: at(act[1], act[2]) })),
+      actions: row.acts.map((act) => (act[0] === 'xfer' || act[0] === 'split' ? { kind: act[0], source: at(act[1], act[2], row.sizes?.[act[2]]), target: at(act[3], act[4], row.sizes?.[act[4]]), carrier: row.carrier } : { kind: act[0], at: at(act[1], act[2], row.sizes?.[act[2]]) })),
     })),
     rackCommands: rows.flatMap((row, index) => (row.rack === undefined ? [] : [{ beforePassIndex: index, value: row.rack }])),
   } as never
@@ -35,6 +35,21 @@ function reversible(from: number, to: number, rows: number, front: (n: number, r
 const texts = (rows: Row[]) => describeTracePassesV1(trace(rows)).map((pass) => pass.text)
 
 describe('pass descriptions', () => {
+  it.each(['knit', 'tuck', 'split'] as const)('keeps the stitch selector attached to each %s edge', (kind) => {
+    const castOn: Row = { carrier: '3', acts: span(10, 29).map((n) => ['knit', 'front', n]) }
+    const acts: Act[] = span(10, 29).map((n) => n === 10 || n === 29
+      ? kind === 'split' ? ['split', 'front', n, 'rear', n] : [kind, 'front', n]
+      : ['knit', 'front', n])
+    const original = trace([castOn, { carrier: '3', acts, sizes: { 10: 4, 29: 7 } }])
+    const swapped = trace([castOn, { carrier: '3', acts, sizes: { 10: 7, 29: 4 } }])
+    const evidence = buildKnitEvidenceV1([{ id: 'original', trace: original, events: [] }])
+    expect(checkTraceAgainstKnitsV1(swapped, evidence).statuses).toEqual(['knitted', 'new'])
+    if (kind === 'knit') {
+      const movedInside = trace([castOn, { carrier: '3', acts, sizes: { 20: 4 } }])
+      expect(checkTraceAgainstKnitsV1(movedInside, evidence).statuses[1]).toBe('new')
+    }
+  })
+
   it('ignore the artwork between the edges, the width, the place on the bed and which carriers hold the yarns', () => {
     const dots = reversible(10, 29, 4, (n, row) => n === 10 || n === 29 || (n + row) % 5 === 0)
     const stripes = reversible(100, 139, 4, (n, row) => n === 100 || n === 139 || (n * 3 + row) % 4 < 2, ['2', '5'])
@@ -152,6 +167,43 @@ describe('knit evidence', () => {
   /** Three rows whose yarns cross between the beds only at the two edges. */
   const knitted = reversible(10, 29, 3, plain)
 
+  it('requires an observed width instead of interpolating between two knits', () => {
+    const atWidth = (width: number) => trace(reversible(10, 9 + width, 2, (n) => n === 10 || n === 9 + width))
+    const evidence = buildKnitEvidenceV1([
+      { id: 'narrow', trace: atWidth(20), events: [] },
+      { id: 'wide', trace: atWidth(60), events: [] },
+    ])
+    const between = checkTraceAgainstKnitsV1(atWidth(40), evidence)
+    expect(between.statuses).toEqual(Array(5).fill('other-width'))
+    expect(between.otherWidth.every((group) => JSON.stringify(group.knittedAt) === '[20,60]')).toBe(true)
+    expect(checkTraceAgainstKnitsV1(atWidth(60), evidence).statuses).toEqual(Array(5).fill('knitted'))
+  })
+
+  it('uses the selected span for the width of a cast-on on an empty bed', () => {
+    const wide = trace(reversible(10, 69, 1, (n) => n === 10 || n === 69))
+    const check = checkTraceAgainstKnitsV1(wide, buildKnitEvidenceV1([{ id: 'narrow', trace: trace(knitted), events: [] }]))
+    expect(check.descriptions[0]!.width).toBe(60)
+    expect(check.statuses[0]).toBe('other-width')
+  })
+
+  it.each([true, false])('does not clear a fault by excluding suspects from an approximate range (novel=%s)', (novel) => {
+    const suspect = knitted.map((row, index) => index >= 5 ? { ...row, roller: 100 } : row)
+    const known = trace(novel ? knitted : suspect)
+    const ambiguous = (id: string) => ({ id, trace: trace(suspect), events: [{ kind: 'fault' as const, passes: [[4, 7] as const], approximate: true, what: 'dropped somewhere near the top' }] })
+    const evidence = buildKnitEvidenceV1([
+      { id: 'earlier', trace: known, events: [] },
+      { id: 'located-fault', trace: known, events: [{ kind: 'fault', passes: [[2, 2]], what: 'edge dropped' }] },
+      ambiguous('ambiguous-1'), ambiguous('ambiguous-2'),
+    ])
+    const check = checkTraceAgainstKnitsV1(known, evidence)
+    expect(check.statuses[1]).toBe('faulted')
+    expect(check.cleared).toEqual([])
+    const pass = evidence.passes.get(check.descriptions[1]!.text)!
+    expect(pass.knittedSinceFault).toBe(0)
+    expect(pass.knitted).toEqual(['earlier'])
+    expect(pass.unclear).toEqual(['ambiguous-1', 'ambiguous-2'])
+  })
+
   it('counts a pass as knitted when a knit ran it with no fault reported on it', () => {
     const dotted = reversible(10, 29, 2, (n, row) => plain(n) || (n + row) % 5 === 0)
     const evidence = buildKnitEvidenceV1([{ id: 'rectangle', trace: trace(dotted), events: [] }])
@@ -189,17 +241,17 @@ describe('knit evidence', () => {
     const evidence = buildKnitEvidenceV1([{ id: 'rectangle', trace: trace(knitted), events: [] }])
     const wide = reversible(10, 69, 2, (n) => n === 10 || n === 69)
     const check = checkTraceAgainstKnitsV1(trace(wide), evidence)
-    expect(check.counts).toMatchObject({ new: 0, 'other-width': 4, knitted: 1 })
-    expect(check.otherWidth[0]).toMatchObject({ width: [60, 60], knittedAt: [20, 20] })
+    expect(check.counts).toMatchObject({ new: 0, 'other-width': 5, knitted: 0 })
+    expect(check.otherWidth[0]).toMatchObject({ width: [60, 60], knittedAt: [20] })
   })
 
   it('marks a pass that only knitted on a wider fabric', () => {
     const evidence = buildKnitEvidenceV1([{ id: 'rectangle', trace: trace(knitted), events: [] }])
     const narrow = reversible(10, 17, 2, (n) => n === 10 || n === 17)
     const check = checkTraceAgainstKnitsV1(trace(narrow), evidence)
-    expect(check.counts).toMatchObject({ new: 0, 'other-width': 4, knitted: 1 })
-    expect(check.otherWidth.flatMap((group) => group.passes).sort((a, b) => a - b)).toEqual([2, 3, 4, 5])
-    expect(check.otherWidth[0]).toMatchObject({ width: [8, 8], knittedAt: [20, 20], knits: ['rectangle'] })
+    expect(check.counts).toMatchObject({ new: 0, 'other-width': 5, knitted: 0 })
+    expect(check.otherWidth.flatMap((group) => group.passes).sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5])
+    expect(check.otherWidth[0]).toMatchObject({ width: [8, 8], knittedAt: [20], knits: ['rectangle'] })
     // On six needles every needle is near an edge, so the cast-on itself reads as a different pass.
     expect(checkTraceAgainstKnitsV1(trace(reversible(10, 15, 2, (n) => n === 10 || n === 15)), evidence).fresh[0]!.passes).toEqual([1])
   })

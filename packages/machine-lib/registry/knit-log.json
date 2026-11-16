@@ -55,7 +55,7 @@
       "report": "The original faster Run 3 attempt had missed knitting near the beginning needles and waste-yarn tangling during C3/C4 introduction.",
       "source": "https://github.com/xjhc/kniterate-studio/issues/9#issuecomment-6711473394",
       "record": "packages/machine-lib/registry/swatches/2026-11-07-run3-mini-bird-toque",
-      "caveat": "The pass it stopped at was not recorded; the waste section is taken as the furthest it got.",
+      "caveat": "The pass it stopped at was not recorded. It stopped during waste; no completed prefix is confirmed and no pass is credited from this run.",
       "events": [
         { "kind": "fault", "section": "waste", "what": "Stitches were missed near the first needles and the waste yarn tangled while the two body yarns were brought in. The run was stopped." }
       ]
@@ -123,7 +123,7 @@
       "report": "Aborted: C1 missed its first arrival from the left, C6 tangled; C3 caught the oldest waste row",
       "source": "https://github.com/xjhc/kniterate-studio/issues/9#issuecomment-6729199930",
       "record": "https://github.com/xjhc/kniterate-studio/pull/14",
-      "caveat": "The pass it stopped at was not recorded; the waste section is taken as the furthest it got. The file is the operator's, copied from their records pull request at commit 86ee485.",
+      "caveat": "The pass it stopped at was not recorded. It stopped during waste; no completed prefix is confirmed and no pass is credited from this run. The file is the operator's, copied from their records pull request at commit 86ee485.",
       "events": [
         { "kind": "fault", "section": "waste", "what": "The draw thread missed its first arrival from the left, the waste yarn tangled, and orange caught the oldest waste row. The run was aborted." }
       ]
@@ -191,17 +191,17 @@
     {
       "id": "2026-11-11-increase-strip",
       "date": "2026-11-11",
-      "what": "One-colour jersey strip comparing four increases, 40 columns (538 passes); stopped in the first band",
+      "what": "One-colour jersey strip comparing four increases, 40 columns (538 passes); stopped in an unrecorded band",
       "file": "docs/physical-trials/2026-11-11/increase-methods-stopped/program.kc",
       "sha256": "6787c4c51481ec9e9ffcf141789310ddf061b7d6638f21ba9f83b32dfceba6a6",
       "yarns": { "1": "not-recorded", "3": "not-recorded", "6": "not-recorded" },
-      "knittedThrough": 194,
+      "knittedThrough": { "section": "body" },
       "operatorSaidHowItRan": true,
       "report": "had to stop it. post photo with this on gh. the increase was ~ok except it missed the last loop. the decrease (i guess its doing fashion decrease?) was bad. also i think the swatch can be smaller.",
       "record": "docs/physical-trials/2026-11-11/increase-methods-stopped",
-      "caveat": "The pass it stopped at was not recorded; the first of the four bands (to pass 194) is taken as the furthest it got.",
+      "caveat": "Neither the stop pass nor the band reached was recorded. Body observations confirm completion of the startup only (through pass 116); no body pass is credited from this run.",
       "events": [
-        { "kind": "fault", "passes": [117, 194], "approximate": true, "what": "The increase missed its last loop and the decrease was bad. The operator stopped the run." }
+        { "kind": "fault", "section": "body", "what": "The increase missed its last loop and the decrease was bad. The operator stopped the run; the band and stop pass were not recorded." }
       ]
     },
     {

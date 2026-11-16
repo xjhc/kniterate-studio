@@ -44,9 +44,13 @@ file that is not the bytes recorded, and a pass or section that is not in the fi
   repository. A file edited at the machine is a different file: log that one.
 - **`yarns`** maps each carrier to a key of the log's `yarns`. Add a yarn there
   when a new one is used; use `not-recorded` when the report does not say.
-- **`knittedThrough`** is the last pass knitted when the run stopped early: a pass
-  number, or `{ "section": "waste" }` when only the section is known. Passes after
-  it are not evidence, and an event cannot be placed after it.
+- **`knittedThrough`** is the exact last pass knitted when the run stopped early.
+  Use `{ "section": "body" }` when the stop is only known to be somewhere in that
+  section: only the prefix before the section is confirmed. Stopping during waste
+  confirms no prefix. The log summary keeps the possible stop range in `stopWithin`;
+  neither that range nor an estimated last pass is execution evidence. Faults in
+  the uncertain section remain in the log; an event after the latest possible stop
+  is refused. Leave this field out only when the run completed.
 - **`operatorSaidHowItRan`** is `true` when the operator said how the run went:
   what went wrong, or that it went well. Leave it `false` for a piece known only
   from a photo or a remark about how it looks. Such a knit still shows its passes
@@ -78,6 +82,12 @@ a guess at the likeliest pass hides the others. When a piece changed two things 
 once and the report cannot tell them apart, place the fault on the whole body: it
 then counts against whatever was new in that piece.
 
+Narrowing ranks suspects; it does not exonerate the other passes in the reported
+range. Excluded passes remain uncertain for that knit: they add no clean credit,
+no observed widths, and cannot help clear an earlier fault. A fault outside the
+confirmed execution prefix makes that prefix unclear rather than crediting the
+unconfirmed passes.
+
 A pass number is worth more than any description. Ask for one for every stop,
 drop and repair.
 
@@ -89,11 +99,14 @@ second, …), direction, cams, racking, speed, roller and stitch sizes; where th
 carrier comes from and stops (inside the fabric, near it or far from it); and each
 action with where it lands (edge needle, inside, beyond the edge), how many loops
 the needle held and whether they had waited long. Two passes with the same
-description are the same pass.
+description have the same recorded edge actions. Each stitch selector stays with
+its action and edge location; swapping the selectors at two edges is a new pass.
 
 Left out on purpose: the artwork between the edges, the width, and the place on
 the bed. Width is kept beside the description, so a pass that has only knitted on
-68 columns is reported as such on 20. On about eight columns or fewer every needle
+68 columns is reported as such on 20. Only observed widths count: observations at
+20 and 60 do not establish 40. The first cast-on uses its selected-needle span,
+even though no loops existed before it. On about eight columns or fewer every needle
 is near an edge, and passes there read differently from the same pass on a wider
 fabric.
 
@@ -107,13 +120,17 @@ mean the pass will knit.
 A pass with a fault on record is flagged until two later knits have run it with
 none reported, counting only knits where the operator said how the run went. The
 fault stays in the report as history. A new fault flags it again.
+An approximate fault that includes the pass cannot count as a clean knit, even
+when another pass is ranked as its likelier cause.
 
 ## Known limits
 
 - **Width is not part of clearing.** A fault on 30 columns is cleared by clean
   knits of the same pass on 40.
 - **A vague report is placed by rule, not by knowledge.** The rule for a stretch
-  can blame a pass that was innocent or miss one that was not.
+  can rank the wrong suspect; all other passes in that range still remain uncertain.
+- **Unknown execution is not coverage.** `new` means there is no confirmed
+  execution for the pass; an aborted run may have reached it without recording how far.
 - **One pass at a time.** A pass is not told apart by what came several passes
   before it, beyond the loops and the carrier position that were left.
 - **Same-day order is by hand.** Two knits on one day count in the order the log

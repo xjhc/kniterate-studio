@@ -35,12 +35,12 @@ What it shows today:
   with its side edges closed by Studio's own fix (`engineMatrix.test.ts` now
   fails if a compiler change gives it a pass the machine has not run). Every
   other construction has new passes: fairisle charts 29 to 135 of 192,
-  birdseye charts 194 to 234 of 280, beanies 147 to 222, sweater pieces 292
-  to 734.
+  birdseye charts 236 of 280, beanies 151 to 226, sweater pieces 296
+  to 738.
 - A reversible chart whose edge stripes are painted by hand in the other
   phase is accepted by Studio but is not what knitted (48 of 214 passes new).
 - Of the three files waiting on the operator, the 510-pass grey paisley has
-  no new pass, the 484-pass open-edge paisley has 13, and the 378-pass tip
+  no new pass and 44 passes only observed at other widths, the 484-pass open-edge paisley has 13 new passes, and the 378-pass tip
   swatch has 80, with 153 more that have only knitted on a wider fabric.
 - All three carry a fault on record at the start: passes 81 to 104, where
   waste stitches dropped while the body yarns were brought in on 14 November.
@@ -50,6 +50,16 @@ early stop being dropped, knits missing from the log, thinly reported knits
 clearing faults, and several pass ranges that did not match their records.
 All are fixed, each with a test. Known limits are listed in the registry
 README.
+
+A further review corrected four overstatements of the evidence. Approximate
+fault ranges no longer grant clean credit to excluded suspects. A section-only
+stop confirms only the prefix before that section; the 538-pass strip confirms
+startup through pass 116, with its stop band still unknown. Stitch selectors stay
+attached to their edge actions, including tucks and splits. Width matching uses
+the exact observed widths, including the first cast-on, rather than interpolating
+between the minimum and maximum. The CLI preserves uncertain fault reasons and
+lists observed widths explicitly. Regression tests exercise all four cases;
+the proof gates now run the evidence, log and matrix tests and fingerprint the log.
 
 Not built: the same report in the browser and in handoff instructions, and
 settings and gauge kept per yarn.
