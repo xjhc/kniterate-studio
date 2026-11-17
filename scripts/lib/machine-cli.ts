@@ -223,7 +223,7 @@ export function auditCommand(pieces: MachinePiece[], options: Map<string, string
   return { result: { kind: 'kniterate-studio-audit', ok: files.every((file) => file.ok), files }, ok: files.every((file) => file.ok) };
 }
 
-const KNITTED_ABOUT = `Read against the knit log (${KNIT_LOG_PATH}): every file that has been on the machine and what the operator reported. A pass is matched by what it does at the fabric's edges, its yarn's role and its settings; the artwork, the width and the place on the bed are left out. The reports are an operator's, not measurements, and a match is not proof that a pass will knit.`;
+const KNITTED_ABOUT = `Read against the knit log (${KNIT_LOG_PATH}): every file that has been on the machine and what the operator reported. A pass is matched by what it does at the fabric's edges, its yarn's role and its settings; the artwork, the width and the place on the bed are left out. Widths between recorded knits are informational; widths outside them deserve attention. Fault warnings can overlap unconfirmed execution when the stop pass is unknown. The reports are an operator's, not measurements, and a match is not proof that a pass will knit.`;
 
 /** knitted [<input>] [--piece <id>] [--waste C] [--draw C|none] */
 export function knittedCommand(pieces: MachinePiece[] | null, options: Map<string, string>) {
@@ -377,7 +377,7 @@ export async function matrixCommand(out: string | null, quick: boolean) {
       let knitted: { knitted: string; newPasses?: number; faultedPasses?: number; unclearPasses?: number };
       try {
         const counts = knittedCounts(trace);
-        knitted = { knitted: `${counts.new} of ${passes} passes new on the machine, ${counts.faulted} with a fault on record`, newPasses: counts.new, faultedPasses: counts.faulted, unclearPasses: counts.unclear };
+        knitted = { knitted: `${counts.new} of ${passes} passes without confirmed execution, ${counts.faulted} with a fault on record (these can overlap)`, newPasses: counts.new, faultedPasses: counts.faulted, unclearPasses: counts.unclear };
       } catch (error) {
         knitted = { knitted: `knit log not readable: ${error instanceof Error ? error.message : String(error)}` };
       }

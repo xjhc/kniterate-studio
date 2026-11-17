@@ -33,7 +33,20 @@ describe('knit log', () => {
     const check = checkTraceAgainstKnitsV1(stopped.trace, alone, stopped.roles);
     // These decreases were previously credited solely from an estimated stop at pass 194.
     for (const pass of [183, 185, 189, 191, 193]) expect(check.statuses[pass - 1], `pass ${pass}`).toBe('new');
+    const warned = check.faulted.flatMap((group) => group.passes);
+    for (const pass of [183, 185, 189, 191, 193]) expect(warned, `fault on pass ${pass}`).toContain(pass);
+    expect(warned.every((pass) => pass >= body.from && pass <= body.to)).toBe(true);
+    expect(check.statuses.slice(0, body.from - 1).every((status) => status === 'knitted')).toBe(true);
     expect(stopped.events[0]!.what).toContain('stopped');
+  });
+
+  it.each(['2026-10-30-mini-bird-toque', '2026-11-08-reversible-v1'])('retains the startup faults from %s', (id) => {
+    const aborted = knit(id);
+    const check = checkTraceAgainstKnitsV1(aborted.trace, evidenceFrom([aborted]), aborted.roles);
+    expect(check.counts.faulted).toBeGreaterThan(0);
+    expect(check.counts.new).toBe(check.passCount);
+    expect(check.counts.knitted).toBe(0);
+    expect(check.faulted.every((group) => group.faults.every((fault) => fault.executionConfirmed === false))).toBe(true);
   });
 
   it('places the dropped waste stitches between the first yarn brought in and the release of the rear loops', () => {
@@ -87,8 +100,12 @@ describe('knit log', () => {
     const grey = knittedReport(file('docs/physical-trials/2026-11-14/paisley-grey-split-candidate/program.kc'), ROLES, [], evidence);
     expect(grey.counts.new).toBe(0);
     // Width 10 was previously interpolated from observations at 9, 11 and 17.
-    expect(grey.otherWidth.find((group) => group.passes.startsWith('137-138'))?.knittedOnColumns).toBe('9, 11, 17');
+    expect(grey.counts['between-widths']).toBe(44);
+    expect(grey.counts['other-width']).toBe(0);
+    expect(grey.betweenWidths.find((group) => group.passes.startsWith('137-138'))?.knittedOnColumns).toBe('9, 11, 17');
     const tip = checkTraceAgainstKnitsV1(file('docs/physical-trials/2026-11-15/tip-start-candidate/program.kc'), evidence, ROLES);
+    expect(tip.counts['between-widths']).toBe(0);
+    expect(tip.counts['other-width']).toBe(153);
     // The draw thread's round at the neck and the cast-on over it, on four needles.
     const fresh = tip.fresh.flatMap((group) => group.passes);
     for (const pass of [169, 170, 172, 173, 174]) expect(fresh, `pass ${pass}`).toContain(pass);
@@ -126,10 +143,12 @@ describe('knit log loader', () => {
     expect(loaded[0]!.stopWithin).toEqual([body.from, body.to]);
     expect(loaded[0]!.events[0]!.passes).toEqual([[body.from, body.to]]);
     const report = knittedReport(loaded[0]!.trace, ROLES, [], evidenceFrom(loaded));
-    expect(report.unclear[0]!.unresolvedFaults[0]!.what).toBe('stopped somewhere in the body');
+    expect(report.faulted.some((group) => group.faults.some((fault) => fault.what === 'stopped somewhere in the body'))).toBe(true);
     const startup = load([entry({ knittedThrough: { section: 'waste' }, events: [{ kind: 'fault', section: 'waste', what: 'aborted during waste' }] })]);
     expect(startup.knits[0]!.knittedThrough).toBe(0);
-    expect(evidenceFrom(startup.knits).passes.size).toBe(0);
+    const warnings = checkTraceAgainstKnitsV1(startup.knits[0]!.trace, evidenceFrom(startup.knits));
+    expect(warnings.counts.faulted).toBeGreaterThan(0);
+    expect(warnings.counts.knitted).toBe(0);
   });
 
   it.each([

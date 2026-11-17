@@ -198,7 +198,7 @@ export function loadKnitEvidence(): { evidence: KnitEvidenceV1; knits: LoggedKni
 }
 
 export function evidenceFrom(knits: readonly LoggedKnit[], references: Parameters<typeof buildKnitEvidenceV1>[1] = []): KnitEvidenceV1 {
-  return buildKnitEvidenceV1(knits.map((knit) => ({ id: knit.entry.id, trace: knit.trace, roles: knit.roles, knittedThrough: knit.knittedThrough, clears: knit.entry.operatorSaidHowItRan === true, events: knit.events })), references);
+  return buildKnitEvidenceV1(knits.map((knit) => ({ id: knit.entry.id, trace: knit.trace, roles: knit.roles, knittedThrough: knit.knittedThrough, stopWithin: knit.stopWithin, clears: knit.entry.operatorSaidHowItRan === true, events: knit.events })), references);
 }
 
 /** `3, 5-7, 12` for a list of pass numbers. */
@@ -219,7 +219,8 @@ export function passRanges(passes: readonly number[]): string {
 
 const STATUS_WORDS: Record<KnittedStatusV1, string> = {
   knitted: 'knitted with no fault reported',
-  'other-width': 'knitted, but only on a wider or narrower fabric',
+  'between-widths': 'between knitted widths',
+  'other-width': 'narrower or wider than any knit of these passes',
   faulted: 'with a fault on record and not yet two clean knits since',
   unclear: 'only in knits whose faults could not be ruled out for these passes',
   new: 'without confirmed execution on this machine',
@@ -227,6 +228,7 @@ const STATUS_WORDS: Record<KnittedStatusV1, string> = {
 
 const fault = (event: KnitEventRefV1) => ({
   knit: event.knit,
+  executionConfirmed: event.executionConfirmed,
   ...(event.passes ? { passes: `${event.passes.map(([from, to]) => (from === to ? `${from}` : `${from}-${to}`)).join(', ')}${event.approximate ? ' (where the report points, not a pass read off the machine)' : ''}` } : {}),
   what: event.what,
 });
@@ -254,13 +256,21 @@ export function knittedReport(trace: MachineTraceV1, roles: TraceYarnRolesV1, se
   const parts = (Object.keys(STATUS_WORDS) as KnittedStatusV1[]).filter((status) => counts[status] > 0).map((status) => `${counts[status]} ${STATUS_WORDS[status]}`);
   const here = check.placement.here;
   const covered = check.placement.knitted;
+  const warned = new Set(check.faulted.flatMap((group) => group.passes));
+  const unconfirmedWarnings = [...warned].filter((pass) => check.statuses[pass - 1] === 'new').length;
+  const widths = (groups: KnittedCheckV1['otherWidth']) => grouped(groups, (found) => found.knittedAt.join(','), (found) => found.passes).map(({ first, passes }) => {
+    const current = passes.map((pass) => check.descriptions[pass - 1]!.width);
+    const [min, max] = [Math.min(...current), Math.max(...current)];
+    return { passes: passRanges(passes), count: passes.length, columnsHere: min === max ? `${min}` : `${min}-${max}`, knittedOnColumns: passRanges(first.knittedAt) };
+  });
   return {
-    summary: `${check.passCount} passes: ${parts.join(', ')}.`,
+    summary: `${check.passCount} passes: ${parts.join(', ')}.${unconfirmedWarnings ? ` ${unconfirmedWarnings} fault warnings overlap passes without confirmed execution.` : ''}`,
     counts,
     sections: sections.map((section) => {
       const inSection = check.statuses.slice(section.from - 1, section.to);
       const tally = (status: KnittedStatusV1) => inSection.filter((found) => found === status).length;
-      return { section: `${section.name} ${section.from}-${section.to}`, knitted: tally('knitted'), otherWidth: tally('other-width'), faulted: tally('faulted'), unclear: tally('unclear'), new: tally('new') };
+      const faulted = [...warned].filter((pass) => pass >= section.from && pass <= section.to).length;
+      return { section: `${section.name} ${section.from}-${section.to}`, knitted: tally('knitted'), betweenWidths: tally('between-widths'), otherWidth: tally('other-width'), faulted, unclear: tally('unclear'), new: tally('new') };
     }),
     new: check.fresh.map((found) => ({
       passes: passRanges(found.passes),
@@ -275,11 +285,8 @@ export function knittedReport(trace: MachineTraceV1, roles: TraceYarnRolesV1, se
         },
       } : {}),
     })),
-    otherWidth: grouped(check.otherWidth, (found) => found.knittedAt.join(','), (found) => found.passes).map(({ first, passes }) => {
-      const widths = passes.map((pass) => check.descriptions[pass - 1]!.width);
-      const [min, max] = [Math.min(...widths), Math.max(...widths)];
-      return { passes: passRanges(passes), count: passes.length, columnsHere: min === max ? `${min}` : `${min}-${max}`, knittedOnColumns: passRanges(first.knittedAt) };
-    }),
+    betweenWidths: widths(check.betweenWidths),
+    otherWidth: widths(check.otherWidth),
     faulted: grouped(check.faulted, (found) => JSON.stringify([found.faults, found.knitted]), (found) => found.passes).map(({ first, passes }) => ({
       passes: passRanges(passes),
       count: passes.length,

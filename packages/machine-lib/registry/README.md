@@ -49,8 +49,9 @@ file that is not the bytes recorded, and a pass or section that is not in the fi
   section: only the prefix before the section is confirmed. Stopping during waste
   confirms no prefix. The log summary keeps the possible stop range in `stopWithin`;
   neither that range nor an estimated last pass is execution evidence. Faults in
-  the uncertain section remain in the log; an event after the latest possible stop
-  is refused. Leave this field out only when the run completed.
+  the uncertain section still warn on matching passes, marked `executionConfirmed:
+  false`; they grant no clean credit or width observations. An event after the
+  latest possible stop is refused. Leave this field out only when the run completed.
 - **`operatorSaidHowItRan`** is `true` when the operator said how the run went:
   what went wrong, or that it went well. Leave it `false` for a piece known only
   from a photo or a remark about how it looks. Such a knit still shows its passes
@@ -84,9 +85,13 @@ then counts against whatever was new in that piece.
 
 Narrowing ranks suspects; it does not exonerate the other passes in the reported
 range. Excluded passes remain uncertain for that knit: they add no clean credit,
-no observed widths, and cannot help clear an earlier fault. A fault outside the
-confirmed execution prefix makes that prefix unclear rather than crediting the
-unconfirmed passes.
+no observed widths, and cannot help clear an earlier fault. For an unknown stop,
+the fault keeps its location in the possible stop section. It does not move onto
+the known prefix. A pass can therefore be both `new` (execution unconfirmed) and
+in `faulted` (a fault warning): those counts overlap and the report says so.
+Only confirmed executions can be offered as a closest knitted pass. A fault
+beyond even the latest possible stop remains unplaced and makes the known prefix
+unclear.
 
 A pass number is worth more than any description. Ask for one for every stop,
 drop and repair.
@@ -104,8 +109,11 @@ its action and edge location; swapping the selectors at two edges is a new pass.
 
 Left out on purpose: the artwork between the edges, the width, and the place on
 the bed. Width is kept beside the description, so a pass that has only knitted on
-68 columns is reported as such on 20. Only observed widths count: observations at
-20 and 60 do not establish 40. The first cast-on uses its selected-needle span,
+68 columns is reported as such on 20. An exact match needs an observed width.
+Observations at 20 and 60 put 40 **between knitted widths**: this is informational,
+not an exact match or an attention flag. Widths below 20 or above 60 are **narrower
+or wider than any knit** and deserve attention. The report preserves the actual
+observations in both cases. The first cast-on uses its selected-needle span,
 even though no loops existed before it. On about eight columns or fewer every needle
 is near an edge, and passes there read differently from the same pass on a wider
 fabric.
@@ -139,6 +147,13 @@ when another pass is ranked as its likelier cause.
   repository. A piece knitted from a file nobody kept is not evidence.
 
 ## Checks
+
+The knit log is deliberately outside the compiler proof fingerprint. Recording
+a knit remains a one-file edit; it does not require a full proof run or a receipt
+commit. The log loader still validates file hashes and records, and the proof
+runs the evidence, log and matrix regression tests. The receipt attests to those
+software checks, not to the current contents of the operator ledger.
+Use `pnpm --silent studio -- knitted` to validate and inspect a log edit.
 
 `apps/studio/src/knitLog.test.ts` loads the log against its files (a wrong hash, a
 pass outside the file or an unknown section fails) and pins how reports are joined

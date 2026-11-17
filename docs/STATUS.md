@@ -40,7 +40,8 @@ What it shows today:
 - A reversible chart whose edge stripes are painted by hand in the other
   phase is accepted by Studio but is not what knitted (48 of 214 passes new).
 - Of the three files waiting on the operator, the 510-pass grey paisley has
-  no new pass and 44 passes only observed at other widths, the 484-pass open-edge paisley has 13 new passes, and the 378-pass tip
+  no new pass and 44 passes between knitted widths (informational), the 484-pass
+  open-edge paisley has 13 new passes, and the 378-pass tip
   swatch has 80, with 153 more that have only knitted on a wider fabric.
 - All three carry a fault on record at the start: passes 81 to 104, where
   waste stitches dropped while the body yarns were brought in on 14 November.
@@ -53,16 +54,28 @@ README.
 
 A further review corrected four overstatements of the evidence. Approximate
 fault ranges no longer grant clean credit to excluded suspects. A section-only
-stop confirms only the prefix before that section; the 538-pass strip confirms
-startup through pass 116, with its stop band still unknown. Stitch selectors stay
+stop confirms only the prefix before that section, while preserving fault warnings
+on candidate passes in the stop section. Those warnings do not establish execution
+or clean credit. The 538-pass strip confirms startup through pass 116, with its
+body fault still visible and its stop band still unknown. Stitch selectors stay
 attached to their edge actions, including tucks and splits. Width matching uses
-the exact observed widths, including the first cast-on, rather than interpolating
-between the minimum and maximum. The CLI preserves uncertain fault reasons and
-lists observed widths explicitly. Regression tests exercise all four cases;
-the proof gates now run the evidence, log and matrix tests and fingerprint the log.
+the exact observed widths, including the first cast-on. Widths between observations
+are informational; widths outside the observed range deserve attention. The CLI
+preserves uncertain fault reasons and lists observed widths explicitly. Regression
+tests exercise all four cases. The proof gates run the evidence, log and matrix
+tests, but the log itself is outside the receipt fingerprint so recording a knit
+remains a one-file edit.
 
-Not built: the same report in the browser and in handoff instructions, and
-settings and gauge kept per yarn.
+The grey-paisley handoff is prepared locally with its unchanged file hash, the
+81–104 watch range, and requests for exact stops, repairs, both faces and row
+gauge. Posting it to #18 remains separately authorized work.
+
+Next: a build-generated summary bundled into the app, checked for freshness;
+the browser cannot read the log's machine files. Keep the status panel to one
+line and put details under “why”. Show an exact-file log match with its recorded
+outcome separately from matching pass descriptions. The shared report and
+generated handoffs are not built yet. Edge-stripe correction and yarn-specific
+settings follow after that slice and the operator's measurements.
 
 ## Split-increase review (2026-11-13)
 

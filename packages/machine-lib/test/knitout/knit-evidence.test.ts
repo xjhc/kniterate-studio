@@ -167,16 +167,55 @@ describe('knit evidence', () => {
   /** Three rows whose yarns cross between the beds only at the two edges. */
   const knitted = reversible(10, 29, 3, plain)
 
-  it('requires an observed width instead of interpolating between two knits', () => {
+  it('distinguishes exact, between and outside observed widths', () => {
     const atWidth = (width: number) => trace(reversible(10, 9 + width, 2, (n) => n === 10 || n === 9 + width))
     const evidence = buildKnitEvidenceV1([
       { id: 'narrow', trace: atWidth(20), events: [] },
       { id: 'wide', trace: atWidth(60), events: [] },
     ])
     const between = checkTraceAgainstKnitsV1(atWidth(40), evidence)
-    expect(between.statuses).toEqual(Array(5).fill('other-width'))
-    expect(between.otherWidth.every((group) => JSON.stringify(group.knittedAt) === '[20,60]')).toBe(true)
+    expect(between.statuses).toEqual(Array(5).fill('between-widths'))
+    expect(between.betweenWidths.every((group) => JSON.stringify(group.knittedAt) === '[20,60]')).toBe(true)
+    expect(between.counts['other-width']).toBe(0)
+    for (const width of [10, 80]) expect(checkTraceAgainstKnitsV1(atWidth(width), evidence).statuses).toEqual(Array(5).fill('other-width'))
     expect(checkTraceAgainstKnitsV1(atWidth(60), evidence).statuses).toEqual(Array(5).fill('knitted'))
+  })
+
+  it.each([
+    [[4, 7], [4, 5, 6, 7]],
+    [[5, 5], [5, 7]],
+  ] as const)('keeps a stopped-section fault at %s without crediting execution or blaming the known prefix', (range, warned) => {
+    const later = trace(knitted.map((row, index) => index > 2 ? { ...row, roller: 100 } : row))
+    const evidence = buildKnitEvidenceV1([{ id: 'stopped', trace: later, knittedThrough: 3, stopWithin: [4, 7], events: [{ kind: 'fault', passes: [range], approximate: true, what: 'missed loop before stopping' }] }])
+    const check = checkTraceAgainstKnitsV1(later, evidence)
+    expect(check.statuses).toEqual(['knitted', 'knitted', 'knitted', 'new', 'new', 'new', 'new'])
+    expect(check.counts).toMatchObject({ knitted: 3, new: 4, faulted: warned.length, unclear: 0 })
+    expect(check.faulted.flatMap((group) => group.passes).sort((a, b) => a - b)).toEqual(warned)
+    expect(check.faulted.every((group) => group.faults.every((fault) => fault.executionConfirmed === false))).toBe(true)
+    expect(check.cleared).toEqual([])
+    for (const d of check.descriptions.slice(3)) {
+      expect(evidence.passes.get(d.text)!.knitted).toEqual([])
+      expect(evidence.passes.get(d.text)!.widths).toEqual([])
+    }
+  })
+
+  it('retains startup-abort warnings without inventing a knitted pass or a closest match', () => {
+    const aborted = trace(knitted)
+    const check = checkTraceAgainstKnitsV1(aborted, buildKnitEvidenceV1([{ id: 'aborted', trace: aborted, knittedThrough: 0, stopWithin: [1, 7], events: [{ kind: 'fault', passes: [[1, 7]], approximate: true, what: 'aborted during startup' }] }]))
+    expect(check.counts).toMatchObject({ knitted: 0, faulted: 7, new: 7, unclear: 0 })
+    expect(check.fresh.every((group) => group.closest === null)).toBe(true)
+    expect(check.placement.knitted).toBeNull()
+  })
+
+  it('clears a stopped-section warning only after two confirmed clean executions', () => {
+    const t = trace(knitted)
+    const stopped = { id: 'stopped', trace: t, knittedThrough: 0, stopWithin: [1, 7] as const, events: [{ kind: 'fault' as const, passes: [[1, 7] as const], approximate: true, what: 'stopped during startup' }] }
+    const clean = (id: string) => ({ id, trace: t, events: [] })
+    const once = checkTraceAgainstKnitsV1(t, buildKnitEvidenceV1([stopped, clean('once')]))
+    expect(once.counts).toMatchObject({ new: 0, faulted: 7 })
+    const twice = checkTraceAgainstKnitsV1(t, buildKnitEvidenceV1([stopped, clean('once'), clean('twice')]))
+    expect(twice.counts).toMatchObject({ knitted: 7, faulted: 0 })
+    expect(twice.cleared.flatMap((group) => group.passes)).toHaveLength(7)
   })
 
   it('uses the selected span for the width of a cast-on on an empty bed', () => {

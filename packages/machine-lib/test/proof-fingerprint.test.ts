@@ -65,13 +65,13 @@ function sourceClone() {
 }
 
 describe('software and physical proof dependency closure', () => {
-  it('binds the knit log that supplies pass coverage and fault clearing evidence', () => {
+  it('keeps routine knit log updates independent of the compiler proof receipt', () => {
     const clone = sourceClone()
     const baseline = collectContractFingerprint(clone.machine)
     const path = resolve(clone.machine, 'registry/knit-log.json')
-    expect(baseline.files.some((input) => input.path === 'registry/knit-log.json')).toBe(true)
+    expect(baseline.files.some((input) => input.path === 'registry/knit-log.json')).toBe(false)
     writeFileSync(path, 'changed operator evidence\n')
-    expect(collectContractFingerprint(clone.machine).sha256).not.toBe(baseline.sha256)
+    expect(collectContractFingerprint(clone.machine).sha256).toBe(baseline.sha256)
   })
 
   it('covers the runtime dependencies of rectangle, beanie, sweater and panel compilation', () => {

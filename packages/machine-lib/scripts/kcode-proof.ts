@@ -161,7 +161,6 @@ const CONTRACT_SOURCES = [
   '../../apps/studio/src/chart/AuthoredMachinePanel.tsx',
   '../../apps/studio/src/chart/ChartWorkspace.tsx',
   'registry/knit-proven.json',
-  'registry/knit-log.json',
 ] as const
 
 const PROOF_HARNESS_SOURCES = [
