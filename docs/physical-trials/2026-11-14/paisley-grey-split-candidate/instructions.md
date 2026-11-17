@@ -5,6 +5,23 @@
 
 This is the 514-pass split paisley that knitted on 14 November (`2868d508…aa1d`), with one change to the increases. It answers the operator's request to keep grey stitches on the grey face.
 
+## Next knit
+
+Use this unchanged 510-pass file with the same yarns and settings as the last
+paisley. Its pass descriptions have appeared in earlier knits; that does not mean
+this exact file has knitted.
+
+**Watch passes 81–104**, while the body yarns are brought in. Waste stitches
+dropped in this stretch on 14 November; the exact fault passes were not recorded.
+For every stop, dropped stitch, repair or setting change, record the displayed
+pass number, needle/bed and yarn where known. If the run is abandoned, record the
+last completed pass.
+
+Photograph both faces and the widening edge on each face. After the piece has
+rested off the machine, measure row gauge: give the number of rows over a measured length in cm,
+include a ruler photo, and say whether the piece was washed or blocked. Compare
+the increases with two-row spacing against those with four-row spacing.
+
 ## The one change
 
 In the 514-pass file, the yarn that happened to be on the left made each increase, so grey made 7 increases and orange made 6. An orange increase knits orange in the two edge columns of the grey face.
@@ -41,8 +58,10 @@ Rows 6, 12, 18, 24, 30 and 36 are one stitch wider than in the 514-pass file. Ev
 
 1. Both faces, and a close-up of the widening edge on each face.
 2. Whether the increases two rows apart (for example rows 4 and 6, passes 121–145) look different from the ones after a four-row gap.
-3. The pass number of any dropped waste stitch during the start. Waste dropped twice in the last paisley run while orange and grey were being introduced (around passes 81–110), and no pass number was noted.
+3. The pass number of any dropped waste stitch during the start. Waste dropped twice in the last paisley run while orange and grey were being introduced (within passes 81–104), and no exact pass number was noted.
 4. Any stop, repair or setting change, with its pass number.
+5. If stopped early, the last completed pass; otherwise explicitly say the file finished.
+6. Row gauge off the machine: rows counted, measured length in cm, a ruler photo, and whether washed or blocked.
 
 ## Events
 
