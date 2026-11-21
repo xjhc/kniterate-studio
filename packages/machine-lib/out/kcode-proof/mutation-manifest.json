@@ -22,7 +22,7 @@
     },
     {
       "path": "src/knitout/kcode/machine-safety.ts",
-      "sha256": "81105b3e11d41c9d489821dc53a2227210aa237dfa274c9170d4b66208cd7b04"
+      "sha256": "30d3c1956055e85450e67ed7add72d6fd3583c8faa4e2f2c5f04dcefc6c0f175"
     },
     {
       "path": "src/knitout/kcode/scheduled-trace-diff.ts",
