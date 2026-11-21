@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildKnitEvidenceV1, checkTraceAgainstKnitsV1, describeTracePassesV1, type MachineTraceV1 } from '../../src/browser.js'
+import { buildKnitEvidenceV1, checkTraceAgainstKnitsV1, compareTraceRangesV1, describeTracePassesV1, type MachineTraceV1 } from '../../src/browser.js'
 
 type Bed = 'front' | 'rear'
 type Act = ['knit' | 'tuck' | 'drop', Bed, number] | ['xfer' | 'split', Bed, number, Bed, number]
@@ -35,6 +35,16 @@ function reversible(from: number, to: number, rows: number, front: (n: number, r
 const texts = (rows: Row[]) => describeTracePassesV1(trace(rows)).map((pass) => pass.text)
 
 describe('pass descriptions', () => {
+  it.each(['xfer', 'split'] as const)('distinguishes both selected stitch settings of a %s at the same edge', (kind) => {
+    const before: Row = { carrier: '3', acts: span(10, 29).map((n) => ['knit', 'front', n]) }
+    const transfer = (from: number, to: number) => trace([before, {
+      carrier: kind === 'xfer' ? '0' : '3', rack: 1, acts: [[kind, 'front', 29, 'rear', 28]], sizes: { 29: from, 28: to },
+    }])
+    const mark = (from: number, to: number) => describeTracePassesV1(transfer(from, to))[1]!.text
+    expect(new Set([mark(5, 7), mark(6, 7), mark(5, 8), mark(7, 5)]).size).toBe(4)
+    const pass = { from: 2, to: 2 }
+    expect(compareTraceRangesV1(transfer(5, 7), pass, transfer(5, 8), pass).differences[0]!.fields).toEqual(['stitches'])
+  })
   it.each(['knit', 'tuck', 'split'] as const)('keeps the stitch selector attached to each %s edge', (kind) => {
     const castOn: Row = { carrier: '3', acts: span(10, 29).map((n) => ['knit', 'front', n]) }
     const acts: Act[] = span(10, 29).map((n) => n === 10 || n === 29
@@ -44,6 +54,8 @@ describe('pass descriptions', () => {
     const swapped = trace([castOn, { carrier: '3', acts, sizes: { 10: 7, 29: 4 } }])
     const evidence = buildKnitEvidenceV1([{ id: 'original', trace: original, events: [] }])
     expect(checkTraceAgainstKnitsV1(swapped, evidence).statuses).toEqual(['knitted', 'new'])
+    const pass = { from: 2, to: 2 }
+    expect(compareTraceRangesV1(original, pass, swapped, pass).differences[0]!.fields).toEqual(['stitches'])
     if (kind === 'knit') {
       const movedInside = trace([castOn, { carrier: '3', acts, sizes: { 20: 4 } }])
       expect(checkTraceAgainstKnitsV1(movedInside, evidence).statuses[1]).toBe('new')
@@ -78,9 +90,9 @@ describe('pass descriptions', () => {
     ]
     const passes = describeTracePassesV1(trace(rows))
     expect(passes[1]!.facets['knit f']).toBe('stitch 7 at L0 R+1/0 R0 in:all')
-    expect(passes[2]!.facets['xfer f>b']).toBe('R0>R0/1>0')
+    expect(passes[2]!.facets['xfer f>b']).toBe('stitch 7 at R0>R0/1>0/receive7')
     // The loop now sits on the rear bed at the right edge; the front fabric ends one needle in.
-    expect(passes[3]!.facets['xfer b>f']).toBe('R0>R1/1>1')
+    expect(passes[3]!.facets['xfer b>f']).toBe('stitch 7 at R0>R1/1>1/receive7')
     expect(passes[4]!.facets['knit f']).toBe('stitch 7 at L0 R0/2 in:all')
   })
 
@@ -105,7 +117,7 @@ describe('pass descriptions', () => {
     ]
     const split = describeTracePassesV1(trace(rows))[1]!
     expect(split.facets.rack).toBe('1')
-    expect(split.facets['split f>b']).toBe('stitch 7 at R0>R0/1>0')
+    expect(split.facets['split f>b']).toBe('stitch 7 at R0>R0/1>0/receive7')
     expect(split.facets['knit f']).toBe('stitch 7 at L0 in:all')
     expect(describeTracePassesV1(trace(rows.map((row) => ({ ...row, rack: undefined }))))[1]!.text).not.toBe(split.text)
   })
@@ -225,6 +237,21 @@ describe('knit evidence', () => {
     expect(check.statuses[0]).toBe('other-width')
   })
 
+  it('requires two reported runs at each implicated width to clear a fault, counting each run once', () => {
+    const runAt = (id: string, width: number) => ({
+      id, trace: trace(reversible(10, 9 + width, 3, (n) => n === 10 || n === 9 + width)), events: [],
+    })
+    const narrow = runAt('narrow', 20)
+    const faultAt = (id: string, width: number) => ({
+      ...runAt(id, width), events: [{ kind: 'fault' as const, passes: [[2, 2] as const], what: 'dropped' }],
+    })
+    const history = [faultAt('narrow-fault', 20), faultAt('wide-fault', 60), runAt('wide-one', 60), runAt('wide-two', 60)]
+    const check = (extra: ReturnType<typeof runAt>[]) => checkTraceAgainstKnitsV1(narrow.trace, buildKnitEvidenceV1([...history, ...extra]))
+    expect(check([]).statuses[1]).toBe('faulted')
+    expect(check([narrow]).statuses[1]).toBe('faulted')
+    expect(check([narrow, runAt('repeat', 20)]).statuses[1]).toBe('knitted')
+  })
+
   it.each([true, false])('does not clear a fault by excluding suspects from an approximate range (novel=%s)', (novel) => {
     const suspect = knitted.map((row, index) => index >= 5 ? { ...row, roller: 100 } : row)
     const known = trace(novel ? knitted : suspect)
@@ -315,6 +342,8 @@ describe('knit evidence', () => {
     const suspect = knitted.map((row, index) => (index === 5 || index === 6 ? { ...row, roller: 100 } : row))
     const pointsTo = { kind: 'fault' as const, passes: [[4, 7] as const], approximate: true, what: 'a stitch dropped near the top' }
     const earlier = { id: 'earlier', trace: trace(knitted), events: [] }
+    const report = checkTraceAgainstKnitsV1(trace(suspect), buildKnitEvidenceV1([earlier, { id: 'later', trace: trace(suspect), events: [pointsTo] }]))
+    expect(report.possibleFaultHistory.flatMap((group) => group.passes)).toEqual(expect.arrayContaining([4, 5]))
     const check = (runs: Parameters<typeof buildKnitEvidenceV1>[0]) => checkTraceAgainstKnitsV1(trace(suspect), buildKnitEvidenceV1(runs)).statuses
     // The ordinary rows had knitted before, so the slack rows carry the fault.
     expect(check([earlier, { id: 'dropped', trace: trace(suspect), events: [pointsTo] }])).toEqual(['knitted', 'knitted', 'knitted', 'knitted', 'knitted', 'faulted', 'faulted'])

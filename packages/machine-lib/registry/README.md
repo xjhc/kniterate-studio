@@ -51,7 +51,13 @@ file that is not the bytes recorded, and a pass or section that is not in the fi
   neither that range nor an estimated last pass is execution evidence. Faults in
   the uncertain section still warn on matching passes, marked `executionConfirmed:
   false`; they grant no clean credit or width observations. An event after the
-  latest possible stop is refused. Leave this field out only when the run completed.
+  latest possible stop is refused.
+- **`stoppedDuringPass`** records an operator-observed terminal stop during a
+  numbered pass. For example, 104 confirms completion through 103 and permits
+  a fault at 104. The interrupted pass contributes no completed execution or
+  width credit. A stop during the first pass confirms zero completed passes.
+  For a repair followed by a restart and completion, record the event at its
+  pass and leave the terminal stop fields out.
 - **`operatorSaidHowItRan`** is `true` when the operator said how the run went:
   what went wrong, or that it went well. Leave it `false` for a piece known only
   from a photo or a remark about how it looks. Such a knit still shows its passes
@@ -106,6 +112,16 @@ action with where it lands (edge needle, inside, beyond the edge), how many loop
 the needle held and whether they had waited long. Two passes with the same
 description have the same recorded edge actions. Each stitch selector stays with
 its action and edge location; swapping the selectors at two edges is a new pass.
+Transfers and splits retain the selectors at both the delivering and receiving needles.
+
+`studio knitted` also shows `matchingRunRecords`. Each entry gives the run's
+file hash, the last identical executable pass starting from home, and the last
+pass in that shared prefix confirmed complete. This comparison checks both
+needle beds, stitch fields, carriage and carrier stops, footer and ordered rack
+commands. A full-file hash match is identified independently. Events keep the
+operator's entire source range alongside the overlap with the shared start.
+`possibleFaultHistory` retains weaker candidates and unlocated observations
+even when another run supplied clean evidence for the same description.
 
 Left out on purpose: the artwork between the edges, the width, and the place on
 the bed. Width is kept beside the description, so a pass that has only knitted on
@@ -125,16 +141,17 @@ mean the pass will knit.
 
 ## When a fault stops counting
 
-A pass with a fault on record is flagged until two later knits have run it with
-none reported, counting only knits where the operator said how the run went. The
-fault stays in the report as history. A new fault flags it again.
+A pass with a fault on record is flagged until two later reported runs have
+completed the description at each width implicated by the fault. Each run
+counts once per width. The audit shows those widths and their counts. A later
+fault resets the count at its implicated widths. The fault stays in the history.
 An approximate fault that includes the pass cannot count as a clean knit, even
 when another pass is ranked as its likelier cause.
 
 ## Known limits
 
-- **Width is not part of clearing.** A fault on 30 columns is cleared by clean
-  knits of the same pass on 40.
+- A fault warning travels with its pass description across widths. The width
+  breakdown identifies where it was reported and where later runs supplied evidence.
 - **A vague report is placed by rule, not by knowledge.** The rule for a stretch
   can rank the wrong suspect; all other passes in that range still remain uncertain.
 - **Unknown execution is not coverage.** `new` means there is no confirmed

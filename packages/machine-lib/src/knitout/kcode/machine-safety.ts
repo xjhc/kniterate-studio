@@ -295,7 +295,7 @@ interface OperatedNeedle {
   readonly span: KCodeSourceSpan
 }
 
-function operatedNeedles(pass: MachineTracePassV1): OperatedNeedle[] {
+export function operatedNeedles(pass: MachineTracePassV1): OperatedNeedle[] {
   const needles: OperatedNeedle[] = []
   for (const [actionIndex, action] of pass.actions.entries()) {
     if (action.kind === 'knit' || action.kind === 'tuck' || action.kind === 'drop') {

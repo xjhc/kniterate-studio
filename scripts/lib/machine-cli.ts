@@ -39,8 +39,9 @@ import { createPanelProject } from '../../apps/studio/src/sweater/panel.js';
 import { createSweaterProject } from '../../apps/studio/src/sweater/sweater.js';
 import { runSweaterPipeline } from '../../apps/studio/src/sweater/sweaterPipeline.js';
 import { summarizeSweaterRun } from '../../apps/studio/src/sweater/sweaterRun.js';
-import { KNIT_LOG_PATH, knitLogSummary, knittedCounts, knittedReport } from './knit-log.js';
-import { MachineUsageError, REFERENCE_DIR, atlas, sha256, traceOf, type AtlasEntry } from './machine-files.js';
+import { KNIT_LOG_PATH, knitLogSummary, knittedCounts, knittedReport, matchingRunRecords } from './knit-log.js';
+import { carrierPickupPlan } from './carrier-plan.js';
+import { MachineUsageError, atlas, readReferenceBytes, sha256, traceOf, type AtlasEntry } from './machine-files.js';
 
 export { MachineUsageError };
 
@@ -72,16 +73,16 @@ function rolesFrom(options: Map<string, string>, fallback: TraceYarnRolesV1): Tr
 }
 
 function fromReference(entry: AtlasEntry, name: string): MachinePiece {
-  const text = readFileSync(join(REFERENCE_DIR, entry.file), 'utf8');
+  const text = readReferenceBytes(entry).toString('latin1');
   return { name, source: 'reference', what: entry.what, kcHash: entry.sha256, trace: traceOf(text, entry.dialect), sections: entry.sections, sectionSource: 'reference atlas', roles: entry.roles, notes: entry.notes };
 }
 
-function fromKcText(name: string, text: string, options: Map<string, string>, source: MachinePiece['source'] = 'file'): MachinePiece {
-  const hash = sha256(text);
+function fromKcText(name: string, bytes: string | Buffer, options: Map<string, string>, source: MachinePiece['source'] = 'file'): MachinePiece {
+  const hash = sha256(bytes);
   const known = atlas().find((entry) => entry.sha256 === hash);
   if (known) return { ...fromReference(known, name), source };
   const roles = rolesFrom(options, { waste: '6', draw: '1' });
-  const trace = traceOf(text);
+  const trace = traceOf(typeof bytes === 'string' ? bytes : bytes.toString('latin1'));
   return { name, source, kcHash: hash, trace, sections: traceAutoSectionsV1(trace, roles), sectionSource: 'automatic', roles };
 }
 
@@ -123,21 +124,21 @@ export async function loadMachineInput(input: string, options: Map<string, strin
     const program = join(input, 'program.kc');
     const projectPath = join(input, 'project.kniterate-studio.json');
     if (existsSync(program)) {
-      const text = readFileSync(program, 'utf8');
+      const bytes = readFileSync(program);
       if (existsSync(projectPath)) {
         // Name the sections from the project when it re-makes these exact bytes.
         const pieces = await fromProject(projectPath, await readProject(projectPath), input, 'package').catch(() => []);
-        const same = pieces.find((piece) => piece.kcHash === sha256(text));
+        const same = pieces.find((piece) => piece.kcHash === sha256(bytes));
         if (same) return [{ ...same, name: input }];
-        return [{ ...fromKcText(input, text, options, 'package'), notes: 'The project no longer re-makes these bytes, so sections are automatic.' }];
+        return [{ ...fromKcText(input, bytes, options, 'package'), notes: 'The project no longer re-makes these bytes, so sections are automatic.' }];
       }
-      return [fromKcText(input, text, options, 'package')];
+      return [fromKcText(input, bytes, options, 'package')];
     }
     const files = readdirSync(input).filter((file) => file.endsWith('.kc')).sort();
     if (files.length === 0) throw new MachineUsageError(`${input}: no program.kc or .kc files in this folder.`);
-    return files.map((file) => fromKcText(join(input, file), readFileSync(join(input, file), 'utf8'), options));
+    return files.map((file) => fromKcText(join(input, file), readFileSync(join(input, file)), options));
   }
-  if (input.endsWith('.kc')) return [fromKcText(input, readFileSync(input, 'utf8'), options)];
+  if (input.endsWith('.kc')) return [fromKcText(input, readFileSync(input), options)];
   if (input.endsWith('.k')) {
     const converted = knitoutToKCode(readFileSync(input, 'utf8'));
     if (!converted.ok || converted.kcode === undefined) throw new MachineUsageError(`${input}: the knitout does not convert to KCode (${converted.stderr.trim().split('\n')[0] ?? 'converter error'}).`);
@@ -217,6 +218,7 @@ export function auditCommand(pieces: MachinePiece[], options: Map<string, string
       checks: audit.checks,
       longestHolds: audit.longestHolds.map((hold) => `${hold.passes} passes on ${hold.needle}: made by c${hold.from.carrier} at pass ${hold.from.pass}${hold.section ? ` (${hold.section})` : ''}, knitted by c${hold.to.carrier} at ${hold.to.pass}`),
       work: audit.work,
+      carrierPickupPlan: carrierPickupPlan(piece.trace),
       emptyNeedleKnits: audit.emptyNeedleKnits,
     };
   });
@@ -231,7 +233,7 @@ export function knittedCommand(pieces: MachinePiece[] | null, options: Map<strin
   const chosen = options.has('--piece') ? [pick(pieces, options, 'knitted')] : pieces;
   const files = chosen.map((piece) => {
     const roles = options.has('--waste') || options.has('--draw') ? rolesFrom(options, piece.roles) : piece.roles;
-    return { ...header(piece), ...knittedReport(piece.trace, roles, piece.sections) };
+    return { ...header(piece), ...knittedReport(piece.trace, roles, piece.sections), matchingRunRecords: matchingRunRecords(piece.trace, piece.kcHash) };
   });
   return { kind: 'kniterate-studio-knitted', about: KNITTED_ABOUT, files };
 }

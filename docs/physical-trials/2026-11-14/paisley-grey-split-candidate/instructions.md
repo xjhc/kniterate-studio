@@ -17,6 +17,11 @@ For every stop, dropped stitch, repair or setting change, record the displayed
 pass number, needle/bed and yarn where known. If the run is abandoned, record the
 last completed pass.
 
+The first 133 machine passes match the 514-pass paisley exactly. Also record
+any problem at **108 or 109**. These passes resemble older faults on 64 and 30
+columns respectively. If a pass stops partway through, record the displayed
+pass and the last one that finished separately.
+
 Photograph both faces and the widening edge on each face. After the piece has
 rested off the machine, measure row gauge: give the number of rows over a measured length in cm,
 include a ruler photo, and say whether the piece was washed or blocked. Compare

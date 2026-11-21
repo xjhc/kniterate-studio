@@ -18,6 +18,7 @@ import {
   type ProjectPlacement,
 } from '../packages/project-contract/src/index.ts';
 import type { ColorworkChartV1 } from '../packages/chart-contract/src/index.ts';
+import { checkReversibleShape, ReversibleShapeConstraintError } from './lib/reversible-shape.js';
 import { runAuthoredPipeline, type AuthoredPipelineResult } from '../apps/studio/src/authoredPipeline.ts';
 import { openStudioProjectJson } from '../apps/studio/src/chart/projectFile.ts';
 import { explain } from '../apps/studio/src/explain.ts';
@@ -126,13 +127,15 @@ handoff package folder. Passes are numbered from 1, as in run records and on the
       Replay every loop: start loops held too long, waste yarn knitting through doubled body loops,
       body stitches dropped with nothing to hold them, loops left on the needles, stacks, and eyelets
       from knitting onto empty needles. Each check says what Kniterate's own files show. Exit 1 on an
-      issue.
+      issue. The carrier pickup analysis gives the whole-file minimum for the recorded work order,
+      pickup stops and needle clearance.
   knitted [<file>] [--piece <id>] [--waste <carrier>] [--draw <carrier>|none]
       Which passes of the file have been on the machine before. Each pass is matched, by what it does
       at the fabric's edges, its yarn's role and its settings, against every file in the knit log
       (packages/machine-lib/registry/knit-log.json): passes that knitted with no fault reported, passes
       with a fault on record, passes that only knitted on a wider or narrower fabric, and passes that
       are new on the machine, each new one with the knitted pass closest to it and how it differs.
+      Also reports exact-file runs and identical starts, with the original operator event ranges.
       Without a file: the knit log, one line per knit. After a knit comes back, add it to the log.
   compare <file-a> <file-b> [--section <name> | --passes <from>-<to>[,<from>-<to>]] [--carriers 2=4,3=3]
       Stitch by stitch: carrier, direction, racking, speed, roller, and every stitch (needles counted
@@ -142,7 +145,11 @@ handoff package folder. Passes are numbered from 1, as in run records and on the
   matrix [-o <directory>] [--quick]
       Build every construction Studio makes (fairisle and birdseye charts including narrow and odd
       widths, beanies, scarves, every sweater silhouette and neck) and audit each file. Exit 1 if any
-      piece fails to export or fails the audit. --quick builds a smaller set.`;
+      piece fails to export or fails the audit. --quick builds a smaller set.
+  shape-check <shape.json> <chart.json> [--detail]
+      Check a fixed-left reversible outline and its motif against the supported-split cadence.
+      Report the minimum courses, added holds and any artwork in the structural edge. --detail lists rows.
+      Exit 1 when the authored rows or motif cannot fit this recipe.`;
 
 const MAX_FINDINGS = 200;
 
@@ -517,6 +524,19 @@ async function main(): Promise<number> {
       const pieces = await loadMachineInput(positional(parsed, 0, '<file>'), parsed.options, readProject);
       print(passesCommand(pieces, parsed.positionals[1], parsed.options, parsed.options.has('--detail')));
       return 0;
+    }
+    case 'shape-check': {
+      const mask = JSON.parse(await readFile(positional(parsed, 0, '<shape.json>'), 'utf8'));
+      const chart = JSON.parse(await readFile(positional(parsed, 1, '<chart.json>'), 'utf8'));
+      try {
+        const report = checkReversibleShape(mask, chart, parsed.options.has('--detail'));
+        print(report);
+        return report.fitsRowAndMotifConstraints ? 0 : 1;
+      } catch (error) {
+        if (!(error instanceof ReversibleShapeConstraintError)) throw error;
+        print({ kind: 'kniterate-studio-reversible-shape', fitsRowAndMotifConstraints: false, reason: error.message });
+        return 1;
+      }
     }
     case 'audit': {
       const { result, ok } = auditCommand(await loadMachineInput(positional(parsed, 0, '<file>'), parsed.options, readProject), parsed.options);

@@ -36,7 +36,14 @@ export function atlas(): AtlasEntry[] {
   return (JSON.parse(readFileSync(join(REFERENCE_DIR, 'atlas.json'), 'utf8')) as { references: AtlasEntry[] }).references;
 }
 
-export const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
+export const sha256 = (bytes: string | Buffer) => createHash('sha256').update(bytes).digest('hex');
+
+/** Atlas roles, sections and run identity apply only to the recorded bytes. */
+export function readReferenceBytes(entry: AtlasEntry): Buffer {
+  const bytes = readFileSync(join(REFERENCE_DIR, entry.file));
+  if (sha256(bytes) !== entry.sha256) throw new MachineUsageError(`Reference ${entry.name} differs from the SHA-256 recorded in the atlas.`);
+  return bytes;
+}
 
 export function traceOf(kcText: string, dialect?: 'app' | 'knitout-vendor'): MachineTraceV1 {
   for (const candidate of dialect ? [dialect] : (['knitout-vendor', 'app'] as const)) {

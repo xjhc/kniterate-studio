@@ -48,18 +48,24 @@ export function tubeScheduleFromChart(
   let anchorCol = -1;
   let firstRow = -1, lastRow = -1;
   for (let r = 0; r < rows; r++) {
-    let count = 0, rightmost = -1;
+    let count = 0, leftmost = -1, rightmost = -1;
     for (let c = 0; c < cols; c++) {
       if (projection.cellAt(r, c).keyId === KEY_ID_TUBE_KNIT) {
         count++;
-        if (c > rightmost) rightmost = c;
+        if (leftmost === -1) leftmost = c;
+        rightmost = c;
       }
     }
     if (count === 0) continue;
-    if (firstRow < 0) firstRow = r;
+    if (rightmost - leftmost + 1 !== count) {
+      return { ok: false, messages: [{ severity: 'error', rule: 'tube-row-hole', message: `Tube row ${r + 1} has a gap between painted columns.` }] };
+    }
+    if (firstRow < 0) { firstRow = r; anchorCol = rightmost; }
+    if (rightmost !== anchorCol) {
+      return { ok: false, messages: [{ severity: 'error', rule: 'tube-moving-spine', message: `Tube row ${r + 1} must end at the same spine column as row ${firstRow + 1}.` }] };
+    }
     lastRow = r;
     schedule.push(count);
-    if (rightmost > anchorCol) anchorCol = rightmost;
   }
 
   if (schedule.length === 0) {

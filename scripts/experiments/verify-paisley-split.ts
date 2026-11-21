@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { auditTraceV1,compareScheduledPassesToMachineTrace,deriveMachineTraceAdvisoriesV1,KNITERATE_7GG_KCODE_PROFILE_V2 as profile,parseKCodeDocument,projectKCodeMachineTrace,projectMachineTopologyV1,validateKCodeMachineSafetyV1,validateKCodeMachineTrace } from '../../packages/machine-lib/src/browser.js';
 import { paisleyIncreaseStarts,type buildPaisleySplit } from './paisley-split-swatch.js';
+import { scheduleSupportedSplit } from '../lib/reversible-shape.js';
 export function verifyPaisleySplit(built:ReturnType<typeof buildPaisleySplit>){
  const p=parseKCodeDocument(built.compiled.kcode,{profile,dialect:'knitout-vendor',strict:true});assert(p.ok);
  const trace=projectKCodeMachineTrace(p.document,profile),validation=validateKCodeMachineTrace(trace,profile),safety=validateKCodeMachineSafetyV1(trace,profile);
@@ -10,21 +11,39 @@ export function verifyPaisleySplit(built:ReturnType<typeof buildPaisleySplit>){
  let label={row:0,slot:'frame'};
  const labels=built.source.split('\n').map(l=>{const m=l.match(/^; PAISLEY ROW (\d+) (\S+)$/);if(m)label={row:+m[1],slot:m[2]};if(l==='; PAISLEY BODY END')label={row:0,slot:'finish'};return label;});
  const pl=built.compiled.scheduledPasses.map(p=>{const ls=p.sourceLines.map(n=>labels[n-1]);assert(new Set(ls.map(l=>l.row)).size<=1,'Row boundary');return ls.at(-1)!;});
- const first=pl.findIndex(l=>l.row>0),last=pl.findLastIndex(l=>l.row>0);
+ const first=pl.findIndex(l=>l.row>0);
+ let last=pl.length-1;
+ while(last>=0&&pl[last]!.row===0)last--;
  const audit=auditTraceV1(trace,{sections:[{name:'waste',from:1,to:first},{name:'body',from:first+1,to:last+1},{name:'top',from:last+2,to:trace.passes.length}]});
  assert(audit.checks.every(c=>c.ok),JSON.stringify(audit.checks.filter(c=>!c.ok)));
  const topology=projectMachineTopologyV1(trace),offset=built.compiled.coordinateMapping.frontSourceSlotToKCodeColumnOffset,at=(n:number)=>n+offset;
+ // The alternating recipe has an independent course schedule. Check its carrier handoffs
+ // against actual stops after lowering, including moves inserted by the converter.
+ const schedule = built.variant === 'alternating' ? scheduleSupportedSplit(built.rows.map(row => row.width)) : null;
+ if (schedule) assert.equal(schedule.extraRows, 0, 'Supported-split cadence');
+ const carrierStop = new Map<string, number>();
  const stacks=new Map<string,number>();
  const joins={left:new Set<number>(),right:new Set<number>()};
  for(const pass of trace.passes){
+  if (pass.carrierStops) carrierStop.set(pass.carrier, pass.direction === '>>' ? pass.carrierStops.right : pass.carrierStops.left);
   const state=validation.passStates[pass.index];for(const delta of state.stackDeltas)stacks.set(`${delta.bed}:${delta.traceCoordinate}`,delta.afterCount);
   const l=pl[pass.index];if(!l.row)continue;
   assert(!['1','6'].includes(pass.carrier),'No idle feeder body moves');assert(state.after.maxStack<=2);
   const works=pass.actions.some(a=>a.kind==='knit'||a.kind==='split');
   if(works){assert([0,l.row===1?100:450].includes(pass.roller),`Roller pass${pass.index+1}`);if(l.slot==='outer-join')assert.equal(pass.roller,0);assert.equal(pass.speed,l.row===1?100:200);assert.equal(pass.rack,0);}else assert.equal(pass.roller,0);
   if(pl[pass.index+1]?.row!==l.row){const row=built.rows[l.row-1];assert.equal(state.after.totalLoops,row.width*2-(row.emptyRear===null?0:1),`row ${l.row} total`);for(let n=built.lo;n<built.lo+row.width;n++)for(const bed of ['front','rear'])assert.equal(stacks.get(`${bed}:${at(n)}`)??0,bed==='rear'&&n===row.emptyRear?0:1,`row ${l.row} occupancy ${bed} ${n}`);}
+  if (schedule && pl[pass.index + 1]?.row !== l.row) {
+   const expected = schedule.rows[l.row - 1]!;
+   const left = expected.leftCarrierAfter, right = left === '3' ? '4' : '3';
+   assert.equal(expected.kind, built.rows[l.row - 1]!.kind, `Row ${l.row} shaping phase`);
+   assert.equal(pass.direction, expected.carriageAfter === 'left' ? '<<' : '>>', `Row ${l.row} carriage side`);
+   assert(carrierStop.get(left)! < at(built.lo) && carrierStop.get(right)! > at(built.lo + expected.width - 1),
+    `Row ${l.row} body feeders outside their planned edges`);
+  }
  }
  const events=[];
+ let previousLoops = new Map<string, number>();
+ const loopAt = (bed: 'front' | 'rear', n: number) => `${bed}:${at(n)}`;
  for(const row of built.rows){
   const loops=topology.loops.filter(l=>pl[l.createdAt.passIndex].row===row.row),hi=built.lo+row.width-1;
   assert.equal(loops.length,row.width*2-(row.emptyRear===null?0:1),'Working count');
@@ -44,7 +63,17 @@ export function verifyPaisleySplit(built:ReturnType<typeof buildPaisleySplit>){
   if(row.kind==='growth'||row.kind==='completion'){
    const target=row.kind==='growth'?hi:hi-1,sl=loops.find(l=>l.creation==='split')!;assert(sl);assert.equal(sl.createdAt.location.traceCoordinate,at(target));assert.equal(sl.createdAt.location.bed,'front');assert.equal(sl.parentLoopIds.length,1);
    const receiving=loops.find(l=>l.createdAt.location.bed==='rear'&&l.createdAt.location.traceCoordinate===at(target))!;assert(receiving);assert.deepEqual(receiving.parentLoopIds,sl.parentLoopIds,'Both split descendants retain parent');
+   const donor = loopAt(row.kind === 'growth' ? 'rear' : 'front', hi - 1);
+   assert.deepEqual(sl.parentLoopIds, [previousLoops.get(donor)], `Row ${row.row} split descends from the intended edge loop`);
+   assert.equal(sl.carrier, schedule ? schedule.rows[row.row - 1]!.splitCarrier : '4', `Row ${row.row} split carrier`);
   }
+  if (row.kind === 'decrease') for (const bed of ['front', 'rear'] as const) {
+   const other = bed === 'front' ? 'rear' : 'front';
+   const merged = loops.find(l => l.createdAt.location.bed === bed && l.createdAt.location.traceCoordinate === at(hi))!;
+   assert.deepEqual(merged.parentLoopIds, [previousLoops.get(loopAt(bed, hi)), previousLoops.get(loopAt(other, hi + 1))],
+    `Row ${row.row} decrease keeps the inner loop and merges the opposite outer loop`);
+  }
+  previousLoops = new Map(loops.map(l => [`${l.createdAt.location.bed}:${l.createdAt.location.traceCoordinate}`, l.id]));
   if(row.kind!=='plain')events.push({row:row.row,kind:row.kind,width:row.width,passes:passes.map(p=>p.index+1),splitPasses:split.map(p=>p.index+1)});
  }
  // The open variant leaves the widening edge unjoined through row 42: no yarn may cross beds there.

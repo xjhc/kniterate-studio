@@ -495,8 +495,12 @@ export function compareTraceRangesV1(
 ): TraceComparisonV1 {
   const slice = (trace: Trace, range: TraceRangeV1) => trace.passes.slice(range.from - 1, range.to)
   const base = (passes: readonly Pass[]) => {
-    const coordinates = passes.flatMap((pass) => pass.actions.flatMap((action) => ('at' in action ? [action.at.traceCoordinate] : 'source' in action ? [action.source.traceCoordinate, action.target.traceCoordinate] : [])))
-    return coordinates.length > 0 ? Math.min(...coordinates) : 0
+    let minimum = Infinity
+    for (const pass of passes) for (const action of pass.actions) {
+      if ('at' in action) minimum = Math.min(minimum, action.at.traceCoordinate)
+      else if ('source' in action) minimum = Math.min(minimum, action.source.traceCoordinate, action.target.traceCoordinate)
+    }
+    return Number.isFinite(minimum) ? minimum : 0
   }
   const aPasses = slice(a, aRange)
   const bPasses = slice(b, bRange)
@@ -504,18 +508,29 @@ export function compareTraceRangesV1(
   const bBase = base(bPasses)
   const map = options.carrierMap ?? {}
   const signature = (trace: Trace, pass: Pass, index: number, origin: number, rename: boolean) => {
-    const stitches = pass.actions.map((action) => {
-      if ('at' in action) return `${action.kind} ${action.at.bed} ${action.at.traceCoordinate - origin} s${action.at.stitchSelector.encodedValue}`
-      if ('source' in action) return `${action.kind} ${action.source.bed} ${action.source.traceCoordinate - origin}>${action.target.bed} ${action.target.traceCoordinate - origin}`
-      return action.kind
-    }).sort()
+    const marks = pass.actions.map((action) => {
+      if ('at' in action) {
+        const column = action.at.traceCoordinate - origin, size = `s${action.at.stitchSelector.encodedValue}`
+        return { text: `${action.kind} ${action.at.bed} ${column} ${size}`, kind: `${action.kind} ${action.at.bed} ${size}`, columns: [column] }
+      }
+      if ('source' in action) {
+        const from = action.source.traceCoordinate - origin, to = action.target.traceCoordinate - origin
+        const size = `s${action.source.stitchSelector.encodedValue}>${action.target.stitchSelector.encodedValue}`
+        return { text: `${action.kind} ${action.source.bed} ${from}>${action.target.bed} ${to} ${size}`, kind: `${action.kind} ${action.source.bed}>${action.target.bed} ${size}`, columns: [from, to] }
+      }
+      return { text: action.kind, kind: action.kind, columns: [] }
+    })
+    const columns = marks.flatMap((m) => m.columns)
     return {
       carrier: rename ? map[pass.carrier] ?? pass.carrier : pass.carrier,
       direction: pass.direction,
       rack: traceRackAtV1(trace, index),
       speed: pass.speed,
       roller: pass.roller,
-      stitches,
+      marks,
+      stitches: marks.map((m) => m.text).sort(),
+      kinds: [...new Set(marks.map((m) => m.kind))].sort().join('|'),
+      left: Math.min(...columns), right: Math.max(...columns),
     }
   }
   const compared = Math.min(aPasses.length, bPasses.length)
@@ -530,14 +545,17 @@ export function compareTraceRangesV1(
       if (x[field] !== y[field]) { fields.push(field); detail[field] = { a: x[field], b: y[field] } }
     }
     if (x.stitches.join('|') !== y.stitches.join('|')) {
-      // The same kinds of stitch on the same beds at the same sizes, only more or fewer: a different width.
-      const kinds = (list: readonly string[]) => [...new Set(list.map((stitch) => {
-        const [kind, bed, place, size] = stitch.split(' ')
-        return kind === 'xfer' || kind === 'split' ? `${kind} ${bed}>${place!.split('>')[1] ?? ''}` : `${kind} ${bed} ${size ?? ''}`
-      }))].sort().join('|')
-      fields.push(kinds(x.stitches) === kinds(y.stitches) ? 'width' : 'stitches')
-      const onlyA = x.stitches.filter((s) => !y.stitches.includes(s))
-      const onlyB = y.stitches.filter((s) => !x.stitches.includes(s))
+      // Only a row extension can be a width-only difference. Moving a selector or a
+      // stitch within the shared region is material, even if the sets of sizes agree.
+      const aSet = new Set(x.stitches), bSet = new Set(y.stitches)
+      const onlyA = x.stitches.filter((s) => !bSet.has(s))
+      const onlyB = y.stitches.filter((s) => !aSet.has(s))
+      const extendsOnly = (wider: typeof x, narrower: typeof x, shared: Set<string>) => wider.marks.every((m) =>
+        shared.has(m.text) || (m.columns.length > 0 && (Math.max(...m.columns) < narrower.left || Math.min(...m.columns) > narrower.right)))
+      const widthOnly = x.kinds === y.kinds && (
+        (onlyA.length === 0 && onlyB.length > 0 && extendsOnly(y, x, aSet))
+        || (onlyB.length === 0 && onlyA.length > 0 && extendsOnly(x, y, bSet)))
+      fields.push(widthOnly ? 'width' : 'stitches')
       const count = (list: readonly string[]) => list.reduce<Record<string, number>>((acc, s) => { const k = s.split(' ').slice(0, 2).join(' '); acc[k] = (acc[k] ?? 0) + 1; return acc }, {})
       detail[fields.at(-1)!] = { a: { counts: count(x.stitches), only: onlyA.slice(0, 6), onlyCount: onlyA.length }, b: { counts: count(y.stitches), only: onlyB.slice(0, 6), onlyCount: onlyB.length } }
     }

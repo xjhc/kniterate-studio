@@ -24,7 +24,7 @@ export type PaisleySplitVariant='alternating'|'grey'|'open';
 export const paisleyIncreaseStarts=(variant:PaisleySplitVariant)=>Array.from({length:37},(_,i)=>i+3).filter(r=>variant==='alternating'?r%3===0:r%6===3||r%6===5);
 export function buildPaisleySplit(variant:PaisleySplitVariant='alternating') {
  const increaseStarts=new Set(paisleyIncreaseStarts(variant));
- const motif=JSON.parse(fs.readFileSync('fixtures/experiments/mixed-paisley-21x81.json','utf8'));
+ const motif=JSON.parse(fs.readFileSync(new URL('../../fixtures/experiments/mixed-paisley-21x81.json',import.meta.url),'utf8'));
  const lo=119, initialHi=126;
  const frame=emitCustomistFairisleFrame({needleStart:lo,needleEnd:initialHi,wasteCarrier:'6',bodyCarriers:['3','4'],drawCarrier:'1',wastePasses:80,waste:FAIRISLE_PARK_WASTE_DEFAULTS,intro:FAIRISLE_CARRIER_INTRO_DEFAULTS,retainBackBed:true,catchNeedles:8});
  const ops:KnitoutOp[]=[{kind:'x-carrier-spacing',value:2},{kind:'x-carrier-stopping-distance',value:2.5},...frame.ops];

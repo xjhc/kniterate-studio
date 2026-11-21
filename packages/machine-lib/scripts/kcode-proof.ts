@@ -42,6 +42,7 @@ interface GateResult {
 
 const PROOF_TESTS = [
   'test/knitout/knit-evidence.test.ts',
+  'test/knitout/tube-chart.test.ts',
   'test/public-api.test.ts',
   'test/physical-registry-manifest.test.ts',
   'test/proof-fingerprint.test.ts',
@@ -83,6 +84,7 @@ const PROOF_TESTS = [
 
 const STUDIO_PROOF_TESTS = [
   'src/knitLog.test.ts',
+  'src/reversiblePlanning.test.ts',
   'src/engineMatrix.test.ts',
   'src/engine.test.ts',
   'src/authoredPipeline.test.ts',
@@ -224,6 +226,7 @@ function collectFingerprintSources(root: string): string[] {
     ...filesUnder('../../scripts'),
     ...filesUnder('../../fixtures/colorwork-chart-v1'),
     '../../fixtures/experiments/edge-swatch-original.k',
+    '../../fixtures/experiments/mixed-paisley-21x81.json',
     // Only the eleven debug captures read by shaped-panel.test.ts. New, rejected, or reversible
     // captures must not stale the receipt until a proof test actually uses them.
     ...(['left', 'right'] as const).flatMap((side) => [0, 1].flatMap((phase) => ['simple', 'fashioned'].map((style) =>

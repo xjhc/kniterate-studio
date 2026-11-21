@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { checkTraceAgainstKnitsV1 } from '@kniterate-studio/machine-lib/browser';
-import { KNIT_LOG_PATH, evidenceFrom, knittedReport, readKnitLog } from '../../../scripts/lib/knit-log';
-import { REPOSITORY_ROOT, traceOf } from '../../../scripts/lib/machine-files';
+import { KNIT_LOG_PATH, commonPassPrefix, evidenceFrom, knittedReport, matchingRunRecords, readKnitLog } from '../../../scripts/lib/knit-log';
+import { REPOSITORY_ROOT, atlas, readReferenceBytes, traceOf } from '../../../scripts/lib/machine-files';
 
 /**
  * The knit log against the real files it lists, and what the loader refuses. Evidence is built from
@@ -64,8 +64,12 @@ describe('knit log', () => {
 
   it('puts the fault on the same-colour strip on what was new in it, not on the increases that had knitted', () => {
     // The strip changed the increase and the edge join together, so its report covers its whole body.
-    const paisley = statusesOf('2026-11-14-split-paisley', '2026-11-14-colour-preserving-increase');
-    expect(passesWith(paisley, 'faulted').every((pass) => pass <= 104)).toBe(true);
+    const paisley = knit('2026-11-14-split-paisley');
+    const afterStrip = checkTraceAgainstKnitsV1(paisley.trace, evidenceFrom(upTo('2026-11-14-colour-preserving-increase')), paisley.roles);
+    expect(afterStrip.faulted.flatMap((g) => g.faults.map((f) => f.knit))).not.toContain('2026-11-14-colour-preserving-increase');
+    expect(afterStrip.faulted.filter((g) => g.passes.some((p) => p > 104)).map((g) => [g.passes, g.clearance])).toEqual([
+      [[108], [{ columns: 64, reportedCleanRuns: 0 }]], [[109], [{ columns: 30, reportedCleanRuns: 0 }]],
+    ]);
     const strip = statusesOf('2026-11-14-colour-preserving-increase', '2026-11-14-colour-preserving-increase');
     const own = passesWith(strip, 'faulted').filter((pass) => pass > 110);
     // Its tucked edge joins (116, 123, 126, 144) and grey's splits (133, 161) were new; they do not read as knitted.
@@ -73,6 +77,41 @@ describe('knit log', () => {
     // Orange's splits (138, 166) are passes the 514-pass paisley had knitted.
     for (const pass of [138, 166]) expect(own, `pass ${pass}`).not.toContain(pass);
     expect(passesWith(strip, 'knitted').length).toBeGreaterThan(100);
+  });
+
+  it('carries the full reported start interval through an identical executable prefix, with independent exact-file identity', () => {
+    const paisley = knit('2026-11-14-split-paisley');
+    const grey = file('docs/physical-trials/2026-11-14/paisley-grey-split-candidate/program.kc');
+    const [record] = matchingRunRecords(grey, 'different file', [paisley]);
+    expect(record).toMatchObject({ exactFile: false, sameThrough: 133, confirmedSharedThrough: 133 });
+    expect(record!.events.find((e) => e.kind === 'fault')).toMatchObject({ approximate: true, sharedRanges: [[81, 104]], fullyWithinSharedStart: true });
+    const stopped = knit('2026-11-11-increase-strip');
+    expect(matchingRunRecords(stopped.trace, stopped.entry.sha256, [stopped])[0]).toMatchObject({ exactFile: true, sameThrough: 538, confirmedSharedThrough: 116 });
+    const partial = { ...paisley, events: [{ kind: 'fault' as const, passes: [[130, 150] as const], approximate: true, what: 'somewhere in this stretch' }] };
+    expect(matchingRunRecords(grey, 'different file', [partial])[0]!.events[0]).toMatchObject({ passes: [[130, 150]], sharedRanges: [[130, 133]], fullyWithinSharedStart: false });
+  });
+
+  it('recognises identical reference bytes across decoder labels and rejects a stale atlas hash', () => {
+    const earlier = knit('2026-10-30-kniterate-fairisle');
+    const reference = atlas().find((entry) => entry.sha256 === earlier.entry.sha256)!;
+    const alternate = traceOf(readReferenceBytes(reference).toString('latin1'), 'app');
+    expect(alternate.dialect).not.toBe(earlier.trace.dialect);
+    expect(commonPassPrefix(alternate, earlier.trace)).toBe(0);
+    expect(matchingRunRecords(alternate, reference.sha256, [earlier])[0]).toMatchObject({
+      exactFile: true, sameThrough: 286, confirmedSharedThrough: 286,
+    });
+    expect(() => readReferenceBytes({ ...reference, sha256: '0'.repeat(64) })).toThrow(/SHA-256 recorded in the atlas/);
+  });
+
+  it('ends the common prefix before a transient rack or a changed stop, even if the following pass matches', () => {
+    const { trace } = knit('2026-11-14-split-paisley');
+    const extra = { ...trace.rackCommands[0]!, beforePassIndex: 4 };
+    const after = trace.rackCommands.findIndex((rack) => rack.beforePassIndex >= 4);
+    const changed = { ...trace, rackCommands: [...trace.rackCommands.slice(0, after), extra, ...trace.rackCommands.slice(after)] };
+    expect(commonPassPrefix(trace, changed)).toBe(4);
+    expect(commonPassPrefix(changed, trace)).toBe(4);
+    const passes = trace.passes.map((p, i) => i === 4 ? { ...p, raw: { ...p.raw, FRNT: trace.passes[5]!.raw.FRNT } } : p);
+    expect(commonPassPrefix(trace, { ...trace, passes })).toBe(4);
   });
 
   it('places stops reported while the waste and draw feeders were moved on those moves', () => {
@@ -134,6 +173,17 @@ describe('knit log loader', () => {
       { kind: 'note', passes: [[105, 110]], approximate: true, what: 'loose' },
       { kind: 'fault', passes: null, what: 'somewhere' },
     ]);
+  });
+
+  it('records a fault during the displayed stopping pass without crediting its completion', () => {
+    const { knits: [aborted] } = load([entry({ stoppedDuringPass: 1, events: [{ kind: 'fault', passes: [1, 1], what: 'stopped mid-pass' }] })]);
+    expect(aborted).toMatchObject({ knittedThrough: 0, stopWithin: [1, 1] });
+    const check = checkTraceAgainstKnitsV1(aborted!.trace, evidenceFrom([aborted!]), aborted!.roles);
+    expect(check.counts).toMatchObject({ knitted: 0, new: check.passCount });
+    expect(check.faulted[0]!.faults[0]).toMatchObject({ executionConfirmed: false, passes: [[1, 1]] });
+    expect(check.faulted[0]!.faults[0]!.approximate).not.toBe(true);
+    expect(() => load([entry({ stoppedDuringPass: 2, knittedThrough: 2 })])).toThrow(/completion through pass 1/);
+    expect(() => load([entry({ stoppedDuringPass: 2, events: [{ kind: 'fault', passes: [2, 3], what: 'too late' }] })])).toThrow(/after pass 2/);
   });
 
   it('credits only the prefix before a section when the stop pass is unknown', () => {

@@ -32,7 +32,7 @@ import {
   type TraceSectionV1,
   type TraceYarnRolesV1,
 } from '../../packages/machine-lib/src/browser.js';
-import { REFERENCE_DIR, REPOSITORY_ROOT, atlas, traceOf } from './machine-files.js';
+import { REPOSITORY_ROOT, atlas, readReferenceBytes, traceOf } from './machine-files.js';
 
 export const KNIT_LOG_PATH = 'packages/machine-lib/registry/knit-log.json';
 
@@ -62,6 +62,8 @@ export interface KnitLogEntry {
   yarns: Record<string, string>;
   /** Exact last pass knitted, or an uncertain stop within a section (only the preceding prefix is confirmed). */
   knittedThrough?: number | { section: string };
+  /** The operator observed the run end during this pass. Only earlier passes completed. */
+  stoppedDuringPass?: number;
   /** The operator said how the run went: what went wrong, or that it went well. Only such a knit clears an earlier fault. */
   operatorSaidHowItRan?: boolean;
   report?: string;
@@ -90,7 +92,7 @@ export interface LoggedKnit {
 
 export class KnitLogError extends Error {}
 
-const ENTRY_KEYS = new Set(['id', 'date', 'what', 'file', 'sha256', 'roles', 'yarns', 'knittedThrough', 'operatorSaidHowItRan', 'report', 'source', 'record', 'caveat', 'events']);
+const ENTRY_KEYS = new Set(['id', 'date', 'what', 'file', 'sha256', 'roles', 'yarns', 'knittedThrough', 'stoppedDuringPass', 'operatorSaidHowItRan', 'report', 'source', 'record', 'caveat', 'events']);
 const EVENT_KEYS = new Set(['kind', 'passes', 'section', 'carrierMoves', 'approximate', 'what']);
 const START_SECTIONS = new Set(['waste', 'draw', 'cast-on']);
 const isRecord = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -147,7 +149,13 @@ export function readKnitLog(root = REPOSITORY_ROOT): { yarns: Record<string, str
     const through: unknown = entry.knittedThrough;
     let knittedThrough: number | null = null;
     let stopWithin: PassSpan | null = null;
-    if (through !== undefined) {
+    if (entry.stoppedDuringPass !== undefined) {
+      const during = entry.stoppedDuringPass;
+      if (typeof during !== 'number' || !Number.isInteger(during)) return fail('`stoppedDuringPass` is a whole pass number.');
+      stopWithin = inFile([during, during]);
+      knittedThrough = during - 1;
+      if (through !== undefined && through !== knittedThrough) fail(`Stopping during pass ${during} confirms completion through pass ${knittedThrough}.`);
+    } else if (through !== undefined) {
       if (Number.isInteger(through)) knittedThrough = inFile([through as number, through as number])[1];
       else if (isRecord(through) && Object.keys(through).join() === 'section') {
         stopWithin = sectionSpan(through.section);
@@ -178,7 +186,7 @@ export function readKnitLog(root = REPOSITORY_ROOT): { yarns: Record<string, str
         spans = (given as PassSpan[]).map(inFile);
       }
       const latestPossible = stopWithin?.[1] ?? knittedThrough;
-      if (spans !== null && latestPossible !== null && spans.some((span) => span[0] > latestPossible)) fail(`an event is placed after pass ${latestPossible}, ${stopWithin ? 'the latest possible stop' : 'the last pass knitted'}.`);
+      if (spans !== null && latestPossible !== null && spans.some(([from, to]) => (approximate ? from : to) > latestPossible)) fail(`an event is placed after pass ${latestPossible}, ${stopWithin ? 'the latest possible stop' : 'the last pass knitted'}.`);
       return { kind, passes: spans, ...(approximate ? { approximate: true } : {}), what };
     });
     return { entry: entry as unknown as KnitLogEntry, trace, roles, sections, knittedThrough, stopWithin, events };
@@ -192,13 +200,51 @@ let cached: { evidence: KnitEvidenceV1; knits: LoggedKnit[]; yarns: Record<strin
 export function loadKnitEvidence(): { evidence: KnitEvidenceV1; knits: LoggedKnit[]; yarns: Record<string, string> } {
   if (cached) return cached;
   const { knits, yarns } = readKnitLog();
-  const references = atlas().map((entry) => ({ name: entry.name, trace: traceOf(readFileSync(join(REFERENCE_DIR, entry.file), 'latin1'), entry.dialect), roles: entry.roles }));
+  const references = atlas().map((entry) => ({ name: entry.name, trace: traceOf(readReferenceBytes(entry).toString('latin1'), entry.dialect), roles: entry.roles }));
   cached = { evidence: evidenceFrom(knits, references), knits, yarns };
   return cached;
 }
 
 export function evidenceFrom(knits: readonly LoggedKnit[], references: Parameters<typeof buildKnitEvidenceV1>[1] = []): KnitEvidenceV1 {
   return buildKnitEvidenceV1(knits.map((knit) => ({ id: knit.entry.id, trace: knit.trace, roles: knit.roles, knittedThrough: knit.knittedThrough, stopWithin: knit.stopWithin, clears: knit.entry.operatorSaidHowItRan === true, events: knit.events })), references);
+}
+
+/** Length of the identical executable start, including every rack command before each pass. */
+export function commonPassPrefix(a: MachineTraceV1, b: MachineTraceV1): number {
+  if (a.dialect !== b.dialect || a.profileId !== b.profileId || a.profileVersion !== b.profileVersion) return 0;
+  let rack = 0;
+  const length = Math.min(a.passes.length, b.passes.length);
+  for (let index = 0; index < length; index++) {
+    while (a.rackCommands[rack]?.beforePassIndex === index || b.rackCommands[rack]?.beforePassIndex === index) {
+      const left = a.rackCommands[rack], right = b.rackCommands[rack];
+      if (left?.beforePassIndex !== index || right?.beforePassIndex !== index || left.valueRaw !== right.valueRaw) return index;
+      rack++;
+    }
+    const left = a.passes[index]!.raw, right = b.passes[index]!.raw;
+    if (left.FRNT !== right.FRNT || left.STIF !== right.STIF || left.REAR !== right.REAR || left.STIR !== right.STIR || left.footer !== right.footer) return index;
+  }
+  return length;
+}
+
+/** Direct run records. An interval crossing the first difference retains its original uncertainty. */
+export function matchingRunRecords(trace: MachineTraceV1, sha256: string, knits: readonly LoggedKnit[] = loadKnitEvidence().knits) {
+  return knits.flatMap(({ entry, trace: earlier, knittedThrough, stopWithin, events }) => {
+    const exactFile = entry.sha256 === sha256;
+    const sameThrough = exactFile ? earlier.passes.length : commonPassPrefix(trace, earlier);
+    if (!exactFile && sameThrough === 0) return [];
+    const confirmed = knittedThrough ?? earlier.passes.length;
+    const possible = stopWithin?.[1] ?? confirmed;
+    const directEvents = events.flatMap((event) => {
+      const sharedRanges = event.passes?.filter(([from]) => from <= Math.min(sameThrough, possible))
+        .map(([from, to]) => [from, Math.min(to, sameThrough, possible)] as const) ?? [];
+      if (!exactFile && event.passes !== null && sharedRanges.length === 0) return [];
+      return [{ ...event, sharedRanges, fullyWithinSharedStart: event.passes !== null && event.passes.every(([, to]) => to <= Math.min(sameThrough, possible)) }];
+    });
+    return [{ knit: entry.id, exactFile, sha256: entry.sha256, sameThrough, confirmedSharedThrough: Math.min(sameThrough, confirmed),
+      sourceStopWithin: stopWithin, ...(entry.stoppedDuringPass !== undefined ? { sourceStoppedDuringPass: entry.stoppedDuringPass } : {}),
+      operatorSaidHowItRan: entry.operatorSaidHowItRan === true, events: directEvents,
+      ...(entry.caveat ? { caveat: entry.caveat } : {}), ...(exactFile && entry.report ? { report: entry.report } : {}) }];
+  });
 }
 
 /** `3, 5-7, 12` for a list of pass numbers. */
@@ -287,19 +333,21 @@ export function knittedReport(trace: MachineTraceV1, roles: TraceYarnRolesV1, se
     })),
     betweenWidths: widths(check.betweenWidths),
     otherWidth: widths(check.otherWidth),
-    faulted: grouped(check.faulted, (found) => JSON.stringify([found.faults, found.knitted]), (found) => found.passes).map(({ first, passes }) => ({
+    faulted: grouped(check.faulted, (found) => JSON.stringify([found.faults, found.knitted, found.clearance]), (found) => found.passes).map(({ first, passes }) => ({
+      passes: passRanges(passes),
+      count: passes.length,
+      faults: first.faults.map(fault),
+      knittedWithNoFaultSince: first.knittedSinceFault,
+      clearanceByWidth: first.clearance,
+    })),
+    earlierFaultsSinceCleared: grouped(check.cleared, (found) => JSON.stringify([found.faults, found.knittedSinceFault]), (found) => found.passes).map(({ first, passes }) => ({
       passes: passRanges(passes),
       count: passes.length,
       faults: first.faults.map(fault),
       knittedWithNoFaultSince: first.knittedSinceFault,
     })),
-    earlierFaultsSinceCleared: grouped(check.cleared, (found) => JSON.stringify(found.faults), (found) => found.passes).map(({ first, passes }) => ({
-      passes: passRanges(passes),
-      count: passes.length,
-      faults: first.faults.map(fault),
-      knittedWithNoFaultSince: first.knittedSinceFault,
-    })),
-    unclear: grouped(check.unclear, (found) => JSON.stringify(found.faults), (found) => found.passes).map(({ first, passes }) => ({ passes: passRanges(passes), count: passes.length, knits: first.knits, unresolvedFaults: first.faults.map(fault) })),
+    unclear: grouped(check.unclear, (found) => JSON.stringify([found.faults, found.knits]), (found) => found.passes).map(({ first, passes }) => ({ passes: passRanges(passes), count: passes.length, knits: first.knits, unresolvedFaults: first.faults.map(fault) })),
+    possibleFaultHistory: grouped(check.possibleFaultHistory, (found) => JSON.stringify(found.faults), (found) => found.passes).map(({ first, passes }) => ({ passes: passRanges(passes), possibleFaults: first.faults.map(fault) })),
     notes: grouped(check.notes, (found) => JSON.stringify(found.notes), (found) => found.passes).map(({ first, passes }) => ({ passes: passRanges(passes), count: passes.length, notes: first.notes.map(fault) })),
     placement: {
       needles: here ? `${here[0]}-${here[1]}` : 'none',
@@ -319,6 +367,7 @@ export function knitLogSummary() {
     passes: knit.trace.passes.length,
     ...(knit.knittedThrough !== null ? { knittedThrough: knit.knittedThrough } : {}),
     ...(knit.stopWithin !== null ? { stopWithin: knit.stopWithin } : {}),
+    ...(knit.entry.stoppedDuringPass !== undefined ? { stoppedDuringPass: knit.entry.stoppedDuringPass } : {}),
     operatorSaidHowItRan: knit.entry.operatorSaidHowItRan === true,
     events: knit.events.map((event) => ({
       kind: event.kind,

@@ -4,6 +4,40 @@
 `pnpm verify` is the software gate. Full-gate status belongs to the exact
 current proof receipt, not this document's dates.
 
+## Pass evidence and reversible shaping (2026-11-21)
+
+`studio knitted` now reports exact-file records and identical executable starts.
+The 510-pass grey paisley shares the first 133 passes with the knitted 514-pass
+piece, including its full 81–104 drop window. Two further matches, 108 and 109,
+carry older faults observed on 64 and 30 columns respectively. Clearing a fault
+requires two later reported runs at every implicated width. Transfer matching
+includes the stitch selectors at both ends. A terminal stop during a numbered
+pass can now be logged separately from the last completed pass.
+
+`studio audit` computes a whole-file lower bound on zero-roller feeder pickups
+with the work order and carriage passes fixed. On the historical CLUMP diamond,
+all 86 pickups above the bound involve the draw or waste carrier. On the
+current matrix diamond the 66 eligible pickups are all required under this model.
+Changing parking or work order would require lowering and validating a new file.
+
+`studio shape-check designs/atelier-paisley/shape.json designs/atelier-paisley/chart.json`
+checks the outline and the motif together. Its 224 increases and 224 decreases
+need at least 1,345 courses under the 514-pass recipe, including its three
+initial plain courses. All 480 artwork rows fit inside the mask and leave the
+structural edge columns free of motif cells. The planner exposes added holds
+and planned yarn and carriage sides with `--detail`. The 514-pass replay checks
+the carrier handoffs, both split descendants' donor and the ordered pair of
+parents in each decrease. The full-size piece still needs measured gauge,
+machine placement and a physical slope trial.
+
+CMU's transfer planner gives a correctness result for cyclic yarn-slack
+constraints. Their example of an additional connection between beds illustrates
+why that result cannot certify a joined two-face edge. Kaspar and colleagues
+also recorded physical failures from overlapping transfers. The checker here
+uses the recorded edge sequence and verifies its loop ancestry on the lowered
+file. [McCann et al.](https://homes.cs.washington.edu/~ztatlock/599z-17sp/papers/knitting-mccann-siggraph16.pdf)
+[Kaspar et al., section 8.1](https://knitsketching.csail.mit.edu/ks-paper.pdf)
+
 ## Knit log: which passes have been on the machine (2026-11-16)
 
 `pnpm --silent studio -- knitted <file>` reads any machine file against every
