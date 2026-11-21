@@ -14,6 +14,12 @@ requires two later reported runs at every implicated width. Transfer matching
 includes the stitch selectors at both ends. A terminal stop during a numbered
 pass can now be logged separately from the last completed pass.
 
+Across the 18 logged knits, 17 fault reports have inferred pass locations and
+one has no location. Replaying each file against only the earlier runs, prior
+fault warnings covered the entire inferred window once, part of it five times
+and none of it eleven times. These counts measure overlap with reported windows.
+Measuring prediction accuracy needs operator-observed fault passes.
+
 `studio audit` computes a whole-file lower bound on zero-roller feeder pickups
 with the work order and carriage passes fixed. On the historical CLUMP diamond,
 all 86 pickups above the bound involve the draw or waste carrier. On the
@@ -23,7 +29,9 @@ Changing parking or work order would require lowering and validating a new file.
 `studio shape-check designs/atelier-paisley/shape.json designs/atelier-paisley/chart.json`
 checks the outline and the motif together. Its 224 increases and 224 decreases
 need at least 1,345 courses under the 514-pass recipe, including its three
-initial plain courses. All 480 artwork rows fit inside the mask and leave the
+initial plain courses. With 480 courses and both tips eight columns wide, this
+cadence permits a peak of 87 columns. Reaching 88 and returning needs 481
+courses. All 480 artwork rows fit inside the mask and leave the
 structural edge columns free of motif cells. The planner exposes added holds
 and planned yarn and carriage sides with `--detail`. The 514-pass replay checks
 the carrier handoffs, both split descendants' donor and the ordered pair of
