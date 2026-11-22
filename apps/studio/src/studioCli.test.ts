@@ -380,6 +380,7 @@ describe('machine-file CLI', () => {
     expect(audit.status).toBe(1);
     const check = audit.receipt.files[0].checks.find((item: { id: string }) => item.id === 'start-hold');
     expect(check).toMatchObject({ ok: false, value: 90, at: ['b94 from pass 2 (c6) to 92 (c2)'] });
+    expect(audit.receipt.files[0]).not.toHaveProperty('carrierPickupPlan');
     expect(audit.receipt.files[0].notes).toContain('no longer re-makes these bytes');
   });
 

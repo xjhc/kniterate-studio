@@ -141,10 +141,15 @@ mean the pass will knit.
 
 ## When a fault stops counting
 
-A pass with a fault on record is flagged until two later reported runs have
-completed the description at each width implicated by the fault. Each run
-counts once per width. The audit shows those widths and their counts. A later
-fault resets the count at its implicated widths. The fault stays in the history.
+A pass with a fault on record is flagged until two later runs with an operator
+report have completed the same pass description cleanly at any width. Each run
+counts once, even when it repeats the pass or works it at several widths. A new
+fault on that description restarts the two-run count.
+
+For both active and cleared faults, `studio knitted` also lists each width
+where the fault was reported and the number of later clean runs there since
+the most recent fault at that width. A warning can clear with this count still
+at zero. Its fault reports remain in the history.
 An approximate fault that includes the pass cannot count as a clean knit, even
 when another pass is ranked as its likelier cause.
 

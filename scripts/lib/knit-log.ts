@@ -333,18 +333,19 @@ export function knittedReport(trace: MachineTraceV1, roles: TraceYarnRolesV1, se
     })),
     betweenWidths: widths(check.betweenWidths),
     otherWidth: widths(check.otherWidth),
-    faulted: grouped(check.faulted, (found) => JSON.stringify([found.faults, found.knitted, found.clearance]), (found) => found.passes).map(({ first, passes }) => ({
+    faulted: grouped(check.faulted, (found) => JSON.stringify([found.faults, found.knitted, found.knittedSinceFault, found.clearance]), (found) => found.passes).map(({ first, passes }) => ({
       passes: passRanges(passes),
       count: passes.length,
       faults: first.faults.map(fault),
       knittedWithNoFaultSince: first.knittedSinceFault,
       clearanceByWidth: first.clearance,
     })),
-    earlierFaultsSinceCleared: grouped(check.cleared, (found) => JSON.stringify([found.faults, found.knittedSinceFault]), (found) => found.passes).map(({ first, passes }) => ({
+    earlierFaultsSinceCleared: grouped(check.cleared, (found) => JSON.stringify([found.faults, found.knittedSinceFault, found.clearance]), (found) => found.passes).map(({ first, passes }) => ({
       passes: passRanges(passes),
       count: passes.length,
       faults: first.faults.map(fault),
       knittedWithNoFaultSince: first.knittedSinceFault,
+      clearanceByWidth: first.clearance,
     })),
     unclear: grouped(check.unclear, (found) => JSON.stringify([found.faults, found.knits]), (found) => found.passes).map(({ first, passes }) => ({ passes: passRanges(passes), count: passes.length, knits: first.knits, unresolvedFaults: first.faults.map(fault) })),
     possibleFaultHistory: grouped(check.possibleFaultHistory, (found) => JSON.stringify(found.faults), (found) => found.passes).map(({ first, passes }) => ({ passes: passRanges(passes), possibleFaults: first.faults.map(fault) })),

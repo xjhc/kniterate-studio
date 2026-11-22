@@ -8,20 +8,26 @@ current proof receipt, not this document's dates.
 
 `studio knitted` now reports exact-file records and identical executable starts.
 The 510-pass grey paisley shares the first 133 passes with the knitted 514-pass
-piece, including its full 81–104 drop window. Two further matches, 108 and 109,
-carry older faults observed on 64 and 30 columns respectively. Clearing a fault
-requires two later reported runs at every implicated width. Transfer matching
+piece, including its full 81–104 drop window. A fault warning clears after
+two later reported runs complete the same pass cleanly at any width. The report
+keeps clean-run counts at the original fault widths in both active and cleared
+history. Passes 108 and 109 remain watch points on the trial sheet. Their earlier
+faults were on 64 and 30 columns respectively, with five and two subsequent
+clean runs at other widths. The 60-column reversible chart has 14 active
+warnings under this rule, down from 17. Transfer matching
 includes the stitch selectors at both ends. A terminal stop during a numbered
 pass can now be logged separately from the last completed pass.
 
 Across the 18 logged knits, 17 fault reports have inferred pass locations and
 one has no location. Replaying each file against only the earlier runs, prior
-fault warnings covered the entire inferred window once, part of it five times
-and none of it eleven times. These counts measure overlap with reported windows.
+fault warnings covered the entire inferred window once, part of it four times
+and none of it twelve times. The previous width-specific rule also warned on
+pass 4 of the second bind-off strip. The operator placed its waste miss within
+passes 1–5. These counts measure overlap with reported windows.
 Measuring prediction accuracy needs operator-observed fault passes.
 
-`studio audit` computes a whole-file lower bound on zero-roller feeder pickups
-with the work order and carriage passes fixed. On the historical CLUMP diamond,
+The carrier-planning experiment computed a lower bound on zero-roller feeder
+pickups with the work order and carriage passes fixed. On the historical CLUMP diamond,
 all 86 pickups above the bound involve the draw or waste carrier. On the
 current matrix diamond the 66 eligible pickups are all required under this model.
 Changing parking or work order would require lowering and validating a new file.

@@ -279,8 +279,9 @@ export interface PassEvidenceV1 {
   readonly executed: readonly string[]
   /** Knits that ran this pass with no fault reported on it, oldest first. */
   readonly knitted: readonly string[]
-  /** Fewest reported clean runs at any implicated width since its latest fault, or null if never faulted. */
+  /** Reported clean runs at any width since the latest fault, or null if never faulted. Each run counts once. */
   readonly knittedSinceFault: number | null
+  /** For each width at which a fault was reported, clean runs there since its latest fault at that width. */
   readonly cleanRunsByFaultWidth: ReadonlyMap<number, number>
   /** Faults reported on this pass, or on a stretch that contains it. */
   readonly faults: readonly KnitEventRefV1[]
@@ -409,20 +410,23 @@ export function buildKnitEvidenceV1(runs: readonly KnitRunV1[], references: read
       for (const [event, executionConfirmed] of here.uncertain) found.unclearFaults.push({ ...event, knit: run.id, executionConfirmed })
       if (here.faults.size > 0) {
         for (const [event, executionConfirmed] of here.faults) found.faults.push({ ...event, knit: run.id, executionConfirmed })
+        found.knittedSinceFault = 0
         for (const width of here.faultWidths) found.cleanRunsByFaultWidth.set(width, 0)
       } else if (here.uncertain.size > 0) {
         if (here.confirmed) found.unclear.push(run.id)
       } else if (here.confirmed) {
         found.knitted.push(run.id)
-        if (run.clears !== false) for (const width of here.widths) {
-          const since = found.cleanRunsByFaultWidth.get(width)
-          if (since !== undefined) found.cleanRunsByFaultWidth.set(width, since + 1)
+        if (run.clears !== false && found.knittedSinceFault !== null) {
+          found.knittedSinceFault++
+          for (const width of here.widths) {
+            const since = found.cleanRunsByFaultWidth.get(width)
+            if (since !== undefined) found.cleanRunsByFaultWidth.set(width, since + 1)
+          }
         }
         const widths: [number, number] = [Math.min(...here.widths), Math.max(...here.widths)]
         found.width = found.width ? [Math.min(found.width[0], widths[0]), Math.max(found.width[1], widths[1])] : widths
         found.widths = [...new Set([...found.widths, ...here.widths])].sort((a, b) => a - b)
       }
-      if (found.cleanRunsByFaultWidth.size) found.knittedSinceFault = Math.min(...found.cleanRunsByFaultWidth.values())
     }
   }
   for (const reference of references) {
@@ -452,6 +456,13 @@ export interface FacetDifferenceV1 {
   readonly here: string | null
 }
 
+interface PassFaultHistoryV1 {
+  readonly passes: readonly number[]
+  readonly faults: readonly KnitEventRefV1[]
+  readonly knittedSinceFault: number
+  readonly clearance: readonly { columns: number; reportedCleanRuns: number }[]
+}
+
 export interface KnittedCheckV1 {
   readonly passCount: number
   /** Fault warnings overlap `new` when a stop section is uncertain; all other counts follow statuses. */
@@ -471,9 +482,9 @@ export interface KnittedCheckV1 {
   readonly otherWidth: readonly { readonly passes: readonly number[]; readonly width: readonly [number, number]; readonly knittedAt: readonly number[]; readonly knits: readonly string[] }[]
   readonly betweenWidths: KnittedCheckV1['otherWidth']
   /** Includes warnings on unconfirmed passes; those passes also appear in `fresh`. */
-  readonly faulted: readonly { readonly passes: readonly number[]; readonly faults: readonly KnitEventRefV1[]; readonly knitted: readonly string[]; readonly knittedSinceFault: number; readonly clearance: readonly { columns: number; reportedCleanRuns: number }[] }[]
+  readonly faulted: readonly (PassFaultHistoryV1 & { readonly knitted: readonly string[] })[]
   /** Passes whose earlier faults no longer count against them: later knits ran them with none reported. */
-  readonly cleared: readonly { readonly passes: readonly number[]; readonly faults: readonly KnitEventRefV1[]; readonly knittedSinceFault: number }[]
+  readonly cleared: readonly PassFaultHistoryV1[]
   readonly unclear: readonly { readonly passes: readonly number[]; readonly knits: readonly string[]; readonly faults: readonly KnitEventRefV1[] }[]
   /** Lower-ranked candidates and unlocated reports, including passes with other, clean observations. */
   readonly possibleFaultHistory: readonly { readonly passes: readonly number[]; readonly faults: readonly KnitEventRefV1[] }[]
@@ -545,20 +556,16 @@ export function checkTraceAgainstKnitsV1(trace: Trace, evidence: KnitEvidenceV1,
   })
   const otherWidth = atOtherWidths('other-width')
   const betweenWidths = atOtherWidths('between-widths')
-  const faulted = groupPasses((description) => activeFault(evidence.passes.get(description.text))).map(({ description, passes }) => {
+  const faulted: KnittedCheckV1['faulted'][number][] = []
+  const cleared: PassFaultHistoryV1[] = []
+  for (const { description, passes } of groupPasses((d) => Boolean(evidence.passes.get(d.text)?.faults.length))) {
     const found = evidence.passes.get(description.text)!
     const clearance = [...found.cleanRunsByFaultWidth].sort(([a], [b]) => a - b).map(([columns, reportedCleanRuns]) => ({ columns, reportedCleanRuns }))
-    return { passes, faults: found.faults, knitted: found.knitted, knittedSinceFault: found.knittedSinceFault ?? 0, clearance }
-  })
+    const history = { passes, faults: found.faults, knittedSinceFault: found.knittedSinceFault ?? 0, clearance }
+    if (activeFault(found)) faulted.push({ ...history, knitted: found.knitted })
+    else cleared.push(history)
+  }
   counts.faulted = faulted.reduce((total, group) => total + group.passes.length, 0)
-  const clearedByText = new Map<string, { passes: number[]; faults: readonly KnitEventRefV1[]; knittedSinceFault: number }>()
-  descriptions.forEach((description, index) => {
-    const found = evidence.passes.get(description.text)
-    if (!found || found.faults.length === 0 || activeFault(found)) return
-    const group = clearedByText.get(description.text) ?? { passes: [], faults: found.faults, knittedSinceFault: found.knittedSinceFault ?? 0 }
-    group.passes.push(index + 1)
-    clearedByText.set(description.text, group)
-  })
   const unclear = byText('unclear').map(({ description, passes }) => {
     const found = evidence.passes.get(description.text)!
     return { passes, knits: found.unclear, faults: found.unclearFaults }
@@ -577,5 +584,5 @@ export function checkTraceAgainstKnitsV1(trace: Trace, evidence: KnitEvidenceV1,
   for (const description of descriptions) {
     if (description.span) here = here ? [Math.min(here[0], description.span[0]), Math.max(here[1], description.span[1])] : [description.span[0], description.span[1]]
   }
-  return { passCount: descriptions.length, counts, statuses, descriptions, fresh, otherWidth, betweenWidths, faulted, cleared: [...clearedByText.values()], unclear, possibleFaultHistory, notes: [...noted.values()], placement: { here, knitted: evidence.span } }
+  return { passCount: descriptions.length, counts, statuses, descriptions, fresh, otherWidth, betweenWidths, faulted, cleared, unclear, possibleFaultHistory, notes: [...noted.values()], placement: { here, knitted: evidence.span } }
 }

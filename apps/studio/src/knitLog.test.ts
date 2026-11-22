@@ -65,11 +65,16 @@ describe('knit log', () => {
   it('puts the fault on the same-colour strip on what was new in it, not on the increases that had knitted', () => {
     // The strip changed the increase and the edge join together, so its report covers its whole body.
     const paisley = knit('2026-11-14-split-paisley');
-    const afterStrip = checkTraceAgainstKnitsV1(paisley.trace, evidenceFrom(upTo('2026-11-14-colour-preserving-increase')), paisley.roles);
+    const evidence = evidenceFrom(upTo('2026-11-14-colour-preserving-increase'));
+    const afterStrip = checkTraceAgainstKnitsV1(paisley.trace, evidence, paisley.roles);
     expect(afterStrip.faulted.flatMap((g) => g.faults.map((f) => f.knit))).not.toContain('2026-11-14-colour-preserving-increase');
-    expect(afterStrip.faulted.filter((g) => g.passes.some((p) => p > 104)).map((g) => [g.passes, g.clearance])).toEqual([
-      [[108], [{ columns: 64, reportedCleanRuns: 0 }]], [[109], [{ columns: 30, reportedCleanRuns: 0 }]],
-    ]);
+    expect(afterStrip.faulted.flatMap((g) => g.passes).every((p) => p <= 104)).toBe(true);
+    const report = knittedReport(paisley.trace, paisley.roles, paisley.sections, evidence);
+    for (const [pass, columns] of [['108', 64], ['109', 30]] as const) {
+      const history = report.earlierFaultsSinceCleared.find((group) => group.passes === pass);
+      expect(history).toMatchObject({ clearanceByWidth: [{ columns, reportedCleanRuns: 0 }] });
+      expect(history!.knittedWithNoFaultSince).toBeGreaterThanOrEqual(2);
+    }
     const strip = statusesOf('2026-11-14-colour-preserving-increase', '2026-11-14-colour-preserving-increase');
     const own = passesWith(strip, 'faulted').filter((pass) => pass > 110);
     // Its tucked edge joins (116, 123, 126, 144) and grey's splits (133, 161) were new; they do not read as knitted.

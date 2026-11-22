@@ -237,19 +237,30 @@ describe('knit evidence', () => {
     expect(check.statuses[0]).toBe('other-width')
   })
 
-  it('requires two reported runs at each implicated width to clear a fault, counting each run once', () => {
-    const runAt = (id: string, width: number) => ({
-      id, trace: trace(reversible(10, 9 + width, 3, (n) => n === 10 || n === 9 + width)), events: [],
-    })
-    const narrow = runAt('narrow', 20)
+  it('clears after two reported runs at any width and retains the counts at each fault width', () => {
+    const rowsAt = (width: number) => reversible(10, 9 + width, 3, (n) => n === 10 || n === 9 + width)
+    const runAt = (id: string, width: number) => ({ id, trace: trace(rowsAt(width)), events: [] })
     const faultAt = (id: string, width: number) => ({
       ...runAt(id, width), events: [{ kind: 'fault' as const, passes: [[2, 2] as const], what: 'dropped' }],
     })
-    const history = [faultAt('narrow-fault', 20), faultAt('wide-fault', 60), runAt('wide-one', 60), runAt('wide-two', 60)]
-    const check = (extra: ReturnType<typeof runAt>[]) => checkTraceAgainstKnitsV1(narrow.trace, buildKnitEvidenceV1([...history, ...extra]))
-    expect(check([]).statuses[1]).toBe('faulted')
-    expect(check([narrow]).statuses[1]).toBe('faulted')
-    expect(check([narrow, runAt('repeat', 20)]).statuses[1]).toBe('knitted')
+    const narrow = faultAt('narrow-fault', 20), wide = faultAt('wide-fault', 60)
+    const check = (...runs: Parameters<typeof buildKnitEvidenceV1>[0]) =>
+      checkTraceAgainstKnitsV1(narrow.trace, buildKnitEvidenceV1([narrow, wide, ...runs]))
+    const at60 = runAt('clean wide', 60), at40 = runAt('clean medium', 40)
+    const breakdown = [{ columns: 20, reportedCleanRuns: 0 }, { columns: 60, reportedCleanRuns: 1 }]
+    expect(check(at60).faulted[0]).toMatchObject({ knittedSinceFault: 1, clearance: breakdown })
+    const cleared = check(at60, at40)
+    expect(cleared.faulted).toEqual([])
+    expect(cleared.statuses[1]).toBe('other-width')
+    expect(cleared.cleared[0]).toMatchObject({ knittedSinceFault: 2, clearance: breakdown })
+    expect(check(at60, at40, faultAt('narrow-again', 20)).faulted[0]).toMatchObject({ knittedSinceFault: 0, clearance: breakdown })
+
+    // One run completes the same pass several times at each width, with a fresh cast-on between widths.
+    const drop: Row = { carrier: '0', acts: span(10, 29).flatMap((n) => [['drop', 'front', n], ['drop', 'rear', n]] as Act[]) }
+    const bothWidths = { id: 'two widths in one run', trace: trace([...rowsAt(20), drop, ...rowsAt(60)]), events: [] }
+    expect(check(bothWidths).faulted[0]).toMatchObject({
+      knittedSinceFault: 1, clearance: [{ columns: 20, reportedCleanRuns: 1 }, { columns: 60, reportedCleanRuns: 1 }],
+    })
   })
 
   it.each([true, false])('does not clear a fault by excluding suspects from an approximate range (novel=%s)', (novel) => {

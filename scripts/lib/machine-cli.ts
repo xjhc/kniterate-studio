@@ -40,7 +40,6 @@ import { createSweaterProject } from '../../apps/studio/src/sweater/sweater.js';
 import { runSweaterPipeline } from '../../apps/studio/src/sweater/sweaterPipeline.js';
 import { summarizeSweaterRun } from '../../apps/studio/src/sweater/sweaterRun.js';
 import { KNIT_LOG_PATH, knitLogSummary, knittedCounts, knittedReport, matchingRunRecords } from './knit-log.js';
-import { carrierPickupPlan } from './carrier-plan.js';
 import { MachineUsageError, atlas, readReferenceBytes, sha256, traceOf, type AtlasEntry } from './machine-files.js';
 
 export { MachineUsageError };
@@ -218,7 +217,6 @@ export function auditCommand(pieces: MachinePiece[], options: Map<string, string
       checks: audit.checks,
       longestHolds: audit.longestHolds.map((hold) => `${hold.passes} passes on ${hold.needle}: made by c${hold.from.carrier} at pass ${hold.from.pass}${hold.section ? ` (${hold.section})` : ''}, knitted by c${hold.to.carrier} at ${hold.to.pass}`),
       work: audit.work,
-      carrierPickupPlan: carrierPickupPlan(piece.trace),
       emptyNeedleKnits: audit.emptyNeedleKnits,
     };
   });

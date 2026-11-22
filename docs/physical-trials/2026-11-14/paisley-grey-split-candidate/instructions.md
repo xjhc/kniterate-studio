@@ -19,7 +19,8 @@ last completed pass.
 
 The first 133 machine passes match the 514-pass paisley exactly. Also record
 any problem at **108 or 109**. These passes resemble older faults on 64 and 30
-columns respectively. If a pass stops partway through, record the displayed
+columns respectively. The log cleared both warnings after later runs at other
+widths. If a pass stops partway through, record the displayed
 pass and the last one that finished separately.
 
 Photograph both faces and the widening edge on each face. After the piece has
