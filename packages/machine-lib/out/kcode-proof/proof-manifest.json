@@ -30946,7 +30946,7 @@
     ]
   },
   "contract": {
-    "sha256": "e5eda52e7325a73a77434a5454c46637d83179b9aefa87ed52ff5a0e6a06a7e0",
+    "sha256": "756e03385f1a85a38dc778a64d53a1bbf4be3438dff8ab67dc7ffd68472f5dc5",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -31520,8 +31520,8 @@
       },
       {
         "path": "../../apps/studio/src/reversiblePlanning.test.ts",
-        "sha256": "693bc40aa9f453c0355cc4eb024dba97046169c7b412f1e13ffdb9384bbc6e2b",
-        "bytes": 6404
+        "sha256": "91e1ac4702a677056be355e9d6478267f73a3344fd890645f2ff796801bbf358",
+        "bytes": 4957
       },
       {
         "path": "../../apps/studio/src/sourceWindow.test.tsx",
@@ -32070,8 +32070,8 @@
       },
       {
         "path": "../../scripts/lib/reversible-shape.ts",
-        "sha256": "524d7523ad55cb53f02326906ebf25769e9f93be1d1ca0719622b044d3032811",
-        "bytes": 6432
+        "sha256": "a59b557bd77fdb161062c95af9c188c382d8cbebf27bf0f9e3ca6790a72fb6d5",
+        "bytes": 3340
       },
       {
         "path": "../../scripts/lib/sweater-cli.ts",
@@ -32090,8 +32090,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "29820eb4add4601c2302222b2808aa3a2ae1d7fbbe8f2c2ee40e66871567746a",
-        "bytes": 48595
+        "sha256": "e3da787a2466d2cedaf1eba6f7e5e62dfe7e305a5717cdd33129c1a295f825ba",
+        "bytes": 47524
       },
       {
         "path": "../../tsconfig.base.json",
