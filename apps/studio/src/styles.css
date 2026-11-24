@@ -411,7 +411,7 @@ button:not(:disabled):active { transform: translateY(1px); }
 
 @media print {
   body { background: #fff; }
-  .app-shell > *:not(.modal-backdrop) { display: none !important; }
+  .app-shell:not(.triangle-shell) > *:not(.modal-backdrop) { display: none !important; }
   .modal-backdrop { position: static; overflow: visible; padding: 0; background: #fff; }
   .run-sheet { width: 100%; padding: 0; box-shadow: none; }
   .run-sheet-actions { display: none; }

@@ -1,7 +1,8 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { FileCode2, FolderOpen } from 'lucide-react';
+import type { TriangleProject } from './scarf/triangleProjectFile';
 import type { ColorworkProjectV1 } from '@kniterate-studio/project-contract';
-import { openStudioProjectFile, projectFileProblem } from './chart/projectFile';
+import { openStudioDocumentFile, projectFileProblem } from './chart/projectFile';
 import { RecentList } from './chart/RecentList';
 import type { RecentProject } from './chart/recentProjects';
 import { SilhouetteIcon } from './sweater/SilhouetteIcon';
@@ -29,9 +30,10 @@ function ScarfIcon() {
   </svg>;
 }
 
-export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, recent, onOpenRecent, onRemoveRecent, unreadableSave }: {
+export function StartScreen({ onNew, onOpenProject, onOpenTriangle, onOpenMachineFile, onBlank, recent, onOpenRecent, onRemoveRecent, unreadableSave }: {
   onNew: (kind: 'sweater' | 'beanie' | 'rectangle') => void;
   onOpenProject: (project: ColorworkProjectV1) => void;
+  onOpenTriangle: (project: TriangleProject) => void;
   onOpenMachineFile: () => void;
   onBlank: () => void;
   /** The projects kept on this device. */
@@ -48,10 +50,12 @@ export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, 
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    let project: ColorworkProjectV1;
-    try { project = (await openStudioProjectFile(file)).project; } catch (error) { setProblem(projectFileProblem(file.name, error)); return; }
-    setProblem(null);
-    onOpenProject(project);
+    try {
+      const opened = await openStudioDocumentFile(file);
+      setProblem(null);
+      if (opened.kind === 'triangle') onOpenTriangle(opened.project);
+      else onOpenProject(opened.project);
+    } catch (error) { setProblem(projectFileProblem(file.name, error)); }
   };
   return <section className="start-screen" aria-labelledby="start-title">
     <div className="start-inner">
@@ -85,6 +89,7 @@ export function StartScreen({ onNew, onOpenProject, onOpenMachineFile, onBlank, 
         <button type="button" className="link-button" onClick={onBlank}>Start with a blank chart</button>
         <input ref={projectInput} className="file-input" type="file" accept="application/json,.json" aria-label="Project file" onChange={(event) => void openProject(event)} />
       </div>
+      <p className="local-note"><a href="?design=atelier-paisley">Atelier paisley triangle</a> · <a href="?design=fig-camel">Fig / Camel paisley</a></p>
       {problem && <p className="start-problem" role="alert">{problem} <button type="button" className="link-button" onClick={() => projectInput.current?.click()}>Choose another file</button></p>}
       <p className="local-note">Your projects stay in this browser on this device. Save a project file to keep a copy elsewhere.</p>
     </div>

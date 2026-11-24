@@ -28,8 +28,10 @@ import { sweaterInstructions, sweaterPackageFiles } from './sweater/sweaterHando
 import { sweaterSchematicSvg } from './sweater/schematic';
 import { MenuBar, type Menu } from './workspace/MenuBar';
 import type { WorkspaceView } from './workspace/ViewSwitch';
-import { openStudioProjectFile, projectFileProblem } from './chart/projectFile';
+import { openStudioDocumentFile, projectFileProblem } from './chart/projectFile';
 import './workspace/workspace.css';
+import { TriangleWorkspace } from './scarf/TriangleWorkspace';
+import type { TriangleProject } from './scarf/triangleProjectFile';
 import { useSweaterRun } from './sweater/sweaterRun';
 import { SweaterWorkspace } from './sweater/SweaterWorkspace';
 import { PanelWorkspace } from './sweater/PanelWorkspace';
@@ -552,6 +554,7 @@ function DiffView({ base, compare, onOpenCompare, onSelect }: { base: MachineDoc
 }
 
 export function App() {
+  const [triangleProject, setTriangleProject] = useState<TriangleProject | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const compareInput = useRef<HTMLInputElement>(null);
   const [document, setDocument] = useState<MachineDocument | null>(null);
@@ -845,7 +848,12 @@ export function App() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    try { openProjectFile((await openStudioProjectFile(file)).project); setDocument(null); setAppError(null); } catch (error) { setAppError(projectFileProblem(file.name, error)); }
+    try {
+      const opened = await openStudioDocumentFile(file);
+      if (opened.kind === 'triangle') setTriangleProject(opened.project);
+      else { openProjectFile(opened.project); setDocument(null); }
+      setAppError(null);
+    } catch (error) { setAppError(projectFileProblem(file.name, error)); }
   };
   const sweaterReady = isPieces && sweaterRun.current && sweaterRun.summary !== null;
   const piecesPlan = sweaterPlan ?? panelPlan;
@@ -965,6 +973,8 @@ export function App() {
     ] },
   ];
 
+  if (triangleProject) return <TriangleWorkspace key={triangleProject.id} id={triangleProject.id} opened={triangleProject} onClose={() => setTriangleProject(null)} />;
+
   return (
     <div className="app-shell" data-theme={theme} data-autosave={autosaveState}>
       <header className="topbar">
@@ -1026,7 +1036,7 @@ export function App() {
       {!document && showRunSheet && isSweater && sweaterPlan && <GarmentSheet markdown={sweaterInstructions(project, sweaterPlan, sweaterRun.current ? sweaterRun.summary : null)} schematic={sweaterSchematicSvg(sweaterPlan, authoredState.chart.palette[0]!.hex)} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && authoredExportReady && authoredStory && authoredState.object?.kind === 'beanie' && <GarmentSheet markdown={instructionsMarkdown(project, plan, authoredStory.result, authoredStory.findings, authoredStory.readiness)} schematic={schematicSvg(project, plan)} onClose={() => setShowRunSheet(false)} />}
       {!document && showRunSheet && !isPieces && authoredExportReady && authoredVerdict && blanketCompile.artifact && kcodeState.artifact && authoredState.object?.kind !== 'beanie' && <AuthoredRunSheet project={project} compiled={blanketCompile.artifact} kcode={kcodeState.artifact} verdict={authoredVerdict} onClose={() => setShowRunSheet(false)} />}
-      {showStart && !document && <StartScreen onNew={(kind) => { setNewProjectKind(kind); setShowNewProject(true); }} onOpenProject={openProjectFile} onOpenMachineFile={() => fileInput.current?.click()} onBlank={() => setShowStart(false)} recent={recent.filter((item) => item.slot !== slot)} onOpenRecent={openRecent} onRemoveRecent={removeRecent} unreadableSave={unreadableSave ? { onDownload: downloadUnreadableSave, onDismiss: dismissUnreadableSave } : undefined} />}
+      {showStart && !document && <StartScreen onNew={(kind) => { setNewProjectKind(kind); setShowNewProject(true); }} onOpenProject={openProjectFile} onOpenTriangle={setTriangleProject} onOpenMachineFile={() => fileInput.current?.click()} onBlank={() => setShowStart(false)} recent={recent.filter((item) => item.slot !== slot)} onOpenRecent={openRecent} onRemoveRecent={removeRecent} unreadableSave={unreadableSave ? { onDownload: downloadUnreadableSave, onDismiss: dismissUnreadableSave } : undefined} />}
       {showRecent && <RecentProjectsDialog recent={recent} current={slot} onOpen={openRecent} onRemove={removeRecent} onClose={() => setShowRecent(false)} />}
       {showNewProject && <NewProjectDialog onCreate={createProject} onCreateBeanie={createBeanie} onCreateSweater={createSweater} onCreatePanel={createPanel} initialKind={newProjectKind ?? (isSweater ? 'sweater' : 'rectangle')} onClose={() => { setShowNewProject(false); setNewProjectKind(null); }} />}
       {!document && !isPieces && showChanges && <ChangesPanel project={project} highlightFrom={changesFrom} onProject={setProject} onClose={() => { setShowChanges(false); setChangesFrom(null); }} />}

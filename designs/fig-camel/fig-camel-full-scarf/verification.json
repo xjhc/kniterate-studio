@@ -1,0 +1,61 @@
+{
+  "ranges": {
+    "setup": [
+      1,
+      114
+    ],
+    "starter": [
+      115,
+      161
+    ],
+    "neck": [
+      162,
+      168
+    ],
+    "body": [
+      169,
+      4355
+    ],
+    "finish": [
+      4356,
+      4384
+    ]
+  },
+  "passCount": 4384,
+  "compilerWarningCount": 0,
+  "chartRows": 846,
+  "selectedColumns": [
+    19,
+    232
+  ],
+  "advisories": {
+    "schemaVersion": 1,
+    "maxFloatDistance": 7,
+    "counts": {
+      "machine-advisory.float-distance": 0
+    },
+    "advisories": []
+  },
+  "peak": [
+    {
+      "row": 424,
+      "kind": "growth",
+      "width": 214,
+      "passes": [
+        3070,
+        3076
+      ]
+    },
+    {
+      "row": 425,
+      "kind": "completion",
+      "width": 214,
+      "passes": [
+        3077,
+        3083
+      ]
+    }
+  ],
+  "programSha256": "3c82521ea30c5c59c79798bd0ea5d8aa64c4d468ed2c94ff34a6f0fed425d254",
+  "studioProjectSha256": "c4821c3a57051a71f21bbca5ecc7fafe4ea255ad91b8a2f446f351c9bced8ef5"
+}

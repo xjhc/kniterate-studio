@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AUTHORED_CAPACITY_LIMITS_V1, appendProjectEdit, materializeColorworkProject } from '@kniterate-studio/project-contract';
-import { MAX_STUDIO_PROJECT_FILE_BYTES_V1, openStudioProjectFile, openStudioProjectJson, projectFileProblem } from './projectFile';
+import { MAX_STUDIO_PROJECT_FILE_BYTES_V1, openStudioDocumentFile, openStudioProjectFile, openStudioProjectJson, projectFileProblem } from './projectFile';
+import { figCamelPalette, figCamelTarget, proportionalFigCamelTarget, originalFigCamelTarget, planTriangle, triangleDraft } from '../scarf/triangle';
 
 const chart = JSON.stringify({
   kind: 'knitlab-colorwork-chart', version: 1, title: 'Shared checker', width: 2, height: 2,
@@ -27,6 +28,29 @@ describe('Studio chart/project intake', () => {
     expect(reopened).toEqual({ project: created, source: 'project' });
     expect(reopened.project.history.cursor).toBe(1);
     expect(materializeColorworkProject(reopened.project).state.chart.cells[0]![0]).toBe(1);
+  });
+
+  it.each([figCamelTarget, proportionalFigCamelTarget, originalFigCamelTarget])('opens a shaped scarf at %j without changing its stitches', async target => {
+    const stitches = 21 * 10 / 5.5;
+    const rows = 45;
+    const plan = planTriangle(stitches, rows, target);
+    const cells = plan.widths.map((width, row) =>
+      Array.from({ length: plan.columns }, (_, column) => Number(column === width - 1 && row % 2 === 1)));
+    const draft = triangleDraft(plan, cells, stitches, rows, {
+      id: 'fig-camel', title: 'Fig / Camel paisley', target, palette: figCamelPalette,
+    });
+    const open = (value: unknown) => {
+      const json = JSON.stringify(value);
+      return openStudioDocumentFile({ size: json.length, text: async () => json });
+    };
+
+    const opened = await open(draft);
+    expect(opened.kind).toBe('triangle');
+    if (opened.kind !== 'triangle') throw new Error('Expected a triangle project');
+    expect(opened.project.plan).toEqual(plan);
+    expect(opened.project.cells).toEqual(cells);
+    const changedIntervals = [[0, 8], ...draft.activeIntervalsExclusive.slice(1)];
+    await expect(open({ ...draft, activeIntervalsExclusive: changedIntervals })).rejects.toThrow(/active needles/);
   });
 
   it('accepts a valid one-color chart without inventing another palette entry', () => {
