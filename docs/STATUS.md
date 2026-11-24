@@ -18,7 +18,7 @@ warnings under this rule, down from 17. Transfer matching
 includes the stitch selectors at both ends. A terminal stop during a numbered
 pass can now be logged separately from the last completed pass.
 
-Across the 18 logged knits, 17 fault reports have inferred pass locations and
+Across the 18 knits logged through 14 November, 17 fault reports have inferred pass locations and
 one has no location. Replaying each file against only the earlier runs, prior
 fault warnings covered the entire inferred window once, part of it four times
 and none of it twelve times. The previous width-specific rule also warned on
@@ -33,13 +33,14 @@ current matrix diamond the 66 eligible pickups are all required under this model
 Changing parking or work order would require lowering and validating a new file.
 
 The triangle's slope was settled by a knit (operator report, 2026-11-23). The
-operator knitted a full-size reversible scarf in 3/28 cashmere from their fork
-(`areumjo/kniterate-studio`, `accumulate` at `7d86088`): 4,384 passes,
+operator knitted a full-size reversible scarf in 3/28 cashmere: 4,384 passes,
 3 → 214 → 3 columns over 846 courses, the right edge changing one column every
 two courses, with joined split increases made by C4. It finished in 3 h 51 min;
 the operator reported two feeder breaks and did not say what broke. The machine
-file, its build script and its run log are in the fork, not in this repository,
-and the run is not in the knit log. `studio audit` passes on that file.
+file, its build script, the cashmere swatches and the run log were merged from
+the operator's fork into [`designs/fig-camel`](../designs/fig-camel/README.md).
+`studio audit` passes on the file. The knit log holds the run with its fault
+unplaced, so its passes read as run but not as knitted cleanly.
 `studio shape-check` assumed the 514-pass paisley's spacing of three courses
 between changes and reported that this shape could not fit; it was removed.
 The 514-pass replay still checks the carrier handoffs, both split descendants'
@@ -57,8 +58,8 @@ file. [McCann et al.](https://homes.cs.washington.edu/~ztatlock/599z-17sp/papers
 
 `pnpm --silent studio -- knitted <file>` reads any machine file against every
 knit whose exact file is in the repository
-([`knit-log.json`](../packages/machine-lib/registry/knit-log.json), 18 knits
-from 30 October to 14 November, described in the
+([`knit-log.json`](../packages/machine-lib/registry/knit-log.json), 22 knits
+from 30 October to 23 November, described in the
 [registry README](../packages/machine-lib/registry/README.md)). It says which
 passes have knitted with no fault reported, which have a fault on record,
 which have only knitted at another width, and which are new on the machine,

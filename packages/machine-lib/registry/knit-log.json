@@ -6,6 +6,7 @@
     "acrylic-2-14": "2/14 acrylic, one strand",
     "acrylic-2-30-x1": "2/30 acrylic, one strand",
     "acrylic-2-30-x2": "2/30 acrylic, two strands",
+    "cashmere-3-28": "3/28 cashmere, one strand (1,360 m per 150 g)",
     "draw-thin": "The thin draw thread on the machine; not identified",
     "not-recorded": "Not recorded"
   },
@@ -294,6 +295,65 @@
       "caveat": "No failing pass was confirmed, and the photos supplied show an earlier piece.",
       "events": [
         { "kind": "fault", "section": "body", "what": "The increase looked bad and the grey loop 'didnt quite knit'. The strip changed the increase and the edge join together, so the report cannot be placed on one of them: it counts against whatever was new in this strip." }
+      ]
+    },
+    {
+      "id": "2026-11-22-joined-grey-paisley",
+      "date": "2026-11-22",
+      "what": "Reversible paisley 8 to 21 to 8 columns, grey making all 13 split increases (510 passes)",
+      "file": "docs/physical-trials/2026-11-14/paisley-grey-split-candidate/program.kc",
+      "sha256": "2c85e52672cc19100a882c1f2feaf8d7cf3b83bf471fa00c010dd54589709aac",
+      "yarns": { "1": "not-recorded", "3": "acrylic-2-14", "4": "acrylic-2-14", "6": "not-recorded" },
+      "operatorSaidHowItRan": false,
+      "source": "https://github.com/xjhc/kniterate-studio/issues/18#issuecomment-7088519932",
+      "record": "docs/physical-trials/2026-11-22/joined-paisley-and-tip",
+      "caveat": "The record gives the operator's view in someone else's words: still imperfect, and the best increase so far. Nothing was said about how it ran or whether waste dropped again in passes 81-104. Both faces were photographed and the piece is complete.",
+      "events": [
+        { "kind": "note", "what": "The widening edge could be tighter; in the photos it is looser than the narrowing edge." }
+      ]
+    },
+    {
+      "id": "2026-11-22-tip-swatch",
+      "date": "2026-11-22",
+      "what": "Reversible tip trial 2 to 8 to 2 columns on a sacrificial starter (378 passes)",
+      "file": "docs/physical-trials/2026-11-15/tip-start-candidate/program.kc",
+      "sha256": "3ea65875e829afc7b406a6a12d3270cc33e16c6f498af6c921dab04ef357b5c1",
+      "yarns": { "1": "not-recorded", "3": "acrylic-2-14", "4": "acrylic-2-14", "6": "not-recorded" },
+      "operatorSaidHowItRan": false,
+      "source": "https://github.com/xjhc/kniterate-studio/issues/18#issuecomment-7088519932",
+      "record": "docs/physical-trials/2026-11-22/joined-paisley-and-tip",
+      "caveat": "The record says the two-column point knitted, in someone else's words. Nothing was said about how it ran. Both faces were photographed with the starter still attached.",
+      "events": [
+        { "kind": "note", "what": "The two-column point looks too sharp and may be fragile. The operator chose three columns at each end." }
+      ]
+    },
+    {
+      "id": "2026-11-23-cashmere-a-swatch",
+      "date": "2026-11-23",
+      "what": "Cashmere triangle 3 to 13 to 3 columns with an A: an increase every two courses and the C3 decrease (398 passes)",
+      "file": "designs/fig-camel/cashmere-triangle-A/c3-knitted-A/command.kc",
+      "sha256": "55797036219c57bafb1ebe4aa18098a6ca967edc1094cf0101b9782e0b9b5172",
+      "yarns": { "1": "not-recorded", "3": "cashmere-3-28", "4": "cashmere-3-28", "6": "not-recorded" },
+      "operatorSaidHowItRan": false,
+      "source": "https://github.com/xjhc/kniterate-studio/issues/21#issuecomment-7116697100",
+      "record": "designs/fig-camel",
+      "caveat": "The operator's design notes name this file as the knitted swatch. They do not give the day or say how it ran. It is dated by the commit that published it and may have been knitted on 22 November.",
+      "events": []
+    },
+    {
+      "id": "2026-11-23-fig-camel-scarf",
+      "date": "2026-11-23",
+      "what": "Full-size reversible cashmere scarf, 3 to 214 to 3 columns over 846 courses, one column changed every two courses (4,384 passes)",
+      "file": "designs/fig-camel/fig-camel-full-scarf/command.kc",
+      "sha256": "3c82521ea30c5c59c79798bd0ea5d8aa64c4d468ed2c94ff34a6f0fed425d254",
+      "yarns": { "1": "not-recorded", "3": "cashmere-3-28", "4": "cashmere-3-28", "6": "not-recorded" },
+      "operatorSaidHowItRan": true,
+      "report": "yarn feeder broke two times",
+      "source": "https://github.com/xjhc/kniterate-studio/issues/21#issuecomment-7118949180",
+      "record": "designs/fig-camel/fig-camel-full-scarf",
+      "caveat": "The run finished in 3 h 51 min. Which feeder broke, at which passes and why were not reported, so the fault has no place and none of this run's passes counts as knitted cleanly. An earlier attempt the same day had a startup issue that was not described. The card's file was read back byte for byte before the run.",
+      "events": [
+        { "kind": "fault", "what": "The operator reported 'yarn feeder broke two times' during the run, with no feeder, pass or cause." }
       ]
     }
   ]
