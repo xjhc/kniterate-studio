@@ -32,17 +32,18 @@ all 86 pickups above the bound involve the draw or waste carrier. On the
 current matrix diamond the 66 eligible pickups are all required under this model.
 Changing parking or work order would require lowering and validating a new file.
 
-`studio shape-check designs/atelier-paisley/shape.json designs/atelier-paisley/chart.json`
-checks the outline and the motif together. Its 224 increases and 224 decreases
-need at least 1,345 courses under the 514-pass recipe, including its three
-initial plain courses. With 480 courses and both tips eight columns wide, this
-cadence permits a peak of 87 columns. Reaching 88 and returning needs 481
-courses. All 480 artwork rows fit inside the mask and leave the
-structural edge columns free of motif cells. The planner exposes added holds
-and planned yarn and carriage sides with `--detail`. The 514-pass replay checks
-the carrier handoffs, both split descendants' donor and the ordered pair of
-parents in each decrease. The full-size piece still needs measured gauge,
-machine placement and a physical slope trial.
+The triangle's slope was settled by a knit (operator report, 2026-11-23). The
+operator knitted a full-size reversible scarf in 3/28 cashmere from their fork
+(`areumjo/kniterate-studio`, `accumulate` at `7d86088`): 4,384 passes,
+3 → 214 → 3 columns over 846 courses, the right edge changing one column every
+two courses, with joined split increases made by C4. It finished in 3 h 51 min;
+the operator reported two feeder breaks and did not say what broke. The machine
+file, its build script and its run log are in the fork, not in this repository,
+and the run is not in the knit log. `studio audit` passes on that file.
+`studio shape-check` assumed the 514-pass paisley's spacing of three courses
+between changes and reported that this shape could not fit; it was removed.
+The 514-pass replay still checks the carrier handoffs, both split descendants'
+donor and the ordered pair of parents in each decrease.
 
 CMU's transfer planner gives a correctness result for cyclic yarn-slack
 constraints. Their example of an additional connection between beds illustrates

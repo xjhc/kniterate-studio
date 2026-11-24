@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { checkReversibleShape, scheduleSupportedSplit } from '../../../scripts/lib/reversible-shape';
+import { scheduleSupportedSplit } from '../../../scripts/lib/reversible-shape';
 import { carrierPickupPlan } from '../../../scripts/lib/carrier-plan';
 import { buildPaisleySplit } from '../../../scripts/experiments/paisley-split-swatch';
 import { verifyPaisleySplit } from '../../../scripts/experiments/verify-paisley-split';
@@ -10,26 +10,6 @@ import type { MachineTraceV1 } from '@kniterate-studio/machine-lib/browser';
 const local = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
 describe('supported-split planning', () => {
-  it('locates the slope constraint in a 480-row triangle with the dimensions in issue 21', () => {
-    const height = 480, width = 232;
-    const widths = Array.from({ length: height }, (_, row) => 8 + Math.round(224 * Math.min(row, height - 1 - row) / 239));
-    const mask = { height, width, rowNumbering: 'bottom-up', activeIntervalsExclusive: widths.map((w) => [0, w]) };
-    const chart = { kind: 'knitlab-colorwork-chart', version: 1, height, width, rowNumbering: 'bottom-up',
-      palette: [{ id: 'dark', name: 'Dark', hex: '#121212' }, { id: 'light', name: 'Light', hex: '#eeeeee' }],
-      cells: widths.map(() => Array.from({ length: width }, (_, x) => Number(x === 3))) };
-    expect(checkReversibleShape(mask, chart)).toMatchObject({
-      fitsRowAndMotifConstraints: false, requestedRows: 480, increases: 224, decreases: 224,
-      minimumRowsAtThisCadence: 1345, additionalRows: 865, firstDelay: { designRow: 2, earliestRow: 4 }, motifConflictCount: 0,
-    });
-    chart.cells[0]![0] = 1;
-    chart.cells[0]![8] = 1;
-    expect(checkReversibleShape(mask, { ...chart, rowNumbering: 'top-down', cells: chart.cells.reverse() }).motifConflicts).toEqual([
-      { row: 1, column: 0, reason: 'edge join or transfer' }, { row: 1, column: 8, reason: 'outside mask' },
-    ]);
-    mask.activeIntervalsExclusive[2]![0] = 1;
-    expect(() => checkReversibleShape(mask, chart)).toThrow(/left edge moves on row 3/);
-  });
-
   it('accounts for holds before shaping, the growth completion and the turn at the peak', () => {
     const schedule = scheduleSupportedSplit([8, 9, 8]);
     expect(schedule.rows.map((r) => [r.width, r.kind, r.designRow])).toEqual([
