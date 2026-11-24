@@ -32,6 +32,22 @@ all 86 pickups above the bound involve the draw or waste carrier. On the
 current matrix diamond the 66 eligible pickups are all required under this model.
 Changing parking or work order would require lowering and validating a new file.
 
+`studio scarf <design.json> -o <directory>` builds a shaped reversible scarf
+from the recipe of the scarf knitted on 2026-11-23, described in the next
+paragraph (`scripts/lib/shaped-scarf.ts`). The design is a
+two-colour chart with its outline; a triangle project saved by Studio's scarf
+workspace works as it is. The command refuses an outline the recipe cannot
+knit and says why, replays every row against the chart, runs the safety
+envelope and the audit, and writes the machine file, a picture of both faces,
+a verification record and the handoff sheet. It rebuilds the knitted
+4,384-pass file byte for byte from its design file
+(`apps/studio/src/shapedScarf.test.ts`). The recipe: three columns at the
+start, a straight left edge, a right edge that moves one column per pair of
+courses. Other outlines within those rules build and pass the software checks;
+only the symmetric triangle has knitted. This is a CLI tool beside Studio's
+export: the scarf workspace in Studio draws and saves the design, and neither
+gives a verdict or Knit-proven.
+
 The triangle's slope was settled by a knit (operator report, 2026-11-23). The
 operator knitted a full-size reversible scarf in 3/28 cashmere: 4,384 passes,
 3 → 214 → 3 columns over 846 courses, the right edge changing one column every

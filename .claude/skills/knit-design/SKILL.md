@@ -239,6 +239,57 @@ pnpm --silent studio -- matrix --quick                     # build and audit a s
 - Judge by stitches, never by speed and roller alone: a frame once matched
   Kniterate's settings pass for pass while missing its drop and cast-on.
 
+## Shaped reversible scarf (triangle, pennant, pointed ends)
+
+A shaped two-colour reversible scarf is not a Studio project and has no
+verdict. It is built by `studio scarf` from the recipe of the scarf knitted on
+2026-11-23 (`designs/fig-camel`, 3/28 cashmere, 4,384 passes). You supply the
+artwork and the outline; never write stitch code for it.
+
+```bash
+pnpm --silent studio -- scarf my-scarf.json -o output/my-scarf   # exit 1 lists why the design does not fit
+```
+
+The design file is JSON:
+
+- `chart`: a two-colour chart (`kind: knitlab-colorwork-chart`, `rowNumbering:
+  bottom-up`). Its first row is the first course knitted; the scarf's length
+  runs along the rows. Colour 0 is the ground (C4), colour 1 the contrast (C3).
+- `activeIntervalsExclusive`: one `[0, width]` per course. Column 0 is the
+  straight edge.
+- optional `title`, `gaugePer10cm: { stitches, rows }` (size estimate only), and
+  `knit: { yarns: { c3, c4 }, stitch, speed, roller, firstNeedle }`. Without
+  `knit` it uses the knitted settings: stitch 6, speed 150, roller 400, centred.
+
+A triangle project saved from Studio's scarf workspace is already this format;
+`designs/fig-camel/Fig-Camel-141cm-9-Rows.kniterate-studio.json` is the worked
+example and rebuilds the knitted file byte for byte.
+
+What the recipe can knit:
+
+- Three columns on the first course. The last course can be any width from three.
+- A width holds for a pair of courses (1–2, 3–4, …). Each pair is the same
+  width as the one before, or one column wider or narrower. That is the
+  steepest edge: one column per two courses. Only the right edge moves.
+- On the two courses of an increase, the column beside the new edge stitch is
+  ground colour. The recipe sets both edge stitches itself; keep motifs two
+  columns clear of each edge.
+- At the knitted cashmere gauge (43.6 stitches and 60 rows per 10 cm) the
+  steepest symmetric triangle is about a third as deep as it is long: 49 cm on
+  141 cm. For another yarn, knit a gauge swatch first and size the chart from it.
+
+The command writes `command.kc`, the knitout, `preview.png` (both faces: look
+at it), `verification.json` and `instructions.md`, after replaying every row
+against the chart and running the safety envelope and audit. `knitLog.new` in
+its output counts passes that have never run on the machine: a straight
+middle, holds between increases, or an edge that widens again all add some.
+Say so, and suggest a small trial of the new part before a full-size piece.
+A different stitch size, speed or roller makes the body passes new. The log
+cannot see the yarn itself, so a new yarn needs its own swatch either way.
+
+Not built: shaping the left edge, both edges at once, an edge steeper than one
+column per two courses, a start wider than three columns, more than two colours.
+
 ## Reporting back
 
 Give: size in stitches × rows and predicted cm (with the gauge used and its

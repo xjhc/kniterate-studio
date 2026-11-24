@@ -146,7 +146,7 @@ export function verifyTipSwatch(built: ReturnType<typeof buildTipSwatch>) {
     return label;
   });
   const passLabels = built.compiled.scheduledPasses.map((pass) => { const own = pass.sourceLines.map((n) => labels[n - 1]!); assert(new Set(own.map((l) => `${l.row}:${l.slot.startsWith('neck') ? 'neck' : ''}`)).size <= 1, 'A pass crosses a row boundary'); return own.at(-1)!; });
-  const firstBody = passLabels.findIndex((l) => l.row > 0), lastBody = passLabels.findLastIndex((l) => l.row > 0);
+  const firstBody = passLabels.findIndex((l) => l.row > 0), lastBody = passLabels.map((l) => l.row > 0).lastIndexOf(true);
   const audit = auditTraceV1(trace, { sections: [{ name: 'waste', from: 1, to: firstBody }, { name: 'body', from: firstBody + 1, to: lastBody + 1 }, { name: 'top', from: lastBody + 2, to: trace.passes.length }] });
   assert(audit.checks.every((c) => c.ok), JSON.stringify(audit.checks.filter((c) => !c.ok)));
   const topology = projectMachineTopologyV1(trace), offset = built.compiled.coordinateMapping.frontSourceSlotToKCodeColumnOffset, at = (n: number) => n + offset;

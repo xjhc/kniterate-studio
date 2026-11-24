@@ -32,6 +32,7 @@ import { decodePng, encodePng } from './lib/png.ts';
 import { SWEATER_USAGE, SweaterUsageError, isSweaterProject, sweaterCheck, sweaterCommand, sweaterPlanJson, type SweaterCliIo } from './lib/sweater-cli.ts';
 import { planSweater } from '../apps/studio/src/sweater/sweater.ts';
 import { RENDER_VIEWS, renderView, type RenderView } from './lib/render.ts';
+import { scarfCommand } from './lib/scarf-command.ts';
 import { MachineUsageError, auditCommand, compareCommand, knittedCommand, loadMachineInput, matrixCommand, passesCommand, referenceCommand } from './lib/machine-cli.ts';
 
 const USAGE = `Usage: pnpm --silent studio -- <command> [args]
@@ -144,7 +145,14 @@ handoff package folder. Passes are numbered from 1, as in run records and on the
   matrix [-o <directory>] [--quick]
       Build every construction Studio makes (fairisle and birdseye charts including narrow and odd
       widths, beanies, scarves, every sweater silhouette and neck) and audit each file. Exit 1 if any
-      piece fails to export or fails the audit. --quick builds a smaller set.`;
+      piece fails to export or fails the audit. --quick builds a smaller set.
+  scarf <design.json> -o <directory>
+      Build a reversible shaped scarf with the recipe of the scarf knitted on 2026-11-23: three columns
+      at the start, a straight left edge, a right edge that moves one column per pair of courses.
+      The design is a two-colour chart with its outline (a triangle project saved by Studio works).
+      Writes command.kc, the knitout, preview.png (both faces), verification.json and instructions.md,
+      and counts the file's passes against the knit log. Exit 1 with the reasons when the outline or
+      chart does not fit the recipe. Not part of Studio's export; the file is not Knit-proven.`;
 
 const MAX_FINDINGS = 200;
 
@@ -546,6 +554,12 @@ async function main(): Promise<number> {
     }
     case 'matrix': {
       const { result, ok } = await matrixCommand(parsed.out, parsed.options.has('--quick'));
+      print(result);
+      return ok ? 0 : 1;
+    }
+    case 'scarf': {
+      if (parsed.out === null) throw new UsageError('scarf requires -o <directory>.');
+      const { result, ok } = await scarfCommand(positional(parsed, 0, '<design.json>'), parsed.out);
       print(result);
       return ok ? 0 : 1;
     }
