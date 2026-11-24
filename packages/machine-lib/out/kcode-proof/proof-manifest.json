@@ -30946,7 +30946,7 @@
     ]
   },
   "contract": {
-    "sha256": "756e03385f1a85a38dc778a64d53a1bbf4be3438dff8ab67dc7ffd68472f5dc5",
+    "sha256": "3221d6e63c798766418862fdf7306afd608c9e7535be077f9239f6547fae022a",
     "files": [
       {
         "path": "../../.github/workflows/ci.yml",
@@ -30980,13 +30980,13 @@
       },
       {
         "path": "../../apps/studio/src/App.tsx",
-        "sha256": "0edacf7c49a3e746bff830417ee8bcf9708bba511b0637fa6fe809317adf1361",
-        "bytes": 84012
+        "sha256": "43ab3e0f07da11f34bf0acc668f60eb0246f5e6aa8ea0952feb5295b01d28993",
+        "bytes": 84564
       },
       {
         "path": "../../apps/studio/src/StartScreen.tsx",
-        "sha256": "be802039a5089ba3329fc8cde11754fb6b91e8c5de81215db5010903fa67de8d",
-        "bytes": 5727
+        "sha256": "620116be36560317e5c2af0ede03b548bf47ccaad9d63ce7256513b951ab7838",
+        "bytes": 6067
       },
       {
         "path": "../../apps/studio/src/assets/fonts/LICENSE-Cantarell.txt",
@@ -31165,13 +31165,13 @@
       },
       {
         "path": "../../apps/studio/src/chart/projectFile.test.ts",
-        "sha256": "a3ce71338294d975b6a0e72409a18e166fdded492c7e4f414b23f1432f90ab49",
-        "bytes": 4134
+        "sha256": "9f2902807316cfae5828ba15c645305d6bd314b95c475aa0d8658f6d0846da9a",
+        "bytes": 5532
       },
       {
         "path": "../../apps/studio/src/chart/projectFile.ts",
-        "sha256": "1b9988319b2333ce5e5e63f6a71ebdaf361c2e14b23e6fe3a7e7c98a528f3756",
-        "bytes": 3191
+        "sha256": "09cf98f606602df0acb0909f708425d26ad217d524f7bd136b307c6ddf84b257",
+        "bytes": 4119
       },
       {
         "path": "../../apps/studio/src/chart/recentProjects.test.ts",
@@ -31475,8 +31475,8 @@
       },
       {
         "path": "../../apps/studio/src/main.tsx",
-        "sha256": "f6406e11478ea3e58ba521df287d48f47bc2479ee126354cfba677d38ad29882",
-        "bytes": 236
+        "sha256": "5ed4d6dba8fd4699bf08d75059795502a6ffdd147aad83acbf38f92ec5bb1b4f",
+        "bytes": 469
       },
       {
         "path": "../../apps/studio/src/parity.test.ts",
@@ -31524,6 +31524,61 @@
         "bytes": 4957
       },
       {
+        "path": "../../apps/studio/src/scarf/ScarfPixelEditor.tsx",
+        "sha256": "55da63e9ccb33ea6b6f9aea4d30bf50026ea3a294990274e86437850cd29ed96",
+        "bytes": 6359
+      },
+      {
+        "path": "../../apps/studio/src/scarf/TriangleKnitLayout.tsx",
+        "sha256": "47aacdd30640940495aebbec2cf87a5152d8b6578ebb65c65f2daf31227a6c32",
+        "bytes": 6367
+      },
+      {
+        "path": "../../apps/studio/src/scarf/TriangleWorkspace.tsx",
+        "sha256": "ad49d06130aa87e38b7d255b45385c339af5dd5b75d65e4d437c0dba70ec603e",
+        "bytes": 18919
+      },
+      {
+        "path": "../../apps/studio/src/scarf/figCamelArtwork.test.ts",
+        "sha256": "f059a9cff9148c60962d4579b2664582d8539c15eabeaf0f08f3304707bd9056",
+        "bytes": 3685
+      },
+      {
+        "path": "../../apps/studio/src/scarf/figCamelArtwork.ts",
+        "sha256": "7221063a954779032e21c965574854e8f29bc3fe667954a696efa152f9fb2bd6",
+        "bytes": 9111
+      },
+      {
+        "path": "../../apps/studio/src/scarf/tipReference.json",
+        "sha256": "fe63f2c2b5b21657863189f7c49a4558742ddfb665f458215976815e35595d7b",
+        "bytes": 13728
+      },
+      {
+        "path": "../../apps/studio/src/scarf/triangle.css",
+        "sha256": "08c5b02b012263a91ea734710756387631151083ccd72890e2205fff107c4c4c",
+        "bytes": 6421
+      },
+      {
+        "path": "../../apps/studio/src/scarf/triangle.ts",
+        "sha256": "830047864b63b836ce11ac33b7115cb5715cb2522b29590aac0096fe431e07aa",
+        "bytes": 6280
+      },
+      {
+        "path": "../../apps/studio/src/scarf/triangleProjectFile.ts",
+        "sha256": "a264f8a54ac8ede8ad2fca7a0e8edecb7813d0dca89d3e97d0caa1f923d86fc2",
+        "bytes": 3728
+      },
+      {
+        "path": "../../apps/studio/src/scarf/wildRagMotifs.ts",
+        "sha256": "429dae54d7987a2c78a2268c1eccde857a3bd1360f3e80a982767b31926211c6",
+        "bytes": 8398
+      },
+      {
+        "path": "../../apps/studio/src/shapedScarf.test.ts",
+        "sha256": "7308edd3b33dbd527fb42bf3558765be1c3ab1b2cde3c1fc9bdd41ef1e2fcae3",
+        "bytes": 6656
+      },
+      {
         "path": "../../apps/studio/src/sourceWindow.test.tsx",
         "sha256": "c735daa96904969dcfb2c321915e33715baa0e25c9922206b5956881f9985d82",
         "bytes": 3578
@@ -31550,8 +31605,8 @@
       },
       {
         "path": "../../apps/studio/src/styles.css",
-        "sha256": "1bfd6933ae7a9c85bc7ff811481461d8ff71561af01cea62eed5a6d7337fa5c7",
-        "bytes": 61936
+        "sha256": "31705eefc167287d0fae52ab873190ad7e892b68b58d9dc4619f1d84ef018918",
+        "bytes": 61957
       },
       {
         "path": "../../apps/studio/src/swatch.test.ts",
@@ -32010,8 +32065,8 @@
       },
       {
         "path": "../../scripts/experiments/tip-swatch.ts",
-        "sha256": "a3ad6cef4dc57b04fdc25f5962e20535cd007bca28338f781a93c4db36c21cd6",
-        "bytes": 19992
+        "sha256": "071ee7c414a012e586d0101cdf35dcca9ad7785676082bea9bf6499791caed6d",
+        "bytes": 20000
       },
       {
         "path": "../../scripts/experiments/verify-colour-preserving.ts",
@@ -32074,6 +32129,16 @@
         "bytes": 3340
       },
       {
+        "path": "../../scripts/lib/scarf-command.ts",
+        "sha256": "5fbcffb1abc94b81fb32f12e09740bf0f03bc1a5fbedbc7eb32e9ababdf1f89b",
+        "bytes": 2117
+      },
+      {
+        "path": "../../scripts/lib/shaped-scarf.ts",
+        "sha256": "0eaeea1937c5cb2a016e0f8d8364e42a0f24b67b2712983294c7f9878e23622a",
+        "bytes": 29040
+      },
+      {
         "path": "../../scripts/lib/sweater-cli.ts",
         "sha256": "8c4f9a4f9f3044c7fdf945567c5e56d21b2874d3220c194563eab9af87466e10",
         "bytes": 26229
@@ -32090,8 +32155,8 @@
       },
       {
         "path": "../../scripts/studio.ts",
-        "sha256": "e3da787a2466d2cedaf1eba6f7e5e62dfe7e305a5717cdd33129c1a295f825ba",
-        "bytes": 47524
+        "sha256": "10c8cf67692b7ea563c2e2299c2ce9a7f5e0a7b6e2e4506a7aaf53163ea137bd",
+        "bytes": 48477
       },
       {
         "path": "../../tsconfig.base.json",
